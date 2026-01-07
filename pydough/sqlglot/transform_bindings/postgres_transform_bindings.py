@@ -10,6 +10,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -617,4 +618,71 @@ class PostgresTransformBindings(BaseTransformBindings):
             fill_pattern=args[2],
             is_left=False,
         )
+        return result
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range collection to its Postgres SQLGlot
+        representation.
+
+        For example, `pydough.range_collection("table_name", "column_name", 1, 10, 2)` becomes:
+        SELECT column_name
+        FROM generate_series(1, 10, 2) AS table_name(column_name);
+
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.column_name, quoted=False
+        )
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.name, quoted=False
+        )
+
+        start: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.start)
+        end: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.end)
+        step: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.step)
+
+        alias_table = sqlglot_expressions.TableAlias(
+            this=table_name, columns=[column_name]
+        )
+
+        # Because Postgres generate_series includes the last number in the range,
+        # we need to adjust the end to exclude the last number.
+        # Example:
+        # generate_series(1, 5, 1) -> [1, 2, 3, 4, 5] but we want [1, 2, 3, 4]
+        # For positive step, we subtract 1 from the end.
+        # For negative step, we add 1 to the end.
+        adjustment_num: SQLGlotExpression = (
+            sqlglot_expressions.Literal.number(1)
+            if collection.step > 0
+            else sqlglot_expressions.Literal.number(-1)
+        )
+
+        # The range collection end minus the adjustment number excluding the
+        # last number. Example:
+        # generate_series(1, 5, 1) -> [1, 2, 3, 4, 5]
+        # With adjustment:
+        # generate_series(1, 5-1, 1) -> [1, 2, 3, 4]
+        effective_end = sqlglot_expressions.Sub(
+            this=end,
+            expression=adjustment_num,
+        )
+
+        generate_series: SQLGlotExpression = sqlglot_expressions.GenerateSeries(
+            start=start, end=effective_end, step=step
+        )
+
+        table = sqlglot_expressions.Table(this=generate_series, alias=alias_table)
+        result: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[sqlglot_expressions.Column(this=column_name)]
+        ).from_(table)
+
         return result

@@ -10,13 +10,16 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 from pydough.types.string_type import StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     expand_std,
     expand_variance,
+    generate_range_rows,
 )
 
 
@@ -711,3 +714,40 @@ class MySQLTransformBindings(BaseTransformBindings):
             return sqlglot_expressions.Greatest(this=args[0], expressions=collated_args)
         else:
             return sqlglot_expressions.Least(this=args[0], expressions=collated_args)
+
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(
+                sqlglot_expressions.values(
+                    [
+                        sqlglot_expressions.Anonymous(
+                            this="ROW",
+                            expressions=[sqlglot_expressions.convert((None,))],
+                        )
+                    ]
+                )
+            )
+        )
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range collection to its MySQL SQLGlot
+        representation. Using ROW constructs to represent each row.
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+        # Generate rows for the range, using ROW().
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, False)
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, [collection.column_name], range_rows
+        )
+
+        return result

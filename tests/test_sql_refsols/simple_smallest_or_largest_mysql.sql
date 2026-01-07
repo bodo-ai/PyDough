@@ -29,4 +29,5 @@ SELECT
   ) AS l7,
   GREATEST('', 'alphabet soup' COLLATE utf8mb4_bin, 'Hello World' COLLATE utf8mb4_bin) AS l8,
   NULL AS l9
-FROM _q_0
+FROM (VALUES
+  ROW(NULL)) AS _q_0(_col_0)

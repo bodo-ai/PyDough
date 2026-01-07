@@ -23,7 +23,9 @@ from pydough.user_collections.user_collections import PyDoughUserGeneratedCollec
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     current_ts_pattern,
+    generate_range_rows,
     offset_pattern,
     pad_helper,
     positive_index,
@@ -2156,6 +2158,21 @@ class BaseTransformBindings:
         """
         return arg
 
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        """
+        Return a SQLGlot expression that represents a single-row, empty (NULL)
+        singleton.
+
+        Returns:
+            A SQLGlotExpression that selects from a one-row VALUES tuple
+            containing a single NULL.
+        """
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
+        )
+
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
@@ -2179,16 +2196,22 @@ class BaseTransformBindings:
                 )
 
     def convert_user_generated_range(
-        self,
-        collection: RangeGeneratedCollection,
+        self, collection: RangeGeneratedCollection
     ) -> SQLGlotExpression:
         """
-        Converts a user-generated range into a SQLGlot expression.
-        Args:
-            `collection`: The user-generated range to convert.
+        Converts a user-generated range collection to its SQLGlot
+        representation.
+
+        Arguments:
+            `collection` : The user-generated range collection to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
-        raise NotImplementedError(
-            "range_collections are not supported for this dialect"
+        # Generate rows for the range, using Tuple.
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, True)
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, [collection.column_name], range_rows
         )
+
+        return result
