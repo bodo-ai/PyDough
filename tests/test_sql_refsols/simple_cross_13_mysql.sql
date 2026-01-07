@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS `_`
-)
 SELECT
   'foo' AS a,
   'bar' AS b,
@@ -10,4 +6,5 @@ SELECT
   'foobar' AS e,
   'fizzbuzz' AS f,
   'yay' AS g
-FROM _q_0
+FROM (VALUES
+  ROW(NULL)) AS _q_0(_col_0)

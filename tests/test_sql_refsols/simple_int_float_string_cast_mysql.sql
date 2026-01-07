@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS `_`
-)
 SELECT
   1 AS i1,
   TRUNCATE(CAST(2.2 AS FLOAT), 0) AS i2,
@@ -25,4 +21,5 @@ SELECT
   CAST(0.1 AS CHAR) AS s7,
   CAST('0.0' AS CHAR) AS s8,
   CAST('abc def' AS CHAR) AS s9
-FROM _q_0
+FROM (VALUES
+  ROW(NULL)) AS _q_0(_col_0)

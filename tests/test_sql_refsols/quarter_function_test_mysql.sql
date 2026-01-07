@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS `_`
-)
 SELECT
   1 AS _expr0,
   1 AS _expr1,
@@ -106,4 +102,5 @@ SELECT
   ) * 4 + (
     QUARTER(CAST('2024-01-01' AS DATETIME)) - QUARTER(CAST('2023-12-31' AS DATETIME))
   ) AS q_diff12
-FROM _q_0
+FROM (VALUES
+  ROW(NULL)) AS _q_0(_col_0)

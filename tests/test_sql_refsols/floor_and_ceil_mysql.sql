@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS `_`
-)
 SELECT
   FLOOR(5.6) AS floor_frac,
   CEIL(5.4) AS ceil_frac,

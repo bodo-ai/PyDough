@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS `_`
-)
 SELECT
   DATE_SUB(
     DATE_ADD(
@@ -24,4 +20,5 @@ SELECT
     ),
     INTERVAL '2' SECOND
   ) AS d3
-FROM _q_0
+FROM (VALUES
+  ROW(NULL)) AS _q_0(_col_0)
