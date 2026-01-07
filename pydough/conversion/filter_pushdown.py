@@ -5,12 +5,15 @@ Logic used to transpose filters lower into relational trees.
 __all__ = ["push_filters"]
 
 
+import itertools
+
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.relational import (
     Aggregate,
     CallExpression,
     ColumnReference,
+    ColumnReferenceFinder,
     EmptySingleton,
     Filter,
     GeneratedTable,
@@ -28,13 +31,17 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     ExpressionTranspositionShuttle,
+    add_input_name,
+    apply_substitution,
     build_filter,
     contains_window,
+    extract_equijoin_keys,
     false_when_null_columns,
     get_conjunctions,
     only_references_columns,
     partition_expressions,
 )
+from pydough.types import BooleanType
 
 from .relational_simplification import SimplificationShuttle
 
@@ -173,6 +180,168 @@ class FilterPushdownShuttle(RelationalShuttle):
             aggregate, remaining_filters, pushable_filters
         )
 
+    def infer_extra_join_filters(
+        self,
+        join: Join,
+        input_idx: int,
+        original_filters: set[RelationalExpression],
+    ) -> set[RelationalExpression]:
+        """
+        Infers any extra filters that can be deduced from the join condition
+        that can be pushed into one of the join inputs.
+
+        Args:
+            `join`: The join node whose condition is to be analyzed.
+            `input_idx`: The index of the input for which to infer extra
+            filters.
+            `original_filters`: The original set of filters that are being
+            pushed from above the join into its inputs.
+
+        Returns:
+            A set of relational expressions representing the inferred filters.
+        """
+        inferred_filters: set[RelationalExpression] = set()
+
+        # Cannot infer any extra filters for ANTI joins, or for LEFT joins
+        # pushing into the right-hand side.
+        if join.join_type == JoinType.ANTI or (
+            join.join_type == JoinType.LEFT and input_idx == 1
+        ):
+            return inferred_filters
+
+        transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+            join, True
+        )
+        transposed_conds = {
+            cond.accept_shuttle(transposer) for cond in original_filters
+        }
+
+        # Extract all equality conditions from the join condition, then build
+        # up equality sets via a union find structure.
+        lhs_keys, rhs_keys = extract_equijoin_keys(join, transposed_conds)
+        equality_sets: dict[RelationalExpression, RelationalExpression] = {}
+        for lhs_key in lhs_keys:
+            equality_sets[lhs_key] = lhs_key
+        for rhs_key in rhs_keys:
+            equality_sets[rhs_key] = rhs_key
+
+        def find(expr: RelationalExpression) -> RelationalExpression:
+            # Finds the root representative of the equality set containing
+            # `expr`, applying path compression along the way.
+            parent = equality_sets.get(expr, expr)
+            if parent != expr:
+                parent = find(parent)
+                equality_sets[expr] = parent
+            return parent
+
+        def union(expr1: RelationalExpression, expr2: RelationalExpression) -> None:
+            # Unites the equality sets containing `expr1` and `expr2`.
+            root1 = find(expr1)
+            root2 = find(expr2)
+            if root1 != root2:
+                equality_sets[root1] = root2
+
+        # The equality sets are built by uniting all of the equality operations
+        # in the join condition.
+        for expr in get_conjunctions(join.condition):
+            if isinstance(expr, CallExpression) and expr.op == pydop.EQU:
+                union(expr.inputs[0], expr.inputs[1])
+
+        rev_equality_sets: dict[RelationalExpression, set[RelationalExpression]] = {}
+        for key, value in equality_sets.items():
+            rev_equality_sets.setdefault(value, set()).add(key)
+
+        finder: ColumnReferenceFinder = ColumnReferenceFinder()
+        for eq_set in rev_equality_sets.values():
+            if len(eq_set) > 1:
+                for a, b in itertools.combinations(eq_set, 2):
+                    finder.reset()
+                    new_cond: RelationalExpression = CallExpression(
+                        pydop.EQU,
+                        BooleanType(),
+                        [a, b],
+                    )
+                    new_cond.accept(finder)
+                    col_refs: set[ColumnReference] = finder.get_column_references()
+                    if {c.input_name for c in col_refs} == {
+                        join.default_input_aliases[input_idx]
+                    }:
+                        inferred_filters.add(new_cond)
+
+        # Iterate through all the keys from the specified input side. If any
+        # are in the same equality set as one another, add such a condition.
+        # Keep track of which keys from the other side map to keys from the
+        # desired side.
+        keys: list[ColumnReference] = lhs_keys + rhs_keys
+        key_remapping: dict[ColumnReference, set[ColumnReference]] = {}
+        for i in range(len(keys)):
+            for j in range(i + 1, len(keys)):
+                if keys[i] != keys[j] and find(keys[i]) == find(keys[j]):
+                    new_cond = CallExpression(
+                        pydop.EQU,
+                        BooleanType(),
+                        [add_input_name(keys[i], None), add_input_name(keys[j], None)],
+                    )
+                    if (
+                        keys[i].input_name == join.default_input_aliases[input_idx]
+                        and keys[j].input_name == join.default_input_aliases[input_idx]
+                    ):
+                        inferred_filters.add(new_cond)
+                    elif (
+                        keys[i].input_name != join.default_input_aliases[input_idx]
+                        and keys[j].input_name == join.default_input_aliases[input_idx]
+                    ):
+                        key_remapping.setdefault(keys[i], set()).add(keys[j])
+                    elif (
+                        keys[i].input_name == join.default_input_aliases[input_idx]
+                        and keys[j].input_name != join.default_input_aliases[input_idx]
+                    ):
+                        key_remapping.setdefault(keys[j], set()).add(keys[i])
+
+        # Additionally, if there filters that apply to a different side of the
+        # join, try to transform them into filters on this side via the same
+        # substitution.
+        if len(key_remapping) > 0 and len(transposed_conds) > 0:
+            self.add_transitive_filters(
+                join, input_idx, transposed_conds, key_remapping, inferred_filters
+            )
+
+        return inferred_filters
+
+    def add_transitive_filters(
+        self,
+        join: Join,
+        input_idx: int,
+        original_filters: set[RelationalExpression],
+        key_remapping: dict[ColumnReference, set[ColumnReference]],
+        filter_set: set[RelationalExpression],
+    ):
+        """
+        TODO
+        """
+        allowed_columns: set[ColumnReference] = set(key_remapping)
+        current_columns: set[ColumnReference] = set()
+        for name, expr in join.inputs[input_idx].columns.items():
+            current_columns.add(
+                ColumnReference(
+                    name, expr.data_type, join.default_input_aliases[input_idx]
+                )
+            )
+        allowed_columns.update(current_columns)
+        reference_finder: ColumnReferenceFinder = ColumnReferenceFinder()
+        key_substitution: dict[RelationalExpression, RelationalExpression] = {}
+        for key, other_keys in key_remapping.items():
+            key_substitution[key] = min(other_keys, key=repr)
+        for cond in original_filters:
+            reference_finder.reset()
+            cond.accept(reference_finder)
+            col_refs: set[ColumnReference] = reference_finder.get_column_references()
+            if (col_refs <= allowed_columns) and not (col_refs <= current_columns):
+                new_cond: RelationalExpression = apply_substitution(
+                    cond, key_substitution, {}
+                )
+                filter_set.add(add_input_name(new_cond, None))
+
     def visit_join(self, join: Join) -> RelationalNode:
         # Identify the set of all column names that correspond to a reference
         # to a column from one side of the join.
@@ -225,6 +394,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         # reference columns from that input.
         pushable_filters: set[RelationalExpression]
         remaining_filters: set[RelationalExpression] = self.filters
+        original_filters: set[RelationalExpression] = self.filters
         transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
             join, False
         )
@@ -242,6 +412,32 @@ class FilterPushdownShuttle(RelationalShuttle):
                     remaining_filters,
                     lambda expr: only_references_columns(expr, input_cols[idx]),
                 )
+
+            pushable_filters = {
+                expr.accept_shuttle(transposer) for expr in pushable_filters
+            }
+
+            # Find any extra filters that can be deduced from the join
+            # condition, e.g. if `t0.a = t1.b` and `t0.a = t1.c` are in the join
+            # condition, then we can infer an extra filter `t1.b = t1.c`. Add
+            # these filters to the pushable filters.
+            if join.join_type == JoinType.INNER:
+                pushable_filters.update(
+                    self.infer_extra_join_filters(
+                        join,
+                        idx,
+                        original_filters,
+                    )
+                )
+
+            # Simplify all of the pushable filters before pushing them down, in
+            # case any always-true conditions were added, then remove them so
+            # we do not incorrectly think filters are being added.
+            pushable_filters = {
+                expr.accept_shuttle(self.simplifier) for expr in pushable_filters
+            }
+            pushable_filters.discard(LiteralExpression(True, BooleanType()))
+
             # Ensure that if any filter is pushed into an input, the
             # corresponding join cardinality is updated to reflect that a filter
             # has been applied.
@@ -250,9 +446,7 @@ class FilterPushdownShuttle(RelationalShuttle):
                     cardinality = join.cardinality.add_filter()
                 else:
                     reverse_cardinality = reverse_cardinality.add_filter()
-            pushable_filters = {
-                expr.accept_shuttle(transposer) for expr in pushable_filters
-            }
+
             # Transform the child input with the filters that can be
             # pushed down.
             self.filters = pushable_filters

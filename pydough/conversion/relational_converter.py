@@ -62,6 +62,7 @@ from pydough.types.pydough_type import PyDoughType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .column_bubbler import bubble_column_names
+from .filter_pullup import pull_filters
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
@@ -1612,7 +1613,12 @@ def optimize_relational_tree(
     # exist to compute a scalar projection and then link it with the data.
     root = confirm_root(pullup_projections(root))
 
-    # Push filters down as far as possible
+    # Pull filters above joins before pushing them down as far as possible
+    print()
+    print(root.to_tree_string())
+    root = confirm_root(pull_filters(root, session))
+    print()
+    print(root.to_tree_string())
     root = confirm_root(push_filters(root, session))
 
     # Merge adjacent projections, unless it would result in excessive duplicate
