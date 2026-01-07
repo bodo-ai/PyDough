@@ -20,7 +20,7 @@ WITH _t0 AS (
     AND part.p_name LIKE '%azure%'
     AND part.p_type LIKE '%PLATED%'
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY part_size ORDER BY part.p_retailprice NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY part.p_retailprice NULLS LAST) = 1
 )
 SELECT
   part_size,

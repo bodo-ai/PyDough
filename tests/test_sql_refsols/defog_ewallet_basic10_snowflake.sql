@@ -4,7 +4,10 @@ WITH _s1 AS (
     receiver_id
   FROM main.wallet_transactions_daily
   WHERE
-    created_at >= DATE_TRUNC('DAY', DATEADD(DAY, -150, CURRENT_TIMESTAMP()))
+    created_at >= DATE_TRUNC(
+      'DAY',
+      DATEADD(DAY, -150, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
     AND receiver_type = 1
 )
 SELECT

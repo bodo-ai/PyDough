@@ -8,8 +8,12 @@ WITH _s2 AS (
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
   FROM main.treatments
   WHERE
-    start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-    AND start_dt >= DATEADD(MONTH, -3, DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()))
+    start_dt < DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    AND start_dt >= DATEADD(
+      MONTH,
+      -3,
+      DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
   GROUP BY
     1
 ), _s3 AS (
@@ -24,8 +28,12 @@ WITH _s2 AS (
   JOIN main.drugs AS drugs
     ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'biologic'
   WHERE
-    treatments.start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-    AND treatments.start_dt >= DATEADD(MONTH, -3, DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()))
+    treatments.start_dt < DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    AND treatments.start_dt >= DATEADD(
+      MONTH,
+      -3,
+      DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
   GROUP BY
     1
 )

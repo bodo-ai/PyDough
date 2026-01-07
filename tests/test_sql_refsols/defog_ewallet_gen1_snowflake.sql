@@ -6,4 +6,4 @@ JOIN main.merchants AS merchants
   AND merchants.mid = wallet_merchant_balance_daily.merchant_id
   AND merchants.status = 'active'
 WHERE
-  DATE_TRUNC('DAY', CAST(wallet_merchant_balance_daily.updated_at AS TIMESTAMP)) = DATE_TRUNC('DAY', CURRENT_TIMESTAMP())
+  DATE_TRUNC('DAY', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) = DATE_TRUNC('DAY', CAST(wallet_merchant_balance_daily.updated_at AS TIMESTAMP))

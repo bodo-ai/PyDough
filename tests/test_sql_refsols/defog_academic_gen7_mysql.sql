@@ -7,7 +7,7 @@ WITH _s1 AS (
     1
 )
 SELECT
-  name COLLATE utf8mb4_bin AS name,
+  domain.name COLLATE utf8mb4_bin AS name,
   COALESCE(_s1.ndistinct_aid, 0) AS author_count
 FROM main.domain AS domain
 LEFT JOIN _s1 AS _s1

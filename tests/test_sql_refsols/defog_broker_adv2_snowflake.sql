@@ -4,7 +4,10 @@ WITH _s1 AS (
     COUNT(*) AS n_rows
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -10, CURRENT_TIMESTAMP()))
+    sbtxdatetime >= DATE_TRUNC(
+      'DAY',
+      DATEADD(DAY, -10, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
     AND sbtxtype = 'buy'
   GROUP BY
     1

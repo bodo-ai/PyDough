@@ -1,10 +1,10 @@
 WITH _t1 AS (
   SELECT
-    ABS(AVG(o_totalprice) OVER () - o_totalprice) <= 1 AS expr_5,
-    ABS(AVG(o_totalprice) OVER () - o_totalprice) <= 10 AS expr_6,
-    ABS(AVG(o_totalprice) OVER () - o_totalprice) <= 100 AS expr_7,
-    ABS(AVG(o_totalprice) OVER () - o_totalprice) <= 1000 AS expr_8,
-    ABS(AVG(o_totalprice) OVER () - o_totalprice) <= 10000 AS expr_9
+    ABS(AVG(CAST(o_totalprice AS REAL)) OVER () - o_totalprice) <= 1 AS expr_5,
+    ABS(AVG(CAST(o_totalprice AS REAL)) OVER () - o_totalprice) <= 10 AS expr_6,
+    ABS(AVG(CAST(o_totalprice AS REAL)) OVER () - o_totalprice) <= 100 AS expr_7,
+    ABS(AVG(CAST(o_totalprice AS REAL)) OVER () - o_totalprice) <= 1000 AS expr_8,
+    ABS(AVG(CAST(o_totalprice AS REAL)) OVER () - o_totalprice) <= 10000 AS expr_9
   FROM tpch.orders
   WHERE
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) = 1992
