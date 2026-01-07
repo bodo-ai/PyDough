@@ -14,8 +14,15 @@ from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.dialects.mysql import MySQL
 from sqlglot.errors import SqlglotError
-from sqlglot.expressions import Alias, Column, Select, Table, With
+from sqlglot.expressions import (
+    Alias,
+    Column,
+    Select,
+    Table,
+    With,
+)
 from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
@@ -65,6 +72,9 @@ def convert_relation_to_sql(
     Returns:
         The SQL string representing the relational tree.
     """
+    # Update the default configuration for the sqlglot dialect.
+    # Preventing undesire sqlglot behaviour for a specific dialect
+    change_sqlglot_dialect_configuration(session.database.dialect)
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         session
     ).relational_to_sqlglot(relational)
@@ -101,7 +111,9 @@ def convert_relation_to_sql(
         ) from e
 
     # Convert the optimized AST back to a SQL string.
-    return glot_expr.sql(sqlglot_dialect, pretty=True)
+    sql: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+    reset_sqlglot_dialect_configuration(session.database.dialect)
+    return sql
 
 
 def apply_sqlglot_optimizer(
@@ -196,6 +208,11 @@ def apply_sqlglot_optimizer(
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
+
+    # Remove the Tuple generated around each row in VALUES during the parsing step.
+    # For example `(ROW(i))` becomes `ROW(i)`. The tuple would generate invalid
+    # SQL.
+    remove_tuple_row_values(glot_expr)
 
     return glot_expr
 
@@ -365,7 +382,13 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
             if len(alias) != 0:  # alias exists for the table
                 # Remove cases like `..FROM t1 as t1..` or `..FROM t1 as t2..`
                 # to get `..FROM t1..`.
-                table.args.pop("alias")
+                # This deleted the alias for generate_series, we keep the
+                # alias in order to be used with the expected name and columns
+                # as a subquery.
+                if not isinstance(
+                    table.this, sqlglot_expressions.ExplodingGenerateSeries
+                ):
+                    table.args.pop("alias")
 
                 # "Scope" represents the current context of a Select statement.
                 # For example, if we have a SELECT statement with a FROM clause
@@ -408,6 +431,37 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
                     remove_table_aliases_conditional(item)
 
 
+def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
+    """
+    Visits the AST and removes the tuple if there is only one item and it is
+    a ROW. This remove the unneccesary tuple wrapper for each row. Which cause
+    incorrect SQL generation.
+    For example:
+        invalid -> `(VALUES (ROW(1)), (ROW(2)), ... )`
+        correct -> `(VALUES ROW(1), ROW(2), ... )`
+
+    Args:
+        expr: The SQLGlot expression to visit.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    if isinstance(expr, sqlglot_expressions.Tuple) and len(expr.expressions) == 1:
+        # Tuple with just one expression
+        inner: SQLGlotExpression = expr.expressions[0]
+
+        # If this inner expression is an Anonymous ROW, replace the tuple with
+        # the ROW unwrapping it from the tuple.
+        # (ROW(...)) -> ROW(...)
+        if isinstance(inner, sqlglot_expressions.Anonymous) and inner.this == "ROW":
+            expr.replace(inner)
+
+    # Recursively visit the subexpressions.
+    for arg in expr.iter_expressions():
+        if isinstance(arg, SQLGlotExpression):
+            remove_tuple_row_values(arg)
+
+
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     """
     Convert the given DatabaseDialect to the corresponding SQLGlotDialect.
@@ -432,6 +486,39 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return PostgresDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
+
+
+def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
+    """
+    Update the configuration of the sqlglot dialect for the given dialect
+
+    Args:
+        `dialect`: Dialect to be changed
+
+    Note: Specify what each of the changes do in a coment above the new value
+    """
+
+    match dialect:
+        case DatabaseDialect.MYSQL:
+            # Avoid the generation of UNION ALL for values
+            MySQL.Generator.VALUES_AS_TABLE = True
+            # Keep the parenthesis around the values
+            MySQL.Generator.WRAP_DERIVED_VALUES = True
+        case _:
+            pass
+
+
+def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
+    """
+    Restore the configuration for this dialect in sqlglot.
+    """
+
+    match dialect:
+        case DatabaseDialect.MYSQL:
+            MySQL.Generator.VALUES_AS_TABLE = False
+            MySQL.Generator.WRAP_DERIVED_VALUES = False
+        case _:
+            pass
 
 
 def execute_df(
