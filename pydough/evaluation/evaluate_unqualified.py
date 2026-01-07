@@ -15,6 +15,7 @@ from pydough.database_connectors import DatabaseContext
 from pydough.errors import (
     PyDoughSessionException,
 )
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -32,8 +33,8 @@ def _load_session_info(**kwargs) -> PyDoughSession:
     Load the session information from the active session unless it is found
     in the keyword arguments. The following variants are accepted:
     - If `session` is found, it is used directly.
-    - If `metadata`, `config` and/or `database` are found, they are used to
-      construct a new session.
+    - If `metadata`, `config`, `mask_server`, and/or `database` are found, they
+      are used to construct a new session.
     - If none of these are found, the active session is used.
 
     Args:
@@ -88,6 +89,11 @@ def _load_session_info(**kwargs) -> PyDoughSession:
         database = kwargs.pop("database")
     else:
         database = pydough.active_session.database
+    mask_server: MaskServerInfo | None
+    if "mask_server" in kwargs:
+        mask_server = kwargs.pop("mask_server")
+    else:
+        mask_server = pydough.active_session.mask_server
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
 
     # Construct the new session
@@ -95,6 +101,7 @@ def _load_session_info(**kwargs) -> PyDoughSession:
     new_session._metadata = metadata
     new_session._config = config
     new_session._database = database
+    new_session._mask_server = mask_server
     return new_session
 
 
@@ -148,6 +155,10 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
         The SQL string corresponding to the unqualified query.
     """
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
+    max_rows: int | None = kwargs.pop("max_rows", None)
+    assert (isinstance(max_rows, int) and max_rows > 0) or max_rows is None, (
+        "`max_rows` must be a positive integer or None."
+    )
     session: PyDoughSession = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):
@@ -155,7 +166,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, session
     )
-    return convert_relation_to_sql(relational, session)
+    return convert_relation_to_sql(relational, session, max_rows)
 
 
 def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
@@ -175,6 +186,10 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
         The DataFrame corresponding to the unqualified query.
     """
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
+    max_rows: int | None = kwargs.pop("max_rows", None)
+    assert (isinstance(max_rows, int) and max_rows > 0) or max_rows is None, (
+        "`max_rows` must be a positive integer or None."
+    )
     display_sql: bool = bool(kwargs.pop("display_sql", False))
     session: PyDoughSession = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, session)
@@ -183,4 +198,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, session
     )
-    return execute_df(relational, session, display_sql)
+    return execute_df(relational, session, display_sql, max_rows)

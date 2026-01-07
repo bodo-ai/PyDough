@@ -73,4 +73,6 @@ class ScalarAttributeMetadata(PropertyMetadata):
 
         # Extract the optional sample values field from the JSON object.
         if "sample values" in meta_json:
-            extract_array(meta_json, "sample values", self.error_name)
+            self._sample_values = extract_array(
+                meta_json, "sample values", self.error_name
+            )

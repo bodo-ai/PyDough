@@ -454,6 +454,7 @@ The `to_sql` API takes in PyDough code and transforms it into SQL query text wit
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
 - `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
+- `max_rows`: a positive integer which, if provided, indicates that the SQL query should produce at most that many rows. E.g. `max_rows=10` will ensure the SQL query ends in `LIMIT 10` (unless the query already ends in a smaller limit).
 
 Below is an example of using `pydough.to_sql` and the output (the SQL output may be outdated if PyDough's SQL conversion process has been updated):
 
@@ -497,6 +498,7 @@ The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), b
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
 - `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
 - `display_sql`: displays the sql before executing in a logger.
+- `max_rows`: a positive integer which, if provided, indicates that the output should produce at most that many rows. E.g. `max_rows=10` will ensure the result returns at most 10 rows, as if the SQL query ended with `LIMIT 10`.
 
 Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
 

@@ -1,4 +1,4 @@
 ROOT(columns=[('n', ROUND(avg_unmask_t_amount, 2:numeric))], orderings=[])
  AGGREGATE(keys={}, aggregations={'avg_unmask_t_amount': AVG(UNMASK::((1025.67 - ([t_amount]))))})
-  FILTER(condition=MONTH(UNMASK::(DATETIME([t_ts], '+54321 seconds'))) == 6:numeric & YEAR(UNMASK::(DATETIME([t_ts], '+54321 seconds'))) == 2022:numeric, columns={'t_amount': t_amount})
+  FILTER(condition=ISIN(t_ts, ['2022-06-03 05:08:58', '2022-06-12 00:24:06', '2022-06-13 05:50:39', '2022-06-14 19:08:57', '2022-06-16 03:15:13', '2022-06-18 03:37:49', '2022-06-27 06:08:04', '2022-06-28 15:35:47', '2022-06-29 05:40:38', '2022-06-29 19:53:42']:array[unknown]), columns={'t_amount': t_amount})
    SCAN(table=CRBNK.TRANSACTIONS, columns={'t_amount': t_amount, 't_ts': t_ts})

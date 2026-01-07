@@ -197,7 +197,7 @@ class BaseTransformBindings:
             return parse_one(combined_string)
         match operator:
             case pydop.NOT:
-                return sqlglot_expressions.Not(this=args[0])
+                return sqlglot_expressions.Not(this=apply_parens(args[0]))
             case pydop.NDISTINCT:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])

@@ -17,6 +17,7 @@
               "unprotect protocol": "(42 - ({}))",
               "protect protocol": "(42 - ({}))",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The unique key for the customer",
               "sample values": [1, 2, 10, 18],
               "synonyms": ["customer id"]
@@ -29,6 +30,7 @@
               "unprotect protocol": "LOWER({})",
               "protect protocol": "UPPER({})",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The first name of the customer",
               "sample values": ["alice", "olivia", "queenie", "james"],
               "synonyms": ["customer name"]
@@ -41,6 +43,7 @@
               "unprotect protocol": "LOWER({})",
               "protect protocol": "UPPER({})",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The last name of the customer",
               "sample values": ["smith", "johnson", "lee"],
               "synonyms": ["surname"]
@@ -53,6 +56,7 @@
               "unprotect protocol": "REPLACE(REPLACE(REPLACE({}, '9', '*'), '0', '9'), '*', '0')",
               "protect protocol": "REPLACE(REPLACE(REPLACE({}, '0', '*'), '9', '0'), '*', '9')",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The phone number of the customer",
               "sample values": ["555-123-4567", "555-768-9012"],
               "synonyms": ["cell number", "contact phone number"]
@@ -65,6 +69,7 @@
               "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
               "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The email address of the customer",
               "sample values": ["alice_j@example.org", "m.gonzalez@ymail.com"],
               "synonyms": ["email address", "contact email"]
@@ -77,6 +82,7 @@
               "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
               "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The address of the customer, in the format 'street address;city;state;zip'",
               "sample values": ["123 Maple St;Portland;OR;97205", "654 Cedar Blvd;San Diego;CA;92101"],
               "synonyms": ["home address", "residential address", "residence", "location", "home"]
@@ -89,6 +95,7 @@
               "unprotect protocol": "DATE({}, '+472 days')",
               "protect protocol": "DATE({}, '-472 days')",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The date the customer was born on.",
               "synonyms": ["birth date", "date of birth", "DOB"]
             }
@@ -147,6 +154,7 @@
               "unprotect protocol": "CASE WHEN {0} = 0 THEN 0 ELSE (CASE WHEN {0} > 0 THEN 1 ELSE -1 END) * CAST(SUBSTRING({0}, 1 + INSTR({0}, '-'), LENGTH({0}) / 2) AS INTEGER) END",
               "protect protocol": "CAST(STRING({0}) || STRING(ABS({0})) AS INTEGER)",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The unique key for the account",
               "sample values": [5, 17, 35, 58],
               "synonyms": ["account id", "account number"]
@@ -177,6 +185,7 @@
               "unprotect protocol": "SQRT({})",
               "protect protocol": "({0} * {0})",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The current balance of the account",
               "sample values": [2450.75, 520.10, 22500.00],
               "synonyms": ["money in account", "account balance", "funds available"]
@@ -189,6 +198,7 @@
               "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
               "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The type of account, which is one of: checking, savings, retirement, business, or mma",
               "sample values": ["checking", "savings", "retirement", "business", "mma"],
               "synonyms": ["category"]
@@ -201,6 +211,7 @@
               "unprotect protocol": "DATETIME({}, '+123456789 seconds')",
               "protect protocol": "DATETIME({}, '-123456789 seconds')",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The timestamp when the account was opened at the branch",
               "synonyms": ["datetime of opening", "account creation date", "account open timestamp"]
             }
@@ -249,6 +260,7 @@
               "unprotect protocol": "(1025.67 - ({}))",
               "protect protocol": "(1025.67 - ({}))",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The amount of money transferred in the transaction",
               "sample values": [2753.92, 322.67, 5278.45],
               "synonyms": ["amount wired", "transaction amount", "money transferred"]
@@ -261,6 +273,7 @@
               "unprotect protocol": "DATETIME({}, '+54321 seconds')",
               "protect protocol": "DATETIME({}, '-54321 seconds')",
               "server masked": true,
+              "server dataset id": "dummy_server",
               "description": "The timestamp when the transaction occurred",
               "synonyms": ["transaction datetime", "transaction time", "datetime of transfer"]
             }
