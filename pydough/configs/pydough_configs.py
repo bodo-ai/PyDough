@@ -126,6 +126,15 @@ class PyDoughConfigs:
     The default is True.
     """
 
+    division_by_zero = ConfigProperty[str]("DATABASE")
+    """
+    The behavior when division by zero occurs. 
+    Possible values are 
+    - DATABASE: Leave it alone and let the database resolve it
+    - NULL: Always convert a / b to a / KEEP_IF(b, b != 0)
+    - ZERO: Always convert a / b to IFF(b == 0, 0, a/b)
+    """
+
     def __setattr__(self, name: str, value: Any) -> None:
         if name not in dir(self):
             raise PyDoughSessionException(f"Unrecognized PyDough config name: {name}")

@@ -25,7 +25,10 @@ from pydough.database_connectors import (
 )
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 from pydough.unqualified import UnqualifiedNode
-from tests.test_pydough_functions.simple_pydough_functions import simple_scan
+from tests.test_pydough_functions.simple_pydough_functions import (
+    simple_division_by_zero,
+    simple_scan,
+)
 
 
 @pytest.mark.parametrize(
@@ -140,3 +143,35 @@ FROM tpch.orders
         assert output == output_query.strip()
     finally:
         pydough.active_session.metadata = old_metadata
+
+
+@pytest.mark.parametrize(
+    "division_by_zero_config, expected_df",
+    [
+        ("DATABASE", pd.DataFrame({"computed_value": [0.0]})),
+        ("NULL", pd.DataFrame({"computed_value": [None]})),
+        ("ZERO", pd.DataFrame({"computed_value": [0.0]})),
+    ],
+)
+def test_division_by_zero_configs(
+    division_by_zero_config, expected_df, sample_graph_path
+):
+    database: DatabaseContext = pydough.active_session.connect_database(
+        "sqlite", database=":memory:"
+    )
+    graph: GraphMetadata = pydough.active_session.load_metadata_graph(
+        sample_graph_path, "TPCH"
+    )
+    # Create a new config
+    new_configs = PyDoughConfigs()
+    new_configs.division_by_zero = division_by_zero_config
+    root: UnqualifiedNode = pydough.init_pydough_context(graph)(
+        simple_division_by_zero
+    )()
+    output = pydough.to_df(
+        root,
+        metadata=graph,
+        database=database,
+        config=new_configs,
+    )
+    pd.testing.assert_frame_equal(output, expected_df)
