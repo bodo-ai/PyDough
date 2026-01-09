@@ -299,6 +299,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             self.stack.pop() for _ in range(len(new_call.inputs))
         ]
         arg_predicates.reverse()
+        self.update_division_by_zero_expr(new_call)
         return self.simplify_function_call(
             new_call, arg_predicates, self.no_group_aggregate
         )
@@ -799,6 +800,85 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             return LiteralExpression(timestamp_value.date(), expr.data_type)
         else:
             return LiteralExpression(timestamp_value, expr.data_type)
+
+    def strip_zero_guards(self, expr):
+        """
+        Strips any KEEP_IF or IFF wrappers from an expression to get to the
+        core expression.
+        Args:
+            `expr`: The expression to check.
+        Returns:
+            The core expression with any KEEP_IF or IFF wrappers removed.
+
+        """
+        while isinstance(expr, CallExpression) and expr.op in (
+            pydop.KEEP_IF,
+            pydop.IFF,
+        ):
+            expr = expr.inputs[0]
+        return expr
+
+    def update_division_by_zero_expr(
+        self,
+        expr: CallExpression,
+    ) -> None:
+        """
+        Updates the division expression to
+        match configurable settings for division_by_zero:
+            DATABASE: keep a / b and the database will handle it. (DEFAULT)
+            NULL: convert a / b to a / KEEP_IF(b, b != 0)
+            ZERO: convert a / b to IFF(b == 0, 0, a/b)
+
+        Args:
+            `expr`: The CallExpression representing the updated behavior of the
+            division operation.
+        """
+        if expr.op == pydop.DIV:
+            divisor = expr.inputs[1]
+            if self.strip_zero_guards(divisor) is not divisor:
+                return
+            match self.session.config.division_by_zero:
+                # Database will decide how to handle division by zero.
+                case "DATABASE":
+                    pass
+                # If b == 0, return NULL
+                case "NULL":
+                    # b != 0
+                    is_not_zero_expr: RelationalExpression = CallExpression(
+                        pydop.NEQ,
+                        BooleanType(),
+                        [
+                            expr.inputs[1],
+                            LiteralExpression(0, expr.inputs[1].data_type),
+                        ],
+                    )
+                    # KEEP_IF(b, b != 0)
+                    expr.inputs[1] = CallExpression(
+                        pydop.KEEP_IF,
+                        expr.data_type,
+                        [expr.inputs[1], is_not_zero_expr],
+                    )
+                # If b == 0, return 0
+                case "ZERO":
+                    # b == 0
+                    is_zero_expr: RelationalExpression = CallExpression(
+                        pydop.EQU,
+                        BooleanType(),
+                        [
+                            expr.inputs[1],
+                            LiteralExpression(0, expr.inputs[1].data_type),
+                        ],
+                    )
+                    # IFF(b == 0, 0, a/b)
+                    expr = CallExpression(
+                        pydop.IFF,
+                        expr.data_type,
+                        [
+                            is_zero_expr,
+                            LiteralExpression(0, expr.data_type),
+                            expr,
+                        ],
+                    )
 
     def simplify_function_call(
         self,
