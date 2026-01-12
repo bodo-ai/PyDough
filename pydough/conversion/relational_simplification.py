@@ -1255,6 +1255,30 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                             ) and isinstance(y, (int, float, str, bool)):
                                 output_expr = LiteralExpression(x >= y, expr.data_type)  # type: ignore
 
+                    # If doing UNMASK(x) == UNMASK(y), simplify to x == y if
+                    # they are the same kind of unmask operation.
+                    case (
+                        CallExpression(),
+                        pydop.EQU | pydop.NEQ,
+                        CallExpression(),
+                    ) if (
+                        isinstance(
+                            expr.inputs[0].op, pydop.MaskedExpressionFunctionOperator
+                        )
+                        and isinstance(
+                            expr.inputs[1].op, pydop.MaskedExpressionFunctionOperator
+                        )
+                        and (
+                            expr.inputs[0].op.format_string
+                            == expr.inputs[1].op.format_string
+                        )
+                    ):
+                        output_expr = CallExpression(
+                            expr.op,
+                            expr.data_type,
+                            [expr.inputs[0].inputs[0], expr.inputs[1].inputs[0]],
+                        )
+
                     # In cases where we do FUNC(x) cmp LIT, attempt additional
                     # simplifications.
                     case (CallExpression(), _, LiteralExpression()):
