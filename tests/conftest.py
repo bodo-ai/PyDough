@@ -79,6 +79,7 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q22,
 )
 from tests.test_pydough_functions.user_collections import (
+    simple_dataframe_1,
     simple_range_1,
     simple_range_2,
     simple_range_3,
@@ -2052,6 +2053,29 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "user_range_collection_6",
             ),
             id="user_range_collection_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_dataframe_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "color": [
+                            "red",
+                            "orange",
+                            "yellow",
+                            "green",
+                            "blue",
+                            "indigo",
+                            "violet",
+                            None,
+                        ],
+                        "idx": range(8),
+                    }
+                ),
+                "simple_dataframe_1",
+            ),
+            id="simple_dataframe_1",
         ),
     ],
 )

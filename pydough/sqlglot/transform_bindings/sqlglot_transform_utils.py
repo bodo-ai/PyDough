@@ -611,12 +611,11 @@ def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
     """
     Match the pydough type with the sqlglot expression needed in the SQL
     """
+    if item is None:
+        return sqlglot_expressions.Null()
 
     match type:
         case ArrayType(elem_type=elem_type):
-            if item is None:
-                return sqlglot_expressions.Null()
-
             return sqlglot_expressions.Anonymous(
                 this="JSON_ARRAY",
                 expressions=[generate_type_expression(v, elem_type) for v in item],
@@ -634,9 +633,6 @@ def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
             )
 
         case MapType(key_type=key_type, val_type=val_type):
-            if item is None:
-                return sqlglot_expressions.Null()
-
             return sqlglot_expressions.Anonymous(
                 this="JSON_OBJECT",
                 expressions=[
@@ -655,9 +651,6 @@ def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
             return sqlglot_expressions.Literal.string(item)
 
         case StructType(fields=fields):
-            if item is None:
-                return sqlglot_expressions.Null()
-
             return sqlglot_expressions.Anonymous(
                 this="JSON_OBJECT",
                 expressions=[
@@ -670,9 +663,5 @@ def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
             )
 
         case _:
-            # Unknown type
-            if item is None:
-                return sqlglot_expressions.Null()
-
             # Preserve value
             return sqlglot_expressions.Literal.string(str(item))

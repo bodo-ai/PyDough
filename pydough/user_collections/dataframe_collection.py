@@ -91,71 +91,73 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
 
         for field in pa.Schema.from_pandas(dataframe):
             pyd_types.append(
-                DataframeGeneratedCollection.match_pyarrow_pydough_types(field)
+                DataframeGeneratedCollection.match_pyarrow_pydough_types(field.type)
             )
 
         return pyd_types
 
     @staticmethod
-    def match_pyarrow_pydough_types(field: pa.Field) -> PyDoughType:
-        match field.type:
-            case pa.NullType():
+    def match_pyarrow_pydough_types(field_type: pa.DataType) -> PyDoughType:
+        match field_type:
+            case _ if pa.types.is_null(field_type):
                 return UnknownType()
-            case pa.BooleanType():
+
+            case _ if pa.types.is_boolean(field_type):
                 return BooleanType()
-            case (
-                pa.Int8Type()
-                | pa.Int16Type()
-                | pa.Int32Type()
-                | pa.Int64Type()
-                | pa.UInt8Type()
-                | pa.UInt16Type()
-                | pa.UInt32Type()
-                | pa.UInt64Type()
+
+            case _ if (
+                pa.types.is_integer(field_type)
+                or pa.types.is_floating(field_type)
+                or pa.types.is_decimal(field_type)
             ):
                 return NumericType()
-            case pa.Float16Type() | pa.Float32Type() | pa.Float64Type():
-                return NumericType()
-            case pa.Decimal128Type() | pa.Decimal256Type():
-                return NumericType()
-            case pa.StringType() | pa.LargeStringType():
+
+            case _ if pa.types.is_string(field_type) or pa.types.is_large_string(
+                field_type
+            ):
                 return StringType()
-            case pa.BinaryType() | pa.LargeBinaryType():
+
+            case _ if pa.types.is_binary(field_type) or pa.types.is_large_binary(
+                field_type
+            ):
                 return StringType()
-            case (
-                pa.Date32Type()
-                | pa.Date64Type()
-                | pa.TimestampType()
-                | pa.Time32Type()
-                | pa.Time64Type()
-                | pa.DurationType()
+
+            case _ if (
+                pa.types.is_date(field_type)
+                or pa.types.is_timestamp(field_type)
+                or pa.types.is_time(field_type)
+                or pa.types.is_duration(field_type)
             ):
                 return DatetimeType()
-            case pa.ListType() | pa.LargeListType():
+
+            case _ if pa.types.is_list(field_type) or pa.types.is_large_list(
+                field_type
+            ):
                 return ArrayType(
                     DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field.type.value_type
+                        field_type.value_type
                     )
                 )
-            case pa.StructType():
+
+            case _ if pa.types.is_struct(field_type):
                 return StructType(
                     [
                         (
-                            field[i].name,
+                            field_type[i].name,
                             DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                                field[i].type
+                                field_type[i].type
                             ),
                         )
-                        for i in range(len(field))
+                        for i in range(len(field_type))
                     ]
                 )
-            case pa.DictionaryType():
+            case _ if pa.types.is_dictionary(field_type):
                 return MapType(
                     DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field.index_type
+                        field_type.index_type
                     ),
                     DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field.value_type
+                        field_type.value_type
                     ),
                 )
             case _:

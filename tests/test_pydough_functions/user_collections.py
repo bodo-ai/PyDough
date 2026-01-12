@@ -7,6 +7,7 @@ PyDough code snippets for testing purposes.
 # ruff & mypy should not try to typecheck or verify any of this
 
 import pydough
+import pandas as pd
 
 import pytest
 
@@ -149,3 +150,23 @@ def user_range_collection_6():
         .CALCULATE(year, n_orders=COUNT(CROSS(order_years).WHERE(order_year == year)))
         .ORDER_BY(year.ASC())
     )
+
+
+def simple_dataframe_1():
+    # Generates a simple dataframe collection
+    df = pd.DataFrame(
+        {
+            "color": [
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "blue",
+                "indigo",
+                "violet",
+                None,
+            ],
+            "idx": range(8),
+        }
+    )
+    return pydough.dataframe_collection(name="rainbow", dataframe=df)
