@@ -4,6 +4,7 @@ Top-level init file for PyDough package.
 
 __all__ = [
     "active_session",
+    "dataframe_collection",
     "display_raw",
     "explain",
     "explain_structure",

@@ -15,14 +15,23 @@ __all__ = [
 
 import re
 from enum import Enum
-from typing import Union
+from typing import Any, Union
 
 import sqlglot.expressions as sqlglot_expressions
+from pandas import Series
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.errors import PyDoughSQLException
 from pydough.types import PyDoughType
+from pydough.types.array_type import ArrayType
+from pydough.types.boolean_type import BooleanType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.map_type import MapType
+from pydough.types.numeric_type import NumericType
+from pydough.types.string_type import StringType
+from pydough.types.struct_type import StructType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
@@ -564,3 +573,106 @@ def generate_range_rows(
     ]
 
     return range_rows
+
+
+def generate_dataframe_rows(
+    collection: DataframeGeneratedCollection, use_tuple: bool
+) -> list[SQLGlotExpression]:
+    """
+    TODO
+    list [row(item1.1, item2.1, item3.1), row(item1.2, item2.2, item3.2)]
+    """
+    dataframe_rows: list[SQLGlotExpression] = []
+
+    for i in range(len(collection.dataframe)):
+        # For each row
+        row: Series = collection.dataframe.iloc[i]
+
+        # Contain the items (data) in the expression
+        # Example: sqlglot.Literal.number(data) for a numeric type
+        expr_list: list[SQLGlotExpression] = []
+
+        for type_idx, item in enumerate(row):
+            expr_list.append(generate_type_expression(item, collection.types[type_idx]))
+
+        # Append the row with its items to the final result
+        dataframe_rows.append(
+            # [(i), ... ]
+            sqlglot_expressions.Tuple(expressions=expr_list)
+            if use_tuple
+            # [ROW(i), ... ]
+            else sqlglot_expressions.Anonymous(this="ROW", expressions=expr_list)
+        )
+
+    return dataframe_rows
+
+
+def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
+    """
+    Match the pydough type with the sqlglot expression needed in the SQL
+    """
+
+    match type:
+        case ArrayType(elem_type=elem_type):
+            if item is None:
+                return sqlglot_expressions.Null()
+
+            return sqlglot_expressions.Anonymous(
+                this="JSON_ARRAY",
+                expressions=[generate_type_expression(v, elem_type) for v in item],
+            )
+
+        case BooleanType():
+            return sqlglot_expressions.Boolean(this=bool(item))
+
+        case DatetimeType():
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.Literal.string(item.isoformat()),
+                to=sqlglot_expressions.DataType(
+                    this=sqlglot_expressions.DataType.Type.TIMESTAMP
+                ),
+            )
+
+        case MapType(key_type=key_type, val_type=val_type):
+            if item is None:
+                return sqlglot_expressions.Null()
+
+            return sqlglot_expressions.Anonymous(
+                this="JSON_OBJECT",
+                expressions=[
+                    (
+                        generate_type_expression(k, key_type),
+                        generate_type_expression(v, val_type),
+                    )
+                    for k, v in item.items()
+                ],
+            )
+
+        case NumericType():
+            return sqlglot_expressions.Literal.number(item)
+
+        case StringType():
+            return sqlglot_expressions.Literal.string(item)
+
+        case StructType(fields=fields):
+            if item is None:
+                return sqlglot_expressions.Null()
+
+            return sqlglot_expressions.Anonymous(
+                this="JSON_OBJECT",
+                expressions=[
+                    (
+                        sqlglot_expressions.Literal.string(field_name),
+                        generate_type_expression(item[field_name], field_type),
+                    )
+                    for field_name, field_type in fields
+                ],
+            )
+
+        case _:
+            # Unknown type
+            if item is None:
+                return sqlglot_expressions.Null()
+
+            # Preserve value
+            return sqlglot_expressions.Literal.string(str(item))

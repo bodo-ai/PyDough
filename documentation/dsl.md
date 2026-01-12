@@ -1584,8 +1584,8 @@ Output:
 The `dataframe_collection` creates a collection within a specified pandas dataframe. This is useful for building datasets dynamically.
 It takes in the following arguments:
 
-- `dataframe`: The panda dataframe containing the corresponding data
 - `name`: The name of the dataframe collection.
+- `dataframe`: The panda dataframe containing the corresponding data
 
 Supported Signatures:
 - `dataframe_collection(dataframe, name)`: generates collection with the given datafram and name.
@@ -1600,7 +1600,7 @@ df = pd.DataFrame({
   "color": ["red", "orange", "yellow", "green", "blue", "indigo", "violet", None]
   "idx": range(8)
 })
-rainbow_table = pydough.dataframe_collection(dataframe=df, name='rainbow')
+rainbow_table = pydough.dataframe_collection(name='rainbow', dataframe=df)
 df = pydough.to_df(rainbow_table)
 print(df)
 ```

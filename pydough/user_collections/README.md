@@ -16,8 +16,8 @@ This module defines the user collections that can be created on the fly and used
 ### [dataframe_collection.py](dataframe_collection.py)
 
   - `DataframeGeneratedCollection`: Class used to create a dataframe collection using the given dataframe and name.
-    - `dataframe`: The pandas dataframe containing all data (rows and columns).
     - `name`: The name of the dataframe collection.
+    - `dataframe`: The pandas dataframe containing all data (rows and columns).
 
 ### [user_collection_apis.py](user_collection_apis.py)
   - `range_collection`: Function to create a range collection with the specified parameters.
@@ -28,8 +28,10 @@ This module defines the user collections that can be created on the fly and used
     - `step`: The step value for incrementing the range. Default is 1.
     - Returns: An instance of `RangeGeneratedCollection`.
   - `dataframe_collection`: Function to create a dataframe collection with the specified parameters.
-    - `dataframe`: The pandas dataframe.
     - `name`: The name of the dataframe collection.
+    - `dataframe`: The pandas dataframe.
+    - Returns: An instance of `DataframeGeneratedCollection`.
+
 
 ### [user_collections.py](user_collections.py)
   - `PyDoughUserGeneratedCollection`: Base class for all user-generated collections in PyDough.
@@ -66,7 +68,7 @@ df = pd.DataFrame({
   "color": ["red", "orange", "yellow", "green", "blue", "indigo", "violet", None]
   "idx": range(8)
 })
-rainbow_table = pydough.dataframe_collection(dataframe=df, name='rainbow')
+rainbow_table = pydough.dataframe_collection(name='rainbow', dataframe=df)
 df = pydough.to_df(rainbow_table)
 print(df)
 ```

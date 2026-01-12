@@ -13,6 +13,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
@@ -280,3 +281,14 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             ).from_(subquery)
 
         return query
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+
+        raise NotImplementedError(
+            "Dataframes collection not implemented for this dialect"
+        )
