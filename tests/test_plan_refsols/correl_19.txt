@@ -1,5 +1,5 @@
 ROOT(columns=[('supplier_name', anything_s_name), ('n_super_cust', n_rows)], orderings=[(n_rows):desc_last], limit=5:numeric)
  AGGREGATE(keys={'s_suppkey': s_suppkey}, aggregations={'anything_s_name': ANYTHING(s_name), 'n_rows': COUNT()})
-  JOIN(condition=t0.s_nationkey == t1.c_nationkey & t1.c_acctbal > t0.s_acctbal, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'s_name': t0.s_name, 's_suppkey': t0.s_suppkey})
+  JOIN(condition=t0.s_nationkey == t1.c_nationkey & t1.c_acctbal > t0.s_acctbal, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'s_name': t0.s_name, 's_suppkey': t0.s_suppkey})
    SCAN(table=tpch.SUPPLIER, columns={'s_acctbal': s_acctbal, 's_name': s_name, 's_nationkey': s_nationkey, 's_suppkey': s_suppkey})
    SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_nationkey': c_nationkey})

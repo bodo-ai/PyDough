@@ -1,4 +1,4 @@
 ROOT(columns=[('r1', r1), ('r2', r_name)], orderings=[(r1):asc_first, (r_name):asc_first])
- JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'r1': t0.r_name, 'r_name': t1.r_name})
+ JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'r1': t0.r_name, 'r_name': t1.r_name})
   SCAN(table=tpch.REGION, columns={'r_name': r_name})
   SCAN(table=tpch.REGION, columns={'r_name': r_name})

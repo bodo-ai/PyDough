@@ -6,7 +6,7 @@ ROOT(columns=[('month', JOIN_STRINGS('-':string, year_ca_dt, LPAD(month_ca_dt, 2
      SCAN(table=main.CALENDAR, columns={'ca_dt': ca_dt})
     AGGREGATE(keys={'ca_dt': ca_dt}, aggregations={'n_rows': COUNT()})
      JOIN(condition=t0.de_production_country_id == t1.co_id, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ca_dt': t0.ca_dt})
-      JOIN(condition=t0.calendar_day_1 == DATETIME(t1.de_purchase_ts, 'start of day':string), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'ca_dt': t0.ca_dt, 'de_production_country_id': t1.de_production_country_id})
+      JOIN(condition=t0.calendar_day_1 == DATETIME(t1.de_purchase_ts, 'start of day':string), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ca_dt': t0.ca_dt, 'de_production_country_id': t1.de_production_country_id})
        JOIN(condition=t1.ca_dt >= DATETIME(t0.ca_dt, '-6 months':string), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ca_dt': t0.ca_dt, 'calendar_day_1': t1.ca_dt})
         FILTER(condition=ISIN(YEAR(ca_dt), [2020, 2021]:array[unknown]), columns={'ca_dt': ca_dt})
          SCAN(table=main.CALENDAR, columns={'ca_dt': ca_dt})

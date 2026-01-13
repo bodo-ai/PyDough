@@ -1,4 +1,4 @@
 ROOT(columns=[('nation_name', n_name)], orderings=[(r_name):desc_last])
- JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'n_name': t1.n_name, 'r_name': t0.r_name})
+ JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t1.n_name, 'r_name': t0.r_name})
   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})
