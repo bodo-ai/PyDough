@@ -5,14 +5,11 @@ TODO
 import pandas as pd
 import pyarrow as pa
 
-from pydough.types.array_type import ArrayType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
-from pydough.types.map_type import MapType
 from pydough.types.numeric_type import NumericType
 from pydough.types.pydough_type import PyDoughType
 from pydough.types.string_type import StringType
-from pydough.types.struct_type import StructType
 from pydough.types.unknown_type import UnknownType
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
@@ -130,35 +127,18 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             ):
                 return DatetimeType()
 
+            # Un supported datatypes
             case _ if pa.types.is_list(field_type) or pa.types.is_large_list(
                 field_type
             ):
-                return ArrayType(
-                    DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field_type.value_type
-                    )
-                )
+                raise ValueError("Arrays are not supported for dataframe collections")
 
             case _ if pa.types.is_struct(field_type):
-                return StructType(
-                    [
-                        (
-                            field_type[i].name,
-                            DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                                field_type[i].type
-                            ),
-                        )
-                        for i in range(len(field_type))
-                    ]
-                )
+                raise ValueError("Scructs are not supported for dataframe collections")
+
             case _ if pa.types.is_dictionary(field_type):
-                return MapType(
-                    DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field_type.index_type
-                    ),
-                    DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field_type.value_type
-                    ),
+                raise ValueError(
+                    "Dictionaries are not supported for dataframe collections"
                 )
             case _:
                 return UnknownType()

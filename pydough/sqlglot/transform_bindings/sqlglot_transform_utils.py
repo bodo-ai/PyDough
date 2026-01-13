@@ -24,13 +24,10 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.errors import PyDoughSQLException
 from pydough.types import PyDoughType
-from pydough.types.array_type import ArrayType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
-from pydough.types.map_type import MapType
 from pydough.types.numeric_type import NumericType
 from pydough.types.string_type import StringType
-from pydough.types.struct_type import StructType
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
@@ -615,12 +612,6 @@ def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
         return sqlglot_expressions.Null()
 
     match type:
-        case ArrayType(elem_type=elem_type):
-            return sqlglot_expressions.Anonymous(
-                this="JSON_ARRAY",
-                expressions=[generate_type_expression(v, elem_type) for v in item],
-            )
-
         case BooleanType():
             return sqlglot_expressions.Boolean(this=bool(item))
 
@@ -632,36 +623,11 @@ def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
                 ),
             )
 
-        case MapType(key_type=key_type, val_type=val_type):
-            return sqlglot_expressions.Anonymous(
-                this="JSON_OBJECT",
-                expressions=[
-                    (
-                        generate_type_expression(k, key_type),
-                        generate_type_expression(v, val_type),
-                    )
-                    for k, v in item.items()
-                ],
-            )
-
         case NumericType():
             return sqlglot_expressions.Literal.number(item)
 
         case StringType():
             return sqlglot_expressions.Literal.string(item)
 
-        case StructType(fields=fields):
-            return sqlglot_expressions.Anonymous(
-                this="JSON_OBJECT",
-                expressions=[
-                    (
-                        sqlglot_expressions.Literal.string(field_name),
-                        generate_type_expression(item[field_name], field_type),
-                    )
-                    for field_name, field_type in fields
-                ],
-            )
-
         case _:
-            # Preserve value
             return sqlglot_expressions.Literal.string(str(item))
