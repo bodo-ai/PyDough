@@ -2233,7 +2233,9 @@ class BaseTransformBindings:
         )
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, collection.columns, dataframe_rows
+            collection.name,
+            collection.columns,
+            dataframe_rows,
         )
 
         return result

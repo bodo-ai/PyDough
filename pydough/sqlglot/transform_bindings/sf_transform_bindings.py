@@ -17,7 +17,11 @@ from pydough.user_collections.dataframe_collection import DataframeGeneratedColl
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
-from .sqlglot_transform_utils import DateTimeUnit
+from .sqlglot_transform_utils import (
+    DateTimeUnit,
+    create_constant_table,
+    generate_dataframe_rows,
+)
 
 
 class SnowflakeTransformBindings(BaseTransformBindings):
@@ -289,6 +293,16 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         TODO
         """
 
-        raise NotImplementedError(
-            "Dataframes collection not implemented for this dialect"
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            True,  # Use tuple
         )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name,
+            collection.columns,
+            dataframe_rows,
+            False,  # Dont alias columns
+        )
+
+        return result

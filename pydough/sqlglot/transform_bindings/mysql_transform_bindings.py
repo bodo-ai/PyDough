@@ -732,7 +732,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         range_rows: list[SQLGlotExpression] = generate_range_rows(collection, False)
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, [collection.column_name], range_rows
+            collection.name, [collection.column_name], range_rows, False
         )
 
         return result
@@ -750,7 +750,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         )
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, collection.columns, dataframe_rows
+            collection.name, collection.columns, dataframe_rows, False
         )
 
         return result

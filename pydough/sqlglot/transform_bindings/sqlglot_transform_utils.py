@@ -402,6 +402,7 @@ def create_constant_table(
     table_name: str,
     column_names: list[str],
     rows: list[SQLGlotExpression],
+    alias_columns: bool = True,
 ) -> SQLGlotExpression:
     """
     Generate a SQL that represents a constant table using the given list of
@@ -455,14 +456,12 @@ def create_constant_table(
 
         # List of columns to select
         select_columns: list[SQLGlotExpression] = []
-        # Determine if ROWS() are used. MySQL uses ROWS and sqlite doesn't
-        rows_used: bool = isinstance(rows[0], sqlglot_expressions.Anonymous)
 
         for idx, column in enumerate(columns_list):
             # Sqlite referred by default its values' columns as column1, column2
-            # and so on. Aliases are used to rename those. MySQL can rename
-            # their columns directly.
-            if not rows_used:
+            # and so on. Aliases are used to rename those. Other dialects can
+            # rename their columns directly.
+            if alias_columns:
                 column_enum: str = f"column{idx + 1}"
                 select_columns.append(
                     sqlglot_expressions.Alias(
@@ -470,6 +469,7 @@ def create_constant_table(
                     )
                 )
             else:
+                # This is used for MySQL, Postgres and Snowflake
                 select_columns.append(sqlglot_expressions.Column(this=column))
 
         result = sqlglot_expressions.Select(expressions=select_columns).from_(
