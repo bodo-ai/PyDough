@@ -1096,6 +1096,25 @@ from .testing_sf_masked_utilities import (
             ),
             id="large_name_single_list",
         ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(HAS(filed_claims.WHERE("
+                "   (YEAR(claim_date) == 2024) &"
+                "   (claim_status == 'Denied') &"
+                "   (ISIN(provider_name, ('Smith Ltd', 'Smith Inc')))"
+                ")))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "patients_claims",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [7]}),
+                },
+            ),
+            id="patients_claims",
+        ),
     ],
 )
 def sf_masked_test_data(
