@@ -13,15 +13,18 @@ __all__ = [
     "trunc_pattern",
 ]
 
+import math
 import re
 from enum import Enum
 from typing import Any, Union
 
+import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from pandas import Series
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
@@ -573,7 +576,7 @@ def generate_range_rows(
 
 
 def generate_dataframe_rows(
-    collection: DataframeGeneratedCollection, use_tuple: bool
+    collection: DataframeGeneratedCollection, use_tuple: bool, dialect: DatabaseDialect
 ) -> list[SQLGlotExpression]:
     """
     TODO
@@ -590,7 +593,9 @@ def generate_dataframe_rows(
         expr_list: list[SQLGlotExpression] = []
 
         for type_idx, item in enumerate(row):
-            expr_list.append(generate_type_expression(item, collection.types[type_idx]))
+            expr_list.append(
+                generate_type_expression(item, collection.types[type_idx], dialect)
+            )
 
         # Append the row with its items to the final result
         dataframe_rows.append(
@@ -604,26 +609,96 @@ def generate_dataframe_rows(
     return dataframe_rows
 
 
-def generate_type_expression(item: Any, type: PyDoughType) -> SQLGlotExpression:
+def generate_type_expression(
+    item: Any, item_type: PyDoughType, dialect: DatabaseDialect
+) -> SQLGlotExpression:
     """
     Match the pydough type with the sqlglot expression needed in the SQL
     """
-    if item is None:
+    if item is None or pd.isna(item):
         return sqlglot_expressions.Null()
 
-    match type:
+    match item_type:
         case BooleanType():
             return sqlglot_expressions.Boolean(this=bool(item))
 
         case DatetimeType():
-            return sqlglot_expressions.Cast(
-                this=sqlglot_expressions.Literal.string(item.isoformat()),
-                to=sqlglot_expressions.DataType(
-                    this=sqlglot_expressions.DataType.Type.TIMESTAMP
-                ),
-            )
+            match dialect:
+                case DatabaseDialect.SQLITE:
+                    return sqlglot_expressions.Literal.string(item)
+
+                case DatabaseDialect.MYSQL:
+                    return sqlglot_expressions.Cast(
+                        this=sqlglot_expressions.Literal.string(item),
+                        to=sqlglot_expressions.DataType.build("DATETIME"),
+                    )
+
+                case DatabaseDialect.POSTGRES | DatabaseDialect.ANSI:
+                    return sqlglot_expressions.Cast(
+                        this=sqlglot_expressions.Literal.string(item),
+                        to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                    )
+
+                case DatabaseDialect.SNOWFLAKE:
+                    return sqlglot_expressions.Anonymous(
+                        this="TO_TIMESTAMP_NTZ",
+                        expressions=[sqlglot_expressions.Literal.string(item)],
+                    )
+
+                case _:
+                    raise ValueError("Unsupported dialect")
 
         case NumericType():
+            if math.isinf(item):
+                match dialect:
+                    case DatabaseDialect.ANSI:
+                        if item >= 0:
+                            return sqlglot_expressions.Literal.string("Infinity")
+                        else:
+                            return sqlglot_expressions.Literal.string("-Infinity")
+
+                    case DatabaseDialect.SQLITE:
+                        if item >= 0:
+                            return sqlglot_expressions.Literal.number("1e999")
+                        else:
+                            return sqlglot_expressions.Literal.number("-1e999")
+
+                    case DatabaseDialect.MYSQL:
+                        raise PyDoughSQLException(
+                            "MySQL does not support Infinity values."
+                        )
+
+                    case DatabaseDialect.POSTGRES:
+                        if item >= 0:
+                            return sqlglot_expressions.Cast(
+                                this=sqlglot_expressions.Literal.string("inf"),
+                                to=sqlglot_expressions.DataType.build("REAL"),
+                            )
+                        else:
+                            return sqlglot_expressions.Cast(
+                                this=sqlglot_expressions.Literal.string("-inf"),
+                                to=sqlglot_expressions.DataType.build("REAL"),
+                            )
+
+                    case DatabaseDialect.SNOWFLAKE:
+                        if item >= 0:
+                            return sqlglot_expressions.Anonymous(
+                                this="TO_DOUBLE",
+                                expressions=[sqlglot_expressions.Literal.string("INF")],
+                            )
+                        else:
+                            return sqlglot_expressions.Anonymous(
+                                this="TO_DOUBLE",
+                                expressions=[
+                                    sqlglot_expressions.Literal.string("-INF")
+                                ],
+                            )
+
+                    case _:
+                        raise ValueError(
+                            "Unsupported dialect for generating type expression"
+                        )
+
             return sqlglot_expressions.Literal.number(item)
 
         case StringType():

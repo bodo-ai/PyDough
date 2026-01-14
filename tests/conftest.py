@@ -8,10 +8,12 @@ import sqlite3
 import subprocess
 import time
 from collections.abc import Callable
+from decimal import Decimal
 from functools import cache
 
 import boto3
 import httpx
+import numpy as np
 import pandas as pd
 import pytest
 from botocore.exceptions import ClientError
@@ -79,6 +81,9 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q22,
 )
 from tests.test_pydough_functions.user_collections import (
+    dataframe_collection_datatypes,
+    dataframe_collection_inf,
+    dataframe_collection_numbers,
     simple_dataframe_1,
     simple_range_1,
     simple_range_2,
@@ -2076,6 +2081,116 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "simple_dataframe_1",
             ),
             id="simple_dataframe_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_datatypes,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "string_col": ["red", "orange", None],
+                        "int_col": pd.Series(range(3), dtype="int64"),
+                        "float_col": [1.5, 2.0, np.nan],
+                        "nullable_int_col": pd.Series([1, None, 7]),
+                        "bool_col": pd.Series([True, False, False], dtype="int64"),
+                        "null_col": [None] * 3,
+                        "datetime_col": pd.to_datetime(
+                            ["2024-01-01", "2024-01-02", None]
+                        ),
+                    }
+                ),
+                "dataframe_collection_datatypes",
+            ),
+            id="dataframe_collection_datatypes",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_numbers,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "py_float": [
+                            1.5,
+                            0.0,
+                            10.0001,
+                            -2.25,
+                            None,
+                        ],
+                        "np_float64": np.array(
+                            [
+                                1.5,
+                                0.0,
+                                4.4444444,
+                                -2.25,
+                                None,
+                            ],
+                            dtype="float64",
+                        ),
+                        "np_float32": np.array(
+                            [
+                                1.5,
+                                3.33333,
+                                0.0,
+                                -2.25,
+                                None,
+                            ],
+                            dtype="float32",
+                        ),
+                        "null_vs_nan": [
+                            None,
+                            np.nan,
+                            float("nan"),
+                            1.0,
+                            0.0,
+                        ],
+                        "decimal_val": [
+                            Decimal("1.50"),
+                            Decimal("0.00"),
+                            Decimal("-2.25"),
+                            Decimal("NaN"),
+                            None,
+                        ],
+                    }
+                ),
+                "dataframe_collection_numbers",
+            ),
+            id="dataframe_collection_numbers",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_inf,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "py_float": [
+                            1.5,
+                            float("nan"),
+                            float("inf"),
+                            float("-inf"),
+                        ],
+                        "np_float64": np.array(
+                            [
+                                -2.25,
+                                np.nan,
+                                np.inf,
+                                -np.inf,
+                            ],
+                            dtype="float64",
+                        ),
+                        "np_float32": np.array(
+                            [
+                                0.0,
+                                np.nan,
+                                np.inf,
+                                -np.inf,
+                            ],
+                            dtype="float32",
+                        ),
+                    }
+                ),
+                "dataframe_collection_inf",
+            ),
+            id="dataframe_collection_inf",
         ),
     ],
 )

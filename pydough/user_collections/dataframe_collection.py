@@ -127,7 +127,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             ):
                 return DatetimeType()
 
-            # Un supported datatypes
+            # Unsupported datatypes
             case _ if pa.types.is_list(field_type) or pa.types.is_large_list(
                 field_type
             ):

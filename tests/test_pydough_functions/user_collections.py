@@ -8,6 +8,8 @@ PyDough code snippets for testing purposes.
 
 import pydough
 import pandas as pd
+import numpy as np
+from decimal import Decimal
 
 import pytest
 
@@ -170,3 +172,119 @@ def simple_dataframe_1():
         }
     )
     return pydough.dataframe_collection(name="rainbow", dataframe=df)
+
+
+def dataframe_collection_datatypes():
+    df = pd.DataFrame(
+        {
+            "string_col": [
+                "red",
+                "orange",
+                None,
+            ],
+            "int_col": pd.Series(range(3), dtype="int64"),
+            "float_col": [
+                1.5,
+                2.0,
+                np.nan,
+            ],
+            "nullable_int_col": pd.Series(
+                [1, None, 7],
+            ),
+            "bool_col": pd.Series([True, False, False], dtype="int64"),
+            "null_col": [None] * 3,
+            "datetime_col": pd.to_datetime(["2024-01-01", "2024-01-02", None]),
+        }
+    )
+
+    return pydough.dataframe_collection("alldatatypes", df)
+
+
+def dataframe_collection_numbers():
+    df_numbers = pd.DataFrame(
+        {
+            "py_float": [
+                1.5,
+                0.0,
+                10.0001,
+                -2.25,
+                None,
+            ],
+            "np_float64": np.array(
+                [
+                    1.5,
+                    0.0,
+                    4.4444444,
+                    -2.25,
+                    None,
+                ],
+                dtype="float64",
+            ),
+            "np_float32": np.array(
+                [
+                    1.5,
+                    3.33333,
+                    0.0,
+                    -2.25,
+                    None,
+                ],
+                dtype="float32",
+            ),
+            "null_vs_nan": [
+                None,
+                np.nan,
+                float("nan"),
+                1.0,
+                0.0,
+            ],
+            "decimal_val": [
+                Decimal("1.50"),
+                Decimal("0.00"),
+                Decimal("-2.25"),
+                Decimal("NaN"),
+                None,
+            ],
+        }
+    )
+    return pydough.dataframe_collection("numbers", df_numbers)
+
+
+def dataframe_collection_inf():
+    df_inf = pd.DataFrame(
+        {
+            "py_float": [
+                1.5,
+                float("nan"),
+                float("inf"),
+                float("-inf"),
+            ],
+            "np_float64": np.array(
+                [
+                    -2.25,
+                    np.nan,
+                    np.inf,
+                    -np.inf,
+                ],
+                dtype="float64",
+            ),
+            "np_float32": np.array(
+                [
+                    0.0,
+                    np.nan,
+                    np.inf,
+                    -np.inf,
+                ],
+                dtype="float32",
+            ),
+        }
+    )
+    return pydough.dataframe_collection("infinty", df_inf)
+
+    # TEST LIST:
+    # test all datatypes
+    # test different types (floating python vs pandas)
+    # Test different datatypes (bad)
+    # Test unsupported datatypes
+    # Test using the table
+    # Test with more than one dataframe collection
+    # Test all posible things with 2 dataframes collections (CROSS, JOIN, FILTER, ...)

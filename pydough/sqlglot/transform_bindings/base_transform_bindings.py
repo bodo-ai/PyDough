@@ -15,6 +15,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.types import BooleanType, NumericType, PyDoughType, StringType
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
@@ -2178,6 +2179,7 @@ class BaseTransformBindings:
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
+        dialect: DatabaseDialect,
     ) -> SQLGlotExpression:
         """
         Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
@@ -2193,7 +2195,7 @@ class BaseTransformBindings:
             case RangeGeneratedCollection():
                 return self.convert_user_generated_range(collection)
             case DataframeGeneratedCollection():
-                return self.convert_user_generated_dataframe(collection)
+                return self.convert_user_generated_dataframe(collection, dialect)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
@@ -2221,7 +2223,7 @@ class BaseTransformBindings:
         return result
 
     def convert_user_generated_dataframe(
-        self, collection: DataframeGeneratedCollection
+        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
     ) -> SQLGlotExpression:
         """
         TODO
@@ -2230,6 +2232,7 @@ class BaseTransformBindings:
         dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
             collection,
             True,  # Use tuple
+            dialect,
         )
 
         result: SQLGlotExpression = create_constant_table(
