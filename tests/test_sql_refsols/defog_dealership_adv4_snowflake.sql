@@ -4,6 +4,6 @@ SELECT
 FROM main.cars AS cars
 JOIN main.sales AS sales
   ON cars._id = sales.car_id
-  AND sales.sale_date >= DATEADD(DAY, -30, CURRENT_TIMESTAMP())
+  AND sales.sale_date >= DATEADD(DAY, -30, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
 WHERE
   CONTAINS(LOWER(cars.make), 'toyota')

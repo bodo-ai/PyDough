@@ -30,6 +30,11 @@ from pydough.errors import PyDoughTestingException
 from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
+from tests.test_pydough_functions.simple_pydough_functions import (
+    string_format_specifiers_mysql,
+    string_format_specifiers_postgres,
+    string_format_specifiers_snowflake,
+)
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
     tpch_q2_output,
@@ -77,19 +82,6 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q20,
     impl_tpch_q21,
     impl_tpch_q22,
-)
-from tests.test_pydough_functions.user_collections import (
-    simple_range_1,
-    simple_range_2,
-    simple_range_3,
-    simple_range_4,
-    simple_range_5,
-    user_range_collection_1,
-    user_range_collection_2,
-    user_range_collection_3,
-    user_range_collection_4,
-    user_range_collection_5,
-    user_range_collection_6,
 )
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
@@ -1834,225 +1826,6 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
             ),
             id="smoke_d",
         ),
-        # NOTE: All range collection tests should move to
-        # test_pipeline_tpch_custom.py after adding tpch_custom test for all
-        # dialects
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_1,
-                "TPCH",
-                lambda: pd.DataFrame({"value": range(10)}),
-                "simple_range_1",
-            ),
-            id="simple_range_1",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_2,
-                "TPCH",
-                lambda: pd.DataFrame({"value": range(9, -1, -1)}),
-                "simple_range_2",
-            ),
-            id="simple_range_2",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_3,
-                "TPCH",
-                lambda: pd.DataFrame({"foo": range(15, 20)}),
-                "simple_range_3",
-            ),
-            id="simple_range_3",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_4,
-                "TPCH",
-                lambda: pd.DataFrame({"foo": range(10, 0, -1)}),
-                "simple_range_4",
-            ),
-            id="simple_range_4",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_5,
-                "TPCH",
-                # TODO: even though generated SQL has CAST(NULL AS INT) AS x
-                # it returns x as object datatype.
-                # using `x: range(-1)` returns int64 so temp. using dtype=object
-                lambda: pd.DataFrame({"x": pd.Series(range(-1), dtype="object")}),
-                "simple_range_5",
-            ),
-            id="simple_range_5",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_1,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "part_size": [
-                            1,
-                            6,
-                            11,
-                            16,
-                            21,
-                            26,
-                            31,
-                            36,
-                            41,
-                            46,
-                            51,
-                            56,
-                            61,
-                            66,
-                            71,
-                            76,
-                            81,
-                            86,
-                            91,
-                            96,
-                        ],
-                        "n_parts": [
-                            228,
-                            225,
-                            206,
-                            234,
-                            228,
-                            221,
-                            231,
-                            208,
-                            245,
-                            226,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                    }
-                ),
-                "user_range_collection_1",
-            ),
-            id="user_range_collection_1",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_2,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "x": [0, 2, 4, 6, 8],
-                        "n_prefix": [1, 56, 56, 56, 56],
-                        "n_suffix": [101, 100, 100, 100, 100],
-                    }
-                ),
-                "user_range_collection_2",
-            ),
-            id="user_range_collection_2",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_3,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "x": [0, 2, 4, 6, 8],
-                        "n_prefix": [1, 56, 56, 56, 56],
-                        "n_suffix": [101, 100, 100, 100, 100],
-                    }
-                ),
-                "user_range_collection_3",
-            ),
-            id="user_range_collection_3",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_4,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "part_size": [1, 2, 4, 5, 6, 10],
-                        "name": [
-                            "azure lime burnished blush salmon",
-                            "spring green chocolate azure navajo",
-                            "cornflower bisque thistle floral azure",
-                            "azure aquamarine tomato lace peru",
-                            "antique cyan tomato azure dim",
-                            "red cream rosy hot azure",
-                        ],
-                        "retail_price": [
-                            1217.13,
-                            1666.60,
-                            1863.87,
-                            1114.16,
-                            1716.72,
-                            1746.81,
-                        ],
-                    }
-                ),
-                "user_range_collection_4",
-            ),
-            id="user_range_collection_4",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_5,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "part_size": [1, 11, 21, 31, 41, 51, 6, 16, 26, 36, 46, 56],
-                        "n_parts": [
-                            1135,
-                            1067,
-                            1128,
-                            1109,
-                            1038,
-                            0,
-                            1092,
-                            1154,
-                            1065,
-                            1094,
-                            1088,
-                            0,
-                        ],
-                    }
-                ),
-                "user_range_collection_5",
-            ),
-            id="user_range_collection_5",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_6,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "year": [
-                            1990,
-                            1991,
-                            1992,
-                            1993,
-                            1994,
-                            1995,
-                            1996,
-                            1997,
-                            1998,
-                            1999,
-                            2000,
-                        ],
-                        "n_orders": [0, 0, 1, 2, 0, 0, 1, 1, 2, 0, 0],
-                    }
-                ),
-                "user_range_collection_6",
-            ),
-            id="user_range_collection_6",
-        ),
     ],
 )
 def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -2240,6 +2013,164 @@ def mock_server_setup():
     # Cleanup after tests
     proc.terminate()
     proc.wait()
+
+
+def tpch_custom_test_data_dialect_replacements(
+    dialect: DatabaseDialect, test: PyDoughPandasTest
+) -> PyDoughPandasTest:
+    """
+    Replace specific TPC-H custom test data with dialect-specific versions.
+    """
+    if test.test_name == "string_format_specifiers":
+        if dialect == DatabaseDialect.MYSQL:
+            return PyDoughPandasTest(
+                string_format_specifiers_mysql,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["Sat"],
+                        "d2": ["Jul"],
+                        "d3": ["7"],
+                        "d4": ["15th"],
+                        "d5": ["15"],
+                        "d6": ["15"],
+                        "d7": ["000000"],
+                        "d8": ["14"],
+                        "d9": ["02"],
+                        "d10": ["02"],
+                        "d11": ["30"],
+                        "d12": ["196"],
+                        "d13": ["14"],
+                        "d14": ["2"],
+                        "d15": ["30"],
+                        "d16": ["07"],
+                        "d17": ["PM"],
+                        "d18": ["02:30:45 PM"],
+                        "d19": ["45"],
+                        "d20": ["45"],
+                        "d21": ["14:30:45"],
+                        "d22": ["28"],
+                        "d23": ["28"],
+                        "d24": ["28"],
+                        "d25": ["28"],
+                        "d26": ["28"],
+                        "d27": ["6"],
+                        "d28": ["2023"],
+                        "d29": ["2023"],
+                        "d30": ["2023"],
+                        "d31": ["23"],
+                        "d32": ["2023-07-15"],
+                        "d33": ["14:30"],
+                    }
+                ),
+                "string_format_specifiers",
+            )
+        elif dialect == DatabaseDialect.POSTGRES:
+            return PyDoughPandasTest(
+                string_format_specifiers_postgres,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        # HOURS / MINUTES / SECONDS
+                        "h1": ["02"],  # HH
+                        "h2": ["02"],  # HH12
+                        "h3": ["14"],  # HH24
+                        "m1": ["30"],  # MI
+                        "s1": ["45"],  # SS
+                        "ms1": ["000"],  # MS
+                        "us1": ["000000"],  # US
+                        "ff1": ["0"],  # FF1
+                        "ff2": ["00"],  # FF2
+                        "ff3": ["000"],  # FF3
+                        "ff4": ["0000"],  # FF4
+                        "ff5": ["00000"],  # FF5
+                        "ff6": ["000000"],  # FF6
+                        "ssss1": ["52245"],  # SSSS
+                        "ssss2": ["52245"],  # SSSSS
+                        # MERIDIEM
+                        "am1": ["PM"],  # AM
+                        "am2": ["pm"],  # am
+                        "am3": ["P.M."],  # A.M.
+                        "am4": ["p.m."],  # a.m.
+                        # YEAR FORMATS
+                        "y1": ["2,023"],  # Y,YYY
+                        "y2": ["2023"],  # YYYY
+                        "y3": ["023"],  # YYY
+                        "y4": ["23"],  # YY
+                        "y5": ["3"],  # Y
+                        "iy1": ["2023"],  # IYYY
+                        "iy2": ["023"],  # IYY
+                        "iy3": ["23"],  # IY
+                        "iy4": ["3"],  # I
+                        # ERA
+                        "era1": ["AD"],  # AD
+                        "era2": ["A.D."],  # A.D.
+                        # MONTH NAMES
+                        "mon1": ["JULY     "],  # MONTH (blank-padded)
+                        "mon2": ["July     "],  # Month
+                        "mon3": ["july     "],  # month
+                        "mon4": ["JUL"],  # MON
+                        "mon5": ["Jul"],  # Mon
+                        "mon6": ["jul"],  # mon
+                        "mon7": ["07"],  # MM
+                        # DAY NAMES
+                        "day1": ["SATURDAY "],  # DAY (blank-padded)
+                        "day2": ["Saturday "],  # Day
+                        "day3": ["saturday "],  # day
+                        "day4": ["SAT"],  # DY
+                        "day5": ["Sat"],  # Dy
+                        "day6": ["sat"],  # dy
+                        # DAY / WEEK / YEAR METRICS
+                        "doy1": ["196"],  # DDD
+                        "doy2": ["195"],  # IDDD
+                        "dom1": ["15"],  # DD
+                        "dow1": ["7"],  # D (Sunday=1)
+                        "dow2": ["6"],  # ID (Monday=1)
+                        "wom1": ["3"],  # W
+                        "woy1": ["28"],  # WW
+                        "woy2": ["28"],  # IW
+                        # OTHER DATE COMPONENTS
+                        "c1": ["21"],  # CC
+                        "j1": ["2460141"],  # J (Julian day number)
+                        "q1": ["3"],  # Q
+                        "rm1": ["VII "],  # RM
+                        "rm2": ["vii "],  # rm
+                        # TIME ZONE (timestamp without time zone → empty)
+                        "tz1": [""],  # TZ
+                        "tz2": [""],  # tz
+                        "tz3": ["+00"],  # TZH
+                        "tz4": ["00"],  # TZM
+                        "tz5": ["+00"],  # OF
+                    }
+                ),
+                "string_format_specifiers",
+            )
+        elif dialect == DatabaseDialect.SNOWFLAKE:
+            return PyDoughPandasTest(
+                string_format_specifiers_snowflake,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["2023"],  # YYYY
+                        "d2": ["23"],  # YY
+                        "d3": ["07"],  # MM
+                        "d4": ["Jul"],  # Mon
+                        "d5": ["July"],  # MMMM
+                        "d6": ["15"],  # DD
+                        "d7": ["Sat"],  # DY
+                        "d8": ["Saturday"],  # DYDY
+                        "d9": ["14"],  # HH24
+                        "d10": ["02"],  # HH12
+                        "d11": ["30"],  # MI
+                        "d12": ["45"],  # SS
+                        "d13": ["PM"],  # AM / PM
+                        "d14": [".000000000"],  # .FF
+                        "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                    }
+                ),
+                "string_format_specifiers",
+            )
+    return test
 
 
 @pytest.fixture(scope="session")

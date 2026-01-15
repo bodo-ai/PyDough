@@ -578,9 +578,24 @@ class PostgresTransformBindings(BaseTransformBindings):
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        return sqlglot_expressions.Cast(
-            this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
-        )
+        assert len(args) == 1
+
+        # Cast as integer directly fails if the argument is a string literal
+        # with decimals. In that case, for literals we first cast to NUMERIC
+        #  then truncate the decimal part.
+        if isinstance(args[0], sqlglot_expressions.Literal):
+            return sqlglot_expressions.Anonymous(
+                this="TRUNC",
+                expressions=[
+                    sqlglot_expressions.Cast(
+                        this=args[0], to=sqlglot_expressions.DataType.build("NUMERIC")
+                    )
+                ],
+            )
+        else:
+            return sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
+            )
 
     def convert_lpad(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

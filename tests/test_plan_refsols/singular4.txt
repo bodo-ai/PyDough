@@ -1,4 +1,4 @@
-ROOT(columns=[('name', c_name)], orderings=[(o_orderdate):asc_last], limit=5:numeric)
+ROOT(columns=[('name', c_name)], orderings=[(DEFAULT_TO(o_orderdate, datetime.date(2000, 1, 1):datetime)):asc_last], limit=5:numeric)
  JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_name': t0.c_name, 'o_orderdate': t1.o_orderdate})
   FILTER(condition=c_nationkey == 6:numeric, columns={'c_custkey': c_custkey, 'c_name': c_name})
    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name, 'c_nationkey': c_nationkey})

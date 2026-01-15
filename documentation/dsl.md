@@ -1537,9 +1537,6 @@ People.CROSS(Addresses).current_address
 <!-- TOC --><a name="user-generated-collections"></a>
 ## User Generated Collections
 
-> [!WARNING]  
-> NOTE: User collections are currently supported **only in the Snowflake context**.
-
 This section describes APIs for dynamically creating PyDough collections and using them alongside other data sources.
 
 <!-- TOC --><a name="range_collection"></a>

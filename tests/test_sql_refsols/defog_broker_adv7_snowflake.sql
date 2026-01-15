@@ -8,8 +8,11 @@ WITH _s2 AS (
     COUNT(*) AS n_rows
   FROM main.sbcustomer
   WHERE
-    sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-    AND sbcustjoindate >= DATE_TRUNC('MONTH', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
+    sbcustjoindate < DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    AND sbcustjoindate >= DATE_TRUNC(
+      'MONTH',
+      DATEADD(MONTH, -6, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
   GROUP BY
     1
 ), _s3 AS (
@@ -26,8 +29,11 @@ WITH _s2 AS (
     AND YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) = YEAR(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
     AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   WHERE
-    sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-    AND sbcustomer.sbcustjoindate >= DATE_TRUNC('MONTH', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
+    sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    AND sbcustomer.sbcustjoindate >= DATE_TRUNC(
+      'MONTH',
+      DATEADD(MONTH, -6, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
   GROUP BY
     1
 )

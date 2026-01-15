@@ -8,4 +8,7 @@ JOIN main.drugs AS drugs
   ON NOT drugs.fda_appr_dt IS NULL AND drugs.drug_id = treatments.drug_id
 WHERE
   NOT treatments.end_dt IS NULL
-  AND treatments.end_dt >= DATE_TRUNC('DAY', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
+  AND treatments.end_dt >= DATE_TRUNC(
+    'DAY',
+    DATEADD(MONTH, -6, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+  )

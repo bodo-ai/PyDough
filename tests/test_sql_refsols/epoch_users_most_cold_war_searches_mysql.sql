@@ -19,7 +19,7 @@ WITH _t1 AS (
     1
 )
 SELECT
-  user_name COLLATE utf8mb4_bin AS user_name,
+  USERS.user_name COLLATE utf8mb4_bin AS user_name,
   _s5.n_rows AS n_cold_war_searches
 FROM USERS AS USERS
 JOIN _s5 AS _s5
