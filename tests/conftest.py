@@ -81,9 +81,12 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q22,
 )
 from tests.test_pydough_functions.user_collections import (
+    dataframe_collection_cross,
     dataframe_collection_datatypes,
     dataframe_collection_inf,
     dataframe_collection_numbers,
+    dataframe_collection_strings,
+    dataframe_collection_where,
     simple_dataframe_1,
     simple_range_1,
     simple_range_2,
@@ -2105,6 +2108,39 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         ),
         pytest.param(
             PyDoughPandasTest(
+                dataframe_collection_strings,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "normal_strings": [
+                            "hello",
+                            "world",
+                            "pydough",
+                            None,
+                            "test_string",
+                        ],
+                        "empty_string": [
+                            "",
+                            "not_empty",
+                            "",
+                            None,
+                            " ",
+                        ],
+                        "special_characters": [
+                            "'simple quoted'",
+                            '"double quoted"',
+                            "unicode_ß_ç_ü",
+                            None,
+                            "tap_space\tnewline_\n_test",
+                        ],
+                    }
+                ),
+                "dataframe_collection_strings",
+            ),
+            id="dataframe_collection_strings",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 dataframe_collection_numbers,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2191,6 +2227,38 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "dataframe_collection_inf",
             ),
             id="dataframe_collection_inf",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_cross,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "id": [1, 1, 2, 2, 3],
+                        "name": ["John", "John", "Jane", "Jane", "Bob"],
+                        "order_id": [101.0, 103.0, 102.0, 105.0, 104.0],
+                        "amount": [250.00, 300.00, 150.50, 200.00, 450.75],
+                    }
+                ),
+                "dataframe_collection_cross",
+            ),
+            id="dataframe_collection_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_where,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "id": [1, 1, 2, 2, 3],
+                        "name": ["John", "John", "Jane", "Jane", "Bob"],
+                        "order_id": [101.0, 103.0, 102.0, 105.0, 104.0],
+                        "amount": [250.00, 300.00, 150.50, 200.00, 450.75],
+                    }
+                ),
+                "dataframe_collection_where",
+            ),
+            id="dataframe_collection_where",
         ),
     ],
 )

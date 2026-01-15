@@ -200,6 +200,35 @@ def dataframe_collection_datatypes():
     return pydough.dataframe_collection("alldatatypes", df)
 
 
+def dataframe_collection_strings():
+    df_strings = pd.DataFrame(
+        {
+            "normal_strings": [
+                "hello",
+                "world",
+                "pydough",
+                None,
+                "test_string",
+            ],
+            "empty_string": [
+                "",
+                "not_empty",
+                "",
+                None,
+                " ",
+            ],
+            "special_characters": [
+                "'simple quoted'",
+                '"double quoted"',
+                "unicode_ß_ç_ü",
+                None,
+                "tap_space\tnewline_\n_test",
+            ],
+        }
+    )
+    return pydough.dataframe_collection("strings", df_strings)
+
+
 def dataframe_collection_numbers():
     df_numbers = pd.DataFrame(
         {
@@ -279,6 +308,64 @@ def dataframe_collection_inf():
         }
     )
     return pydough.dataframe_collection("infinty", df_inf)
+
+
+def dataframe_collection_cross():
+    # Get the users and orders dataframe collections
+    users_df = pd.DataFrame(
+        {
+            "id_": range(1, 6),
+            "name": ["John", "Jane", "Bob", "Alice", "Charlie"],
+        }
+    )
+    users = pydough.dataframe_collection(name="users", dataframe=users_df)
+
+    orders_df = pd.DataFrame(
+        {
+            "order_id": range(101, 106),
+            "user_id": [1, 2, 1, 3, 2],
+            "amount": [250.0, 150.5, 300.0, 450.75, 200.0],
+        }
+    )
+    orders = pydough.dataframe_collection(name="orders", dataframe=orders_df)
+
+    return (
+        users.CALCULATE(id1=id_, name1=name)
+        .CROSS(orders)
+        .WHERE((id1 == user_id))
+        .CALCULATE(id1, name1, order_id, amount)
+    )
+
+
+# COLLECTION OPERATORS TESTS
+def dataframe_collection_where():
+    # Return all suppliers in that region whose S_ACCTBAL is greater than the
+    # DataFrame value.
+    threshold_df = pd.DataFrame(
+        {
+            "region_name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+            "min_account_balance": [5000.32, 8000, 4600.32, 3400.50, 8999.99],
+        }
+    )
+    thresholds = pydough.dataframe_collection(name="thresholds", dataframe=threshold_df)
+
+    filtered_suppliers = suppliers.CALCULATE(
+        sup_region_name=nation.region.name, account_balance=account_balance
+    )
+
+    return (
+        thresholds.CALCULATE(region_name, min_account_balance)
+        .CROSS(filtered_suppliers)
+        .WHERE(
+            (sup_region_name == region_name) & (account_balance > min_account_balance)
+        )
+        .PARTITION(name="region", by=sup_region_name)
+        .CALCULATE(sup_region_name, COUNT(suppliers))
+        # nations.CALCULATE(region_name=region.name)
+        # .WHERE(STARTSWITH(name, "A"))
+        # .PARTITION(name="region", by=region_name)
+        # .CALCULATE(region_name, n_nations=COUNT(nations))
+    )
 
     # TEST LIST:
     # test all datatypes

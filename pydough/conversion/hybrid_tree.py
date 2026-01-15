@@ -715,6 +715,9 @@ class HybridTree:
                 return self.children[0].subtree.infer_root_reverse_cardinality(context)
             case HybridPartitionChild():
                 return self.pipeline[0].subtree.infer_root_reverse_cardinality(context)
+            case HybridUserGeneratedCollection():
+                # NOTE: No sure about this one
+                return JoinCardinality.PLURAL_FILTER
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {self.pipeline[0].__class__.__name__}"

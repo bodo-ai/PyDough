@@ -915,6 +915,10 @@ class Qualifier:
                 new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
                     parent, partition_ancestor
                 )
+            case UnqualifiedGeneratedCollection():
+                new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
+                    UnqualifiedRoot(self.graph), partition_ancestor
+                )
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
@@ -931,9 +935,14 @@ class Qualifier:
                     isinstance(node, UnqualifiedAccess)
                     and node._parcel[1] != self.graph.name
                 )
+                or isinstance(node, UnqualifiedGeneratedCollection)
             )
             and ((partition_ancestor is None) or (partition_ancestor in ancestry_names))
         ):
+            if isinstance(node, UnqualifiedGeneratedCollection):
+                new_child = UnqualifiedGeneratedCollection(*node._parcel[0:])
+                ancestry_names.append(node._parcel[0].name)
+                return new_ancestry, new_child, ancestry_names
             if isinstance(node, UnqualifiedAccess):
                 new_child = UnqualifiedAccess(
                     UnqualifiedRoot(self.graph), *node._parcel[1:]
