@@ -86,6 +86,19 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
             else self.masking_metadata.protect_protocol
         )
 
+    def toggle_protection(self) -> "MaskedExpressionFunctionOperator":
+        """
+        Returns a new MaskedExpressionFunctionOperator with the same metadata
+        and table path, but with the is_unmask flag toggled.
+
+        Returns:
+            A new MaskedExpressionFunctionOperator with the toggled is_unmask
+            flag.
+        """
+        return MaskedExpressionFunctionOperator(
+            self.masking_metadata, self.table_path, not self.is_unmask
+        )
+
     def to_string(self, arg_strings: list[str]) -> str:
         name: str = "UNMASK" if self.is_unmask else "MASK"
         arg_strings = [f"[{s}]" for s in arg_strings]
