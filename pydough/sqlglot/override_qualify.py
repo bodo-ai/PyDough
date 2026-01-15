@@ -415,8 +415,6 @@ def _qualify_columns(
         column_name = column.name
 
         if column_table and column_table in scope.sources:
-            # PYDOUGH CHANGE: using our custom get_scope_columns function
-            # instead of scope.columns
             source_columns = resolver.get_source_columns(column_table)
             if (
                 not allow_partial_qualification

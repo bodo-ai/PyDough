@@ -580,6 +580,9 @@ class PostgresTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         assert len(args) == 1
 
+        # Cast as integer directly fails if the argument is a string literal
+        # with decimals. In that case, for literals we first cast to NUMERIC
+        #  then truncate the decimal part.
         if isinstance(args[0], sqlglot_expressions.Literal):
             return sqlglot_expressions.Anonymous(
                 this="TRUNC",

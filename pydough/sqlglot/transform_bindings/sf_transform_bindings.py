@@ -76,6 +76,10 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         assert len(args) == 1
+        # Cast as integer directly rounds the argument instead of truncate the
+        # decimal part. For example INTEGER(-5.88) returns -6, not -5.
+        # In that case, for literals first cast to DOUBLE then truncate the
+        # decimal part.
         if isinstance(args[0], sqlglot_expressions.Literal):
             return sqlglot_expressions.Anonymous(
                 this="TRUNCATE",
