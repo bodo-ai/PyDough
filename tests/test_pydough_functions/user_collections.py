@@ -339,8 +339,8 @@ def dataframe_collection_cross():
 
 # COLLECTION OPERATORS TESTS
 def dataframe_collection_where():
-    # Return all suppliers in that region whose S_ACCTBAL is greater than the
-    # DataFrame value.
+    # Return all suppliers in that region whose account_balance is greater than
+    # the DataFrame value.
     threshold_df = pd.DataFrame(
         {
             "region_name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -363,11 +363,18 @@ def dataframe_collection_where():
         .CALCULATE(sup_region_name, n_suppliers=COUNT(suppliers))
     )
 
-    # TEST LIST:
-    # test all datatypes
-    # test different types (floating python vs pandas)
-    # Test different datatypes (bad)
-    # Test unsupported datatypes
-    # Test using the table
-    # Test with more than one dataframe collection
-    # Test all posible things with 2 dataframes collections (CROSS, JOIN, FILTER, ...)
+
+# Collection Operators to test:
+# WHERE (coverred)
+# ORDER_BY
+# TOP_K
+# PARTITION (coverred and fixed)
+# SINGULAR
+# BEST
+# CROSS (coverred)
+
+# TEST LIST:
+# Test different datatypes (bad)
+# Test unsupported datatypes
+# Test using the table
+# Test all posible things with 2 dataframes collections (CROSS, JOIN, FILTER, ...)

@@ -1430,7 +1430,6 @@ class RelTranslation:
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_hybridroot(context)
             case HybridUserGeneratedCollection():
-                # assert context is not None, "Malformed HybridTree pattern."
                 if context is None:
                     context = TranslationOutput(EmptySingleton(), {})
 

@@ -692,7 +692,7 @@ class HybridTree:
         # At the root, only this node’s type matters for reverse cardinality.
         # Deeper nodes do not affect parent-child match guarantees.
         match self.pipeline[0]:
-            case HybridRoot():
+            case HybridRoot() | HybridUserGeneratedCollection():
                 # If the parent of the child is a root, it means a cross join
                 # is occurring, so the cardinality depends on whether
                 # the parent context is singular or plural.
@@ -715,9 +715,6 @@ class HybridTree:
                 return self.children[0].subtree.infer_root_reverse_cardinality(context)
             case HybridPartitionChild():
                 return self.pipeline[0].subtree.infer_root_reverse_cardinality(context)
-            case HybridUserGeneratedCollection():
-                # NOTE: No sure about this one
-                return JoinCardinality.PLURAL_FILTER
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {self.pipeline[0].__class__.__name__}"

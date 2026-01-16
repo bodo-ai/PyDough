@@ -943,6 +943,7 @@ class Qualifier:
                 new_child = UnqualifiedGeneratedCollection(*node._parcel[0:])
                 ancestry_names.append(node._parcel[0].name)
                 return new_ancestry, new_child, ancestry_names
+
             if isinstance(node, UnqualifiedAccess):
                 new_child = UnqualifiedAccess(
                     UnqualifiedRoot(self.graph), *node._parcel[1:]
