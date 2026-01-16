@@ -1896,6 +1896,61 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         ),
         pytest.param(
             PyDoughPandasTest(
+                "r = pydough.range_collection('tbl', 'v', 0, 500, 13).CALCULATE(first_digit=INTEGER(STRING(v)[:1]))\n"
+                "result = r.PARTITION(name='digits', by=first_digit).CALCULATE(first_digit, n=COUNT(tbl))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_digit": [0, 1, 2, 3, 4, 5, 6, 7, 9],
+                        "n": [1, 9, 9, 8, 8, 1, 1, 1, 1],
+                    }
+                ),
+                "simple_range_6",
+                kwargs={"pydough": pydough},
+            ),
+            id="simple_range_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "r1 = pydough.range_collection('d1', 'x', 1, 7).CALCULATE(x)\n"
+                "r2 = pydough.range_collection('d2', 'y', 1, 7)\n"
+                "convolutions = r1.CROSS(r2).CALCULATE(s=x+y, p=x*y)\n"
+                "result = convolutions.PARTITION(name='sums', by=s).CALCULATE(s, n=COUNT(d2), a=AVG(d2.p))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "s": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                        "n": [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1],
+                        "a": [1, 2, 10 / 3, 5, 7, 28 / 3, 14, 19, 73 / 3, 30, 36],
+                    }
+                ),
+                "simple_range_7",
+                kwargs={"pydough": pydough},
+            ),
+            id="simple_range_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "r1 = pydough.range_collection('d1', 'x', 1, 5).CALCULATE(x)\n"
+                "r2 = pydough.range_collection('d2', 'y', 1, 5).CALCULATE(y)\n"
+                "r3 = pydough.range_collection('d3', 'z', 1, 5).CALCULATE(z)\n"
+                "convolutions = r1.CROSS(r2).CROSS(r3).CALCULATE(s=x+y+z, p=x*y*z)\n"
+                "result = convolutions.PARTITION(name='sums', by=s).CALCULATE(s, n=COUNT(d3), a=AVG(d3.p))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "s": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                        "n": [1, 3, 6, 10, 12, 12, 10, 6, 3, 1],
+                        "a": [1, 2, 3.5, 5.6, 9.25, 14.5, 21.9, 34, 48, 64],
+                    }
+                ),
+                "simple_range_8",
+                kwargs={"pydough": pydough},
+            ),
+            id="simple_range_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 user_range_collection_1,
                 "TPCH",
                 lambda: pd.DataFrame(

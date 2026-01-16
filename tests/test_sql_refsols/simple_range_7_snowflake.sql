@@ -1,0 +1,17 @@
+WITH d1 AS (
+  SELECT
+    1 + SEQ4() AS x
+  FROM TABLE(GENERATOR(ROWCOUNT => 6))
+), d2 AS (
+  SELECT
+    1 + SEQ4() AS y
+  FROM TABLE(GENERATOR(ROWCOUNT => 6))
+)
+SELECT
+  d1.x + d2.y AS s,
+  COUNT(*) AS n,
+  AVG(d1.x * d2.y) AS a
+FROM d1 AS d1
+CROSS JOIN d2 AS d2
+GROUP BY
+  1

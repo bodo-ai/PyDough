@@ -1,0 +1,8 @@
+SELECT
+  d1.x + d2.y AS s,
+  COUNT(*) AS n,
+  AVG(CAST(d1.x * d2.y AS DECIMAL)) AS a
+FROM GENERATE_SERIES(1, 6, 1) AS d1(x)
+CROSS JOIN GENERATE_SERIES(1, 6, 1) AS d2(y)
+GROUP BY
+  1
