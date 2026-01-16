@@ -344,7 +344,7 @@ def dataframe_collection_where():
     threshold_df = pd.DataFrame(
         {
             "region_name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-            "min_account_balance": [5000.32, 8000, 4600.32, 3400.50, 8999.99],
+            "min_account_balance": [5000.32, 8000, 4600.32, 6400.50, 8999.99],
         }
     )
     thresholds = pydough.dataframe_collection(name="thresholds", dataframe=threshold_df)
@@ -360,11 +360,7 @@ def dataframe_collection_where():
             (sup_region_name == region_name) & (account_balance > min_account_balance)
         )
         .PARTITION(name="region", by=sup_region_name)
-        .CALCULATE(sup_region_name, COUNT(suppliers))
-        # nations.CALCULATE(region_name=region.name)
-        # .WHERE(STARTSWITH(name, "A"))
-        # .PARTITION(name="region", by=region_name)
-        # .CALCULATE(region_name, n_nations=COUNT(nations))
+        .CALCULATE(sup_region_name, n_suppliers=COUNT(suppliers))
     )
 
     # TEST LIST:

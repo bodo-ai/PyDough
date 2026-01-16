@@ -2250,10 +2250,14 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "id": [1, 1, 2, 2, 3],
-                        "name": ["John", "John", "Jane", "Jane", "Bob"],
-                        "order_id": [101.0, 103.0, 102.0, 105.0, 104.0],
-                        "amount": [250.00, 300.00, 150.50, 200.00, 450.75],
+                        "sup_region_name": [
+                            "EUROPE",
+                            "AMERICA",
+                            "AFRICA",
+                            "ASIA",
+                            "MIDDLE EAST",
+                        ],
+                        "n_suppliers": [649, 387, 877, 988, 144],
                     }
                 ),
                 "dataframe_collection_where",
