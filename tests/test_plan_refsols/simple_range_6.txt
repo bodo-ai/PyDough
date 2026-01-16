@@ -1,0 +1,3 @@
+ROOT(columns=[('first_digit', first_digit), ('n', n_rows)], orderings=[])
+ AGGREGATE(keys={'first_digit': INTEGER(SLICE(STRING(v), None:unknown, 1:numeric, None:unknown))}, aggregations={'n_rows': COUNT()})
+  GENERATED_TABLE(RangeCollection('tbl', v=range(0, 500, 13)))
