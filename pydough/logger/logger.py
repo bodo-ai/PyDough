@@ -8,9 +8,9 @@ import sys
 
 
 def get_logger(
-    name: str = __name__,
+    logger_name: str = "pydough",
     default_level: int = logging.INFO,
-    fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    fmt="%(asctime)s [%(levelname)s] %(module)s: %(message)s",
     handlers: list[logging.Handler] | None = None,
 ) -> logging.Logger:
     """
@@ -18,14 +18,14 @@ def get_logger(
     The default handler redirects to standard output. Additional handlers can be sent as a list.
 
     Args:
-        `name` : Logger name, usually the `__name__` from the calling module.
+        `logger_name` : The logger name you want to get or create (in case it does not exists)
         `default_level` : Default logging level if not set externally.
         `fmt` : The format of the string compatible with python's logging library.
         `handlers` : A list of `logging.Handler` instances to add to the logger.
     Returns:
         `logging.Logger` : Configured logger instance.
     """
-    logger: logging.Logger = logging.getLogger(name)
+    logger: logging.Logger = logging.getLogger(logger_name)
     level_env: str | None = os.getenv("PYDOUGH_LOG_LEVEL")
     level: int
 
@@ -51,18 +51,21 @@ def get_logger(
         )
         level = default_level
 
-    # Create default console handler
-    default_handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
-    default_handler.setLevel(level)
-    # Create formatter
-    formatter: logging.Formatter = logging.Formatter(fmt)
-    # Attach formatter to the default handler
-    default_handler.setFormatter(formatter)
     # Avoid adding duplicate handlers
     if not logger.handlers:
+        # Create default console handler
+        default_handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
+        default_handler.setLevel(level)
+        # Create formatter
+        formatter: logging.Formatter = logging.Formatter(fmt)
+        # Attach formatter to the default handler
+        default_handler.setFormatter(formatter)
         logger.addHandler(default_handler)
+        # Add additional provided handlers
         if handlers:
             for handler in handlers:
+                if (handler.level == logging.NOTSET):
+                    handler.setLevel(level)
                 handler.setFormatter(formatter)
                 logger.addHandler(handler)
     logger.setLevel(level)
