@@ -8,8 +8,10 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.types import PyDoughType
 from pydough.types.string_type import StringType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
@@ -19,6 +21,7 @@ from .sqlglot_transform_utils import (
     create_constant_table,
     expand_std,
     expand_variance,
+    generate_dataframe_rows,
     generate_range_rows,
 )
 
@@ -730,7 +733,26 @@ class MySQLTransformBindings(BaseTransformBindings):
         range_rows: list[SQLGlotExpression] = generate_range_rows(collection, False)
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, [collection.column_name], range_rows
+            collection.name, [collection.column_name], range_rows, False
+        )
+
+        return result
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            False,  # Use ROW
+            dialect,
+        )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, collection.columns, dataframe_rows, False
         )
 
         return result

@@ -383,6 +383,10 @@ def test_pipeline_e2e_mysql_tpch(
     """
     Test executing the TPC-H queries from the original code generation on MySQL.
     """
+    # NOTE: This should be moved to tpch_custom once is merged
+    if tpch_pipeline_test_data.test_name == "dataframe_collection_inf":
+        pytest.skip("Skipping test as MySQL does not support Infinity values.")
+
     tpch_pipeline_test_data.run_e2e_test(
         get_sample_graph,
         mysql_conn_db_context("tpch"),

@@ -8,14 +8,18 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
+    generate_dataframe_rows,
 )
 
 
@@ -672,5 +676,26 @@ class PostgresTransformBindings(BaseTransformBindings):
         result: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[sqlglot_expressions.Column(this=column_name)]
         ).from_(table)
+
+        return result
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            True,  # Use tuple
+            dialect,
+        )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name,
+            collection.columns,
+            dataframe_rows,
+            False,  # Dont alias columns
+        )
 
         return result

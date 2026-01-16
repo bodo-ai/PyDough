@@ -575,7 +575,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     def visit_generated_table(self, generated_table: "GeneratedTable") -> None:
         query: SQLGlotExpression = (
             self._expr_visitor._bindings.convert_user_generated_collection(
-                generated_table.collection
+                generated_table.collection, self._session.database.dialect
             )
         )
         self._stack.append(query)

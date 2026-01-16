@@ -15,8 +15,10 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
@@ -25,6 +27,7 @@ from .sqlglot_transform_utils import (
     apply_parens,
     create_constant_table,
     current_ts_pattern,
+    generate_dataframe_rows,
     generate_range_rows,
     offset_pattern,
     pad_helper,
@@ -2176,6 +2179,7 @@ class BaseTransformBindings:
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
+        dialect: DatabaseDialect,
     ) -> SQLGlotExpression:
         """
         Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
@@ -2190,6 +2194,8 @@ class BaseTransformBindings:
         match collection:
             case RangeGeneratedCollection():
                 return self.convert_user_generated_range(collection)
+            case DataframeGeneratedCollection():
+                return self.convert_user_generated_dataframe(collection, dialect)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
@@ -2212,6 +2218,27 @@ class BaseTransformBindings:
 
         result: SQLGlotExpression = create_constant_table(
             collection.name, [collection.column_name], range_rows
+        )
+
+        return result
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            True,  # Use tuple
+            dialect,
+        )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name,
+            collection.columns,
+            dataframe_rows,
         )
 
         return result

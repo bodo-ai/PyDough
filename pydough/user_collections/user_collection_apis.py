@@ -4,7 +4,10 @@ Implementation of User Collection APIs in PyDough.
 
 __all__ = ["range_collection"]
 
+import pandas as pd
+
 from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 
@@ -43,3 +46,32 @@ def range_collection(
     )
 
     return UnqualifiedGeneratedCollection(range_collection)
+
+
+def dataframe_collection(
+    name: str, dataframe: pd.DataFrame
+) -> UnqualifiedGeneratedCollection:
+    """
+    Implementation of the `pydough.dataframe_collection` function, which provides
+    a way to create a collection of pandas dataframe in PyDough.
+
+    Args:
+        `name` : The name of the collection.
+        `dataframe` : The dataframe of the collection
+
+    Returns:
+        A collection with the given dataframe.
+    """
+    if not isinstance(name, str):
+        raise TypeError(f"Expected 'name' to be a string, got {type(name).__name__}")
+    if not isinstance(dataframe, pd.DataFrame):
+        raise TypeError(
+            f"Expected 'dataframe' to be a pandas DataFrame, got {type(dataframe).__name__}"
+        )
+
+    dataframe_collection = DataframeGeneratedCollection(
+        name=name,
+        dataframe=dataframe,
+    )
+
+    return UnqualifiedGeneratedCollection(dataframe_collection)
