@@ -337,7 +337,40 @@ def dataframe_collection_cross():
     )
 
 
-# COLLECTION OPERATORS TESTS
+def dataframe_collection_partition():
+    products_df = pd.DataFrame(
+        {
+            "product_id": range(1, 5),
+            "product_category": ["A", "B", "A", "B"],
+            "price": [17.99, 45.65, 15, 10.99],
+        }
+    )
+    pricing_rules_df = pd.DataFrame(
+        {
+            "rule_id": range(1, 4),
+            "rule_category": ["A", "B", "C"],
+            "discount": [0.10, 0.15, 0.05],
+        }
+    )
+
+    products = pydough.dataframe_collection(name="products", dataframe=products_df)
+    pricing_rules = pydough.dataframe_collection(
+        name="pricing_rules", dataframe=pricing_rules_df
+    ).CALCULATE(rule_id, rule_category, discount)
+    return (
+        products.CALCULATE(product_id, product_category, price)
+        .CROSS(pricing_rules)
+        .WHERE(product_category == rule_category)
+        .PARTITION(name="category", by=product_category)
+        .CALCULATE(
+            product_category,
+            avg_price=AVG(products.price),
+            n_products=COUNT(products),
+            min_discount=MIN(pricing_rules.discount),
+        )
+    )
+
+
 def dataframe_collection_where():
     # Return all suppliers in that region whose account_balance is greater than
     # the DataFrame value.

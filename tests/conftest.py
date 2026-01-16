@@ -85,6 +85,7 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_datatypes,
     dataframe_collection_inf,
     dataframe_collection_numbers,
+    dataframe_collection_partition,
     dataframe_collection_strings,
     dataframe_collection_where,
     simple_dataframe_1,
@@ -2298,6 +2299,22 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "dataframe_collection_cross",
             ),
             id="dataframe_collection_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_partition,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "product_category": ["A", "B"],
+                        "avg_price": [16.495000, 28.320000],
+                        "n_products": [2, 2],
+                        "avg_discount": [0.10, 0.15],
+                    }
+                ),
+                "dataframe_collection_partition",
+            ),
+            id="dataframe_collection_partition",
         ),
         pytest.param(
             PyDoughPandasTest(
