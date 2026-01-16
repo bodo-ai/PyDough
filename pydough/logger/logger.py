@@ -64,7 +64,7 @@ def get_logger(
         # Add additional provided handlers
         if handlers:
             for handler in handlers:
-                if (handler.level == logging.NOTSET):
+                if handler.level == logging.NOTSET:
                     handler.setLevel(level)
                 handler.setFormatter(formatter)
                 logger.addHandler(handler)
