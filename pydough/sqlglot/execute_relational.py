@@ -544,6 +544,6 @@ def execute_df(
     """
     sql: str = convert_relation_to_sql(relational, session, max_rows)
     if display_sql:
-        pyd_logger = get_logger(__name__)
+        pyd_logger = get_logger()
         pyd_logger.info(f"SQL query:\n {sql}")
     return session._database.connection.execute_query_df(sql)
