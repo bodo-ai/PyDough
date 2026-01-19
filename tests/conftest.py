@@ -87,6 +87,7 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_numbers,
     dataframe_collection_partition,
     dataframe_collection_strings,
+    dataframe_collection_top_k,
     dataframe_collection_where,
     dataframe_collection_where_date,
     simple_dataframe_1,
@@ -2354,6 +2355,41 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "dataframe_collection_where_date",
             ),
             id="dataframe_collection_where_date",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_top_k,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "firebrick spring powder moccasin light",
+                            "light navy deep papaya olive",
+                            "black rosy lemon blue gainsboro",
+                            "cornsilk bisque lace slate deep",
+                            "blanched firebrick royal purple chartreuse",
+                        ],
+                        "shipping_type": ["REG AIR", "TRUCK", "SHIP", "TRUCK", "SHIP"],
+                        "extended_price": [
+                            904.00,
+                            905.00,
+                            916.01,
+                            908.00,
+                            922.00,
+                        ],
+                        "added_discount": [0.15, 0.15, 0.16, 0.15, 0.16],
+                        "final_price": [
+                            768.4000,
+                            769.2500,
+                            769.4484,
+                            771.8000,
+                            774.4800,
+                        ],
+                    }
+                ),
+                "dataframe_collection_top_k",
+            ),
+            id="dataframe_collection_top_k",
         ),
     ],
 )

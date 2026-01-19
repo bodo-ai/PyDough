@@ -445,6 +445,33 @@ def dataframe_collection_where_date():
     )
 
 
+def dataframe_collection_top_k():
+    discounts_df = pd.DataFrame(
+        {
+            "shipping_type": ["REG AIR", "SHIP", "TRUCK"],
+            "added_discount": [0.05, 0.06, 0.05],
+        }
+    )
+
+    disccount_added = pydough.dataframe_collection(
+        name="discounts", dataframe=discounts_df
+    )
+
+    return (
+        disccount_added.CALCULATE(shipping_type, added_discount)
+        .CROSS(lines)
+        .WHERE(shipping_type == ship_mode)
+        .CALCULATE(
+            part.name,
+            shipping_type,
+            extended_price,
+            added_discount=discount + added_discount,
+            final_price=extended_price * (1 - (discount + added_discount)),
+        )
+        .TOP_K(5, by=final_price.ASC())
+    )
+
+
 # Collection Operators to test:
 # WHERE (coverred)
 # ORDER_BY
