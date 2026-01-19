@@ -338,6 +338,7 @@ def dataframe_collection_cross():
 
 
 def dataframe_collection_partition():
+    # CHECK THIS TEST
     products_df = pd.DataFrame(
         {
             "product_id": range(1, 5),
@@ -353,22 +354,40 @@ def dataframe_collection_partition():
         }
     )
 
-    products = pydough.dataframe_collection(name="products", dataframe=products_df)
+    products = pydough.dataframe_collection(
+        name="products_collection", dataframe=products_df
+    )
+
     pricing_rules = pydough.dataframe_collection(
-        name="pricing_rules", dataframe=pricing_rules_df
-    ).CALCULATE(rule_id, rule_category, discount)
+        name="pricing_collection", dataframe=pricing_rules_df
+    )
+
+    pricing_calc = pricing_rules.CALCULATE(rule_category, discount)
+    products_calc = products.CALCULATE(product_id, product_category, price)
+
     return (
         products.CALCULATE(product_id, product_category, price)
-        .CROSS(pricing_rules)
+        .CROSS(pricing_calc)
         .WHERE(product_category == rule_category)
         .PARTITION(name="category", by=product_category)
         .CALCULATE(
             product_category,
             avg_price=AVG(products.price),
             n_products=COUNT(products),
-            min_discount=MIN(pricing_rules.discount),
+            min_discount=MIN(pricing_calc.discount),
         )
     )
+    # my_regions = regions.CALCULATE(region_id=key, region_name=name)
+    # my_nations = nations.CALCULATE(nation=name, n_region_id=region.key)
+    # return (
+    #     my_regions.CROSS(my_nations)
+    #     .WHERE(region_id == n_region_id)
+    #     .PARTITION(name="nation_region", by=region_name)
+    #     .CALCULATE(
+    #         region_name=region_name,
+    #         n_nations=COUNT(my_nations)
+    #     )
+    # )
 
 
 def dataframe_collection_where():
@@ -394,6 +413,35 @@ def dataframe_collection_where():
         )
         .PARTITION(name="region", by=sup_region_name)
         .CALCULATE(sup_region_name, n_suppliers=COUNT(suppliers))
+    )
+
+
+def dataframe_collection_where_date():
+    # Given a DataFrame defining (clerk_id, start_date, end_date),
+    # return how many orders from the clerk falls within that range.
+    date_df = pd.DataFrame(
+        {
+            "clerk_id": ["Clerk#000000456", "Clerk#000000743", "Clerk#000000547"],
+            "start_date": pd.to_datetime(["1996-01-01", "1995-06-01", "1995-11-01"]),
+            "end_date": pd.to_datetime(["1996-02-01", "1995-07-01", "1995-12-01"]),
+        }
+    )
+
+    thresholds_dates = pydough.dataframe_collection(name="dates", dataframe=date_df)
+
+    return (
+        thresholds_dates.CALCULATE(
+            clerk_id,
+            start_date,
+            end_date,
+        )
+        .CROSS(orders)
+        .WHERE(
+            (clerk_id == clerk)
+            & (MONOTONIC(start_date, DATETIME(order_date), end_date))
+        )
+        .PARTITION(name="clerk_orders", by=clerk_id)
+        .CALCULATE(clerk_id, n_orders=COUNT(orders))
     )
 
 

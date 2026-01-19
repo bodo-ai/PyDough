@@ -1,0 +1,5 @@
+ROOT(columns=[('clerk_id', clerk_id), ('n_orders', n_rows)], orderings=[])
+ AGGREGATE(keys={'clerk_id': clerk_id}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.clerk_id == t1.o_clerk & MONOTONIC(t0.start_date, DATETIME(t1.o_orderdate), t0.end_date), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'clerk_id': t0.clerk_id})
+   GENERATED_TABLE(DataframeCollection(name='dates', shape=(3, 3), columns=['clerk_id', 'start_date', 'end_date']))
+   SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_orderdate': o_orderdate})

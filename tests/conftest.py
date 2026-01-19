@@ -88,6 +88,7 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_partition,
     dataframe_collection_strings,
     dataframe_collection_where,
+    dataframe_collection_where_date,
     simple_dataframe_1,
     simple_range_1,
     simple_range_2,
@@ -2335,6 +2336,24 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "dataframe_collection_where",
             ),
             id="dataframe_collection_where",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_where_date,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "clerk_id": [
+                            "Clerk#000000456",
+                            "Clerk#000000743",
+                            "Clerk#000000547",
+                        ],
+                        "n_orders": [20, 16, 13],
+                    }
+                ),
+                "dataframe_collection_where_date",
+            ),
+            id="dataframe_collection_where_date",
         ),
     ],
 )
