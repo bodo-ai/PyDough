@@ -1086,7 +1086,7 @@ from .testing_sf_masked_utilities import (
                 + "))\n"
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
-                "large_name_list",
+                "large_name_single_list",
                 order_sensitive=True,
                 answers={
                     "NONE": None,
