@@ -38,6 +38,7 @@ def get_logger(
         `logging.Logger` : Configured logger instance.
     """
     logger: logging.Logger = logging.getLogger(name)
+    level: int = logging.INFO
     if default_level is None:
         # Get log level from PYDOUGH_LOG_LEVEL
         level_env = os.getenv("PYDOUGH_LOG_LEVEL")
@@ -52,7 +53,7 @@ def get_logger(
                 f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be one of {', '.join(allowed_levels)}, found {default_level}"
             )
             # Convert string level (e.g., "DEBUG", "INFO") to a logging constant
-            default_level = getattr(logging, level_env, logging.INFO)
+            level = getattr(logging, level_env, logging.INFO)
     else:
         assert default_level in [
             logging.DEBUG,
@@ -63,11 +64,11 @@ def get_logger(
         ], (
             f"expected arguement default_value to be one of logging.DEBUG,logging.INFO,logging.WARNING,logging.ERROR,logging.CRITICAL, found {default_level}"
         )
-    level: int = default_level if default_level is not None else logging.INFO
+        level = default_level
 
     # Create formatter
     formatter: logging.Formatter = logging.Formatter(fmt)
-    if get_level_source_logger(logger).name == "root":
+    if (default_level is not None) or (get_level_source_logger(logger).name == "root"):
         # Set logLevel if no level has been set for pydough module
         logger.setLevel(level)
     # Add provided handlers
