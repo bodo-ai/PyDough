@@ -87,6 +87,31 @@ def test_get_logger_no_duplicate_handlers():
     assert len(logger.handlers) == initial_handler_count
 
 
+def test_get_logger_propagation(monkeypatch):
+    """
+    Test logger with a custom handler.
+    """
+    # Create a custom handler
+    buf = StringIO()
+    custom_handler = logging.StreamHandler(buf)
+    # Create the pydough logger with the custom handler (default name is pydough)
+    logger1 = get_logger(default_level=logging.WARN, handlers=[custom_handler])
+    # Avoid interference from root handlers
+    logger1.propagate = False
+    # Create new logger that will propagate messages to logger1 handlers
+    # logger2 log level will be logging.NOTSET because logger1 already exists,
+    # hence propagated log messages will use logger1 level
+    logger2 = get_logger(name="pydough.mask_server.mask_server")
+    # Log messages of different levels
+    logger2.info("This is a INFO message")
+    logger2.warning("This is a WARNING message")
+
+    custom_handler.flush()
+    output = buf.getvalue()
+    assert "This is a INFO message" not in output
+    assert output.count("This is a WARNING message") == 1
+
+
 def test_get_logger_format():
     """
     Test if the log format is correctly applied.
