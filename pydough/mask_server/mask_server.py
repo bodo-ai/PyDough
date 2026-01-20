@@ -179,7 +179,7 @@ class MaskServerInfo:
             hard_limit = 1000
 
         # Log the batch request
-        pyd_logger = get_logger()
+        pyd_logger = get_logger(__name__)
         if dry_run:
             pyd_logger.info(
                 f"Batch request (dry run) to Mask Server ({len(batch)} items):"
