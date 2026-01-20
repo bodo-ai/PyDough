@@ -806,7 +806,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_members))",
                 "FSI",
                 "fsi_accounts_customers_compound_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -821,7 +820,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_members))",
                 "FSI",
                 "fsi_accounts_customers_compound_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -836,7 +834,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_members))",
                 "FSI",
                 "fsi_accounts_customers_compound_c",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -851,7 +848,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_names_analysis_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -866,7 +862,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_names_analysis_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -881,7 +876,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_all",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -896,7 +890,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_none",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -911,7 +904,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -926,7 +918,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -941,7 +932,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_c",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -956,7 +946,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_d",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -971,7 +960,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_e",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -1006,7 +994,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "large_name_list",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -1087,7 +1074,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "large_name_single_list",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -1106,7 +1092,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "patients_claims",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -1114,6 +1099,26 @@ from .testing_sf_masked_utilities import (
                 },
             ),
             id="patients_claims",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_accounts = accounts.WHERE("
+                "   MONOTONIC('2022-01-20', creation_date, '2022-09-15') &"
+                "   (status == 'Active') &"
+                "   ~(account_type == 'Checking') &"
+                "   ~ISIN(DAY(creation_date), (10, 15, 20)) &"
+                "   (currency == 'USD')"
+                ")\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_accounts))",
+                "FSI",
+                "fsi_accounts_complex_filter",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [4]}),
+                },
+            ),
+            id="fsi_accounts_complex_filter",
         ),
     ],
 )
