@@ -31,7 +31,7 @@ def get_logger(
 
     Args:
         `name` : The logger name you want to get or create (in case it does not exists)
-        `default_level` : Default logging level if not set externally.
+        `default_level` : Logging level. PYDOUGH_LOG_LEVEL value will be used if not set and not ancestor level has been already set.
         `fmt` : The format of the string compatible with python's logging library.
         `handlers` : A list of `logging.Handler` instances to add to the logger.
     Returns:
@@ -68,7 +68,7 @@ def get_logger(
     # Create formatter
     formatter: logging.Formatter = logging.Formatter(fmt)
     if get_level_source_logger(logger).name == "root":
-        # Set logLevel to PYDOUGH_LOG_LEVEL if no level has been set for pydough module
+        # Set logLevel if no level has been set for pydough module
         logger.setLevel(level)
     # Add provided handlers
     if handlers:
