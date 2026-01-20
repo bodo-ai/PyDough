@@ -103,12 +103,12 @@ def test_get_logger_propagation(monkeypatch):
     # hence propagated log messages will use logger1 level
     logger2 = get_logger(name="pydough.mask_server.mask_server")
     # Log messages of different levels
-    logger2.info("This is a INFO message")
+    logger2.info("This is an INFO message")
     logger2.warning("This is a WARNING message")
 
     custom_handler.flush()
     output = buf.getvalue()
-    assert "This is a INFO message" not in output
+    assert "This is an INFO message" not in output
     assert output.count("This is a WARNING message") == 1
 
 
@@ -127,28 +127,56 @@ logger.error("Test format")
     assert "ERROR - Test format" in p.stdout
 
 
-@pytest.mark.skip(reason="Requires design discussion")
-def test_get_logger_env_level_overriding_default_value():
+def test_get_logger_arg_level_precedence():
     """
-    Test if the logger picks up level from env variable when given default_value in the arguments
+    Test if the argument level takes precedence over PYDOUGH_LOG_LEVEL and ancestor level
     """
-    # Set the environment variable to override the log level
+    # Set the environment variable for a default log level
     env: dict = {"PYDOUGH_LOG_LEVEL": "DEBUG"}
     code = r"""
 from pydough.logger import get_logger
 import logging
 
-logger = get_logger(
-    name="env_level_overriding_default_value_test_logger",
-    default_level=logging.INFO,
-)
-logger.debug("This is a DEBUG message")
+logger1 = get_logger()
+logger2 = get_logger(name="pydough.mask_server.mask_server", default_level=logging.WARN)
+logger2.debug("This is a DEBUG message")
+logger2.info("This is an INFO message")
+logger2.warning("This is a WARNING message")
+logger1.debug("This DEBUG message should be logged")
 """
     p = subprocess.run(
         [sys.executable, "-c", code], env=env, capture_output=True, text=True
     )
-    assert "[DEBUG]" in p.stdout
-    assert "This is a DEBUG message" in p.stdout
+    assert "This is a DEBUG message" not in p.stdout
+    assert "This is an INFO message" not in p.stdout
+    assert p.stdout.count("This is a WARNING message") == 1
+    assert p.stdout.count("This DEBUG message should be logged") == 1
+
+
+def test_get_logger_ancestor_level_precedence():
+    """
+    Test if ancestor level takes precedence over PYDOUGH_LOG_LEVEL
+    """
+    # Set the environment variable for a default log level
+    env: dict = {"PYDOUGH_LOG_LEVEL": "DEBUG"}
+    code = r"""
+from pydough.logger import get_logger
+import logging
+
+logger1 = get_logger(default_level=logging.WARN)
+logger2 = get_logger(name="pydough.mask_server.mask_server")
+logger2.debug("This is a DEBUG message")
+logger2.info("This is an INFO message")
+logger2.warning("This is a WARNING message")
+logger1.debug("This DEBUG message should not be logged")
+"""
+    p = subprocess.run(
+        [sys.executable, "-c", code], env=env, capture_output=True, text=True
+    )
+    assert "This is a DEBUG message" not in p.stdout
+    assert "This is an INFO message" not in p.stdout
+    assert p.stdout.count("This is a WARNING message") == 1
+    assert "This DEBUG message should not be logged" not in p.stdout
 
 
 @pytest.mark.parametrize(
