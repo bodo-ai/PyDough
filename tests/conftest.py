@@ -81,6 +81,7 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q22,
 )
 from tests.test_pydough_functions.user_collections import (
+    dataframe_collection_best,
     dataframe_collection_cross,
     dataframe_collection_datatypes,
     dataframe_collection_inf,
@@ -2390,6 +2391,40 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "dataframe_collection_top_k",
             ),
             id="dataframe_collection_top_k",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_best,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000107698",
+                            "Customer#000138094",
+                            "Customer#000053551",
+                            "Customer#000025090",
+                            "Customer#000064043",
+                        ],
+                        "order_key": [5267200, 4318946, 1600323, 1591073, 823814],
+                        "order_priority": [
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "1-URGENT",
+                            "4-NOT SPECIFIED",
+                            "1-URGENT",
+                        ],
+                        "cheapest_order_price": [
+                            901.7856,
+                            902.5164,
+                            910.245,
+                            913.2978,
+                            914.4240,
+                        ],
+                    }
+                ),
+                "dataframe_collection_best",
+            ),
+            id="dataframe_collection_best",
         ),
     ],
 )

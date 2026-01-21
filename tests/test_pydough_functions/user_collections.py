@@ -472,17 +472,29 @@ def dataframe_collection_top_k():
     )
 
 
-# Collection Operators to test:
-# WHERE (coverred)
-# ORDER_BY
-# TOP_K
-# PARTITION (coverred and fixed)
-# SINGULAR
-# BEST
-# CROSS (coverred)
-
-# TEST LIST:
-# Test different datatypes (bad)
-# Test unsupported datatypes
-# Test using the table
-# Test all posible things with 2 dataframes collections (CROSS, JOIN, FILTER, ...)
+def dataframe_collection_best():
+    priority_tax_df = pd.DataFrame(
+        {
+            "priority_lvl": ["1-URGENT", "2-HIGH", "3-MEDIUM", "4-NOT SPECIFIED"],
+            "tax_rate": [0.05, 0.04, 0.03, 0.02],
+        }
+    )
+    priority_taxes_collection = pydough.dataframe_collection(
+        name="priority_taxes", dataframe=priority_tax_df
+    )
+    cheapest_order = (
+        orders.CALCULATE(key, order_priority, total_price)
+        .CROSS(priority_taxes_collection)
+        .WHERE(order_priority == priority_lvl)
+        .CALCULATE(
+            order_priority, key, tax_price=(total_price + total_price * tax_rate)
+        )
+        .BEST(by=tax_price.ASC(), per="orders")
+        .SINGULAR()
+    )
+    return customers.CALCULATE(
+        name,
+        order_key=cheapest_order.key,
+        order_priority=cheapest_order.order_priority,
+        cheapest_order_price=cheapest_order.tax_price,
+    ).TOP_K(5, by=cheapest_order_price.ASC())
