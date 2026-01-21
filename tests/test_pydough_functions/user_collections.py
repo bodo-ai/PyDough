@@ -338,7 +338,6 @@ def dataframe_collection_cross():
 
 
 def dataframe_collection_partition():
-    # CHECK THIS TEST
     products_df = pd.DataFrame(
         {
             "product_id": range(1, 5),
@@ -356,38 +355,23 @@ def dataframe_collection_partition():
 
     products = pydough.dataframe_collection(
         name="products_collection", dataframe=products_df
-    )
+    ).CALCULATE(product_id, product_category, price)
 
     pricing_rules = pydough.dataframe_collection(
         name="pricing_collection", dataframe=pricing_rules_df
-    )
-
-    pricing_calc = pricing_rules.CALCULATE(rule_category, discount)
-    products_calc = products.CALCULATE(product_id, product_category, price)
+    ).CALCULATE(rule_category, discount)
 
     return (
-        products.CALCULATE(product_id, product_category, price)
-        .CROSS(pricing_calc)
+        products.CROSS(pricing_rules)
         .WHERE(product_category == rule_category)
         .PARTITION(name="category", by=product_category)
         .CALCULATE(
             product_category,
-            avg_price=AVG(products.price),
-            n_products=COUNT(products),
-            min_discount=MIN(pricing_calc.discount),
+            avg_price=AVG(pricing_collection.price),
+            n_products=COUNT(pricing_collection),
+            min_discount=MIN(pricing_collection.discount),
         )
     )
-    # my_regions = regions.CALCULATE(region_id=key, region_name=name)
-    # my_nations = nations.CALCULATE(nation=name, n_region_id=region.key)
-    # return (
-    #     my_regions.CROSS(my_nations)
-    #     .WHERE(region_id == n_region_id)
-    #     .PARTITION(name="nation_region", by=region_name)
-    #     .CALCULATE(
-    #         region_name=region_name,
-    #         n_nations=COUNT(my_nations)
-    #     )
-    # )
 
 
 def dataframe_collection_where():
@@ -399,20 +383,21 @@ def dataframe_collection_where():
             "min_account_balance": [5000.32, 8000, 4600.32, 6400.50, 8999.99],
         }
     )
-    thresholds = pydough.dataframe_collection(name="thresholds", dataframe=threshold_df)
+    thresholds = pydough.dataframe_collection(
+        name="thresholds_collection", dataframe=threshold_df
+    ).CALCULATE(region_name, min_account_balance)
 
     filtered_suppliers = suppliers.CALCULATE(
         sup_region_name=nation.region.name, account_balance=account_balance
     )
 
     return (
-        thresholds.CALCULATE(region_name, min_account_balance)
-        .CROSS(filtered_suppliers)
+        thresholds.CROSS(filtered_suppliers)
         .WHERE(
             (sup_region_name == region_name) & (account_balance > min_account_balance)
         )
         .PARTITION(name="region", by=sup_region_name)
-        .CALCULATE(sup_region_name, n_suppliers=COUNT(suppliers))
+        .CALCULATE(sup_region_name, n_suppliers=COUNT(filtered_suppliers))
     )
 
 
@@ -427,15 +412,12 @@ def dataframe_collection_where_date():
         }
     )
 
-    thresholds_dates = pydough.dataframe_collection(name="dates", dataframe=date_df)
+    thresholds_dates = pydough.dataframe_collection(
+        name="dates", dataframe=date_df
+    ).CALCULATE(clerk_id, start_date, end_date)
 
     return (
-        thresholds_dates.CALCULATE(
-            clerk_id,
-            start_date,
-            end_date,
-        )
-        .CROSS(orders)
+        thresholds_dates.CROSS(orders)
         .WHERE(
             (clerk_id == clerk)
             & (MONOTONIC(start_date, DATETIME(order_date), end_date))
@@ -455,11 +437,10 @@ def dataframe_collection_top_k():
 
     disccount_added = pydough.dataframe_collection(
         name="discounts", dataframe=discounts_df
-    )
+    ).CALCULATE(shipping_type, added_discount)
 
     return (
-        disccount_added.CALCULATE(shipping_type, added_discount)
-        .CROSS(lines)
+        disccount_added.CROSS(lines)
         .WHERE(shipping_type == ship_mode)
         .CALCULATE(
             part.name,
@@ -498,3 +479,113 @@ def dataframe_collection_best():
         order_priority=cheapest_order.order_priority,
         cheapest_order_price=cheapest_order.tax_price,
     ).TOP_K(5, by=cheapest_order_price.ASC())
+
+
+# Windows functions
+def dataframe_collection_window_functions():
+    customers_filters_df = pd.DataFrame(
+        {
+            "nation_name": ["UNITED STATES", "JAPAN", "BRAZIL"],
+            "mrk_segment": ["BUILDING", "AUTOMOBILE", "MACHINERY"],
+        }
+    )
+    customers_filters = pydough.dataframe_collection(
+        name="customers_filters", dataframe=customers_filters_df
+    ).CALCULATE(nation_name, mrk_segment)
+
+    order_date_diff = orders.CALCULATE(
+        month_diff=DATEDIFF(
+            "months", PREV(order_date, by=order_date.ASC(), per="customers"), order_date
+        )
+    )
+
+    order_price_diff = orders.CALCULATE(
+        price_diff=(
+            total_price - NEXT(total_price, by=order_date.ASC(), per="customers")
+        )
+    )
+
+    return (
+        customers_filters.CROSS(customers)
+        .WHERE(
+            (nation.name == nation_name)
+            & (market_segment == mrk_segment)
+            & (PERCENTILE(by=account_balance.ASC(), n_buckets=1000) > 996)
+        )
+        .CALCULATE(
+            name,
+            ranking_balance=RANKING(by=account_balance.DESC(), per="customers_filters"),
+            n_orders=COUNT(orders),
+            avg_month_orders=AVG(order_date_diff.month_diff),
+            avg_price_diff=AVG(order_price_diff.price_diff),
+            proportion=account_balance / RELSUM(account_balance),
+            above_avg=IFF(account_balance > RELAVG(account_balance), True, False),
+            n_poorer=RELCOUNT(
+                account_balance, by=(account_balance.ASC()), cumulative=True
+            ),
+            ratio=account_balance / RELSIZE(),
+        )
+        .ORDER_BY(name.ASC())
+    )
+
+
+# BAD TESTS
+def dataframe_collection_bad_1():
+    # Different column sizes
+    df_bad = pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": ["a", "b"],
+        }
+    )
+    print("we can make it here")
+    return pydough.dataframe_collection("bad_df_1", df_bad)
+
+
+def dataframe_collection_bad_2():
+    # Different datatypes within same column
+    df_bad = pd.DataFrame(
+        {
+            "col1": [1, "two", 3],
+            "col2": ["a", "b", "c"],
+            "col3": ["a", None, "c"],
+        }
+    )
+    return pydough.dataframe_collection("bad_df_2", df_bad)
+
+
+def dataframe_collection_bad_3():
+    # Empty column
+    df_col_empty = pd.DataFrame(
+        {
+            "col1": [],
+            "col2": [],
+        }
+    )
+    return pydough.dataframe_collection("empty_col_df", df_col_empty)
+
+
+def dataframe_collection_bad_4():
+    # Empty dataframe
+    df_empty = pd.DataFrame({})
+    return pydough.dataframe_collection("empty_df", df_empty)
+
+
+def dataframe_collection_bad_5():
+    # Unsupported datatypes (array, struct, map, etc)
+    df_unsupported = pd.DataFrame(
+        {
+            "col1": [[1, 2], [3, 4], [5, 6]],  # list/array type
+        }
+    )
+    return pydough.dataframe_collection("unsupported_df", df_unsupported)
+
+
+def dataframe_collection_bad_6():
+    # Unsupported datatypes (array, struct, map, etc)
+    df_unsupported = pd.DataFrame(
+        {
+            "col1": [{"a": 1}, {"b": 2}, {"c": 3}],  # dict/map type
+        }
+    )
+    return pydough.dataframe_collection("unsupported_df", df_unsupported)

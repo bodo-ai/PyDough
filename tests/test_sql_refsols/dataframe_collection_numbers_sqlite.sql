@@ -1,9 +1,9 @@
 SELECT
-  column1 AS py_float,
-  column2 AS np_float64,
-  column3 AS np_float32,
-  column4 AS null_vs_nan,
-  column5 AS decimal_val
+  numbers.column1 AS py_float,
+  numbers.column2 AS np_float64,
+  numbers.column3 AS np_float32,
+  numbers.column4 AS null_vs_nan,
+  numbers.column5 AS decimal_val
 FROM (VALUES
   (1.5, 1.5, 1.5, NULL, 1.50),
   (0.0, 0.0, 3.33333, NULL, 0.00),

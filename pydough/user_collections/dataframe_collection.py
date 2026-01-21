@@ -81,8 +81,21 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         Verify that each column has homogeneos type and gets its type
         and convert it to PyDoughType.
         """
-        if len({type(v) for v in dataframe.dropna()}) > 1:
-            raise TypeError("Mixed types columns are not allowed")
+        if len(dataframe.columns) == 0:
+            raise ValueError(
+                "Dataframe is empty. Must have at least one column and one value."
+            )
+
+        for col in list(dataframe.columns):
+            types_list = {type(v) for v in dataframe[col].dropna()}
+            if len(types_list) > 1:
+                raise TypeError(
+                    f"Mixed types in column '{col}': {types_list}. All values in a column must be of the same type."
+                )
+            elif len(dataframe[col]) == 0:
+                raise TypeError(
+                    f"Column '{col}' is empty. All columns must have at least one value."
+                )
 
         pyd_types: list[PyDoughType] = []
 
@@ -134,7 +147,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
                 raise ValueError("Arrays are not supported for dataframe collections")
 
             case _ if pa.types.is_struct(field_type):
-                raise ValueError("Scructs are not supported for dataframe collections")
+                raise ValueError("Structs are not supported for dataframe collections")
 
             case _ if pa.types.is_dictionary(field_type):
                 raise ValueError(

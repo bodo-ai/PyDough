@@ -182,6 +182,14 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
+from tests.test_pydough_functions.user_collections import (
+    dataframe_collection_bad_1,
+    dataframe_collection_bad_2,
+    dataframe_collection_bad_3,
+    dataframe_collection_bad_4,
+    dataframe_collection_bad_5,
+    dataframe_collection_bad_6,
+)
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
@@ -3670,6 +3678,48 @@ def test_pipeline_e2e_tpch_custom(
                 "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE(20, 0.9)"
             ),
             id="bad_quantile_6",
+        ),
+        pytest.param(
+            dataframe_collection_bad_1,
+            None,
+            re.escape("All arrays must be of the same length"),
+            id="dataframe_collection_bad_1",
+        ),
+        pytest.param(
+            dataframe_collection_bad_2,
+            None,
+            re.escape(
+                "Mixed types in column 'col1': {<class 'int'>, <class 'str'>}. All values in a column must be of the same type."
+            ),
+            id="dataframe_collection_bad_2",
+        ),
+        pytest.param(
+            dataframe_collection_bad_3,
+            None,
+            re.escape(
+                "Column 'col1' is empty. All columns must have at least one value."
+            ),
+            id="dataframe_collection_bad_3",
+        ),
+        pytest.param(
+            dataframe_collection_bad_4,
+            None,
+            re.escape(
+                "Dataframe is empty. Must have at least one column and one value."
+            ),
+            id="dataframe_collection_bad_4",
+        ),
+        pytest.param(
+            dataframe_collection_bad_5,
+            None,
+            re.escape("Arrays are not supported for dataframe collections"),
+            id="dataframe_collection_bad_5",
+        ),
+        pytest.param(
+            dataframe_collection_bad_6,
+            None,
+            re.escape("Structs are not supported for dataframe collections"),
+            id="dataframe_collection_bad_6",
         ),
     ],
 )

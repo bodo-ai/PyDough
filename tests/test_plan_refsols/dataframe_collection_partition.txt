@@ -1,5 +1,5 @@
 ROOT(columns=[('product_category', product_category), ('avg_price', avg_price), ('n_products', n_rows), ('min_discount', min_discount)], orderings=[])
  AGGREGATE(keys={'product_category': product_category}, aggregations={'avg_price': AVG(price), 'min_discount': MIN(discount), 'n_rows': COUNT()})
   JOIN(condition=t0.product_category == t1.rule_category, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'discount': t1.discount, 'price': t0.price, 'product_category': t0.product_category})
-   GENERATED_TABLE(DataframeCollection(name='products', shape=(4, 3), columns=['product_id', 'product_category', 'price']))
-   GENERATED_TABLE(DataframeCollection(name='pricing_rules', shape=(3, 3), columns=['rule_id', 'rule_category', 'discount']))
+   GENERATED_TABLE(DataframeCollection(name='products_collection', shape=(4, 3), columns=['product_id', 'product_category', 'price']))
+   GENERATED_TABLE(DataframeCollection(name='pricing_collection', shape=(3, 3), columns=['rule_id', 'rule_category', 'discount']))

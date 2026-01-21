@@ -5,7 +5,7 @@ WITH _s1 AS (
   FROM (VALUES
     (1, 'A', 0.1),
     (2, 'B', 0.15),
-    (3, 'C', 0.05)) AS pricing_rules(rule_id, rule_category, discount)
+    (3, 'C', 0.05)) AS pricing_collection(rule_id, rule_category, discount)
 )
 SELECT
   column2 AS product_category,
@@ -16,7 +16,7 @@ FROM (VALUES
   (1, 'A', 17.99),
   (2, 'B', 45.65),
   (3, 'A', 15.0),
-  (4, 'B', 10.99)) AS products(product_id, product_category, price)
+  (4, 'B', 10.99)) AS products_collection(product_id, product_category, price)
 JOIN _s1 AS _s1
   ON _s1.rule_category = column2
 GROUP BY

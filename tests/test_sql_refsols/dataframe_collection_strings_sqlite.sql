@@ -1,7 +1,7 @@
 SELECT
-  column1 AS normal_strings,
-  column2 AS empty_string,
-  column3 AS special_characters
+  strings.column1 AS normal_strings,
+  strings.column2 AS empty_string,
+  strings.column3 AS special_characters
 FROM (VALUES
   ('hello', '', '''simple quoted'''),
   ('world', 'not_empty', '"double quoted"'),
