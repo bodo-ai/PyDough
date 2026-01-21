@@ -94,7 +94,8 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
 
             # But if the length is >= 50, then it needs to be first broken up
             # into multiple ISIN calls that are OR'd together to avoid exceeding
-            # parameter limits.
+            # parameter limits. This limitation comes up in Snowflake, which
+            # does not allow non-constant tuples with more than 50 elements.
             max_bucket_size = 50
             n_buckets: int = (
                 len(literal_arg.value) + max_bucket_size - 1
