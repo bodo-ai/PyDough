@@ -252,29 +252,32 @@ def test_division_by_zero_to_sql(
 )
 def division_by_zero_db_context(
     request,
-    sqlite_tpch_db_context: DatabaseContext,
-    sf_conn_db_context: Callable,
-    mysql_conn_db_context: Callable,
-    postgres_conn_db_context: DatabaseContext,
     get_sample_graph: graph_fetcher,
     get_sf_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     Returns database context and graph metadata for each supported database.
+    Fixtures are lazily loaded to avoid triggering setup for unused databases.
     """
     match request.param:
         case "sqlite":
-            return sqlite_tpch_db_context, get_sample_graph("TPCH")
+            db_context = request.getfixturevalue("sqlite_tpch_db_context")
+            return db_context, get_sample_graph("TPCH")
         case "snowflake":
+            sf_conn = request.getfixturevalue("sf_conn_db_context")
             return (
-                sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+                sf_conn("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
                 get_sf_sample_graph("TPCH"),
             )
         case "mysql":
-            return mysql_conn_db_context("tpch"), get_sample_graph("TPCH")
+            mysql_conn = request.getfixturevalue("mysql_conn_db_context")
+            return mysql_conn("tpch"), get_sample_graph("TPCH")
         case "postgres":
-            return postgres_conn_db_context, get_sample_graph("TPCH")
-    return sqlite_tpch_db_context, get_sample_graph("TPCH")
+            db_context = request.getfixturevalue("postgres_conn_db_context")
+            return db_context, get_sample_graph("TPCH")
+    # Default fallback
+    db_context = request.getfixturevalue("sqlite_tpch_db_context")
+    return db_context, get_sample_graph("TPCH")
 
 
 @pytest.mark.execute
