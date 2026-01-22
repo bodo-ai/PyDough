@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    column1 AS x
+    a.column1 AS x
   FROM (VALUES
     (0),
     (1),
@@ -14,7 +14,7 @@ WITH _s0 AS (
     (9)) AS a
 ), _s1 AS (
   SELECT
-    column1 AS y
+    b.column1 AS y
   FROM (VALUES
     (0),
     (2),

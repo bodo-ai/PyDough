@@ -13,7 +13,7 @@ WITH _s5 AS (
     1
 )
 SELECT
-  column1 AS year,
+  years.column1 AS year,
   COALESCE(_s5.ndistinct_o_custkey, 0) AS n_orders
 FROM (VALUES
   (1990),
@@ -28,6 +28,6 @@ FROM (VALUES
   (1999),
   (2000)) AS years
 LEFT JOIN _s5 AS _s5
-  ON _s5.year_o_orderdate = column1
+  ON _s5.year_o_orderdate = years.column1
 ORDER BY
   1

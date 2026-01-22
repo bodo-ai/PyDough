@@ -1,6 +1,6 @@
 SELECT
-  column1 AS color,
-  column2 AS idx
+  rainbow.column1 AS color,
+  rainbow.column2 AS idx
 FROM (VALUES
   ('red', 0),
   ('orange', 1),
