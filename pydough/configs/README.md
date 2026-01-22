@@ -15,6 +15,7 @@ The configs module provides functionality to manage various configuration settin
     - `propogate_collation`: If True, the collation of the current expression, which does not have a collation, uses the most recent available collation in the nodes of the term. If False, the expression uses the default collation as specified by `collation_default_asc`. The default is False.
     - `start_of_week`: The day of the week that is considered the start of the week. The default is `DayOfWeek.SUNDAY`.
     - `start_week_as_zero`: If True, then the first day of the week is considered to be 0. If False, then the first day of the week is considered to be 1. The default is True.
+    - `division_by_zero`: The behavior when division by zero occurs. The default is `DivisionByZeroBehavior.DATABASE`. See `DivisionByZeroBehavior` for available options.
 - `DayOfWeek`: Enum to represent the day of the week.
     - `SUNDAY`: Sunday.
     - `MONDAY`: Monday.
@@ -23,6 +24,10 @@ The configs module provides functionality to manage various configuration settin
     - `THURSDAY`: Thursday.
     - `FRIDAY`: Friday.
     - `SATURDAY`: Saturday.
+- `DivisionByZeroBehavior`: Enum to represent the behavior when division by zero occurs.
+    - `DATABASE`: Leave it alone and let the database resolve it.
+    - `NULL`: Always convert `a / b` to `a / KEEP_IF(b, b != 0)`, returning NULL on division by zero.
+    - `ZERO`: Always convert `a / b` to `IFF(b == 0, 0, a/b)`, returning 0 on division by zero.
 
 ### [session.py](session.py)
 

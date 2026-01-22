@@ -12,22 +12,34 @@ ensure that we don't affect other tests, or that in the teardown step
 we replace the active session with a new default session.
 """
 
+from collections.abc import Callable
+
 import pandas as pd
 import pytest
 
 import pydough
-from pydough.configs import ConfigProperty, PyDoughConfigs, PyDoughSession
+from pydough.configs import (
+    ConfigProperty,
+    DivisionByZeroBehavior,
+    PyDoughConfigs,
+    PyDoughSession,
+)
 from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
     load_database_context,
 )
+from pydough.errors import PyDoughSQLException
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 from pydough.unqualified import UnqualifiedNode
 from tests.test_pydough_functions.simple_pydough_functions import (
     simple_division_by_zero,
     simple_scan,
+)
+from tests.testing_utilities import (
+    PyDoughPandasTest,
+    graph_fetcher,
 )
 
 
@@ -145,33 +157,182 @@ FROM tpch.orders
         pydough.active_session.metadata = old_metadata
 
 
-@pytest.mark.parametrize(
-    "division_by_zero_config, expected_df",
-    [
-        ("DATABASE", pd.DataFrame({"computed_value": [0.0]})),
-        ("NULL", pd.DataFrame({"computed_value": [None]})),
-        ("ZERO", pd.DataFrame({"computed_value": [0.0]})),
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                DivisionByZeroBehavior.DATABASE,
+                PyDoughPandasTest(
+                    simple_division_by_zero,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_by_zero_database",
+                ),
+            ),
+            id="database",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    simple_division_by_zero,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_by_zero_null",
+                ),
+            ),
+            id="null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    simple_division_by_zero,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0]}),
+                    "division_by_zero_zero",
+                ),
+            ),
+            id="zero",
+        ),
     ],
 )
-def test_division_by_zero_configs(
-    division_by_zero_config, expected_df, sample_graph_path
-):
-    database: DatabaseContext = pydough.active_session.connect_database(
-        "sqlite", database=":memory:"
+def division_by_zero_test_data(
+    request,
+) -> tuple[DivisionByZeroBehavior, PyDoughPandasTest]:
+    """
+    Test data for division by zero SQL generation tests.
+    """
+    return request.param
+
+
+def test_division_by_zero_to_sql(
+    division_by_zero_test_data: tuple[DivisionByZeroBehavior, PyDoughPandasTest],
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Tests that division by zero SQL is correctly generated for all dialects.
+    """
+    division_by_zero_config, test_data = division_by_zero_test_data
+
+    # Create config with the specified division_by_zero behavior
+    config = PyDoughConfigs()
+    config.division_by_zero = division_by_zero_config
+
+    file_path: str = get_sql_test_filename(
+        test_data.test_name, empty_context_database.dialect
     )
-    graph: GraphMetadata = pydough.active_session.load_metadata_graph(
-        sample_graph_path, "TPCH"
+    test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database, config=config
     )
-    # Create a new config
+
+
+@pytest.fixture(
+    params=[
+        pytest.param("sqlite", id="sqlite"),
+        pytest.param(
+            "snowflake",
+            id="snowflake",
+            marks=[pytest.mark.snowflake, pytest.mark.execute],
+        ),
+        pytest.param(
+            "mysql",
+            id="mysql",
+            marks=[pytest.mark.mysql, pytest.mark.execute],
+        ),
+        pytest.param(
+            "postgres",
+            id="postgres",
+            marks=[pytest.mark.postgres, pytest.mark.execute],
+        ),
+    ],
+)
+def division_by_zero_db_context(
+    request,
+    sqlite_tpch_db_context: DatabaseContext,
+    sf_conn_db_context: Callable,
+    mysql_conn_db_context: Callable,
+    postgres_conn_db_context: DatabaseContext,
+    get_sample_graph: graph_fetcher,
+    get_sf_sample_graph: graph_fetcher,
+) -> tuple[DatabaseContext, GraphMetadata]:
+    """
+    Returns database context and graph metadata for each supported database.
+    """
+    match request.param:
+        case "sqlite":
+            return sqlite_tpch_db_context, get_sample_graph("TPCH")
+        case "snowflake":
+            return (
+                sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+                get_sf_sample_graph("TPCH"),
+            )
+        case "mysql":
+            return mysql_conn_db_context("tpch"), get_sample_graph("TPCH")
+        case "postgres":
+            return postgres_conn_db_context, get_sample_graph("TPCH")
+    return sqlite_tpch_db_context, get_sample_graph("TPCH")
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "division_by_zero_config",
+    [
+        pytest.param(DivisionByZeroBehavior.DATABASE, id="database"),
+        pytest.param(DivisionByZeroBehavior.NULL, id="null"),
+        pytest.param(DivisionByZeroBehavior.ZERO, id="zero"),
+    ],
+)
+def test_division_by_zero_e2e(
+    division_by_zero_config: DivisionByZeroBehavior,
+    division_by_zero_db_context: tuple[DatabaseContext, GraphMetadata],
+) -> None:
+    """
+    Tests division by zero behavior across all supported databases.
+    """
+    db_context, graph = division_by_zero_db_context
+
     new_configs = PyDoughConfigs()
     new_configs.division_by_zero = division_by_zero_config
+
     root: UnqualifiedNode = pydough.init_pydough_context(graph)(
         simple_division_by_zero
     )()
+
+    # DATABASE mode: Snowflake/Postgres throw errors, SQLite/MySQL return NULL
+    if division_by_zero_config == DivisionByZeroBehavior.DATABASE:
+        if db_context.dialect in (DatabaseDialect.SNOWFLAKE, DatabaseDialect.POSTGRES):
+            with pytest.raises(PyDoughSQLException, match="[Dd]ivision by zero"):
+                pydough.to_df(
+                    root,
+                    metadata=graph,
+                    database=db_context,
+                    config=new_configs,
+                )
+            return
+
     output = pydough.to_df(
         root,
         metadata=graph,
-        database=database,
+        database=db_context,
         config=new_configs,
     )
-    pd.testing.assert_frame_equal(output, expected_df)
+
+    # Snowflake returns uppercase column names
+    col_name = (
+        "COMPUTED_VALUE"
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else "computed_value"
+    )
+
+    # Determine expected result based on config
+    if division_by_zero_config == DivisionByZeroBehavior.ZERO:
+        expected_df = pd.DataFrame({col_name: [0.0]})
+    else:
+        # DATABASE (for sqlite/mysql) and NULL both return NULL
+        expected_df = pd.DataFrame({col_name: [None]})
+
+    pd.testing.assert_frame_equal(output, expected_df, check_dtype=False)

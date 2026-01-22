@@ -3340,4 +3340,6 @@ def agg_simplification_2():
 
 
 def simple_division_by_zero():
-    return lines.CALCULATE(computed_value=extended_price / quantity)
+    return lines.CALCULATE(computed_value=extended_price / discount).TOP_K(
+        1, by=computed_value.ASC(na_pos="first")
+    )

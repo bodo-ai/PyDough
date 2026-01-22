@@ -2,7 +2,7 @@
 Definitions of configuration settings for PyDough.
 """
 
-__all__ = ["DayOfWeek", "PyDoughConfigs"]
+__all__ = ["DayOfWeek", "DivisionByZeroBehavior", "PyDoughConfigs"]
 
 from enum import Enum
 from typing import Any, Generic, TypeVar
@@ -42,6 +42,21 @@ class DayOfWeek(Enum):
                 return 4
             case DayOfWeek.SATURDAY:
                 return 5
+
+
+class DivisionByZeroBehavior(Enum):
+    """
+    An enum to represent the behavior when division by zero occurs.
+    """
+
+    DATABASE = "DATABASE"
+    """Leave it alone and let the database resolve it."""
+
+    NULL = "NULL"
+    """Always convert a / b to a / KEEP_IF(b, b != 0), returning NULL on division by zero."""
+
+    ZERO = "ZERO"
+    """Always convert a / b to IFF(b == 0, 0, a/b), returning 0 on division by zero."""
 
 
 class ConfigProperty(Generic[T]):
@@ -126,13 +141,12 @@ class PyDoughConfigs:
     The default is True.
     """
 
-    division_by_zero = ConfigProperty[str]("DATABASE")
+    division_by_zero = ConfigProperty[DivisionByZeroBehavior](
+        DivisionByZeroBehavior.DATABASE
+    )
     """
-    The behavior when division by zero occurs. 
-    Possible values are 
-    - DATABASE: Leave it alone and let the database resolve it
-    - NULL: Always convert a / b to a / KEEP_IF(b, b != 0)
-    - ZERO: Always convert a / b to IFF(b == 0, 0, a/b)
+    The behavior when division by zero occurs. The default is DATABASE.
+    See `DivisionByZeroBehavior` for available options.
     """
 
     def __setattr__(self, name: str, value: Any) -> None:

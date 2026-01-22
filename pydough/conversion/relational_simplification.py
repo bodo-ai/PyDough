@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughSession
+from pydough.configs import DivisionByZeroBehavior, PyDoughSession
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -298,8 +298,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         arg_predicates: list[PredicateSet] = [
             self.stack.pop() for _ in range(len(new_call.inputs))
         ]
+        new_call, arg_predicates = self.update_div_expr(new_call, arg_predicates)
         arg_predicates.reverse()
-        self.update_division_by_zero_expr(new_call)
         return self.simplify_function_call(
             new_call, arg_predicates, self.no_group_aggregate
         )
@@ -801,84 +801,133 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         else:
             return LiteralExpression(timestamp_value, expr.data_type)
 
-    def strip_zero_guards(self, expr):
+    def strip_zero_guards(self, expr: RelationalExpression) -> RelationalExpression:
         """
         Strips any KEEP_IF or IFF wrappers from an expression to get to the
         core expression.
+
+        For KEEP_IF(value, condition), the guarded value is inputs[0].
+        For IFF(condition, then_value, else_value), the guarded value is inputs[2].
+
         Args:
             `expr`: The expression to check.
+
         Returns:
             The core expression with any KEEP_IF or IFF wrappers removed.
-
         """
-        while isinstance(expr, CallExpression) and expr.op in (
-            pydop.KEEP_IF,
-            pydop.IFF,
-        ):
-            expr = expr.inputs[0]
+        while isinstance(expr, CallExpression):
+            if expr.op == pydop.KEEP_IF:
+                expr = expr.inputs[0]
+            elif expr.op == pydop.IFF:
+                expr = expr.inputs[2]
+            else:
+                break
         return expr
 
-    def update_division_by_zero_expr(
+    def update_div_expr(
         self,
         expr: CallExpression,
-    ) -> None:
+        arg_predicates: list[PredicateSet],
+    ) -> tuple[CallExpression, list[PredicateSet]]:
         """
-        Updates the division expression to
-        match configurable settings for division_by_zero:
+        Updates the division expression to match configurable settings for
+        division_by_zero:
             DATABASE: keep a / b and the database will handle it. (DEFAULT)
-            NULL: convert a / b to a / KEEP_IF(b, b != 0)
+            NULL: convert a / b to a / KEEP_IF(b, b != 0) (which could be
+                    translated to NULLIF(b, 0) after some optimizations)
             ZERO: convert a / b to IFF(b == 0, 0, a/b)
 
         Args:
-            `expr`: The CallExpression representing the updated behavior of the
-            division operation.
+            `expr`: The CallExpression representing the division operation.
+            `arg_predicates`: The predicates for the arguments of the division.
+
+        Returns:
+            A tuple of the updated CallExpression and the updated arg_predicates.
         """
         if expr.op == pydop.DIV:
             divisor = expr.inputs[1]
             if self.strip_zero_guards(divisor) is not divisor:
-                return
+                return expr, arg_predicates
             match self.session.config.division_by_zero:
                 # Database will decide how to handle division by zero.
-                case "DATABASE":
-                    pass
+                case DivisionByZeroBehavior.DATABASE:
+                    return expr, arg_predicates
                 # If b == 0, return NULL
-                case "NULL":
+                case DivisionByZeroBehavior.NULL:
                     # b != 0
                     is_not_zero_expr: RelationalExpression = CallExpression(
                         pydop.NEQ,
                         BooleanType(),
                         [
-                            expr.inputs[1],
-                            LiteralExpression(0, expr.inputs[1].data_type),
+                            divisor,
+                            LiteralExpression(0, divisor.data_type),
                         ],
                     )
-                    # KEEP_IF(b, b != 0)
-                    expr.inputs[1] = CallExpression(
+                    # Wrap divisor with KEEP_IF(b, b != 0)
+                    guarded_divisor = CallExpression(
                         pydop.KEEP_IF,
-                        expr.data_type,
-                        [expr.inputs[1], is_not_zero_expr],
+                        divisor.data_type,
+                        [divisor, is_not_zero_expr],
                     )
+                    # Create new division expression with guarded divisor
+                    new_expr = CallExpression(
+                        pydop.DIV,
+                        expr.data_type,
+                        [expr.inputs[0], guarded_divisor],
+                    )
+                    return new_expr, arg_predicates
                 # If b == 0, return 0
-                case "ZERO":
+                case DivisionByZeroBehavior.ZERO:
                     # b == 0
                     is_zero_expr: RelationalExpression = CallExpression(
                         pydop.EQU,
                         BooleanType(),
                         [
-                            expr.inputs[1],
-                            LiteralExpression(0, expr.inputs[1].data_type),
+                            divisor,
+                            LiteralExpression(0, divisor.data_type),
                         ],
                     )
-                    # IFF(b == 0, 0, a/b)
-                    expr = CallExpression(
+                    # b != 0 (used to mark divisor as processed)
+                    is_not_zero_expr = CallExpression(
+                        pydop.NEQ,
+                        BooleanType(),
+                        [
+                            divisor,
+                            LiteralExpression(0, divisor.data_type),
+                        ],
+                    )
+                    # Wrap divisor with KEEP_IF to mark it as processed,
+                    # preventing re-wrapping if the DIV is visited again
+                    guarded_divisor = CallExpression(
+                        pydop.KEEP_IF,
+                        divisor.data_type,
+                        [divisor, is_not_zero_expr],
+                    )
+                    # Create new division with guarded divisor
+                    guarded_div = CallExpression(
+                        pydop.DIV,
+                        expr.data_type,
+                        [expr.inputs[0], guarded_divisor],
+                    )
+                    # Create new arg predicates to reflect that now we have 3 inputs:
+                    # boolean predicate (b == 0), 0, and the guarded div (a / b)
+                    iff_arg_predicates = [
+                        PredicateSet(),  # boolean (b == 0)
+                        PredicateSet(not_null=True, not_negative=True),  # literal 0
+                        arg_predicates[0] | arg_predicates[1],  # guarded div (a / b)
+                    ]
+
+                    # Replace whole operation with IFF(b == 0, 0, a / guarded_b)
+                    return CallExpression(
                         pydop.IFF,
                         expr.data_type,
                         [
                             is_zero_expr,
                             LiteralExpression(0, expr.data_type),
-                            expr,
+                            guarded_div,
                         ],
-                    )
+                    ), iff_arg_predicates
+        return expr, arg_predicates
 
     def simplify_function_call(
         self,
