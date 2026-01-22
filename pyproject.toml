@@ -40,7 +40,7 @@ dev-dependencies = [
 ]
 
 [project.optional-dependencies]
-snowflake = ["snowflake-connector-python[pandas]==1.10.0"]
+snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
