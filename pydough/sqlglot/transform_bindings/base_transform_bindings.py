@@ -5,9 +5,11 @@ implementations of how to convert them to SQLGlot expressions
 
 __all__ = ["BaseTransformBindings"]
 
+import math
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.expressions import Concat
@@ -15,9 +17,14 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
-from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.errors import PyDoughSQLException
-from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.types import (
+    BooleanType,
+    DatetimeType,
+    NumericType,
+    PyDoughType,
+    StringType,
+)
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
@@ -2179,7 +2186,6 @@ class BaseTransformBindings:
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
-        dialect: DatabaseDialect,
     ) -> SQLGlotExpression:
         """
         Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
@@ -2195,7 +2201,7 @@ class BaseTransformBindings:
             case RangeGeneratedCollection():
                 return self.convert_user_generated_range(collection)
             case DataframeGeneratedCollection():
-                return self.convert_user_generated_dataframe(collection, dialect)
+                return self.convert_user_generated_dataframe(collection)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
@@ -2208,7 +2214,7 @@ class BaseTransformBindings:
         Converts a user-generated range collection to its SQLGlot
         representation.
 
-        Arguments:
+        Args:
             `collection` : The user-generated range collection to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
@@ -2223,16 +2229,22 @@ class BaseTransformBindings:
         return result
 
     def convert_user_generated_dataframe(
-        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
+        self, collection: DataframeGeneratedCollection
     ) -> SQLGlotExpression:
         """
-        TODO
+        Converts a user-generated dataframe collection to its SQLGlot
+        representation.
+
+        Args:
+            `collection` : The user-generated dataframe collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated dataframe as table.
         """
 
         dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
             collection,
             True,  # Use tuple
-            dialect,
+            self,
         )
 
         result: SQLGlotExpression = create_constant_table(
@@ -2242,3 +2254,71 @@ class BaseTransformBindings:
         )
 
         return result
+
+    def generate_dataframe_item_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for given item and pydough type.
+
+        Args:
+            `item` : The actual value stored in the dataframe.
+            `item_type` : The mapped PydDough type for this item.
+
+        Returns:
+            A SQLGlotExpression representing the item and its value.
+
+        Note: This covers the standard representations
+        (None, NaN, BooleanType, StringType) meaning that this representation
+        works through all current dialects.
+        """
+
+        if item is None or pd.isna(item):
+            return sqlglot_expressions.Null()
+
+        match item_type:
+            case BooleanType():
+                return sqlglot_expressions.Boolean(this=bool(item))
+
+            case StringType():
+                return sqlglot_expressions.Literal.string(item)
+
+            case _:  # Specific dialect expression
+                return self.generate_dataframe_item_dialect_expression(item, item_type)
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for given item and pydough type.
+
+        Args:
+            `item` : The actual value stored in the dataframe.
+            `item_type` : The mapped PydDough type for this item.
+
+        Returns:
+            A SQLGlotExpression representing the item and its value.
+
+        Note: This covers the NOT standard representations
+        (Datetime, NumericType, UnknownType) meaning that the expression
+        changes in different dialects.
+        """
+
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Literal.string("Infinity")
+                    else:
+                        return sqlglot_expressions.Literal.string("-Infinity")
+
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

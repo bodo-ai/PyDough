@@ -13,26 +13,24 @@ __all__ = [
     "trunc_pattern",
 ]
 
-import math
 import re
 from enum import Enum
-from typing import Any, Union
+from typing import TYPE_CHECKING, Union
 
-import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from pandas import Series
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.types import PyDoughType
-from pydough.types.boolean_type import BooleanType
-from pydough.types.datetime_type import DatetimeType
-from pydough.types.numeric_type import NumericType
-from pydough.types.string_type import StringType
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
+
+if TYPE_CHECKING:
+    from pydough.sqlglot.transform_bindings.base_transform_bindings import (
+        BaseTransformBindings,
+    )
 
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
 """
@@ -576,11 +574,27 @@ def generate_range_rows(
 
 
 def generate_dataframe_rows(
-    collection: DataframeGeneratedCollection, use_tuple: bool, dialect: DatabaseDialect
+    collection: DataframeGeneratedCollection,
+    use_tuple: bool,
+    transform_bindings: "BaseTransformBindings",
 ) -> list[SQLGlotExpression]:
     """
-    TODO
-    list [row(item1.1, item2.1, item3.1), row(item1.2, item2.2, item3.2)]
+    Helper function to generate the rows for a given dataframe collection
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+        `use_tuple`: If `True` the rows are build with Tuple (used with some dialects).
+        If `False` the rows are build with ROW (used with MySQL)
+
+    Returns:
+        List of sqlglot expressions for the dataframe.
+
+    SQL Example:
+        Using item[row].[column], it generates the follwing list.
+        list[ROW(item1.1, item1.2, ...), ROW(item2.1, item2.2, ...), ...]
+
+        Note: If use_tuple is True the list will look like this
+        list[(item1.1, item1.2, ...), (item2.1, item2.2, ...), ...]
     """
     dataframe_rows: list[SQLGlotExpression] = []
 
@@ -594,7 +608,9 @@ def generate_dataframe_rows(
 
         for type_idx, item in enumerate(row):
             expr_list.append(
-                generate_type_expression(item, collection.types[type_idx], dialect)
+                transform_bindings.generate_dataframe_item_expression(
+                    item, collection.types[type_idx]
+                )
             )
 
         # Append the row with its items to the final result
@@ -607,102 +623,3 @@ def generate_dataframe_rows(
         )
 
     return dataframe_rows
-
-
-def generate_type_expression(
-    item: Any, item_type: PyDoughType, dialect: DatabaseDialect
-) -> SQLGlotExpression:
-    """
-    Match the pydough type with the sqlglot expression needed in the SQL
-    """
-    if item is None or pd.isna(item):
-        return sqlglot_expressions.Null()
-
-    match item_type:
-        case BooleanType():
-            return sqlglot_expressions.Boolean(this=bool(item))
-
-        case DatetimeType():
-            match dialect:
-                case DatabaseDialect.SQLITE:
-                    return sqlglot_expressions.Literal.string(item)
-
-                case DatabaseDialect.MYSQL:
-                    return sqlglot_expressions.Cast(
-                        this=sqlglot_expressions.Literal.string(item),
-                        to=sqlglot_expressions.DataType.build("DATETIME"),
-                    )
-
-                case DatabaseDialect.POSTGRES | DatabaseDialect.ANSI:
-                    return sqlglot_expressions.Cast(
-                        this=sqlglot_expressions.Literal.string(item),
-                        to=sqlglot_expressions.DataType.build("TIMESTAMP"),
-                    )
-
-                case DatabaseDialect.SNOWFLAKE:
-                    return sqlglot_expressions.Anonymous(
-                        this="TO_TIMESTAMP_NTZ",
-                        expressions=[sqlglot_expressions.Literal.string(item)],
-                    )
-
-                case _:
-                    raise ValueError("Unsupported dialect")
-
-        case NumericType():
-            if math.isinf(item):
-                match dialect:
-                    case DatabaseDialect.ANSI:
-                        if item >= 0:
-                            return sqlglot_expressions.Literal.string("Infinity")
-                        else:
-                            return sqlglot_expressions.Literal.string("-Infinity")
-
-                    case DatabaseDialect.SQLITE:
-                        if item >= 0:
-                            return sqlglot_expressions.Literal.number("1e999")
-                        else:
-                            return sqlglot_expressions.Literal.number("-1e999")
-
-                    case DatabaseDialect.MYSQL:
-                        raise PyDoughSQLException(
-                            "MySQL does not support Infinity values."
-                        )
-
-                    case DatabaseDialect.POSTGRES:
-                        if item >= 0:
-                            return sqlglot_expressions.Cast(
-                                this=sqlglot_expressions.Literal.string("inf"),
-                                to=sqlglot_expressions.DataType.build("REAL"),
-                            )
-                        else:
-                            return sqlglot_expressions.Cast(
-                                this=sqlglot_expressions.Literal.string("-inf"),
-                                to=sqlglot_expressions.DataType.build("REAL"),
-                            )
-
-                    case DatabaseDialect.SNOWFLAKE:
-                        if item >= 0:
-                            return sqlglot_expressions.Anonymous(
-                                this="TO_DOUBLE",
-                                expressions=[sqlglot_expressions.Literal.string("INF")],
-                            )
-                        else:
-                            return sqlglot_expressions.Anonymous(
-                                this="TO_DOUBLE",
-                                expressions=[
-                                    sqlglot_expressions.Literal.string("-INF")
-                                ],
-                            )
-
-                    case _:
-                        raise ValueError(
-                            "Unsupported dialect for generating type expression"
-                        )
-
-            return sqlglot_expressions.Literal.number(item)
-
-        case StringType():
-            return sqlglot_expressions.Literal.string(item)
-
-        case _:
-            return sqlglot_expressions.Literal.string(str(item))

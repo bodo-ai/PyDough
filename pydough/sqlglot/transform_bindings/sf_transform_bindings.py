@@ -6,14 +6,16 @@ __all__ = ["SnowflakeTransformBindings"]
 
 
 import math
+from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
@@ -288,16 +290,12 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         return query
 
     def convert_user_generated_dataframe(
-        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
+        self, collection: DataframeGeneratedCollection
     ) -> SQLGlotExpression:
-        """
-        TODO
-        """
-
         dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
             collection,
             True,  # Use tuple
-            dialect,
+            self,
         )
 
         result: SQLGlotExpression = create_constant_table(
@@ -308,3 +306,30 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         )
 
         return result
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Anonymous(
+                    this="TO_TIMESTAMP_NTZ",
+                    expressions=[sqlglot_expressions.Literal.string(item)],
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Anonymous(
+                            this="TO_DOUBLE",
+                            expressions=[sqlglot_expressions.Literal.string("INF")],
+                        )
+                    else:
+                        return sqlglot_expressions.Anonymous(
+                            this="TO_DOUBLE",
+                            expressions=[sqlglot_expressions.Literal.string("-INF")],
+                        )
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:
+                return sqlglot_expressions.Literal.string(str(item))

@@ -4,13 +4,17 @@ Definition of SQLGlot transformation bindings for the Postgres dialect.
 
 __all__ = ["PostgresTransformBindings"]
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
@@ -680,15 +684,12 @@ class PostgresTransformBindings(BaseTransformBindings):
         return result
 
     def convert_user_generated_dataframe(
-        self, collection: DataframeGeneratedCollection, dialect: DatabaseDialect
+        self, collection: DataframeGeneratedCollection
     ) -> SQLGlotExpression:
-        """
-        TODO
-        """
         dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
             collection,
             True,  # Use tuple
-            dialect,
+            self,
         )
 
         result: SQLGlotExpression = create_constant_table(
@@ -699,3 +700,30 @@ class PostgresTransformBindings(BaseTransformBindings):
         )
 
         return result
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Literal.string("inf"),
+                            to=sqlglot_expressions.DataType.build("REAL"),
+                        )
+                    else:
+                        return sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Literal.string("-inf"),
+                            to=sqlglot_expressions.DataType.build("REAL"),
+                        )
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))
