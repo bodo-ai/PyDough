@@ -237,7 +237,8 @@ def rank_nations_by_region():
 
 def rank_nations_per_region_by_customers():
     return regions.nations.CALCULATE(
-        name, rank=RANKING(by=COUNT(customers).DESC(), per="regions")
+        nation_name=name,
+        rank=RANKING(by=(COUNT(customers).DESC(), region.name), per="regions"),
     ).TOP_K(5, by=rank.ASC())
 
 
@@ -254,24 +255,20 @@ def rank_parts_per_supplier_region_by_size():
                 dense=True,
             ),
         )
-        .TOP_K(15, by=key.ASC())
+        .TOP_K(15, by=(key.ASC(), region.ASC()))
     )
 
 
 def rank_with_filters_a():
-    return (
-        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
-        .WHERE(ENDSWITH(name, "0"))
-        .WHERE(r <= 30)
-    )
+    return customers.CALCULATE(
+        n=name, r=RANKING(by=(account_balance.DESC(), name.ASC()))
+    ).WHERE((ENDSWITH(n, "0")) & (r <= 30))
 
 
 def rank_with_filters_b():
-    return (
-        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
-        .WHERE(r <= 30)
-        .WHERE(ENDSWITH(name, "0"))
-    )
+    return customers.CALCULATE(
+        n=name, r=RANKING(by=(account_balance.DESC(), name.ASC()))
+    ).WHERE((ENDSWITH(name, "0")) & (r <= 30))
 
 
 def rank_with_filters_c():
@@ -279,7 +276,7 @@ def rank_with_filters_c():
         parts.PARTITION(name="sizes", by=size)
         .TOP_K(5, by=size.DESC())
         .parts.CALCULATE(size, name)
-        .WHERE(RANKING(by=retail_price.DESC(), per="sizes") == 1)
+        .WHERE(RANKING(by=(retail_price.DESC(), key.ASC()), per="sizes") == 1)
     )
 
 
@@ -342,10 +339,10 @@ def prev_next_regions():
     return regions.CALCULATE(
         two_preceding=PREV(name, n=2, by=name.ASC()),
         one_preceding=PREV(name, by=name.ASC()),
-        current=name,
+        current_region=name,
         one_following=NEXT(name, by=name.ASC()),
         two_following=PREV(name, n=-2, by=name.ASC()),
-    ).ORDER_BY(current.ASC())
+    ).ORDER_BY(current_region.ASC())
 
 
 def avg_order_diff_per_customer():
@@ -370,7 +367,9 @@ def yoy_change_in_num_orders():
     return years.CALCULATE(
         year,
         current_year_orders=current_year_orders,
-        pct_change=100.0 * (current_year_orders - prev_year_orders) / prev_year_orders,
+        pct_change=100.0
+        * FLOAT(current_year_orders - prev_year_orders)
+        / prev_year_orders,
     ).ORDER_BY(year.ASC())
 
 
@@ -787,17 +786,22 @@ def supplier_pct_national_qty():
         & (ship_mode == "SHIP")
         & CONTAINS(part.name, "tomato")
         & STARTSWITH(part.container, "LG")
+        & (QUARTER(ship_date) < 3)
     )
     supp_qty = SUM(selected_lines.quantity)
     return (
-        nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        nations.WHERE(region.name == "AFRICA")
         .CALCULATE(nation_name=name)
-        .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
+        .suppliers.WHERE((account_balance >= 8000.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
             nation_name=nation_name,
             supplier_quantity=supp_qty,
-            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
+            national_qty_pct=100.0
+            * supp_qty
+            / KEEP_IF(
+                RELSUM(supp_qty, per="nations"), RELSUM(supp_qty, per="nations") > 0
+            ),
         )
         .TOP_K(5, by=national_qty_pct.DESC())
     )
@@ -1096,8 +1100,9 @@ def bad_child_reuse_1():
     # number of orders, only keep ones that have orders.
     return (
         customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
-        .TOP_K(10, by=account_balance.DESC())
+        .TOP_K(10, by=(account_balance.DESC(), n_orders.ASC()))
         .WHERE(HAS(orders))
+        .ORDER_BY(cust_key.ASC())
     )
 
 
@@ -1144,7 +1149,7 @@ def bad_child_reuse_5():
     # number of orders, only keep ones that have no orders.
     return (
         customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
-        .TOP_K(10, by=account_balance.DESC())
+        .TOP_K(10, by=(account_balance.DESC(), key.DESC()))
         .WHERE(HASNOT(orders))
     )
 
@@ -2386,10 +2391,13 @@ def singular4():
         customers.WHERE(nation_key == 6)
         .TOP_K(
             5,
-            by=orders.WHERE(order_priority == "1-URGENT")
-            .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
-            .SINGULAR()
-            .order_date.ASC(na_pos="last"),
+            by=DEFAULT_TO(
+                orders.WHERE(order_priority == "1-URGENT")
+                .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
+                .SINGULAR()
+                .order_date,
+                datetime.date(2000, 1, 1),
+            ).ASC(na_pos="last"),
         )
         .CALCULATE(name)
     )
@@ -2591,8 +2599,8 @@ def simple_int_float_string_cast():
         s3=STRING("3"),
         s4=STRING("4.3"),
         s5=STRING("-5.888"),
-        s6=STRING(-6.0),
-        s7=STRING(0.0),
+        s6=STRING(-6.1),
+        s7=STRING(0.1),
         s8=STRING("0.0"),
         s9=STRING("abc def"),
     )
@@ -2653,6 +2661,253 @@ def string_format_specifiers_sqlite():
     )
 
 
+def string_format_specifiers_mysql():
+    # String format specifiers for date/time with a static datetime
+    # Works for MySQL versions >= v8.0.31
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # Abbreviated weekday name: Sun-Sat
+        d1=STRING(static_date, "%a"),
+        # Abbreviated month name: Jan-Dec
+        d2=STRING(static_date, "%b"),
+        # Month numeric (1-12)
+        d3=STRING(static_date, "%c"),
+        # Day of the month with English suffix: 1st, 2nd, 3rd, 4th
+        d4=STRING(static_date, "%D"),
+        # day of month: 00-31
+        d5=STRING(static_date, "%d"),
+        # day of month without leading zero: 0-31
+        d6=STRING(static_date, "%e"),
+        # Microseconds (000000-999999)
+        d7=STRING(static_date, "%f"),
+        # Hour (00-23)
+        d8=STRING(static_date, "%H"),
+        # Hour (01-12)
+        d9=STRING(static_date, "%h"),
+        # Hour (1-12)
+        d10=STRING(static_date, "%I"),
+        # Minutes (00-59)
+        d11=STRING(static_date, "%i"),
+        # Day of year (001-366)
+        d12=STRING(static_date, "%j"),
+        # Hour (0-23)
+        d13=STRING(static_date, "%k"),
+        # Hour (1-12)
+        d14=STRING(static_date, "%l"),
+        # Month name
+        d15=STRING(static_date, "%M"),
+        # Month numeric (01-12)
+        d16=STRING(static_date, "%m"),
+        # AM or PM
+        d17=STRING(static_date, "%p"),
+        # Time, 12-hour (hh:mm:ss followed by AM or PM)
+        d18=STRING(static_date, "%r"),
+        # Seconds (00-59)
+        d19=STRING(static_date, "%S"),
+        # Seconds since Unix epoch (1970-01-01 00:00:00
+        d20=STRING(static_date, "%s"),
+        # Time, 24-hour (hh:mm:ss)
+        d21=STRING(static_date, "%T"),
+        # Week (00..53), where Sunday is the first day of the week; WEEK() mode 0
+        d22=STRING(static_date, "%U"),
+        # Week (00..53), where Monday is the first day of the week; WEEK() mode 1
+        d23=STRING(static_date, "%u"),
+        # Week (01..53), where Sunday is the first day of the week; WEEK() mode 2; used with %X
+        d24=STRING(static_date, "%V"),
+        # Week (01..53), where Monday is the first day of the week; WEEK() mode 3; used with %x
+        d25=STRING(static_date, "%v"),
+        # Weekday name (Sunday..Saturday)
+        d26=STRING(static_date, "%W"),
+        # Day of the week (0=Sunday..6=Saturday)
+        d27=STRING(static_date, "%w"),
+        # Year for the week where Sunday is the first day of the week, numeric,
+        # four digits; used with %V
+        d28=STRING(static_date, "%X"),
+        # Year for the week where Monday is the first day of the week, numeric,
+        # four digits; used with %v
+        d29=STRING(static_date, "%x"),
+        # Year, numeric, four digits
+        d30=STRING(static_date, "%Y"),
+        # Year, numeric, two digits
+        d31=STRING(static_date, "%y"),
+        # ISO 8601 date: YYYY-MM-DD
+        d32=STRING(static_date, "%Y-%m-%d"),
+        # ISO 8601 time: HH:MM
+        d33=STRING(static_date, "%H:%i"),
+    )
+
+
+def string_format_specifiers_postgres():
+    # String format specifiers for date/time with a static datetime
+    # Works for Postgres
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # hour of day (01–12)
+        h1=STRING(static_date, "HH"),
+        # hour of day (01–12)
+        h2=STRING(static_date, "HH12"),
+        # hour of day (00–23)
+        h3=STRING(static_date, "HH24"),
+        # minute (00–59)
+        m1=STRING(static_date, "MI"),
+        # second (00–59)
+        s1=STRING(static_date, "SS"),
+        # millisecond (000–999)
+        ms1=STRING(static_date, "MS"),
+        # microsecond (000000–999999)
+        us1=STRING(static_date, "US"),
+        # tenth of second (0–9)
+        ff1=STRING(static_date, "FF1"),
+        # hundredth of second (00–99)
+        ff2=STRING(static_date, "FF2"),
+        # millisecond (000–999)
+        ff3=STRING(static_date, "FF3"),
+        # tenth of a millisecond (0000–9999)
+        ff4=STRING(static_date, "FF4"),
+        # hundredth of a millisecond (00000–99999)
+        ff5=STRING(static_date, "FF5"),
+        # microsecond (000000–999999)
+        ff6=STRING(static_date, "FF6"),
+        # seconds past midnight (0–86399)
+        ssss1=STRING(static_date, "SSSS"),
+        # seconds past midnight (0–86399)
+        ssss2=STRING(static_date, "SSSSS"),
+        # AM / PM (no periods)
+        am1=STRING(static_date, "AM"),
+        # am / pm (lowercase)
+        am2=STRING(static_date, "am"),
+        # A.M. / P.M. (with periods)
+        am3=STRING(static_date, "A.M."),
+        # a.m. / p.m. (with periods)
+        am4=STRING(static_date, "a.m."),
+        # year with comma (4+ digits)
+        y1=STRING(static_date, "Y,YYY"),
+        # year (4+ digits)
+        y2=STRING(static_date, "YYYY"),
+        # last 3 digits of year
+        y3=STRING(static_date, "YYY"),
+        # last 2 digits of year
+        y4=STRING(static_date, "YY"),
+        # last digit of year
+        y5=STRING(static_date, "Y"),
+        # ISO week-numbering year
+        iy1=STRING(static_date, "IYYY"),
+        # last 3 digits of ISO year
+        iy2=STRING(static_date, "IYY"),
+        # last 2 digits of ISO year
+        iy3=STRING(static_date, "IY"),
+        # last digit of ISO year
+        iy4=STRING(static_date, "I"),
+        # BC / AD (no periods)
+        era1=STRING(static_date, "AD"),
+        # B.C. / A.D. (with periods)
+        era2=STRING(static_date, "A.D."),
+        # full upper-case month name (blank-padded)
+        mon1=STRING(static_date, "MONTH"),
+        # full capitalized month name (blank-padded)
+        mon2=STRING(static_date, "Month"),
+        # full lower-case month name (blank-padded)
+        mon3=STRING(static_date, "month"),
+        # abbreviated upper-case month name
+        mon4=STRING(static_date, "MON"),
+        # abbreviated capitalized month name
+        mon5=STRING(static_date, "Mon"),
+        # abbreviated lower-case month name
+        mon6=STRING(static_date, "mon"),
+        # month number (01–12)
+        mon7=STRING(static_date, "MM"),
+        # full upper-case day name (blank-padded)
+        day1=STRING(static_date, "DAY"),
+        # full capitalized day name (blank-padded)
+        day2=STRING(static_date, "Day"),
+        # full lower-case day name (blank-padded)
+        day3=STRING(static_date, "day"),
+        # abbreviated upper-case day name
+        day4=STRING(static_date, "DY"),
+        # abbreviated capitalized day name
+        day5=STRING(static_date, "Dy"),
+        # abbreviated lower-case day name
+        day6=STRING(static_date, "dy"),
+        # day of year (001–366)
+        doy1=STRING(static_date, "DDD"),
+        # day of ISO year (001–371)
+        doy2=STRING(static_date, "IDDD"),
+        # day of month (01–31)
+        dom1=STRING(static_date, "DD"),
+        # day of week, Sunday (1) to Saturday (7)
+        dow1=STRING(static_date, "D"),
+        # ISO day of week, Monday (1) to Sunday (7)
+        dow2=STRING(static_date, "ID"),
+        # week of month (1–5)
+        wom1=STRING(static_date, "W"),
+        # week of year (1–53)
+        woy1=STRING(static_date, "WW"),
+        # ISO week of year (01–53)
+        woy2=STRING(static_date, "IW"),
+        # century (2 digits)
+        c1=STRING(static_date, "CC"),
+        # Julian Date
+        j1=STRING(static_date, "J"),
+        # quarter
+        q1=STRING(static_date, "Q"),
+        # month in Roman numerals (upper-case)
+        rm1=STRING(static_date, "RM"),
+        # month in Roman numerals (lower-case)
+        rm2=STRING(static_date, "rm"),
+        # time-zone abbreviation (upper-case)
+        tz1=STRING(static_date, "TZ"),
+        # time-zone abbreviation (lower-case)
+        tz2=STRING(static_date, "tz"),
+        # time-zone hours
+        tz3=STRING(static_date, "TZH"),
+        # time-zone minutes
+        tz4=STRING(static_date, "TZM"),
+        # time-zone offset from UTC
+        tz5=STRING(static_date, "OF"),
+    )
+
+
+def string_format_specifiers_snowflake():
+    # String format specifiers for date/time with a static datetime
+    # Works for Snowflake
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # four-digit year
+        d1=STRING(static_date, "YYYY"),
+        # last two digits of the year
+        d2=STRING(static_date, "YY"),
+        # two-digit month (01–12)
+        d3=STRING(static_date, "MM"),
+        # abbreviated month name
+        d4=STRING(static_date, "Mon"),
+        # full month name
+        d5=STRING(static_date, "MMMM"),
+        # two-digit day of month (01–31)
+        d6=STRING(static_date, "DD"),
+        # abbreviated day of week
+        d7=STRING(static_date, "DY"),
+        # full day of week
+        d8=STRING(static_date, "DYDY"),
+        # hour in 24-hour format (00–23)
+        d9=STRING(static_date, "HH24"),
+        # hour in 12-hour format (01–12)
+        d10=STRING(static_date, "HH12"),
+        # minute (00–59)
+        d11=STRING(static_date, "MI"),
+        # second (00–59)
+        d12=STRING(static_date, "SS"),
+        # meridian indicator
+        d13=STRING(static_date, "PM"),
+        # fractional seconds (up to 9 digits)
+        d14=STRING(static_date, ".FF"),
+        # timezone hour and minute
+        d15=STRING(static_date, "TZH:TZM"),
+    )
+
+
 def part_reduced_size():
     # What are the top 5 line items with the highest discounts
     # on parts with the lowest retail prices casted to integers?
@@ -2681,7 +2936,7 @@ def part_reduced_size():
             # AM or PM
             am_pm=STRING(receipt_date, "%H:%M%p"),
         )
-        .TOP_K(5, by=discount.DESC())
+        .TOP_K(5, by=(discount.DESC(), date_dmy.ASC()))
     )
 
 
@@ -2885,7 +3140,7 @@ def simple_cross_5():
     )
     best_priority = (
         CROSS(order_info.PARTITION(name="priorities", by=order_priority))
-        .CALCULATE(total_qty=SUM(lines.quantity))
+        .CALCULATE(total_qty=KEEP_IF(SUM(lines.quantity), SUM(lines.quantity) > 0))
         .BEST(by=total_qty.DESC(), per="sizes")
     )
     return sizes.CALCULATE(
@@ -2896,48 +3151,55 @@ def simple_cross_5():
 
 
 def simple_cross_6():
-    # Count how many combinations of 2 DISTINCT orders exist that were from the
-    # same day from the same customer, only considering orders handled
-    # by any of the clerks whose numbers is at least 900.
-    predicates = INTEGER(clerk[6:]) >= 900
-    original_orders = orders.CALCULATE(
-        original_customer_key=customer_key,
-        original_order_key=key,
-        original_order_date=order_date,
+    # Count how many combinations of 2 DISTINCT customers exist that were from the
+    # same nation, same market segment, only considering customers with an account balance
+    # over 9990, where the first customer has a lower key than the second customer
+    predicates = account_balance > 9990
+    original_customers = customers.CALCULATE(
+        original_customer_key=key,
+        original_customer_nation_key=nation_key,
+        original_customer_segment=market_segment,
     ).WHERE(predicates)
-    other_orders_by_same_customer_same_date = original_orders.CROSS(
-        orders.WHERE(predicates)
+    other_customers_by_same_customer_balance = original_customers.CROSS(
+        customers.WHERE(predicates)
     ).WHERE(
-        (customer_key == original_customer_key)
-        & (key > original_order_key)
-        & (order_date == original_order_date)
+        (nation_key == original_customer_nation_key)
+        & (key > original_customer_key)
+        & (market_segment == original_customer_segment)
     )
-    return TPCH.CALCULATE(n_pairs=COUNT(other_orders_by_same_customer_same_date))
+    return TPCH.CALCULATE(n_pairs=COUNT(other_customers_by_same_customer_balance))
 
 
 def simple_cross_7():
-    # For every order with status P, count how many DIFFERENT orders with
-    # status "P" were made by the same
-    # customer on the same date, considering only the first 5 orders
-    # with the highest number of other orders, breaking ties by key
-    original_orders = orders.WHERE(order_status == "P").CALCULATE(
-        original_customer_key=customer_key,
-        original_order_key=key,
-        original_order_date=order_date,
+    # For every part from Manufacturer#3 of Brand#35
+    # with "tomato" in the name, count how many OTHER parts
+    # from the same manufacturer & brand with "tomato" in the name
+    # have difference of 5 dolars in its retail price, considering only the f
+    # irst 5 parts with the highest number of other parts, breaking ties by part key
+    original_parts = parts.WHERE(
+        (manufacturer == "Manufacturer#3")
+        & (brand == "Brand#35")
+        & (CONTAINS(name, "tomato"))
+    ).CALCULATE(
+        original_part_key=key,
+        original_manufacturer=manufacturer,
+        original_brand=brand,
+        original_price=retail_price,
     )
-    return original_orders.CALCULATE(
-        original_order_key,
-        n_other_orders=COUNT(
+    return original_parts.CALCULATE(
+        original_part_key,
+        n_other_parts=COUNT(
             CROSS(
-                orders.WHERE(
-                    (customer_key == original_customer_key)
-                    & (order_status == "P")
-                    & (key > original_order_key)
-                    & (order_date == original_order_date)
+                parts.WHERE(
+                    (manufacturer == original_manufacturer)
+                    & (brand == original_brand)
+                    & (CONTAINS(name, "tomato"))
+                    & (key > original_part_key)
+                    & (ABS(retail_price - original_price) < 5.0)
                 )
             )
         ),
-    ).TOP_K(5, by=[n_other_orders.DESC(), original_order_key.ASC()])
+    ).TOP_K(5, by=[n_other_parts.DESC(), original_part_key.ASC()])
 
 
 def simple_cross_8():

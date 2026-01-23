@@ -21,10 +21,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+          DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
         ) % 7
       ) * -1,
-      CURRENT_TIMESTAMP()
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   )
   AND sbtransaction.sbtxdatetime >= DATEADD(
@@ -36,10 +36,10 @@ WHERE
         DAY,
         (
           (
-            DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+            DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
           ) % 7
         ) * -1,
-        CURRENT_TIMESTAMP()
+        CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
       )
     )
   )

@@ -5,6 +5,7 @@ Definition of the logic to convert QDAG nodes into a HybridTree
 __all__ = ["HybridTranslator", "HybridTree"]
 
 from collections.abc import Iterable
+from decimal import Decimal
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
@@ -161,6 +162,10 @@ class HybridTranslator:
             aggregation function.
         """
         match expr:
+            case CollationExpression():
+                HybridTranslator.identify_connection_types(
+                    expr.expr, child_idx, reference_types, inside_aggregation
+                )
             # If `expr` is a reference to the child in question, add
             # a reference that is either singular or aggregation depending
             # on the `inside_aggregation` argument
@@ -789,7 +794,7 @@ class HybridTranslator:
         """
         Rewrites a QUANTILE aggregation call into an equivalent expression using
         window functions. This is typically used for dialects that do not natively
-        support the PERCENTILE_DISCaggregate function.
+        support the PERCENTILE_DISC aggregate function.
 
         The rewritten expression selects the value at the specified quantile by:
         - Ranking the rows within each partition.
@@ -827,6 +832,22 @@ class HybridTranslator:
         # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
         data_expr: HybridExpr = expr.args[0]  # Column
 
+        max_call: HybridFunctionExpr
+
+        if expr.args[1].literal.value == 0.0:
+            # Shortcut for p=0 case: just return the MIN
+            # SQL: MIN(data_expr)
+            min_call: HybridFunctionExpr = HybridFunctionExpr(
+                pydop.MIN, [data_expr], expr.typ
+            )
+            return min_call
+
+        if expr.args[1].literal.value == 1.0:
+            # Shortcut for p=1 case: just return the MAX
+            # SQL: MAX(data_expr)
+            max_call = HybridFunctionExpr(pydop.MAX, [data_expr], expr.typ)
+            return max_call
+
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
         order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
@@ -841,19 +862,22 @@ class HybridTranslator:
         )
 
         # (1.0-args[1])
+        # Decimal avoids floating point precision issues
         sub: HybridExpr = HybridLiteralExpr(
-            Literal(1.0 - float(expr.args[1].literal.value), NumericType())
+            Literal(
+                Decimal("1.0") - Decimal(str(expr.args[1].literal.value)), NumericType()
+            )
         )
 
         # (1.0-args[1]) * N
         product: HybridExpr = HybridFunctionExpr(pydop.MUL, [sub, rows], NumericType())
 
-        # INTEGER((1.0-args[1]) * N)
+        # FLOOR((1.0-args[1]) * N)
         cast_integer: HybridExpr = HybridFunctionExpr(
-            pydop.INTEGER, [product], NumericType()
+            pydop.FLOOR, [product], NumericType()
         )
 
-        # R > INTEGER((1.0-args[1]) * N)
+        # R > FLOOR((1.0-args[1]) * N)
         greater: HybridExpr = HybridFunctionExpr(
             pydop.GRT, [rank, cast_integer], expr.typ
         )
@@ -867,10 +891,7 @@ class HybridTranslator:
         max_input_arg = self.inject_expression(
             child_connection.subtree, keep_largest, create_new_calc
         )
-        max_call: HybridFunctionExpr = HybridFunctionExpr(
-            pydop.MAX, [max_input_arg], expr.typ
-        )
-
+        max_call = HybridFunctionExpr(pydop.MAX, [max_input_arg], expr.typ)
         return max_call
 
     def add_unique_terms(
@@ -1059,7 +1080,7 @@ class HybridTranslator:
         hybrid_arg: HybridExpr
         collection: PyDoughCollectionQDAG
         match expr:
-            case PartitionKey():
+            case PartitionKey() | CollationExpression():
                 return self.make_hybrid_expr(
                     hybrid, expr.expr, child_ref_mapping, inside_agg
                 )

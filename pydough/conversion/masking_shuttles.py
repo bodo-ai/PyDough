@@ -56,17 +56,26 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
         ):
             return original_call
 
-        masked_literal: RelationalExpression
+        flipped_operator: pydop.MaskedExpressionFunctionOperator = (
+            call_arg.op.toggle_protection()
+        )
 
         if original_call.op in (pydop.EQU, pydop.NEQ):
             # If the operation is equality or inequality, we can simply wrap the
             # literal in a call to MASK by toggling is_unmask to False.
-            masked_literal = CallExpression(
-                pydop.MaskedExpressionFunctionOperator(
-                    call_arg.op.masking_metadata, call_arg.op.table_path, False
-                ),
+            masked_literal: RelationalExpression = CallExpression(
+                flipped_operator,
                 call_arg.data_type,
                 [literal_arg],
+            )
+            # Now that we have the masked literal, we can return a new call
+            # expression with the same operators as before, but where the left hand
+            # side argument is the expression that was being unmasked, and the right
+            # hand side is the masked literal.
+            return CallExpression(
+                original_call.op,
+                original_call.data_type,
+                [call_arg.inputs[0], masked_literal],
             )
         elif original_call.op == pydop.ISIN and isinstance(
             literal_arg.value, (list, tuple)
@@ -74,37 +83,69 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
             # If the operation is containment, and the literal is a list/tuple,
             # we need to build a list by wrapping each element of the tuple in
             # a MASK call.
-            inner_type: PyDoughType
-            if isinstance(literal_arg.data_type, ArrayType):
-                inner_type = literal_arg.data_type.elem_type
+
+            # First, extract the array component type for the protect calls.
+            original_inner_type: PyDoughType
+            if isinstance(original_call.data_type, ArrayType):
+                original_inner_type = original_call.data_type.elem_type
             else:
-                inner_type = UnknownType()
-            masked_literal = LiteralExpression(
-                [
-                    CallExpression(
-                        pydop.MaskedExpressionFunctionOperator(
-                            call_arg.op.masking_metadata, call_arg.op.table_path, False
-                        ),
-                        call_arg.data_type,
-                        [LiteralExpression(v, inner_type)],
+                original_inner_type = UnknownType()
+            inner_type: PyDoughType = call_arg.op.masking_metadata.data_type
+
+            # But if the length is >= 50, then it needs to be first broken up
+            # into multiple ISIN calls that are OR'd together to avoid exceeding
+            # parameter limits. This limitation comes up in Snowflake, which
+            # does not allow non-constant tuples with more than 50 elements.
+            max_bucket_size = 50
+            n_buckets: int = (
+                len(literal_arg.value) + max_bucket_size - 1
+            ) // max_bucket_size
+            buckets: list[list] = [[] for _ in range(n_buckets)]
+            for idx, v in enumerate(literal_arg.value):
+                buckets[idx // max_bucket_size].append(v)
+
+            # Build up the individual ISIN calls for each bucket
+            isin_calls: list[CallExpression] = []
+            for bucket in buckets:
+                bucket_literal = LiteralExpression(
+                    [
+                        CallExpression(
+                            flipped_operator,
+                            inner_type,
+                            [LiteralExpression(v, original_inner_type)],
+                        )
+                        for v in bucket
+                    ],
+                    ArrayType(inner_type),
+                )
+                isin_call = CallExpression(
+                    pydop.ISIN,
+                    original_call.data_type,
+                    [call_arg.inputs[0], bucket_literal],
+                )
+                isin_calls.append(isin_call)
+
+            # Form the disjunction of all the ISIN calls
+            assert len(isin_calls) > 0
+            if len(isin_calls) == 1:
+                return isin_calls[0]
+            else:
+                disjunction: CallExpression = CallExpression(
+                    pydop.BOR,
+                    original_call.data_type,
+                    [isin_calls[0], isin_calls[1]],
+                )
+                for isin_call in isin_calls[2:]:
+                    disjunction = CallExpression(
+                        pydop.BOR,
+                        original_call.data_type,
+                        [disjunction, isin_call],
                     )
-                    for v in literal_arg.value
-                ],
-                original_call.data_type,
-            )
+                return disjunction
+
         else:
             # Otherwise, return the original.
             return original_call
-
-        # Now that we have the masked literal, we can return a new call
-        # expression with the same operators as before, but where the left hand
-        # side argument is the expression that was being unmasked, and the right
-        # hand side is the masked literal.
-        return CallExpression(
-            original_call.op,
-            original_call.data_type,
-            [call_arg.inputs[0], masked_literal],
-        )
 
     def visit_call_expression(
         self, call_expression: CallExpression
