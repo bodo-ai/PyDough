@@ -731,10 +731,16 @@ class RelTranslation:
                             child_output = self.apply_aggregations(
                                 child, child_output, child.subtree.agg_keys
                             )
+                        join_type: JoinType = child.connection_type.join_type
+                        # Semi-joins on singular subtrees can be promoted to
+                        # inner joins to avoid unnecessary complexity and
+                        # improve performance.
+                        if join_type == JoinType.SEMI and child.subtree.is_singular():
+                            join_type = JoinType.INNER
                         context = self.join_outputs(
                             context,
                             child_output,
-                            child.connection_type.join_type,
+                            join_type,
                             cardinality,
                             child.reverse_cardinality,
                             join_keys,

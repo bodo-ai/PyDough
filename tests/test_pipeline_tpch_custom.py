@@ -2683,6 +2683,19 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(nation.WHERE(region.name == 'ASIA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [30183],
+                    }
+                ),
+                "redundant_has",
+            ),
+            id="redundant_has",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 order_quarter_test,
                 "TPCH",
                 lambda: pd.DataFrame(

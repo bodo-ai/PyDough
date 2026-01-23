@@ -1,0 +1,8 @@
+gROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={})
+   SCAN(table=tpch.CUSTOMER, columns={'c_nationkey': c_nationkey})
+   JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey})
+    SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
+    FILTER(condition=r_name == 'ASIA':string, columns={'r_regionkey': r_regionkey})
+     SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
