@@ -17,16 +17,26 @@ from sqlglot.optimizer.qualify_columns import (
     pushdown_cte_alias_columns as pushdown_cte_alias_columns_func,
 )
 from sqlglot.optimizer.qualify_columns import (
-    qualify_columns as qualify_columns_func,
-)
-from sqlglot.optimizer.qualify_columns import (
     quote_identifiers as quote_identifiers_func,
 )
 from sqlglot.optimizer.qualify_columns import (
     validate_qualify_columns as validate_qualify_columns_func,
 )
+from sqlglot.optimizer.qualify_columns import (
+    _pop_table_column_aliases,
+    _expand_using,
+    _expand_alias_refs,
+    _convert_columns_to_dots,
+    _expand_stars,
+    qualify_outputs,
+    _expand_group_by,
+    _expand_order_by,
+    Resolver,
+)
+from sqlglot.errors import OptimizeError
 from sqlglot.optimizer.scope import Scope, traverse_scope
 from sqlglot.schema import Schema, ensure_schema
+from sqlglot.optimizer.annotate_types import TypeAnnotator
 
 if t.TYPE_CHECKING:
     from sqlglot._typing import E
@@ -302,3 +312,199 @@ def qualify_tables(
                     column.set("table", table_alias)
 
     return expression
+
+
+def qualify_columns_func(
+    expression: exp.Expression,
+    schema: t.Dict | Schema,
+    expand_alias_refs: bool = True,
+    expand_stars: bool = True,
+    infer_schema: t.Optional[bool] = None,
+    allow_partial_qualification: bool = False,
+) -> exp.Expression:
+    """
+    Rewrite sqlglot AST to have fully qualified columns.
+
+    Example:
+        >>> import sqlglot
+        >>> schema = {"tbl": {"col": "INT"}}
+        >>> expression = sqlglot.parse_one("SELECT col FROM tbl")
+        >>> qualify_columns(expression, schema).sql()
+        'SELECT tbl.col AS col FROM tbl'
+
+    Args:
+        expression: Expression to qualify.
+        schema: Database schema.
+        expand_alias_refs: Whether to expand references to aliases.
+        expand_stars: Whether to expand star queries. This is a necessary step
+            for most of the optimizer's rules to work; do not set to False unless you
+            know what you're doing!
+        infer_schema: Whether to infer the schema if missing.
+        allow_partial_qualification: Whether to allow partial qualification.
+
+    Returns:
+        The qualified expression.
+
+    Notes:
+        - Currently only handles a single PIVOT or UNPIVOT operator
+    """
+    schema = ensure_schema(schema)
+    annotator = TypeAnnotator(schema)
+    infer_schema = schema.empty if infer_schema is None else infer_schema
+    dialect = Dialect.get_or_raise(schema.dialect)
+    pseudocolumns = dialect.PSEUDOCOLUMNS
+
+    snowflake_or_oracle = dialect in ("oracle", "snowflake")
+
+    for scope in traverse_scope(expression):
+        scope_expression = scope.expression
+        is_select = isinstance(scope_expression, exp.Select)
+
+        if is_select and snowflake_or_oracle and scope_expression.args.get("connect"):
+            # In Snowflake / Oracle queries that have a CONNECT BY clause, one can use the LEVEL
+            # pseudocolumn, which doesn't belong to a table, so we change it into an identifier
+            scope_expression.transform(
+                lambda n: n.this
+                if isinstance(n, exp.Column) and n.name == "LEVEL"
+                else n,
+                copy=False,
+            )
+            scope.clear_cache()
+
+        resolver = Resolver(scope, schema, infer_schema=infer_schema)
+        _pop_table_column_aliases(scope.ctes)
+        _pop_table_column_aliases(scope.derived_tables)
+        using_column_tables = _expand_using(scope, resolver)
+
+        if (
+            schema.empty or dialect.FORCE_EARLY_ALIAS_REF_EXPANSION
+        ) and expand_alias_refs:
+            _expand_alias_refs(
+                scope,
+                resolver,
+                dialect,
+                expand_only_groupby=dialect.EXPAND_ALIAS_REFS_EARLY_ONLY_IN_GROUP_BY,
+            )
+
+        _convert_columns_to_dots(scope, resolver)
+        _qualify_columns(
+            scope, resolver, allow_partial_qualification=allow_partial_qualification
+        )
+
+        if not schema.empty and expand_alias_refs:
+            _expand_alias_refs(scope, resolver, dialect)
+
+        if is_select:
+            if expand_stars:
+                _expand_stars(
+                    scope,
+                    resolver,
+                    using_column_tables,
+                    pseudocolumns,
+                    annotator,
+                )
+            qualify_outputs(scope)
+
+        _expand_group_by(scope, dialect)
+        _expand_order_by(scope, resolver)
+
+        if dialect == "bigquery":
+            annotator.annotate_scope(scope)
+
+    return expression
+
+
+def _qualify_columns(
+    scope: Scope, resolver: Resolver, allow_partial_qualification: bool
+) -> None:
+    """Disambiguate columns, ensuring each column specifies a source"""
+    # PYDOUGH CHANGE: using our custom get_scope_columns function instead of
+    # scope.columns
+    for column in get_scope_columns(scope):
+        column_table = column.table
+        column_name = column.name
+
+        if column_table and column_table in scope.sources:
+            source_columns = resolver.get_source_columns(column_table)
+            if (
+                not allow_partial_qualification
+                and source_columns
+                and column_name not in source_columns
+                and "*" not in source_columns
+            ):
+                raise OptimizeError(f"Unknown column: {column_name}")
+
+        if not column_table:
+            if scope.pivots and not column.find_ancestor(exp.Pivot):
+                # If the column is under the Pivot expression, we need to qualify it
+                # using the name of the pivoted source instead of the pivot's alias
+                column.set("table", exp.to_identifier(scope.pivots[0].alias))
+                continue
+
+            # column_table can be a '' because bigquery unnest has no table alias
+            column_table = resolver.get_table(column_name)
+            if column_table:
+                column.set("table", column_table)
+
+    for pivot in scope.pivots:
+        for column in pivot.find_all(exp.Column):
+            if not column.table and column.name in resolver.all_columns:
+                column_table = resolver.get_table(column.name)
+                if column_table:
+                    column.set("table", column_table)
+
+
+def get_scope_columns(scope: Scope) -> list[exp.Column]:
+    """
+    Pydouhh custom version of `scope.columns`. This function extract the columns
+    from the given Scope.
+
+    Args:
+        `scope`: Sqlglot scope from which the function exacts the columns.
+
+    Returns:
+        A list of columns.
+    """
+    scope._ensure_collected()
+    columns = scope._raw_columns
+
+    external_columns = [
+        column
+        for scope in itertools.chain(
+            scope.subquery_scopes,
+            scope.udtf_scopes,
+            (dts for dts in scope.derived_table_scopes if dts.can_be_correlated),
+        )
+        for column in scope.external_columns
+    ]
+
+    _columns = []
+    for column in columns + external_columns:
+        ancestor = column.find_ancestor(
+            exp.Select,
+            exp.Qualify,
+            exp.Order,
+            exp.Having,
+            exp.Hint,
+            exp.Table,
+            exp.Star,
+        )
+        if (
+            not ancestor
+            or column.table
+            or isinstance(ancestor, exp.Select)
+            or (
+                isinstance(ancestor, exp.Table)
+                and not isinstance(ancestor.this, exp.Func)
+            )
+            or (
+                isinstance(ancestor, exp.Order) or isinstance(ancestor, exp.Qualify)
+                # PYDOUGH CHANGE: not checking for instance of Window or WithinGroup
+                # or not column.name in named_selects. Allowing qualification
+                # for columns in Qualify
+            )
+            or (isinstance(ancestor, exp.Star) and not column.arg_key == "except")
+        ):
+            _columns.append(column)
+
+    return _columns

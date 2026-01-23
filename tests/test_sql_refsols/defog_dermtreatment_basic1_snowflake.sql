@@ -5,7 +5,10 @@ WITH _s1 AS (
     SUM(tot_drug_amt) AS sum_tot_drug_amt
   FROM main.treatments
   WHERE
-    start_dt >= DATE_TRUNC('DAY', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
+    start_dt >= DATE_TRUNC(
+      'DAY',
+      DATEADD(MONTH, -6, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
   GROUP BY
     1
 ), _t1 AS (

@@ -1,0 +1,13 @@
+WITH _t AS (
+  SELECT
+    CUSTOMER.c_custkey,
+    ROW_NUMBER() OVER (PARTITION BY NATION.n_regionkey ORDER BY CASE WHEN CUSTOMER.c_acctbal IS NULL THEN 1 ELSE 0 END DESC, CUSTOMER.c_acctbal DESC) AS _w
+  FROM tpch.NATION AS NATION
+  JOIN tpch.CUSTOMER AS CUSTOMER
+    ON CUSTOMER.c_nationkey = NATION.n_nationkey
+)
+SELECT
+  c_custkey AS `key`
+FROM _t
+WHERE
+  _w = 1

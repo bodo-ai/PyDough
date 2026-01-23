@@ -176,9 +176,22 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # Visit the inputs in reverse order so we can pop them off in order.
         for arg in reversed(window_expression.inputs):
             arg.accept(self)
-        arg_exprs: list[SQLGlotExpression] = [
-            self._stack.pop() for _ in range(len(window_expression.inputs))
-        ]
+        arg_exprs: list[SQLGlotExpression] = []
+        for _ in range(len(window_expression.inputs)):
+            expr: SQLGlotExpression = self._stack.pop()
+            # Some dialects require a cast before calling a windows function
+            # like AVG with NULL or other datatypes
+            if isinstance(expr, sqlglot_expressions.Null):
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("INTEGER")
+                )
+            # Fix the precision gap. For exmaple: 7.333 now will be 7.333333
+            # which is the exepected value
+            elif window_expression.op.function_name == "RELAVG":
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("DOUBLE")
+                )
+            arg_exprs.append(expr)
         # Do the same with the partition expressions.
         for arg in reversed(window_expression.partition_inputs):
             arg.accept(self)

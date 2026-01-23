@@ -32,6 +32,11 @@ from pydough.errors import PyDoughTestingException
 from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
+from tests.test_pydough_functions.simple_pydough_functions import (
+    string_format_specifiers_mysql,
+    string_format_specifiers_postgres,
+    string_format_specifiers_snowflake,
+)
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
     tpch_q2_output,
@@ -2680,6 +2685,164 @@ def mock_server_setup():
     # Cleanup after tests
     proc.terminate()
     proc.wait()
+
+
+def tpch_custom_test_data_dialect_replacements(
+    dialect: DatabaseDialect, test: PyDoughPandasTest
+) -> PyDoughPandasTest:
+    """
+    Replace specific TPC-H custom test data with dialect-specific versions.
+    """
+    if test.test_name == "string_format_specifiers":
+        if dialect == DatabaseDialect.MYSQL:
+            return PyDoughPandasTest(
+                string_format_specifiers_mysql,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["Sat"],
+                        "d2": ["Jul"],
+                        "d3": ["7"],
+                        "d4": ["15th"],
+                        "d5": ["15"],
+                        "d6": ["15"],
+                        "d7": ["000000"],
+                        "d8": ["14"],
+                        "d9": ["02"],
+                        "d10": ["02"],
+                        "d11": ["30"],
+                        "d12": ["196"],
+                        "d13": ["14"],
+                        "d14": ["2"],
+                        "d15": ["30"],
+                        "d16": ["07"],
+                        "d17": ["PM"],
+                        "d18": ["02:30:45 PM"],
+                        "d19": ["45"],
+                        "d20": ["45"],
+                        "d21": ["14:30:45"],
+                        "d22": ["28"],
+                        "d23": ["28"],
+                        "d24": ["28"],
+                        "d25": ["28"],
+                        "d26": ["28"],
+                        "d27": ["6"],
+                        "d28": ["2023"],
+                        "d29": ["2023"],
+                        "d30": ["2023"],
+                        "d31": ["23"],
+                        "d32": ["2023-07-15"],
+                        "d33": ["14:30"],
+                    }
+                ),
+                "string_format_specifiers",
+            )
+        elif dialect == DatabaseDialect.POSTGRES:
+            return PyDoughPandasTest(
+                string_format_specifiers_postgres,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        # HOURS / MINUTES / SECONDS
+                        "h1": ["02"],  # HH
+                        "h2": ["02"],  # HH12
+                        "h3": ["14"],  # HH24
+                        "m1": ["30"],  # MI
+                        "s1": ["45"],  # SS
+                        "ms1": ["000"],  # MS
+                        "us1": ["000000"],  # US
+                        "ff1": ["0"],  # FF1
+                        "ff2": ["00"],  # FF2
+                        "ff3": ["000"],  # FF3
+                        "ff4": ["0000"],  # FF4
+                        "ff5": ["00000"],  # FF5
+                        "ff6": ["000000"],  # FF6
+                        "ssss1": ["52245"],  # SSSS
+                        "ssss2": ["52245"],  # SSSSS
+                        # MERIDIEM
+                        "am1": ["PM"],  # AM
+                        "am2": ["pm"],  # am
+                        "am3": ["P.M."],  # A.M.
+                        "am4": ["p.m."],  # a.m.
+                        # YEAR FORMATS
+                        "y1": ["2,023"],  # Y,YYY
+                        "y2": ["2023"],  # YYYY
+                        "y3": ["023"],  # YYY
+                        "y4": ["23"],  # YY
+                        "y5": ["3"],  # Y
+                        "iy1": ["2023"],  # IYYY
+                        "iy2": ["023"],  # IYY
+                        "iy3": ["23"],  # IY
+                        "iy4": ["3"],  # I
+                        # ERA
+                        "era1": ["AD"],  # AD
+                        "era2": ["A.D."],  # A.D.
+                        # MONTH NAMES
+                        "mon1": ["JULY     "],  # MONTH (blank-padded)
+                        "mon2": ["July     "],  # Month
+                        "mon3": ["july     "],  # month
+                        "mon4": ["JUL"],  # MON
+                        "mon5": ["Jul"],  # Mon
+                        "mon6": ["jul"],  # mon
+                        "mon7": ["07"],  # MM
+                        # DAY NAMES
+                        "day1": ["SATURDAY "],  # DAY (blank-padded)
+                        "day2": ["Saturday "],  # Day
+                        "day3": ["saturday "],  # day
+                        "day4": ["SAT"],  # DY
+                        "day5": ["Sat"],  # Dy
+                        "day6": ["sat"],  # dy
+                        # DAY / WEEK / YEAR METRICS
+                        "doy1": ["196"],  # DDD
+                        "doy2": ["195"],  # IDDD
+                        "dom1": ["15"],  # DD
+                        "dow1": ["7"],  # D (Sunday=1)
+                        "dow2": ["6"],  # ID (Monday=1)
+                        "wom1": ["3"],  # W
+                        "woy1": ["28"],  # WW
+                        "woy2": ["28"],  # IW
+                        # OTHER DATE COMPONENTS
+                        "c1": ["21"],  # CC
+                        "j1": ["2460141"],  # J (Julian day number)
+                        "q1": ["3"],  # Q
+                        "rm1": ["VII "],  # RM
+                        "rm2": ["vii "],  # rm
+                        # TIME ZONE (timestamp without time zone → empty)
+                        "tz1": [""],  # TZ
+                        "tz2": [""],  # tz
+                        "tz3": ["+00"],  # TZH
+                        "tz4": ["00"],  # TZM
+                        "tz5": ["+00"],  # OF
+                    }
+                ),
+                "string_format_specifiers",
+            )
+        elif dialect == DatabaseDialect.SNOWFLAKE:
+            return PyDoughPandasTest(
+                string_format_specifiers_snowflake,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["2023"],  # YYYY
+                        "d2": ["23"],  # YY
+                        "d3": ["07"],  # MM
+                        "d4": ["Jul"],  # Mon
+                        "d5": ["July"],  # MMMM
+                        "d6": ["15"],  # DD
+                        "d7": ["Sat"],  # DY
+                        "d8": ["Saturday"],  # DYDY
+                        "d9": ["14"],  # HH24
+                        "d10": ["02"],  # HH12
+                        "d11": ["30"],  # MI
+                        "d12": ["45"],  # SS
+                        "d13": ["PM"],  # AM / PM
+                        "d14": [".000000000"],  # .FF
+                        "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                    }
+                ),
+                "string_format_specifiers",
+            )
+    return test
 
 
 @pytest.fixture(scope="session")

@@ -2,7 +2,7 @@ WITH _t2 AS (
   SELECT
     customer.c_acctbal,
     nation.n_regionkey,
-    AVG(customer.c_acctbal) OVER (PARTITION BY nation.n_regionkey) AS avg_balance
+    AVG(CAST(customer.c_acctbal AS REAL)) OVER (PARTITION BY nation.n_regionkey) AS avg_balance
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey

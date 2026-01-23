@@ -1,8 +1,10 @@
 WITH _u_0 AS (
   SELECT
     (
-      42 - (
-        customers.c_key
+      (
+        42 - (
+          customers.c_key
+        )
       )
     ) AS _u_1,
     branches.b_key AS _u_2

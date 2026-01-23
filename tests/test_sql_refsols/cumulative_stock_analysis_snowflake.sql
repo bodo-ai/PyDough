@@ -18,7 +18,7 @@ SELECT
     )
   ) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS share_change,
   ROUND(
-    AVG(sbtransaction.sbtxamount) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    AVG(CAST(sbtransaction.sbtxamount AS DOUBLE)) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS rolling_avg_amount
 FROM main.sbtransaction AS sbtransaction
