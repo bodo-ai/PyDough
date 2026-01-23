@@ -1149,7 +1149,7 @@ def bad_child_reuse_5():
     # number of orders, only keep ones that have no orders.
     return (
         customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
-        .TOP_K(10, by=account_balance.DESC())
+        .TOP_K(10, by=(account_balance.DESC(), key.DESC()))
         .WHERE(HASNOT(orders))
     )
 

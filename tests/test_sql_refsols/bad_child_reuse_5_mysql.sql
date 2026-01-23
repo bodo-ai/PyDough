@@ -18,7 +18,8 @@ WITH _t2 AS (
   LEFT JOIN _s1 AS _s1
     ON CUSTOMER.c_custkey = _s1.o_custkey
   ORDER BY
-    1 DESC
+    1 DESC,
+    2 DESC
   LIMIT 10
 ), _u_0 AS (
   SELECT
@@ -36,4 +37,5 @@ LEFT JOIN _u_0 AS _u_0
 WHERE
   _u_0._u_1 IS NULL
 ORDER BY
-  _s2.c_acctbal DESC
+  _s2.c_acctbal DESC,
+  1 DESC
