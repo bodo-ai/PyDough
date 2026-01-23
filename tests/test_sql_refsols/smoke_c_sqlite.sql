@@ -4,7 +4,13 @@ WITH _t1 AS (
     c_mktsegment,
     c_name,
     CASE
-      WHEN CAST(0.8 * COUNT(c_acctbal) OVER () AS INTEGER) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
+      WHEN (
+        CAST(0.8 * COUNT(c_acctbal) OVER () AS INTEGER) - CASE
+          WHEN 0.8 * COUNT(c_acctbal) OVER () < CAST(0.8 * COUNT(c_acctbal) OVER () AS INTEGER)
+          THEN 1
+          ELSE 0
+        END
+      ) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
       THEN c_acctbal
       ELSE NULL
     END AS expr_30,

@@ -72,6 +72,43 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        assert len(args) == 1
+        # Cast as integer directly rounds the argument instead of truncate the
+        # decimal part. For example INTEGER(-5.88) returns -6, not -5.
+        # In that case, for literals first cast to DOUBLE then truncate the
+        # decimal part.
+        if isinstance(args[0], sqlglot_expressions.Literal):
+            return sqlglot_expressions.Anonymous(
+                this="TRUNCATE",
+                expressions=[
+                    sqlglot_expressions.Cast(
+                        this=args[0], to=sqlglot_expressions.DataType.build("DOUBLE")
+                    )
+                ],
+            )
+        else:
+            return sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("BIGINT")
+            )
+
+    def convert_current_timestamp(self) -> SQLGlotExpression:
+        """
+        Create a SQLGlot expression to obtain the current timestamp removing the
+        timezone and not DST-aware specifically for Snowflake.
+        SQL:
+            CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMP_NTZ)
+        """
+        return sqlglot_expressions.Cast(
+            this=sqlglot_expressions.ConvertTimezone(
+                target_tz=sqlglot_expressions.Literal.string("UTC"),
+                timestamp=sqlglot_expressions.CurrentTimestamp(),
+            ),
+            to=sqlglot_expressions.DataType.build("TIMESTAMPNTZ"),
+        )
+
     def convert_extract_datetime(
         self,
         args: list[SQLGlotExpression],

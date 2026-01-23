@@ -5,7 +5,11 @@ WITH _s1 AS (
     SUM(sbdpclose) AS sum_sbdpclose
   FROM main.sbdailyprice
   WHERE
-    DATEDIFF(DAY, CAST(sbdpdate AS DATETIME), CURRENT_TIMESTAMP()) <= 7
+    DATEDIFF(
+      DAY,
+      CAST(sbdpdate AS DATETIME),
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
+    ) <= 7
   GROUP BY
     1
 )
