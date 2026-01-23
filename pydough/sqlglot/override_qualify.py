@@ -445,7 +445,16 @@ def _qualify_columns(
 
 
 def get_scope_columns(scope: Scope) -> list[exp.Column]:
-    """Pydough custom version of scope.columns to better handle derived columns."""
+    """
+    Pydouhh custom version of `scope.columns`. This function extract the columns
+    from the given Scope.
+
+    Args:
+        `scope`: Sqlglot scope from which the function exacts the columns.
+
+    Returns:
+        A list of columns.
+    """
     scope._ensure_collected()
     columns = scope._raw_columns
 

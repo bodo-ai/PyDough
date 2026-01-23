@@ -179,10 +179,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         arg_exprs: list[SQLGlotExpression] = []
         for _ in range(len(window_expression.inputs)):
             expr: SQLGlotExpression = self._stack.pop()
+            # Some dialects require a cast before calling a windows function
+            # like AVG with NULL or other datatypes
             if isinstance(expr, sqlglot_expressions.Null):
                 expr = sqlglot_expressions.Cast(
                     this=expr, to=sqlglot_expressions.DataType.build("INTEGER")
                 )
+            # Fix the precision gap. For exmaple: 7.333 now will be 7.333333
+            # which is the exepected value
             elif window_expression.op.function_name == "RELAVG":
                 expr = sqlglot_expressions.Cast(
                     this=expr, to=sqlglot_expressions.DataType.build("DOUBLE")

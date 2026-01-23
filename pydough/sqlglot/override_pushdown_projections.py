@@ -98,6 +98,10 @@ def pushdown_projections(expression, schema=None, remove_unused_selections=True)
 
 
 def _remove_unused_selections(scope, parent_selections, schema, alias_count):
+    """
+    Unmodified function from sqlglot. It is needed because the change is in the
+    `default_selection` function which is used here.
+    """
     order = scope.expression.args.get("order")
 
     if order:

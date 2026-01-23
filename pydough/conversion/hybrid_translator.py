@@ -836,6 +836,7 @@ class HybridTranslator:
 
         if expr.args[1].literal.value == 0.0:
             # Shortcut for p=0 case: just return the MIN
+            # SQL: MIN(data_expr)
             min_call: HybridFunctionExpr = HybridFunctionExpr(
                 pydop.MIN, [data_expr], expr.typ
             )
@@ -843,6 +844,7 @@ class HybridTranslator:
 
         if expr.args[1].literal.value == 1.0:
             # Shortcut for p=1 case: just return the MAX
+            # SQL: MAX(data_expr)
             max_call = HybridFunctionExpr(pydop.MAX, [data_expr], expr.typ)
             return max_call
 
@@ -860,7 +862,7 @@ class HybridTranslator:
         )
 
         # (1.0-args[1])
-        # Decimal aviods floating point precision issues
+        # Decimal avoids floating point precision issues
         sub: HybridExpr = HybridLiteralExpr(
             Literal(
                 Decimal("1.0") - Decimal(str(expr.args[1].literal.value)), NumericType()
