@@ -806,7 +806,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_members))",
                 "FSI",
                 "fsi_accounts_customers_compound_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -821,7 +820,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_members))",
                 "FSI",
                 "fsi_accounts_customers_compound_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -836,7 +834,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_members))",
                 "FSI",
                 "fsi_accounts_customers_compound_c",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -851,7 +848,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_names_analysis_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -866,7 +862,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_names_analysis_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -881,7 +876,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_all",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -896,7 +890,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_none",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -911,7 +904,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -926,7 +918,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -941,7 +932,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_c",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -956,7 +946,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_d",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -971,7 +960,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "name_range_e",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -1006,7 +994,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "large_name_list",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -1014,6 +1001,124 @@ from .testing_sf_masked_utilities import (
                 },
             ),
             id="large_name_list",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE("
+                "ISIN(last_name, "
+                + repr(
+                    [
+                        "Bailey",
+                        "Baker",
+                        "Ball",
+                        "Banks",
+                        "Barajas",
+                        "Barnett",
+                        "Barrera",
+                        "Barron",
+                        "Barton",
+                        "Cabrera",
+                        "Calderon",
+                        "Caldwell",
+                        "Callahan",
+                        "Campbell",
+                        "Campos",
+                        "Cardenas",
+                        "Carey",
+                        "Carlson",
+                        "Carney",
+                        "Carpenter",
+                        "Carr",
+                        "Carroll",
+                        "Carter",
+                        "Casey",
+                        "Castillo",
+                        "Castro",
+                        "Daniels",
+                        "Davenport",
+                        "Davis",
+                        "Dawson",
+                        "Day",
+                        "Eaton",
+                        "Farrell",
+                        "Galvan",
+                        "Garcia",
+                        "Garrett",
+                        "Garrison",
+                        "Gates",
+                        "Hahn",
+                        "Hale",
+                        "Hall",
+                        "Hampton",
+                        "Hansen",
+                        "Hanson",
+                        "Hardy",
+                        "Harris",
+                        "Harrison",
+                        "Harvey",
+                        "Hatfield",
+                        "Hawkins",
+                        "Hayden",
+                        "Hayes",
+                        "Jackson",
+                        "Jacobs",
+                        "Jacobson",
+                        "James",
+                        "Kane",
+                        "Lara",
+                        "Larsen",
+                        "Larson",
+                    ]
+                )
+                + "))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "large_name_single_list",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [126]}),
+                },
+            ),
+            id="large_name_single_list",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(HAS(filed_claims.WHERE("
+                "   (YEAR(claim_date) == 2024) &"
+                "   (claim_status == 'Denied') &"
+                "   (ISIN(provider_name, ('Smith Ltd', 'Smith Inc')))"
+                ")))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "patients_claims",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [7]}),
+                },
+            ),
+            id="patients_claims",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_accounts = accounts.WHERE("
+                "   MONOTONIC('2022-01-20', creation_date, '2022-09-15') &"
+                "   (status == 'Active') &"
+                "   ~(account_type == 'Checking') &"
+                "   ~ISIN(DAY(creation_date), (10, 15, 20)) &"
+                "   (currency == 'USD')"
+                ")\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_accounts))",
+                "FSI",
+                "fsi_accounts_complex_filter",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [4]}),
+                },
+            ),
+            id="fsi_accounts_complex_filter",
         ),
     ],
 )
@@ -1072,7 +1177,6 @@ def test_pipeline_until_sql_masked_sf(
     file_path: str = get_sql_test_filename(
         f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}", sf_data.dialect
     )
-    # with redirect_stdout(io.StringIO()):
     sf_masked_test_data.run_sql_test(
         get_sf_masked_graphs,
         file_path,
@@ -1215,3 +1319,143 @@ def test_masked_sf_mask_server_logging(
     assert batch_requests_made == batch_requests, (
         "The batch requests made do not match the expected batch requests."
     )
+
+
+@pytest.mark.sf_masked
+@pytest.mark.parametrize(
+    "execute",
+    [
+        pytest.param(False, id="sql"),
+        pytest.param(True, id="e2e", marks=pytest.mark.execute),
+    ],
+)
+@pytest.mark.parametrize(
+    "test_data, hard_limit",
+    [
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(ISIN(last_name, ['Bailey', 'Baker', 'Ball', 'Banks', 'Barajas', 'Barnett', 'Barrera', 'Barron', 'Barton', 'Cabrera']))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_list_10_limit_5",
+                answers={
+                    "FULL": pd.DataFrame({"n": [18]}),
+                },
+                account_type="FULL",
+            ),
+            5,
+            id="health_list_10_limit_5",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(ISIN(last_name, ['Bailey', 'Baker', 'Ball', 'Banks', 'Barajas', 'Barnett', 'Barrera', 'Barron', 'Barton', 'Cabrera']))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_list_10_limit_10",
+                answers={
+                    "FULL": pd.DataFrame({"n": [18]}),
+                },
+                account_type="FULL",
+            ),
+            10,
+            id="health_list_10_limit_10",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(ISIN(last_name, ['Bailey', 'Baker', 'Ball', 'Banks', 'Barajas', 'Barnett', 'Barrera', 'Barron', 'Barton', 'Cabrera', 'Calderon', 'Caldwell', 'Callahan', 'Campbell', 'Campos', 'Cardenas', 'Carey', 'Carlson', 'Carney', 'Carpenter', 'Carr', 'Carroll', 'Carter', 'Casey', 'Castillo', 'Castro', 'Daniels', 'Davenport', 'Davis', 'Dawson', 'Day', 'Eaton', 'Farrell', 'Galvan', 'Garcia', 'Garrett', 'Garrison', 'Gates', 'Hahn', 'Hale', 'Hall', 'Hampton', 'Hansen', 'Hanson', 'Hardy', 'Harris', 'Harrison', 'Harvey', 'Hatfield', 'Hawkins', 'Hayden', 'Hayes', 'Jackson', 'Jacobs', 'Jacobson', 'James', 'Kane', 'Lara', 'Larsen', 'Larson']))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_list_60_limit_100",
+                answers={
+                    "FULL": pd.DataFrame({"n": [126]}),
+                },
+                account_type="FULL",
+            ),
+            100,
+            id="health_list_60_limit_100",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(ISIN(last_name, ['Bailey', 'Baker', 'Ball', 'Banks', 'Barajas', 'Barnett', 'Barrera', 'Barron', 'Barton', 'Cabrera', 'Calderon', 'Caldwell', 'Callahan', 'Campbell', 'Campos', 'Cardenas', 'Carey', 'Carlson', 'Carney', 'Carpenter', 'Carr', 'Carroll', 'Carter', 'Casey', 'Castillo', 'Castro', 'Daniels', 'Davenport', 'Davis', 'Dawson', 'Day', 'Eaton', 'Farrell', 'Galvan', 'Garcia', 'Garrett', 'Garrison', 'Gates', 'Hahn', 'Hale', 'Hall', 'Hampton', 'Hansen', 'Hanson', 'Hardy', 'Harris', 'Harrison', 'Harvey', 'Hatfield', 'Hawkins', 'Hayden', 'Hayes', 'Jackson', 'Jacobs', 'Jacobson', 'James', 'Kane', 'Lara', 'Larsen', 'Larson']))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_list_60_limit_50",
+                answers={
+                    "FULL": pd.DataFrame({"n": [126]}),
+                },
+                account_type="FULL",
+            ),
+            50,
+            id="health_list_60_limit_50",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(CONTAINS(LOWER(last_name), 'e'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_contains_e_limit_100",
+                answers={
+                    "FULL": pd.DataFrame({"n": [520]}),
+                },
+                account_type="FULL",
+            ),
+            100,
+            id="health_contains_e_limit_100",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(CONTAINS(LOWER(last_name), 'e'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_contains_e_limit_500",
+                answers={
+                    "FULL": pd.DataFrame({"n": [520]}),
+                },
+                account_type="FULL",
+            ),
+            500,
+            id="health_contains_e_limit_500",
+        ),
+    ],
+)
+def test_pipeline_hard_limit_variations(
+    test_data: PyDoughSnowflakeMaskedTest,
+    hard_limit: int,
+    get_sf_masked_graphs: graph_fetcher,  # noqa: F811
+    sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+    true_mask_server_info: MaskServerInfo,
+    execute: bool,
+):
+    """
+    Same idea as test_pipeline_until_sql_masked_sf and
+    test_pipeline_until_sql_masked_e2e, but specifically testing edge
+    cases with the PYDOUGH_MASK_SERVER_HARD_LIMIT with fewer other parameters.
+    """
+    sf_data = sf_masked_context("BODO", test_data.graph_name, "FULL")
+    with temp_env_override(
+        {
+            "PYDOUGH_MASK_SERVER_HARD_LIMIT": str(hard_limit),
+            "PYDOUGH_ENABLE_MASK_REWRITES": "1",
+        }
+    ):
+        with redirect_stdout(io.StringIO()):
+            if execute:
+                test_data.run_e2e_test(
+                    get_sf_masked_graphs,
+                    sf_masked_context("BODO", test_data.graph_name, "FULL"),
+                    coerce_types=True,
+                    mask_server=true_mask_server_info,
+                )
+            else:
+                file_path: str = get_sql_test_filename(
+                    f"{test_data.test_name}_rewrite", sf_data.dialect
+                )
+                test_data.run_sql_test(
+                    get_sf_masked_graphs,
+                    file_path,
+                    update_tests,
+                    sf_data,
+                    mask_server=true_mask_server_info,
+                )
