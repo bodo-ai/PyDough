@@ -17,9 +17,5 @@ JOIN tpch.lineitem AS lineitem
 JOIN tpch.part AS part
   ON lineitem.l_partkey = part.p_partkey
 ORDER BY
-  lineitem.l_extendedprice * (
-    1 - (
-      lineitem.l_discount + added_discount
-    )
-  )
+  5
 LIMIT 5

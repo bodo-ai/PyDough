@@ -14,8 +14,8 @@ WITH _t2 AS (
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
     NTILE(1000) OVER (ORDER BY customer.c_acctbal NULLS LAST) > 996
-    AND c_mktsegment = mrk_segment
-    AND n_name = nation_name
+    AND column1 = nation.n_name
+    AND column2 = customer.c_mktsegment
 ), _s6 AS (
   SELECT
     _t2.c_custkey,
@@ -66,7 +66,7 @@ SELECT
   _s9.avg_price_diff,
   _s6.anything_c_acctbal / SUM(_s6.anything_c_acctbal) OVER () AS proportion,
   CASE
-    WHEN _s6.anything_c_acctbal > AVG(_s6.anything_c_acctbal) OVER ()
+    WHEN _s6.anything_c_acctbal > AVG(CAST(_s6.anything_c_acctbal AS DOUBLE)) OVER ()
     THEN TRUE
     ELSE FALSE
   END AS above_avg,

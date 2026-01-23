@@ -18,7 +18,7 @@ WITH _s1 AS (
   JOIN _s1 AS _s1
     ON _s1.priority_lvl = orders.o_orderpriority
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY o_orderkey ORDER BY orders.o_totalprice + orders.o_totalprice * _s1.tax_rate NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY orders.o_orderkey ORDER BY orders.o_totalprice + orders.o_totalprice * _s1.tax_rate NULLS LAST) = 1
 )
 SELECT
   customer.c_name AS name,

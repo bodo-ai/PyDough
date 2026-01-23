@@ -1,7 +1,7 @@
 SELECT
   d1.x + d2.y AS s,
   COUNT(*) AS n,
-  AVG(d1.x * d2.y) AS a
+  AVG(CAST(d1.x * d2.y AS DOUBLE)) AS a
 FROM (VALUES
   ROW(1),
   ROW(2),

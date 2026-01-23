@@ -64,7 +64,11 @@ SELECT
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,
   CAST(_s6.anything_c_acctbal AS REAL) / SUM(_s6.anything_c_acctbal) OVER () AS proportion,
-  IIF(_s6.anything_c_acctbal > AVG(_s6.anything_c_acctbal) OVER (), TRUE, FALSE) AS above_avg,
+  IIF(
+    _s6.anything_c_acctbal > AVG(CAST(_s6.anything_c_acctbal AS REAL)) OVER (),
+    TRUE,
+    FALSE
+  ) AS above_avg,
   COUNT(_s6.anything_c_acctbal) OVER (ORDER BY _s6.anything_c_acctbal ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_poorer,
   CAST(_s6.anything_c_acctbal AS REAL) / COUNT(*) OVER () AS ratio
 FROM _s6 AS _s6

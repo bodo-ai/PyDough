@@ -13,7 +13,7 @@ WITH _t1 AS (
     ('4-NOT SPECIFIED', 0.02)) AS priority_taxes(priority_lvl, tax_rate)
     ON orders.o_orderpriority = priority_taxes.priority_lvl
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY o_orderkey ORDER BY orders.o_totalprice + orders.o_totalprice * priority_taxes.tax_rate) = 1
+    ROW_NUMBER() OVER (PARTITION BY orders.o_orderkey ORDER BY orders.o_totalprice + orders.o_totalprice * priority_taxes.tax_rate) = 1
 )
 SELECT
   customer.c_name AS name,

@@ -1,7 +1,7 @@
 SELECT
   d1.column1 + d2.column1 AS s,
   COUNT(*) AS n,
-  AVG(d1.column1 * d2.column1) AS a
+  AVG(CAST(d1.column1 * d2.column1 AS REAL)) AS a
 FROM (VALUES
   (1),
   (2),

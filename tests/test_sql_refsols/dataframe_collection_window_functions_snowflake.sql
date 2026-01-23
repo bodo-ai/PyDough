@@ -14,8 +14,8 @@ WITH _t2 AS (
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
     NTILE(1000) OVER (ORDER BY customer.c_acctbal) > 996
-    AND c_mktsegment = mrk_segment
-    AND n_name = nation_name
+    AND customer.c_mktsegment = customers_filters.mrk_segment
+    AND customers_filters.nation_name = nation.n_name
 ), _s6 AS (
   SELECT
     _t2.c_custkey,
@@ -65,7 +65,11 @@ SELECT
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,
   _s6.anything_c_acctbal / SUM(_s6.anything_c_acctbal) OVER () AS proportion,
-  IFF(_s6.anything_c_acctbal > AVG(_s6.anything_c_acctbal) OVER (), TRUE, FALSE) AS above_avg,
+  IFF(
+    _s6.anything_c_acctbal > AVG(CAST(_s6.anything_c_acctbal AS DOUBLE)) OVER (),
+    TRUE,
+    FALSE
+  ) AS above_avg,
   COUNT(_s6.anything_c_acctbal) OVER (ORDER BY _s6.anything_c_acctbal ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_poorer,
   _s6.anything_c_acctbal / COUNT(*) OVER () AS ratio
 FROM _s6 AS _s6

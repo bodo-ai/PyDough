@@ -67,7 +67,7 @@ SELECT
   _s9.avg_price_diff,
   CAST(_s6.anything_c_acctbal AS DOUBLE PRECISION) / SUM(_s6.anything_c_acctbal) OVER () AS proportion,
   CASE
-    WHEN _s6.anything_c_acctbal > AVG(_s6.anything_c_acctbal) OVER ()
+    WHEN _s6.anything_c_acctbal > AVG(CAST(_s6.anything_c_acctbal AS DOUBLE PRECISION)) OVER ()
     THEN TRUE
     ELSE FALSE
   END AS above_avg,

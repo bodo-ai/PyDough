@@ -5,10 +5,13 @@ dataset.
 
 import re
 from collections.abc import Callable
+from decimal import Decimal
 
+import numpy as np
 import pandas as pd
 import pytest
 
+import pydough
 from pydough.database_connectors import DatabaseContext
 from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
@@ -190,6 +193,18 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_bad_4,
     dataframe_collection_bad_5,
     dataframe_collection_bad_6,
+    dataframe_collection_best,
+    dataframe_collection_cross,
+    dataframe_collection_datatypes,
+    dataframe_collection_inf,
+    dataframe_collection_numbers,
+    dataframe_collection_partition,
+    dataframe_collection_strings,
+    dataframe_collection_top_k,
+    dataframe_collection_where,
+    dataframe_collection_where_date,
+    dataframe_collection_window_functions,
+    simple_dataframe_1,
     simple_range_1,
     simple_range_2,
     simple_range_3,
@@ -3249,6 +3264,61 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "r = pydough.range_collection('tbl', 'v', 0, 500, 13).CALCULATE(first_digit=INTEGER(STRING(v)[:1]))\n"
+                "result = r.PARTITION(name='digits', by=first_digit).CALCULATE(first_digit, n=COUNT(tbl))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_digit": [0, 1, 2, 3, 4, 5, 6, 7, 9],
+                        "n": [1, 9, 9, 8, 8, 1, 1, 1, 1],
+                    }
+                ),
+                "simple_range_6",
+                kwargs={"pydough": pydough},
+            ),
+            id="simple_range_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "r1 = pydough.range_collection('d1', 'x', 1, 7).CALCULATE(x)\n"
+                "r2 = pydough.range_collection('d2', 'y', 1, 7)\n"
+                "convolutions = r1.CROSS(r2).CALCULATE(s=x+y, p=x*y)\n"
+                "result = convolutions.PARTITION(name='sums', by=s).CALCULATE(s, n=COUNT(d2), a=AVG(FLOAT(d2.p)))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "s": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                        "n": [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1],
+                        "a": [1, 2, 10 / 3, 5, 7, 28 / 3, 14, 19, 73 / 3, 30, 36],
+                    }
+                ),
+                "simple_range_7",
+                kwargs={"pydough": pydough},
+            ),
+            id="simple_range_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "r1 = pydough.range_collection('d1', 'x', 1, 5).CALCULATE(x)\n"
+                "r2 = pydough.range_collection('d2', 'y', 1, 5).CALCULATE(y)\n"
+                "r3 = pydough.range_collection('d3', 'z', 1, 5).CALCULATE(z)\n"
+                "convolutions = r1.CROSS(r2).CROSS(r3).CALCULATE(s=x+y+z, p=x*y*z)\n"
+                "result = convolutions.PARTITION(name='sums', by=s).CALCULATE(s, n=COUNT(d3), a=AVG(d3.p))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "s": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                        "n": [1, 3, 6, 10, 12, 12, 10, 6, 3, 1],
+                        "a": [1, 2, 3.5, 5.6, 9.25, 14.5, 21.9, 34, 48, 64],
+                    }
+                ),
+                "simple_range_8",
+                kwargs={"pydough": pydough},
+            ),
+            id="simple_range_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 user_range_collection_1,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -3415,6 +3485,377 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="user_range_collection_6",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_dataframe_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "color": [
+                            "red",
+                            "orange",
+                            "yellow",
+                            "green",
+                            "blue",
+                            "indigo",
+                            "violet",
+                            None,
+                        ],
+                        "idx": range(8),
+                    }
+                ),
+                "simple_dataframe_1",
+            ),
+            id="simple_dataframe_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_datatypes,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "string_col": ["red", "orange", None],
+                        "int_col": pd.Series(range(3), dtype="int64"),
+                        "float_col": [1.5, 2.0, np.nan],
+                        "nullable_int_col": pd.Series([1, None, 7]),
+                        "bool_col": pd.Series([True, False, False], dtype="int64"),
+                        "null_col": [None] * 3,
+                        "datetime_col": pd.to_datetime(
+                            ["2024-01-01", "2024-01-02", None]
+                        ),
+                    }
+                ),
+                "dataframe_collection_datatypes",
+            ),
+            id="dataframe_collection_datatypes",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_strings,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "normal_strings": [
+                            "hello",
+                            "world",
+                            "pydough",
+                            None,
+                            "test_string",
+                        ],
+                        "empty_string": [
+                            "",
+                            "not_empty",
+                            "",
+                            None,
+                            " ",
+                        ],
+                        "special_characters": [
+                            "'simple quoted'",
+                            '"double quoted"',
+                            "unicode_ß_ç_ü",
+                            None,
+                            "tap_space\tnewline_\n_test",
+                        ],
+                    }
+                ),
+                "dataframe_collection_strings",
+            ),
+            id="dataframe_collection_strings",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_numbers,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "py_float": [
+                            1.5,
+                            0.0,
+                            10.0001,
+                            -2.25,
+                            None,
+                        ],
+                        "np_float64": np.array(
+                            [
+                                1.5,
+                                0.0,
+                                4.4444444,
+                                -2.25,
+                                None,
+                            ],
+                            dtype="float64",
+                        ),
+                        "np_float32": np.array(
+                            [
+                                1.5,
+                                3.33333,
+                                0.0,
+                                -2.25,
+                                None,
+                            ],
+                            dtype="float32",
+                        ),
+                        "null_vs_nan": [
+                            None,
+                            np.nan,
+                            float("nan"),
+                            1.0,
+                            0.0,
+                        ],
+                        "decimal_val": [
+                            Decimal("1.50"),
+                            Decimal("0.00"),
+                            Decimal("-2.25"),
+                            Decimal("NaN"),
+                            None,
+                        ],
+                    }
+                ),
+                "dataframe_collection_numbers",
+            ),
+            id="dataframe_collection_numbers",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_inf,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "py_float": [
+                            1.5,
+                            float("nan"),
+                            float("inf"),
+                            float("-inf"),
+                        ],
+                        "np_float64": np.array(
+                            [
+                                -2.25,
+                                np.nan,
+                                np.inf,
+                                -np.inf,
+                            ],
+                            dtype="float64",
+                        ),
+                        "np_float32": np.array(
+                            [
+                                0.0,
+                                np.nan,
+                                np.inf,
+                                -np.inf,
+                            ],
+                            dtype="float32",
+                        ),
+                    }
+                ),
+                "dataframe_collection_inf",
+            ),
+            id="dataframe_collection_inf",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_cross,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "id": [1, 1, 2, 2, 3],
+                        "name": ["John", "John", "Jane", "Jane", "Bob"],
+                        "order_id": [101.0, 103.0, 102.0, 105.0, 104.0],
+                        "amount": [250.00, 300.00, 150.50, 200.00, 450.75],
+                    }
+                ),
+                "dataframe_collection_cross",
+            ),
+            id="dataframe_collection_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_partition,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "product_category": ["A", "B"],
+                        "avg_price": [16.495000, 28.320000],
+                        "n_products": [2, 2],
+                        "avg_discount": [0.10, 0.15],
+                    }
+                ),
+                "dataframe_collection_partition",
+            ),
+            id="dataframe_collection_partition",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_where,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "sup_region_name": [
+                            "EUROPE",
+                            "AMERICA",
+                            "AFRICA",
+                            "ASIA",
+                            "MIDDLE EAST",
+                        ],
+                        "n_suppliers": [649, 387, 877, 988, 144],
+                    }
+                ),
+                "dataframe_collection_where",
+            ),
+            id="dataframe_collection_where",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_where_date,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "clerk_id": [
+                            "Clerk#000000456",
+                            "Clerk#000000743",
+                            "Clerk#000000547",
+                        ],
+                        "n_orders": [20, 16, 13],
+                    }
+                ),
+                "dataframe_collection_where_date",
+            ),
+            id="dataframe_collection_where_date",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_top_k,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "firebrick spring powder moccasin light",
+                            "light navy deep papaya olive",
+                            "black rosy lemon blue gainsboro",
+                            "cornsilk bisque lace slate deep",
+                            "blanched firebrick royal purple chartreuse",
+                        ],
+                        "shipping_type": ["REG AIR", "TRUCK", "SHIP", "TRUCK", "SHIP"],
+                        "extended_price": [
+                            904.00,
+                            905.00,
+                            916.01,
+                            908.00,
+                            922.00,
+                        ],
+                        "added_discount": [0.15, 0.15, 0.16, 0.15, 0.16],
+                        "final_price": [
+                            768.4000,
+                            769.2500,
+                            769.4484,
+                            771.8000,
+                            774.4800,
+                        ],
+                    }
+                ),
+                "dataframe_collection_top_k",
+            ),
+            id="dataframe_collection_top_k",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_best,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000107698",
+                            "Customer#000138094",
+                            "Customer#000053551",
+                            "Customer#000025090",
+                            "Customer#000064043",
+                        ],
+                        "order_key": [5267200, 4318946, 1600323, 1591073, 823814],
+                        "order_priority": [
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "1-URGENT",
+                            "4-NOT SPECIFIED",
+                            "1-URGENT",
+                        ],
+                        "cheapest_order_price": [
+                            901.7856,
+                            902.5164,
+                            910.245,
+                            913.2978,
+                            914.4240,
+                        ],
+                    }
+                ),
+                "dataframe_collection_best",
+            ),
+            id="dataframe_collection_best",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_window_functions,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000033690",
+                            "Customer#000046655",
+                            "Customer#000092396",
+                            "Customer#000096460",
+                            "Customer#000100101",
+                            "Customer#000110091",
+                            "Customer#000110568",
+                            "Customer#000129387",
+                        ],
+                        "ranking_balance": [1, 2, 1, 4, 3, 2, 2, 1],
+                        "n_orders": [0, 5, 8, 30, 0, 0, 0, 0],
+                        "avg_month_orders": [
+                            None,
+                            14.2500,
+                            8.7143,
+                            2.4138,
+                            None,
+                            None,
+                            None,
+                            None,
+                        ],
+                        "avg_price_diff": [
+                            None,
+                            24912.557500,
+                            -10995.104286,
+                            -1091.415172,
+                            None,
+                            None,
+                            None,
+                            None,
+                        ],
+                        "proportion": [
+                            0.125165,
+                            0.125076,
+                            0.125120,
+                            0.124864,
+                            0.124887,
+                            0.124915,
+                            0.124762,
+                            0.125212,
+                        ],
+                        "above_avg": [1, 1, 1, 0, 0, 0, 0, 1],
+                        "n_poorer": [7, 5, 6, 2, 3, 4, 1, 8],
+                        "ratio": [
+                            1248.953750,
+                            1248.063750,
+                            1248.500000,
+                            1245.947500,
+                            1246.173750,
+                            1246.462500,
+                            1244.931250,
+                            1249.417500,
+                        ],
+                    }
+                ),
+                "dataframe_collection_window_functions",
+            ),
+            id="dataframe_collection_window_functions",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -3453,6 +3894,11 @@ def test_pipeline_until_sql_tpch_custom(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
+    if (
+        tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
+        and empty_context_database.dialect == DatabaseDialect.MYSQL
+    ):
+        pytest.skip("Skipping test as MySQL does not support Infinity values.")
 
     tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
         empty_context_database.dialect, tpch_custom_pipeline_test_data
@@ -3477,7 +3923,7 @@ def test_pipeline_e2e_tpch_custom(
     code generation.
     """
     tpch_custom_pipeline_test_data.run_e2e_test(
-        get_sample_graph, sqlite_tpch_db_context
+        get_sample_graph, sqlite_tpch_db_context, coerce_types=True
     )
 
 
