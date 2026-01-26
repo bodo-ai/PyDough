@@ -756,9 +756,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 order_sensitive=True,
             ),
             id="dealership_adv8",
-            marks=pytest.mark.skip(
-                "TODO (gh #162): add user created collections support to PyDough"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(

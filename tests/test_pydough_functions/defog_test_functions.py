@@ -121,6 +121,9 @@ __all__ = [
 ]
 
 import datetime
+import pandas as pd
+
+from pydough.user_collections.user_collection_apis import dataframe_collection
 
 
 # ruff: noqa
@@ -834,22 +837,34 @@ def impl_defog_dealership_adv8():
     Order by month ascending. PMSPS = per month salesperson sales count. PMSR =
     per month sales revenue in dollars. Truncate date to month for aggregation.
     """
-    eligible_salespersons = salespeople.WHERE(
-        (YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023)
+
+    now = pd.Timestamp.today().normalize().replace(day=1)
+
+    months = pd.date_range(
+        start=now - pd.DateOffset(months=6),
+        end=now - pd.DateOffset(months=1),
+        freq="MS",  # Month Start
     )
+    date_range_df = pd.DataFrame({"month_start": months})
+    date_range = dataframe_collection("months_range", date_range_df).CALCULATE(
+        month_start
+    )
+
+    filtered_sales = sales.WHERE(
+        (YEAR(salesperson.hire_date) >= 2022)
+        & (YEAR(salesperson.hire_date) <= 2023)
+        & (STRING(sale_date, "%Y-%m") == STRING(month_start, "%Y-%m"))
+    )
+
     return (
-        sales.WHERE(
-            MONOTONIC(
-                1, DATEDIFF("months", sale_date, DATETIME("now", "start of month")), 6
-            )
-            & HAS(
-                salespeople.WHERE((YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023))
-            )
+        date_range.CROSS(sales)
+        .PARTITION(name="per_month", by=month_start)
+        .CALCULATE(
+            month=STRING(month_start, "%Y-%m-%d"),
+            PMSPS=DEFAULT_TO(COUNT(filtered_sales), 0),
+            PMSR=DEFAULT_TO(SUM(filtered_sales.sale_price), 0),
         )
-        .CALCULATE(sale_price, sale_month=DATETIME(sale_date, "start of month"))
-        .PARTITION(name="months", by=sale_month)
-        .CALCULATE(sale_month, PMSPS=COUNT(sales), PMSR=SUM(sales.sale_price))
-        .ORDER_BY(sale_month.ASC())
+        .ORDER_BY(month_start.ASC())
     )
 
 
@@ -943,7 +958,6 @@ def impl_defog_dealership_adv13():
     value). Return all months in your answer, including those where there were
     no payments.
     """
-    # TODO (gh #162): add user created collections support to PyDough
 
     filtered_payments = payments_received.CALCULATE(
         payment_amount,
