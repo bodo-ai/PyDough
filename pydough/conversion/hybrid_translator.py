@@ -1691,7 +1691,7 @@ class HybridTranslator:
         Args:
             `hybrid`: The hybrid tree to run filter merging on.
         """
-        filter_merger: HybridFilterMerger = HybridFilterMerger()
+        filter_merger: HybridFilterMerger = HybridFilterMerger(self)
         filter_merger.merge_filters(hybrid)
 
     def convert_qdag_to_hybrid(self, node: PyDoughCollectionQDAG) -> HybridTree:
@@ -1718,14 +1718,8 @@ class HybridTranslator:
         self.run_correlation_extraction(hybrid)
         # 5. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        print()
-        print("BEFORE FILTER MERGING")
-        print(hybrid)
         # 5. Run the filter-merging procedure.
         self.run_filter_merging(hybrid)
-        print()
-        print("AFTER FILTER MERGING")
-        print(hybrid)
         # 7. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)

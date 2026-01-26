@@ -1,4 +1,4 @@
-gROOT(columns=[('n', n_rows)], orderings=[])
+ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
   JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={})
    SCAN(table=tpch.CUSTOMER, columns={'c_nationkey': c_nationkey})

@@ -6,6 +6,7 @@ the less-filtered subtree where the SUM argument is the additional filters.
 """
 
 import copy
+from typing import TYPE_CHECKING
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import Literal
@@ -13,6 +14,7 @@ from pydough.types import BooleanType, NumericType
 
 from .hybrid_connection import ConnectionType
 from .hybrid_expressions import (
+    HybridChildRefExpr,
     HybridExpr,
     HybridFunctionExpr,
     HybridLiteralExpr,
@@ -24,11 +26,17 @@ from .hybrid_operations import (
 )
 from .hybrid_tree import HybridTree
 
+if TYPE_CHECKING:
+    from .hybrid_translator import HybridTranslator
+
 
 class HybridFilterMerger:
     """
     TODO
     """
+
+    def __init__(self, translator: "HybridTranslator") -> None:
+        self.translator: HybridTranslator = translator
 
     def merge_filters(self, tree: HybridTree) -> None:
         """
@@ -40,31 +48,27 @@ class HybridFilterMerger:
             # not ONLY_MATCH.
             mergeable_children: set[int] = self.identify_mergeable_children(tree)
 
+            # TODO ADD COMMENT
             child_filters: list[set[HybridExpr]] = [
                 self.get_final_filters(child.subtree) for child in tree.children
             ]
 
+            # TODO ADD COMMENT
             child_isomorphisms: list[set[int]] = self.get_child_isomorphisms(tree)
 
+            # TODO ADD COMMENT
             filter_dag: list[int | None] = self.make_filter_dag(
                 mergeable_children, child_filters, child_isomorphisms
             )
 
-            print()
-            print(tree)
-            print(mergeable_children)
-            print(child_filters)
-            print(child_isomorphisms)
-            print(filter_dag)
-
+            # TODO ADD COMMENT
+            replacement_map: dict[HybridExpr, HybridExpr] = {}
             for source_idx, target_idx in enumerate(filter_dag):
                 if target_idx is None:
                     continue
-                print(source_idx, "->", target_idx)
                 extra_filters: set[HybridExpr] = (
                     child_filters[source_idx] - child_filters[target_idx]
                 )
-                print(extra_filters)
                 assert len(extra_filters) > 0
                 new_cond: HybridExpr
                 if len(extra_filters) == 1:
@@ -84,13 +88,34 @@ class HybridFilterMerger:
                     ],
                     NumericType(),
                 )
-                sum_expr: HybridExpr = HybridFunctionExpr(
+                sum_expr: HybridFunctionExpr = HybridFunctionExpr(
                     pydop.SUM,
                     [numeric_expr],
-                    BooleanType(),
+                    NumericType(),
                 )
-                print(sum_expr)
-                # agg_name: str = tree.gen_agg_name(tree.children[target_idx])
+                agg_name: str = self.translator.gen_agg_name(tree.children[target_idx])
+                tree.children[target_idx].aggs[agg_name] = sum_expr
+                agg_ref: HybridExpr = HybridChildRefExpr(
+                    agg_name, target_idx, NumericType()
+                )
+                old_agg_ref = HybridChildRefExpr(
+                    next(iter(tree.children[source_idx].aggs)),
+                    source_idx,
+                    NumericType(),
+                )
+                replacement_map[old_agg_ref] = agg_ref
+                tree.children[target_idx].max_steps = min(
+                    tree.children[target_idx].max_steps,
+                    tree.children[source_idx].max_steps,
+                )
+                tree.children[target_idx].min_steps = min(
+                    tree.children[target_idx].min_steps,
+                    tree.children[source_idx].min_steps,
+                )
+
+            # TODO ADD COMMENT
+            for operation in tree.pipeline:
+                operation.replace_expressions(replacement_map)
 
         # Run the procedure recursively on the parent tree and the child
         # subtrees.
@@ -187,6 +212,7 @@ class HybridFilterMerger:
             if dag[idx] is not None:
                 while True:
                     target_idx: int | None = dag[idx]
-                    if target_idx is not None:
-                        dag[idx] = dag[target_idx]
+                    if target_idx is None or dag[target_idx] is None:
+                        break
+                    dag[idx] = dag[target_idx]
         return dag
