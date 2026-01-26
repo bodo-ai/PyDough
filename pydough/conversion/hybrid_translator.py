@@ -64,6 +64,7 @@ from .hybrid_expressions import (
     HybridSidedRefExpr,
     HybridWindowExpr,
 )
+from .hybrid_filter_merger import HybridFilterMerger
 from .hybrid_operations import (
     HybridCalculate,
     HybridCollectionAccess,
@@ -1680,6 +1681,19 @@ class HybridTranslator:
         decorr.find_correlated_children(hybrid)
         decorr.decorrelate_hybrid_tree(hybrid)
 
+    def run_filter_merging(self, hybrid: "HybridTree") -> None:
+        """
+        Invokes the procedure to merge identical child subtrees in the hybrid
+        tree if they are identical except for the filters they have, which can
+        be emulated via a SUM on a predicate. The transformation is done
+        in-place.
+
+        Args:
+            `hybrid`: The hybrid tree to run filter merging on.
+        """
+        filter_merger: HybridFilterMerger = HybridFilterMerger()
+        filter_merger.merge_filters(hybrid)
+
     def convert_qdag_to_hybrid(self, node: PyDoughCollectionQDAG) -> HybridTree:
         """
         Convert a PyDough QDAG node to a hybrid tree, including any necessary
@@ -1704,10 +1718,18 @@ class HybridTranslator:
         self.run_correlation_extraction(hybrid)
         # 5. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        # 6. Run any final rewrites, such as turning MEDIAN into an average
+        print()
+        print("BEFORE FILTER MERGING")
+        print(hybrid)
+        # 5. Run the filter-merging procedure.
+        self.run_filter_merging(hybrid)
+        print()
+        print("AFTER FILTER MERGING")
+        print(hybrid)
+        # 7. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
-        # 7. Remove any dead children in the hybrid tree that are no longer
+        # 8. Remove any dead children in the hybrid tree that are no longer
         # being used.
         hybrid.remove_dead_children(set())
         return hybrid

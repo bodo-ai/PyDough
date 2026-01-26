@@ -2696,6 +2696,73 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600))), "
+                " n2=COUNT(customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_a",
+            ),
+            id="count_multiple_filters_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600))), "
+                " n2=COUNT(customers.WHERE(market_segment == 'BUILDING')), "
+                " n3=COUNT(customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))), "
+                " n4=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600) & STARTSWITH(phone, '11'))), "
+                " n5=COUNT(customers.WHERE(STARTSWITH(phone, '11') & (market_segment == 'BUILDING'))), "
+                " n6=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600) & STARTSWITH(phone, '11') & (market_segment == 'BUILDING'))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [30142],
+                        "n3": [268],
+                        "n4": [54],
+                        "n5": [1261],
+                        "n6": [19],
+                    }
+                ),
+                "count_multiple_filters_b",
+            ),
+            id="count_multiple_filters_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(customers), "
+                " n2=COUNT(customers.WHERE(market_segment == 'BUILDING')), "
+                " n3=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600))), "
+                " n4=COUNT(customers.WHERE(STARTSWITH(phone, '11'))), "
+                " n5=COUNT(customers.WHERE(STARTSWITH(phone, '11') & (market_segment == 'BUILDING'))), "
+                " n6=COUNT(customers.WHERE(STARTSWITH(phone, '11') & (market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [150000],
+                        "n2": [30142],
+                        "n3": [1379],
+                        "n4": [5975],
+                        "n5": [1261],
+                        "n6": [19],
+                    }
+                ),
+                "count_multiple_filters_c",
+            ),
+            id="count_multiple_filters_c",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 order_quarter_test,
                 "TPCH",
                 lambda: pd.DataFrame(

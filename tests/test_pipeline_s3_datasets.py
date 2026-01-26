@@ -130,7 +130,7 @@ result = menu.menu.WHERE(
                 "menu",
                 lambda: pd.DataFrame(
                     {
-                        "sponsor": ["foo"],
+                        "sponsor": ["MURRAY HILL HOTEL"],
                     }
                 ),
                 "menu_5556",
