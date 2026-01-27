@@ -1,11 +1,11 @@
 WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.publication
+  FROM publication
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.author
+  FROM author
 )
 SELECT
   _s0.n_rows / NULLIF(_s1.n_rows, 0) AS publication_to_author_ratio

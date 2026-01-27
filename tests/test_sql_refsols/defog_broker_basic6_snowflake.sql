@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     sbdptickerid AS _u_1
-  FROM main.sbdailyprice
+  FROM broker.sbdailyprice
   WHERE
     sbdpdate >= CAST('2023-04-01' AS DATE)
   GROUP BY
@@ -9,7 +9,7 @@ WITH _u_0 AS (
 )
 SELECT
   sbticker.sbtickerid AS _id
-FROM main.sbticker AS sbticker
+FROM broker.sbticker AS sbticker
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = sbticker.sbtickerid
 WHERE

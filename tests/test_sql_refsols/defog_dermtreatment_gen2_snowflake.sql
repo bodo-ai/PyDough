@@ -3,7 +3,7 @@ WITH _t1 AS (
     doc_id,
     start_dt,
     treatment_id
-  FROM main.treatments
+  FROM dermtreatment.treatments
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY doc_id ORDER BY start_dt) = 1
 )
@@ -12,7 +12,7 @@ SELECT
   doctors.year_reg,
   _t1.start_dt AS first_treatment_date,
   _t1.treatment_id AS first_treatment_id
-FROM main.doctors AS doctors
+FROM dermtreatment.doctors AS doctors
 LEFT JOIN _t1 AS _t1
   ON _t1.doc_id = doctors.doc_id
 WHERE

@@ -123,7 +123,7 @@ __all__ = [
 import datetime
 import pandas as pd
 
-from pydough.user_collections.user_collection_apis import dataframe_collection
+import pydough
 
 
 # ruff: noqa
@@ -846,7 +846,7 @@ def impl_defog_dealership_adv8():
         freq="MS",  # Month Start
     )
     date_range_df = pd.DataFrame({"month_start": months})
-    date_range = dataframe_collection("months_range", date_range_df).CALCULATE(
+    date_range = pydough.dataframe_collection("months_range", date_range_df).CALCULATE(
         month_start
     )
 
@@ -959,20 +959,27 @@ def impl_defog_dealership_adv13():
     no payments.
     """
 
-    filtered_payments = payments_received.CALCULATE(
-        payment_amount,
-        month=DATETIME(payment_date, "start of month"),
+    all_months = pydough.range_collection("months", "n", 0, 12).CALCULATE(n)
+
+    group_payments = (
+        payments_received.CALCULATE(
+            start_month=DATETIME(payment_date, "start of month")
+        )
+        .PARTITION(name="month", by=start_month)
+        .CALCULATE(total_payments=SUM(payments_received.payment_amount))
     )
 
-    monthly_totals = filtered_payments.PARTITIOn(name="months", by=month).CALCULATE(
-        total_payments=SUM(payments_received.payment_amount)
+    return (
+        all_months.CROSS(group_payments)
+        .CALCULATE(dt=ADD_MONTHS(start_month, n), payment=IFF(n > 0, 0, total_payments))
+        .WHERE(dt <= DATETIME("now", "start of month", "+1 hour"))
+        .PARTITION(name="full_months", by=dt)
+        .CALCULATE(
+            dt,
+            total_payments=SUM(month.payment),
+            MoM_change=SUM(month.payment) - PREV(SUM(month.payment), by=dt.ASC()),
+        )
     )
-
-    return monthly_totals.CALCULATE(
-        month,
-        total_payments,
-        MoM_change=total_payments - PREV(total_payments, by=month.ASC()),
-    ).ORDER_BY(month.ASC())
 
 
 def impl_defog_dealership_adv14():

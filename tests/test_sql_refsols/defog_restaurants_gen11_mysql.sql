@@ -1,13 +1,13 @@
 WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.restaurant
+  FROM restaurants.restaurant
   WHERE
     rating > 4.5
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.restaurant
+  FROM restaurants.restaurant
 )
 SELECT
   _s0.n_rows / _s1.n_rows AS ratio

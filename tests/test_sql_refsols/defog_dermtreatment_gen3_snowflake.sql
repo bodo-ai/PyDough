@@ -6,6 +6,6 @@ SELECT
       CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   ) AS average_age
-FROM main.patients
+FROM dermtreatment.patients
 WHERE
   gender = 'Male' AND ins_type = 'private'

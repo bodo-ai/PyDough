@@ -2,8 +2,8 @@ WITH _s3 AS (
   SELECT
     treatments.drug_id,
     COUNT(*) AS n_rows
-  FROM main.treatments AS treatments
-  JOIN main.adverse_events AS adverse_events
+  FROM dermtreatment.treatments AS treatments
+  JOIN dermtreatment.adverse_events AS adverse_events
     ON DATE_TRUNC('MONTH', CAST(adverse_events.reported_dt AS TIMESTAMP)) = DATE_TRUNC('MONTH', CAST(treatments.start_dt AS TIMESTAMP))
     AND adverse_events.treatment_id = treatments.treatment_id
   GROUP BY
@@ -13,7 +13,7 @@ SELECT
   drugs.drug_id,
   drugs.drug_name,
   _s3.n_rows AS num_adverse_events
-FROM main.drugs AS drugs
+FROM dermtreatment.drugs AS drugs
 JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id
 ORDER BY

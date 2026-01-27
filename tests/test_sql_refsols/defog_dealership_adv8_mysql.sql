@@ -12,16 +12,16 @@ WITH _s0 AS (
   SELECT DISTINCT
     _s0.month_start
   FROM _s0 AS _s0
-  CROSS JOIN main.sales AS sales
+  CROSS JOIN dealership.sales AS sales
 ), _s7 AS (
   SELECT
     _s2.month_start,
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
   FROM _s0 AS _s2
-  JOIN main.sales AS sales
+  JOIN dealership.sales AS sales
     ON DATE_FORMAT(_s2.month_start, '%Y-%m') = DATE_FORMAT(sales.sale_date, '%Y-%m')
-  JOIN main.salespersons AS salespersons
+  JOIN dealership.salespersons AS salespersons
     ON EXTRACT(YEAR FROM CAST(salespersons.hire_date AS DATETIME)) <= 2023
     AND EXTRACT(YEAR FROM CAST(salespersons.hire_date AS DATETIME)) >= 2022
     AND sales.salesperson_id = salespersons._id

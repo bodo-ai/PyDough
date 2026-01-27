@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     sbcustid AS _u_1
-  FROM main.sbCustomer
+  FROM broker.sbCustomer
   WHERE
     LOWER(sbcustcountry) = 'usa'
   GROUP BY
@@ -10,7 +10,7 @@ WITH _u_0 AS (
 SELECT
   NULLIF(COUNT(*), 0) AS n_transactions,
   COALESCE(SUM(sbTransaction.sbtxamount), 0) AS total_amount
-FROM main.sbTransaction AS sbTransaction
+FROM broker.sbTransaction AS sbTransaction
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = sbTransaction.sbtxcustid
 WHERE
