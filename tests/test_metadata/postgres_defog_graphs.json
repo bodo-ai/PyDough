@@ -1194,7 +1194,7 @@
         "name": "ADD_MONTHS",
         "type": "sql macro",
         "macro text": "{0} + ({1} * INTERVAL '1 month')",
-        "description": "Adds a number of months to a date value in sqlite",
+        "description": "Adds a number of months to a date value in postgres",
         "input signature": {"type": "fixed arguments", "value": ["datetime", "numeric"]},
         "output signature": {"type": "constant", "value": "datetime"}
       }

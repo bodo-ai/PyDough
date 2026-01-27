@@ -414,12 +414,14 @@ def create_constant_table(
         `table_name`: The name of the table
         `column_names`: List with all column names
         `rows`: The data for each row
+        `alias_columns`: If the column alias is needed or not (needed for SQlite)
 
     Returns:
         The SQLGlot expression for the constant table.
 
-    Note: This function is only used to generate tables for MySQL and Sqlite
-    dialects
+    Note: This function is used for MySQL and SQlite to generate range
+    collections. And used for MySQL, SQlite, Snowflake and Postgres to generate
+    dataframe collection.
     """
     assert column_names != []
 
