@@ -49,7 +49,7 @@ logger.debug("This is a DEBUG message")
     assert "This is a DEBUG message" in p.stdout
 
 
-def test_get_logger_custom_handler(monkeypatch):
+def test_get_logger_custom_handler(monkeypatch, clean_pydough_logger):
     """
     Test logger with a custom handler.
     """
@@ -89,7 +89,7 @@ def test_get_logger_no_duplicate_handlers():
 
 def test_get_logger_propagation(monkeypatch):
     """
-    Test logger with a custom handler.
+    Test that child loggers propagate to the parent logger and respect the parent's level.
     """
     # Create a custom handler
     buf = StringIO()
@@ -238,7 +238,9 @@ def test_get_logger_invalid_env_level(monkeypatch):
         get_logger(name="logger_invalid_env_level_test_logger")
 
 
-def test_execute_df_logging(sqlite_tpch_session: PyDoughSession) -> None:
+def test_execute_df_logging(
+    sqlite_tpch_session: PyDoughSession, clean_pydough_logger
+) -> None:
     """
     Test the example TPC-H relational trees executed on a
     SQLite database, and capture log output printed
