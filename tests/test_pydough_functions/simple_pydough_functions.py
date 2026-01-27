@@ -3599,3 +3599,9 @@ def agg_simplification_2():
         )
         .ORDER_BY(state.ASC())
     )
+
+
+def simple_division_by_zero():
+    return lines.CALCULATE(computed_value=extended_price / discount).TOP_K(
+        1, by=computed_value.ASC(na_pos="first")
+    )
