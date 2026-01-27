@@ -1,5 +1,15 @@
 """
-TODO
+A user-defined collection of pandas Dataframes.
+Usage:
+`pydough.dataframe_collection(name, dataframe)`
+
+This module defines a collection that generated from a given pandas Dataframe.
+The user must specify the name of the collection and the
+name of the dataframe that will hold the values.
+
+The pandas dataframe must have at least one column with one item. The accepted
+types are: NumericType, BooleanType, DatetimeType, StringType and UnknownType.
+Mixed types columsn are not allowed.
 """
 
 import pandas as pd
