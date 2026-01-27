@@ -87,7 +87,10 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             )
 
         for col in list(dataframe.columns):
-            types_list = {type(v) for v in dataframe[col].dropna()}
+            types_list = sorted(
+                {type(v) for v in dataframe[col].dropna()},
+                key=lambda t: t.__name__,
+            )
             if len(types_list) > 1:
                 raise TypeError(
                     f"Mixed types in column '{col}': {types_list}. All values in a column must be of the same type."

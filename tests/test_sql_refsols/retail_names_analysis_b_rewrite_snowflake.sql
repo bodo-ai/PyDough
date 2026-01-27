@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.retail.protected_loyalty_members
 WHERE
-  first_name IN ('ZcH', 'MgEZTa', 'veSbKfjZ', 'HBRvO', 'jvUyLK', 'tdfnU')
+  CONTAINS('day', LOWER(SUBSTRING(PTY_UNPROTECT(first_name, 'deName'), 1, 2)))

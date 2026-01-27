@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.retail.protected_loyalty_members
 WHERE
-  last_name IN ('jNPacL', 'NIAZ', 'eIVERzXY', 'tREJmG', 'cxyIdcy')
+  CONTAINS(LOWER(PTY_UNPROTECT_NAME(last_name)), 'hu')

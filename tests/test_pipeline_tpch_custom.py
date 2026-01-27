@@ -4381,7 +4381,7 @@ def test_pipeline_e2e_tpch_custom(
             dataframe_collection_bad_2,
             None,
             re.escape(
-                "Mixed types in column 'col1': {<class 'int'>, <class 'str'>}. All values in a column must be of the same type."
+                "Mixed types in column 'col1': [<class 'int'>, <class 'str'>]. All values in a column must be of the same type."
             ),
             id="dataframe_collection_bad_2",
         ),
