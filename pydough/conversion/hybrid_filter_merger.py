@@ -144,9 +144,9 @@ class HybridFilterMerger:
         result: set[HybridExpr] = set()
         for operation in reversed(tree.pipeline):
             if isinstance(operation, HybridFilter):
-                result.update(operation.condition.get_conjunction())
                 if operation.condition.contains_window_functions():
                     break
+                result.update(operation.condition.get_conjunction())
             elif isinstance(operation, HybridLimit):
                 break
             elif isinstance(operation, HybridCalculate):
@@ -180,9 +180,9 @@ class HybridFilterMerger:
         stripped_tree = copy.deepcopy(tree)
         for idx, operation in reversed(list(enumerate(stripped_tree.pipeline))):
             if isinstance(operation, HybridFilter):
-                stripped_tree.pipeline.pop(idx)
                 if operation.condition.contains_window_functions():
                     break
+                stripped_tree.pipeline.pop(idx)
             elif isinstance(operation, HybridLimit):
                 break
             elif isinstance(operation, HybridCalculate):

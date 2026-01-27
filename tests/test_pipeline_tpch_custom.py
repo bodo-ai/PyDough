@@ -2772,6 +2772,69 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "c1 = customers.WHERE(PERCENTILE(by=account_balance.ASC()) == 100)\n"
+                "c2 = customers.WHERE(nation.name == 'GERMANY').WHERE(PERCENTILE(by=account_balance.ASC()) == 100)\n"
+                "c3 = customers.WHERE(nation.name == 'GERMANY')\n"
+                "c4 = customers.WHERE(nation.name == 'CHINA').WHERE(PERCENTILE(by=account_balance.ASC()) == 100)\n"
+                "c5 = customers.WHERE((PERCENTILE(by=account_balance.ASC()) == 100) & (nation.name == 'CHINA'))\n"
+                "c6 = customers.WHERE(nation.name == 'CHINA')\n"
+                "c6 = customers.WHERE(nation.name == 'CHINA')\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                " n4=COUNT(c4), "
+                " n5=COUNT(c5), "
+                " n6=COUNT(c6), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1500],
+                        "n2": [59],
+                        "n3": [5908],
+                        "n4": [60],
+                        "n5": [57],
+                        "n6": [6024],
+                    }
+                ),
+                "count_multiple_filters_d",
+            ),
+            id="count_multiple_filters_d",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n5=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [298994, 299103, 301740, 303286, 296877],
+                        "n3": [59767, 59902, 60166, 60373, 60135],
+                        "n4": [59511, 60232, 60246, 60901, 59201],
+                        "n5": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_e",
+            ),
+            id="count_multiple_filters_e",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 order_quarter_test,
                 "TPCH",
                 lambda: pd.DataFrame(

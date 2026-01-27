@@ -1739,8 +1739,10 @@ class HybridTranslator:
         self.run_correlation_extraction(hybrid)
         # 5. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        # 5. Run the filter-merging procedure.
+        # 5. Run the filter-merging procedure, then re-run ejecting aggregate
+        # inputs to clean up any new aggregates created by filter merging.
         self.run_filter_merging(hybrid)
+        self.eject_aggregate_inputs(hybrid)
         # 7. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
