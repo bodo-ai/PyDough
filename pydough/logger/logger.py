@@ -9,7 +9,18 @@ import sys
 
 def get_level_source_logger(logger: logging.Logger) -> logging.Logger:
     """
-    Returns the logger from which the effective level is inherited.
+    Returns the logger from which the effective logging level is inherited.
+
+    This function walks up the logger hierarchy, starting from the given logger,
+    and returns the first ancestor (including itself) whose level is not
+    `logging.NOTSET`. If no such logger is found, the root logger is returned.
+
+    Args:
+        `logger` : The logger whose effective level source should be resolved.
+
+    Returns:
+        `logging.Logger` : The ancestor logger that provides the effective level,
+        or the root logger if all ancestors have level `NOTSET`.
     """
     current: logging.Logger | None = logger
     while current:
@@ -31,7 +42,7 @@ def get_logger(
 
     Args:
         `name` : The logger name you want to get or create (in case it does not exists)
-        `default_level` : Logging level. PYDOUGH_LOG_LEVEL value will be used if not set and not ancestor level has been already set.
+        `default_level` : Logging level. PYDOUGH_LOG_LEVEL value will be used if not set and ancestor level has not been already set.
         `fmt` : The format of the string compatible with python's logging library.
         `handlers` : A list of `logging.Handler` instances to add to the logger.
     Returns:
@@ -41,7 +52,7 @@ def get_logger(
     level: int = logging.INFO
     if default_level is None:
         # Get log level from PYDOUGH_LOG_LEVEL
-        level_env = os.getenv("PYDOUGH_LOG_LEVEL")
+        level_env: str | None = os.getenv("PYDOUGH_LOG_LEVEL")
 
         if level_env is not None:
             assert isinstance(level_env, str), (
