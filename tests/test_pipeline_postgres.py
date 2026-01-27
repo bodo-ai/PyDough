@@ -540,7 +540,7 @@ def test_pipeline_e2e_postgres_tpch_custom(
 @pytest.mark.execute
 def test_pipeline_e2e_postgres_defog_custom(
     defog_postgres_test_data: PyDoughPandasTest,
-    defog_graphs: graph_fetcher,
+    get_postgres_defog_graphs: graph_fetcher,
     defog_config: PyDoughConfigs,
     postgres_conn_db_context: DatabaseContext,
 ):
@@ -548,7 +548,7 @@ def test_pipeline_e2e_postgres_defog_custom(
     Test executing the defog analytical queries with Postgres database.
     """
     defog_postgres_test_data.run_e2e_test(
-        defog_graphs,
+        get_postgres_defog_graphs,
         postgres_conn_db_context,
         config=defog_config,
         coerce_types=True,
@@ -559,7 +559,7 @@ def test_pipeline_e2e_postgres_defog_custom(
 @pytest.mark.execute
 def test_pipeline_e2e_postgres_defog(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,  # noqa: F811
-    defog_graphs: graph_fetcher,
+    get_postgres_defog_graphs: graph_fetcher,
     postgres_conn_db_context: DatabaseContext,
     defog_config: PyDoughConfigs,
     sqlite_defog_connection: DatabaseContext,
@@ -574,7 +574,7 @@ def test_pipeline_e2e_postgres_defog(
     the correct results.
     """
     defog_pipeline_test_data.run_e2e_test(
-        defog_graphs,
+        get_postgres_defog_graphs,
         postgres_conn_db_context,
         defog_config,
         reference_database=sqlite_defog_connection,

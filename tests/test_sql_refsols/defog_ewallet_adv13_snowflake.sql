@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS TUC
-FROM main.user_sessions
+FROM ewallet.user_sessions
 WHERE
   session_end_ts >= DATE_TRUNC(
     'DAY',

@@ -7,6 +7,9 @@ PyDough code snippets for testing purposes.
 # ruff & mypy should not try to typecheck or verify any of this
 
 import pydough
+import pandas as pd
+import numpy as np
+from decimal import Decimal
 
 import pytest
 
@@ -149,3 +152,440 @@ def user_range_collection_6():
         .CALCULATE(year, n_orders=COUNT(CROSS(order_years).WHERE(order_year == year)))
         .ORDER_BY(year.ASC())
     )
+
+
+def simple_dataframe_1():
+    # Generates a simple dataframe collection
+    df = pd.DataFrame(
+        {
+            "color": [
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "blue",
+                "indigo",
+                "violet",
+                None,
+            ],
+            "idx": range(8),
+        }
+    )
+    return pydough.dataframe_collection(name="rainbow", dataframe=df)
+
+
+def dataframe_collection_datatypes():
+    df = pd.DataFrame(
+        {
+            "string_col": [
+                "red",
+                "orange",
+                None,
+            ],
+            "int_col": pd.Series(range(3), dtype="int64"),
+            "float_col": [
+                1.5,
+                2.0,
+                np.nan,
+            ],
+            "nullable_int_col": pd.Series(
+                [1, None, 7],
+            ),
+            "bool_col": pd.Series([True, False, False], dtype="int64"),
+            "null_col": [None] * 3,
+            "datetime_col": pd.to_datetime(["2024-01-01", "2024-01-02", None]),
+        }
+    )
+
+    return pydough.dataframe_collection("alldatatypes", df)
+
+
+def dataframe_collection_strings():
+    df_strings = pd.DataFrame(
+        {
+            "normal_strings": [
+                "hello",
+                "world",
+                "pydough",
+                None,
+                "test_string",
+            ],
+            "empty_string": [
+                "",
+                "not_empty",
+                "",
+                None,
+                " ",
+            ],
+            "special_characters": [
+                "'simple quoted'",
+                '"double quoted"',
+                "unicode_ß_ç_ü",
+                None,
+                "tap_space\tnewline_\n_test",
+            ],
+        }
+    )
+    return pydough.dataframe_collection("strings", df_strings)
+
+
+def dataframe_collection_numbers():
+    df_numbers = pd.DataFrame(
+        {
+            "py_float": [
+                1.5,
+                0.0,
+                10.0001,
+                -2.25,
+                None,
+            ],
+            "np_float64": np.array(
+                [
+                    1.5,
+                    0.0,
+                    4.4444444,
+                    -2.25,
+                    None,
+                ],
+                dtype="float64",
+            ),
+            "np_float32": np.array(
+                [
+                    1.5,
+                    3.33333,
+                    0.0,
+                    -2.25,
+                    None,
+                ],
+                dtype="float32",
+            ),
+            "null_vs_nan": [
+                None,
+                np.nan,
+                float("nan"),
+                1.0,
+                0.0,
+            ],
+            "decimal_val": [
+                Decimal("1.50"),
+                Decimal("0.00"),
+                Decimal("-2.25"),
+                Decimal("NaN"),
+                None,
+            ],
+        }
+    )
+    return pydough.dataframe_collection("numbers", df_numbers)
+
+
+def dataframe_collection_inf():
+    df_inf = pd.DataFrame(
+        {
+            "py_float": [
+                1.5,
+                float("nan"),
+                float("inf"),
+                float("-inf"),
+            ],
+            "np_float64": np.array(
+                [
+                    -2.25,
+                    np.nan,
+                    np.inf,
+                    -np.inf,
+                ],
+                dtype="float64",
+            ),
+            "np_float32": np.array(
+                [
+                    0.0,
+                    np.nan,
+                    np.inf,
+                    -np.inf,
+                ],
+                dtype="float32",
+            ),
+        }
+    )
+    return pydough.dataframe_collection("infinty", df_inf)
+
+
+def dataframe_collection_cross():
+    # Get the users and orders dataframe collections
+    users_df = pd.DataFrame(
+        {
+            "id_": range(1, 6),
+            "name": ["John", "Jane", "Bob", "Alice", "Charlie"],
+        }
+    )
+    users = pydough.dataframe_collection(name="users", dataframe=users_df)
+
+    orders_df = pd.DataFrame(
+        {
+            "order_id": range(101, 106),
+            "user_id": [1, 2, 1, 3, 2],
+            "amount": [250.0, 150.5, 300.0, 450.75, 200.0],
+        }
+    )
+    orders = pydough.dataframe_collection(name="orders", dataframe=orders_df)
+
+    return (
+        users.CALCULATE(id1=id_, name1=name)
+        .CROSS(orders)
+        .WHERE((id1 == user_id))
+        .CALCULATE(id1, name1, order_id, amount)
+    )
+
+
+def dataframe_collection_partition():
+    products_df = pd.DataFrame(
+        {
+            "product_id": range(1, 5),
+            "product_category": ["A", "B", "A", "B"],
+            "price": [17.99, 45.65, 15, 10.99],
+        }
+    )
+    pricing_rules_df = pd.DataFrame(
+        {
+            "rule_id": range(1, 4),
+            "rule_category": ["A", "B", "C"],
+            "discount": [0.10, 0.15, 0.05],
+        }
+    )
+
+    products = pydough.dataframe_collection(
+        name="products_collection", dataframe=products_df
+    ).CALCULATE(product_id, product_category, price)
+
+    pricing_rules = pydough.dataframe_collection(
+        name="pricing_collection", dataframe=pricing_rules_df
+    ).CALCULATE(rule_category, discount)
+
+    return (
+        products.CROSS(pricing_rules)
+        .WHERE(product_category == rule_category)
+        .PARTITION(name="category", by=product_category)
+        .CALCULATE(
+            product_category,
+            avg_price=AVG(pricing_collection.price),
+            n_products=COUNT(pricing_collection),
+            min_discount=MIN(pricing_collection.discount),
+        )
+    )
+
+
+def dataframe_collection_where():
+    # Return all suppliers in that region whose account_balance is greater than
+    # the DataFrame value.
+    threshold_df = pd.DataFrame(
+        {
+            "region_name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+            "min_account_balance": [5000.32, 8000, 4600.32, 6400.50, 8999.99],
+        }
+    )
+    thresholds = pydough.dataframe_collection(
+        name="thresholds_collection", dataframe=threshold_df
+    ).CALCULATE(region_name, min_account_balance)
+
+    filtered_suppliers = suppliers.CALCULATE(
+        sup_region_name=nation.region.name, account_balance=account_balance
+    )
+
+    return (
+        thresholds.CROSS(filtered_suppliers)
+        .WHERE(
+            (sup_region_name == region_name) & (account_balance > min_account_balance)
+        )
+        .PARTITION(name="region", by=sup_region_name)
+        .CALCULATE(sup_region_name, n_suppliers=COUNT(filtered_suppliers))
+    )
+
+
+def dataframe_collection_where_date():
+    # Given a DataFrame defining (clerk_id, start_date, end_date),
+    # return how many orders from the clerk falls within that range.
+    date_df = pd.DataFrame(
+        {
+            "clerk_id": ["Clerk#000000456", "Clerk#000000743", "Clerk#000000547"],
+            "start_date": pd.to_datetime(["1996-01-01", "1995-06-01", "1995-11-01"]),
+            "end_date": pd.to_datetime(["1996-02-01", "1995-07-01", "1995-12-01"]),
+        }
+    )
+
+    thresholds_dates = pydough.dataframe_collection(
+        name="dates", dataframe=date_df
+    ).CALCULATE(clerk_id, start_date, end_date)
+
+    return (
+        thresholds_dates.CROSS(orders)
+        .WHERE(
+            (clerk_id == clerk)
+            & (MONOTONIC(start_date, DATETIME(order_date), end_date))
+        )
+        .PARTITION(name="clerk_orders", by=clerk_id)
+        .CALCULATE(clerk_id, n_orders=COUNT(orders))
+    )
+
+
+def dataframe_collection_top_k():
+    discounts_df = pd.DataFrame(
+        {
+            "shipping_type": ["REG AIR", "SHIP", "TRUCK"],
+            "added_discount": [0.05, 0.06, 0.05],
+        }
+    )
+
+    disccount_added = pydough.dataframe_collection(
+        name="discounts", dataframe=discounts_df
+    ).CALCULATE(shipping_type, added_discount)
+
+    return (
+        disccount_added.CROSS(lines)
+        .WHERE(shipping_type == ship_mode)
+        .CALCULATE(
+            part.name,
+            shipping_type,
+            extended_price,
+            added_discount=discount + added_discount,
+            final_price=extended_price * (1 - (discount + added_discount)),
+        )
+        .TOP_K(5, by=final_price.ASC())
+    )
+
+
+def dataframe_collection_best():
+    priority_tax_df = pd.DataFrame(
+        {
+            "priority_lvl": ["1-URGENT", "2-HIGH", "3-MEDIUM", "4-NOT SPECIFIED"],
+            "tax_rate": [0.05, 0.04, 0.03, 0.02],
+        }
+    )
+    priority_taxes_collection = pydough.dataframe_collection(
+        name="priority_taxes", dataframe=priority_tax_df
+    )
+    cheapest_order = (
+        orders.CALCULATE(key, order_priority, total_price)
+        .CROSS(priority_taxes_collection)
+        .WHERE(order_priority == priority_lvl)
+        .CALCULATE(
+            order_priority, key, tax_price=(total_price + total_price * tax_rate)
+        )
+        .BEST(by=tax_price.ASC(), per="orders")
+        .SINGULAR()
+    )
+    return customers.CALCULATE(
+        name,
+        order_key=cheapest_order.key,
+        order_priority=cheapest_order.order_priority,
+        cheapest_order_price=cheapest_order.tax_price,
+    ).TOP_K(5, by=cheapest_order_price.ASC())
+
+
+# Windows functions
+def dataframe_collection_window_functions():
+    customers_filters_df = pd.DataFrame(
+        {
+            "nation_name": ["UNITED STATES", "JAPAN", "BRAZIL"],
+            "mrk_segment": ["BUILDING", "AUTOMOBILE", "MACHINERY"],
+        }
+    )
+    customers_filters = pydough.dataframe_collection(
+        name="customers_filters", dataframe=customers_filters_df
+    ).CALCULATE(nation_name, mrk_segment)
+
+    order_date_diff = orders.CALCULATE(
+        month_diff=DATEDIFF(
+            "months", PREV(order_date, by=order_date.ASC(), per="customers"), order_date
+        )
+    )
+
+    order_price_diff = orders.CALCULATE(
+        price_diff=(
+            total_price - NEXT(total_price, by=order_date.ASC(), per="customers")
+        )
+    )
+
+    return (
+        customers_filters.CROSS(customers)
+        .WHERE(
+            (nation.name == nation_name)
+            & (market_segment == mrk_segment)
+            & (PERCENTILE(by=account_balance.ASC(), n_buckets=1000) > 996)
+        )
+        .CALCULATE(
+            name,
+            ranking_balance=RANKING(by=account_balance.DESC(), per="customers_filters"),
+            n_orders=COUNT(orders),
+            avg_month_orders=AVG(order_date_diff.month_diff),
+            avg_price_diff=AVG(order_price_diff.price_diff),
+            proportion=account_balance / RELSUM(account_balance),
+            above_avg=IFF(account_balance > RELAVG(account_balance), True, False),
+            n_poorer=RELCOUNT(
+                account_balance, by=(account_balance.ASC()), cumulative=True
+            ),
+            ratio=account_balance / RELSIZE(),
+        )
+        .ORDER_BY(name.ASC())
+    )
+
+
+# BAD TESTS
+def dataframe_collection_bad_1():
+    # Different column sizes
+    df_bad = pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": ["a", "b"],
+        }
+    )
+    print("we can make it here")
+    return pydough.dataframe_collection("bad_df_1", df_bad)
+
+
+def dataframe_collection_bad_2():
+    # Different datatypes within same column
+    df_bad = pd.DataFrame(
+        {
+            "col1": [1, "two", 3],
+            "col2": ["a", "b", "c"],
+            "col3": ["a", None, "c"],
+        }
+    )
+    return pydough.dataframe_collection("bad_df_2", df_bad)
+
+
+def dataframe_collection_bad_3():
+    # Empty column
+    df_col_empty = pd.DataFrame(
+        {
+            "col1": [],
+            "col2": [],
+        }
+    )
+    return pydough.dataframe_collection("empty_col_df", df_col_empty)
+
+
+def dataframe_collection_bad_4():
+    # Empty dataframe
+    df_empty = pd.DataFrame({})
+    return pydough.dataframe_collection("empty_df", df_empty)
+
+
+def dataframe_collection_bad_5():
+    # Unsupported datatypes (array, struct, map, etc)
+    df_unsupported = pd.DataFrame(
+        {
+            "col1": [[1, 2], [3, 4], [5, 6]],  # list/array type
+        }
+    )
+    return pydough.dataframe_collection("unsupported_df", df_unsupported)
+
+
+def dataframe_collection_bad_6():
+    # Unsupported datatypes (array, struct, map, etc)
+    df_unsupported = pd.DataFrame(
+        {
+            "col1": [{"a": 1}, {"b": 2}, {"c": 3}],  # dict/map type
+        }
+    )
+    return pydough.dataframe_collection("unsupported_df", df_unsupported)

@@ -3,8 +3,8 @@ WITH _t1 AS (
     ANY_VALUE(treatments.diag_id) AS anything_diag_id,
     ANY_VALUE(treatments.patient_id) AS anything_patient_id,
     MAX(outcomes.day100_itch_vas) AS max_day100_itch_vas
-  FROM main.treatments AS treatments
-  JOIN main.outcomes AS outcomes
+  FROM dermtreatment.treatments AS treatments
+  JOIN dermtreatment.outcomes AS outcomes
     ON outcomes.treatment_id = treatments.treatment_id
   GROUP BY
     outcomes.treatment_id
@@ -21,7 +21,7 @@ SELECT
   diagnoses.diag_name AS diagnosis_name,
   _s3.ndistinct_anything_patient_id AS num_patients,
   _s3.max_max_day100_itch_vas AS max_itch_score
-FROM main.diagnoses AS diagnoses
+FROM dermtreatment.diagnoses AS diagnoses
 JOIN _s3 AS _s3
   ON _s3.anything_diag_id = diagnoses.diag_id
 ORDER BY

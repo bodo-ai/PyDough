@@ -3,7 +3,7 @@ WITH _s0 AS (
     sbtxcustid AS sbTxCustId,
     sbtxtickerid AS sbTxTickerId,
     COUNT(*) AS n_rows
-  FROM main.sbTransaction
+  FROM broker.sbTransaction
   GROUP BY
     1,
     2
@@ -13,7 +13,7 @@ WITH _s0 AS (
     _s0.sbTxCustId,
     SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
-  JOIN main.sbTicker AS sbTicker
+  JOIN broker.sbTicker AS sbTicker
     ON _s0.sbTxTickerId = sbTicker.sbtickerid
   GROUP BY
     1,
@@ -24,7 +24,7 @@ SELECT
   _s2.sbTickerType AS ticker_type,
   SUM(_s2.sum_n_rows) AS num_transactions
 FROM _s2 AS _s2
-JOIN main.sbCustomer AS sbCustomer
+JOIN broker.sbCustomer AS sbCustomer
   ON _s2.sbTxCustId = sbCustomer.sbcustid
 GROUP BY
   1,
