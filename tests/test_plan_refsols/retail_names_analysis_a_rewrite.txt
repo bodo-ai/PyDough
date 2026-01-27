@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=CONTAINS('GT':string, UPPER(SLICE(UNMASK::(PTY_UNPROTECT([first_name], 'deName')), None:unknown, 1:numeric, None:unknown))), columns={})
+  FILTER(condition=ISIN(first_name, ['wrJPcBLnb', 'tfdP', 'aPZukW', 'FllTrn', 'dWFj', 'zQhHu', 'cLxbra', 'iShNn', 'nrvyDT', 'Eikudy', 'dDxAuD', 'RwQZcxw', 'RnYgnn', 'UMwsjSm', 'VjzF', 'lDKVA', 'DAzoEa', 'POnnEr', 'EGBa']:array[unknown]), columns={})
    SCAN(table=bodo.retail.protected_loyalty_members, columns={'first_name': first_name})

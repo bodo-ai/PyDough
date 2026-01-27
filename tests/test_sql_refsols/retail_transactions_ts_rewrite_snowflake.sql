@@ -3,39 +3,32 @@ WITH _s0 AS (
     COUNT(*) AS n_rows
   FROM bodo.retail.transactions
   WHERE
-    DAY(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 1
-    AND HOUR(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 7
+    transaction_date IN ('2178-03-20 07:19:29', '2825-09-23 07:37:08')
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
   FROM bodo.retail.transactions
   WHERE
-    DAY(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 2
-    AND HOUR(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 7
+    transaction_date IN ('1010-12-08 07:23:35', '2328-01-19 07:33:25', '1577-03-20 07:41:29', '1345-03-06 07:41:47', '0937-05-21 07:27:48', '2176-01-07 07:07:03')
 ), _s3 AS (
   SELECT
     COUNT(*) AS n_rows
   FROM bodo.retail.transactions
   WHERE
-    DAY(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 1
-    AND HOUR(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 8
+    transaction_date IN ('3120-07-22 08:30:44', '1890-02-18 08:21:13', '1890-02-18 08:46:51')
 ), _s5 AS (
   SELECT
     COUNT(*) AS n_rows
   FROM bodo.retail.transactions
   WHERE
-    DAY(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 2
-    AND HOUR(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = 8
+    transaction_date IN ('2052-11-18 08:24:33', '2052-11-18 08:32:00', '1577-03-20 08:03:51', '1577-03-20 08:32:17', '2550-01-17 08:56:44', '1551-03-04 08:36:08')
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows
   FROM bodo.retail.transactions
   WHERE
-    (
-      DAY(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) < 4
-      OR MINUTE(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) = SECOND(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP))
-    )
-    AND HOUR(CAST(PTY_UNPROTECT_TS(transaction_date) AS TIMESTAMP)) < 3
+    transaction_date IN ('1752-07-20 01:18:18', '1880-04-06 00:47:47', '2956-09-24 00:03:03', '1868-06-13 01:22:22', '0780-03-23 01:14:14', '1598-04-24 01:11:11', '0763-04-15 00:16:16', '2780-03-19 01:32:32')
+    OR transaction_date IN ('2268-07-06 01:50:11', '3056-08-07 01:18:26', '3120-07-22 02:43:20', '1010-12-08 01:47:15', '1440-10-15 02:26:30', '3054-12-02 00:51:55', '3031-02-17 00:54:21', '1539-02-23 00:49:34', '2418-09-09 01:12:48', '2418-09-09 02:09:31', '2551-01-12 00:34:57', '3141-01-25 02:24:01', '2328-01-19 01:20:40', '1577-03-20 00:27:19', '1608-08-20 00:10:55', '1608-08-20 01:12:55', '1608-08-20 02:14:47', '2825-09-23 02:31:19', '1286-12-21 00:21:24', '1286-12-21 01:25:46', '3300-07-12 00:15:35', '2059-07-23 01:56:15', '2955-06-27 00:48:34', '2955-06-27 01:24:43', '0937-05-21 00:40:43', '0930-11-28 02:44:19', '1605-10-12 00:58:57', '0781-08-29 02:28:10', '2374-09-21 00:21:42', '2374-09-21 02:10:55', '3022-05-13 01:56:21', '3088-03-30 01:09:15', '3088-03-30 02:38:56', '1757-01-16 00:20:29', '3287-10-20 01:17:31', '2555-09-08 00:40:20', '2555-09-08 01:20:22', '2555-09-08 02:36:58', '2176-01-07 02:50:08', '2282-06-16 00:21:35', '2595-05-23 01:32:01', '3237-05-26 01:19:24', '3237-05-26 01:52:49', '2780-03-19 01:32:32', '2780-03-19 02:33:01')
 )
 SELECT
   _s0.n_rows AS n1,

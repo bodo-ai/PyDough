@@ -2,5 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.health.protected_patients
 WHERE
-  UPPER(PTY_UNPROTECT_NAME(first_name)) <= 'LARRY'
-  AND UPPER(PTY_UNPROTECT_NAME(first_name)) >= 'KIM'
+  first_name IN ('sSZ', 'AXKFlSlU', 'hyBAOH', 'ZmkhlnM', 'HXQSIvf', 'ukGSulkV', 'TmVMGp', 'tzfT', 'ojXP', 'eOhGB', 'SEAVv', 'BbNgC')

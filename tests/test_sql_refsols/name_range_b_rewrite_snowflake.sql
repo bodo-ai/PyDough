@@ -2,9 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.health.protected_patients
 WHERE
-  (
-    UPPER(PTY_UNPROTECT_NAME(first_name)) < 'KIM'
-    OR UPPER(PTY_UNPROTECT_NAME(first_name)) > 'LARRY'
-  )
-  AND UPPER(PTY_UNPROTECT_NAME(first_name)) <= 'MATTHEW'
-  AND UPPER(PTY_UNPROTECT_NAME(first_name)) >= 'JULIA'
+  first_name IN ('cDTeJ', 'xyLof', 'kiKNKR', 'srXHQOs', 'wNgU', 'culTf', 'WAnqWpJ', 'StqmwCvYW', 'ejgYoaOj', 'uIAoglX', 'dITcC', 'FHyaKck', 'fbxYQ', 'sbktR', 'OtfUs', 'BrsuCS', 'pkpimjV', 'cNTVC', 'BCcSEm', 'dmWqq', 'WBObiw', 'GYVw', 'gYR', 'OQMeTN', 'lOGP', 'RuOHJ', 'mublfhb', 'YobcLHV', 'JYiQ', 'nsLY', 'oivbknRk', 'mMLMo', 'fGzC', 'CzDuFde', 'YivjA', 'AYZbGb', 'QnzW', 'ZMuLn', 'dwKLWM', 'jLHnwiTH', 'CricE', 'XkohKQB', 'cOLtT', 'xDkCYu', 'bmgtuNK', 'fCsj', 'zrhoqK', 'HrIFed', 'cvsv', 'PghcwKp')

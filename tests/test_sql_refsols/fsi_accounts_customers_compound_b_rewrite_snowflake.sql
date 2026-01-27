@@ -2,9 +2,9 @@ SELECT
   COUNT(*) AS n
 FROM bodo.fsi.accounts AS accounts
 JOIN bodo.fsi.protected_customers AS protected_customers
-  ON NOT protected_customers.firstname IN (PTY_PROTECT('Jennifer', 'deName'), PTY_PROTECT('Julio', 'deName'), PTY_PROTECT('Johnson', 'deName'), PTY_PROTECT('Jameson', 'deName'), PTY_PROTECT('Michael', 'deName'), PTY_PROTECT('Robert', 'deName'))
+  ON NOT protected_customers.firstname IN ('tzuhpuCF', 'cPBnsOl', 'NVGimP')
   AND accounts.customerid = protected_customers.customerid
-  AND protected_customers.state IN (PTY_PROTECT('Georgia', 'deAddress'), PTY_PROTECT('Alabama', 'deAddress'), PTY_PROTECT('Mississippi', 'deAddress'), PTY_PROTECT('Arkansas', 'deAddress'), PTY_PROTECT('Louisiana', 'deAddress'), PTY_PROTECT('Florida', 'deAddress'), PTY_PROTECT('South Carolina', 'deAddress'), PTY_PROTECT('North Carolina', 'deAddress'), PTY_PROTECT('Texas', 'deAddress'), PTY_PROTECT('Tennessee', 'deAddress'), PTY_PROTECT('Missouri', 'deAddress'))
+  AND protected_customers.state IN ('EdJ6cty', 'raXuWJGK', '4o0uuG1', 'FvlL1x8', 'TY84qyAxy', 'AqjyPuvoU8d', 'q6OaWD9X', 'MZBK0 U3nQzZbb', 'lN1sA AANifXzd', 'JXtZBpRhT', 'YYE75')
 WHERE
   YEAR(CAST(PTY_UNPROTECT_DOB(accounts.createddate) AS TIMESTAMP)) <= 2022
-  AND accounts.currency IN (PTY_PROTECT('USD', 'deAccount'), PTY_PROTECT('GPB', 'deAccount'), PTY_PROTECT('EUR', 'deAccount'), PTY_PROTECT('JPY', 'deAccount'), PTY_PROTECT('AUD', 'deAccount'))
+  AND accounts.currency IN ('jpb', 'gFr')
