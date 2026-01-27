@@ -608,7 +608,7 @@ from tests.test_pydough_functions.user_collections import (
 ──┬─ TPCH
   ├─── TableCollection[customers]
   ├─── Where[nation_key == 6]
-  ├─┬─ TopK[5, $1.order_date.ASC(na_pos='last')]
+  ├─┬─ TopK[5, DEFAULT_TO($1.order_date, datetime.date(2000, 1, 1)).ASC(na_pos='last')]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[orders]
   │   ├─── Where[order_priority == '1-URGENT']
@@ -918,7 +918,7 @@ from tests.test_pydough_functions.user_collections import (
         │     └─┬─ Where[($1.size == part_size) & (tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
         │       └─┬─ AccessChild
         │         └─── SubCollection[part]
-        ├─┬─ Calculate[total_qty=SUM($1.quantity)]
+        ├─┬─ Calculate[total_qty=KEEP_IF(SUM($1.quantity), SUM($1.quantity) > 0)]
         │ └─┬─ AccessChild
         │   └─── PartitionChild[lines]
         ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=2, allow_ties=False) == 1]
@@ -932,13 +932,13 @@ from tests.test_pydough_functions.user_collections import (
 ┌─── TPCH
 └─┬─ Calculate[n_pairs=COUNT($1)]
   └─┬─ AccessChild
-    ├─── TableCollection[orders]
-    ├─── Calculate[original_customer_key=customer_key, original_order_key=key, original_order_date=order_date]
-    └─┬─ Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
+    ├─── TableCollection[customers]
+    ├─── Calculate[original_customer_key=key, original_customer_nation_key=nation_key, original_customer_segment=market_segment]
+    └─┬─ Where[account_balance > 9990]
       └─┬─ TPCH
-        ├─── TableCollection[orders]
-        ├─── Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
-        └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
+        ├─── TableCollection[customers]
+        ├─── Where[account_balance > 9990]
+        └─── Where[(nation_key == original_customer_nation_key) & (key > original_customer_key) & (market_segment == original_customer_segment)]
   """,
             id="simple_cross_6",
         ),

@@ -1,0 +1,17 @@
+SELECT
+  PART.p_partkey AS `key`,
+  REGION.r_name COLLATE utf8mb4_bin AS region,
+  DENSE_RANK() OVER (PARTITION BY NATION.n_regionkey ORDER BY CASE WHEN PART.p_size IS NULL THEN 1 ELSE 0 END DESC, PART.p_size DESC, CASE WHEN PART.p_container COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END DESC, PART.p_container COLLATE utf8mb4_bin DESC, CASE WHEN PART.p_type COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END DESC, PART.p_type COLLATE utf8mb4_bin DESC) AS `rank`
+FROM tpch.REGION AS REGION
+JOIN tpch.NATION AS NATION
+  ON NATION.n_regionkey = REGION.r_regionkey
+JOIN tpch.SUPPLIER AS SUPPLIER
+  ON NATION.n_nationkey = SUPPLIER.s_nationkey
+JOIN tpch.PARTSUPP AS PARTSUPP
+  ON PARTSUPP.ps_suppkey = SUPPLIER.s_suppkey
+JOIN tpch.PART AS PART
+  ON PART.p_partkey = PARTSUPP.ps_partkey
+ORDER BY
+  1,
+  2
+LIMIT 15

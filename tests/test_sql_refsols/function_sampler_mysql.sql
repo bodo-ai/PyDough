@@ -1,0 +1,21 @@
+SELECT
+  CONCAT_WS('-', REGION.r_name, NATION.n_name, SUBSTRING(CUSTOMER.c_name, 17)) AS a,
+  ROUND(CUSTOMER.c_acctbal, 1) AS b,
+  CASE WHEN SUBSTRING(CUSTOMER.c_phone, 1, 1) = '3' THEN CUSTOMER.c_name ELSE NULL END AS c,
+  NOT CASE
+    WHEN SUBSTRING(CUSTOMER.c_phone, 2, GREATEST(1, 0)) = '1'
+    THEN CUSTOMER.c_name
+    ELSE NULL
+  END IS NULL AS d,
+  CASE WHEN SUBSTRING(CUSTOMER.c_phone, 15) = '7' THEN CUSTOMER.c_name ELSE NULL END IS NULL AS e,
+  ROUND(CUSTOMER.c_acctbal, 0) AS f
+FROM tpch.REGION AS REGION
+JOIN tpch.NATION AS NATION
+  ON NATION.n_regionkey = REGION.r_regionkey
+JOIN tpch.CUSTOMER AS CUSTOMER
+  ON CUSTOMER.c_acctbal <= 100.0
+  AND CUSTOMER.c_acctbal >= 0.0
+  AND CUSTOMER.c_nationkey = NATION.n_nationkey
+ORDER BY
+  CUSTOMER.c_address COLLATE utf8mb4_bin
+LIMIT 10

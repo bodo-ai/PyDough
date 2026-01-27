@@ -21,7 +21,7 @@ WITH _t3 AS (
   JOIN bodo.fsi.accounts AS accounts
     ON accounts.customerid = protected_customers.customerid
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY unmask_state ORDER BY accounts.balance DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s0.unmask_state ORDER BY accounts.balance DESC) = 1
 )
 SELECT
   unmask_state AS state,

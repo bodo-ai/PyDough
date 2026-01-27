@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(sale_price) AS sum_sale_price
   FROM main.sales
   WHERE
-    sale_date >= DATEADD(MONTH, -3, CURRENT_TIMESTAMP())
+    sale_date >= DATEADD(MONTH, -3, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
   GROUP BY
     1
 )

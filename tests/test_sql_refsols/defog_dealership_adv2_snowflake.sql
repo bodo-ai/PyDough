@@ -4,7 +4,11 @@ WITH _s1 AS (
     COUNT(*) AS n_rows
   FROM main.sales
   WHERE
-    DATEDIFF(DAY, CAST(sale_date AS DATETIME), CURRENT_TIMESTAMP()) <= 30
+    DATEDIFF(
+      DAY,
+      CAST(sale_date AS DATETIME),
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
+    ) <= 30
   GROUP BY
     1
 )

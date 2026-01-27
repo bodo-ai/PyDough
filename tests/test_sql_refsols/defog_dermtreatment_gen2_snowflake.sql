@@ -16,4 +16,6 @@ FROM main.doctors AS doctors
 LEFT JOIN _t1 AS _t1
   ON _t1.doc_id = doctors.doc_id
 WHERE
-  doctors.year_reg = YEAR(DATEADD(YEAR, -2, CURRENT_TIMESTAMP()))
+  doctors.year_reg = YEAR(
+    CAST(DATEADD(YEAR, -2, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) AS TIMESTAMP)
+  )

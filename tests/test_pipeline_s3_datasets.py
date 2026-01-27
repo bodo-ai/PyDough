@@ -21,8 +21,8 @@ result = (
     patients
     .WHERE((gender == 'F') & (ethnicity == 'italian'))
     .conditions
-    .PARTITION(name='condition_groups', by=DESCRIPTION)
-    .CALCULATE(condition_description=DESCRIPTION, occurrence_count=COUNT(conditions))
+    .PARTITION(name='condition_groups', by=description)
+    .CALCULATE(condition_description=description, occurrence_count=COUNT(conditions))
     .TOP_K(1, by=(occurrence_count.DESC(), condition_description.ASC()))
     .CALCULATE(condition_description)
 )

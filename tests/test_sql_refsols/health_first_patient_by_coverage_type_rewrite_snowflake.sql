@@ -1,14 +1,19 @@
-WITH _t3 AS (
+WITH _s2 AS (
+  SELECT
+    coverage_type,
+    insurance_plan_id
+  FROM bodo.health.insurance_plans
+), _t3 AS (
   SELECT
     protected_patients.date_of_birth,
     protected_patients.first_name,
-    insurance_plans.insurance_plan_id,
+    _s0.insurance_plan_id,
     protected_patients.last_name
-  FROM bodo.health.insurance_plans AS insurance_plans
+  FROM _s2 AS _s0
   JOIN bodo.health.protected_patients AS protected_patients
-    ON insurance_plans.insurance_plan_id = protected_patients.insurance_plan_id
+    ON _s0.insurance_plan_id = protected_patients.insurance_plan_id
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY coverage_type ORDER BY PTY_UNPROTECT(protected_patients.date_of_birth, 'deDOB'), PTY_UNPROTECT_ACCOUNT(protected_patients.patient_id)) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s0.coverage_type ORDER BY PTY_UNPROTECT(protected_patients.date_of_birth, 'deDOB'), PTY_UNPROTECT_ACCOUNT(protected_patients.patient_id)) = 1
 ), _s3 AS (
   SELECT
     insurance_plan_id,
@@ -21,14 +26,14 @@ WITH _t3 AS (
     1
 ), _t0 AS (
   SELECT
-    insurance_plans.coverage_type,
+    _s2.coverage_type,
     MAX(_s3.anything_unmask_date_of_birth) AS max_anything_unmask_date_of_birth,
     MAX(_s3.anything_unmask_first_name) AS max_anything_unmask_first_name,
     MAX(_s3.anything_unmask_last_name) AS max_anything_unmask_last_name,
     SUM(_s3.n_rows) AS sum_n_rows
-  FROM bodo.health.insurance_plans AS insurance_plans
+  FROM _s2 AS _s2
   LEFT JOIN _s3 AS _s3
-    ON _s3.insurance_plan_id = insurance_plans.insurance_plan_id
+    ON _s2.insurance_plan_id = _s3.insurance_plan_id
   GROUP BY
     1
 )
