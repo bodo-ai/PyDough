@@ -2187,7 +2187,7 @@ def true_mask_server_info() -> MaskServerInfo:
     Returns the MaskServerInfo for the true Mask server.
     """
     if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
-        raise RuntimeError("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
+        pytest.skip("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
 
     # Send a health request to ensure the server is reachable and functioning.
     # If not, then halt testing early.
