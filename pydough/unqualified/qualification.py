@@ -595,7 +595,8 @@ class Qualifier:
         )
 
         if (
-            isinstance(qualified_parent, GlobalContext)
+            isinstance(unqualified_parent, UnqualifiedRoot)
+            and isinstance(qualified_parent, GlobalContext)
             and name == qualified_parent.graph.name
             and not is_child
         ) or (
