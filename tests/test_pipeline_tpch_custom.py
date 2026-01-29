@@ -2871,6 +2871,123 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(nation.WHERE(region.name == 'ASIA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [30183],
+                    }
+                ),
+                "redundant_has",
+            ),
+            id="redundant_has",
+        ),
+        # Nested HAS on singular chain (supplier -> nation -> region), both should optimize to INNER
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(nation.WHERE(HAS(region.WHERE(name == 'AFRICA')))))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1955],
+                    }
+                ),
+                "redundant_has_nested",
+            ),
+            id="redundant_has_nested",
+        ),
+        # HAS on plural relationship (orders) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(total_price > 400000)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [3533],
+                    }
+                ),
+                "redundant_has_on_plural",
+            ),
+            id="redundant_has_on_plural",
+        ),
+        # HAS on singular relationship with additional filter
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(nation.WHERE(region.name == 'EUROPE')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1987],
+                    }
+                ),
+                "redundant_has_singular_chain",
+            ),
+            id="redundant_has_singular_chain",
+        ),
+        # HAS on plural relationship (lineitems) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(orders.WHERE(HAS(lines.WHERE(quantity > 49)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [115066],
+                    }
+                ),
+                "redundant_has_on_plural_lineitems",
+            ),
+            id="redundant_has_on_plural_lineitems",
+        ),
+        # HASNOT on singular relationship - should optimize to ANTI join or similar
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HASNOT(nation.WHERE(region.name == 'AFRICA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [8045],
+                    }
+                ),
+                "redundant_has_not_on_singular",
+                skip_relational=True,
+                skip_sql=True,
+            ),
+            id="redundant_has_not_on_singular",
+        ),
+        # HAS without WHERE filter on singular - should optimize to INNER
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(nation))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "redundant_has_no_filter_singular",
+                skip_relational=True,
+                skip_sql=True,
+            ),
+            id="redundant_has_no_filter_singular",
+        ),
+        # HAS on singular within plural context - orders whose customer is from ASIA
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(orders.WHERE(HAS(customer.WHERE(nation.region.name == 'ASIA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [301740],
+                    }
+                ),
+                "redundant_has_singular_in_plural_context",
+                skip_relational=True,
+                skip_sql=True,
+            ),
+            id="redundant_has_singular_in_plural_context",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 bad_child_reuse_1,
                 "TPCH",
                 lambda: pd.DataFrame(
