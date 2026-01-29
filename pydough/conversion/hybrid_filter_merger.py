@@ -117,6 +117,8 @@ class HybridFilterMerger:
             for operation in tree.pipeline:
                 operation.replace_expressions(replacement_map)
 
+        tree.remove_dead_children(set())
+
         # Run the procedure recursively on the parent tree and the child
         # subtrees.
         if tree.parent is not None:

@@ -2967,8 +2967,8 @@ def impl_defog_restaurants_gen14():
     non-vegan food in San Francisco? Match food_type case insensitively
     """
     sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
-    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
-    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
+    n_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) == "vegan"))
+    n_non_vegan = COUNT(sf_restaurants) - n_vegan
     return Restaurants.CALCULATE(
         ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
     )
@@ -2983,7 +2983,7 @@ def impl_defog_restaurants_gen15():
     Los Angeles?
     """
     la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
-    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la_italian = COUNT(la_restaurants.WHERE(LOWER(food_type) == "italian"))
     n_la = COUNT(la_restaurants)
     return Restaurants.CALCULATE(ratio=(n_la_italian / KEEP_IF(n_la, n_la != 0)))
 

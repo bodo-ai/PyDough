@@ -1,3 +1,3 @@
 SELECT
-  SUM(CASE WHEN rating > 4.5 THEN 1 ELSE 0 END) / COUNT(*) AS ratio
+  SUM(rating > 4.5) / COUNT(*) AS ratio
 FROM main.restaurant

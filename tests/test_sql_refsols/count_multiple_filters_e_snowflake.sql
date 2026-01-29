@@ -2,9 +2,9 @@ WITH _s3 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows,
-    SUM(IFF(o_orderpriority = '1-URGENT', 1, 0)) AS sum_expr,
-    SUM(IFF(o_orderpriority = '2-HIGH', 1, 0)) AS sum_expr_21,
-    SUM(IFF(o_orderpriority = '3-MEDIUM', 1, 0)) AS sum_expr_22
+    COUNT_IF(o_orderpriority = '1-URGENT') AS sum_expr,
+    COUNT_IF(o_orderpriority = '2-HIGH') AS sum_expr_21,
+    COUNT_IF(o_orderpriority = '3-MEDIUM') AS sum_expr_22
   FROM tpch.orders
   GROUP BY
     1

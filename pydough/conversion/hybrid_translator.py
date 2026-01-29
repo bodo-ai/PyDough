@@ -1746,7 +1746,4 @@ class HybridTranslator:
         # 7. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
-        # 8. Remove any dead children in the hybrid tree that are no longer
-        # being used.
-        hybrid.remove_dead_children(set())
         return hybrid

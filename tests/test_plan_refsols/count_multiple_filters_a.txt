@@ -1,4 +1,4 @@
-ROOT(columns=[('n1', n_rows), ('n2', n2)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n2': SUM(IFF(c_mktsegment == 'BUILDING':string, 1:numeric, 0:numeric)), 'n_rows': COUNT()})
+ROOT(columns=[('n1', n_rows), ('n2', sum_expr)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT(), 'sum_expr': SUM(c_mktsegment == 'BUILDING':string)})
   FILTER(condition=MONOTONIC(500:numeric, c_acctbal, 600:numeric), columns={'c_mktsegment': c_mktsegment})
    SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_mktsegment': c_mktsegment})

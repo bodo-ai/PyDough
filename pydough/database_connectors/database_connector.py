@@ -52,7 +52,6 @@ class DatabaseConnection:
         try:
             self.cursor.execute(sql)
         except Exception as e:
-            breakpoint()
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, True
