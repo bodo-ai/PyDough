@@ -1,6 +1,6 @@
 WITH _s2 AS (
   SELECT
-    column1 AS part_size
+    sizes.column1 AS part_size
   FROM (VALUES
     (1),
     (6),

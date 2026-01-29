@@ -4,12 +4,19 @@ Definition of SQLGlot transformation bindings for the MySQL dialect.
 
 __all__ = ["MySQLTransformBindings"]
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.errors.error_types import PyDoughSQLException
 from pydough.types import PyDoughType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
 from pydough.types.string_type import StringType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
@@ -19,6 +26,7 @@ from .sqlglot_transform_utils import (
     create_constant_table,
     expand_std,
     expand_variance,
+    generate_dataframe_rows,
     generate_range_rows,
 )
 
@@ -747,7 +755,40 @@ class MySQLTransformBindings(BaseTransformBindings):
         range_rows: list[SQLGlotExpression] = generate_range_rows(collection, False)
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, [collection.column_name], range_rows
+            collection.name, [collection.column_name], range_rows, False
         )
 
         return result
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection
+    ) -> SQLGlotExpression:
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            False,  # Use ROW
+            self,
+        )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, collection.columns, dataframe_rows, False
+        )
+
+        return result
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("DATETIME"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    raise PyDoughSQLException("MySQL does not support Infinity values.")
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

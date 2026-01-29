@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     balance,
     user_id
-  FROM main.wallet_user_balance_daily
+  FROM ewallet.wallet_user_balance_daily
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY updated_at DESC) = 1
 )

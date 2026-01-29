@@ -1,8 +1,8 @@
 SELECT
   ANY_VALUE(conference.name) AS name,
   COUNT(publication.cid) AS count_publications
-FROM main.conference AS conference
-LEFT JOIN main.publication AS publication
+FROM academic.conference AS conference
+LEFT JOIN academic.publication AS publication
   ON conference.cid = publication.cid
 GROUP BY
   conference.cid

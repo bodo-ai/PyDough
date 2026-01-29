@@ -21,6 +21,7 @@ __all__ = [
     "TableCollection",
     "TopK",
     "Where",
+    "dataframe_collection",
     "range_collection",
 ]
 

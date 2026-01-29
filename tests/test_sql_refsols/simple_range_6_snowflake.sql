@@ -1,0 +1,11 @@
+WITH tbl AS (
+  SELECT
+    SEQ4() * 13 AS v
+  FROM TABLE(GENERATOR(ROWCOUNT => 39))
+)
+SELECT
+  CAST(SUBSTRING(CAST(v AS TEXT), 1, 1) AS BIGINT) AS first_digit,
+  COUNT(*) AS n
+FROM tbl
+GROUP BY
+  1
