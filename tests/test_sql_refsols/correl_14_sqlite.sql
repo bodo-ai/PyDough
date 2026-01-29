@@ -1,8 +1,8 @@
 WITH _s4 AS (
   SELECT
     partsupp.ps_suppkey,
-    SUM(NOT part.p_retailprice IS NULL) AS sum_expr,
-    SUM(part.p_retailprice) AS sum_p_retailprice
+    SUM(part.p_retailprice) AS sum_p_retailprice,
+    SUM(NOT part.p_retailprice IS NULL) AS sum_present_p_retailprice
   FROM tpch.supplier AS supplier
   JOIN tpch.partsupp AS partsupp
     ON partsupp.ps_suppkey = supplier.s_suppkey
@@ -22,7 +22,7 @@ JOIN tpch.part AS part
   ON part.p_container = 'LG DRUM'
   AND part.p_partkey = partsupp.ps_partkey
   AND part.p_retailprice < (
-    CAST(_s4.sum_p_retailprice AS REAL) / _s4.sum_expr
+    CAST(_s4.sum_p_retailprice AS REAL) / _s4.sum_present_p_retailprice
   )
   AND part.p_retailprice < (
     partsupp.ps_supplycost * 1.5

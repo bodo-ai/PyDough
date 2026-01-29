@@ -53,7 +53,7 @@ WITH _t2 AS (
     1
 ), _s11 AS (
   SELECT
-    CAST(SUM(_s9.sum_day100_pasi_score) AS REAL) / SUM(_s9.count_day100_pasi_score) AS avg_day100_pasi_score,
+    CAST(SUM(_s9.sum_day100_pasi_score) AS REAL) / SUM(_s9.count_day100_pasi_score) AS sum_sum_day100_pasi_score_div_sum_count_day100_pasi_score,
     _s7.ins_type
   FROM _t2 AS _t6
   LEFT JOIN _u_2 AS _u_2
@@ -70,7 +70,7 @@ WITH _t2 AS (
 SELECT
   _s10.ins_type AS insurance_type,
   _s10.ndistinct_patient_id AS num_distinct_patients,
-  _s11.avg_day100_pasi_score AS avg_pasi_score_day100
+  _s11.sum_sum_day100_pasi_score_div_sum_count_day100_pasi_score AS avg_pasi_score_day100
 FROM _s10 AS _s10
 LEFT JOIN _s11 AS _s11
   ON _s10.ins_type = _s11.ins_type

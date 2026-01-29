@@ -37,7 +37,7 @@ WITH _s0 AS (
     1
 ), _s7 AS (
   SELECT
-    SUM(_s5.sum_rating) / SUM(_s5.count_rating) AS avg_rating,
+    SUM(_s5.sum_rating) / SUM(_s5.count_rating) AS sum_sum_rating_div_sum_count_rating,
     _s2.region
   FROM _s0 AS _s2
   LEFT JOIN _u_2 AS _u_2
@@ -51,7 +51,7 @@ WITH _s0 AS (
 )
 SELECT
   _s6.region AS rest_region,
-  _s7.avg_rating
+  _s7.sum_sum_rating_div_sum_count_rating AS avg_rating
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
   ON _s6.region = _s7.region

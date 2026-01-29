@@ -1,8 +1,8 @@
 WITH _s1 AS (
   SELECT
     sbtxtickerid AS sbTxTickerId,
-    SUM(sbtxtax + sbtxcommission) AS sum_expr,
-    SUM(sbtxamount) AS sum_sbTxAmount
+    SUM(sbtxamount) AS sum_sbTxAmount,
+    SUM(sbtxtax + sbtxcommission) AS sum_sbTxTax_plus_sbTxCommission
   FROM main.sbTransaction
   WHERE
     sbtxdatetime >= DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '1' MONTH)
@@ -14,7 +14,7 @@ SELECT
   sbTicker.sbtickersymbol COLLATE utf8mb4_bin AS symbol,
   (
     100.0 * (
-      COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.sum_expr, 0)
+      COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.sum_sbTxTax_plus_sbTxCommission, 0)
     )
   ) / COALESCE(_s1.sum_sbTxAmount, 0) AS SPM
 FROM main.sbTicker AS sbTicker

@@ -9,6 +9,7 @@ __all__ = ["bubble_column_names"]
 
 import re
 
+import pydough.pydough_operators as pydop
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -17,6 +18,7 @@ from pydough.relational import (
     Filter,
     Join,
     Limit,
+    LiteralExpression,
     Project,
     RelationalExpression,
     RelationalNode,
@@ -48,7 +50,63 @@ def name_sort_key(name: str) -> tuple[bool, bool, str]:
     )
 
 
-def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> list[str]:
+binop_namings: dict[pydop.PyDoughExpressionOperator, str] = {
+    pydop.ADD: "plus",
+    pydop.SUB: "minus",
+    pydop.MUL: "times",
+    pydop.DIV: "div",
+    pydop.MOD: "mod",
+    pydop.POW: "pow",
+    pydop.STARTSWITH: "startswith",
+    pydop.ENDSWITH: "endswith",
+    pydop.CONTAINS: "contains",
+}
+"""
+TODO
+"""
+
+
+def make_cleaner_name(expr: CallExpression) -> str | None:
+    """
+    TODO
+    """
+    input_names: list[str] = []
+    arg_name: str | None
+    for arg in expr.inputs:
+        if isinstance(arg, ColumnReference):
+            arg_name = arg.name
+            # Remove any non-alphanumeric characters to make a cleaner name
+            # and underscores
+            arg_name = re.sub(r"[^a-zA-Z0-9_]", "", arg_name)
+            input_names.append(arg_name)
+        elif isinstance(arg, CallExpression):
+            arg_name = make_cleaner_name(arg)
+            if arg_name is None:
+                return None
+            input_names.append(arg_name)
+        elif isinstance(arg, LiteralExpression):
+            # For literals, use their value directly in the name if it's
+            # a simple type
+            if isinstance(arg.value, (str, int, float, bool)):
+                arg_name = str(arg.value)
+                arg_name = re.sub(r"[^a-zA-Z0-9_]", "", arg_name)
+                input_names.append(arg_name)
+            else:
+                return None
+        else:
+            return None
+    cleaner_name: str | None = None
+    if len(expr.inputs) == 1:
+        cleaner_name = f"{expr.op.function_name.lower()}_{input_names[0]}"
+    elif len(expr.inputs) == 2 and expr.op in binop_namings:
+        cleaner_name = f"{input_names[0]}_{binop_namings[expr.op]}_{input_names[1]}"
+
+    if cleaner_name is not None and cleaner_name.isidentifier():
+        return cleaner_name
+    return None
+
+
+def generate_cleaner_names(expr: RelationalExpression, current_name) -> list[str]:
     """
     Generates more readable names for an expression based on its, if applicable.
     The patterns of name generation are:
@@ -73,21 +131,18 @@ def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> lis
     """
     result: list[str] = []
     if isinstance(expr, CallExpression):
-        if len(expr.inputs) == 1:
-            input_expr = expr.inputs[0]
-            if isinstance(input_expr, ColumnReference):
-                input_name: str = input_expr.name
-                # Remove any non-alphanumeric characters to make a cleaner name
-                # and underscores
-                input_name = re.sub(r"[^a-zA-Z0-9_]", "", input_name)
-                cleaner_name: str = f"{expr.op.function_name.lower()}_{input_name}"
-
-                result.append(cleaner_name)
+        cleaner_name: str | None = make_cleaner_name(expr)
+        if cleaner_name is not None:
+            result.append(cleaner_name)
 
         if len(expr.inputs) == 0 and expr.op.function_name.lower() == "count":
             result.append("n_rows")
 
-    if not (current_name.startswith("agg") or current_name.startswith("expr")):
+    if not (
+        current_name is None
+        or current_name.startswith("agg")
+        or current_name.startswith("expr")
+    ):
         if re.match(r"^(.*)_[0-9]+$", current_name):
             result.append(re.findall(r"^(.*)_[0-9]+$", current_name)[0])
     return result

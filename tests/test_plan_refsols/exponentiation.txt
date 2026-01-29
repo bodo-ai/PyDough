@@ -1,2 +1,3 @@
-ROOT(columns=[('low_square', sbDpLow ** 2:numeric), ('low_sqrt', SQRT(sbDpLow)), ('low_cbrt', POWER(sbDpLow, 0.3333333333333333:numeric))], orderings=[(sbDpLow ** 2:numeric):asc_first], limit=10:numeric)
- SCAN(table=main.sbDailyPrice, columns={'sbDpLow': sbDpLow})
+ROOT(columns=[('low_square', sbDpLow ** 2:numeric), ('low_sqrt', SQRT(sbDpLow)), ('low_cbrt', POWER(sbDpLow, 0.3333333333333333:numeric))], orderings=[(sbDpLow ** 2:numeric):asc_first])
+ LIMIT(limit=10:numeric, columns={'sbDpLow': sbDpLow}, orderings=[(low_square):asc_first])
+  SCAN(table=main.sbDailyPrice, columns={'sbDpLow': sbDpLow})
