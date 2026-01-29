@@ -50,7 +50,7 @@ class DivisionByZeroBehavior(Enum):
     """
 
     DATABASE = "DATABASE"
-    """Leave it alone and let the database resolve it."""
+    """It will follow the behavior of the underlying database engine."""
 
     NULL = "NULL"
     """Always convert a / b to a / KEEP_IF(b, b != 0), returning NULL on division by zero."""

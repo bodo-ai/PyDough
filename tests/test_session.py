@@ -34,6 +34,11 @@ from pydough.errors import PyDoughSQLException
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 from pydough.unqualified import UnqualifiedNode
 from tests.test_pydough_functions.simple_pydough_functions import (
+    division_with_complex_operands,
+    division_with_iff_denom_false_branch,
+    division_with_iff_denom_true_branch,
+    division_with_keep_if_denom,
+    division_with_multiple_ops,
     simple_division_by_zero,
     simple_scan,
 )
@@ -195,6 +200,76 @@ FROM tpch.orders
             ),
             id="zero",
         ),
+        # Multiple operations: a*(c / b) + z
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_multiple_ops,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_multiple_ops_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="multiple_ops_zero",
+        ),
+        # Complex operands: (a+b)/(z*2)
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_complex_operands,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_complex_operands_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="complex_operands_zero",
+        ),
+        # KEEP_IF already in denominator
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_keep_if_denom,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_keep_if_denom_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="keep_if_denom_zero",
+        ),
+        # IFF in denominator - divisor in true branch
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_iff_denom_true_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_iff_true_branch_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_true_branch_zero",
+        ),
+        # IFF in denominator - divisor in false branch
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_iff_denom_false_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_iff_false_branch_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_false_branch_zero",
+        ),
     ],
 )
 def division_by_zero_test_data(
@@ -232,52 +307,19 @@ def test_division_by_zero_to_sql(
 
 @pytest.fixture(
     params=[
-        pytest.param("sqlite", id="sqlite"),
-        pytest.param(
-            "snowflake",
-            id="snowflake",
-            marks=[pytest.mark.snowflake, pytest.mark.execute],
-        ),
-        pytest.param(
-            "mysql",
-            id="mysql",
-            marks=[pytest.mark.mysql, pytest.mark.execute],
-        ),
-        pytest.param(
-            "postgres",
-            id="postgres",
-            marks=[pytest.mark.postgres, pytest.mark.execute],
-        ),
+        pytest.param(simple_division_by_zero, id="simple"),
+        pytest.param(division_with_multiple_ops, id="multiple_ops"),
+        pytest.param(division_with_complex_operands, id="complex_operands"),
+        pytest.param(division_with_iff_denom_false_branch, id="iff_false_branch"),
     ],
 )
-def division_by_zero_db_context(
-    request,
-    get_sample_graph: graph_fetcher,
-    get_sf_sample_graph: graph_fetcher,
-) -> tuple[DatabaseContext, GraphMetadata]:
+def division_e2e_test_func(request) -> Callable:
     """
-    Returns database context and graph metadata for each supported database.
-    Fixtures are lazily loaded to avoid triggering setup for unused databases.
+    Test functions that trigger actual division-by-zero behavior.
+    These all use TOP_K(1, by=computed_value.ASC(na_pos="first")) which
+    guarantees the row with division-by-zero is selected (nulls/zeros first).
     """
-    match request.param:
-        case "sqlite":
-            db_context = request.getfixturevalue("sqlite_tpch_db_context")
-            return db_context, get_sample_graph("TPCH")
-        case "snowflake":
-            sf_conn = request.getfixturevalue("sf_conn_db_context")
-            return (
-                sf_conn("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
-                get_sf_sample_graph("TPCH"),
-            )
-        case "mysql":
-            mysql_conn = request.getfixturevalue("mysql_conn_db_context")
-            return mysql_conn("tpch"), get_sample_graph("TPCH")
-        case "postgres":
-            db_context = request.getfixturevalue("postgres_conn_db_context")
-            return db_context, get_sample_graph("TPCH")
-    # Default fallback
-    db_context = request.getfixturevalue("sqlite_tpch_db_context")
-    return db_context, get_sample_graph("TPCH")
+    return request.param
 
 
 @pytest.mark.execute
@@ -291,18 +333,21 @@ def division_by_zero_db_context(
 )
 def test_division_by_zero_e2e(
     division_by_zero_config: DivisionByZeroBehavior,
-    division_by_zero_db_context: tuple[DatabaseContext, GraphMetadata],
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+    division_e2e_test_func: Callable,
 ) -> None:
     """
     Tests division by zero behavior across all supported databases.
+    All test functions use TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    to ensure the division-by-zero row is selected.
     """
-    db_context, graph = division_by_zero_db_context
+    db_context, graph = all_dialects_tpch_db_context
 
-    new_configs = PyDoughConfigs()
+    new_configs: PyDoughConfigs = PyDoughConfigs()
     new_configs.division_by_zero = division_by_zero_config
 
     root: UnqualifiedNode = pydough.init_pydough_context(graph)(
-        simple_division_by_zero
+        division_e2e_test_func
     )()
 
     # DATABASE mode: Snowflake/Postgres throw errors, SQLite/MySQL return NULL
@@ -317,7 +362,7 @@ def test_division_by_zero_e2e(
                 )
             return
 
-    output = pydough.to_df(
+    output: pd.DataFrame = pydough.to_df(
         root,
         metadata=graph,
         database=db_context,
@@ -325,7 +370,7 @@ def test_division_by_zero_e2e(
     )
 
     # Snowflake returns uppercase column names
-    col_name = (
+    col_name: str = (
         "COMPUTED_VALUE"
         if db_context.dialect == DatabaseDialect.SNOWFLAKE
         else "computed_value"

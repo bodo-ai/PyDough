@@ -25,7 +25,7 @@ The configs module provides functionality to manage various configuration settin
     - `FRIDAY`: Friday.
     - `SATURDAY`: Saturday.
 - `DivisionByZeroBehavior`: Enum to represent the behavior when division by zero occurs.
-    - `DATABASE`: Leave it alone and let the database resolve it.
+    - `DATABASE`: It will follow the behavior of the underlying database engine.
     - `NULL`: Always convert `a / b` to `a / KEEP_IF(b, b != 0)`, returning NULL on division by zero.
     - `ZERO`: Always convert `a / b` to `IFF(b == 0, 0, a/b)`, returning 0 on division by zero.
 

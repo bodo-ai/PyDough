@@ -3605,3 +3605,38 @@ def simple_division_by_zero():
     return lines.CALCULATE(computed_value=extended_price / discount).TOP_K(
         1, by=computed_value.ASC(na_pos="first")
     )
+
+
+def division_with_multiple_ops():
+    """Test: a*(c / b) + z pattern"""
+    return lines.CALCULATE(
+        computed_value=quantity * (extended_price / discount) + tax
+    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+
+
+def division_with_complex_operands():
+    """Test: (a+b)/(z*2) pattern"""
+    return lines.CALCULATE(
+        computed_value=(extended_price + tax) / (discount * 2)
+    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+
+
+def division_with_keep_if_denom():
+    """Test: x / KEEP_IF(y, y > threshold) - denominator already has KEEP_IF"""
+    return lines.CALCULATE(
+        computed_value=extended_price / KEEP_IF(discount, discount > 0.05)
+    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+
+
+def division_with_iff_denom_true_branch():
+    """Test: x / IFF(cond, y, fallback) - division by IFF where divisor is in true branch"""
+    return lines.CALCULATE(
+        computed_value=extended_price / IFF(discount > 0, discount, 1)
+    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+
+
+def division_with_iff_denom_false_branch():
+    """Test: x / IFF(cond, fallback, y) - division by IFF where divisor is in false branch"""
+    return lines.CALCULATE(
+        computed_value=extended_price / IFF(discount > 0, 1, discount)
+    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
