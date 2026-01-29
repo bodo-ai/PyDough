@@ -980,10 +980,6 @@ class HybridTree:
             ) or self.children[child_idx].connection_type.is_anti:
                 children_to_delete.discard(child_idx)
 
-        print()
-        print(self)
-        print(children_to_delete)
-
         if len(children_to_delete) == 0:
             return {i: i for i in range(len(self.children))}
 
