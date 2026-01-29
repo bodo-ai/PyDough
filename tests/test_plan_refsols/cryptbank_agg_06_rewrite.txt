@@ -1,3 +1,3 @@
-ROOT(columns=[('n_neg', sum_expr), ('n_positive', sum_expr_3)], orderings=[])
- AGGREGATE(keys={}, aggregations={'sum_expr': SUM(False:bool), 'sum_expr_3': SUM(True:bool)})
+ROOT(columns=[('n_neg', sum_False), ('n_positive', sum_True)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_False': SUM(False:bool), 'sum_True': SUM(True:bool)})
   SCAN(table=CRBNK.TRANSACTIONS, columns={})

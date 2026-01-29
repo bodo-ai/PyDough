@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    ABS(CAST(sbcustpostalcode AS INTEGER)) AS expr_13,
+    ABS(CAST(sbcustpostalcode AS INTEGER)) AS abs_integer_sbcustpostalcode,
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
     AVG(CAST(ABS(COALESCE(CAST(sbcustpostalcode AS INTEGER), 0)) AS REAL)) OVER () AS ravg1,
     COALESCE(
@@ -36,26 +36,26 @@ WITH _t2 AS (
     rsum2,
     CASE
       WHEN (
-        CAST(0.75 * COUNT(expr_13) OVER () AS INTEGER) - CASE
-          WHEN 0.75 * COUNT(expr_13) OVER () < CAST(0.75 * COUNT(expr_13) OVER () AS INTEGER)
+        CAST(0.75 * COUNT(abs_integer_sbcustpostalcode) OVER () AS INTEGER) - CASE
+          WHEN 0.75 * COUNT(abs_integer_sbcustpostalcode) OVER () < CAST(0.75 * COUNT(abs_integer_sbcustpostalcode) OVER () AS INTEGER)
           THEN 1
           ELSE 0
         END
-      ) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
-      THEN expr_13
+      ) < ROW_NUMBER() OVER (ORDER BY abs_integer_sbcustpostalcode DESC)
+      THEN abs_integer_sbcustpostalcode
       ELSE NULL
     END AS expr_15,
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (ORDER BY expr_13 DESC) - 1.0
+          ROW_NUMBER() OVER (ORDER BY abs_integer_sbcustpostalcode DESC) - 1.0
         ) - (
           CAST((
-            COUNT(expr_13) OVER () - 1.0
+            COUNT(abs_integer_sbcustpostalcode) OVER () - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0
-      THEN expr_13
+      THEN abs_integer_sbcustpostalcode
       ELSE NULL
     END AS expr_16
   FROM _t2

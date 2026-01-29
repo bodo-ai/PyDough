@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _t3 AS (
   SELECT
     nation.n_nationkey,
     supplier.s_phone,
@@ -54,31 +54,39 @@ WITH _t2 AS (
     ) AS expr_1,
     n_nationkey,
     AVG(expr_2) AS avg_expr_2
-  FROM _t2
+  FROM _t3
   GROUP BY
     1,
     2
+), _t0 AS (
+  SELECT
+    _s5.avg_expr_2 AS avg_expr,
+    customer.c_acctbal,
+    customer.c_name
+  FROM tpch.customer AS customer
+  JOIN _s5 AS _s5
+    ON _s5.expr_1 = SUBSTRING(
+      customer.c_phone,
+      CASE
+        WHEN (
+          LENGTH(customer.c_phone) + 0
+        ) < 1
+        THEN 1
+        ELSE (
+          LENGTH(customer.c_phone) + 0
+        )
+      END
+    )
+    AND _s5.n_nationkey = customer.c_nationkey
+  WHERE
+    customer.c_mktsegment = 'AUTOMOBILE'
+  ORDER BY
+    delta
+  LIMIT 5
 )
 SELECT
-  customer.c_name AS customer_name,
-  ABS(customer.c_acctbal - _s5.avg_expr_2) AS delta
-FROM tpch.customer AS customer
-JOIN _s5 AS _s5
-  ON _s5.expr_1 = SUBSTRING(
-    customer.c_phone,
-    CASE
-      WHEN (
-        LENGTH(customer.c_phone) + 0
-      ) < 1
-      THEN 1
-      ELSE (
-        LENGTH(customer.c_phone) + 0
-      )
-    END
-  )
-  AND _s5.n_nationkey = customer.c_nationkey
-WHERE
-  customer.c_mktsegment = 'AUTOMOBILE'
+  c_name AS customer_name,
+  ABS(c_acctbal - avg_expr) AS delta
+FROM _t0
 ORDER BY
   2
-LIMIT 5
