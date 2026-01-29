@@ -11,7 +11,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughSession
+from pydough.configs import DivisionByZeroBehavior, PyDoughSession
 from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
 from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
@@ -130,12 +130,14 @@ class TranslationOutput:
 
 
 class RelTranslation:
-    def __init__(self):
+    def __init__(self, session: PyDoughSession):
         # An index used for creating fake column names
         self.dummy_idx = 1
         # A stack of contexts used to point to ancestors for correlated
         # references.
         self.stack: list[TranslationOutput] = []
+        # The session object for configuration access
+        self.session: PyDoughSession = session
 
     def make_null_column(self, relation: RelationalNode) -> ColumnReference:
         """
@@ -202,6 +204,140 @@ class RelTranslation:
             self.dummy_idx += 1
         return context.correlated_name
 
+    def _is_zero_check_condition(
+        self, condition: RelationalExpression, value: RelationalExpression
+    ) -> bool:
+        """
+        Check if condition is 'value != 0' with a literal zero.
+
+        Args:
+            `condition`: The condition expression to check.
+            `value`: The value that should be compared against zero.
+
+        Returns:
+            True if condition is 'value != 0' with literal 0, False otherwise.
+        """
+        if not isinstance(condition, CallExpression):
+            return False
+        if condition.op != pydop.NEQ:
+            return False
+        lhs, rhs = condition.inputs
+        # Check if one side is value and other is literal 0
+        is_lhs_zero = isinstance(lhs, LiteralExpression) and lhs.value == 0
+        is_rhs_zero = isinstance(rhs, LiteralExpression) and rhs.value == 0
+        return (lhs == value and is_rhs_zero) or (rhs == value and is_lhs_zero)
+
+    def _strip_zero_guards(self, expr: RelationalExpression) -> RelationalExpression:
+        """
+        Strips KEEP_IF or IFF wrappers from an expression only if they are
+        specifically zero-guards (condition is 'value != 0' with literal 0).
+
+        This ensures we don't strip KEEP_IF/IFF added for business logic
+        reasons unrelated to division-by-zero protection.
+
+        Args:
+            `expr`: The expression to check.
+
+        Returns:
+            The core expression with zero-guard wrappers removed, or the
+            original expression if no zero-guards are detected.
+        """
+        while isinstance(expr, CallExpression):
+            if expr.op == pydop.KEEP_IF:
+                # KEEP_IF(value, condition) - only strip if condition is 'value != 0'
+                value = expr.inputs[0]
+                condition = expr.inputs[1]
+                if self._is_zero_check_condition(condition, value):
+                    expr = value
+                else:
+                    break
+            elif expr.op == pydop.IFF:
+                # IFF(condition, then_value, else_value)
+                # Only strip if condition is 'then_value != 0'
+                condition = expr.inputs[0]
+                then_value = expr.inputs[1]
+                if self._is_zero_check_condition(condition, then_value):
+                    expr = then_value
+                else:
+                    break
+            else:
+                break
+        return expr
+
+    def _apply_division_by_zero_handling(
+        self,
+        dividend: RelationalExpression,
+        divisor: RelationalExpression,
+        typ: PyDoughType,
+    ) -> RelationalExpression:
+        """
+        Applies division-by-zero handling based on the session configuration.
+
+        Args:
+            `dividend`: The dividend (numerator) expression.
+            `divisor`: The divisor (denominator) expression.
+            `typ`: The result type of the division.
+
+        Returns:
+            A RelationalExpression representing the division with appropriate
+            zero-handling based on the config.
+        """
+        # Check if divisor already has a zero guard
+        if self._strip_zero_guards(divisor) is not divisor:
+            # Already has a zero guard, just return normal division
+            return CallExpression(pydop.DIV, typ, [dividend, divisor])
+
+        match self.session.config.division_by_zero:
+            case DivisionByZeroBehavior.DATABASE:
+                # Database will decide how to handle division by zero
+                return CallExpression(pydop.DIV, typ, [dividend, divisor])
+
+            case DivisionByZeroBehavior.NULL:
+                # If b == 0, return NULL
+                # Wrap divisor with KEEP_IF(b, b != 0)
+                is_not_zero_expr = CallExpression(
+                    pydop.NEQ,
+                    BooleanType(),
+                    [divisor, LiteralExpression(0, divisor.data_type)],
+                )
+                guarded_divisor = CallExpression(
+                    pydop.KEEP_IF,
+                    divisor.data_type,
+                    [divisor, is_not_zero_expr],
+                )
+                return CallExpression(pydop.DIV, typ, [dividend, guarded_divisor])
+
+            case DivisionByZeroBehavior.ZERO:
+                # If b == 0, return 0
+                # Replace with IFF(b == 0, 0, a / guarded_b)
+                is_zero_expr = CallExpression(
+                    pydop.EQU,
+                    BooleanType(),
+                    [divisor, LiteralExpression(0, divisor.data_type)],
+                )
+                is_not_zero_expr = CallExpression(
+                    pydop.NEQ,
+                    BooleanType(),
+                    [divisor, LiteralExpression(0, divisor.data_type)],
+                )
+                # Wrap divisor with KEEP_IF to mark it as processed
+                guarded_divisor = CallExpression(
+                    pydop.KEEP_IF,
+                    divisor.data_type,
+                    [divisor, is_not_zero_expr],
+                )
+                guarded_div = CallExpression(
+                    pydop.DIV, typ, [dividend, guarded_divisor]
+                )
+                return CallExpression(
+                    pydop.IFF,
+                    typ,
+                    [is_zero_expr, LiteralExpression(0, typ), guarded_div],
+                )
+
+        # Default: return normal division
+        return CallExpression(pydop.DIV, typ, [dividend, divisor])
+
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
     ) -> RelationalExpression:
@@ -244,6 +380,11 @@ class RelTranslation:
                 return context.expressions[expr]
             case HybridFunctionExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
+                # Apply division-by-zero handling for DIV operations
+                if expr.operator == pydop.DIV:
+                    return self._apply_division_by_zero_handling(
+                        inputs[0], inputs[1], expr.typ
+                    )
                 return CallExpression(expr.operator, expr.typ, inputs)
             case HybridWindowExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
@@ -1712,7 +1853,7 @@ def convert_ast_to_relational(
     """
     # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
-    rel_translator: RelTranslation = RelTranslation()
+    rel_translator: RelTranslation = RelTranslation(session)
     node = rel_translator.preprocess_root(node, columns)
 
     # Convert the QDAG node to a hybrid tree, including any necessary
