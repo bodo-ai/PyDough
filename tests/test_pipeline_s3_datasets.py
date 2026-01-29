@@ -137,6 +137,60 @@ result = menu.menu.WHERE(
             ),
             id="menu_5556",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = donor.CALCULATE(
+    total_sb_projects=COUNT(projects.WHERE(LOWER(school_city) == "santa barbara")),
+    suburban_sb_projects=COUNT(projects.WHERE(
+        (LOWER(school_city) == "santa barbara") &
+        (LOWER(school_metro) == "suburban")
+    ))
+).CALCULATE(
+    percentage_suburban=100.0 * suburban_sb_projects / total_sb_projects
+)
+            """,
+                "donor",
+                lambda: pd.DataFrame(
+                    {
+                        "percentage_suburban": [30.303],
+                    }
+                ),
+                "donor_3276",
+            ),
+            id="donor_3276",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = movielens.CALCULATE(
+    # Count all users who have at least one rating of 2
+    total_users_with_rating_2 = COUNT(users.WHERE(
+        HAS(submitted_ratings.WHERE(rating == 2))
+    )),
+    # Count female users who have at least one rating of 2
+    female_users_with_rating_2 = COUNT(users.WHERE(
+        HAS(submitted_ratings.WHERE(rating == 2)) & (LOWER(u_gender) == 'f')
+    ))
+).CALCULATE(
+    # Calculate the percentage, handling division by zero
+    percentage_of_female_users = IFF(
+        total_users_with_rating_2 > 0,
+        100.0 * female_users_with_rating_2 / total_users_with_rating_2,
+        0.0
+    )
+)
+            """,
+                "movielens",
+                lambda: pd.DataFrame(
+                    {
+                        "percentage_of_female_users": [27.961],
+                    }
+                ),
+                "movielens_2274",
+            ),
+            id="movielens_2274",
+        ),
     ],
 )
 def s3_datasets_test_data(request) -> PyDoughPandasTest:
