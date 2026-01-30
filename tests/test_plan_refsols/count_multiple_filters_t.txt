@@ -1,0 +1,8 @@
+ROOT(columns=[('customer_key', c_custkey), ('n1', sum_expr_7), ('n2', sum_expr_9), ('n3', sum_expr)], orderings=[])
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey, 'sum_expr': t1.sum_expr, 'sum_expr_7': t1.sum_expr_7, 'sum_expr_9': t1.sum_expr_9})
+  FILTER(condition=ISIN(c_custkey, [2, 3, 4, 17, 23, 26, 380, 827]:array[unknown]), columns={'c_custkey': c_custkey})
+   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
+  FILTER(condition=sum_expr_10 != 0:numeric, columns={'o_custkey': o_custkey, 'sum_expr': sum_expr_10, 'sum_expr_7': sum_expr, 'sum_expr_9': sum_expr_9})
+   AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'sum_expr': SUM(o_orderpriority == '1-URGENT':string), 'sum_expr_10': SUM(o_orderpriority == '3-MEDIUM':string), 'sum_expr_9': SUM(o_orderpriority == '2-HIGH':string)})
+    FILTER(condition=o_orderpriority == '3-MEDIUM':string | o_orderpriority == '1-URGENT':string | o_orderpriority == '2-HIGH':string, columns={'o_custkey': o_custkey, 'o_orderpriority': o_orderpriority})
+     SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderpriority': o_orderpriority})
