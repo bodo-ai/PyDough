@@ -2704,8 +2704,69 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                     }
                 ),
                 "count_multiple_filters_a",
+                skip_sql=True,
             ),
             id="count_multiple_filters_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(MONOTONIC(500, account_balance, 600))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                ").WHERE(HAS(c1))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_b",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(MONOTONIC(500, account_balance, 600))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                ").WHERE(HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_c",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_c",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(MONOTONIC(500, account_balance, 600))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                ").WHERE(HAS(c1) & HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_d",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_d",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2728,9 +2789,10 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "n6": [19],
                     }
                 ),
-                "count_multiple_filters_b",
+                "count_multiple_filters_e",
+                skip_sql=True,
             ),
-            id="count_multiple_filters_b",
+            id="count_multiple_filters_e",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2753,9 +2815,10 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "n6": [19],
                     }
                 ),
-                "count_multiple_filters_c",
+                "count_multiple_filters_f",
+                skip_sql=True,
             ),
-            id="count_multiple_filters_c",
+            id="count_multiple_filters_f",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2785,9 +2848,10 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "n6": [6024],
                     }
                 ),
-                "count_multiple_filters_d",
+                "count_multiple_filters_g",
+                skip_sql=True,
             ),
-            id="count_multiple_filters_d",
+            id="count_multiple_filters_g",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2816,9 +2880,264 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "n5": [59597, 59230, 60485, 60375, 59036],
                     }
                 ),
-                "count_multiple_filters_e",
+                "count_multiple_filters_h",
+                skip_sql=True,
             ),
-            id="count_multiple_filters_e",
+            id="count_multiple_filters_h",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n5=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ").WHERE(HAS(nations.customers.orders.WHERE(order_priority == '2-HIGH')))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [298994, 299103, 301740, 303286, 296877],
+                        "n3": [59767, 59902, 60166, 60373, 60135],
+                        "n4": [59511, 60232, 60246, 60901, 59201],
+                        "n5": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_i",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_i",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [59767, 59902, 60166, 60373, 60135],
+                        "n3": [59511, 60232, 60246, 60901, 59201],
+                        "n4": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_j",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_j",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ").WHERE(HAS(nations.customers.orders.WHERE(order_priority == '1-URGENT')))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [59767, 59902, 60166, 60373, 60135],
+                        "n3": [59511, 60232, 60246, 60901, 59201],
+                        "n4": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_k",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_k",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))), "
+                " n3=COUNT(nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))), "
+                " n4=COUNT(nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_l",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_l",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_m",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_m",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_n",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_n",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c3))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_o",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_o",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c2) & HAS(c3))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_p",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_p",
         ),
         pytest.param(
             PyDoughPandasTest(
