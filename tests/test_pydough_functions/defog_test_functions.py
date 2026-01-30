@@ -2968,7 +2968,7 @@ def impl_defog_restaurants_gen14():
     """
     sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
     n_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) == "vegan"))
-    n_non_vegan = COUNT(sf_restaurants) - n_vegan
+    n_non_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) != "vegan"))
     return Restaurants.CALCULATE(
         ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
     )

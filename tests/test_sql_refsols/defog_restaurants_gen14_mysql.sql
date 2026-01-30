@@ -1,11 +1,10 @@
 SELECT
-  SUM(LOWER(food_type) = 'vegan') / CASE
-    WHEN (
-      COUNT(*) - SUM(LOWER(food_type) = 'vegan')
-    ) <> 0
-    THEN COUNT(*) - SUM(LOWER(food_type) = 'vegan')
-    ELSE NULL
-  END AS ratio
+  SUM(LOWER(food_type) = 'vegan') / NULLIF(SUM(LOWER(food_type) <> 'vegan'), 0) AS ratio
 FROM main.restaurant
 WHERE
-  LOWER(city_name) = 'san francisco'
+  (
+    LOWER(city_name) = 'san francisco' OR LOWER(food_type) = 'vegan'
+  )
+  AND (
+    LOWER(food_type) <> 'vegan' OR LOWER(food_type) = 'vegan'
+  )
