@@ -384,7 +384,7 @@
           "original parent": "branches",
           "original property": "same_state_customers",
           "singular": false,
-          "always matches": true,
+          "always matches": false,
           "description": "All branches located in the same state as the customer",
           "synonyms": ["branches in same state", "local branches"]
         }
