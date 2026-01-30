@@ -113,6 +113,24 @@ class HybridFilterMerger:
                     tree.children[source_idx].min_steps,
                 )
 
+                # Add a new filter for the extra conditions from the source
+                # subtree if it was an ONLY_MATCH, checking whether the SUM
+                # is not  zero, indicating that there was a match.
+                if (
+                    tree.children[source_idx].connection_type
+                    == ConnectionType.AGGREGATION_ONLY_MATCH
+                ):
+                    tree.add_operation(
+                        HybridFilter(
+                            tree.pipeline[-1],
+                            HybridFunctionExpr(
+                                pydop.NEQ,
+                                [agg_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+                                BooleanType(),
+                            ),
+                        )
+                    )
+
             # TODO ADD COMMENT
             for operation in tree.pipeline:
                 operation.replace_expressions(replacement_map)
@@ -134,7 +152,8 @@ class HybridFilterMerger:
             idx
             for idx, child in enumerate(tree.children)
             if (
-                child.connection_type == ConnectionType.AGGREGATION
+                child.connection_type
+                in (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
                 and {repr(v) for v in child.aggs.values()} == {"COUNT()"}
             )
         }
