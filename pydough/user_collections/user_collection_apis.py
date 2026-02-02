@@ -2,7 +2,7 @@
 Implementation of User Collection APIs in PyDough.
 """
 
-__all__ = ["range_collection"]
+__all__ = ["dataframe_collection", "range_collection"]
 
 import pandas as pd
 
@@ -53,7 +53,7 @@ def dataframe_collection(
 ) -> UnqualifiedGeneratedCollection:
     """
     Implementation of the `pydough.dataframe_collection` function, which provides
-    a way to create a collection of pandas dataframe in PyDough.
+    a way to create a collection of Pandas Dataframe in PyDough.
 
     Args:
         `name` : The name of the collection.

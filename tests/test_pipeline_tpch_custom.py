@@ -3568,6 +3568,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
+                        "pyd_numbers": [
+                            10,
+                            -3,
+                            3.56,
+                            np.nan,
+                            None,
+                        ],
                         "py_float": [
                             1.5,
                             0.0,
@@ -4381,24 +4388,20 @@ def test_pipeline_e2e_tpch_custom(
             dataframe_collection_bad_2,
             None,
             re.escape(
-                "Mixed types in column 'col1': [<class 'int'>, <class 'str'>]. All values in a column must be of the same type."
+                "Mixed types in column 'col1'. All values in a column must be of the same type."
             ),
             id="dataframe_collection_bad_2",
         ),
         pytest.param(
             dataframe_collection_bad_3,
             None,
-            re.escape(
-                "Column 'col1' is empty. All columns must have at least one value."
-            ),
+            re.escape("DataFrame has no rows. Must have at least one row."),
             id="dataframe_collection_bad_3",
         ),
         pytest.param(
             dataframe_collection_bad_4,
             None,
-            re.escape(
-                "Dataframe is empty. Must have at least one column and one value."
-            ),
+            re.escape("DataFrame is empty. Must have at least one non-empty column."),
             id="dataframe_collection_bad_4",
         ),
         pytest.param(

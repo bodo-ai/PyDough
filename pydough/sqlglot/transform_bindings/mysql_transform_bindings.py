@@ -16,7 +16,6 @@ from pydough.types import PyDoughType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.types.string_type import StringType
-from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
@@ -26,7 +25,6 @@ from .sqlglot_transform_utils import (
     create_constant_table,
     expand_std,
     expand_variance,
-    generate_dataframe_rows,
     generate_range_rows,
 )
 
@@ -51,6 +49,14 @@ class MySQLTransformBindings(BaseTransformBindings):
             "Friday": 6,
             "Saturday": 7,
         }
+
+    @property
+    def values_tuple(self) -> bool:
+        return False
+
+    @property
+    def values_alias_column(self) -> bool:
+        return False
 
     PYDOP_TO_MYSQL_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.LPAD: "LPAD",
@@ -752,25 +758,10 @@ class MySQLTransformBindings(BaseTransformBindings):
             A SQLGlotExpression representing the user-generated range as table.
         """
         # Generate rows for the range, using ROW().
-        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, False)
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, self)
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, [collection.column_name], range_rows, False
-        )
-
-        return result
-
-    def convert_user_generated_dataframe(
-        self, collection: DataframeGeneratedCollection
-    ) -> SQLGlotExpression:
-        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
-            collection,
-            False,  # Use ROW
-            self,
-        )
-
-        result: SQLGlotExpression = create_constant_table(
-            collection.name, collection.columns, dataframe_rows, False
+            collection.name, [collection.column_name], range_rows, self
         )
 
         return result

@@ -400,21 +400,22 @@ def create_constant_table(
     table_name: str,
     column_names: list[str],
     rows: list[SQLGlotExpression],
-    alias_columns: bool = True,
+    transform_bindings: "BaseTransformBindings",
 ) -> SQLGlotExpression:
     """
     Generate a SQL that represents a constant table using the given list of
     columns and rows. The final SQLGlot expression corresponds to the SQL:
-    For MySQL:
-    SELECT {column_names} FROM ( VALUES {rows} ) AS table_name ({column_names})
-    For sqlite:
+    When transform_bindings.values_alias_column is `True`:
     SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} ) AS {table_name}
+
+    otherwise:
+    SELECT {column_names} FROM ( VALUES {rows} ) AS table_name ({column_names})
 
     Args:
         `table_name`: The name of the table
         `column_names`: List with all column names
-        `rows`: The data for each row
-        `alias_columns`: If the column alias is needed or not (needed for SQlite)
+        `rows`: List of rows containg the data from the dataframe.
+        `transform_bindings`: The tranform bindings class that called this function
 
     Returns:
         The SQLGlot expression for the constant table.
@@ -461,7 +462,7 @@ def create_constant_table(
             # Sqlite referred by default its values' columns as column1, column2
             # and so on. Aliases are used to rename those. Other dialects can
             # rename their columns directly.
-            if alias_columns:
+            if transform_bindings.values_alias_column:
                 column_enum: str = f"column{idx + 1}"
                 select_columns.append(
                     sqlglot_expressions.Alias(
@@ -544,15 +545,15 @@ def is_empty_range(collection: RangeGeneratedCollection) -> bool:
 
 
 def generate_range_rows(
-    collection: RangeGeneratedCollection, use_tuple: bool
+    collection: RangeGeneratedCollection,
+    transform_bindings: "BaseTransformBindings",
 ) -> list[SQLGlotExpression]:
     """
     Helper function to generate the rows for a given range collection
 
     Args:
         `collection`: The RangeGeneratedCollection to check.
-        `use_tuple`: If `True` the rows are build with Tuple (used with sqlite).
-        If `False` the rows are build with ROW (used with MySQL)
+        `transform_bindings`: The tranform bindings class that called this function
 
     Returns:
         List of sqlglot expressions for the range, empty if it is an empty range
@@ -564,7 +565,7 @@ def generate_range_rows(
     range_rows: list[SQLGlotExpression] = [
         # [(i), ... ]
         sqlglot_expressions.Tuple(expressions=[sqlglot_expressions.Literal.number(i)])
-        if use_tuple
+        if transform_bindings.values_tuple
         # [ROW(i), ... ]
         else sqlglot_expressions.Anonymous(
             this="ROW", expressions=[sqlglot_expressions.Literal.number(i)]
@@ -577,26 +578,26 @@ def generate_range_rows(
 
 def generate_dataframe_rows(
     collection: DataframeGeneratedCollection,
-    use_tuple: bool,
     transform_bindings: "BaseTransformBindings",
 ) -> list[SQLGlotExpression]:
     """
     Helper function to generate the rows for a given dataframe collection
 
     Args:
-        `collection`: The RangeGeneratedCollection to check.
-        `use_tuple`: If `True` the rows are build with Tuple (used with some dialects).
-        If `False` the rows are build with ROW (used with MySQL)
+        `collection`: The dataframe collection for generate the rows.
+        `transform_bindings`: The tranform bindings class that called this function
 
     Returns:
         List of sqlglot expressions for the dataframe.
 
     SQL Example:
         Using item[row].[column], it generates the follwing list.
-        list[ROW(item1.1, item1.2, ...), ROW(item2.1, item2.2, ...), ...]
+        If transform_bindings.values_tuple is True the list will look like
+        this:
+            list[(item1.1, item1.2, ...), (item2.1, item2.2, ...), ...]
 
-        Note: If use_tuple is True the list will look like this
-        list[(item1.1, item1.2, ...), (item2.1, item2.2, ...), ...]
+        otherwise it will look like:
+            list[ROW(item1.1, item1.2, ...), ROW(item2.1, item2.2, ...), ...]
     """
     dataframe_rows: list[SQLGlotExpression] = []
 
@@ -619,7 +620,7 @@ def generate_dataframe_rows(
         dataframe_rows.append(
             # [(i), ... ]
             sqlglot_expressions.Tuple(expressions=expr_list)
-            if use_tuple
+            if transform_bindings.values_tuple
             # [ROW(i), ... ]
             else sqlglot_expressions.Anonymous(this="ROW", expressions=expr_list)
         )

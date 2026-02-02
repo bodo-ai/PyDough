@@ -99,6 +99,42 @@ class BaseTransformBindings:
             "Saturday": 6,
         }
 
+    @property
+    def values_tuple(self) -> bool:
+        """
+        This property determine if the rows in VALUES for `GeneratedCollection` are
+        surrounded by a Tuple() or ROW().
+
+        If `True` the rows are build with Tuple (used with some dialects).
+        Example:
+        {rows} = [(column1, column2, ...), (...), ... ]
+
+        If `False` the rows are build with ROW (required for MySQL)
+        Example:
+        {rows} = [ROW(column1, column2, ...), ROW(...), ...]
+        """
+        return True
+
+    @property
+    def values_alias_column(self) -> bool:
+        """
+        Determine if the columns in VALUES can be renamed directly or not.
+
+        If `True` the columns should be renamed with an alias (needed for SQlite).
+        Example:
+        SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} )
+        AS {table_name}
+
+        If `False` the columns can be rename directly
+        Example:
+        SELECT {column_names} FROM ( VALUES {rows} )
+        AS table_name ({column_names})
+
+        Note: {column_names} is a list[str] with the names of the columns
+        respectively.
+        """
+        return True
+
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
@@ -2220,10 +2256,10 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the user-generated range as table.
         """
         # Generate rows for the range, using Tuple.
-        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, True)
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, self)
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, [collection.column_name], range_rows
+            collection.name, [collection.column_name], range_rows, self
         )
 
         return result
@@ -2243,7 +2279,6 @@ class BaseTransformBindings:
 
         dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
             collection,
-            True,  # Use tuple
             self,
         )
 
@@ -2251,6 +2286,7 @@ class BaseTransformBindings:
             collection.name,
             collection.columns,
             dataframe_rows,
+            self,
         )
 
         return result

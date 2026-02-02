@@ -1578,14 +1578,26 @@ Output:
 <!-- TOC --><a name="dataframe_collection"></a>
 ### `pydough.dataframe_collection`
 
-The `dataframe_collection` creates a collection within a specified pandas dataframe. This is useful for building datasets dynamically.
+The `dataframe_collection` creates a collection from a specified Pandas DataFrame. 
+This is useful for building datasets dynamically.
+
 It takes in the following arguments:
 
 - `name`: The name of the dataframe collection.
-- `dataframe`: The panda dataframe containing the corresponding data
+- `dataframe`: Pandas DataFrame containing the corresponding data.
 
-Supported Signatures:
-- `dataframe_collection(dataframe, name)`: generates collection with the given datafram and name.
+#### Datatypes
+`dataframe_collection` doesn't support mix datatypes in one column.
+
+The supported PyDough types for `dataframe_collection` are:
+- `NumericType`: includes float, integer, infinity, Nan.
+- `BooleanType`: includes classic true and false.
+- `StringType`: includes all aphanumeric caracters.
+- `Datetype`: includes date and datetime.
+- `UnknownType`: everything else.
+
+Note: MySQL by default does not support infinity values. When PyDough detects 
+infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
 
 #### Example
 

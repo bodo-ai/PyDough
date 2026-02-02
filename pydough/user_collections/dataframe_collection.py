@@ -1,19 +1,35 @@
 """
-A user-defined collection of pandas Dataframes.
+A user-defined collection of Pandas Dataframes.
 Usage:
 `pydough.dataframe_collection(name, dataframe)`
 
-This module defines a collection that generated from a given pandas Dataframe.
+This module defines a collection that is generated from a given Pandas Dataframe.
 The user must specify the name of the collection and the
-name of the dataframe that will hold the values.
+name of the dataframe that has the values.
 
-The pandas dataframe must have at least one column with one item. The accepted
-types are: NumericType, BooleanType, DatetimeType, StringType and UnknownType.
-Mixed types columsn are not allowed.
+The Pandas Dataframe must have at least one column with one value.
+The supported PyDough types are:
+- NumericType
+- BooleanType
+- DatetimeType
+- StringType
+- UnknownType
+
+Pandas supported datatypes:
+- null
+- string
+- int64
+- float64
+- decimal
+- bool
+- datetime64
+
+Mixed types columns are NOT supported.
 """
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.types as pa_types
 
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
@@ -50,7 +66,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
     @property
     def column_names_and_types(self) -> list[tuple[str, PyDoughType]]:
         assert len(self.columns) == len(self.types)
-        return [(self.columns[i], self.types[i]) for i in range(len(self.columns))]
+        return list(zip(self.columns, self.types))
 
     @property
     def unique_column_names(self) -> list[str]:
@@ -64,7 +80,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         return len(self) <= 1
 
     def always_exists(self) -> bool:
-        """Check if the range collection is always non-empty."""
+        """Check if the dataframe collection is always non-empty."""
         return len(self) > 0
 
     def to_string(self) -> str:
@@ -88,83 +104,98 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
     @staticmethod
     def get_dataframe_types(dataframe: pd.DataFrame) -> list[PyDoughType]:
         """
-        Verify that each column has homogeneos type and gets its type
-        and convert it to PyDoughType.
+        Validate the given dataframe and collect the PyDough types matching each
+        column respectively.
+
+        Validations:
+            - The dataframe must have at least one column.
+            - The dataframe must have at least one value per column.
+            - The dataframe must have one datatype per column.
+
+        Args:
+            `dataframe`: The Pandas Dataframe to get the PyDouhg types from.
+
+        Returns:
+            List of PyDough types matching each column
         """
         if len(dataframe.columns) == 0:
             raise ValueError(
-                "Dataframe is empty. Must have at least one column and one value."
+                "DataFrame is empty. Must have at least one non-empty column."
             )
 
-        for col in list(dataframe.columns):
-            types_list = sorted(
-                {type(v) for v in dataframe[col].dropna()},
-                key=lambda t: t.__name__,
-            )
-            if len(types_list) > 1:
-                raise TypeError(
-                    f"Mixed types in column '{col}': {types_list}. All values in a column must be of the same type."
-                )
-            elif len(dataframe[col]) == 0:
-                raise TypeError(
-                    f"Column '{col}' is empty. All columns must have at least one value."
-                )
+        if len(dataframe) == 0:
+            raise ValueError("DataFrame has no rows. Must have at least one row.")
 
         pyd_types: list[PyDoughType] = []
 
-        for field in pa.Schema.from_pandas(dataframe):
-            pyd_types.append(
-                DataframeGeneratedCollection.match_pyarrow_pydough_types(field.type)
-            )
+        for col in dataframe.columns:
+            try:
+                field: pa.Field = pa.Schema.from_pandas(dataframe[[col]])
+                pyd_types.append(
+                    DataframeGeneratedCollection.match_pyarrow_pydough_types(
+                        field.types[0]
+                    )
+                )
+
+            except pa.ArrowInvalid:
+                raise ValueError(
+                    f"Mixed types in column '{col}'. All values in a column must be of the same type."
+                )
 
         return pyd_types
 
     @staticmethod
     def match_pyarrow_pydough_types(field_type: pa.DataType) -> PyDoughType:
-        match field_type:
-            case _ if pa.types.is_null(field_type):
-                return UnknownType()
+        """
+        Match the PyArrow type with its equivalent in PyDough. Raise a ValueError
+        for unsupproted types in the PyDough dataframe collection.
 
-            case _ if pa.types.is_boolean(field_type):
-                return BooleanType()
+        Unsupported datatypes:
+            - Arrays/List
+            - Struct
+            - Dictionary
+            - Binary
 
-            case _ if (
-                pa.types.is_integer(field_type)
-                or pa.types.is_floating(field_type)
-                or pa.types.is_decimal(field_type)
-            ):
-                return NumericType()
+        Args:
+            `field_type`: The PyArrow datatype for the Pandas Dataframe column
 
-            case _ if pa.types.is_string(field_type) or pa.types.is_large_string(
-                field_type
-            ):
-                return StringType()
+        Returns:
+            Its PyDoughType equivalent
+        """
+        if pa.types.is_null(field_type):
+            return UnknownType()
 
-            case _ if pa.types.is_binary(field_type) or pa.types.is_large_binary(
-                field_type
-            ):
-                return StringType()
+        elif pa.types.is_boolean(field_type):
+            return BooleanType()
 
-            case _ if (
-                pa.types.is_date(field_type)
-                or pa.types.is_timestamp(field_type)
-                or pa.types.is_time(field_type)
-                or pa.types.is_duration(field_type)
-            ):
-                return DatetimeType()
+        elif (
+            pa.types.is_integer(field_type)
+            or pa.types.is_floating(field_type)
+            or pa.types.is_decimal(field_type)
+        ):
+            return NumericType()
 
-            # Unsupported datatypes
-            case _ if pa.types.is_list(field_type) or pa.types.is_large_list(
-                field_type
-            ):
-                raise ValueError("Arrays are not supported for dataframe collections")
+        elif pa.types.is_string(field_type) or pa.types.is_large_string(field_type):
+            return StringType()
 
-            case _ if pa.types.is_struct(field_type):
-                raise ValueError("Structs are not supported for dataframe collections")
+        elif (
+            pa.types.is_date(field_type)
+            or pa.types.is_timestamp(field_type)
+            or pa.types.is_time(field_type)
+            or pa.types.is_duration(field_type)
+        ):
+            return DatetimeType()
+        # Unsupported types
+        elif pa.types.is_binary(field_type) or pa.types.is_large_binary(field_type):
+            raise ValueError("Binaries are not supported for dataframe collections")
 
-            case _ if pa.types.is_dictionary(field_type):
-                raise ValueError(
-                    "Dictionaries are not supported for dataframe collections"
-                )
-            case _:
-                return UnknownType()
+        elif pa_types.is_list(field_type) or pa.types.is_large_list(field_type):
+            raise ValueError("Arrays are not supported for dataframe collections")
+
+        elif pa_types.is_struct(field_type):
+            raise ValueError("Structs are not supported for dataframe collections")
+
+        elif pa_types.is_dictionary(field_type):
+            raise ValueError("Dictionaries are not supported for dataframe collections")
+        else:
+            return UnknownType()

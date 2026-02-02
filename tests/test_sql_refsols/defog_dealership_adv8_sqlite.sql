@@ -2,12 +2,12 @@ WITH _s0 AS (
   SELECT
     months_range.column1 AS month_start
   FROM (VALUES
-    ('2025-07-01 00:00:00'),
     ('2025-08-01 00:00:00'),
     ('2025-09-01 00:00:00'),
     ('2025-10-01 00:00:00'),
     ('2025-11-01 00:00:00'),
-    ('2025-12-01 00:00:00')) AS months_range
+    ('2025-12-01 00:00:00'),
+    ('2026-01-01 00:00:00')) AS months_range
 ), _s6 AS (
   SELECT DISTINCT
     _s0.month_start

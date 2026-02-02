@@ -17,7 +17,7 @@ This module defines the user collections that can be created on the fly and used
 
   - `DataframeGeneratedCollection`: Class used to create a dataframe collection using the given dataframe and name.
     - `name`: The name of the dataframe collection.
-    - `dataframe`: The pandas dataframe containing all data (rows and columns).
+    - `dataframe`: The Pandas dataframe containing all data (rows and columns).
 
 ### [user_collection_apis.py](user_collection_apis.py)
   - `range_collection`: Function to create a range collection with the specified parameters.
@@ -29,7 +29,7 @@ This module defines the user collections that can be created on the fly and used
     - Returns: An instance of `RangeGeneratedCollection`.
   - `dataframe_collection`: Function to create a dataframe collection with the specified parameters.
     - `name`: The name of the dataframe collection.
-    - `dataframe`: The pandas dataframe.
+    - `dataframe`: The Pandas dataframe.
     - Returns: An instance of `DataframeGeneratedCollection`.
 
 
@@ -89,6 +89,6 @@ Output:
 
 The user collections module provides a way to create collections that are not part of the static metadata graph but can be generated dynamically based on user input or code. The most common user collection are integer range collections and Pandas DataFrame collections.
 The range collection, generates a sequence of numbers. The `RangeGeneratedCollection` class allows users to define a range collection by specifying the start, end, and step values. The `range_collection` function is a convenient API to create instances of `RangeGeneratedCollection`.
-The dataframe collection, generates a collection based on the given pandas dataframe. The `DataframeGeneratedCollection` class
-allows user to create a collection by specifying the dataframe and name. The `dataframe_collection` function is an effective API
+The dataframe collection, generates a collection based on the given Pandas Dataframe. The `DataframeGeneratedCollection` class
+allows user to create a collection by specifying the dataframe and name. The `dataframe_collection` function is a convenient API
 to create instances of `DataframeGeneratedCollection`.

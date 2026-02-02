@@ -232,6 +232,13 @@ def dataframe_collection_strings():
 def dataframe_collection_numbers():
     df_numbers = pd.DataFrame(
         {
+            "pyd_numbers": [
+                10,
+                -3,
+                3.56,
+                np.nan,
+                None,
+            ],
             "py_float": [
                 1.5,
                 0.0,
@@ -538,7 +545,6 @@ def dataframe_collection_bad_1():
             "col2": ["a", "b"],
         }
     )
-    print("we can make it here")
     return pydough.dataframe_collection("bad_df_1", df_bad)
 
 

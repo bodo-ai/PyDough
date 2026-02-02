@@ -1,2 +1,2 @@
-ROOT(columns=[('py_float', py_float), ('np_float64', np_float64), ('np_float32', np_float32), ('null_vs_nan', null_vs_nan), ('decimal_val', decimal_val)], orderings=[])
- GENERATED_TABLE(DataframeCollection(name='numbers', shape=(5, 5), columns=['py_float', 'np_float64', 'np_float32', 'null_vs_nan', 'decimal_val']))
+ROOT(columns=[('pyd_numbers', pyd_numbers), ('py_float', py_float), ('np_float64', np_float64), ('np_float32', np_float32), ('null_vs_nan', null_vs_nan), ('decimal_val', decimal_val)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='numbers', shape=(5, 6), columns=['pyd_numbers', 'py_float', 'np_float64', 'np_float32', 'null_vs_nan', 'decimal_val']))

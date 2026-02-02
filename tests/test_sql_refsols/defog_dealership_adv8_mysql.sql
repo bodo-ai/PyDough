@@ -2,12 +2,12 @@ WITH _s0 AS (
   SELECT
     months_range.month_start
   FROM (VALUES
-    ROW(CAST('2025-07-01 00:00:00' AS DATETIME)),
     ROW(CAST('2025-08-01 00:00:00' AS DATETIME)),
     ROW(CAST('2025-09-01 00:00:00' AS DATETIME)),
     ROW(CAST('2025-10-01 00:00:00' AS DATETIME)),
     ROW(CAST('2025-11-01 00:00:00' AS DATETIME)),
-    ROW(CAST('2025-12-01 00:00:00' AS DATETIME))) AS months_range(month_start)
+    ROW(CAST('2025-12-01 00:00:00' AS DATETIME)),
+    ROW(CAST('2026-01-01 00:00:00' AS DATETIME))) AS months_range(month_start)
 ), _s6 AS (
   SELECT DISTINCT
     _s0.month_start
