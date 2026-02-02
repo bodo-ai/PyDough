@@ -1,6 +1,6 @@
 SELECT
   title
-FROM main.publication
+FROM publication
 ORDER BY
   reference_num DESC
 LIMIT 3

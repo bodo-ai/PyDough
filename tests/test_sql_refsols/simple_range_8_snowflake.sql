@@ -1,0 +1,24 @@
+WITH d1 AS (
+  SELECT
+    1 + SEQ4() AS x
+  FROM TABLE(GENERATOR(ROWCOUNT => 4))
+), d2 AS (
+  SELECT
+    1 + SEQ4() AS y
+  FROM TABLE(GENERATOR(ROWCOUNT => 4))
+), d3 AS (
+  SELECT
+    1 + SEQ4() AS z
+  FROM TABLE(GENERATOR(ROWCOUNT => 4))
+)
+SELECT
+  (
+    d1.x + d2.y
+  ) + d3.z AS s,
+  COUNT(*) AS n,
+  AVG(d1.x * d2.y * d3.z) AS a
+FROM d1 AS d1
+CROSS JOIN d2 AS d2
+CROSS JOIN d3 AS d3
+GROUP BY
+  1

@@ -1,5 +1,5 @@
 SELECT
-  column1 AS value
+  simple_range.column1 AS value
 FROM (VALUES
   (0),
   (1),

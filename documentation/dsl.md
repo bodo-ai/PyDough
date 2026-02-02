@@ -1575,6 +1575,57 @@ Output:
 4     9
 ```
 
+<!-- TOC --><a name="dataframe_collection"></a>
+### `pydough.dataframe_collection`
+
+The `dataframe_collection` creates a collection from a specified Pandas DataFrame. 
+This is useful for building datasets dynamically.
+
+It takes in the following arguments:
+
+- `name`: The name of the dataframe collection.
+- `dataframe`: Pandas DataFrame containing the corresponding data.
+
+#### Datatypes
+`dataframe_collection` doesn't support mix datatypes in one column.
+
+The supported PyDough types for `dataframe_collection` are:
+- `NumericType`: includes float, integer, infinity, Nan.
+- `BooleanType`: includes classic true and false.
+- `StringType`: includes all aphanumeric caracters.
+- `Datetype`: includes date and datetime.
+- `UnknownType`: everything else.
+
+Note: MySQL by default does not support infinity values. When PyDough detects 
+infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
+
+#### Example
+
+```python
+import pydough
+import pandas as pd
+
+df = pd.DataFrame({
+  "color": ["red", "orange", "yellow", "green", "blue", "indigo", "violet", None]
+  "idx": range(8)
+})
+rainbow_table = pydough.dataframe_collection(name='rainbow', dataframe=df)
+df = pydough.to_df(rainbow_table)
+print(df)
+```
+Output:
+```
+    color   idx
+0   red     1
+1   orange  2
+2   yellow  3
+3   green   4
+4   blue    5
+5   indigo  6
+6   violet  7
+7   None    8
+```
+
 <!-- TOC --><a name="larger-examples"></a>
 ## Larger Examples
 

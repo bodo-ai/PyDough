@@ -1,6 +1,6 @@
 SELECT
   AVG(balance) AS AMB
-FROM main.wallet_user_balance_daily
+FROM ewallet.wallet_user_balance_daily
 WHERE
   DATEDIFF(
     DAY,

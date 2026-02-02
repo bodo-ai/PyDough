@@ -1,6 +1,6 @@
 SELECT
   COALESCE(SUM(status = 'success'), 0) / COUNT(*) AS _expr0
-FROM main.wallet_transactions_daily
+FROM ewallet.wallet_transactions_daily
 WHERE
   (
     (
