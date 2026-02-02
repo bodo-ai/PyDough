@@ -7,9 +7,32 @@ import os
 import sys
 
 
+def get_level_source_logger(logger: logging.Logger) -> logging.Logger:
+    """
+    Returns the logger from which the effective logging level is inherited.
+
+    This function walks up the logger hierarchy, starting from the given logger,
+    and returns the first ancestor (including itself) whose level is not
+    `logging.NOTSET`. If no such logger is found, the root logger is returned.
+
+    Args:
+        `logger` : The logger whose effective level source should be resolved.
+
+    Returns:
+        `logging.Logger` : The ancestor logger that provides the effective level,
+        or the root logger if all ancestors have level `NOTSET`.
+    """
+    current: logging.Logger | None = logger
+    while current:
+        if current.level != logging.NOTSET:
+            return current
+        current = current.parent
+    return logging.root
+
+
 def get_logger(
-    name: str = __name__,
-    default_level: int = logging.INFO,
+    name: str = "pydough",
+    default_level: int | None = None,
     fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers: list[logging.Handler] | None = None,
 ) -> logging.Logger:
@@ -18,27 +41,30 @@ def get_logger(
     The default handler redirects to standard output. Additional handlers can be sent as a list.
 
     Args:
-        `name` : Logger name, usually the `__name__` from the calling module.
-        `default_level` : Default logging level if not set externally.
+        `name` : The logger name you want to get or create (in case it does not exists)
+        `default_level` : Logging level. PYDOUGH_LOG_LEVEL value will be used if not set and ancestor level has not been already set.
         `fmt` : The format of the string compatible with python's logging library.
         `handlers` : A list of `logging.Handler` instances to add to the logger.
     Returns:
         `logging.Logger` : Configured logger instance.
     """
     logger: logging.Logger = logging.getLogger(name)
-    level_env: str | None = os.getenv("PYDOUGH_LOG_LEVEL")
-    level: int
+    level: int = logging.INFO
+    if default_level is None:
+        # Get log level from PYDOUGH_LOG_LEVEL
+        level_env: str | None = os.getenv("PYDOUGH_LOG_LEVEL")
 
-    if level_env is not None:
-        assert isinstance(level_env, str), (
-            f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be a string, found {level_env.__class__.__name__}"
-        )
-        allowed_levels: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        assert level_env in allowed_levels, (
-            f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be one of {', '.join(allowed_levels)}, found {level_env}"
-        )
-        # Convert string level (e.g., "DEBUG", "INFO") to a logging constant
-        level = getattr(logging, level_env.upper(), default_level)
+        if level_env is not None:
+            assert isinstance(level_env, str), (
+                f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be a string, found {level_env.__class__.__name__}"
+            )
+            level_env = level_env.upper()
+            allowed_levels: list[str] = list(logging._nameToLevel.keys())
+            assert level_env in allowed_levels, (
+                f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be one of {', '.join(allowed_levels)}, found {default_level}"
+            )
+            # Convert string level (e.g., "DEBUG", "INFO") to a logging constant
+            level = getattr(logging, level_env, logging.INFO)
     else:
         assert default_level in [
             logging.DEBUG,
@@ -51,19 +77,25 @@ def get_logger(
         )
         level = default_level
 
-    # Create default console handler
-    default_handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
-    default_handler.setLevel(level)
     # Create formatter
     formatter: logging.Formatter = logging.Formatter(fmt)
-    # Attach formatter to the default handler
-    default_handler.setFormatter(formatter)
-    # Avoid adding duplicate handlers
-    if not logger.handlers:
-        logger.addHandler(default_handler)
-        if handlers:
-            for handler in handlers:
+    if (default_level is not None) or (get_level_source_logger(logger).name == "root"):
+        # Set logLevel if no level has been set for pydough module
+        logger.setLevel(level)
+    # Add provided handlers
+    if handlers:
+        for handler in handlers:
+            if handler.level == logging.NOTSET:
+                handler.setLevel(logger.level)
+            if handler.formatter is None:
                 handler.setFormatter(formatter)
-                logger.addHandler(handler)
-    logger.setLevel(level)
+            logger.addHandler(handler)
+    elif not logger.hasHandlers():
+        # Create default console handler only if no handlers were provided to avoid adding duplicate handlers
+        default_handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
+        default_handler.setLevel(level)
+        # Attach formatter to the default handler
+        default_handler.setFormatter(formatter)
+        logger.addHandler(default_handler)
+
     return logger

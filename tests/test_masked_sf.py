@@ -1290,6 +1290,7 @@ def test_masked_sf_mask_server_logging(
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     true_mask_server_info: MaskServerInfo,
     caplog,
+    clean_pydough_logger,
 ):
     """
     Tests whether, during the conversion of the PyDough queries on the masked
