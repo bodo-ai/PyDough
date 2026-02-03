@@ -13,6 +13,7 @@ from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDia
 __all__ = [
     "load_database_context",
     "load_mysql_connection",
+    "load_oracle_connection",
     "load_postgres_connection",
     "load_snowflake_connection",
     "load_sqlite_connection",
@@ -32,7 +33,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Returns:
         The database context object.
     """
-    supported_databases = {"postgres", "mysql", "sqlite", "snowflake"}
+    supported_databases = {"postgres", "mysql", "sqlite", "snowflake", "oracle"}
     connection: DatabaseConnection
     dialect: DatabaseDialect
     match database_name.lower():
@@ -48,6 +49,9 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "postgres":
             connection = load_postgres_connection(**kwargs)
             dialect = DatabaseDialect.POSTGRES
+        case "oracle":
+            connection = load_oracle_connection(**kwargs)
+            dialect = DatabaseDialect.ORACLE
         case _:
             raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
@@ -296,3 +300,95 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
             attempt += 1
 
     raise ValueError(f"Failed to connect to Postgres after {attempts} attempts")
+
+
+def load_oracle_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads an Oracle database connection. This is done by providing a wrapper
+    around the DB 2.0 connect API.
+
+    Args:
+        **kwargs: Either an Oracle connection object (as `connection=<object>`)
+            or the required connection parameters:
+            - `user`: Oracle username
+            - `password`: Oracle password for the specified user
+            - `service_name`: The database service name.
+            Optionally, you can provide:
+            - `host`: Oracle server host (default: "127.0.0.1"/"localhost").
+            - `port`: Oracle server port (default: 1521).
+            - `tcp_connect_timeout`: Timeout for the connection (default: 3 seconds).
+            - `attempts` (not an Oralce connector parameter): Number of connection attempts (default: 3)
+            - `delay` (not an Oracle connector parameter): Delay between connection attempts (default: 2 seconds).
+            If a connection object is provided, it will be used directly.
+            All arguments must be accepted by the Oracle connector connect API.
+
+    Raises:
+        ImportError: If the Oracle connector is not installed.
+        ValueError: If required connection parameters are missing.
+
+    Returns:
+        A database connection object for Oracle.
+    """
+    try:
+        import oracledb
+    except ImportError:
+        raise ImportError(
+            "Oracle connector oracledb is not installed. Please install it with"
+            " `python -m pip install oracledb --upgrade`."
+        )
+
+    # Oracle python connector
+    connection: oracledb.connection
+    if connection := kwargs.pop("connection", None):
+        # If a connection object is provided, return it wrapped in
+        # DatabaseConnection
+        return DatabaseConnection(connection)
+
+    # Oracle connection requires specific parameters:
+    # user, password and dsn or host, port and service_name instead of dsn.
+    # Raise an error if any of these are missing.
+    # NOTE: host, port are optional and will default to the oracle defaults.
+    # See: https://python-oracledb.readthedocs.io/en/latest/user_guide/connection_handling.html
+
+    required_keys = ["user", "password", "service_name"]
+    if not all(key in kwargs for key in required_keys):
+        raise ValueError(
+            "Oracle connection requires at least the following arguments: "
+            + ", ".join(required_keys)
+        )
+
+    # Host is required for oracledb connector, not required for PyDough
+    if "host" not in kwargs:
+        kwargs["host"] = "localhost"
+
+    # Default timeout for connection
+    if "tcp_connect_timeout" not in kwargs or kwargs["tcp_connect_timeout"] <= 0:
+        kwargs["tcp_connect_timeout"] = 3
+
+    # Default attempts for connection if not given
+    if not (attempts := kwargs.pop("attempts", None)):
+        attempts = 1
+
+    # Default delay between attempts for connection if not given
+    if not (delay := kwargs.pop("delay", None)):
+        delay = 2.0
+
+    attempt: int = 1
+
+    # For each attempt a connection is tried
+    # If it fails, there is a delay before another attempt is executed
+    while attempt <= attempts:
+        try:
+            connection = oracledb.connect(**kwargs)
+            return DatabaseConnection(connection)
+
+        except (OSError, oracledb.Error) as err:
+            if attempt >= attempts:
+                raise ValueError(
+                    f"Failed to connect to Oracle after {attempt} attempts: {err}"
+                )
+            # Delay for another attempt
+            time.sleep(delay)
+            attempt += 1
+
+    raise ValueError(f"Failed to connect to Oracle after {attempts} attempts")

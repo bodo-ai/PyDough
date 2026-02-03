@@ -11,6 +11,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
@@ -484,6 +485,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return MySQLDialect()
         case DatabaseDialect.POSTGRES:
             return PostgresDialect()
+        case DatabaseDialect.ORACLE:
+            return OracleDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 

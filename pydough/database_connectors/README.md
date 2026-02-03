@@ -19,6 +19,7 @@ The database connectors module provides functionality to manage database connect
         - `SNOWFLAKE`: Represents the Snowflake SQL dialect.
         - `MYSQL`: Represents the MySQL dialect.
         - `POSTGRES`: Represents the Postgres dialect
+        - `ORACLE`: Represents the Oracle dialect
 - `DatabaseContext`: Dataclass that manages the database connection and the corresponding dialect.
     - Fields:
         - `connection`: The `DatabaseConnection` object.
@@ -35,6 +36,7 @@ The database connectors module provides functionality to manage database connect
 - `load_snowflake_connection`: Loads a Snowflake connection.
 - `load_mysql_connection`: Loads a MySQL database connection.
 - `load_postgres_connection`: Loads a Postgres database connection.
+- `load_oracle_connection`: Loads an Oracle database connection.
 
 ## Usage
 
