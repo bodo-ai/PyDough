@@ -1,0 +1,78 @@
+WITH _S2 AS (
+  SELECT
+    LISTAGG(
+      '-',
+      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))), (
+          2 * -1
+        ))
+      END
+    ) AS MONTH,
+    COUNT(*) AS N_ROWS
+  FROM MAIN.SBCUSTOMER
+  WHERE
+    sbcustjoindate < TRUNC(CURRENT_TIMESTAMP, 'MONTH')
+    AND sbcustjoindate >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 6, MONTH), 'MONTH')
+  GROUP BY
+    LISTAGG(
+      '-',
+      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))), (
+          2 * -1
+        ))
+      END
+    )
+), _S3 AS (
+  SELECT
+    LISTAGG(
+      '-',
+      EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME)),
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTR(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME))),
+          (
+            2 * -1
+          )
+        )
+      END
+    ) AS MONTH,
+    AVG(SBTRANSACTION.sbtxamount) AS AVG_SBTXAMOUNT
+  FROM MAIN.SBCUSTOMER SBCUSTOMER
+  JOIN MAIN.SBTRANSACTION SBTRANSACTION
+    ON EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(SBTRANSACTION.sbtxdatetime AS DATETIME))
+    AND EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME)) = EXTRACT(YEAR FROM CAST(SBTRANSACTION.sbtxdatetime AS DATETIME))
+    AND SBCUSTOMER.sbcustid = SBTRANSACTION.sbtxcustid
+  WHERE
+    SBCUSTOMER.sbcustjoindate < TRUNC(CURRENT_TIMESTAMP, 'MONTH')
+    AND SBCUSTOMER.sbcustjoindate >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 6, MONTH), 'MONTH')
+  GROUP BY
+    LISTAGG(
+      '-',
+      EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME)),
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTR(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATETIME))),
+          (
+            2 * -1
+          )
+        )
+      END
+    )
+)
+SELECT
+  _S2.MONTH AS month,
+  _S2.N_ROWS AS customer_signups,
+  _S3.AVG_SBTXAMOUNT AS avg_tx_amount
+FROM _S2 _S2
+LEFT JOIN _S3 _S3
+  ON _S2.MONTH = _S3.MONTH

@@ -33,6 +33,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
     string_format_specifiers_mysql,
+    string_format_specifiers_oracle,
     string_format_specifiers_postgres,
     string_format_specifiers_snowflake,
 )
@@ -423,6 +424,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
+        pytest.param(DatabaseDialect.ORACLE, id="oracle"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -2322,6 +2324,31 @@ def tpch_custom_test_data_dialect_replacements(
             case DatabaseDialect.SNOWFLAKE:
                 return PyDoughPandasTest(
                     string_format_specifiers_snowflake,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # Mon
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # DD
+                            "d7": ["Sat"],  # DY
+                            "d8": ["Saturday"],  # DYDY
+                            "d9": ["14"],  # HH24
+                            "d10": ["02"],  # HH12
+                            "d11": ["30"],  # MI
+                            "d12": ["45"],  # SS
+                            "d13": ["PM"],  # AM / PM
+                            "d14": [".000000000"],  # .FF
+                            "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.ORACLE:
+                return PyDoughPandasTest(
+                    string_format_specifiers_oracle,
                     "TPCH",
                     lambda: pd.DataFrame(
                         {

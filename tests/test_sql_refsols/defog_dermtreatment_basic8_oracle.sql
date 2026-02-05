@@ -1,0 +1,9 @@
+SELECT
+  specialty,
+  COUNT(*) AS num_doctors
+FROM MAIN.DOCTORS
+GROUP BY
+  specialty
+ORDER BY
+  2 DESC NULLS LAST
+FETCH FIRST 2 ROWS ONLY

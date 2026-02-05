@@ -1,0 +1,8 @@
+SELECT
+  CARS._id,
+  CARS.make,
+  CARS.model,
+  CARS.year
+FROM MAIN.CARS CARS
+JOIN MAIN.SALES SALES
+  ON CARS._id = SALES.car_id

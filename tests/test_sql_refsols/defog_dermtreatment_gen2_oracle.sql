@@ -1,0 +1,26 @@
+WITH _T AS (
+  SELECT
+    doc_id AS DOC_ID,
+    start_dt AS START_DT,
+    treatment_id AS TREATMENT_ID,
+    ROW_NUMBER() OVER (PARTITION BY doc_id ORDER BY start_dt) AS _W
+  FROM MAIN.TREATMENTS
+), _S1 AS (
+  SELECT
+    DOC_ID,
+    START_DT,
+    TREATMENT_ID
+  FROM _T
+  WHERE
+    _W = 1
+)
+SELECT
+  DOCTORS.last_name,
+  DOCTORS.year_reg,
+  _S1.START_DT AS first_treatment_date,
+  _S1.TREATMENT_ID AS first_treatment_id
+FROM MAIN.DOCTORS DOCTORS
+LEFT JOIN _S1 _S1
+  ON DOCTORS.doc_id = _S1.DOC_ID
+WHERE
+  DOCTORS.year_reg = EXTRACT(YEAR FROM DATE_SUB(CURRENT_TIMESTAMP, 2, YEAR))

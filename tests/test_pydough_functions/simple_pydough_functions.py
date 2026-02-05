@@ -2908,6 +2908,45 @@ def string_format_specifiers_snowflake():
     )
 
 
+def string_format_specifiers_oracle():
+    # String format specifiers for date/time with a static datetime
+    # Works for Oracle
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # four-digit year
+        d1=STRING(static_date, "YYYY"),
+        # last two digits of the year
+        d2=STRING(static_date, "YY"),
+        # two-digit month (01–12)
+        d3=STRING(static_date, "MM"),
+        # abbreviated month name
+        d4=STRING(static_date, "Mon"),
+        # full month name
+        d5=STRING(static_date, "MMMM"),
+        # two-digit day of month (01–31)
+        d6=STRING(static_date, "DD"),
+        # abbreviated day of week
+        d7=STRING(static_date, "DY"),
+        # full day of week
+        d8=STRING(static_date, "DYDY"),
+        # hour in 24-hour format (00–23)
+        d9=STRING(static_date, "HH24"),
+        # hour in 12-hour format (01–12)
+        d10=STRING(static_date, "HH12"),
+        # minute (00–59)
+        d11=STRING(static_date, "MI"),
+        # second (00–59)
+        d12=STRING(static_date, "SS"),
+        # meridian indicator
+        d13=STRING(static_date, "PM"),
+        # fractional seconds (up to 9 digits)
+        d14=STRING(static_date, ".FF"),
+        # timezone hour and minute
+        d15=STRING(static_date, "TZH:TZM"),
+    )
+
+
 def part_reduced_size():
     # What are the top 5 line items with the highest discounts
     # on parts with the lowest retail prices casted to integers?

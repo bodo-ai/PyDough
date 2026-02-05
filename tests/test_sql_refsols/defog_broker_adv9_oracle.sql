@@ -1,0 +1,20 @@
+SELECT
+  TRUNC(CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP), 'WEEK') AS week,
+  COUNT(*) AS num_transactions,
+  NVL(
+    SUM((
+      MOD((
+        DAY_OF_WEEK(SBTRANSACTION.sbtxdatetime) + 6
+      ), 7)
+    ) IN (5, 6)),
+    0
+  ) AS weekend_transactions
+FROM MAIN.SBTRANSACTION SBTRANSACTION
+JOIN MAIN.SBTICKER SBTICKER
+  ON SBTICKER.sbtickerid = SBTRANSACTION.sbtxtickerid
+  AND SBTICKER.sbtickertype = 'stock'
+WHERE
+  SBTRANSACTION.sbtxdatetime < TRUNC(CURRENT_TIMESTAMP, 'WEEK')
+  AND SBTRANSACTION.sbtxdatetime >= DATE_SUB(TRUNC(CURRENT_TIMESTAMP, 'WEEK'), 8, WEEK)
+GROUP BY
+  TRUNC(CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP), 'WEEK')

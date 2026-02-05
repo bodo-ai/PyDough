@@ -1,0 +1,8 @@
+SELECT
+  COUNTRY.countrycode AS country_code
+FROM MAIN.COUNTRY COUNTRY
+JOIN MAIN.COUNTRYNOTES COUNTRYNOTES
+  ON COUNTRY.countrycode = COUNTRYNOTES.countrycode
+  AND COUNTRYNOTES.seriescode = 'DT.DOD.DECT.CD'
+WHERE
+  COUNTRY.incomegroup = 'Low income'

@@ -1,0 +1,95 @@
+WITH _T2 AS (
+  SELECT
+    ABS(CAST(sbcustpostalcode AS INT)) AS EXPR_13,
+    ROW_NUMBER() OVER (ORDER BY sbcustname) AS RANK,
+    AVG(CAST(ABS(NVL(CAST(sbcustpostalcode AS INT), 0)) AS DOUBLE PRECISION)) OVER () AS RAVG1,
+    NVL(
+      AVG(CAST(ABS(NVL(CAST(sbcustpostalcode AS INT), 0)) AS DOUBLE PRECISION)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      0.1
+    ) AS RAVG2,
+    COUNT(CAST(sbcustpostalcode AS INT)) OVER () AS RCNT1,
+    NVL(
+      COUNT(CAST(sbcustpostalcode AS INT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      0.1
+    ) AS RCNT2,
+    COUNT(*) OVER () AS RSIZ1,
+    NVL(
+      COUNT(*) OVER (ORDER BY sbcustname ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
+      0.1
+    ) AS RSIZ2,
+    SUM(ABS(NVL(CAST(sbcustpostalcode AS INT), 0))) OVER () AS RSUM1,
+    NVL(
+      SUM(ABS(NVL(CAST(sbcustpostalcode AS INT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      0.1
+    ) AS RSUM2
+  FROM MAIN.SBCUSTOMER
+), _T1 AS (
+  SELECT
+    RANK,
+    RAVG1,
+    RAVG2,
+    RCNT1,
+    RCNT2,
+    RSIZ1,
+    RSIZ2,
+    RSUM1,
+    RSUM2,
+    CASE
+      WHEN FLOOR(0.75 * COUNT(EXPR_13) OVER ()) < ROW_NUMBER() OVER (ORDER BY EXPR_13 DESC NULLS LAST)
+      THEN EXPR_13
+      ELSE NULL
+    END AS EXPR_15,
+    CASE
+      WHEN ABS(
+        (
+          ROW_NUMBER() OVER (ORDER BY EXPR_13 DESC NULLS LAST) - 1.0
+        ) - (
+          (
+            COUNT(EXPR_13) OVER () - 1.0
+          ) / 2.0
+        )
+      ) < 1.0
+      THEN EXPR_13
+      ELSE NULL
+    END AS EXPR_16
+  FROM _T2
+)
+SELECT
+  TRUE AS s00,
+  TRUE AS s01,
+  FALSE AS s02,
+  FALSE AS s03,
+  FALSE AS s04,
+  FALSE AS s05,
+  COUNT(*) >= 3 AS s06,
+  FALSE AS s07,
+  COUNT(*) <= 6 AS s08,
+  FALSE AS s09,
+  91 AS s10,
+  0 AS s11,
+  50 AS s12,
+  35 AS s13,
+  25.0 AS s14,
+  ABS(COUNT(*) * -0.75) AS s15,
+  10 AS s16,
+  COUNT(*) AS s17,
+  COUNT(*) AS s18,
+  FALSE AS s19,
+  TRUE AS s20,
+  FALSE AS s21,
+  TRUE AS s22,
+  FALSE AS s23,
+  TRUE AS s24,
+  MAX(EXPR_15) AS s25,
+  AVG(EXPR_16) AS s26,
+  MIN(RANK) AS s27,
+  MAX(RANK) AS s28,
+  ANY_VALUE(RSUM1) AS s29,
+  ROUND(SUM(RSUM2), 2) AS s30,
+  ANY_VALUE(RAVG1) AS s31,
+  ROUND(SUM(RAVG2), 2) AS s32,
+  ANY_VALUE(RCNT1) AS s33,
+  ROUND(SUM(RCNT2), 2) AS s34,
+  ANY_VALUE(RSIZ1) AS s35,
+  ROUND(SUM(RSIZ2), 2) AS s36
+FROM _T1

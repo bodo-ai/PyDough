@@ -1,0 +1,12 @@
+SELECT
+  ANY_VALUE(USERS.username) AS username,
+  COUNT(*) AS total_unread_notifs
+FROM MAIN.USERS USERS
+JOIN MAIN.NOTIFICATIONS NOTIFICATIONS
+  ON NOTIFICATIONS.status = 'unread'
+  AND NOTIFICATIONS.type = 'promotion'
+  AND NOTIFICATIONS.user_id = USERS.uid
+WHERE
+  LOWER(USERS.country) = 'us'
+GROUP BY
+  NOTIFICATIONS.user_id
