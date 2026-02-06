@@ -30,7 +30,7 @@ However, if answering the question with SQL, I would need to write the following
 ```sql
 SELECT
     P.name AS name,
-    COALESCE(T1.total_income_earned, 0) - COALESCE(T2.total_tuition_paid, 0) AS net_income
+    COALESCE(J.total_income_earned, 0) - COALESCE(S.total_tuition_paid, 0) AS net_income
 FROM PEOPLE AS P
 LEFT JOIN (
     SELECT person_ssn, SUM(income_earned) AS total_income_earned
@@ -41,6 +41,7 @@ ON P.ssn = J.person_ssn
 LEFT JOIN (
     SELECT person_ssn, SUM(tuition_paid) AS total_tuition_paid
     FROM EDUCATION_RECORDS
+    GROUP BY person_ssn
 ) AS S
 ON P.ssn = S.person_ssn
 ```
