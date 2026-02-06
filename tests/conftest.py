@@ -683,7 +683,7 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators"]
+S3_DATASETS = ["synthea", "world_development_indicators", "menu"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.

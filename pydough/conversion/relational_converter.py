@@ -731,10 +731,17 @@ class RelTranslation:
                             child_output = self.apply_aggregations(
                                 child, child_output, child.subtree.agg_keys
                             )
+                        # Optimize SEMI to INNER for singular subtrees
+                        join_type = child.connection_type.join_type
+                        if (
+                            child.connection_type == ConnectionType.SEMI
+                            and child.subtree.is_singular()
+                        ):
+                            join_type = JoinType.INNER
                         context = self.join_outputs(
                             context,
                             child_output,
-                            child.connection_type.join_type,
+                            join_type,
                             cardinality,
                             child.reverse_cardinality,
                             join_keys,
