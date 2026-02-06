@@ -42,7 +42,7 @@ class HybridFilterMerger:
         """
         TODO
         """
-        # Keep a set of all children that are marked for certain deletion.
+        # Keep a set of all children that are marked for certain deletion.\
         must_delete: set[int] = set()
 
         # Run the main procedure on subtrees with multiple children.
@@ -65,6 +65,11 @@ class HybridFilterMerger:
             )
 
             # TODO ADD COMMENT
+            secondary_merges: dict[int, set[int]] = self.make_secondary_merges(
+                mergeable_children, child_isomorphisms, filter_dag
+            )
+
+            # TODO ADD COMMENT
             replacement_map: dict[HybridExpr, HybridExpr] = {}
             for source_idx, target_idx in enumerate(filter_dag):
                 if target_idx is None:
@@ -75,26 +80,25 @@ class HybridFilterMerger:
                 extra_target_filters: set[HybridExpr] = (
                     child_filters[target_idx] - child_filters[source_idx]
                 )
-                assert len(extra_source_filters) > 0
-                if len(extra_target_filters) == 0:
-                    self.merge_subset_filters(
-                        tree,
-                        source_idx,
-                        target_idx,
-                        extra_source_filters,
-                        replacement_map,
-                        must_delete,
-                    )
-                else:
-                    self.merge_partial_disjoint_filters(
-                        tree,
-                        source_idx,
-                        target_idx,
-                        extra_source_filters,
-                        extra_target_filters,
-                        replacement_map,
-                        must_delete,
-                    )
+                assert len(extra_source_filters) > 0 and len(extra_target_filters) == 0
+                self.merge_subset_filters(
+                    tree,
+                    source_idx,
+                    target_idx,
+                    extra_source_filters,
+                    replacement_map,
+                    must_delete,
+                )
+
+            for target_idx, source_idxs in secondary_merges.items():
+                self.merge_partial_disjoint_filters(
+                    tree,
+                    target_idx,
+                    source_idxs,
+                    child_filters,
+                    replacement_map,
+                    must_delete,
+                )
 
             # TODO ADD COMMENT
             for operation in tree.pipeline:
@@ -190,10 +194,9 @@ class HybridFilterMerger:
     def merge_partial_disjoint_filters(
         self,
         tree: HybridTree,
-        source_idx: int,
         target_idx: int,
-        extra_source_filters: set[HybridExpr],
-        extra_target_filters: set[HybridExpr],
+        source_idxs: set[int],
+        all_filters: list[set[HybridExpr]],
         replacement_map: dict[HybridExpr, HybridExpr],
         must_delete: set[int],
     ) -> None:
@@ -201,14 +204,26 @@ class HybridFilterMerger:
         TODO
         """
         # TODO ADD COMMENTS
-        self.merge_subset_filters(
-            tree,
-            source_idx,
-            target_idx,
-            extra_source_filters,
-            replacement_map,
-            must_delete,
+        intersection = set.intersection(
+            *(all_filters[source_idx] for source_idx in source_idxs),
+            all_filters[target_idx],
         )
+
+        for source_idx in sorted(source_idxs):
+            extra_source_filters: set[HybridExpr] = (
+                all_filters[source_idx] - intersection
+            )
+            self.merge_subset_filters(
+                tree,
+                source_idx,
+                target_idx,
+                extra_source_filters,
+                replacement_map,
+                must_delete,
+            )
+
+        # TODO ADD COMMENTS
+        extra_target_filters: set[HybridExpr] = all_filters[target_idx] - intersection
         self.merge_subset_filters(
             tree,
             target_idx,
@@ -218,13 +233,29 @@ class HybridFilterMerger:
             must_delete,
         )
 
+        # TODO: ADD COMMENTS
+        new_conds: list[HybridExpr] = []
+        for source_idx in sorted(source_idxs):
+            source_filters: set[HybridExpr] = all_filters[source_idx]
+            source_cond: HybridExpr
+            if len(source_filters) == 1:
+                source_cond = next(iter(source_filters))
+            else:
+                source_cond = HybridFunctionExpr(
+                    pydop.BAN,
+                    sorted(source_filters, key=repr),
+                    BooleanType(),
+                )
+            new_conds.append(source_cond)
+
+        # TODO: ADD COMMENTS
         new_cond: HybridExpr
-        if len(extra_source_filters) == 1:
-            new_cond = next(iter(extra_source_filters))
+        if len(new_conds) == 1:
+            new_cond = new_conds[0]
         else:
             new_cond = HybridFunctionExpr(
-                pydop.BAN,
-                sorted(extra_source_filters, key=repr),
+                pydop.BOR,
+                new_conds,
                 BooleanType(),
             )
 
@@ -337,22 +368,6 @@ class HybridFilterMerger:
                     dag[idx] = other_idx
                     break
 
-        # Form secondary edges between island nodes that are not subsets of
-        # one another but where both of them are mergeable, and neither one is
-        # the sink of an edge yet.
-        existing_sinks: set[int | None] = set(dag)
-        for idx in mergeable_children:
-            for other_idx in sorted(child_isomorphisms[idx]):
-                if (
-                    other_idx in mergeable_children
-                    and dag[idx] is None
-                    and dag[other_idx] is None
-                    and idx not in existing_sinks
-                    and other_idx not in existing_sinks
-                ):
-                    dag[idx] = other_idx
-                    break
-
         # Collapse transitive edges
         for idx in range(len(dag)):
             if dag[idx] is not None:
@@ -362,3 +377,36 @@ class HybridFilterMerger:
                         break
                     dag[idx] = dag[target_idx]
         return dag
+
+    def make_secondary_merges(
+        self,
+        mergeable_children: set[int],
+        child_isomorphisms: list[set[int]],
+        filter_dag: list[int | None],
+    ) -> dict[int, set[int]]:
+        """
+        TODO
+        """
+        secondary_merges: dict[int, set[int]] = {}
+
+        # Form secondary edges between island nodes that are not subsets of
+        # one another but where both of them are mergeable, and neither one is
+        # the sink of an edge yet.
+        existing_sinks: set[int | None] = set(filter_dag)
+        already_merged: set[int] = set()
+        for idx in mergeable_children:
+            for other_idx in sorted(child_isomorphisms[idx]):
+                if (
+                    other_idx in mergeable_children
+                    and filter_dag[idx] is None
+                    and filter_dag[other_idx] is None
+                    and idx not in existing_sinks
+                    and other_idx not in existing_sinks
+                    and other_idx not in secondary_merges
+                    and other_idx not in already_merged
+                ):
+                    secondary_merges[idx] = secondary_merges.get(idx, set())
+                    secondary_merges[idx].add(other_idx)
+                    already_merged.add(other_idx)
+
+        return secondary_merges

@@ -3265,6 +3265,59 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "c1 = customers.WHERE(market_segment == 'BUILDING')\n"
+                "c2 = c1.WHERE(MONOTONIC(500, account_balance, 1000))\n"
+                "c3 = c1.WHERE(~MONOTONIC(500, account_balance, 1000))\n"
+                "result = TPCH.CALCULATE("
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n2": [1394],
+                        "n3": [28748],
+                    }
+                ),
+                "count_multiple_filters_v",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_v",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '30'))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '31'))\n"
+                "c3 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '32'))\n"
+                "c4 = customers.WHERE((market_segment == 'HOUSEHOLD') & STARTSWITH(phone, '30'))\n"
+                "c5 = customers.WHERE((market_segment == 'HOUSEHOLD') & STARTSWITH(phone, '31'))\n"
+                "c6 = customers.WHERE((market_segment == 'HOUSEHOLD') & STARTSWITH(phone, '32'))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1),"
+                " n2=COUNT(c2),"
+                " n3=COUNT(c3),"
+                " n4=COUNT(c4),"
+                " n5=COUNT(c5),"
+                " n6=COUNT(c6),"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1182],
+                        "n2": [1230],
+                        "n3": [1207],
+                        "n4": [1206],
+                        "n5": [1215],
+                        "n6": [1265],
+                    }
+                ),
+                "count_multiple_filters_w",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_w",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 order_quarter_test,
                 "TPCH",
                 lambda: pd.DataFrame(
