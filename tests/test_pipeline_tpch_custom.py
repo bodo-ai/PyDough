@@ -2741,6 +2741,135 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "asian_nations = nation.WHERE(region.name == 'ASIA')\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(asian_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [30183],
+                    }
+                ),
+                "redundant_has",
+            ),
+            id="redundant_has",
+        ),
+        # Nested HAS on singular chain (supplier -> nation -> region), both should optimize to INNER
+        pytest.param(
+            PyDoughPandasTest(
+                "african_regions = region.WHERE(name == 'AFRICA')\n"
+                "african_nations = nation.WHERE(HAS(african_regions))\n"
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(african_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1955],
+                    }
+                ),
+                "redundant_has_nested",
+            ),
+            id="redundant_has_nested",
+        ),
+        # HAS on plural relationship (orders) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(total_price > 400000)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [3533],
+                    }
+                ),
+                "redundant_has_on_plural",
+            ),
+            id="redundant_has_on_plural",
+        ),
+        # HAS on singular relationship with additional filter
+        pytest.param(
+            PyDoughPandasTest(
+                "european_nations = nation.WHERE(region.name == 'EUROPE')\n"
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(european_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1987],
+                    }
+                ),
+                "redundant_has_singular_chain",
+            ),
+            id="redundant_has_singular_chain",
+        ),
+        # HAS on plural relationship (lineitems) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(orders.WHERE(HAS(lines.WHERE(quantity > 49)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [115066],
+                    }
+                ),
+                "redundant_has_on_plural_lineitems",
+            ),
+            id="redundant_has_on_plural_lineitems",
+        ),
+        # No optimization , stay as ANTI.
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HASNOT(nation.WHERE(region.name == 'AFRICA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [8045],
+                    }
+                ),
+                "redundant_has_not_on_singular",
+            ),
+            id="redundant_has_not_on_singular",
+        ),
+        # HAS containing CROSS with correlated filter back to outer context.
+        # Customers who have a supplier from their same nation (via CROSS).
+        # Should NOT optimize since CROSS creates a plural relationship.
+        pytest.param(
+            PyDoughPandasTest(
+                "selected = customers.CALCULATE(my_nation_key=nation.key)\n"
+                "result = TPCH.CALCULATE(\n"
+                "    n=COUNT(selected.WHERE(HAS(\n"
+                "        CROSS(suppliers).WHERE(nation.key == my_nation_key)\n"
+                "    )))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "has_cross_correlated",
+            ),
+            id="has_cross_correlated",
+        ),
+        # HAS containing CROSS with correlated filter and SINGULAR.
+        # The filter ensures exactly one match per row, SINGULAR enforces it.
+        # Optimizes to INNER JOIN since SINGULAR makes the relationship singular.
+        pytest.param(
+            PyDoughPandasTest(
+                "selected = customers.CALCULATE(my_nation_key=nation.key)\n"
+                "result = TPCH.CALCULATE(\n"
+                "    n=COUNT(selected.WHERE(HAS(\n"
+                "        CROSS(nations).WHERE(key == my_nation_key).SINGULAR()\n"
+                "    )))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "has_cross_correlated_singular",
+            ),
+            id="has_cross_correlated_singular",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 bad_child_reuse_1,
                 "TPCH",
                 lambda: pd.DataFrame(

@@ -113,6 +113,30 @@ result = (
             ),
             id="wdi_albania_footnotes_1978",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = menu.menu.WHERE(
+    HAS(menupages.menuitems.dish.WHERE(LOWER(name) == "baked apples with cream"))
+    ).CALCULATE(
+        sponsor_name=sponsor,
+        max_item_price=MAX(menupages.menuitems.price)
+    ).TOP_K(
+        1, by=max_item_price.DESC()
+    ).CALCULATE(
+        sponsor=sponsor_name
+    )
+            """,
+                "menu",
+                lambda: pd.DataFrame(
+                    {
+                        "sponsor": ["MURRAY HILL HOTEL"],
+                    }
+                ),
+                "menu_5556",
+            ),
+            id="menu_5556",
+        ),
     ],
 )
 def s3_datasets_test_data(request) -> PyDoughPandasTest:
