@@ -11,6 +11,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
@@ -204,7 +205,7 @@ def apply_sqlglot_optimizer(
 
     # Replaces any grouping or ordering keys that point to a clause in the
     # SELECT with an index (e.g. ORDER BY 1, GROUP BY 1, 2)
-    replace_keys_with_indices(glot_expr)
+    replace_keys_with_indices(glot_expr, dialect)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
@@ -217,7 +218,9 @@ def apply_sqlglot_optimizer(
     return glot_expr
 
 
-def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
+def replace_keys_with_indices(
+    glot_expr: SQLGlotExpression, dialect: SQLGlotDialect
+) -> None:
     """
     Runs a transformation postprocessing pass on the SQLGlot AST to make the
     following changes:
@@ -293,7 +296,9 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
                         expression.expressions[expr_idx] = collate
 
         # Replace GROUP BY keys that are in the select clause with indices.
-        if expression.args.get("group") is not None:
+        # Oracle does not support indices in the GROUP BY, for this dialect this
+        # step is skipped
+        if expression.args.get("group") is not None and dialect != OracleDialect:
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
                 # Only replace with the index if the key expression appears in
@@ -484,6 +489,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return MySQLDialect()
         case DatabaseDialect.POSTGRES:
             return PostgresDialect()
+        case DatabaseDialect.ORACLE:
+            return OracleDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 

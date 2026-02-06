@@ -1,0 +1,6 @@
+SELECT
+  year,
+  COUNT(*) AS _expr0
+FROM MAIN.PUBLICATION
+GROUP BY
+  year

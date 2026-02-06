@@ -1,0 +1,28 @@
+WITH _S1 AS (
+  SELECT
+    ps_partkey AS PS_PARTKEY,
+    ps_suppkey AS PS_SUPPKEY
+  FROM TPCH.PARTSUPP
+)
+SELECT
+  LINEITEM.l_orderkey AS order_key,
+  LINEITEM.l_linenumber AS line_number,
+  PART.p_size AS part_size,
+  NATION.n_nationkey AS supplier_nation
+FROM TPCH.PART PART
+JOIN _S1 _S1
+  ON PART.p_partkey = _S1.PS_PARTKEY
+CROSS JOIN TPCH.NATION NATION
+JOIN TPCH.SUPPLIER SUPPLIER
+  ON NATION.n_nationkey = SUPPLIER.s_nationkey
+JOIN _S1 _S7
+  ON SUPPLIER.s_suppkey = _S7.PS_SUPPKEY
+JOIN TPCH.LINEITEM LINEITEM
+  ON LINEITEM.l_partkey = PART.p_partkey
+  AND LINEITEM.l_partkey = _S7.PS_PARTKEY
+  AND LINEITEM.l_suppkey = _S1.PS_SUPPKEY
+  AND LINEITEM.l_suppkey = _S7.PS_SUPPKEY
+ORDER BY
+  1 NULLS FIRST,
+  2 NULLS FIRST
+FETCH FIRST 7 ROWS ONLY

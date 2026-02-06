@@ -26,4 +26,5 @@ Once the introduction notebook is complete, you can explore the other notebooks:
 - [SF_TPCH_q1.ipynb](notebooks/SF_TPCH_q1.ipynb) demonstrates how to connect a Snowflake database with PyDough.
 - [MySQL_TPCH.ipynb](notebooks/MySQL_TPCH.ipynb) demonstrates how to connect a MySQL database with PyDough.
 - [PG_TPCH.ipynb](notebooks/PG_TPCH.ipynb) demonstrates how to connect a Postgres database with PyDough.
+- [Oracle_TPCH.ipynb](notebooks/Oracle_TPCH.ipynb) demonstrates how to connect an Oracle database with PyDough.
 

@@ -1,0 +1,20 @@
+WITH _S1 AS (
+  SELECT
+    sbtxtickerid AS SBTXTICKERID,
+    COUNT(*) AS N_ROWS
+  FROM MAIN.SBTRANSACTION
+  WHERE
+    sbtxdatetime >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 10, DAY), 'DAY')
+    AND sbtxtype = 'buy'
+  GROUP BY
+    sbtxtickerid
+)
+SELECT
+  SBTICKER.sbtickersymbol AS symbol,
+  NVL(_S1.N_ROWS, 0) AS tx_count
+FROM MAIN.SBTICKER SBTICKER
+LEFT JOIN _S1 _S1
+  ON SBTICKER.sbtickerid = _S1.SBTXTICKERID
+ORDER BY
+  2 DESC NULLS LAST
+FETCH FIRST 2 ROWS ONLY

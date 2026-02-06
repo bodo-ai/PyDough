@@ -1,0 +1,35 @@
+WITH _T AS (
+  SELECT
+    CUSTOMER.c_custkey AS C_CUSTKEY,
+    NATION.n_regionkey AS N_REGIONKEY,
+    ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC, CUSTOMER.c_name) AS _W
+  FROM TPCH.NATION NATION
+  JOIN TPCH.CUSTOMER CUSTOMER
+    ON CUSTOMER.c_nationkey = NATION.n_nationkey
+), _S3 AS (
+  SELECT
+    o_custkey AS O_CUSTKEY,
+    COUNT(*) AS N_ROWS
+  FROM TPCH.ORDERS
+  GROUP BY
+    o_custkey
+), _S5 AS (
+  SELECT
+    _T.N_REGIONKEY,
+    SUM(_S3.N_ROWS) AS SUM_N_ROWS
+  FROM _T _T
+  JOIN _S3 _S3
+    ON _S3.O_CUSTKEY = _T.C_CUSTKEY
+  WHERE
+    _T._W = 1
+  GROUP BY
+    _T.N_REGIONKEY
+)
+SELECT
+  REGION.r_name AS region_name,
+  NVL(_S5.SUM_N_ROWS, 0) AS n_orders
+FROM TPCH.REGION REGION
+LEFT JOIN _S5 _S5
+  ON REGION.r_regionkey = _S5.N_REGIONKEY
+ORDER BY
+  1 NULLS FIRST
