@@ -1684,6 +1684,7 @@ def test_cryptbank_mask_server_logging(
     enable_mask_rewrites: str,
     mock_server_info: MaskServerInfo,
     caplog,
+    clean_pydough_logger,
 ):
     """
     Tests whether, during the conversion of the PyDough queries on the custom
