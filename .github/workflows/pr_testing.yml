@@ -16,6 +16,10 @@ on:
         description: "Python 3.12"
         type: boolean
         default: true
+      py313:
+        description: "Python 3.13"
+        type: boolean
+        default: true
       run-all:
         description: "Run All Tests"
         type: boolean
@@ -103,9 +107,12 @@ jobs:
             if [ "${{ inputs.py312 }}" == "true" ]; then
               versions+=("\"3.12\"")
             fi
+            if [ "${{ inputs.py313 }}" == "true" ]; then
+              versions+=("\"3.13\"")
+            fi
           else
             # For pull_request and other events, use all versions by default
-            versions=( "\"3.10\"" "\"3.11\"" "\"3.12\"" )
+            versions=( "\"3.10\"" "\"3.11\"" "\"3.12\"" "\"3.13\"" )
           fi
           # Join the array elements with commas and wrap in brackets to make valid JSON
           joined=$(IFS=, ; echo "[${versions[*]}]")
@@ -127,7 +134,7 @@ jobs:
       matrix:
         python-version: ${{ github.event_name == 'workflow_dispatch'
                         && fromJSON(needs.get-py-ver-matrix.outputs.matrix)
-                        || fromJSON('["3.10", "3.11", "3.12"]') }}
+                        || fromJSON('["3.10", "3.11", "3.12", "3.13"]') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -181,7 +188,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-mysql-tests:
     name: MySQL Tests
@@ -197,7 +204,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-postgres-tests:
     name: Postgres Tests
@@ -213,7 +220,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-sf-masked-tests:
     name: Masked Snowflake Tests
@@ -235,7 +242,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-s3-tests:
     name: S3 datasets Tests
@@ -250,4 +257,4 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
