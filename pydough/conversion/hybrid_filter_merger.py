@@ -348,7 +348,7 @@ class HybridFilterMerger:
                     for expr in operation.new_expressions.values()
                 ):
                     break
-        return repr(stripped_tree)
+        return repr(stripped_tree) + f" {stripped_tree.join_keys}"
 
     def make_filter_dag(
         self,
