@@ -1,3 +1,3 @@
 ROOT(columns=[('nation_name', c_nationkey), ('avg_consumer_value', avg_consumer_value)], orderings=[])
- AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'avg_consumer_value': MAX(IFF(c_acctbal < 0.0:numeric, 0.0:numeric, c_acctbal))})
+ AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'avg_consumer_value': MAX(IFF((c_acctbal < 0.0:numeric), 0.0:numeric, c_acctbal))})
   SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_nationkey': c_nationkey})

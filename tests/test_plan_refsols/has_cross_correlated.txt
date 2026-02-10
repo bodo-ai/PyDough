@@ -1,5 +1,5 @@
 ROOT(columns=[('n', ndistinct_c_custkey)], orderings=[])
  AGGREGATE(keys={}, aggregations={'ndistinct_c_custkey': NDISTINCT(c_custkey)})
-  JOIN(condition=t1.s_nationkey == t0.c_nationkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey})
+  JOIN(condition=t0.c_nationkey == t1.s_nationkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey})
    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
    SCAN(table=tpch.SUPPLIER, columns={'s_nationkey': s_nationkey})
