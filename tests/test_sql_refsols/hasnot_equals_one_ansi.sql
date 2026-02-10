@@ -14,6 +14,4 @@ FROM tpch.customer AS customer
 LEFT JOIN _s1 AS _s1
   ON _s1.o_custkey = customer.c_custkey
 WHERE
-  (
-    _s1.n_rows = 0 OR _s1.n_rows IS NULL
-  ) = 1
+  _s1.n_rows = 0 OR _s1.n_rows IS NULL

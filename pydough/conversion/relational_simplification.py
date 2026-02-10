@@ -571,6 +571,34 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     ],
                 )
 
+            case (
+                _,
+                pydop.EQU | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ | pydop.NEQ,
+                _,
+            ) if isinstance(func_expr.data_type, BooleanType) and isinstance(
+                lit_expr.value, int
+            ):
+                match (func_expr.op, lit_expr.value):
+                    # e.g. (a < b) == 0 <=> NOT (a < b)
+                    case (pydop.EQU | pydop.LEQ, 0) | (pydop.NEQ | pydop.LET, 1):
+                        return CallExpression(pydop.NOT, expr.data_type, [func_expr])
+
+                    # e.g. (a < b) == 1 <=> (a < b)
+                    case (pydop.EQU | pydop.GEQ, 1) | (pydop.NEQ | pydop.GRT, 1):
+                        return func_expr
+
+                    # e.g. (a == b) == 3 <=> False
+                    case (pydop.EQU, _) if lit_expr.value not in (0, 1):
+                        return conditional_false
+
+                    # e.g. (a == b) != 3 <=> True
+                    case (pydop.NEQ, _) if lit_expr.value not in (0, 1):
+                        return conditional_true
+
+                    # Ignore other cases
+                    case _:
+                        pass
+
             # Fall back to the original expression by default.
             case _:
                 pass
