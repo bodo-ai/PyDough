@@ -5,7 +5,14 @@ The representation of a column function call for use in a relational tree.
 __all__ = ["CallExpression"]
 
 
-from pydough.pydough_operators import BAN, BOR, EQU, NEQ, PyDoughExpressionOperator
+from pydough.pydough_operators import (
+    BAN,
+    BOR,
+    EQU,
+    NEQ,
+    BinaryOperator,
+    PyDoughExpressionOperator,
+)
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
@@ -63,7 +70,16 @@ class CallExpression(RelationalExpression):
 
     def to_string(self, compact: bool = False) -> str:
         if compact:
-            arg_strings: list[str] = [arg.to_string(compact) for arg in self.inputs]
+            arg_strings: list[str] = []
+            # Ensure binary expressions are wrapped in parentheses to preserve
+            # the correct order of operations and visual clarity when printed.
+            for arg in self.inputs:
+                arg_string: str = arg.to_string(compact)
+                if isinstance(arg, CallExpression) and isinstance(
+                    arg.op, BinaryOperator
+                ):
+                    arg_string = f"({arg_string})"
+                arg_strings.append(arg_string)
             return self.op.to_string(arg_strings)
         else:
             return f"Call(op={self.op}, inputs={self.inputs}, return_type={self.data_type})"

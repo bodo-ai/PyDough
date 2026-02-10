@@ -1187,15 +1187,14 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 'a']",
                     "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 's']",
-                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['OR', 3, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
                     "CRBNK/CUSTOMERS/c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
                     "CRBNK/CUSTOMERS/c_phone: ['ENDSWITH', 2, '__col__', '5']",
                     "DRY_RUN",
                 },
                 {
+                    "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 's']",
-                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
                     "CRBNK/CUSTOMERS/c_phone: ['ENDSWITH', 2, '__col__', '5']",
                 },
@@ -1377,9 +1376,6 @@ def test_pipeline_e2e_cryptbank(
                 {
                     "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'DAY', 1, '__col__', 'QUARTER', 1, '__col__']",
                     "DRY_RUN",
-                },
-                {
-                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'DAY', 1, '__col__', 'QUARTER', 1, '__col__']"
                 },
             ],
             id="cryptbank_filter_count_34",
