@@ -1,21 +1,12 @@
-WITH _u_0 AS (
-  SELECT
-    sbcustid AS _u_1
-  FROM broker.sbCustomer
-  WHERE
-    LOWER(sbcustcountry) = 'usa'
-  GROUP BY
-    1
-)
 SELECT
   NULLIF(COUNT(*), 0) AS n_transactions,
   COALESCE(SUM(sbTransaction.sbtxamount), 0) AS total_amount
-FROM broker.sbTransaction AS sbTransaction
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = sbTransaction.sbtxcustid
+FROM main.sbTransaction AS sbTransaction
+JOIN main.sbCustomer AS sbCustomer
+  ON LOWER(sbCustomer.sbcustcountry) = 'usa'
+  AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
 WHERE
-  NOT _u_0._u_1 IS NULL
-  AND sbTransaction.sbtxdatetime < CAST(DATE_SUB(
+  sbTransaction.sbtxdatetime < CAST(DATE_SUB(
     CURRENT_TIMESTAMP(),
     INTERVAL (
       (

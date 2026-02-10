@@ -3,6 +3,7 @@ Definitions of various fixtures used in PyDough tests that are automatically
 available.
 """
 
+import logging
 import os
 import sqlite3
 import subprocess
@@ -725,7 +726,7 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators"]
+S3_DATASETS = ["synthea", "world_development_indicators", "menu"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
@@ -2230,7 +2231,7 @@ def true_mask_server_info() -> MaskServerInfo:
     Returns the MaskServerInfo for the true Mask server.
     """
     if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
-        raise RuntimeError("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
+        pytest.skip("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
 
     # Send a health request to ensure the server is reachable and functioning.
     # If not, then halt testing early.
@@ -2246,3 +2247,50 @@ def true_mask_server_info() -> MaskServerInfo:
         pytest.fail(f"Mask server is not reachable (health check failed: {json})")
 
     return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)
+
+
+def reset_logger(name: str):
+    """
+    Resets a logger to a clean default state.
+
+    This function clears all handlers and filters from the specified logger,
+    resets its level to `logging.NOTSET`, re-enables propagation, and ensures
+    the logger is not disabled. It is primarily intended for use in tests to
+    avoid cross-test contamination of logging state.
+
+    Args:
+        `name` : The name of the logger to reset.
+
+    Returns:
+        `None`
+    """
+    logger = logging.getLogger(name)
+    logger.handlers.clear()
+    logger.filters.clear()
+    logger.setLevel(logging.NOTSET)
+    logger.propagate = True
+    logger.disabled = False
+
+
+@pytest.fixture(scope="function")
+def clean_pydough_logger():
+    """
+    Pytest fixture that resets PyDough loggers before and after each test.
+
+    This fixture ensures that the `pydough` and `pydough.mask_server` loggers
+    start each test in a clean state, with no handlers, default levels, and
+    propagation enabled. It prevents logging configuration from leaking
+    between tests and causing order-dependent failures.
+
+    Yields:
+        `None`
+    """
+    # Before test
+    reset_logger("pydough")
+    reset_logger("pydough.mask_server")
+
+    yield
+
+    # After test (cleanup)
+    reset_logger("pydough")
+    reset_logger("pydough.mask_server")
