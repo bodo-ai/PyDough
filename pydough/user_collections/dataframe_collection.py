@@ -45,13 +45,19 @@ __all__ = ["DataframeGeneratedCollection"]
 class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
     """Dataframe base collection"""
 
-    def __init__(self, name: str, dataframe: pd.DataFrame) -> None:
+    def __init__(
+        self,
+        name: str,
+        dataframe: pd.DataFrame,
+        unique_column_names: list[str | list[str]],
+    ) -> None:
         super().__init__(
             name=name,
             columns=list(dataframe.columns),
             types=self.get_dataframe_types(dataframe),
         )
         self._dataframe = dataframe
+        self._unique_column_names = unique_column_names
 
     @property
     def types(self) -> list[PyDoughType]:
@@ -69,8 +75,8 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         return list(zip(self.columns, self.types))
 
     @property
-    def unique_column_names(self) -> list[str]:
-        return list(dict.fromkeys(self.columns))
+    def unique_column_names(self) -> list[str | list[str]]:
+        return self._unique_column_names
 
     def __len__(self) -> int:
         return len(self._dataframe)
@@ -97,7 +103,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         return (
             isinstance(other, DataframeGeneratedCollection)
             and self.name == other.name
-            and self.columns == other.columns
+            and self.unique_column_names == other.unique_column_names
             and self.dataframe.equals(other.dataframe)
         )
 
@@ -133,19 +139,22 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
                 field: pa.Field = pa.Schema.from_pandas(dataframe[[col]])
                 pyd_types.append(
                     DataframeGeneratedCollection.match_pyarrow_pydough_types(
-                        field.types[0]
+                        field.types[0], col
                     )
                 )
 
-            except pa.ArrowInvalid:
+            except pa.ArrowInvalid as e:
                 raise ValueError(
-                    f"Mixed types in column '{col}'. All values in a column must be of the same type."
+                    f"Failed to infer a consistent type for column '{col}'. "
+                    f"Arrow error: {e}"
                 )
 
         return pyd_types
 
     @staticmethod
-    def match_pyarrow_pydough_types(field_type: pa.DataType) -> PyDoughType:
+    def match_pyarrow_pydough_types(
+        field_type: pa.DataType, field_name: str
+    ) -> PyDoughType:
         """
         Match the PyArrow type with its equivalent in PyDough. Raise a ValueError
         for unsupproted types in the PyDough dataframe collection.
@@ -187,15 +196,31 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             return DatetimeType()
         # Unsupported types
         elif pa.types.is_binary(field_type) or pa.types.is_large_binary(field_type):
-            raise ValueError("Binaries are not supported for dataframe collections")
+            raise ValueError(
+                f"Binaries in column '{field_name}', are not supported for dataframe collections"
+            )
 
         elif pa_types.is_list(field_type) or pa.types.is_large_list(field_type):
-            raise ValueError("Arrays are not supported for dataframe collections")
+            raise ValueError(
+                f"Arrays in column '{field_name}', are not supported for dataframe collections"
+            )
 
         elif pa_types.is_struct(field_type):
-            raise ValueError("Structs are not supported for dataframe collections")
+            raise ValueError(
+                f"Structs in column '{field_name}', are not supported for dataframe collections"
+            )
 
         elif pa_types.is_dictionary(field_type):
-            raise ValueError("Dictionaries are not supported for dataframe collections")
+            raise ValueError(
+                f"Dictionaries in column '{field_name}', are not supported for dataframe collections"
+            )
+
+        elif pa.types.is_fixed_size_list(field_type):
+            raise ValueError(
+                f"Fixed-size arrays / tuples in column '{field_name}', are not supported for dataframe collections"
+            )
+
         else:
-            return UnknownType()
+            raise ValueError(
+                f"Unknown type in column '{field_name}' for dataframe collections"
+            )

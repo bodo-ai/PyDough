@@ -1,0 +1,7 @@
+ROOT(columns=[('first_name', first_name), ('last_name', last_name), ('n_teachers', n_rows)], orderings=[])
+ AGGREGATE(keys={'first_name': first_name, 'last_name': last_name}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t1.tid == t0.teacher_id, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'first_name': t1.first_name, 'last_name': t1.last_name})
+   JOIN(condition=t0.teacher_id != t1.teacher_id & t0.class_key == t1.class_key, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'teacher_id': t0.teacher_id})
+    GENERATED_TABLE(DataframeCollection(name='teaching', shape=(30, 4), columns=['class_key', 'teacher_id', 'semester', 'rating']))
+    GENERATED_TABLE(DataframeCollection(name='teaching', shape=(30, 4), columns=['class_key', 'teacher_id', 'semester', 'rating']))
+   GENERATED_TABLE(DataframeCollection(name='teachers', shape=(12, 3), columns=['tid', 'first_name', 'last_name']))

@@ -193,13 +193,20 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_bad_4,
     dataframe_collection_bad_5,
     dataframe_collection_bad_6,
+    dataframe_collection_bad_7,
     dataframe_collection_best,
     dataframe_collection_cross,
     dataframe_collection_datatypes,
+    dataframe_collection_highest_rating,
     dataframe_collection_inf,
+    dataframe_collection_language_highest_rating,
     dataframe_collection_numbers,
     dataframe_collection_partition,
     dataframe_collection_strings,
+    dataframe_collection_taught_recently,
+    dataframe_collection_teacher_class,
+    dataframe_collection_teacher_count,
+    dataframe_collection_teacher_lowest_rating,
     dataframe_collection_top_k,
     dataframe_collection_where,
     dataframe_collection_where_date,
@@ -3863,6 +3870,225 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="dataframe_collection_window_functions",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_taught_recently,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "class_name": [
+                            "Programming Fundamentals",
+                            "Imperative Programming",
+                            "Functional Programming",
+                            "Parallel Algorithms",
+                            "Theoretical CS",
+                        ],
+                        "last_semester": ["2023-02-01"] * 5,
+                        "teacher_first_name": ["Mike", "Anil", "David", "Anil", "Mike"],
+                        "teacher_last_name": [
+                            "Lee",
+                            "Taylor",
+                            "Smith",
+                            "Smith",
+                            "Smith",
+                        ],
+                    }
+                ),
+                "dataframe_collection_taught_recently",
+            ),
+            id="dataframe_collection_taught_recently",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_highest_rating,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "class_name": [
+                            "Programming Fundamentals",
+                            "Imperative Programming",
+                            "Functional Programming",
+                            "Parallel Algorithms",
+                            "Theoretical CS",
+                        ],
+                        "last_semester": [
+                            "2020-09-01",
+                            "2021-02-01",
+                            "2020-09-01",
+                            "2021-09-01",
+                            "2022-02-01",
+                        ],
+                        "teacher_first_name": ["Anil", "Anil", "Anil", "Mike", "David"],
+                        "teacher_last_name": ["Lee", "Lee", "Taylor", "Lee", "Taylor"],
+                    }
+                ),
+                "dataframe_collection_highest_rating",
+            ),
+            id="dataframe_collection_highest_rating",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_teacher_class,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_name": [
+                            "Anil",
+                            "Mike",
+                            "David",
+                            "Anil",
+                            "Mike",
+                            "David",
+                            "Anil",
+                            "Mike",
+                            "David",
+                        ],
+                        "last_name": [
+                            "Lee",
+                            "Lee",
+                            "Smith",
+                            "Smith",
+                            "Smith",
+                            "Taylor",
+                            "Taylor",
+                            "Thomas",
+                            "Thomas",
+                        ],
+                        "recent_semester": [
+                            "2022-09-01",
+                            "2023-02-01",
+                            "2023-02-01",
+                            "2023-02-01",
+                            "2023-02-01",
+                            "2022-02-01",
+                            "2023-02-01",
+                            "2022-09-01",
+                            "2022-09-01",
+                        ],
+                        "class_name": [
+                            "Theoretical CS",
+                            "Programming Fundamentals",
+                            "Functional Programming",
+                            "Parallel Algorithms",
+                            "Theoretical CS",
+                            "Theoretical CS",
+                            "Imperative Programming",
+                            "Imperative Programming",
+                            "Parallel Algorithms",
+                        ],
+                    }
+                ),
+                "dataframe_collection_teacher_class",
+            ),
+            id="dataframe_collection_teacher_class",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_teacher_lowest_rating,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_name": [
+                            "Anil",
+                            "Mike",
+                            "David",
+                            "Anil",
+                            "Mike",
+                            "David",
+                            "Anil",
+                            "Mike",
+                            "David",
+                        ],
+                        "last_name": [
+                            "Lee",
+                            "Lee",
+                            "Smith",
+                            "Smith",
+                            "Smith",
+                            "Taylor",
+                            "Taylor",
+                            "Thomas",
+                            "Thomas",
+                        ],
+                        "rating": [
+                            11.58,
+                            9.22,
+                            11.27,
+                            10.97,
+                            4.99,
+                            7.87,
+                            11.93,
+                            6.75,
+                            3.94,
+                        ],
+                        "class_name": [
+                            "Imperative Programming",
+                            "Imperative Programming",
+                            "Programming Fundamentals",
+                            "Functional Programming",
+                            "Theoretical CS",
+                            "Theoretical CS",
+                            "Functional Programming",
+                            "Theoretical CS",
+                            "Imperative Programming",
+                        ],
+                    }
+                ),
+                "dataframe_collection_teacher_lowest_rating",
+            ),
+            id="dataframe_collection_teacher_lowest_rating",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_language_highest_rating,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "language": ["C", "Python", "SML"],
+                        "rating": [11.58, 11.39, 11.93],
+                        "first_name": ["Anil", "Anil", "Anil"],
+                        "last_name": ["Lee", "Lee", "Taylor"],
+                    }
+                ),
+                "dataframe_collection_language_highest_rating",
+            ),
+            id="dataframe_collection_language_highest_rating",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_teacher_count,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_name": [
+                            "Anil",
+                            "Anil",
+                            "Anil",
+                            "David",
+                            "David",
+                            "David",
+                            "Mike",
+                            "Mike",
+                            "Mike",
+                        ],
+                        "last_name": [
+                            "Lee",
+                            "Smith",
+                            "Taylor",
+                            "Smith",
+                            "Taylor",
+                            "Thomas",
+                            "Lee",
+                            "Smith",
+                            "Thomas",
+                        ],
+                        "n_teachers": [25, 25, 25, 15, 10, 10, 15, 15, 10],
+                    }
+                ),
+                "dataframe_collection_teacher_count",
+            ),
+            id="dataframe_collection_teacher_count",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -4388,7 +4614,7 @@ def test_pipeline_e2e_tpch_custom(
             dataframe_collection_bad_2,
             None,
             re.escape(
-                "Mixed types in column 'col1'. All values in a column must be of the same type."
+                "Failed to infer a consistent type for column 'col1'. Arrow error: Could not convert 'two' with type str: tried to convert to int64"
             ),
             id="dataframe_collection_bad_2",
         ),
@@ -4407,14 +4633,26 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             dataframe_collection_bad_5,
             None,
-            re.escape("Arrays are not supported for dataframe collections"),
+            re.escape(
+                "Arrays in column 'col1', are not supported for dataframe collections"
+            ),
             id="dataframe_collection_bad_5",
         ),
         pytest.param(
             dataframe_collection_bad_6,
             None,
-            re.escape("Structs are not supported for dataframe collections"),
+            re.escape(
+                "Structs in column 'col1', are not supported for dataframe collections"
+            ),
             id="dataframe_collection_bad_6",
+        ),
+        pytest.param(
+            dataframe_collection_bad_7,
+            None,
+            re.escape(
+                "Not existing column from 'unique_column_names' in the dataframe."
+            ),
+            id="dataframe_collection_bad_7",
         ),
     ],
 )

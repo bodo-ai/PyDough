@@ -117,7 +117,8 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
 
     @property
     def unique_terms(self) -> list[str]:
-        return self.collection.unique_column_names
+        chosen_unique: str | list[str] = self.collection.unique_column_names[0]
+        return [chosen_unique] if isinstance(chosen_unique, str) else chosen_unique
 
     @property
     def standalone_string(self) -> str:

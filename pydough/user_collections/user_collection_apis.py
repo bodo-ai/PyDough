@@ -49,7 +49,7 @@ def range_collection(
 
 
 def dataframe_collection(
-    name: str, dataframe: pd.DataFrame
+    name: str, dataframe: pd.DataFrame, unique_column_names: list[str | list[str]]
 ) -> UnqualifiedGeneratedCollection:
     """
     Implementation of the `pydough.dataframe_collection` function, which provides
@@ -58,6 +58,8 @@ def dataframe_collection(
     Args:
         `name` : The name of the collection.
         `dataframe` : The dataframe of the collection
+        `unique_column_names`: List of unique properties or unique combinations
+        in the collection.
 
     Returns:
         A collection with the given dataframe.
@@ -66,12 +68,26 @@ def dataframe_collection(
         raise TypeError(f"Expected 'name' to be a string, got {type(name).__name__}")
     if not isinstance(dataframe, pd.DataFrame):
         raise TypeError(
-            f"Expected 'dataframe' to be a pandas DataFrame, got {type(dataframe).__name__}"
+            f"Expected 'dataframe' to be a Pandas DataFrame, got {type(dataframe).__name__}"
+        )
+    if not isinstance(unique_column_names, list):
+        raise TypeError(
+            f"Expected 'unique_column_names' to be a list of string, got {type(unique_column_names).__name__}"
+        )
+
+    unique_flatten_columns: list[str] = [
+        col
+        for item in unique_column_names
+        for col in ([item] if isinstance(item, str) else item)
+    ]
+
+    if not all(col in dataframe.columns for col in unique_flatten_columns):
+        raise ValueError(
+            "Not existing column from 'unique_column_names' in the dataframe."
         )
 
     dataframe_collection = DataframeGeneratedCollection(
-        name=name,
-        dataframe=dataframe,
+        name=name, dataframe=dataframe, unique_column_names=unique_column_names
     )
 
     return UnqualifiedGeneratedCollection(dataframe_collection)

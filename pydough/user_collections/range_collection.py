@@ -65,7 +65,7 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         return self.columns[0]
 
     @property
-    def unique_column_names(self) -> list[str]:
+    def unique_column_names(self) -> list[str | list[str]]:
         return [self.columns[0]]
 
     def __len__(self) -> int:

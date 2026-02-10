@@ -1591,15 +1591,15 @@ It takes in the following arguments:
 
 The supported PyDough types for `dataframe_collection` are:
 - `NumericType`: includes float, integer, infinity, Nan.
-- `BooleanType`: includes classic true and false.
-- `StringType`: includes all aphanumeric caracters.
-- `Datetype`: includes date and datetime.
-- `UnknownType`: everything else.
+- `BooleanType`: True or False.
+- `StringType`: alphanumeric characters.
+- `Datetype`: date and datetime.
+- `UnknownType`: used for all `None` columns.
 
 Note: MySQL by default does not support infinity values. When PyDough detects 
 infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
 
-#### Example
+#### Example 1
 
 ```python
 import pydough
@@ -1624,6 +1624,50 @@ Output:
 5   indigo  6
 6   violet  7
 7   None    8
+```
+
+#### Example 2: Dataframe suppliers threshold (using TPCH)
+**Question**: Return how many suppliers whose account_balance is greater than the DataFrame value are per region.
+
+**Answer**
+```py
+%%pydough
+
+threshold_df = pd.DataFrame(
+    {
+        "region_name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+        "min_account_balance": [5000.32, 8000, 4600.32, 6400.50, 8999.99],
+    }
+)
+
+thresholds = pydough.dataframe_collection(
+    name="thresholds_collection", dataframe=threshold_df, unique_column_names=["region_name"]
+).CALCULATE(region_name, min_account_balance)
+
+suppliers_info = suppliers.CALCULATE(
+    sup_region_name=nation.region.name, account_balance=account_balance
+)
+
+result = (
+    thresholds.CROSS(suppliers_info)
+    .WHERE(
+        (sup_region_name == region_name) & (account_balance > min_account_balance)
+    )
+    .PARTITION(name="region", by=sup_region_name)
+    .CALCULATE(region_name=sup_region_name, n_suppliers=COUNT(suppliers_info))
+)
+df = pydough.to_df(rainbow_table)
+print(df)
+```
+
+Output:
+```
+    region_name     n_suppliers
+0   EUROPE          649
+1   AMERICA         385
+2   AFRICA          877
+3   ASIA            988
+4   MIDDLE EAST     144
 ```
 
 <!-- TOC --><a name="larger-examples"></a>
