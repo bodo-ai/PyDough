@@ -14,8 +14,8 @@ WITH _s13 AS (
     orders.o_totalprice,
     partsupp.ps_partkey,
     partsupp.ps_suppkey,
-    AVG(CAST(orders.o_totalprice AS REAL)) OVER (PARTITION BY lineitem.l_linenumber, lineitem.l_orderkey, partsupp.ps_partkey, partsupp.ps_suppkey) AS _w,
-    COUNT(*) OVER (PARTITION BY lineitem.l_partkey, lineitem.l_suppkey) AS _w_2
+    COUNT(*) OVER (PARTITION BY lineitem.l_partkey, lineitem.l_suppkey) AS _w,
+    AVG(CAST(orders.o_totalprice AS REAL)) OVER (PARTITION BY lineitem.l_linenumber, lineitem.l_orderkey, partsupp.ps_partkey, partsupp.ps_suppkey) AS _w_2
   FROM tpch.partsupp AS partsupp
   JOIN tpch.supplier AS supplier
     ON partsupp.ps_suppkey = supplier.s_suppkey
@@ -40,7 +40,7 @@ WITH _s13 AS (
   FROM _t
   WHERE
     (
-      _w < o_totalprice OR _w_2 = 1
+      _w = 1 OR _w_2 < o_totalprice
     )
     AND l_orderkey = o_orderkey
     AND l_partkey = ps_partkey

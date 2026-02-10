@@ -1,3 +1,3 @@
-ROOT(columns=[('year', year_o_orderdate), ('current_year_orders', n_rows), ('pct_change', 100.0:numeric * FLOAT(n_rows - PREV(args=[n_rows], partition=[], order=[(year_o_orderdate):asc_last])) / PREV(args=[n_rows], partition=[], order=[(year_o_orderdate):asc_last]))], orderings=[(year_o_orderdate):asc_first])
+ROOT(columns=[('year', year_o_orderdate), ('current_year_orders', n_rows), ('pct_change', (100.0:numeric * FLOAT((n_rows - PREV(args=[n_rows], partition=[], order=[(year_o_orderdate):asc_last])))) / PREV(args=[n_rows], partition=[], order=[(year_o_orderdate):asc_last]))], orderings=[(year_o_orderdate):asc_first])
  AGGREGATE(keys={'year_o_orderdate': YEAR(o_orderdate)}, aggregations={'n_rows': COUNT()})
   SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})
