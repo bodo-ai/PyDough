@@ -1,7 +1,7 @@
 ROOT(columns=[('nation_name', anything_n_name), ('n_selected_purchases', n_rows)], orderings=[(anything_n_name):asc_first])
  JOIN(condition=t0.anything_n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'anything_n_name': t0.anything_n_name, 'n_rows': t0.n_rows})
   AGGREGATE(keys={'n_nationkey': n_nationkey}, aggregations={'anything_n_name': ANYTHING(n_name), 'anything_n_regionkey': ANYTHING(n_regionkey), 'n_rows': COUNT()})
-   JOIN(condition=t0.l_suppkey == t1.s_suppkey & t1.n_name == t0.n_name, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'n_regionkey': t0.n_regionkey})
+   JOIN(condition=t0.l_suppkey == t1.s_suppkey & t0.n_name == t1.n_name, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'n_regionkey': t0.n_regionkey})
     JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'l_suppkey': t1.l_suppkey, 'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'n_regionkey': t0.n_regionkey})
      JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'n_regionkey': t0.n_regionkey, 'o_orderkey': t1.o_orderkey})
       JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_custkey': t1.c_custkey, 'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'n_regionkey': t0.n_regionkey})

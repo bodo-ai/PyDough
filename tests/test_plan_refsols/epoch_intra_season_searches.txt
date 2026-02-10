@@ -6,7 +6,7 @@ ROOT(columns=[('season_name', s_name), ('pct_season_searches', ROUND(100.0:numer
      JOIN(condition=MONTH(t1.search_ts) == t0.s_month1 | MONTH(t1.search_ts) == t0.s_month2 | MONTH(t1.search_ts) == t0.s_month3, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'s_name': t0.s_name, 'search_id': t1.search_id})
       SCAN(table=SEASONS, columns={'s_month1': s_month1, 's_month2': s_month2, 's_month3': s_month3, 's_name': s_name})
       SCAN(table=SEARCHES, columns={'search_id': search_id, 'search_ts': search_ts})
-     JOIN(condition=t1.s_name == t0.s_name & MONTH(t0.ev_dt) == t1.s_month1 | MONTH(t0.ev_dt) == t1.s_month2 | MONTH(t0.ev_dt) == t1.s_month3, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'s_name': t0.s_name, 'search_id': t0.search_id})
+     JOIN(condition=t0.s_name == t1.s_name & MONTH(t0.ev_dt) == t1.s_month1 | MONTH(t0.ev_dt) == t1.s_month2 | MONTH(t0.ev_dt) == t1.s_month3, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'s_name': t0.s_name, 'search_id': t0.search_id})
       JOIN(condition=CONTAINS(LOWER(t0.search_string), LOWER(t1.ev_name)), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ev_dt': t1.ev_dt, 's_name': t0.s_name, 'search_id': t0.search_id})
        JOIN(condition=MONTH(t1.search_ts) == t0.s_month1 | MONTH(t1.search_ts) == t0.s_month2 | MONTH(t1.search_ts) == t0.s_month3, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'s_name': t0.s_name, 'search_id': t1.search_id, 'search_string': t1.search_string})
         SCAN(table=SEASONS, columns={'s_month1': s_month1, 's_month2': s_month2, 's_month3': s_month3, 's_name': s_name})

@@ -4,7 +4,7 @@ ROOT(columns=[('name', c_name), ('receipt_date', l_receiptdate), ('nation_name',
    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name, 'c_nationkey': c_nationkey})
   JOIN(condition=t0.s_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'l_receiptdate': t0.l_receiptdate, 'n_name': t1.n_name, 'o_custkey': t0.o_custkey})
    JOIN(condition=t0.l_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'l_receiptdate': t0.l_receiptdate, 'o_custkey': t0.o_custkey, 's_nationkey': t1.s_nationkey})
-    FILTER(condition=RANKING(args=[], partition=[o_custkey], order=[(l_receiptdate):asc_last, (l_extendedprice * 1:numeric - l_discount):desc_first]) == 1:numeric, columns={'l_receiptdate': l_receiptdate, 'l_suppkey': l_suppkey, 'o_custkey': o_custkey})
+    FILTER(condition=1:numeric == RANKING(args=[], partition=[o_custkey], order=[(l_receiptdate):asc_last, (l_extendedprice * 1:numeric - l_discount):desc_first]), columns={'l_receiptdate': l_receiptdate, 'l_suppkey': l_suppkey, 'o_custkey': o_custkey})
      JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'l_discount': t1.l_discount, 'l_extendedprice': t1.l_extendedprice, 'l_receiptdate': t1.l_receiptdate, 'l_suppkey': t1.l_suppkey, 'o_custkey': t0.o_custkey})
       FILTER(condition=o_clerk == 'Clerk#000000017':string, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
        SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_custkey': o_custkey, 'o_orderkey': o_orderkey})

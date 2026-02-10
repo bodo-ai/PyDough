@@ -1,5 +1,5 @@
 ROOT(columns=[('order_year', year_o_orderdate), ('highest_priority', o_orderpriority), ('priority_pct', priority_pct)], orderings=[(year_o_orderdate):asc_first])
- FILTER(condition=RANKING(args=[], partition=[year_o_orderdate], order=[(priority_pct):desc_first]) == 1:numeric, columns={'o_orderpriority': o_orderpriority, 'priority_pct': priority_pct, 'year_o_orderdate': year_o_orderdate})
+ FILTER(condition=1:numeric == RANKING(args=[], partition=[year_o_orderdate], order=[(priority_pct):desc_first]), columns={'o_orderpriority': o_orderpriority, 'priority_pct': priority_pct, 'year_o_orderdate': year_o_orderdate})
   PROJECT(columns={'o_orderpriority': o_orderpriority, 'priority_pct': 100.0:numeric * n_rows / RELSUM(args=[n_rows], partition=[year_o_orderdate], order=[]), 'year_o_orderdate': year_o_orderdate})
    AGGREGATE(keys={'o_orderpriority': o_orderpriority, 'year_o_orderdate': YEAR(o_orderdate)}, aggregations={'n_rows': COUNT()})
     SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority})

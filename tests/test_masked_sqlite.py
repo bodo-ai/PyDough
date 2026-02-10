@@ -1188,7 +1188,7 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 's']",
                     "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
-                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 3, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
                     "CRBNK/CUSTOMERS/c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
                     "CRBNK/CUSTOMERS/c_phone: ['ENDSWITH', 2, '__col__', '5']",
                     "DRY_RUN",
@@ -1223,7 +1223,7 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_email: ['CONTAINS', 2, '__col__', 'gmail']",
                     "CRBNK/CUSTOMERS/c_email: ['CONTAINS', 2, '__col__', 'outlook']",
                     "CRBNK/ACCOUNTS/a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
-                    "CRBNK/CUSTOMERS/c_email: ['OR', 2, 'CONTAINS', 2, '__col__', 'outlook', 'CONTAINS', 2, '__col__', 'gmail']",
+                    "CRBNK/CUSTOMERS/c_email: ['OR', 2, 'CONTAINS', 2, '__col__', 'gmail', 'CONTAINS', 2, '__col__', 'outlook']",
                     "DRY_RUN",
                 },
                 {
@@ -1375,11 +1375,11 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
             [
                 {
-                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']",
+                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'DAY', 1, '__col__', 'QUARTER', 1, '__col__']",
                     "DRY_RUN",
                 },
                 {
-                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']"
+                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'DAY', 1, '__col__', 'QUARTER', 1, '__col__']"
                 },
             ],
             id="cryptbank_filter_count_34",

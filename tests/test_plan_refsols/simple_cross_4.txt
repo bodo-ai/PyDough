@@ -2,6 +2,6 @@ ROOT(columns=[('region_name', r_name), ('n_other_regions', DEFAULT_TO(n_rows, 0:
  JOIN(condition=t0.r_regionkey == t1.r_regionkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'r_name': t0.r_name})
   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
   AGGREGATE(keys={'r_regionkey': r_regionkey}, aggregations={'n_rows': COUNT()})
-   JOIN(condition=t1.r_name != t0.r_name & SLICE(t0.r_name, None:unknown, 1:numeric, None:unknown) == SLICE(t1.r_name, None:unknown, 1:numeric, None:unknown), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'r_regionkey': t0.r_regionkey})
+   JOIN(condition=t0.r_name != t1.r_name & SLICE(t0.r_name, None:unknown, 1:numeric, None:unknown) == SLICE(t1.r_name, None:unknown, 1:numeric, None:unknown), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'r_regionkey': t0.r_regionkey})
     SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
     SCAN(table=tpch.REGION, columns={'r_name': r_name})

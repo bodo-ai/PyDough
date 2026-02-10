@@ -16,5 +16,5 @@ ROOT(columns=[('n1', n_rows), ('n2', agg_1), ('n3', agg_2), ('n4', agg_3), ('n5'
     FILTER(condition=DAY(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == 2:numeric & HOUR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == 8:numeric, columns={})
      SCAN(table=bodo.retail.transactions, columns={'transaction_date': transaction_date})
   AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-   FILTER(condition=DAY(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) < 4:numeric & HOUR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) < 3:numeric | MINUTE(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == SECOND(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) & HOUR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) < 3:numeric, columns={})
+   FILTER(condition=DAY(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) < 4:numeric & HOUR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) < 3:numeric | HOUR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) < 3:numeric & MINUTE(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == SECOND(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))), columns={})
     SCAN(table=bodo.retail.transactions, columns={'transaction_date': transaction_date})
