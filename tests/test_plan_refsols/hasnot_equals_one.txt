@@ -1,0 +1,8 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=(DEFAULT_TO(n_rows, 0:numeric) == 0:numeric) == 1:numeric, columns={})
+   JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows})
+    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
+    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})
+     FILTER(condition=o_orderpriority == '1-URGENT':string, columns={'o_custkey': o_custkey})
+      SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderpriority': o_orderpriority})

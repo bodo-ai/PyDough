@@ -2983,6 +2983,15 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HASNOT(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [57667]}),
+                "hasnot_equals_one",
+            ),
+            id="hasnot_equals_one",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 bad_child_reuse_5,
                 "TPCH",
                 lambda: pd.DataFrame(
