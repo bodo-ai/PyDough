@@ -20,7 +20,6 @@ WITH _t AS (
     _t.c_custkey,
     ANY_VALUE(_t.c_acctbal) AS anything_c_acctbal,
     ANY_VALUE(_t.c_name) AS anything_c_name,
-    ANY_VALUE(_t.mrk_segment) AS anything_mrk_segment,
     ANY_VALUE(_t.nation_name) AS anything_nation_name,
     COUNT(ORDERS.o_custkey) AS count_o_custkey
   FROM _t AS _t
@@ -65,7 +64,7 @@ WITH _t AS (
 )
 SELECT
   _s6.anything_c_name COLLATE utf8mb4_bin AS name,
-  ROW_NUMBER() OVER (PARTITION BY _s6.anything_mrk_segment, _s6.anything_nation_name ORDER BY CASE WHEN _s6.anything_c_acctbal IS NULL THEN 1 ELSE 0 END DESC, _s6.anything_c_acctbal DESC) AS ranking_balance,
+  ROW_NUMBER() OVER (PARTITION BY _s6.anything_nation_name ORDER BY CASE WHEN _s6.anything_c_acctbal IS NULL THEN 1 ELSE 0 END DESC, _s6.anything_c_acctbal DESC) AS ranking_balance,
   COALESCE(_s6.count_o_custkey, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,

@@ -3,7 +3,6 @@ WITH _t2 AS (
     customer.c_acctbal,
     customer.c_custkey,
     customer.c_name,
-    column2 AS mrk_segment,
     column1 AS nation_name
   FROM (VALUES
     ('UNITED STATES', 'BUILDING'),
@@ -21,7 +20,6 @@ WITH _t2 AS (
     _t2.c_custkey,
     ANY_VALUE(_t2.c_acctbal) AS anything_c_acctbal,
     ANY_VALUE(_t2.c_name) AS anything_c_name,
-    ANY_VALUE(_t2.mrk_segment) AS anything_mrk_segment,
     ANY_VALUE(_t2.nation_name) AS anything_nation_name,
     COUNT(orders.o_custkey) AS count_o_custkey
   FROM _t2 AS _t2
@@ -60,7 +58,7 @@ WITH _t2 AS (
 )
 SELECT
   _s6.anything_c_name AS name,
-  ROW_NUMBER() OVER (PARTITION BY _s6.anything_mrk_segment, _s6.anything_nation_name ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST) AS ranking_balance,
+  ROW_NUMBER() OVER (PARTITION BY _s6.anything_nation_name ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST) AS ranking_balance,
   COALESCE(_s6.count_o_custkey, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,
