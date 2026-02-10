@@ -1,12 +1,12 @@
 SELECT
-  rainbow.color,
-  rainbow.idx
+  rainbow.idx,
+  rainbow.color
 FROM (VALUES
-  ROW('red', 0),
-  ROW('orange', 1),
-  ROW('yellow', 2),
-  ROW('green', 3),
-  ROW('blue', 4),
-  ROW('indigo', 5),
-  ROW('violet', 6),
-  ROW(NULL, 7)) AS rainbow(color, idx)
+  ROW(0, 'red'),
+  ROW(1, 'orange'),
+  ROW(2, 'yellow'),
+  ROW(3, 'green'),
+  ROW(4, 'blue'),
+  ROW(5, 'indigo'),
+  ROW(6, 'violet'),
+  ROW(7, NULL)) AS rainbow(idx, color)

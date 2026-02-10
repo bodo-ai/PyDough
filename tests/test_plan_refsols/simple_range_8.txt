@@ -1,5 +1,5 @@
 ROOT(columns=[('s', s), ('n', n_rows), ('a', avg_p)], orderings=[])
- AGGREGATE(keys={'s': x + y + z}, aggregations={'avg_p': AVG(x * y * z), 'n_rows': COUNT()})
+ AGGREGATE(keys={'s': (x + y) + z}, aggregations={'avg_p': AVG(((x * y) * z)), 'n_rows': COUNT()})
   JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'x': t0.x, 'y': t0.y, 'z': t1.z})
    JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'x': t0.x, 'y': t1.y})
     GENERATED_TABLE(RangeCollection('d1', x=range(1, 5)))

@@ -1,12 +1,12 @@
 SELECT
-  rainbow.color,
-  rainbow.idx
+  rainbow.idx,
+  rainbow.color
 FROM (VALUES
-  ('red', 0),
-  ('orange', 1),
-  ('yellow', 2),
-  ('green', 3),
-  ('blue', 4),
-  ('indigo', 5),
-  ('violet', 6),
-  (NULL, 7)) AS rainbow(color, idx)
+  (0, 'red'),
+  (1, 'orange'),
+  (2, 'yellow'),
+  (3, 'green'),
+  (4, 'blue'),
+  (5, 'indigo'),
+  (6, 'violet'),
+  (7, NULL)) AS rainbow(idx, color)

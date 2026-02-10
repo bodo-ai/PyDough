@@ -846,9 +846,9 @@ def impl_defog_dealership_adv8():
         freq="MS",  # Month Start
     )
     date_range_df = pd.DataFrame({"month_start": months})
-    date_range = pydough.dataframe_collection("months_range", date_range_df).CALCULATE(
-        month_start
-    )
+    date_range = pydough.dataframe_collection(
+        "months_range", date_range_df, ["month_start"]
+    ).CALCULATE(month_start)
 
     filtered_sales = sales.WHERE(
         (YEAR(salesperson.hire_date) >= 2022)
