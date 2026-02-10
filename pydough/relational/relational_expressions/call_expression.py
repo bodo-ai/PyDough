@@ -50,11 +50,6 @@ class CallExpression(RelationalExpression):
         if self.op in (BAN, BOR, EQU, NEQ):
             self._inputs.sort(key=repr)
 
-        # If the operator is a commutative operation (AND, OR, EQUAL, NOT-EQUAL)
-        # first sort the inputs to normalize them.
-        if self.op in (BAN, BOR, EQU, NEQ):
-            self._inputs.sort(key=repr)
-
     @property
     def op(self) -> PyDoughExpressionOperator:
         """
