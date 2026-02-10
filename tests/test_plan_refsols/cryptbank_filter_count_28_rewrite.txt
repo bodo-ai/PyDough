@@ -1,7 +1,7 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
   JOIN(condition=UNMASK::((42 - ([t1.c_key]))) == t0.a_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
-   FILTER(condition=YEAR(UNMASK::(DATETIME([a_open_ts], '+123456789 seconds'))) < 2020:numeric & UNMASK::(SQRT([a_balance])) >= 5000:numeric & ISIN(a_type, ['avingss', 'etirementr']:array[unknown]), columns={'a_custkey': a_custkey})
+   FILTER(condition=(YEAR(UNMASK::(DATETIME([a_open_ts], '+123456789 seconds'))) < 2020:numeric) & (UNMASK::(SQRT([a_balance])) >= 5000:numeric) & ISIN(a_type, ['avingss', 'etirementr']:array[unknown]), columns={'a_custkey': a_custkey})
     SCAN(table=CRBNK.ACCOUNTS, columns={'a_balance': a_balance, 'a_custkey': a_custkey, 'a_open_ts': a_open_ts, 'a_type': a_type})
    FILTER(condition=CONTAINS(UNMASK::(SUBSTRING([c_email], -1) || SUBSTRING([c_email], 1, LENGTH([c_email]) - 1)), 'gmail':string) | CONTAINS(UNMASK::(SUBSTRING([c_email], -1) || SUBSTRING([c_email], 1, LENGTH([c_email]) - 1)), 'outlook':string), columns={'c_key': c_key})
     SCAN(table=CRBNK.CUSTOMERS, columns={'c_email': c_email, 'c_key': c_key})

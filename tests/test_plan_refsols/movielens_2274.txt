@@ -1,5 +1,5 @@
-ROOT(columns=[('percentage_of_female_users', IFF(n_rows > 0:numeric, 100.0:numeric * sum_expr / n_rows, 0.0:numeric))], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT(), 'sum_expr': SUM(LOWER(u_gender) == 'f':string)})
+ROOT(columns=[('percentage_of_female_users', IFF((n_rows > 0:numeric), ((100.0:numeric * sum_expr) / n_rows), 0.0:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT(), 'sum_expr': SUM((LOWER(u_gender) == 'f':string))})
   JOIN(condition=t0.userid == t1.userid, type=SEMI, columns={'u_gender': t0.u_gender})
    SCAN(table=main.users, columns={'u_gender': u_gender, 'userid': userid})
    FILTER(condition=rating == 2:numeric, columns={'userid': userid})

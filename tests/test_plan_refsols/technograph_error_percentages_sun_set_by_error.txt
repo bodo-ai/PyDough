@@ -1,4 +1,4 @@
-ROOT(columns=[('error', er_name), ('pct', ROUND(100.0:numeric * DEFAULT_TO(n_rows, 0:numeric) / RELSUM(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[]), 2:numeric))], orderings=[(ROUND(100.0:numeric * DEFAULT_TO(n_rows, 0:numeric) / RELSUM(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[]), 2:numeric)):desc_last])
+ROOT(columns=[('error', er_name), ('pct', ROUND(((100.0:numeric * DEFAULT_TO(n_rows, 0:numeric)) / RELSUM(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[])), 2:numeric))], orderings=[(ROUND(((100.0:numeric * DEFAULT_TO(n_rows, 0:numeric)) / RELSUM(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[])), 2:numeric)):desc_last])
  JOIN(condition=t0.er_id == t1.in_error_id, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'er_name': t0.er_name, 'n_rows': t1.n_rows})
   SCAN(table=main.ERRORS, columns={'er_id': er_id, 'er_name': er_name})
   AGGREGATE(keys={'in_error_id': in_error_id}, aggregations={'n_rows': COUNT()})

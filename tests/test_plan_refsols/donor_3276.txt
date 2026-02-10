@@ -1,4 +1,4 @@
-ROOT(columns=[('percentage_suburban', 100.0:numeric * suburban_sb_projects / n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT(), 'suburban_sb_projects': SUM(LOWER(school_metro) == 'suburban':string)})
+ROOT(columns=[('percentage_suburban', (100.0:numeric * suburban_sb_projects) / n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT(), 'suburban_sb_projects': SUM((LOWER(school_metro) == 'suburban':string))})
   FILTER(condition=LOWER(school_city) == 'santa barbara':string, columns={'school_metro': school_metro})
    SCAN(table=main.projects, columns={'school_city': school_city, 'school_metro': school_metro})

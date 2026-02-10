@@ -5,7 +5,7 @@ ROOT(columns=[('nation_name', n_name), ('customer_name', c_name), ('order_key', 
    FILTER(condition=r_name == 'ASIA':string, columns={'r_regionkey': r_regionkey})
     SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
   FILTER(condition=1:numeric == RANKING(args=[], partition=[c_nationkey], order=[(o_totalprice):desc_first], allow_ties=False), columns={'c_name': c_name, 'c_nationkey': c_nationkey, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice, 'value_percentage': value_percentage})
-   PROJECT(columns={'c_name': c_name, 'c_nationkey': c_nationkey, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice, 'value_percentage': 100.0:numeric * o_totalprice / RELSUM(args=[o_totalprice], partition=[c_nationkey], order=[])})
+   PROJECT(columns={'c_name': c_name, 'c_nationkey': c_nationkey, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice, 'value_percentage': (100.0:numeric * o_totalprice) / RELSUM(args=[o_totalprice], partition=[c_nationkey], order=[])})
     JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_name': t0.c_name, 'c_nationkey': t0.c_nationkey, 'o_orderkey': t1.o_orderkey, 'o_totalprice': t1.o_totalprice})
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name, 'c_nationkey': c_nationkey})
      FILTER(condition=YEAR(o_orderdate) == 1998:numeric, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice})
