@@ -3627,6 +3627,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
+                        "idx": range(8),
                         "color": [
                             "red",
                             "orange",
@@ -3637,7 +3638,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "violet",
                             None,
                         ],
-                        "idx": range(8),
                     }
                 ),
                 "simple_dataframe_1",
