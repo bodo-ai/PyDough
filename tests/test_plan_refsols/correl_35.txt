@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  JOIN(condition=t0.p_type == t1.p_type & t0.s_nationkey == t1.c_nationkey & t0.o_custkey == t1.c_custkey & t0.o_orderpriority == t1.o_orderpriority, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
+  JOIN(condition=t0.o_custkey == t1.c_custkey & t0.o_orderpriority == t1.o_orderpriority & t0.p_type == t1.p_type & t0.s_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
    JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'o_custkey': t1.o_custkey, 'o_orderpriority': t1.o_orderpriority, 'p_type': t0.p_type, 's_nationkey': t0.s_nationkey})
     JOIN(condition=t0.l_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'l_orderkey': t0.l_orderkey, 'p_type': t0.p_type, 's_nationkey': t1.s_nationkey})
      JOIN(condition=t0.l_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'l_orderkey': t0.l_orderkey, 'l_suppkey': t0.l_suppkey, 'p_type': t1.p_type})

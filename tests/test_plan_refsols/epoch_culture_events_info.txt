@@ -5,7 +5,7 @@ ROOT(columns=[('event_name', ev_name), ('era_name', er_name), ('event_year', YEA
     FILTER(condition=ev_typ == 'culture':string, columns={'ev_dt': ev_dt, 'ev_key': ev_key, 'ev_name': ev_name})
      SCAN(table=EVENTS, columns={'ev_dt': ev_dt, 'ev_key': ev_key, 'ev_name': ev_name, 'ev_typ': ev_typ})
     SCAN(table=ERAS, columns={'er_end_year': er_end_year, 'er_name': er_name, 'er_start_year': er_start_year})
-   JOIN(condition=MONTH(t0.ev_dt) == t1.s_month1 | MONTH(t0.ev_dt) == t1.s_month2 | MONTH(t0.ev_dt) == t1.s_month3, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ev_key': t0.ev_key, 's_name': t1.s_name})
+   JOIN(condition=MONTH(t0.ev_dt) == t1.s_month3 | MONTH(t0.ev_dt) == t1.s_month1 | MONTH(t0.ev_dt) == t1.s_month2, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ev_key': t0.ev_key, 's_name': t1.s_name})
     SCAN(table=EVENTS, columns={'ev_dt': ev_dt, 'ev_key': ev_key})
     SCAN(table=SEASONS, columns={'s_month1': s_month1, 's_month2': s_month2, 's_month3': s_month3, 's_name': s_name})
   JOIN(condition=t1.t_start_hour <= HOUR(t0.ev_dt) & HOUR(t0.ev_dt) < t1.t_end_hour, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ev_key': t0.ev_key, 't_name': t1.t_name})

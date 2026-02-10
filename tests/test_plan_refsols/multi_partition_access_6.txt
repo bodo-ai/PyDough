@@ -1,5 +1,5 @@
 ROOT(columns=[('transaction_id', sbTxId)], orderings=[(sbTxId):asc_first])
- JOIN(condition=t0.sbTxCustId == t1.sbTxCustId & t0.sbTxType == t1.sbTxType & t1.n_rows == 1:numeric | t0.n_rows == 1:numeric, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'sbTxId': t1.sbTxId})
+ JOIN(condition=t0.sbTxCustId == t1.sbTxCustId & t0.sbTxType == t1.sbTxType & t0.n_rows == 1:numeric | t1.n_rows == 1:numeric, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'sbTxId': t1.sbTxId})
   AGGREGATE(keys={'sbTxCustId': sbTxCustId, 'sbTxType': sbTxType}, aggregations={'n_rows': COUNT()})
    JOIN(condition=t0.sbTxCustId == t1.sbTxCustId, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'sbTxCustId': t1.sbTxCustId, 'sbTxType': t1.sbTxType})
     FILTER(condition=n_rows > 1:numeric, columns={'sbTxCustId': sbTxCustId})

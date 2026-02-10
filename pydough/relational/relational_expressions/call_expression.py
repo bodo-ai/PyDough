@@ -5,7 +5,7 @@ The representation of a column function call for use in a relational tree.
 __all__ = ["CallExpression"]
 
 
-from pydough.pydough_operators import PyDoughExpressionOperator
+from pydough.pydough_operators import BAN, BOR, EQU, NEQ, PyDoughExpressionOperator
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
@@ -26,6 +26,11 @@ class CallExpression(RelationalExpression):
         super().__init__(return_type)
         self._op: PyDoughExpressionOperator = op
         self._inputs: list[RelationalExpression] = inputs
+
+        # If the operator is a commutative operation (AND, OR, EQUAL, NOT-EQUAL)
+        # first sort the inputs to normalize them.
+        if self.op in (BAN, BOR, EQU, NEQ):
+            self._inputs.sort(key=repr)
 
     @property
     def op(self) -> PyDoughExpressionOperator:
