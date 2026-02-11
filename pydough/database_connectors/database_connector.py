@@ -14,8 +14,9 @@ import pandas as pd
 
 import pydough
 from pydough.errors import PyDoughSessionException
+from pydough.logger import get_logger
 
-from .db_types import DBConnection, DBCursor, SnowflakeCursor
+from .db_types import BodoSQLContext, DBConnection, DBCursor, SnowflakeCursor
 
 
 class DatabaseConnection:
@@ -134,5 +135,23 @@ class DatabaseContext:
     the required corresponding dialect.
     """
 
-    connection: DatabaseConnection
+    connection: DatabaseConnection | BodoSQLContext
     dialect: DatabaseDialect
+
+    def execute_query(self, sql: str) -> pd.DataFrame:
+        """Execute a SQL query using the database connection and return the
+        results as a Pandas DataFrame.
+
+        Args:
+            `sql`: The SQL query to execute.
+        Returns:
+            A Pandas DataFrame containing the results of the query.
+        """
+        if isinstance(self.connection, DatabaseConnection):
+            return self.connection.execute_query_df(sql)
+        else:
+            # Otherwise it is a BodoSQLContext
+            pyd_logger = get_logger(__name__)
+            bodosql_plan: str = self.connection.generate_plan(sql)
+            pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
+            return self.connection.sql(sql)

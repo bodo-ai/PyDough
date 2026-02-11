@@ -37,6 +37,7 @@ dev-dependencies = [
     "pydough[mysql]",
     "pydough[postgres]",
     "pydough[server]",
+    "pydough[bodo]",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,7 @@ snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
+bodo = ["bodo", "bodosql"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

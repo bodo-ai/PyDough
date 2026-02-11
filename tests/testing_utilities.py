@@ -1066,9 +1066,9 @@ class PyDoughSQLComparisonTest:
         sql_text: str = self.sql_function()
         refsol: pd.DataFrame
         if reference_database is not None:
-            refsol = reference_database.connection.execute_query_df(sql_text)
+            refsol = reference_database.execute_query(sql_text)
         else:
-            refsol = database.connection.execute_query_df(sql_text)
+            refsol = database.execute_query(sql_text)
 
         # If the query does not care about column names, update the answer to use
         # the column names in the refsol.
@@ -1381,6 +1381,9 @@ class PyDoughPandasTest:
                     result[col_name], refsol[col_name]
                 )
         # Perform the comparison between the result and the reference solution
+        print()
+        print(result.to_string())
+        print(refsol.to_string())
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )
