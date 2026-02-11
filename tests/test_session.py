@@ -270,6 +270,72 @@ FROM tpch.orders
             ),
             id="iff_false_branch_zero",
         ),
+        # Also test these weird variants with the NULL behavior
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_multiple_ops,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_multiple_ops_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="multiple_ops_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_complex_operands,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_complex_operands_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="complex_operands_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_keep_if_denom,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_keep_if_denom_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="keep_if_denom_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_iff_denom_true_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_iff_true_branch_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_true_branch_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_iff_denom_false_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_iff_false_branch_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_false_branch_null",
+        ),
     ],
 )
 def division_by_zero_test_data(

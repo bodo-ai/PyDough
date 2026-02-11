@@ -227,42 +227,35 @@ class RelTranslation:
         is_rhs_zero = isinstance(rhs, LiteralExpression) and rhs.value == 0
         return (lhs == value and is_rhs_zero) or (rhs == value and is_lhs_zero)
 
-    def _strip_zero_guards(self, expr: RelationalExpression) -> RelationalExpression:
+    def _has_zero_guard(self, expr: RelationalExpression) -> bool:
         """
-        Strips KEEP_IF or IFF wrappers from an expression only if they are
-        specifically zero-guards (condition is 'value != 0' with literal 0).
-
-        This ensures we don't strip KEEP_IF/IFF added for business logic
-        reasons unrelated to division-by-zero protection.
+        Checks if an expression has a zero-guard wrapper (KEEP_IF or IFF with
+        condition 'value != 0' and literal 0).
 
         Args:
             `expr`: The expression to check.
 
         Returns:
-            The core expression with zero-guard wrappers removed, or the
-            original expression if no zero-guards are detected.
+            True if the expression has a zero-guard wrapper, False otherwise.
         """
-        while isinstance(expr, CallExpression):
-            if expr.op == pydop.KEEP_IF:
-                # KEEP_IF(value, condition) - only strip if condition is 'value != 0'
-                value = expr.inputs[0]
-                condition = expr.inputs[1]
-                if self._is_zero_check_condition(condition, value):
-                    expr = value
-                else:
-                    break
-            elif expr.op == pydop.IFF:
-                # IFF(condition, then_value, else_value)
-                # Only strip if condition is 'then_value != 0'
-                condition = expr.inputs[0]
-                then_value = expr.inputs[1]
-                if self._is_zero_check_condition(condition, then_value):
-                    expr = then_value
-                else:
-                    break
-            else:
-                break
-        return expr
+        if not isinstance(expr, CallExpression):
+            return False
+        if expr.op == pydop.KEEP_IF:
+            # KEEP_IF(value, condition) - check if condition is 'value != 0'
+            value = expr.inputs[0]
+            condition = expr.inputs[1]
+            return self._is_zero_check_condition(condition, value)
+        elif expr.op == pydop.IFF:
+            # IFF(condition, then_value, else_value)
+            # Only matches pattern IFF(x != 0, x, 0)
+            condition = expr.inputs[0]
+            then_value = expr.inputs[1]
+            else_value = expr.inputs[2]
+            is_else_zero = (
+                isinstance(else_value, LiteralExpression) and else_value.value == 0
+            )
+            return is_else_zero and self._is_zero_check_condition(condition, then_value)
+        return False
 
     def _apply_division_by_zero_handling(
         self,
@@ -283,7 +276,7 @@ class RelTranslation:
             zero-handling based on the config.
         """
         # Check if divisor already has a zero guard
-        if self._strip_zero_guards(divisor) is not divisor:
+        if self._has_zero_guard(divisor):
             # Already has a zero guard, just return normal division
             return CallExpression(pydop.DIV, typ, [dividend, divisor])
 
@@ -309,30 +302,18 @@ class RelTranslation:
 
             case DivisionByZeroBehavior.ZERO:
                 # If b == 0, return 0
-                # Replace with IFF(b == 0, 0, a / guarded_b)
+                # Replace with IFF(b == 0, 0, a / b)
+                # The IFF guards against zero, so no KEEP_IF needed on divisor
                 is_zero_expr = CallExpression(
                     pydop.EQU,
                     BooleanType(),
                     [divisor, LiteralExpression(0, divisor.data_type)],
                 )
-                is_not_zero_expr = CallExpression(
-                    pydop.NEQ,
-                    BooleanType(),
-                    [divisor, LiteralExpression(0, divisor.data_type)],
-                )
-                # Wrap divisor with KEEP_IF to mark it as processed
-                guarded_divisor = CallExpression(
-                    pydop.KEEP_IF,
-                    divisor.data_type,
-                    [divisor, is_not_zero_expr],
-                )
-                guarded_div = CallExpression(
-                    pydop.DIV, typ, [dividend, guarded_divisor]
-                )
+                div_expr = CallExpression(pydop.DIV, typ, [dividend, divisor])
                 return CallExpression(
                     pydop.IFF,
                     typ,
-                    [is_zero_expr, LiteralExpression(0, typ), guarded_div],
+                    [is_zero_expr, LiteralExpression(0, typ), div_expr],
                 )
 
         # Default: return normal division
