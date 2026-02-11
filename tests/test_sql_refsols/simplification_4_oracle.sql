@@ -1,8 +1,8 @@
 WITH _T AS (
   SELECT
     sbtxdatetime AS SBTXDATETIME,
-    ROW_NUMBER() OVER (ORDER BY sbtxdatetime) AS _W,
-    ROW_NUMBER() OVER (ORDER BY sbtxdatetime DESC) AS _W_2
+    ROW_NUMBER() OVER (ORDER BY sbtxdatetime DESC) AS _W,
+    ROW_NUMBER() OVER (ORDER BY sbtxdatetime) AS _W_2
   FROM MAIN.SBTRANSACTION
   WHERE
     EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
