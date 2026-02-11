@@ -2983,6 +2983,17 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                bad_child_reuse_5,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"key": [2487, 43044, 69321, 76146], "n_orders": [0] * 4}
+                ),
+                "bad_child_reuse_5",
+            ),
+            id="bad_child_reuse_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
                 "TPCH",
                 lambda: pd.DataFrame({"n": [92333]}),
@@ -2998,17 +3009,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "hasnot_equals_one",
             ),
             id="hasnot_equals_one",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                bad_child_reuse_5,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {"key": [2487, 43044, 69321, 76146], "n_orders": [0] * 4}
-                ),
-                "bad_child_reuse_5",
-            ),
-            id="bad_child_reuse_5",
         ),
         pytest.param(
             PyDoughPandasTest(
