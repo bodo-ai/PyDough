@@ -39,5 +39,8 @@ SELECT
     (
       sum_sum_sbdpclose / sum_count_sbdpclose
     ) - LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) / LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month) AS momc
+  ) / NULLIF(
+    LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month),
+    0
+  ) AS momc
 FROM _t0
