@@ -124,7 +124,7 @@ def defog_config() -> PyDoughConfigs:
     config.avg_default_zero = False
     config.start_of_week = DayOfWeek.MONDAY
     config.start_week_as_zero = True
-    config.division_by_zero = DivisionByZeroBehavior.DATABASE
+    config.division_by_zero = DivisionByZeroBehavior.NULL
     return config
 
 

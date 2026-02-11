@@ -10,6 +10,6 @@ WITH _s0 AS (
   FROM main.restaurant
 )
 SELECT
-  _s0.n_rows / _s1.n_rows AS ratio
+  _s0.n_rows / NULLIF(_s1.n_rows, 0) AS ratio
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1
