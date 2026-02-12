@@ -269,7 +269,7 @@ result = (
                             "Silver",
                             "Gray (X11 Gray)",
                             "Battleship Grey",
-                            "Dim Grey",
+                            "Dim Gray",
                         ],
                         "color_hex": [
                             "#c0c0c0",
@@ -671,6 +671,81 @@ result = (
                 order_sensitive=True,
             ),
             id="color_q12",
+        ),
+        pytest.param(
+            # For each of the 5 selected colors, how many shipments were there
+            # of that color? Break down as 1 column per color in a single row.
+            PyDoughPandasTest(
+                """
+count_args = {}
+for color_name in color_names:
+    count_args[f'n_{color_name}'] = COUNT(shipments.WHERE((color_key == color_name)))
+result = COLORSHOP.CALCULATE(**count_args)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "n_avocado": [458],
+                        "n_blue_bell": [446],
+                        "n_carmine": [377],
+                        "n_deep_fuchsia": [314],
+                        "n_mode_beige": [181],
+                    }
+                ),
+                "color_q13",
+                kwargs={
+                    "color_names": [
+                        "avocado",
+                        "blue_bell",
+                        "carmine",
+                        "deep_fuchsia",
+                        "mode_beige",
+                    ]
+                },
+            ),
+            id="color_q13",
+        ),
+        pytest.param(
+            # For each of the 5 selected colors, which company has the cheapest
+            # price-per-volume for that color?
+            PyDoughPandasTest(
+                """
+analysis_args = {}
+for color_name in color_names:
+    best_price_per_volume = (
+        shipments.WHERE(color_key == color_name)
+        .CALCULATE(price_per_volume=ROUND(price / volume, 2))
+        .TOP_K(1, by=(price_per_volume.ASC(), company.name.ASC()))
+        .SINGULAR()
+    )
+    analysis_args[f'cheapest_{color_name}_price'] = best_price_per_volume.price_per_volume
+    analysis_args[f'cheapest_{color_name}_company'] = best_price_per_volume.company.name
+result = COLORSHOP.CALCULATE(**analysis_args)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "cheapest_brandeis_blue_price": [13.81],
+                        "cheapest_brandeis_blue_company": ["Hue Depot"],
+                        "cheapest_china_pink_price": [17.08],
+                        "cheapest_china_pink_company": ["Chroma Co."],
+                        "cheapest_french_raspberry_price": [15.97],
+                        "cheapest_french_raspberry_company": ["Tint Traders"],
+                        "cheapest_puce_price": [12.97],
+                        "cheapest_puce_company": ["Rainbow Inc."],
+                    }
+                ),
+                "color_q14",
+                kwargs={
+                    "color_names": [
+                        "brandeis_blue",
+                        "china_pink",
+                        "french_raspberry",
+                        "puce",
+                    ]
+                },
+            ),
+            id="color_q14",
         ),
     ],
 )
