@@ -33,7 +33,11 @@ if TYPE_CHECKING:
 
 class HybridFilterMerger:
     """
-    TODO
+    Transformation class that takes in a hybrid tree and recursively applies a
+    protocol throughout the tree that identifies children that are identical
+    except for their filters and attempts to merge them into one child that is
+    aggregated differently. Along the way, dead child pruning is performed on
+    the entire tree.
     """
 
     def __init__(self, translator: "HybridTranslator") -> None:
