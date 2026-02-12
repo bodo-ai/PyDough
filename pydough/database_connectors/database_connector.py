@@ -154,4 +154,6 @@ class DatabaseContext:
             pyd_logger = get_logger(__name__)
             bodosql_plan: str = self.connection.generate_plan(sql)
             pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
+            print()
+            print(bodosql_plan)
             return self.connection.sql(sql)

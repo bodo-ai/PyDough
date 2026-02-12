@@ -1,0 +1,4 @@
+ROOT(columns=[('color', identname)], orderings=[(identname):asc_first])
+ JOIN(condition=t0.identname == t1.colid, type=ANTI, columns={'identname': t0.identname})
+  SCAN(table=CLRS, columns={'identname': identname})
+  SCAN(table=SHPMNTS, columns={'colid': colid})

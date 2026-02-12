@@ -1,0 +1,7 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.colid == t1.identname, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
+   FILTER(condition=YEAR(dos) == 2025:numeric, columns={'colid': colid})
+    SCAN(table=SHPMNTS, columns={'colid': colid, 'dos': dos})
+   FILTER(condition=STARTSWITH(colorname, 'Yellow':string), columns={'identname': identname})
+    SCAN(table=CLRS, columns={'colorname': colorname, 'identname': identname})

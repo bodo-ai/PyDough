@@ -12,7 +12,7 @@
           {
             "name": "key",
             "type": "table column",
-            "column name": "\"identname\"",
+            "column name": "identname",
             "data type": "string",
             "description": "Neat string identifier name for the color, all lowercase, with underscores instead of spaces and no punctuation",
             "sample values": ["antique_white", "tractor_red", "vermilion_cinnabar", "aquamarine"],
@@ -21,7 +21,7 @@
           {
             "name": "name",
             "type": "table column",
-            "column name": "\"colorname\"",
+            "column name": "colorname",
             "data type": "string",
             "description": "Full name of the color, with capitalization, spaces, parenthesis, etc.",
             "sample values": ["Antique White", "Tractor Red", "Vermilion (Cinnabar)", "Aquamarine"]
@@ -29,7 +29,7 @@
           {
             "name": "hex_code",
             "type": "table column",
-            "column name": "\"chex\"",
+            "column name": "chex",
             "data type": "string",
             "description": "Hexadecimal representation of the color, either in 3 or 6 character format, with a # at the beginning",
             "sample values": ["#0ff", "#8db600", "#ffbf00", "#00008b"],
@@ -38,7 +38,7 @@
           {
             "name": "red",
             "type": "table column",
-            "column name": "\"r\"",
+            "column name": "r",
             "data type": "numeric",
             "description": "The red component of the color in RGB, from 0 to 255",
             "sample values": [0, 16, 141, 240, 255],
@@ -47,7 +47,7 @@
           {
             "name": "green",
             "type": "table column",
-            "column name": "\"g\"",
+            "column name": "g",
             "data type": "numeric",
             "description": "The green component of the color in RGB, from 0 to 255",
             "sample values": [0, 10, 50, 213, 255],
@@ -56,7 +56,7 @@
           {
             "name": "blue",
             "type": "table column",
-            "column name": "\"b\"",
+            "column name": "b",
             "data type": "numeric",
             "description": "The blue component of the color in RGB, from 0 to 255",
             "sample values": [0, 1, 100, 185, 255],
@@ -75,7 +75,7 @@
           {
             "name": "key",
             "type": "table column",
-            "column name": "\"sid\"",
+            "column name": "sid",
             "data type": "numeric",
             "description": "Unique identifier for the shipment",
             "sample values": [1, 20, 104, 564],
@@ -84,7 +84,7 @@
           {
             "name": "color_key",
             "type": "table column",
-            "column name": "\"colid\"",
+            "column name": "colid",
             "data type": "string",
             "description": "The key of the color being shipped",
             "sample values": ["color id"]
@@ -92,7 +92,7 @@
           {
             "name": "customer_key",
             "type": "table column",
-            "column name": "\"cusid\"",
+            "column name": "cusid",
             "data type": "numeric",
             "description": "Key of the customer requesting the shipment",
             "sample values": [1, 2, 4, 9],
@@ -101,7 +101,7 @@
           {
             "name": "company_key",
             "type": "table column",
-            "column name": "\"comid\"",
+            "column name": "comid",
             "data type": "numeric",
             "description": "Key of the company responsible for the shipment",
             "sample values": [2, 3, 5, 7, 8],
@@ -110,7 +110,7 @@
           {
             "name": "ship_date",
             "type": "table column",
-            "column name": "\"dos\"",
+            "column name": "dos",
             "data type": "datetime",
             "description": "The date that the shipment was sent out",
             "sample values": ["2026-01-01", "2024-02-15", "2025-03-20", "2024-04-10"],
@@ -119,7 +119,7 @@
           {
             "name": "volume",
             "type": "table column",
-            "column name": "\"vol\"",
+            "column name": "vol",
             "data type": "numeric",
             "description": "How many liters of the color were shipped",
             "sample values": [0.1, 0.5, 1.0, 2.0, 4.5],
@@ -128,7 +128,7 @@
           {
             "name": "price",
             "type": "table column",
-            "column name": "\"prc\"",
+            "column name": "prc",
             "data type": "numeric",
             "description": "Price in dollars for the shipment",
             "sample values": [19.99, 49.99, 100.0, 250.5],
@@ -146,7 +146,7 @@
           {
             "name": "key",
             "type": "table column",
-            "column name": "\"cstid\"",
+            "column name": "cstid",
             "data type": "numeric",
             "description": "Unique identifier for the customer",
             "sample values": [1, 2, 4, 9],
@@ -155,7 +155,7 @@
           {
             "name": "first_name",
             "type": "table column",
-            "column name": "\"cstfname\"",
+            "column name": "cstfname",
             "data type": "string",
             "description": "Customer's first name",
             "sample values": ["Rahul", "Janet", "Alice", "Marcel"]
@@ -163,7 +163,7 @@
           {
             "name": "last_name",
             "type": "table column",
-            "column name": "\"cstlname\"",
+            "column name": "cstlname",
             "data type": "string",
             "description": "Customer's last name",
             "sample values": ["Sharma", "Smith", "Johnson", "Garcia"]
@@ -180,7 +180,7 @@
           {
             "name": "key",
             "type": "table column",
-            "column name": "\"supid\"",
+            "column name": "supid",
             "data type": "numeric",
             "description": "Unique identifier for the company",
             "sample values": [2, 4, 5],
@@ -189,7 +189,7 @@
           {
             "name": "name",
             "type": "table column",
-            "column name": "\"supname\"",
+            "column name": "supname",
             "data type": "string",
             "description": "The company name",
             "sample values": ["Pallette Emporium", "Rainbow Inc.", "Hue Depot"]

@@ -1,0 +1,6 @@
+ROOT(columns=[('color', anything_colorname), ('hex_code', anything_chex), ('vol_shipped', DEFAULT_TO(sum_vol, 0:numeric))], orderings=[(DEFAULT_TO(sum_vol, 0:numeric)):desc_last, (anything_chex):asc_first], limit=3:numeric)
+ AGGREGATE(keys={'colid': colid}, aggregations={'anything_chex': ANYTHING(chex), 'anything_colorname': ANYTHING(colorname), 'sum_vol': SUM(vol)})
+  JOIN(condition=t0.identname == t1.colid, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'chex': t0.chex, 'colid': t1.colid, 'colorname': t0.colorname, 'vol': t1.vol})
+   FILTER(condition=(r >= (b + 50:numeric)) & (r >= (g + 50:numeric)), columns={'chex': chex, 'colorname': colorname, 'identname': identname})
+    SCAN(table=CLRS, columns={'b': b, 'chex': chex, 'colorname': colorname, 'g': g, 'identname': identname, 'r': r})
+   SCAN(table=SHPMNTS, columns={'colid': colid, 'vol': vol})

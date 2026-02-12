@@ -41,12 +41,12 @@ def bodosql_sample_ctx() -> BodoSQLContext:
     """
     color_df: pd.DataFrame = pd.read_csv(
         f"{os.path.dirname(__file__)}/gen_data/colors.csv",
-        names=["identname", "colorname", "chex", "r", "g", "b"],
+        names=["IDENTNAME", "COLORNAME", "CHEX", "R", "G", "B"],
     )
     customers_df: pd.DataFrame = pd.DataFrame(
         {
-            "cstid": range(1, 21),
-            "cstfname": [
+            "CSTID": range(1, 21),
+            "CSTFNAME": [
                 "Alice",
                 "Bob",
                 "Charlie",
@@ -94,8 +94,8 @@ def bodosql_sample_ctx() -> BodoSQLContext:
     )
     suppliers_df: pd.DataFrame = pd.DataFrame(
         {
-            "supid": range(1, 6),
-            "supname": [
+            "SUPID": range(1, 6),
+            "SUPNAME": [
                 "Pallette Emporium",
                 "Rainbow Inc.",
                 "Hue Depot",
@@ -111,12 +111,12 @@ def bodosql_sample_ctx() -> BodoSQLContext:
         rng.integers(len(color_df), size=n_shipments),
     )
     customer_ids: npt.NDArray[np.int_] = np.minimum(
-        rng.integers(len(customers_df), size=n_shipments),
-        rng.integers(2 * len(customers_df), size=n_shipments),
+        rng.integers(1, len(customers_df) + 1, size=n_shipments),
+        rng.integers(1, 2 * len(customers_df), size=n_shipments),
     )
     supplier_ids: npt.NDArray[np.int_] = np.minimum(
-        rng.integers(len(suppliers_df), size=n_shipments),
-        rng.integers(round(1.5 * len(suppliers_df)), size=n_shipments),
+        rng.integers(1, len(suppliers_df) + 1, size=n_shipments),
+        rng.integers(1, round(1.5 * len(suppliers_df)), size=n_shipments),
     )
     dates_of_shipment: list[datetime.date] = sorted(
         [
@@ -132,13 +132,13 @@ def bodosql_sample_ctx() -> BodoSQLContext:
     )
     shipments_df: pd.DataFrame = pd.DataFrame(
         {
-            "sid": range(n_shipments),
-            "colid": color_df.loc[color_indices, "identname"].values,
-            "cusid": customer_ids,
-            "comid": supplier_ids,
-            "dos": dates_of_shipment,
-            "vol": volumes,
-            "price": prices,
+            "SID": range(n_shipments),
+            "COLID": color_df.loc[color_indices, "IDENTNAME"].values,
+            "CUSID": customer_ids,
+            "COMID": supplier_ids,
+            "DOS": dates_of_shipment,
+            "VOL": volumes,
+            "PRC": prices,
         }
     )
     bc: BodoSQLContext = BodoSQLContext(
@@ -152,30 +152,30 @@ def bodosql_sample_ctx() -> BodoSQLContext:
     assert bc.estimated_row_counts == [865, 200000, 20, 5]
     bc.estimated_ndvs = [
         {
-            "identname": 865,
-            "colorname": 865,
-            "chex": 765,
-            "r": 221,
-            "g": 234,
-            "b": 340,
+            "IDENTNAME": 865,
+            "COLORNAME": 865,
+            "CHEX": 765,
+            "R": 221,
+            "G": 234,
+            "B": 340,
         },
         {
-            "sid": 20000,
-            "colid": 763,
-            "cusid": 20,
-            "comid": 5,
-            "dos": 770,
-            "vol": 5,
-            "price": 4951,
+            "SID": 20000,
+            "COLID": 763,
+            "CUSID": 20,
+            "COMID": 5,
+            "DOS": 770,
+            "VOL": 5,
+            "PRC": 4951,
         },
         {
-            "cstid": 20,
-            "cstfname": 20,
-            "cstlname": 20,
+            "CSTID": 20,
+            "CSTFNAME": 20,
+            "CSTLNAME": 20,
         },
         {
-            "supid": 5,
-            "supname": 5,
+            "SUPID": 5,
+            "SUPNAME": 5,
         },
     ]
     return bc
@@ -273,19 +273,25 @@ result = (
                             "Tint Traders",
                         ],
                         "color_name": [
-                            "Dim Gray",
+                            "Silver",
                             "Silver",
                             "Gray (X11 Gray)",
                             "Battleship Grey",
-                            None,
+                            "Dim Grey",
                         ],
-                        "color_hex": ["#696969", "#c0c0c0", "#bebebe", "#848482", None],
+                        "color_hex": [
+                            "#c0c0c0",
+                            "#c0c0c0",
+                            "#bebebe",
+                            "#848482",
+                            "#696969",
+                        ],
                         "vol_shipped": [
+                            datetime.date(2024, 1, 1),
+                            datetime.date(2024, 1, 4),
                             datetime.date(2024, 1, 2),
                             datetime.date(2024, 1, 1),
                             datetime.date(2024, 1, 2),
-                            datetime.date(2024, 1, 1),
-                            None,
                         ],
                     }
                 ),
@@ -294,6 +300,326 @@ result = (
             ),
             id="color_q02",
         ),
+        pytest.param(
+            # For each company, which blue color (blue is at least 50 larger
+            # than red and green) made the most total profit?
+            PyDoughPandasTest(
+                """
+blue_data = (
+    colors
+    .WHERE(blue >= (LARGEST(red, green) + 50))
+    .CALCULATE(color_name=name, color_hex=hex_code)
+    .shipments
+    .PARTITION(name="comp_color", by=(company_key, color_name))
+    .CALCULATE(color_hex=ANYTHING(shipments.color_hex), total_profit=SUM(shipments.price))
+)
+best_blue = CROSS(blue_data).WHERE(company_key == selected_company_key).BEST(by=(total_profit.DESC(), color_name.ASC()), per='companies')
+result = (
+    companies
+    .CALCULATE(selected_company_key=key)
+    .CALCULATE(
+        company_name=name,
+        color_name=best_blue.color_name,
+        color_hex=best_blue.color_hex,
+        total_profit=best_blue.total_profit,
+    )
+    .ORDER_BY(company_name.ASC())
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "company_name": [
+                            "Chroma Co.",
+                            "Hue Depot",
+                            "Pallette Emporium",
+                            "Rainbow Inc.",
+                            "Tint Traders",
+                        ],
+                        "color_name": [
+                            "Blue (Ryb)",
+                            "Amethyst",
+                            "Celestial Blue",
+                            "Blue Gray",
+                            "Cerulean Blue",
+                        ],
+                        "color_hex": ["#0247fe", "#96c", "#4997d0", "#69c", "#2a52be"],
+                        "total_profit": [
+                            3388.59,
+                            4567.26,
+                            7442.77,
+                            7089.28,
+                            2543.37,
+                        ],
+                    }
+                ),
+                "color_q03",
+                order_sensitive=True,
+            ),
+            id="color_q03",
+        ),
+        pytest.param(
+            # How many shipments were there of colors whose name starts with
+            # Yellow in the year 2025?
+            PyDoughPandasTest(
+                "result = COLORSHOP.CALCULATE(n=COUNT(shipments.WHERE(STARTSWITH(color.name, 'Yellow') & (YEAR(ship_date) == 2025))))",
+                "COLORSHOP",
+                lambda: pd.DataFrame({"n": [16]}),
+                "color_q04",
+            ),
+            id="color_q04",
+        ),
+        pytest.param(
+            # For each color of the rainbow, how many colors have that color
+            # as their first word?
+            PyDoughPandasTest(
+                """
+result = (
+    colors
+    .CALCULATE(first_word=LOWER(GETPART(name, ' ', 1)))
+    .WHERE(ISIN(first_word, rainbow_colors))
+    .PARTITION(name="rainbow_color", by=first_word)
+    .CALCULATE(rainbow_color=first_word, n=COUNT(colors))
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "rainbow_color": [
+                            "red",
+                            "orange",
+                            "yellow",
+                            "green",
+                            "blue",
+                            "indigo",
+                            "violet",
+                        ],
+                        "n": [6, 4, 6, 7, 9, 3, 4],
+                    }
+                ),
+                "color_q05",
+                kwargs={
+                    "rainbow_colors": [
+                        "red",
+                        "orange",
+                        "yellow",
+                        "green",
+                        "blue",
+                        "indigo",
+                        "violet",
+                    ]
+                },
+            ),
+            id="color_q05",
+        ),
+        pytest.param(
+            # For every day in a specified period, what is the cumulative
+            # number of orders made in that period?
+            PyDoughPandasTest(
+                """
+result = (
+    shipments
+    .WHERE(MONOTONIC(start_date, ship_date, end_date))
+    .PARTITION(name="days", by=ship_date)
+    .CALCULATE(day=ship_date, cum_ships=RELSUM(COUNT(shipments), by=ship_date.ASC(), cumulative=True))
+    .ORDER_BY(day.ASC())
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "day": [
+                            datetime.date(2024, 1, 15),
+                            datetime.date(2024, 1, 16),
+                            datetime.date(2024, 1, 17),
+                            datetime.date(2024, 1, 18),
+                            datetime.date(2024, 1, 19),
+                            datetime.date(2024, 1, 20),
+                        ],
+                        "cum_ships": [273, 525, 810, 1064, 1324, 1560],
+                    }
+                ),
+                "color_q06",
+                kwargs={
+                    "start_date": datetime.date(2024, 1, 15),
+                    "end_date": datetime.date(2024, 1, 20),
+                },
+            ),
+            id="color_q06",
+        ),
+        pytest.param(
+            # For every day in a specified period, how many orders were made
+            # that day, and what is the change from the previous day within
+            # that window, broken down by company?
+            PyDoughPandasTest(
+                """
+result = (
+    shipments
+    .WHERE(MONOTONIC(start_date, ship_date, end_date))
+    .CALCULATE(company_name=company.name)
+    .PARTITION(name="day_comps", by=(ship_date, company_name))
+    .CALCULATE(n_orders=COUNT(shipments))
+    .PARTITION(name="company", by=company_name)
+    .day_comps
+    .CALCULATE(company_name, day=ship_date, n_orders=n_orders, delta=n_orders - PREV(n_orders, by=ship_date.ASC(), per='company'))
+    .ORDER_BY(company_name.ASC(), day.ASC())
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "company_name": ["Chroma Co."] * 4
+                        + ["Hue Depot"] * 4
+                        + ["Pallette Emporium"] * 4
+                        + ["Rainbow Inc."] * 4
+                        + ["Tint Traders"] * 4,
+                        "day": [
+                            datetime.date(2025, 7, 1),
+                            datetime.date(2025, 7, 2),
+                            datetime.date(2025, 7, 3),
+                            datetime.date(2025, 7, 4),
+                        ]
+                        * 5,
+                        "n_orders": [
+                            30,
+                            44,
+                            33,
+                            26,
+                            57,
+                            52,
+                            51,
+                            48,
+                            83,
+                            77,
+                            86,
+                            73,
+                            70,
+                            66,
+                            65,
+                            81,
+                            21,
+                            19,
+                            22,
+                            17,
+                        ],
+                        "delta": [
+                            None,
+                            14,
+                            -11,
+                            -7,
+                            None,
+                            -5,
+                            -1,
+                            -3,
+                            None,
+                            -6,
+                            9,
+                            -13,
+                            None,
+                            -4,
+                            -1,
+                            16,
+                            None,
+                            -2,
+                            3,
+                            -5,
+                        ],
+                    }
+                ),
+                "color_q07",
+                kwargs={
+                    "start_date": datetime.date(2025, 7, 1),
+                    "end_date": datetime.date(2025, 7, 4),
+                },
+                order_sensitive=True,
+            ),
+            id="color_q07",
+        ),
+        pytest.param(
+            # List every color key that has never been ordered.
+            PyDoughPandasTest(
+                """
+result = (
+    colors
+    .WHERE(HASNOT(shipments))
+    .CALCULATE(color=key)
+    .ORDER_BY(color.ASC())
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "color": ["zaffre", "zinnwaldite_brown"],
+                    }
+                ),
+                "color_q08",
+                order_sensitive=True,
+            ),
+            id="color_q08",
+        ),
+        pytest.param(
+            # List every color key that has not been ordered since the
+            # specified date.
+            PyDoughPandasTest(
+                """
+result = (
+    colors
+    .WHERE(HASNOT(shipments.WHERE(ship_date >= cutoff_date)))
+    .CALCULATE(color=key)
+    .ORDER_BY(color.ASC())
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "color": [
+                            "wheat",
+                            "wine_dregs",
+                            "wisteria",
+                            "yale_blue",
+                            "yellow_munsell",
+                            "yellow_orange",
+                            "yellow_process",
+                            "yellow_ryb",
+                            "zaffre",
+                            "zinnwaldite_brown",
+                        ],
+                    }
+                ),
+                "color_q09",
+                kwargs={"cutoff_date": datetime.date(2025, 9, 15)},
+                order_sensitive=True,
+            ),
+            id="color_q09",
+        ),
+        pytest.param(
+            # How many colors were ordered at least once on the specified date?
+            PyDoughPandasTest(
+                """
+result = COLORSHOP.CALCULATE(n=COUNT(colors.WHERE(HAS(shipments.WHERE(ship_date == chosen_date)))))
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame({"n": [194]}),
+                "color_q10",
+                kwargs={"chosen_date": datetime.date(2024, 7, 4)},
+                order_sensitive=True,
+            ),
+            id="color_q10",
+        ),
+        pytest.param(
+            # Different way of writing colors_q10.
+            PyDoughPandasTest(
+                """
+result = COLORSHOP.CALCULATE(n=NDISTINCT((shipments.WHERE(ship_date == chosen_date).color_key)))
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame({"n": [194]}),
+                "color_q11",
+                kwargs={"chosen_date": datetime.date(2024, 7, 4)},
+                order_sensitive=True,
+            ),
+            id="color_q11",
+        ),
     ],
 )
 def bodosql_e2e_tests(request) -> PyDoughPandasTest:
@@ -301,6 +627,24 @@ def bodosql_e2e_tests(request) -> PyDoughPandasTest:
     Test data for e2e tests for the BodoSQL tests.
     """
     return request.param
+
+
+@pytest.mark.bodosql
+def test_pipeline_until_relational_masked_sf(
+    bodosql_e2e_tests: PyDoughPandasTest,
+    bodosql_graphs: graph_fetcher,
+    get_plan_test_filename: Callable[[str], str],
+    update_tests: bool,
+) -> None:
+    """
+    Test transforming queries to the relational plan for the BodoSQL tests.
+    """
+    file_path: str = get_plan_test_filename(bodosql_e2e_tests.test_name)
+    bodosql_e2e_tests.run_relational_test(
+        bodosql_graphs,
+        file_path,
+        update_tests,
+    )
 
 
 @pytest.mark.bodosql
