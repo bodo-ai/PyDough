@@ -17,19 +17,35 @@ from pydough.database_connectors import DatabaseContext
 import os
 import pydough
 from functools import cache
+from pyiceberg.schema import Schema as IcebergSchema
 
 from tests.testing_utilities import graph_fetcher
 import numpy as np
 import numpy.typing as npt
 
 from .testing_utilities import PyDoughPandasTest
-from bodosql import BodoSQLContext
+from bodosql import BodoSQLContext, FileSystemCatalog
+from bodo.io.iceberg.catalog.dir import DirCatalog
+
+from pyiceberg.catalog import WAREHOUSE_LOCATION
+from pyiceberg.partitioning import PartitionSpec
+from pyiceberg.table import Table as IcebergTable
+
+from pyarrow.csv import read_csv as pyarrow_read_csv
 
 
 @pytest.fixture(scope="session")
-def bodosql_sample_ctx() -> BodoSQLContext:
+def bodosql_color_ctx() -> BodoSQLContext:
     """
-    BodoSQL Context context for the sample BodoSQL database.
+    BodoSQL Context definition for the COLORSHOP dataset, which is a locally
+    defined series of tables:
+    - `CLRS`: Each registered paint color in the dataset, which has a name and
+      hex code + the corresponding RGB values.
+    - `CUST`: The customers registered in the dataset.
+    - `SUPLS`: The companies registered in the dataset.
+    - `SHPMNTS`: The shipments of colors that have been made, which includes the
+       color shipped, the customer and company involved, the date of shipment,
+       volume of paint shipped, and the price of the shipment.
     """
     color_df: pd.DataFrame = pd.read_csv(
         f"{os.path.dirname(__file__)}/gen_data/colors.csv",
@@ -174,11 +190,90 @@ def bodosql_sample_ctx() -> BodoSQLContext:
 
 
 @pytest.fixture(scope="session")
-def bodosql_sample_db_ctx(bodosql_sample_ctx: BodoSQLContext) -> DatabaseContext:
+def bodosql_corpus_ctx() -> BodoSQLContext:
     """
-    Database context for the sample BodoSQL database.
+    BodoSQL Context definition for the CORPUS dataset, which is defined via
+    a filesystem Iceberg catalog and has the following tables:
+    - `DICT`: A subset of the english dictionary including various words and
+      their definitions, with a word possibly appearing more than once if it has
+      multiple parts of speech.
+    - `SHAKE`: A subset of the corpus of Shakespeare's works, where each row
+      corresponds to a word from a line in his plays, accompanied by the
+      act/scene/line/player that it is from.
     """
-    return DatabaseContext(bodosql_sample_ctx, dialect=DatabaseDialect.SNOWFLAKE)
+
+    # Read the CSV files as PyArrow tables
+    dict_pyarrow = pyarrow_read_csv(
+        f"{os.path.dirname(__file__)}//gen_data/sampled_dictionary.csv"
+    )
+    shake_pyarrow = pyarrow_read_csv(
+        f"{os.path.dirname(__file__)}/gen_data/shakespeare_words.csv"
+    )
+
+    warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/corpus_iceberg"
+    db_name: str = "CORPUS_DB"
+
+    dir: DirCatalog = DirCatalog(f'"{db_name}"', **{WAREHOUSE_LOCATION: warehouse_loc})
+
+    # Build the partition spec for the Dictionary table where it partitions on
+    # the part of speech, word length, and first letter of the word.
+    dict_iceberg_schema: IcebergSchema = IcebergSchema.from_arrow(dict_pyarrow.schema)
+    dict_spec_builder = PartitionSpec.builder_for(dict_iceberg_schema)
+    dict_spec_builder.identity("POS")
+    dict_spec_builder.identity("Ccount")
+    dict_spec_builder.truncate("Word", 1)
+    partition_spec: PartitionSpec = dict_spec_builder.build()
+
+    # Create the Iceberg table definition for the Dictionary table, and load
+    # the data into it.
+    dict_table: IcebergTable = dir.create_table(
+        "DICT",
+        schema=dict_pyarrow.schema,
+        partition_spec=partition_spec,
+    )
+
+    # Load the data to the Iceberg table:
+    dict_table.append(dict_pyarrow)
+
+    # Build the partition spec for the Shakespeare table, where it partitions
+    # on the play, act, scene, and player that each word is from.
+    shake_iceberg_schema: IcebergSchema = IcebergSchema.from_arrow(shake_pyarrow.schema)
+    shake_spec_builder = PartitionSpec.builder_for(shake_iceberg_schema)
+    shake_spec_builder.identity("PLAY")
+    shake_spec_builder.identity("ACT")
+    shake_spec_builder.identity("SCENE")
+    shake_spec_builder.identity("PLAYER")
+    shake_partition_spec: PartitionSpec = shake_spec_builder.build()
+
+    # Create the Iceberg table definition for the Shakespeare table, and load
+    # the data into it.
+    shake_table: IcebergTable = dir.create_table(
+        "SHAKE",
+        schema=shake_pyarrow.schema,
+        partition_spec=shake_partition_spec,
+    )
+    shake_table.append(shake_pyarrow)
+
+    catalog = FileSystemCatalog(warehouse_loc, default_schema=f'"{db_name}"')
+    bc = BodoSQLContext(catalog=catalog)
+    return bc
+
+
+@pytest.fixture(scope="session")
+def bodosql_sample_contexts(
+    bodosql_color_ctx: BodoSQLContext, bodosql_corpus_ctx: BodoSQLContext
+) -> dict[str, BodoSQLContext]:
+    """
+    Mapping of graph names to the various BodoSQL Contexts for the sample
+    BodoSQL databases. The supported graph names are:
+
+    * `COLORSHOP`
+    * `CORPUS`
+    """
+    {
+        "COLORSHOP": bodosql_color_ctx,
+        "CORPUS": bodosql_corpus_ctx,
+    }
 
 
 @pytest.fixture(scope="session")
@@ -747,6 +842,16 @@ result = COLORSHOP.CALCULATE(**analysis_args)
             ),
             id="color_q14",
         ),
+        pytest.param(
+            # How many nouns start with N?
+            PyDoughPandasTest(
+                "result = CORPUS.CALCULATE(n=COUNT(dictionary.WHERE((part_of_speech == 'n.') & STARTSWITH(word, 'n'))))",
+                "CORPUS",
+                lambda: pd.DataFrame({"n": [16]}),
+                "corpus_q01",
+            ),
+            id="corpus_q01",
+        ),
     ],
 )
 def bodosql_e2e_tests(request) -> PyDoughPandasTest:
@@ -778,7 +883,7 @@ def test_pipeline_until_relational_masked_sf(
 def test_pipeline_sql_bodosql(
     bodosql_e2e_tests: PyDoughPandasTest,
     bodosql_graphs: graph_fetcher,
-    bodosql_sample_db_ctx: DatabaseContext,
+    bodosql_sample_contexts: dict[str, DatabaseContext],
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):
@@ -786,14 +891,17 @@ def test_pipeline_sql_bodosql(
     Test transforming queries to SQL for BodoSQL, comparing against expected
     results.
     """
-    file_path: str = get_sql_test_filename(
-        bodosql_e2e_tests.test_name, bodosql_sample_db_ctx.dialect
+
+    ctx: DatabaseContext = DatabaseContext(
+        bodosql_sample_contexts[bodosql_e2e_tests.graph_name],
+        dialect=DatabaseDialect.SNOWFLAKE,
     )
+    file_path: str = get_sql_test_filename(bodosql_e2e_tests.test_name, ctx.dialect)
     bodosql_e2e_tests.run_sql_test(
         bodosql_graphs,
         file_path,
         update_tests,
-        bodosql_sample_db_ctx,
+        ctx,
     )
 
 
@@ -802,14 +910,18 @@ def test_pipeline_sql_bodosql(
 def test_pipeline_e2e_bodosql(
     bodosql_e2e_tests: PyDoughPandasTest,
     bodosql_graphs: graph_fetcher,
-    bodosql_sample_db_ctx: DatabaseContext,
+    bodosql_sample_contexts: dict[str, DatabaseContext],
 ):
     """
     Test executing tests end-to-end with BodoSQL, comparing against expected
     results.
     """
+    ctx: DatabaseContext = DatabaseContext(
+        bodosql_sample_contexts[bodosql_e2e_tests.graph_name],
+        dialect=DatabaseDialect.SNOWFLAKE,
+    )
     bodosql_e2e_tests.run_e2e_test(
         bodosql_graphs,
-        bodosql_sample_db_ctx,
+        ctx,
         coerce_types=True,
     )

@@ -264,5 +264,171 @@
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}
+  },
+   {
+    "name": "CORPUS",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "dictionary",
+        "type": "simple table",
+        "table path": "DICT",
+        "unique properties": [["word", "part_of_speech"]],
+        "properties": [
+          {
+            "name": "word",
+            "type": "table column",
+            "column name": "Word",
+            "data type": "string",
+            "description": "The word in the dictionary, in lowercase",
+            "sample values": ["abacus", "iridectomy", "justice", "lurking"]
+          },
+          {
+            "name": "part_of_speech",
+            "type": "table column",
+            "column name": "POS",
+            "data type": "string",
+            "description": "The part of speech that the word belongs to in a shorthand form",
+            "sample values": ["n.", "v.", "adj.", "adv.", "n. pl.", "v. t."]
+          },
+          {
+            "name": "length",
+            "type": "table column",
+            "column name": "Ccount",
+            "data type": "numeric",
+            "description": "The number of characters in the word",
+            "sample values": [5, 7, 8, 12],
+            "synonyms": ["number of characters", "word size"]
+          },
+          {
+            "name": "definition",
+            "type": "table column",
+            "column name": "Definition",
+            "data type": "string",
+            "description": "The definition of the word with that given part of speech",
+            "sample values": ["The act of abacinating", "Abandonment; relinquishment.", "A lady; mistress.", "A female tyrant."],
+            "synonyms": ["meaning", "explanation"]
+          }
+        ],
+        "description": "The various words registred in this dictionary with their definitions; each word can have multiple entries if it belongs to multiple parts of speech.",
+        "synonyms": ["words"]
+      },
+      {
+        "name": "shakespeare",
+        "type": "simple table",
+        "table path": "SHAKE",
+        "unique properties": ["key", ["data_line", "line_word_index"]],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "PKHASH",
+            "data type": "numeric",
+            "description": "Unique identifier for the word within a line of dialogue in a Shakespeare play",
+            "sample values": [534377729, 511587732, 758182205, 436869060],
+            "synonyms": ["line word id"]
+          },
+          {
+            "name": "data_line",
+            "type": "table column",
+            "column name": "DATALINE",
+            "data type": "numeric",
+            "description": "Identifier for each line of dialogue in a Shakespeare play",
+            "sample values": [800, 1475, 3455],
+            "synonyms": ["line id"]
+          },
+          {
+            "name": "play",
+            "type": "table column",
+            "column name": "PLAY",
+            "data type": "string",
+            "description": "Name of the shakespeare play that the line/word are from (lowercase).",
+            "sample values": ["henry iv", "much ado about nothing", "othello", "romeo and juliet"],
+            "synonyms": ["play name"]
+          },
+          {
+            "name": "act",
+            "type": "table column",
+            "column name": "ACT",
+            "data type": "numeric",
+            "description": "Act from the play that the line/word are from",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["act number"]
+          },
+          {
+            "name": "scene",
+            "type": "table column",
+            "column name": "SCENE",
+            "data type": "numeric",
+            "description": "Scene within the act of the play that the line/word are from",
+            "sample values": [1, 2, 5, 7, 8],
+            "synonyms": ["act scene number"]
+          },
+          {
+            "name": "line",
+            "type": "table column",
+            "column name": "LINE",
+            "data type": "numeric",
+            "description": "Line within the scene of the act of the play that the line/word are from",
+            "sample values": [1, 10, 50, 103, 254],
+            "synonyms": ["act scene line number", "line number within scene"]
+          },
+          {
+            "name": "player",
+            "type": "table column",
+            "column name": "PLAYER",
+            "data type": "string",
+            "description": "Name of the character saying the line/word (lowercase)",
+            "sample values": ["bardolph", "bastard of orleans", "beatrice", "autolycus"],
+            "synonyms": ["character name"]
+          },
+          {
+            "name": "word",
+            "type": "table column",
+            "column name": "LINEWORDWORD",
+            "data type": "string",
+            "description": "The word being said in the line of the play, in lowercase",
+            "sample values": ["vizards", "money", "of", "the", "kings"],
+            "synonyms": ["word within line"]
+          },
+          {
+            "name": "line_word_index",
+            "type": "table column",
+            "column name": "LINEWORDIDX",
+            "data type": "numeric",
+            "description": "The position of the word within the line of dialog, starting at 1 for the first word in the line",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["word position"]
+          }
+        ],
+        "description": "Lines of dialogue from shakespeare plays, broken down into 1 row per word",
+        "synonyms": ["shakespeare dialogue words"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "word_definitions",
+        "parent collection": "shakespeare",
+        "child collection": "dictionary",
+        "singular": false,
+        "always matches": false,
+        "keys": {"word": ["word"]},
+        "description": "Some potential definitions of the word within the dialogue",
+        "synonyms": ["definitions", "meanings", "explanations"]
+      },
+      {
+        "type": "reverse",
+        "name": "shakespeare_uses",
+        "original parent": "shakespeare",
+        "original property": "word_definitions",
+        "singular": false,
+        "always matches": false,
+        "description": "The instances of the word being used in a line of Shakespeare's dialogue"
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   }
 ]
