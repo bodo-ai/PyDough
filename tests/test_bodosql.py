@@ -10,27 +10,19 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 import datetime
-from pydough.database_connectors.database_connector import (
-    DatabaseDialect,
-    DatabaseConnection,
-)
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
-from pydough.unqualified import UnqualifiedNode
-from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 
 import os
 import pydough
 from functools import cache
-from tests.test_pydough_functions.simple_pydough_functions import week_offset
 
 from tests.testing_utilities import graph_fetcher
 import numpy as np
 import numpy.typing as npt
-from .conftest import tpch_custom_test_data_dialect_replacements
 
 from .testing_utilities import PyDoughPandasTest
-from pydough import init_pydough_context, to_df, to_sql
 from bodosql import BodoSQLContext
 
 
@@ -68,7 +60,7 @@ def bodosql_sample_ctx() -> BodoSQLContext:
                 "Sybil",
                 "Trent",
             ],
-            "cstlname": [
+            "CSTLNAME": [
                 "Smith",
                 "Johnson",
                 "Williams",
@@ -145,7 +137,7 @@ def bodosql_sample_ctx() -> BodoSQLContext:
         {
             "CLRS": color_df,
             "SHPMNTS": shipments_df,
-            "CUSTOMERS": customers_df,
+            "CUST": customers_df,
             "SUPLS": suppliers_df,
         }
     )
@@ -619,6 +611,66 @@ result = COLORSHOP.CALCULATE(n=NDISTINCT((shipments.WHERE(ship_date == chosen_da
                 order_sensitive=True,
             ),
             id="color_q11",
+        ),
+        pytest.param(
+            # For each color that is pure red, green, or blue (one of r, g, or b
+            # is 255 and the other two are 0), who was the first customer to
+            # purchase that color, and when did they do so, and from which
+            # company? Ignore colors without any such shipment.
+            PyDoughPandasTest(
+                """
+first_order = shipments.BEST(per='colors', by=(ship_date.ASC(), key.ASC()))
+result = (
+    colors
+    .WHERE(((SMALLEST(red, green, blue) == 0) & (LARGEST(red, green, blue) == 255) & ((red + green + blue) == 255)) & HAS(first_order))
+    .CALCULATE(
+        key,
+        hex_code,
+        first_customer=JOIN_STRINGS(' ', first_order.customer.first_name, first_order.customer.last_name),
+        first_order_date=first_order.ship_date,
+        first_order_company=first_order.company.name,
+    )
+    .ORDER_BY(key.ASC())
+)
+                """,
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [
+                            "blue",
+                            "electric_green",
+                            "green_color_wheel_x11_green",
+                            "lime_web_x11_green",
+                            "red",
+                        ],
+                        "hex_code": ["#00f", "#0f0", "#0f0", "#0f0", "#f00"],
+                        "first_customer": [
+                            "Janet Taylor",
+                            "Frank Davis",
+                            "Grace Miller",
+                            "Frank Davis",
+                            "Marcel Jackson",
+                        ],
+                        "first_order_date": [
+                            datetime.date(2024, 1, 2),
+                            datetime.date(2024, 1, 3),
+                            datetime.date(2024, 1, 3),
+                            datetime.date(2024, 1, 5),
+                            datetime.date(2024, 1, 3),
+                        ],
+                        "first_order_company": [
+                            "Rainbow Inc.",
+                            "Hue Depot",
+                            "Tint Traders",
+                            "Pallette Emporium",
+                            "Tint Traders",
+                        ],
+                    }
+                ),
+                "color_q12",
+                order_sensitive=True,
+            ),
+            id="color_q12",
         ),
     ],
 )
