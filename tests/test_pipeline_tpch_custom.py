@@ -2994,6 +2994,24 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [92333]}),
+                "has_equals_one",
+            ),
+            id="has_equals_one",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HASNOT(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [57667]}),
+                "hasnot_equals_one",
+            ),
+            id="hasnot_equals_one",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 aggregation_analytics_1,
                 "TPCH",
                 lambda: pd.DataFrame(
