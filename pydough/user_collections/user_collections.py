@@ -53,8 +53,14 @@ class PyDoughUserGeneratedCollection(ABC):
 
     @property
     @abstractmethod
-    def unique_column_names(self) -> list[str]:
-        """Return the set of unique column names in the collection."""
+    def unique_column_names(self) -> list[str | list[str]]:
+        """
+        The list of all names of properties of the user generated collection that
+        are guaranteed to be unique within the collection. Entries that are a
+        string represent a single column being completely unique, while entries
+        that are a list of strings indicate that each combination of those
+        properties is unique.
+        """
 
     @abstractmethod
     def always_exists(self) -> bool:

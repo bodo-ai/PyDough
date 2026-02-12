@@ -17,8 +17,8 @@ SELECT
       DAYOFWEEK(notifications.created_at) + 6
     ) % 7
   ) IN (5, 6)) AS weekend_notifs
-FROM main.notifications AS notifications
-JOIN main.users AS users
+FROM ewallet.notifications AS notifications
+JOIN ewallet.users AS users
   ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')
 WHERE
   notifications.created_at < DATE_TRUNC(

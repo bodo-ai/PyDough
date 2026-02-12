@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS TSC
-FROM main.sales
+FROM dealership.sales
 WHERE
   DATEDIFF(
     DAY,
