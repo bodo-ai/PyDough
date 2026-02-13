@@ -120,6 +120,10 @@ def bodosql_color_ctx() -> BodoSQLContext:
             ],
         }
     )
+    # Generate the shipments table with 200,000 rows using random generation
+    # while maintaining referential integrity with the other three tables and
+    # creating some correlations/trends in the data to make the queries more
+    # interesting. The random seed is fixed to ensure test reproducibility.
     rng: np.random.Generator = np.random.default_rng(seed=42)
     n_shipments: int = 200000
     color_indices: npt.NDArray[np.int_] = np.minimum(
@@ -165,7 +169,11 @@ def bodosql_color_ctx() -> BodoSQLContext:
             "SUPLS": suppliers_df,
         }
     )
+    # Confirm the row counts are as expected
     assert bc.estimated_row_counts == [865, 200000, 20, 5]
+
+    # Manually hack in the NDV values for the various columns, since BodoSQL
+    # does not natively support estimated NDVs for locally defined DataFrames.
     bc.estimated_ndvs = [
         {
             "IDENTNAME": 865,
@@ -217,55 +225,65 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
     regenerate_iceberg: bool = not os.path.exists(warehouse_loc)
     if regenerate_iceberg:
         # Create the directory that will serve as the Iceberg catalog.
-        os.mkdir(warehouse_loc)
-        dir: DirCatalog = DirCatalog("CORPUS_DB", **{WAREHOUSE_LOCATION: warehouse_loc})
+        try:
+            os.mkdir(warehouse_loc)
+            dircat: DirCatalog = DirCatalog(
+                "CORPUS_DB", **{WAREHOUSE_LOCATION: warehouse_loc}
+            )
 
-        # Read the CSV files as PyArrow tables
-        dict_pyarrow: PyArrowTable = pyarrow_read_csv(
-            f"{os.path.dirname(__file__)}//gen_data/sampled_dictionary.csv"
-        )
-        shake_pyarrow: PyArrowTable = pyarrow_read_csv(
-            f"{os.path.dirname(__file__)}/gen_data/shakespeare_words.csv"
-        )
+            # Read the CSV files as PyArrow tables
+            dict_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/sampled_dictionary.csv.gz"
+            )
+            shake_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/shakespeare_words.csv.gz"
+            )
 
-        # Create the Iceberg table definition for the Dictionary table.
-        dict_table: IcebergTable = dir.create_table(
-            "DICT",
-            schema=dict_pyarrow.schema,
-        )
+            # Create the Iceberg table definition for the Dictionary table.
+            dict_table: IcebergTable = dircat.create_table(
+                "DICT",
+                schema=dict_pyarrow.schema,
+            )
 
-        # Evolve the table spec to partition on the first letter of the word, the
-        # part of speech, and the number of characters.
-        (
-            dict_table.update_spec()
-            .add_field("WORD", "truncate[1]")
-            .add_field("POS", "identity")
-            .add_field("CCOUNT", "identity")
-            .commit()
-        )
+            # Evolve the table spec to partition on the first letter of the word, the
+            # part of speech, and the number of characters.
+            (
+                dict_table.update_spec()
+                .add_field("WORD", "truncate[1]")
+                .add_field("POS", "identity")
+                .add_field("CCOUNT", "identity")
+                .commit()
+            )
 
-        # Load the data to the Iceberg table
-        dict_table.append(dict_pyarrow)
+            # Load the data to the Iceberg table
+            dict_table.append(dict_pyarrow)
 
-        # Create the Iceberg table definition for the Shakespeare table, and load
-        # the data into it.
-        shake_table: IcebergTable = dir.create_table(
-            "SHAKE",
-            schema=shake_pyarrow.schema,
-        )
+            # Create the Iceberg table definition for the Shakespeare table, and load
+            # the data into it.
+            shake_table: IcebergTable = dircat.create_table(
+                "SHAKE",
+                schema=shake_pyarrow.schema,
+            )
 
-        # Evolve the table spec to partition on play, act, scene and player
-        (
-            shake_table.update_spec()
-            .add_field("PLAY", "identity")
-            .add_field("ACT", "identity")
-            .add_field("SCENE", "identity")
-            .add_field("PLAYER", "identity")
-            .commit()
-        )
+            # Evolve the table spec to partition on play, act, scene and player
+            (
+                shake_table.update_spec()
+                .add_field("PLAY", "identity")
+                .add_field("ACT", "identity")
+                .add_field("SCENE", "identity")
+                .add_field("PLAYER", "identity")
+                .commit()
+            )
 
-        # Load the data to the Iceberg table
-        shake_table.append(shake_pyarrow)
+            # Load the data to the Iceberg table
+            shake_table.append(shake_pyarrow)
+
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(warehouse_loc):
+                shutil.rmtree(warehouse_loc)
+            raise e
 
     # Create the catalog/context pointing to the location of the database.
     catalog = FileSystemCatalog(warehouse_loc)
@@ -276,8 +294,10 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
     # update the metadata to include puffin files with theta sketches containing
     # the approximate NDV statistics for various columns.
     if regenerate_iceberg:
-        breakpoint()
-        for table_name in ["DICT", "SHAKE"]:
+        # Get all the table names from a DDL command given to the BodoSQL
+        # context.
+        table_names: list[str] = bc.sql('SHOW TABLES IN "."')["NAME"].tolist()
+        for table_name in table_names:
             bc.sql(
                 f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
             )
