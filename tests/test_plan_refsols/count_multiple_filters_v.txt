@@ -1,0 +1,4 @@
+ROOT(columns=[('n2', sum_expr), ('n3', sum_expr_4)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_expr': SUM(MONOTONIC(500:numeric, c_acctbal, 1000:numeric)), 'sum_expr_4': SUM(NOT(MONOTONIC(500:numeric, c_acctbal, 1000:numeric)))})
+  FILTER(condition=(((c_mktsegment == 'BUILDING':string) & NOT(MONOTONIC(500:numeric, c_acctbal, 1000:numeric))) | (c_mktsegment == 'BUILDING':string)) & (((c_mktsegment == 'BUILDING':string) & NOT(MONOTONIC(500:numeric, c_acctbal, 1000:numeric))) | MONOTONIC(500:numeric, c_acctbal, 1000:numeric)), columns={'c_acctbal': c_acctbal})
+   SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_mktsegment': c_mktsegment})

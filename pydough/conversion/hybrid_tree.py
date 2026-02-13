@@ -976,7 +976,7 @@ class HybridTree:
                 continue
             if (
                 self.children[child_idx].connection_type.is_semi
-                and not self.children[child_idx].subtree.always_exists()
+                and not self.children[child_idx].get_always_exists()
             ) or self.children[child_idx].connection_type.is_anti:
                 children_to_delete.discard(child_idx)
 

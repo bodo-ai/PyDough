@@ -898,8 +898,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         output_predicates.positive = True
                     output_expr = CallExpression(pydop.COUNT, expr.data_type, [])
 
-            # All of these operators are non-null or non-negative if their
-            # first argument is.
+            # All of these operators are non-null, non-negative, or positive if
+            # their first argument is.
             case (
                 pydop.SUM
                 | pydop.AVG
@@ -910,8 +910,28 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 | pydop.QUANTILE
             ):
                 output_predicates |= arg_predicates[0] & PredicateSet(
-                    not_null=True, not_negative=True
+                    not_null=True,
+                    not_negative=True,
+                    positive=True,
                 )
+                if expr.op == pydop.SUM:
+                    if (
+                        isinstance(expr.inputs[0], CallExpression)
+                        and expr.inputs[0].op == pydop.IFF
+                    ):
+                        # SUM(IFF(cond, 1, 0)) -> SUM(cond)
+                        cond_arg: RelationalExpression = expr.inputs[0].inputs[0]
+                        first_arg: RelationalExpression = expr.inputs[0].inputs[1]
+                        second_arg: RelationalExpression = expr.inputs[0].inputs[2]
+                        if (
+                            isinstance(first_arg, LiteralExpression)
+                            and first_arg.value in (1, 1.0, True)
+                            and isinstance(second_arg, LiteralExpression)
+                            and second_arg.value in (0, 0.0, False)
+                        ):
+                            output_expr = CallExpression(
+                                pydop.SUM, expr.data_type, [cond_arg]
+                            )
 
             # INTEGER(x) -> x if x is a literal integer. Also simplify for
             # booleans.

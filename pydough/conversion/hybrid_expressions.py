@@ -14,10 +14,12 @@ __all__ = [
     "HybridFunctionExpr",
     "HybridLiteralExpr",
     "HybridRefExpr",
+    "make_condition",
 ]
 
 import copy
 from abc import ABC, abstractmethod
+from collections.abc import Collection
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
@@ -766,3 +768,30 @@ class HybridWindowExpr(HybridExpr):
             self.typ,
             self.kwargs,
         )
+
+
+def make_condition(
+    expressions: Collection[HybridExpr], conjunction: bool
+) -> HybridExpr:
+    """
+    Converts a list of expressions into a composite boolean expression, either
+    a conjunction or disjunction. If the list is empty, returns a literal True
+    expression.
+
+    Args:
+        `expressions`: the expressions to combine into a condition.
+        `conjunction`: whether to combine the expressions using AND (if True) or
+        OR (if False).
+
+    Returns:
+        The combined condition expression.
+    """
+    if not expressions:
+        return HybridLiteralExpr(Literal(True, BooleanType()))
+    if len(expressions) == 1:
+        return next(iter(expressions))
+    if conjunction:
+        return HybridFunctionExpr(
+            pydop.BAN, sorted(expressions, key=repr), BooleanType()
+        )
+    return HybridFunctionExpr(pydop.BOR, sorted(expressions, key=repr), BooleanType())
