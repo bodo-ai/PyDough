@@ -12,7 +12,7 @@ SELECT
   (
     CAST((
       COALESCE(SUM(_s0.sum_sale_price), 0) - COALESCE(SUM(cars.cost), 0)
-    ) AS DOUBLE PRECISION) / COALESCE(SUM(cars.cost), 0)
+    ) AS DOUBLE PRECISION) / NULLIF(SUM(cars.cost), 0)
   ) * 100 AS GPM
 FROM _s0 AS _s0
 JOIN main.cars AS cars
