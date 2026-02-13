@@ -1,4 +1,4 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     sbtxcustid AS SBTXCUSTID,
     sbtxtickerid AS SBTXTICKERID,
@@ -7,28 +7,28 @@ WITH _S0 AS (
   GROUP BY
     sbtxcustid,
     sbtxtickerid
-), _S2 AS (
+), "_S2" AS (
   SELECT
     SBTICKER.sbtickertype AS SBTICKERTYPE,
-    _S0.SBTXCUSTID,
-    SUM(_S0.N_ROWS) AS SUM_N_ROWS
-  FROM _S0 _S0
+    "_S0".SBTXCUSTID,
+    SUM("_S0".N_ROWS) AS SUM_N_ROWS
+  FROM "_S0" "_S0"
   JOIN MAIN.SBTICKER SBTICKER
-    ON SBTICKER.sbtickerid = _S0.SBTXTICKERID
+    ON SBTICKER.sbtickerid = "_S0".SBTXTICKERID
   GROUP BY
     SBTICKER.sbtickertype,
-    _S0.SBTXCUSTID
+    "_S0".SBTXCUSTID
 )
 SELECT
   SBCUSTOMER.sbcuststate AS state,
-  _S2.SBTICKERTYPE AS ticker_type,
-  SUM(_S2.SUM_N_ROWS) AS num_transactions
-FROM _S2 _S2
+  "_S2".SBTICKERTYPE AS ticker_type,
+  SUM("_S2".SUM_N_ROWS) AS num_transactions
+FROM "_S2" "_S2"
 JOIN MAIN.SBCUSTOMER SBCUSTOMER
-  ON SBCUSTOMER.sbcustid = _S2.SBTXCUSTID
+  ON SBCUSTOMER.sbcustid = "_S2".SBTXCUSTID
 GROUP BY
   SBCUSTOMER.sbcuststate,
-  _S2.SBTICKERTYPE
+  "_S2".SBTICKERTYPE
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 5 ROWS ONLY

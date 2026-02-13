@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     o_custkey AS O_CUSTKEY,
     COUNT(*) AS N_ROWS
@@ -8,10 +8,10 @@ WITH _S1 AS (
 )
 SELECT
   CUSTOMER.c_custkey AS customer_key,
-  NVL(_S1.N_ROWS, 0) AS n_orders
+  NVL("_S1".N_ROWS, 0) AS n_orders
 FROM TPCH.CUSTOMER CUSTOMER
-LEFT JOIN _S1 _S1
-  ON CUSTOMER.c_custkey = _S1.O_CUSTKEY
+LEFT JOIN "_S1" "_S1"
+  ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
 ORDER BY
   2 DESC NULLS LAST,
   1 NULLS FIRST

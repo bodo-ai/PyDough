@@ -1,4 +1,4 @@
-WITH _T0 AS (
+WITH "_T0" AS (
   SELECT
     c_acctbal AS C_ACCTBAL,
     CASE
@@ -48,4 +48,4 @@ SELECT
   AVG(EXPR_7) AS median_red_acctbal,
   AVG(EXPR_5) AS median_black_acctbal,
   AVG(EXPR_6) AS median_overall_acctbal
-FROM _T0
+FROM "_T0"

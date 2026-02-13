@@ -1,9 +1,9 @@
-WITH _T AS (
+WITH "_T" AS (
   SELECT
     ERAS.er_name AS ER_NAME,
     ERAS.er_start_year AS ER_START_YEAR,
     EVENTS.ev_name AS EV_NAME,
-    ROW_NUMBER() OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt) AS _W
+    ROW_NUMBER() OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt) AS "_W"
   FROM ERAS ERAS
   JOIN EVENTS EVENTS
     ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
@@ -12,8 +12,8 @@ WITH _T AS (
 SELECT
   ER_NAME AS era_name,
   EV_NAME AS event_name
-FROM _T
+FROM "_T"
 WHERE
-  _W = 1
+  "_W" = 1
 ORDER BY
   ER_START_YEAR NULLS FIRST

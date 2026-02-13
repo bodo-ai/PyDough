@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     sbtxcustid AS SBTXCUSTID,
     COUNT(*) AS N_ROWS,
@@ -9,9 +9,9 @@ WITH _S1 AS (
 )
 SELECT
   SBCUSTOMER.sbcustname AS name,
-  _S1.N_ROWS AS num_tx,
-  NVL(_S1.SUM_SBTXAMOUNT, 0) AS total_amount,
-  RANK() OVER (ORDER BY NVL(_S1.SUM_SBTXAMOUNT, 0) DESC) AS cust_rank
+  "_S1".N_ROWS AS num_tx,
+  NVL("_S1".SUM_SBTXAMOUNT, 0) AS total_amount,
+  RANK() OVER (ORDER BY NVL("_S1".SUM_SBTXAMOUNT, 0) DESC) AS cust_rank
 FROM MAIN.SBCUSTOMER SBCUSTOMER
-JOIN _S1 _S1
-  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
+JOIN "_S1" "_S1"
+  ON SBCUSTOMER.sbcustid = "_S1".SBTXCUSTID

@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     sbtxcustid AS SBTXCUSTID,
     COUNT(*) AS N_ROWS
@@ -10,12 +10,12 @@ WITH _S1 AS (
     sbtxcustid
 )
 SELECT
-  SBCUSTOMER.sbcustid AS _id,
+  SBCUSTOMER.sbcustid AS "_id",
   SBCUSTOMER.sbcustname AS name,
-  NVL(_S1.N_ROWS, 0) AS num_tx
+  NVL("_S1".N_ROWS, 0) AS num_tx
 FROM MAIN.SBCUSTOMER SBCUSTOMER
-LEFT JOIN _S1 _S1
-  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
+LEFT JOIN "_S1" "_S1"
+  ON SBCUSTOMER.sbcustid = "_S1".SBTXCUSTID
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 1 ROWS ONLY

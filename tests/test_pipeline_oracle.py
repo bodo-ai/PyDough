@@ -268,7 +268,7 @@ def test_pipeline_e2e_oracle_defog(
 @pytest.mark.execute
 def test_pipeline_e2e_oracle_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
-    get_custom_datasets_graph: graph_fetcher,
+    get_oracle_custom_datasets_graph: graph_fetcher,
     oracle_conn_db_context: Callable[[str], DatabaseContext],
 ):
     """
@@ -276,7 +276,7 @@ def test_pipeline_e2e_oracle_custom_datasets(
     refsol DataFrame.
     """
     custom_datasets_test_data.run_e2e_test(
-        get_custom_datasets_graph,
+        get_oracle_custom_datasets_graph,
         oracle_conn_db_context(custom_datasets_test_data.graph_name.lower()),
         coerce_types=True,
     )

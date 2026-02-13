@@ -1,4 +1,4 @@
-WITH _T2 AS (
+WITH "_T2" AS (
   SELECT
     SEARCHES.search_engine AS SEARCH_ENGINE,
     TIMES.t_name AS T_NAME,
@@ -10,20 +10,20 @@ WITH _T2 AS (
   GROUP BY
     SEARCHES.search_engine,
     TIMES.t_name
-), _T AS (
+), "_T" AS (
   SELECT
     SEARCH_ENGINE,
     T_NAME,
     N_ROWS,
-    ROW_NUMBER() OVER (PARTITION BY T_NAME ORDER BY N_ROWS DESC, SEARCH_ENGINE) AS _W
-  FROM _T2
+    ROW_NUMBER() OVER (PARTITION BY T_NAME ORDER BY N_ROWS DESC, SEARCH_ENGINE) AS "_W"
+  FROM "_T2"
 )
 SELECT
   T_NAME AS tod,
   SEARCH_ENGINE AS search_engine,
   N_ROWS AS n_searches
-FROM _T
+FROM "_T"
 WHERE
-  _W = 1
+  "_W" = 1
 ORDER BY
   1 NULLS FIRST

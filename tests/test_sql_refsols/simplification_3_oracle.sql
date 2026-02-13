@@ -1,4 +1,4 @@
-WITH _T2 AS (
+WITH "_T2" AS (
   SELECT
     ABS(CAST(sbcustpostalcode AS INT)) AS EXPR_13,
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS RANK,
@@ -23,7 +23,7 @@ WITH _T2 AS (
       0.1
     ) AS RSUM2
   FROM MAIN.SBCUSTOMER
-), _T1 AS (
+), "_T1" AS (
   SELECT
     RANK,
     RAVG1,
@@ -52,7 +52,7 @@ WITH _T2 AS (
       THEN EXPR_13
       ELSE NULL
     END AS EXPR_16
-  FROM _T2
+  FROM "_T2"
 )
 SELECT
   TRUE AS s00,
@@ -92,4 +92,4 @@ SELECT
   ROUND(SUM(RCNT2), 2) AS s34,
   ANY_VALUE(RSIZ1) AS s35,
   ROUND(SUM(RSIZ2), 2) AS s36
-FROM _T1
+FROM "_T1"

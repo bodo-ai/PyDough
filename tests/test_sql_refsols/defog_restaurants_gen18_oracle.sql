@@ -1,19 +1,19 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     city_name AS CITY_NAME,
     region AS REGION
   FROM MAIN.GEOGRAPHIC
-), _S1 AS (
+), "_S1" AS (
   SELECT
     city_name AS CITY_NAME
   FROM MAIN.RESTAURANT
-), _S6 AS (
+), "_S6" AS (
   SELECT DISTINCT
-    _S0.REGION
-  FROM _S0 _S0
-  JOIN _S1 _S1
-    ON _S0.CITY_NAME = _S1.CITY_NAME
-), _S5 AS (
+    "_S0".REGION
+  FROM "_S0" "_S0"
+  JOIN "_S1" "_S1"
+    ON "_S0".CITY_NAME = "_S1".CITY_NAME
+), "_S5" AS (
   SELECT
     city_name AS CITY_NAME,
     COUNT(rating) AS COUNT_RATING,
@@ -21,23 +21,23 @@ WITH _S0 AS (
   FROM MAIN.RESTAURANT
   GROUP BY
     city_name
-), _S7 AS (
+), "_S7" AS (
   SELECT
-    SUM(_S5.SUM_RATING) / SUM(_S5.COUNT_RATING) AS AVG_RATING,
-    _S2.REGION
-  FROM _S0 _S2
-  JOIN _S1 _S3
-    ON _S2.CITY_NAME = _S3.CITY_NAME
-  JOIN _S5 _S5
-    ON _S2.CITY_NAME = _S5.CITY_NAME
+    SUM("_S5".SUM_RATING) / SUM("_S5".COUNT_RATING) AS AVG_RATING,
+    "_S2".REGION
+  FROM "_S0" "_S2"
+  JOIN "_S1" "_S3"
+    ON "_S2".CITY_NAME = "_S3".CITY_NAME
+  JOIN "_S5" "_S5"
+    ON "_S2".CITY_NAME = "_S5".CITY_NAME
   GROUP BY
-    _S2.REGION
+    "_S2".REGION
 )
 SELECT
-  _S6.REGION AS rest_region,
-  _S7.AVG_RATING AS avg_rating
-FROM _S6 _S6
-LEFT JOIN _S7 _S7
-  ON _S6.REGION = _S7.REGION
+  "_S6".REGION AS rest_region,
+  "_S7".AVG_RATING AS avg_rating
+FROM "_S6" "_S6"
+LEFT JOIN "_S7" "_S7"
+  ON "_S6".REGION = "_S7".REGION
 ORDER BY
   1 NULLS FIRST

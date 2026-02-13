@@ -1,4 +1,4 @@
-WITH _S6 AS (
+WITH "_S6" AS (
   SELECT
     PARTSUPP.ps_partkey AS PS_PARTKEY,
     SUM(
@@ -24,10 +24,10 @@ WITH _S6 AS (
 )
 SELECT
   PART.p_name AS part_name,
-  ROUND(NVL(_S6.SUM_REVENUE, 0), 2) AS revenue_generated
-FROM _S6 _S6
+  ROUND(NVL("_S6".SUM_REVENUE, 0), 2) AS revenue_generated
+FROM "_S6" "_S6"
 JOIN TPCH.PART PART
-  ON PART.p_partkey = _S6.PS_PARTKEY
+  ON PART.p_partkey = "_S6".PS_PARTKEY
 ORDER BY
   2 NULLS FIRST,
   1 NULLS FIRST

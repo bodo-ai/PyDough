@@ -4,7 +4,7 @@ SELECT
   NVL(SUM(SALES.sale_price), 0) AS total_revenue
 FROM MAIN.SALES SALES
 JOIN MAIN.CUSTOMERS CUSTOMERS
-  ON CUSTOMERS._id = SALES.customer_id
+  ON CUSTOMERS."_id" = SALES.customer_id
 GROUP BY
   CUSTOMERS.state
 ORDER BY

@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     n_name AS N_NAME,
     n_nationkey AS N_NATIONKEY,
@@ -6,18 +6,18 @@ WITH _S1 AS (
   FROM TPCH.NATION
 )
 SELECT
-  ANY_VALUE(_S1.N_NAME) AS supplier_nation,
-  ANY_VALUE(_S5.N_NAME) AS customer_nation,
+  ANY_VALUE("_S1".N_NAME) AS supplier_nation,
+  ANY_VALUE("_S5".N_NAME) AS customer_nation,
   COUNT(*) AS nation_combinations
 FROM TPCH.REGION REGION
-JOIN _S1 _S1
-  ON REGION.r_regionkey = _S1.N_REGIONKEY
+JOIN "_S1" "_S1"
+  ON REGION.r_regionkey = "_S1".N_REGIONKEY
 JOIN TPCH.REGION REGION_2
   ON REGION_2.r_name = 'AMERICA'
-JOIN _S1 _S5
-  ON REGION_2.r_regionkey = _S5.N_REGIONKEY
+JOIN "_S1" "_S5"
+  ON REGION_2.r_regionkey = "_S5".N_REGIONKEY
 JOIN TPCH.CUSTOMER CUSTOMER
-  ON CUSTOMER.c_acctbal < 0 AND CUSTOMER.c_nationkey = _S5.N_NATIONKEY
+  ON CUSTOMER.c_acctbal < 0 AND CUSTOMER.c_nationkey = "_S5".N_NATIONKEY
 JOIN TPCH.ORDERS ORDERS
   ON CUSTOMER.c_custkey = ORDERS.o_custkey
   AND EXTRACT(MONTH FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 4
@@ -26,11 +26,11 @@ JOIN TPCH.LINEITEM LINEITEM
   ON LINEITEM.l_orderkey = ORDERS.o_orderkey AND LINEITEM.l_shipmode = 'SHIP'
 JOIN TPCH.SUPPLIER SUPPLIER
   ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
-  AND SUPPLIER.s_nationkey = _S1.N_NATIONKEY
+  AND SUPPLIER.s_nationkey = "_S1".N_NATIONKEY
 WHERE
   REGION.r_name = 'ASIA'
 GROUP BY
   REGION_2.r_regionkey,
-  _S5.N_NATIONKEY,
-  _S1.N_NATIONKEY,
+  "_S5".N_NATIONKEY,
+  "_S1".N_NATIONKEY,
   REGION.r_regionkey

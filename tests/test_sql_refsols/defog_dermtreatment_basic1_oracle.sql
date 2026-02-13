@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     doc_id AS DOC_ID,
     COUNT(*) AS N_ROWS,
@@ -8,14 +8,14 @@ WITH _S1 AS (
     start_dt >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 6, MONTH), 'DAY')
   GROUP BY
     doc_id
-), _T1 AS (
+), "_T1" AS (
   SELECT
     DOCTORS.specialty AS SPECIALTY,
-    SUM(_S1.N_ROWS) AS SUM_N_ROWS,
-    SUM(_S1.SUM_TOT_DRUG_AMT) AS SUM_SUM_TOT_DRUG_AMT
+    SUM("_S1".N_ROWS) AS SUM_N_ROWS,
+    SUM("_S1".SUM_TOT_DRUG_AMT) AS SUM_SUM_TOT_DRUG_AMT
   FROM MAIN.DOCTORS DOCTORS
-  LEFT JOIN _S1 _S1
-    ON DOCTORS.doc_id = _S1.DOC_ID
+  LEFT JOIN "_S1" "_S1"
+    ON DOCTORS.doc_id = "_S1".DOC_ID
   GROUP BY
     DOCTORS.specialty
 )
@@ -23,7 +23,7 @@ SELECT
   SPECIALTY AS specialty,
   SUM_N_ROWS AS num_treatments,
   NVL(SUM_SUM_TOT_DRUG_AMT, 0) AS total_drug_amount
-FROM _T1
+FROM "_T1"
 WHERE
   SUM_N_ROWS <> 0
 ORDER BY

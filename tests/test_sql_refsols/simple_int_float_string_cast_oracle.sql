@@ -22,4 +22,4 @@ SELECT
   CAST('0.0' AS CLOB) AS s8,
   CAST('abc def' AS CLOB) AS s9
 FROM (VALUES
-  (NULL)) AS _Q_0(_COL_0)
+  (NULL)) AS "_Q_0"("_COL_0")

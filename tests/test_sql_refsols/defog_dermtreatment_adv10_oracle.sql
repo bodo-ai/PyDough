@@ -1,4 +1,4 @@
-WITH _S3 AS (
+WITH "_S3" AS (
   SELECT
     TREATMENTS.drug_id AS DRUG_ID,
     COUNT(*) AS N_ROWS
@@ -12,10 +12,10 @@ WITH _S3 AS (
 SELECT
   DRUGS.drug_id,
   DRUGS.drug_name,
-  _S3.N_ROWS AS num_adverse_events
+  "_S3".N_ROWS AS num_adverse_events
 FROM MAIN.DRUGS DRUGS
-JOIN _S3 _S3
-  ON DRUGS.drug_id = _S3.DRUG_ID
+JOIN "_S3" "_S3"
+  ON DRUGS.drug_id = "_S3".DRUG_ID
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 1 ROWS ONLY

@@ -1,4 +1,4 @@
-WITH _T0 AS (
+WITH "_T0" AS (
   SELECT
     TIMES.t_name AS T_NAME,
     ANY_VALUE(TIMES.t_start_hour) AS ANYTHING_T_START_HOUR,
@@ -15,6 +15,6 @@ SELECT
   ROUND((
     100.0 * N_ROWS
   ) / SUM(N_ROWS) OVER (), 2) AS pct_searches
-FROM _T0
+FROM "_T0"
 ORDER BY
   ANYTHING_T_START_HOUR NULLS FIRST

@@ -1,4 +1,4 @@
-WITH _S9 AS (
+WITH "_S9" AS (
   SELECT
     NATION.n_name AS N_NAME,
     ORDERS.o_orderkey AS O_ORDERKEY
@@ -13,7 +13,7 @@ WITH _S9 AS (
 )
 SELECT
   NATION.n_name AS SUPP_NATION,
-  _S9.N_NAME AS CUST_NATION,
+  "_S9".N_NAME AS CUST_NATION,
   EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)) AS L_YEAR,
   NVL(SUM(LINEITEM.l_extendedprice * (
     1 - LINEITEM.l_discount
@@ -23,22 +23,22 @@ JOIN TPCH.SUPPLIER SUPPLIER
   ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
 JOIN TPCH.NATION NATION
   ON NATION.n_nationkey = SUPPLIER.s_nationkey
-JOIN _S9 _S9
-  ON LINEITEM.l_orderkey = _S9.O_ORDERKEY
+JOIN "_S9" "_S9"
+  ON LINEITEM.l_orderkey = "_S9".O_ORDERKEY
   AND (
     NATION.n_name = 'FRANCE' OR NATION.n_name = 'GERMANY'
   )
   AND (
-    NATION.n_name = 'FRANCE' OR _S9.N_NAME = 'FRANCE'
+    NATION.n_name = 'FRANCE' OR "_S9".N_NAME = 'FRANCE'
   )
   AND (
-    NATION.n_name = 'GERMANY' OR _S9.N_NAME = 'GERMANY'
+    NATION.n_name = 'GERMANY' OR "_S9".N_NAME = 'GERMANY'
   )
 WHERE
   EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)) IN (1995, 1996)
 GROUP BY
   EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)),
-  _S9.N_NAME,
+  "_S9".N_NAME,
   NATION.n_name
 ORDER BY
   1 NULLS FIRST,

@@ -1,4 +1,4 @@
-WITH _T0 AS (
+WITH "_T0" AS (
   SELECT
     DATEDIFF(
       CAST(o_orderdate AS DATETIME),
@@ -11,4 +11,4 @@ WITH _T0 AS (
 )
 SELECT
   AVG(DELTA) AS avg_delta
-FROM _T0
+FROM "_T0"

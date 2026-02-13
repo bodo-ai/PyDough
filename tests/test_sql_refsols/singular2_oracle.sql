@@ -1,4 +1,4 @@
-WITH _S3 AS (
+WITH "_S3" AS (
   SELECT
     CUSTOMER.c_nationkey AS C_NATIONKEY,
     ORDERS.o_orderkey AS O_ORDERKEY
@@ -10,7 +10,7 @@ WITH _S3 AS (
 )
 SELECT
   NATION.n_name AS name,
-  _S3.O_ORDERKEY AS okey
+  "_S3".O_ORDERKEY AS okey
 FROM TPCH.NATION NATION
-LEFT JOIN _S3 _S3
-  ON NATION.n_nationkey = _S3.C_NATIONKEY
+LEFT JOIN "_S3" "_S3"
+  ON NATION.n_nationkey = "_S3".C_NATIONKEY

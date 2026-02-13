@@ -1,4 +1,4 @@
-WITH _S3 AS (
+WITH "_S3" AS (
   SELECT
     COUPONS.merchant_id AS MERCHANT_ID,
     COUNT(*) AS N_ROWS
@@ -12,10 +12,10 @@ WITH _S3 AS (
 SELECT
   MERCHANTS.mid AS merchant_id,
   MERCHANTS.name AS merchant_name,
-  NVL(_S3.N_ROWS, 0) AS coupons_per_merchant
+  NVL("_S3".N_ROWS, 0) AS coupons_per_merchant
 FROM MAIN.MERCHANTS MERCHANTS
-LEFT JOIN _S3 _S3
-  ON MERCHANTS.mid = _S3.MERCHANT_ID
+LEFT JOIN "_S3" "_S3"
+  ON MERCHANTS.mid = "_S3".MERCHANT_ID
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 1 ROWS ONLY

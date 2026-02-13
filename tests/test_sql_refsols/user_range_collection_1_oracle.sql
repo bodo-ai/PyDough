@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     p_size AS P_SIZE,
     COUNT(*) AS N_ROWS
@@ -10,7 +10,7 @@ WITH _S1 AS (
 )
 SELECT
   COLUMN1 AS part_size,
-  NVL(_S1.N_ROWS, 0) AS n_parts
+  NVL("_S1".N_ROWS, 0) AS n_parts
 FROM (VALUES
   (1),
   (6),
@@ -32,5 +32,5 @@ FROM (VALUES
   (86),
   (91),
   (96)) AS SIZES(PART_SIZE)
-LEFT JOIN _S1 _S1
-  ON COLUMN1 = _S1.P_SIZE
+LEFT JOIN "_S1" "_S1"
+  ON COLUMN1 = "_S1".P_SIZE

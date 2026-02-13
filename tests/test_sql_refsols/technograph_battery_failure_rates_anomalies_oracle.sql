@@ -1,4 +1,4 @@
-WITH _S7 AS (
+WITH "_S7" AS (
   SELECT
     INCIDENTS.in_device_id AS IN_DEVICE_ID,
     COUNT(*) AS N_ROWS
@@ -11,14 +11,14 @@ WITH _S7 AS (
 SELECT
   COUNTRIES.co_name AS country_name,
   PRODUCTS.pr_name AS product_name,
-  ROUND(NVL(SUM(_S7.N_ROWS), 0) / COUNT(*), 2) AS ir
+  ROUND(NVL(SUM("_S7".N_ROWS), 0) / COUNT(*), 2) AS ir
 FROM MAIN.COUNTRIES COUNTRIES
 JOIN MAIN.DEVICES DEVICES
   ON COUNTRIES.co_id = DEVICES.de_production_country_id
 JOIN MAIN.PRODUCTS PRODUCTS
   ON DEVICES.de_product_id = PRODUCTS.pr_id
-LEFT JOIN _S7 _S7
-  ON DEVICES.de_id = _S7.IN_DEVICE_ID
+LEFT JOIN "_S7" "_S7"
+  ON DEVICES.de_id = "_S7".IN_DEVICE_ID
 GROUP BY
   COUNTRIES.co_name,
   PRODUCTS.pr_name

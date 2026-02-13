@@ -1,11 +1,11 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     did AS DID,
     COUNT(*) AS N_ROWS
   FROM MAIN.DOMAIN_PUBLICATION
   GROUP BY
     did
-), _S3 AS (
+), "_S3" AS (
   SELECT
     did AS DID,
     COUNT(*) AS N_ROWS
@@ -15,9 +15,9 @@ WITH _S1 AS (
 )
 SELECT
   DOMAIN.did AS domain_id,
-  NVL(_S1.N_ROWS, 0) / NULLIF(_S3.N_ROWS, 0) AS ratio
+  NVL("_S1".N_ROWS, 0) / NULLIF("_S3".N_ROWS, 0) AS ratio
 FROM MAIN.DOMAIN DOMAIN
-LEFT JOIN _S1 _S1
-  ON DOMAIN.did = _S1.DID
-LEFT JOIN _S3 _S3
-  ON DOMAIN.did = _S3.DID
+LEFT JOIN "_S1" "_S1"
+  ON DOMAIN.did = "_S1".DID
+LEFT JOIN "_S3" "_S3"
+  ON DOMAIN.did = "_S3".DID

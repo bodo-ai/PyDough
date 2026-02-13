@@ -1,7 +1,7 @@
-WITH _T AS (
+WITH "_T" AS (
   SELECT
     ORDERS.o_totalprice AS O_TOTALPRICE,
-    AVG(CAST(NULL AS INT)) OVER () AS _W
+    AVG(CAST(NULL AS INT)) OVER () AS "_W"
   FROM TPCH.ORDERS ORDERS
   JOIN TPCH.CUSTOMER CUSTOMER
     ON CUSTOMER.c_custkey = ORDERS.o_custkey AND CUSTOMER.c_mktsegment = 'BUILDING'
@@ -10,8 +10,8 @@ WITH _T AS (
 )
 SELECT
   COUNT(*) AS n
-FROM _T
+FROM "_T"
 WHERE
   O_TOTALPRICE < (
-    0.05 * _W
+    0.05 * "_W"
   )

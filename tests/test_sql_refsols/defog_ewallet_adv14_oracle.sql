@@ -1,5 +1,5 @@
 SELECT
-  NVL(SUM(status = 'success'), 0) / COUNT(*) AS _expr0
+  NVL(SUM(status = 'success'), 0) / COUNT(*) AS "_expr0"
 FROM MAIN.WALLET_TRANSACTIONS_DAILY
 WHERE
   DATEDIFF(CURRENT_TIMESTAMP, CAST(created_at AS DATETIME), MONTH) = 1

@@ -1,9 +1,9 @@
 SELECT
   "CAST".id2 AS id1,
   "CAST".id AS id2,
-  "lowercase_detail"."select" AS fk1_select,
-  "lowercase_detail"."as" AS fk1_as,
-  lowercase_detail_2."two words" AS fk2_two_words
+  "lowercase_detail"."select" AS "fk1_select",
+  "lowercase_detail"."as" AS "fk1_as",
+  lowercase_detail_2."two words" AS "fk2_two_words"
 FROM KEYWORDS."CAST" "CAST"
 JOIN KEYWORDS."lowercase_detail" "lowercase_detail"
   ON "CAST".id2 = "lowercase_detail".id

@@ -219,7 +219,23 @@ def get_custom_datasets_graph() -> graph_fetcher:
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/custom_datasets_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_oracle_custom_datasets_graph() -> graph_fetcher:
+    """
+    Returns the graph for the given custom dataset name for oracle.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/oracle_custom_datasets_graphs.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl

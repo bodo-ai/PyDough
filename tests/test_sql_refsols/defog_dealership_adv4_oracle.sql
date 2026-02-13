@@ -3,7 +3,7 @@ SELECT
   CASE WHEN COUNT(*) <> 0 THEN NVL(SUM(SALES.sale_price), 0) ELSE NULL END AS total_revenue
 FROM MAIN.CARS CARS
 JOIN MAIN.SALES SALES
-  ON CARS._id = SALES.car_id
+  ON CARS."_id" = SALES.car_id
   AND SALES.sale_date >= DATE_SUB(CURRENT_TIMESTAMP, 30, DAY)
 WHERE
   LOWER(CARS.make) LIKE '%toyota%'

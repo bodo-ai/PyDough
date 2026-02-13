@@ -1,4 +1,4 @@
-WITH _S3 AS (
+WITH "_S3" AS (
   SELECT
     drug_id AS DRUG_ID,
     AVG(
@@ -12,9 +12,9 @@ WITH _S3 AS (
 )
 SELECT
   DRUGS.drug_name,
-  _S3.AVG_DDD AS avg_ddd
+  "_S3".AVG_DDD AS avg_ddd
 FROM MAIN.DRUGS DRUGS
 JOIN MAIN.TREATMENTS TREATMENTS
   ON DRUGS.drug_id = TREATMENTS.drug_id AND NOT TREATMENTS.end_dt IS NULL
-LEFT JOIN _S3 _S3
-  ON DRUGS.drug_id = _S3.DRUG_ID
+LEFT JOIN "_S3" "_S3"
+  ON DRUGS.drug_id = "_S3".DRUG_ID

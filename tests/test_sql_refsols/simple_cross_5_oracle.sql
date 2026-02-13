@@ -1,30 +1,30 @@
-WITH _T1 AS (
+WITH "_T1" AS (
   SELECT
     p_container AS P_CONTAINER,
     p_size AS P_SIZE
   FROM TPCH.PART
   WHERE
     p_container LIKE 'LG%'
-), _S6 AS (
+), "_S6" AS (
   SELECT DISTINCT
     P_SIZE
-  FROM _T1
+  FROM "_T1"
   ORDER BY
     1 NULLS FIRST
   FETCH FIRST 10 ROWS ONLY
-), _S0 AS (
+), "_S0" AS (
   SELECT DISTINCT
     P_SIZE
-  FROM _T1
+  FROM "_T1"
   ORDER BY
     1 NULLS FIRST
   FETCH FIRST 10 ROWS ONLY
-), _T4 AS (
+), "_T4" AS (
   SELECT
     ORDERS.o_orderpriority AS O_ORDERPRIORITY,
-    _S0.P_SIZE,
+    "_S0".P_SIZE,
     SUM(LINEITEM.l_quantity) AS SUM_L_QUANTITY
-  FROM _S0 _S0
+  FROM "_S0" "_S0"
   JOIN TPCH.ORDERS ORDERS
     ON EXTRACT(MONTH FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1
     AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
@@ -36,11 +36,11 @@ WITH _T1 AS (
   JOIN TPCH.PART PART
     ON LINEITEM.l_partkey = PART.p_partkey
     AND PART.p_container LIKE 'LG%'
-    AND PART.p_size = _S0.P_SIZE
+    AND PART.p_size = "_S0".P_SIZE
   GROUP BY
     ORDERS.o_orderpriority,
-    _S0.P_SIZE
-), _T AS (
+    "_S0".P_SIZE
+), "_T" AS (
   SELECT
     O_ORDERPRIORITY,
     P_SIZE,
@@ -51,9 +51,9 @@ WITH _T1 AS (
       )
       THEN NVL(SUM_L_QUANTITY, 0)
       ELSE NULL
-    END DESC) AS _W
-  FROM _T4
-), _S7 AS (
+    END DESC) AS "_W"
+  FROM "_T4"
+), "_S7" AS (
   SELECT
     CASE
       WHEN (
@@ -64,16 +64,16 @@ WITH _T1 AS (
     END AS TOTAL_QTY,
     O_ORDERPRIORITY,
     P_SIZE
-  FROM _T
+  FROM "_T"
   WHERE
-    _W = 1
+    "_W" = 1
 )
 SELECT
-  _S6.P_SIZE AS part_size,
-  _S7.O_ORDERPRIORITY AS best_order_priority,
-  _S7.TOTAL_QTY AS best_order_priority_qty
-FROM _S6 _S6
-LEFT JOIN _S7 _S7
-  ON _S6.P_SIZE = _S7.P_SIZE
+  "_S6".P_SIZE AS part_size,
+  "_S7".O_ORDERPRIORITY AS best_order_priority,
+  "_S7".TOTAL_QTY AS best_order_priority_qty
+FROM "_S6" "_S6"
+LEFT JOIN "_S7" "_S7"
+  ON "_S6".P_SIZE = "_S7".P_SIZE
 ORDER BY
   1 NULLS FIRST

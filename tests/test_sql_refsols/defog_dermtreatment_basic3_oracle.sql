@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     drug_id AS DRUG_ID,
     AVG(tot_drug_amt) AS AVG_TOT_DRUG_AMT,
@@ -9,11 +9,11 @@ WITH _S1 AS (
 )
 SELECT
   DRUGS.drug_name,
-  NVL(_S1.N_ROWS, 0) AS num_treatments,
-  _S1.AVG_TOT_DRUG_AMT AS avg_drug_amount
+  NVL("_S1".N_ROWS, 0) AS num_treatments,
+  "_S1".AVG_TOT_DRUG_AMT AS avg_drug_amount
 FROM MAIN.DRUGS DRUGS
-LEFT JOIN _S1 _S1
-  ON DRUGS.drug_id = _S1.DRUG_ID
+LEFT JOIN "_S1" "_S1"
+  ON DRUGS.drug_id = "_S1".DRUG_ID
 ORDER BY
   2 DESC NULLS LAST,
   3 DESC NULLS LAST,

@@ -1,4 +1,4 @@
-WITH _T0 AS (
+WITH "_T0" AS (
   SELECT
     city_name AS CITY_NAME,
     name AS NAME,
@@ -12,6 +12,6 @@ SELECT
   CITY_NAME AS city_name,
   NAME AS name,
   N_ROWS AS n_restaurants
-FROM _T0
+FROM "_T0"
 WHERE
   N_ROWS > 1

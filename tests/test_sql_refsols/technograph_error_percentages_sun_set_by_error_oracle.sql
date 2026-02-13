@@ -1,4 +1,4 @@
-WITH _S5 AS (
+WITH "_S5" AS (
   SELECT
     INCIDENTS.in_error_id AS IN_ERROR_ID,
     COUNT(*) AS N_ROWS
@@ -13,10 +13,10 @@ WITH _S5 AS (
 SELECT
   ERRORS.er_name AS error,
   ROUND((
-    100.0 * NVL(_S5.N_ROWS, 0)
-  ) / SUM(NVL(_S5.N_ROWS, 0)) OVER (), 2) AS pct
+    100.0 * NVL("_S5".N_ROWS, 0)
+  ) / SUM(NVL("_S5".N_ROWS, 0)) OVER (), 2) AS pct
 FROM MAIN.ERRORS ERRORS
-LEFT JOIN _S5 _S5
-  ON ERRORS.er_id = _S5.IN_ERROR_ID
+LEFT JOIN "_S5" "_S5"
+  ON ERRORS.er_id = "_S5".IN_ERROR_ID
 ORDER BY
   2 DESC NULLS LAST

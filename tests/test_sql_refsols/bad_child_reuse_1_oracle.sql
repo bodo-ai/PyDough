@@ -1,26 +1,26 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     o_custkey AS O_CUSTKEY,
     COUNT(*) AS N_ROWS
   FROM TPCH.ORDERS
   GROUP BY
     o_custkey
-), _T1 AS (
+), "_T1" AS (
   SELECT
     CUSTOMER.c_custkey AS C_CUSTKEY,
-    _S1.N_ROWS
+    "_S1".N_ROWS
   FROM TPCH.CUSTOMER CUSTOMER
-  LEFT JOIN _S1 _S1
-    ON CUSTOMER.c_custkey = _S1.O_CUSTKEY
+  LEFT JOIN "_S1" "_S1"
+    ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
   ORDER BY
     CUSTOMER.c_acctbal DESC NULLS LAST,
-    NVL(_S1.N_ROWS, 0) NULLS FIRST
+    NVL("_S1".N_ROWS, 0) NULLS FIRST
   FETCH FIRST 10 ROWS ONLY
 )
 SELECT
   C_CUSTKEY AS cust_key,
   N_ROWS AS n_orders
-FROM _T1
+FROM "_T1"
 WHERE
   N_ROWS <> 0
 ORDER BY

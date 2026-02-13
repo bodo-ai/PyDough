@@ -1,24 +1,24 @@
-WITH _S2 AS (
+WITH "_S2" AS (
   SELECT
     r_name AS R_NAME,
     r_regionkey AS R_REGIONKEY
   FROM TPCH.REGION
-), _S3 AS (
+), "_S3" AS (
   SELECT
-    _S0.R_REGIONKEY,
+    "_S0".R_REGIONKEY,
     COUNT(*) AS N_ROWS
-  FROM _S2 _S0
+  FROM "_S2" "_S0"
   JOIN TPCH.REGION REGION
-    ON REGION.r_name <> _S0.R_NAME
-    AND SUBSTR(REGION.r_name, 1, 1) = SUBSTR(_S0.R_NAME, 1, 1)
+    ON REGION.r_name <> "_S0".R_NAME
+    AND SUBSTR(REGION.r_name, 1, 1) = SUBSTR("_S0".R_NAME, 1, 1)
   GROUP BY
-    _S0.R_REGIONKEY
+    "_S0".R_REGIONKEY
 )
 SELECT
-  _S2.R_NAME AS region_name,
-  NVL(_S3.N_ROWS, 0) AS n_other_regions
-FROM _S2 _S2
-LEFT JOIN _S3 _S3
-  ON _S2.R_REGIONKEY = _S3.R_REGIONKEY
+  "_S2".R_NAME AS region_name,
+  NVL("_S3".N_ROWS, 0) AS n_other_regions
+FROM "_S2" "_S2"
+LEFT JOIN "_S3" "_S3"
+  ON "_S2".R_REGIONKEY = "_S3".R_REGIONKEY
 ORDER BY
   1 NULLS FIRST

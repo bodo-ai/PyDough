@@ -1,4 +1,4 @@
-WITH _S5 AS (
+WITH "_S5" AS (
   SELECT
     LINEITEM.l_partkey AS L_PARTKEY,
     SUM(LINEITEM.l_quantity) AS SUM_L_QUANTITY
@@ -19,11 +19,11 @@ JOIN TPCH.NATION NATION
   ON NATION.n_name = 'CANADA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
 JOIN TPCH.PARTSUPP PARTSUPP
   ON PARTSUPP.ps_suppkey = SUPPLIER.s_suppkey
-JOIN _S5 _S5
+JOIN "_S5" "_S5"
   ON PARTSUPP.ps_availqty > (
-    0.5 * NVL(_S5.SUM_L_QUANTITY, 0)
+    0.5 * NVL("_S5".SUM_L_QUANTITY, 0)
   )
-  AND PARTSUPP.ps_partkey = _S5.L_PARTKEY
+  AND PARTSUPP.ps_partkey = "_S5".L_PARTKEY
 GROUP BY
   PARTSUPP.ps_suppkey
 ORDER BY

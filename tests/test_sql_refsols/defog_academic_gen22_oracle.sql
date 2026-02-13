@@ -1,4 +1,4 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     aid AS AID,
     did AS DID
@@ -8,9 +8,9 @@ SELECT
   AUTHOR.name,
   AUTHOR.aid AS author_id
 FROM MAIN.AUTHOR AUTHOR
-JOIN _S0 _S0
-  ON AUTHOR.aid = _S0.AID
-JOIN _S0 _S1
-  ON _S0.DID = _S1.DID
+JOIN "_S0" "_S0"
+  ON AUTHOR.aid = "_S0".AID
+JOIN "_S0" "_S1"
+  ON "_S0".DID = "_S1".DID
 JOIN MAIN.AUTHOR AUTHOR_2
-  ON AUTHOR_2.aid = _S1.AID AND LOWER(AUTHOR_2.name) LIKE '%martin%'
+  ON AUTHOR_2.aid = "_S1".AID AND LOWER(AUTHOR_2.name) LIKE '%martin%'

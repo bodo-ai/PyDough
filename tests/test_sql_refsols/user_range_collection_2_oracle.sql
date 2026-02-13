@@ -1,4 +1,4 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     COLUMN1 AS X
   FROM (VALUES
@@ -12,7 +12,7 @@ WITH _S0 AS (
     (7),
     (8),
     (9)) AS A(X)
-), _S1 AS (
+), "_S1" AS (
   SELECT
     COLUMN1 AS Y
   FROM (VALUES
@@ -517,31 +517,31 @@ WITH _S0 AS (
     (996),
     (998),
     (1000)) AS B(Y)
-), _S4 AS (
+), "_S4" AS (
   SELECT
-    _S0.X,
+    "_S0".X,
     COUNT(*) AS N_ROWS
-  FROM _S0 _S0
-  JOIN _S1 _S1
-    ON CAST(_S1.Y AS CLOB) LIKE CONCAT(CAST(_S0.X AS CLOB), '%')
+  FROM "_S0" "_S0"
+  JOIN "_S1" "_S1"
+    ON CAST("_S1".Y AS CLOB) LIKE CONCAT(CAST("_S0".X AS CLOB), '%')
   GROUP BY
-    _S0.X
-), _S5 AS (
+    "_S0".X
+), "_S5" AS (
   SELECT
-    _S2.X,
+    "_S2".X,
     COUNT(*) AS N_ROWS
-  FROM _S0 _S2
-  JOIN _S1 _S3
-    ON CAST(_S3.Y AS CLOB) LIKE CONCAT('%', CAST(_S2.X AS CLOB))
+  FROM "_S0" "_S2"
+  JOIN "_S1" "_S3"
+    ON CAST("_S3".Y AS CLOB) LIKE CONCAT('%', CAST("_S2".X AS CLOB))
   GROUP BY
-    _S2.X
+    "_S2".X
 )
 SELECT
-  _S4.X AS x,
-  _S4.N_ROWS AS n_prefix,
-  _S5.N_ROWS AS n_suffix
-FROM _S4 _S4
-JOIN _S5 _S5
-  ON _S4.X = _S5.X
+  "_S4".X AS x,
+  "_S4".N_ROWS AS n_prefix,
+  "_S5".N_ROWS AS n_suffix
+FROM "_S4" "_S4"
+JOIN "_S5" "_S5"
+  ON "_S4".X = "_S5".X
 ORDER BY
   1 NULLS FIRST

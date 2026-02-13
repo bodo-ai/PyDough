@@ -215,6 +215,10 @@ def apply_sqlglot_optimizer(
     # SQL.
     remove_tuple_row_values(glot_expr)
 
+    # Quote identifiers when required
+    # For Oracle add quotes to all alias starting with _
+    quote_oracle_identifiers(glot_expr, dialect)
+
     return glot_expr
 
 
@@ -465,6 +469,34 @@ def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
     for arg in expr.iter_expressions():
         if isinstance(arg, SQLGlotExpression):
             remove_tuple_row_values(arg)
+
+
+def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -> None:
+    """
+    Add quotes to all Identifiers that start with '_'. Identifiers that start with
+    '_' are invalid for Oracle unless they are quoted.
+
+    Note: This only is required for the Oracle dialect.
+
+    Args:
+        expr: The SQLGlot expression to visit.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    if dialect != OracleDialect:
+        return
+
+    if isinstance(expr, (sqlglot_expressions.Identifier)):
+        # Identifiers starting with _ are required to be quoted for Oracle
+        if expr.this.startswith("_"):
+            new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
+            expr.replace(new_identifier)
+
+    # Recursively visit the subexpressions.
+    for arg in expr.iter_expressions():
+        if isinstance(arg, SQLGlotExpression):
+            quote_oracle_identifiers(arg, dialect)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:

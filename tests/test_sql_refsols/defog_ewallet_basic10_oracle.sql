@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     amount AS AMOUNT,
     receiver_id AS RECEIVER_ID
@@ -9,11 +9,11 @@ WITH _S1 AS (
 )
 SELECT
   ANY_VALUE(MERCHANTS.name) AS merchant_name,
-  NVL(NULLIF(COUNT(_S1.RECEIVER_ID), 0), 0) AS total_transactions,
-  NVL(SUM(_S1.AMOUNT), 0) AS total_amount
+  NVL(NULLIF(COUNT("_S1".RECEIVER_ID), 0), 0) AS total_transactions,
+  NVL(SUM("_S1".AMOUNT), 0) AS total_amount
 FROM MAIN.MERCHANTS MERCHANTS
-LEFT JOIN _S1 _S1
-  ON MERCHANTS.mid = _S1.RECEIVER_ID
+LEFT JOIN "_S1" "_S1"
+  ON MERCHANTS.mid = "_S1".RECEIVER_ID
 GROUP BY
   MERCHANTS.mid
 ORDER BY

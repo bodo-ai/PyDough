@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     n_regionkey AS N_REGIONKEY,
     COUNT(*) AS N_ROWS
@@ -11,9 +11,9 @@ WITH _S1 AS (
 SELECT
   REGION.r_name AS region_name,
   'foo' AS x,
-  NVL(_S1.N_ROWS, 0) AS n
+  NVL("_S1".N_ROWS, 0) AS n
 FROM TPCH.REGION REGION
-LEFT JOIN _S1 _S1
-  ON REGION.r_regionkey = _S1.N_REGIONKEY
+LEFT JOIN "_S1" "_S1"
+  ON REGION.r_regionkey = "_S1".N_REGIONKEY
 ORDER BY
   1 NULLS FIRST

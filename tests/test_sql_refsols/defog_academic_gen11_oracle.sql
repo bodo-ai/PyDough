@@ -1,13 +1,13 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     COUNT(*) AS N_ROWS
   FROM MAIN.PUBLICATION
-), _S1 AS (
+), "_S1" AS (
   SELECT
     COUNT(*) AS N_ROWS
   FROM MAIN.AUTHOR
 )
 SELECT
-  _S0.N_ROWS / NULLIF(_S1.N_ROWS, 0) AS publication_to_author_ratio
-FROM _S0 _S0
-CROSS JOIN _S1 _S1
+  "_S0".N_ROWS / NULLIF("_S1".N_ROWS, 0) AS publication_to_author_ratio
+FROM "_S0" "_S0"
+CROSS JOIN "_S1" "_S1"

@@ -1,4 +1,4 @@
-WITH _T1 AS (
+WITH "_T1" AS (
   SELECT
     CUSTOMER.c_acctbal AS C_ACCTBAL,
     CUSTOMER.c_nationkey AS C_NATIONKEY,
@@ -55,7 +55,7 @@ SELECT
   AVG(EXPR_7) AS median_red_acctbal,
   AVG(EXPR_5) AS median_black_acctbal,
   AVG(EXPR_6) AS median_overall_acctbal
-FROM _T1
+FROM "_T1"
 GROUP BY
   C_NATIONKEY
 ORDER BY

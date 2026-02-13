@@ -1,17 +1,17 @@
 SELECT
-  1 AS _expr0,
-  1 AS _expr1,
-  1 AS _expr2,
-  2 AS _expr3,
-  2 AS _expr4,
-  2 AS _expr5,
-  3 AS _expr6,
-  3 AS _expr7,
-  3 AS _expr8,
-  4 AS _expr9,
-  4 AS _expr10,
-  4 AS _expr11,
-  1 AS _expr12,
+  1 AS "_expr0",
+  1 AS "_expr1",
+  1 AS "_expr2",
+  2 AS "_expr3",
+  2 AS "_expr4",
+  2 AS "_expr5",
+  3 AS "_expr6",
+  3 AS "_expr7",
+  3 AS "_expr8",
+  4 AS "_expr9",
+  4 AS "_expr10",
+  4 AS "_expr11",
+  1 AS "_expr12",
   TO_DATE('2023-01-01', 'YYYY-MM-DD') AS q1_jan,
   TO_DATE('2023-01-01', 'YYYY-MM-DD') AS q1_feb,
   TO_DATE('2023-01-01', 'YYYY-MM-DD') AS q1_mar,
@@ -55,4 +55,4 @@ SELECT
   DATEDIFF(CAST('2023-04-01' AS TIMESTAMP), CAST('2023-03-31' AS TIMESTAMP), QUARTER) AS q_diff11,
   DATEDIFF(CAST('2024-01-01' AS TIMESTAMP), CAST('2023-12-31' AS TIMESTAMP), QUARTER) AS q_diff12
 FROM (VALUES
-  (NULL)) AS _Q_0(_COL_0)
+  (NULL)) AS "_Q_0"("_COL_0")

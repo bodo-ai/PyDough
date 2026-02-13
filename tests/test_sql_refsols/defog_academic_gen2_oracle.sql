@@ -1,4 +1,4 @@
-WITH _S3 AS (
+WITH "_S3" AS (
   SELECT
     WRITES.aid AS AID,
     SUM(PUBLICATION.citation_num) AS SUM_CITATION_NUM
@@ -10,7 +10,7 @@ WITH _S3 AS (
 )
 SELECT
   AUTHOR.name,
-  NVL(_S3.SUM_CITATION_NUM, 0) AS total_citations
+  NVL("_S3".SUM_CITATION_NUM, 0) AS total_citations
 FROM MAIN.AUTHOR AUTHOR
-JOIN _S3 _S3
-  ON AUTHOR.aid = _S3.AID
+JOIN "_S3" "_S3"
+  ON AUTHOR.aid = "_S3".AID

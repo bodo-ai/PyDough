@@ -1,5 +1,5 @@
 SELECT
-  CAST(SUBSTR(sbcustid, 2) AS INT) AS _expr0,
+  CAST(SUBSTR(sbcustid, 2) AS INT) AS "_expr0",
   REGEXP_SUBSTR(
     sbcustname,
     '[^ ]+',

@@ -1,8 +1,8 @@
-WITH _T AS (
+WITH "_T" AS (
   SELECT
     sbtxdatetime AS SBTXDATETIME,
-    ROW_NUMBER() OVER (ORDER BY sbtxdatetime DESC) AS _W,
-    ROW_NUMBER() OVER (ORDER BY sbtxdatetime) AS _W_2
+    ROW_NUMBER() OVER (ORDER BY sbtxdatetime DESC) AS "_W",
+    ROW_NUMBER() OVER (ORDER BY sbtxdatetime) AS "_W_2"
   FROM MAIN.SBTRANSACTION
   WHERE
     EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
@@ -114,6 +114,6 @@ SELECT
   TO_DATE('2024-12-30', 'YYYY-MM-DD') AS s102,
   TO_DATE('2025-01-06', 'YYYY-MM-DD') AS s103,
   TO_DATE('2025-01-06', 'YYYY-MM-DD') AS s104
-FROM _T
+FROM "_T"
 WHERE
-  _W = 1 OR _W_2 = 1
+  "_W" = 1 OR "_W_2" = 1

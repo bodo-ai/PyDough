@@ -1,4 +1,4 @@
-WITH _S2 AS (
+WITH "_S2" AS (
   SELECT
     LISTAGG(
       '-',
@@ -28,7 +28,7 @@ WITH _S2 AS (
         ))
       END
     )
-), _S3 AS (
+), "_S3" AS (
   SELECT
     LISTAGG(
       '-',
@@ -70,9 +70,9 @@ WITH _S2 AS (
     )
 )
 SELECT
-  _S2.MONTH AS month,
-  _S2.N_ROWS AS customer_signups,
-  _S3.AVG_SBTXAMOUNT AS avg_tx_amount
-FROM _S2 _S2
-LEFT JOIN _S3 _S3
-  ON _S2.MONTH = _S3.MONTH
+  "_S2".MONTH AS month,
+  "_S2".N_ROWS AS customer_signups,
+  "_S3".AVG_SBTXAMOUNT AS avg_tx_amount
+FROM "_S2" "_S2"
+LEFT JOIN "_S3" "_S3"
+  ON "_S2".MONTH = "_S3".MONTH

@@ -1,4 +1,4 @@
-WITH _S2 AS (
+WITH "_S2" AS (
   SELECT
     LISTAGG(
       '-',
@@ -28,7 +28,7 @@ WITH _S2 AS (
         ))
       END
     )
-), _S3 AS (
+), "_S3" AS (
   SELECT
     LISTAGG(
       '-',
@@ -68,11 +68,11 @@ WITH _S2 AS (
     )
 )
 SELECT
-  _S2.TREATMENT_MONTH AS month,
-  _S2.NDISTINCT_PATIENT_ID AS patient_count,
-  NVL(_S3.NDISTINCT_PATIENT_ID, 0) AS biologic_treatment_count
-FROM _S2 _S2
-LEFT JOIN _S3 _S3
-  ON _S2.TREATMENT_MONTH = _S3.TREATMENT_MONTH
+  "_S2".TREATMENT_MONTH AS month,
+  "_S2".NDISTINCT_PATIENT_ID AS patient_count,
+  NVL("_S3".NDISTINCT_PATIENT_ID, 0) AS biologic_treatment_count
+FROM "_S2" "_S2"
+LEFT JOIN "_S3" "_S3"
+  ON "_S2".TREATMENT_MONTH = "_S3".TREATMENT_MONTH
 ORDER BY
   1 DESC NULLS LAST

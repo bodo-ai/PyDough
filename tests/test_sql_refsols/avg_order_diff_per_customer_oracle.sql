@@ -1,4 +1,4 @@
-WITH _T1 AS (
+WITH "_T1" AS (
   SELECT
     CUSTOMER.c_name AS C_NAME,
     ORDERS.o_custkey AS O_CUSTKEY,
@@ -16,7 +16,7 @@ WITH _T1 AS (
 SELECT
   ANY_VALUE(C_NAME) AS name,
   AVG(DAY_DIFF) AS avg_diff
-FROM _T1
+FROM "_T1"
 GROUP BY
   O_CUSTKEY
 ORDER BY

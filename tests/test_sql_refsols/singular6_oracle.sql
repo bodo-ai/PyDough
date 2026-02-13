@@ -1,11 +1,11 @@
-WITH _T AS (
+WITH "_T" AS (
   SELECT
     LINEITEM.l_receiptdate AS L_RECEIPTDATE,
     LINEITEM.l_suppkey AS L_SUPPKEY,
     ORDERS.o_custkey AS O_CUSTKEY,
     ROW_NUMBER() OVER (PARTITION BY ORDERS.o_custkey ORDER BY LINEITEM.l_receiptdate, LINEITEM.l_extendedprice * (
       1 - LINEITEM.l_discount
-    ) DESC) AS _W
+    ) DESC) AS "_W"
   FROM TPCH.ORDERS ORDERS
   JOIN TPCH.LINEITEM LINEITEM
     ON LINEITEM.l_orderkey = ORDERS.o_orderkey
@@ -14,13 +14,13 @@ WITH _T AS (
 )
 SELECT
   CUSTOMER.c_name AS name,
-  _T.L_RECEIPTDATE AS receipt_date,
+  "_T".L_RECEIPTDATE AS receipt_date,
   NATION.n_name AS nation_name
 FROM TPCH.CUSTOMER CUSTOMER
-JOIN _T _T
-  ON CUSTOMER.c_custkey = _T.O_CUSTKEY AND _T._W = 1
+JOIN "_T" "_T"
+  ON CUSTOMER.c_custkey = "_T".O_CUSTKEY AND "_T"."_W" = 1
 JOIN TPCH.SUPPLIER SUPPLIER
-  ON SUPPLIER.s_suppkey = _T.L_SUPPKEY
+  ON SUPPLIER.s_suppkey = "_T".L_SUPPKEY
 JOIN TPCH.NATION NATION
   ON NATION.n_nationkey = SUPPLIER.s_nationkey
 WHERE

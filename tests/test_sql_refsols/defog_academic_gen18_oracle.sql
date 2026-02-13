@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     jid AS JID,
     COUNT(*) AS N_ROWS
@@ -9,9 +9,9 @@ WITH _S1 AS (
 SELECT
   JOURNAL.name,
   JOURNAL.jid AS journal_id,
-  NVL(_S1.N_ROWS, 0) AS num_publications
+  NVL("_S1".N_ROWS, 0) AS num_publications
 FROM MAIN.JOURNAL JOURNAL
-LEFT JOIN _S1 _S1
-  ON JOURNAL.jid = _S1.JID
+LEFT JOIN "_S1" "_S1"
+  ON JOURNAL.jid = "_S1".JID
 ORDER BY
   3 DESC NULLS LAST

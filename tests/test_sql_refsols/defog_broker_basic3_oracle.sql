@@ -1,4 +1,4 @@
-WITH _S1 AS (
+WITH "_S1" AS (
   SELECT
     sbtxtickerid AS SBTXTICKERID,
     COUNT(*) AS N_ROWS,
@@ -9,11 +9,11 @@ WITH _S1 AS (
 )
 SELECT
   SBTICKER.sbtickersymbol AS symbol,
-  NVL(_S1.N_ROWS, 0) AS num_transactions,
-  NVL(_S1.SUM_SBTXAMOUNT, 0) AS total_amount
+  NVL("_S1".N_ROWS, 0) AS num_transactions,
+  NVL("_S1".SUM_SBTXAMOUNT, 0) AS total_amount
 FROM MAIN.SBTICKER SBTICKER
-LEFT JOIN _S1 _S1
-  ON SBTICKER.sbtickerid = _S1.SBTXTICKERID
+LEFT JOIN "_S1" "_S1"
+  ON SBTICKER.sbtickerid = "_S1".SBTXTICKERID
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 10 ROWS ONLY

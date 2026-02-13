@@ -1,10 +1,10 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     MIN(snapshot_date) AS MIN_SNAPSHOT_DATE
   FROM MAIN.USER_SETTING_SNAPSHOT
   WHERE
     EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
-), _S1 AS (
+), "_S1" AS (
   SELECT
     snapshot_date AS SNAPSHOT_DATE,
     AVG(tx_limit_daily) AS AVG_TX_LIMIT_DAILY,
@@ -16,8 +16,8 @@ WITH _S0 AS (
     snapshot_date
 )
 SELECT
-  _S1.AVG_TX_LIMIT_DAILY AS avg_daily_limit,
-  _S1.AVG_TX_LIMIT_MONTHLY AS avg_monthly_limit
-FROM _S0 _S0
-LEFT JOIN _S1 _S1
-  ON _S0.MIN_SNAPSHOT_DATE = _S1.SNAPSHOT_DATE
+  "_S1".AVG_TX_LIMIT_DAILY AS avg_daily_limit,
+  "_S1".AVG_TX_LIMIT_MONTHLY AS avg_monthly_limit
+FROM "_S0" "_S0"
+LEFT JOIN "_S1" "_S1"
+  ON "_S0".MIN_SNAPSHOT_DATE = "_S1".SNAPSHOT_DATE

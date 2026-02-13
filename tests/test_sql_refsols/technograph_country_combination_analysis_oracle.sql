@@ -1,45 +1,45 @@
-WITH _S0 AS (
+WITH "_S0" AS (
   SELECT
     co_id AS CO_ID,
     co_name AS CO_NAME
   FROM MAIN.COUNTRIES
-), _S2 AS (
+), "_S2" AS (
   SELECT
     co_id AS CO_ID
   FROM MAIN.COUNTRIES
-), _T1 AS (
+), "_T1" AS (
   SELECT
-    ANY_VALUE(_S3.CO_ID) AS ANYTHING__ID_3,
-    ANY_VALUE(_S2.CO_ID) AS ANYTHING_CO_ID,
+    ANY_VALUE("_S3".CO_ID) AS ANYTHING__ID_3,
+    ANY_VALUE("_S2".CO_ID) AS ANYTHING_CO_ID,
     COUNT(INCIDENTS.in_device_id) AS COUNT_IN_DEVICE_ID
-  FROM _S2 _S2
-  CROSS JOIN _S2 _S3
+  FROM "_S2" "_S2"
+  CROSS JOIN "_S2" "_S3"
   JOIN MAIN.DEVICES DEVICES
-    ON DEVICES.de_production_country_id = _S2.CO_ID
-    AND DEVICES.de_purchase_country_id = _S3.CO_ID
+    ON DEVICES.de_production_country_id = "_S2".CO_ID
+    AND DEVICES.de_purchase_country_id = "_S3".CO_ID
   LEFT JOIN MAIN.INCIDENTS INCIDENTS
     ON DEVICES.de_id = INCIDENTS.in_device_id
   GROUP BY
     DEVICES.de_id
-), _S9 AS (
+), "_S9" AS (
   SELECT
     ANYTHING__ID_3,
     ANYTHING_CO_ID,
     COUNT(*) AS N_ROWS,
     SUM(COUNT_IN_DEVICE_ID) AS SUM_N_ROWS
-  FROM _T1
+  FROM "_T1"
   GROUP BY
     ANYTHING__ID_3,
     ANYTHING_CO_ID
 )
 SELECT
-  _S0.CO_NAME AS factory_country,
-  _S1.CO_NAME AS purchase_country,
-  ROUND(NVL(_S9.SUM_N_ROWS, 0) / NVL(_S9.N_ROWS, 0), 2) AS ir
-FROM _S0 _S0
-CROSS JOIN _S0 _S1
-LEFT JOIN _S9 _S9
-  ON _S0.CO_ID = _S9.ANYTHING_CO_ID AND _S1.CO_ID = _S9.ANYTHING__ID_3
+  "_S0".CO_NAME AS factory_country,
+  "_S1".CO_NAME AS purchase_country,
+  ROUND(NVL("_S9".SUM_N_ROWS, 0) / NVL("_S9".N_ROWS, 0), 2) AS ir
+FROM "_S0" "_S0"
+CROSS JOIN "_S0" "_S1"
+LEFT JOIN "_S9" "_S9"
+  ON "_S0".CO_ID = "_S9".ANYTHING_CO_ID AND "_S1".CO_ID = "_S9".ANYTHING__ID_3
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 5 ROWS ONLY

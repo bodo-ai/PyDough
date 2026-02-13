@@ -1,4 +1,4 @@
-WITH _T AS (
+WITH "_T" AS (
   SELECT
     NATION.n_name AS N_NAME,
     PART.p_mfgr AS P_MFGR,
@@ -8,7 +8,7 @@ WITH _T AS (
     SUPPLIER.s_comment AS S_COMMENT,
     SUPPLIER.s_name AS S_NAME,
     SUPPLIER.s_phone AS S_PHONE,
-    RANK() OVER (PARTITION BY PARTSUPP.ps_partkey ORDER BY PARTSUPP.ps_supplycost) AS _W
+    RANK() OVER (PARTITION BY PARTSUPP.ps_partkey ORDER BY PARTSUPP.ps_supplycost) AS "_W"
   FROM TPCH.PART PART
   JOIN TPCH.PARTSUPP PARTSUPP
     ON PART.p_partkey = PARTSUPP.ps_partkey
@@ -30,9 +30,9 @@ SELECT
   S_ADDRESS,
   S_PHONE,
   S_COMMENT
-FROM _T
+FROM "_T"
 WHERE
-  _W = 1
+  "_W" = 1
 ORDER BY
   1 DESC NULLS LAST,
   3 NULLS FIRST,
