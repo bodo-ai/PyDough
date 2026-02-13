@@ -1192,7 +1192,69 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     for arg in expr.inputs
                 ):
                     output_expr = LiteralExpression(True, expr.data_type)
-                output_predicates.not_negative = True
+                # If any of the two arguments are opposites, replace the entire
+                # AND expression with False. For example:
+                # (x >= y) & (x < y) -> False
+                for i in range(len(expr.inputs)):
+                    for j in range(i + 1, len(expr.inputs)):
+                        if are_opposites(expr.inputs[i], expr.inputs[j]):
+                            output_expr = LiteralExpression(False, expr.data_type)
+
+                # If all the arguments are ANDs that have overlap, create an OR
+                # between the overlapping parts vs the rest of the arguments
+                # that are AND-ed together.
+                # For example: (x | y) & (x | z) -> x | (y & z)
+                if all(
+                    isinstance(arg, CallExpression) and arg.op == pydop.BOR
+                    for arg in expr.inputs
+                ):
+                    common_args: set[RelationalExpression] = set.intersection(
+                        *[
+                            set(arg.inputs)
+                            for arg in expr.inputs
+                            if isinstance(arg, CallExpression)
+                        ]
+                    )
+                    if len(common_args) > 0:
+                        common_arg_expr: RelationalExpression
+                        if len(common_args) == 1:
+                            common_arg_expr = next(iter(common_args))
+                        else:
+                            common_arg_expr = CallExpression(
+                                pydop.BOR, expr.data_type, list(common_args)
+                            )
+                        conjunctions: list[RelationalExpression] = []
+                        for arg in expr.inputs:
+                            assert isinstance(arg, CallExpression)
+                            conj_args: list[RelationalExpression] = list(
+                                set(arg.inputs) - common_args
+                            )
+                            if len(conj_args) == 0:
+                                continue
+                            elif len(conj_args) == 1:
+                                conjunctions.append(next(iter(conj_args)))
+                            else:
+                                conjunctions.append(
+                                    CallExpression(pydop.BAN, expr.data_type, conj_args)
+                                )
+
+                        disjunction_expr: RelationalExpression
+                        if len(conjunctions) == 0:
+                            output_expr = common_arg_expr
+                        else:
+                            if len(conjunctions) == 1:
+                                disjunction_expr = next(iter(conjunctions))
+                            else:
+                                disjunction_expr = CallExpression(
+                                    pydop.BOR, expr.data_type, conjunctions
+                                )
+                            output_expr = CallExpression(
+                                pydop.BAN,
+                                expr.data_type,
+                                [common_arg_expr, disjunction_expr],
+                            )
+
+                output_predicates.not_negative = False
 
             # X | Y is True if any of the arguments are Truth-y literals, and False
             # if all of the arguments are False-y literals.
@@ -1208,6 +1270,70 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     for arg in expr.inputs
                 ):
                     output_expr = LiteralExpression(False, expr.data_type)
+                # If any of the two arguments are opposites, replace the entire
+                # OR expression with True. For example:
+                # (x >= y) | (x < y) -> True
+                for i in range(len(expr.inputs)):
+                    for j in range(i + 1, len(expr.inputs)):
+                        if are_opposites(expr.inputs[i], expr.inputs[j]):
+                            output_expr = LiteralExpression(True, expr.data_type)
+                            output_predicates.positive = True
+                            break
+
+                # If all the arguments are ORs that have overlap, create an AND
+                # between the overlapping parts vs the rest of the arguments
+                # that are OR-ed together.
+                # For example: (x & y) | (x & z) -> x & (y | z)
+                if all(
+                    isinstance(arg, CallExpression) and arg.op == pydop.BAN
+                    for arg in expr.inputs
+                ):
+                    common_args = set.intersection(
+                        *[
+                            set(arg.inputs)
+                            for arg in expr.inputs
+                            if isinstance(arg, CallExpression)
+                        ]
+                    )
+                    breakpoint()
+                    if len(common_args) > 0:
+                        if len(common_args) == 1:
+                            common_arg_expr = next(iter(common_args))
+                        else:
+                            common_arg_expr = CallExpression(
+                                pydop.BAN, expr.data_type, list(common_args)
+                            )
+                        disjunctions: list[RelationalExpression] = []
+                        for arg in expr.inputs:
+                            assert isinstance(arg, CallExpression)
+                            disj_args: list[RelationalExpression] = list(
+                                set(arg.inputs) - common_args
+                            )
+                            if len(disj_args) == 0:
+                                continue
+                            elif len(disj_args) == 1:
+                                disjunctions.append(next(iter(disj_args)))
+                            else:
+                                disjunctions.append(
+                                    CallExpression(pydop.BOR, expr.data_type, disj_args)
+                                )
+
+                        conjunction_expr: RelationalExpression
+                        if len(disjunctions) == 0:
+                            output_expr = common_arg_expr
+                        else:
+                            if len(disjunctions) == 1:
+                                conjunction_expr = next(iter(disjunctions))
+                            else:
+                                conjunction_expr = CallExpression(
+                                    pydop.BOR, expr.data_type, disjunctions
+                                )
+                            output_expr = CallExpression(
+                                pydop.BOR,
+                                expr.data_type,
+                                [common_arg_expr, conjunction_expr],
+                            )
+
                 output_predicates.not_negative = True
 
             # NOT(x) is True if x is a False-y literal, and False if x is a
@@ -1789,3 +1915,47 @@ def simplify_expressions(
     """
     simplifier: SimplificationVisitor = SimplificationVisitor(session)
     node.accept(simplifier)
+
+
+def are_opposites(expr1: RelationalExpression, expr2: RelationalExpression) -> bool:
+    """
+    Helper function to determine whether two expressions are opposites of each
+    other. For example, x >= y and x < y are opposites, as are x = y and
+    x != y.
+
+    Args:
+        `expr1`: The first expression to compare.
+        `expr2`: The second expression to compare.
+
+    Returns:
+        A boolean indicating whether the two expressions are opposites of each
+        other.
+    """
+    if not (isinstance(expr1, CallExpression) and isinstance(expr2, CallExpression)):
+        return False
+    match (expr1.op, expr2.op):
+        # e.g. (a = b) is the opposite of (a != b)
+        case (pydop.EQU, pydop.NEQ) | (pydop.NEQ, pydop.EQU):
+            return set(expr1.inputs) == set(expr2.inputs)
+
+        # e.g. (a < b) is the opposite of (a >= b)
+        case (
+            (pydop.LET, pydop.GEQ)
+            | (pydop.LEQ, pydop.GRT)
+            | (pydop.GEQ, pydop.LET)
+            | (pydop.GRT, pydop.LEQ)
+        ):
+            return expr1.inputs == expr2.inputs
+
+        # e.g. (a < b) is the opposite of (b <= a)
+        case (
+            (pydop.LET, pydop.LEQ)
+            | (pydop.LEQ, pydop.LET)
+            | (pydop.GEQ, pydop.GRT)
+            | (pydop.GRT, pydop.GEQ)
+        ):
+            return expr1.inputs == list(reversed(expr2.inputs))
+
+        # TODO: add more cases
+        case _:
+            return False
