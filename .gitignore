@@ -27,6 +27,7 @@ share/python-wheels/
 MANIFEST
 test-output.xml
 *.db
+tests/gen_data/corpus_iceberg/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

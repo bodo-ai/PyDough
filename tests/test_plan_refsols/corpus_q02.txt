@@ -1,0 +1,5 @@
+ROOT(columns=[('word', Word)], orderings=[(Word):asc_first])
+ JOIN(condition=t0.Word == t1.LINEWORD, type=SEMI, columns={'Word': t0.Word})
+  FILTER(condition=STARTSWITH(Word, 'aba':string), columns={'Word': Word})
+   SCAN(table=DICT, columns={'Word': Word})
+  SCAN(table=SHAKE, columns={'LINEWORD': LINEWORD})

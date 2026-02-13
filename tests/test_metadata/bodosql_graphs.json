@@ -385,7 +385,7 @@
           {
             "name": "word",
             "type": "table column",
-            "column name": "LINEWORDWORD",
+            "column name": "LINEWORD",
             "data type": "string",
             "description": "The word being said in the line of the play, in lowercase",
             "sample values": ["vizards", "money", "of", "the", "kings"],

@@ -17,7 +17,10 @@ from pydough.database_connectors import DatabaseContext
 import os
 import pydough
 from functools import cache
+from pyarrow import Table as PyArrowTable
+import shutil
 from pyiceberg.schema import Schema as IcebergSchema
+from pyiceberg.partitioning import PartitionSpec, PartitionField
 
 from tests.testing_utilities import graph_fetcher
 import numpy as np
@@ -28,7 +31,12 @@ from bodosql import BodoSQLContext, FileSystemCatalog
 from bodo.io.iceberg.catalog.dir import DirCatalog
 
 from pyiceberg.catalog import WAREHOUSE_LOCATION
-from pyiceberg.partitioning import PartitionSpec
+from pyiceberg.partitioning import (
+    PartitionSpec,
+    PartitionField,
+    IdentityTransform,
+    TruncateTransform,
+)
 from pyiceberg.table import Table as IcebergTable
 
 from pyarrow.csv import read_csv as pyarrow_read_csv
@@ -201,60 +209,65 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
       corresponds to a word from a line in his plays, accompanied by the
       act/scene/line/player that it is from.
     """
-
-    # Read the CSV files as PyArrow tables
-    dict_pyarrow = pyarrow_read_csv(
-        f"{os.path.dirname(__file__)}//gen_data/sampled_dictionary.csv"
-    )
-    shake_pyarrow = pyarrow_read_csv(
-        f"{os.path.dirname(__file__)}/gen_data/shakespeare_words.csv"
-    )
-
+    # Check if the folder already exists. If so, skip the setup steps.
+    # Note: if you need to regenerate the folder, either delete it or
+    # temporarily disable the condition check below. The regeneration code will
+    # then be invoked the first time a test that depends on this fixture is run.
     warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/corpus_iceberg"
-    db_name: str = "CORPUS_DB"
+    if not os.path.exists(warehouse_loc):
+        # Create the directory that will serve as the Iceberg catalog.
+        os.mkdir(warehouse_loc)
+        dir: DirCatalog = DirCatalog("CORPUS_DB", **{WAREHOUSE_LOCATION: warehouse_loc})
 
-    dir: DirCatalog = DirCatalog(f'"{db_name}"', **{WAREHOUSE_LOCATION: warehouse_loc})
+        # Read the CSV files as PyArrow tables
+        dict_pyarrow: PyArrowTable = pyarrow_read_csv(
+            f"{os.path.dirname(__file__)}//gen_data/sampled_dictionary.csv"
+        )
+        shake_pyarrow: PyArrowTable = pyarrow_read_csv(
+            f"{os.path.dirname(__file__)}/gen_data/shakespeare_words.csv"
+        )
 
-    # Build the partition spec for the Dictionary table where it partitions on
-    # the part of speech, word length, and first letter of the word.
-    dict_iceberg_schema: IcebergSchema = IcebergSchema.from_arrow(dict_pyarrow.schema)
-    dict_spec_builder = PartitionSpec.builder_for(dict_iceberg_schema)
-    dict_spec_builder.identity("POS")
-    dict_spec_builder.identity("Ccount")
-    dict_spec_builder.truncate("Word", 1)
-    partition_spec: PartitionSpec = dict_spec_builder.build()
+        # Create the Iceberg table definition for the Dictionary table.
+        dict_table: IcebergTable = dir.create_table(
+            "DICT",
+            schema=dict_pyarrow.schema,
+        )
 
-    # Create the Iceberg table definition for the Dictionary table, and load
-    # the data into it.
-    dict_table: IcebergTable = dir.create_table(
-        "DICT",
-        schema=dict_pyarrow.schema,
-        partition_spec=partition_spec,
-    )
+        # Evolve the table spec to partition on the first letter of the word, the
+        # part of speech, and the number of characters.
+        (
+            dict_table.update_spec()
+            .add_field("WORD", "truncate[1]")
+            .add_field("POS", "identity")
+            .add_field("CCOUNT", "identity")
+            .commit()
+        )
 
-    # Load the data to the Iceberg table:
-    dict_table.append(dict_pyarrow)
+        # Load the data to the Iceberg table
+        dict_table.append(dict_pyarrow)
 
-    # Build the partition spec for the Shakespeare table, where it partitions
-    # on the play, act, scene, and player that each word is from.
-    shake_iceberg_schema: IcebergSchema = IcebergSchema.from_arrow(shake_pyarrow.schema)
-    shake_spec_builder = PartitionSpec.builder_for(shake_iceberg_schema)
-    shake_spec_builder.identity("PLAY")
-    shake_spec_builder.identity("ACT")
-    shake_spec_builder.identity("SCENE")
-    shake_spec_builder.identity("PLAYER")
-    shake_partition_spec: PartitionSpec = shake_spec_builder.build()
+        # Create the Iceberg table definition for the Shakespeare table, and load
+        # the data into it.
+        shake_table: IcebergTable = dir.create_table(
+            "SHAKE",
+            schema=shake_pyarrow.schema,
+        )
 
-    # Create the Iceberg table definition for the Shakespeare table, and load
-    # the data into it.
-    shake_table: IcebergTable = dir.create_table(
-        "SHAKE",
-        schema=shake_pyarrow.schema,
-        partition_spec=shake_partition_spec,
-    )
-    shake_table.append(shake_pyarrow)
+        # Evolve the table spec to partition on play, act, scene and player
+        (
+            shake_table.update_spec()
+            .add_field("PLAY", "identity")
+            .add_field("ACT", "identity")
+            .add_field("SCENE", "identity")
+            .add_field("PLAYER", "identity")
+            .commit()
+        )
 
-    catalog = FileSystemCatalog(warehouse_loc, default_schema=f'"{db_name}"')
+        # Load the data to the Iceberg table
+        shake_table.append(shake_pyarrow)
+
+    # Create the catalog/context pointing to the location of the database.
+    catalog = FileSystemCatalog(warehouse_loc)
     bc = BodoSQLContext(catalog=catalog)
     return bc
 
@@ -270,7 +283,7 @@ def bodosql_sample_contexts(
     * `COLORSHOP`
     * `CORPUS`
     """
-    {
+    return {
         "COLORSHOP": bodosql_color_ctx,
         "CORPUS": bodosql_corpus_ctx,
     }
@@ -851,6 +864,232 @@ result = COLORSHOP.CALCULATE(**analysis_args)
                 "corpus_q01",
             ),
             id="corpus_q01",
+        ),
+        pytest.param(
+            # Which words starting with "aba" appear at least once in the
+            # Shakespeare dialogue sample?
+            PyDoughPandasTest(
+                """
+result = (
+    dictionary
+    .WHERE(STARTSWITH(word, 'aba') & HAS(shakespeare_uses))
+    .CALCULATE(word)
+    .ORDER_BY(word.ASC())
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame({"word": ["abate"]}),
+                "corpus_q02",
+            ),
+            id="corpus_q02",
+        ),
+        pytest.param(
+            # How many words appear in the Shakespeare dialogue sample of act
+            # 5 of Macbeth?
+            PyDoughPandasTest(
+                "result = CORPUS.CALCULATE(n=COUNT(shakespeare.WHERE((play == 'macbeth') & (act == 5))))",
+                "CORPUS",
+                lambda: pd.DataFrame({"n": [62]}),
+                "corpus_q03",
+            ),
+            id="corpus_q03",
+        ),
+        pytest.param(
+            # How many words appear in the Shakespeare dialogue sample of act
+            # 5 of Macbeth?
+            PyDoughPandasTest(
+                """
+result = (
+    shakespeare
+    .PARTITION(name="plays", by=play)
+    .CALCULATE(play, n_words=COUNT(shakespeare))
+    .TOP_K(5, by=n_words.DESC())
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "play": [
+                            "loves labours lost",
+                            "julius caesar",
+                            "much ado about nothing",
+                            "king john",
+                            "troilus and cressida",
+                        ],
+                        "n_words": [8535, 8150, 7705, 5667, 4695],
+                    }
+                ),
+                "corpus_q04",
+            ),
+            id="corpus_q04",
+        ),
+        pytest.param(
+            # Which five parts of speech show up the most in the Shakespeare
+            # dialogue sample?
+            PyDoughPandasTest(
+                """
+result = (
+    dictionary
+    .CALCULATE(part_of_speech)
+    .shakespeare_uses
+    .PARTITION(name="pos", by=part_of_speech)
+    .CALCULATE(part_of_speech, n_uses=COUNT(shakespeare_uses))
+    .TOP_K(5, by=n_uses.DESC())
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "part_of_speech": ["n.", "v. t.", "adv.", "a.", "v. i."],
+                        "n_uses": [22081, 11540, 8832, 8807, 8070],
+                    }
+                ),
+                "corpus_q05",
+                order_sensitive=True,
+            ),
+            id="corpus_q05",
+        ),
+        pytest.param(
+            # List each adjective with 10 characters whose first character is
+            # 'a' or 'b' that appears in one of the selected plays from the
+            # Shakespeare dialogue sample. For each occurrence, note the
+            # play, act, scene, line, and player where it is uttered.
+            PyDoughPandasTest(
+                """
+result = (
+    dictionary
+    .WHERE((word < 'c') & (LENGTH(word) == 10) & (part_of_speech == 'a.'))
+    .shakespeare_uses
+    .WHERE(ISIN(play, selected_plays))
+    .CALCULATE(word, play, act, scene, line, player)
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "word": [
+                            "acquainted",
+                            "acquainted",
+                            "beforehand",
+                            "benedictus",
+                            "benedictus",
+                            "benedictus",
+                            "beneficial",
+                        ],
+                        "play": [
+                            "merry wives of windsor",
+                            "pericles",
+                            "king john",
+                            "much ado about nothing",
+                            "much ado about nothing",
+                            "much ado about nothing",
+                            "henry viii",
+                        ],
+                        "act": [2, 4, 5, 3, 3, 3, 1],
+                        "scene": [2, 6, 7, 4, 4, 4, 1],
+                        "line": [139, 185, 116, 66, 66, 67, 64],
+                        "player": [
+                            "bardolph",
+                            "boult",
+                            "bastard",
+                            "beatrice",
+                            "beatrice",
+                            "beatrice",
+                            "buckingham",
+                        ],
+                    }
+                ),
+                "corpus_q06",
+                kwargs={
+                    "selected_plays": [
+                        "much ado about nothing",
+                        "henry viii",
+                        "merry wives of windsor",
+                        "romeo and juliet",
+                        "pericles",
+                        "king john",
+                        "othello",
+                    ]
+                },
+            ),
+            id="corpus_q06",
+        ),
+        pytest.param(
+            # What is the definition of the 20 longest words that appear in
+            # the first scene of the first act of any play in the Shakespeare
+            # dialogue sample? Include words without a definition, and if they
+            # have multiple definitions choose the one with the part of speech
+            # that comes first alphabetically. Break ties in word length by
+            # alphabetical order of the word.
+            PyDoughPandasTest(
+                """
+first_definition = CROSS(
+    dictionary
+    .PARTITION(name="words", by=word)
+    .dictionary
+    .BEST(by=part_of_speech.ASC(), per='words')
+).WHERE(word == shakespeare_word).SINGULAR()
+result = (
+    shakespeare
+    .WHERE((act == 1) & (scene == 1))
+    .TOP_K(20, by=(LENGTH(word).DESC(), word.ASC()))
+    .CALCULATE(shakespeare_word=word)
+    .CALCULATE(word, definition=first_definition.definition)
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "word": [
+                            "northamptonshire",
+                            "richardgodamercy",
+                            "misinterpreting",
+                            "wellexperienced",
+                            "magnificencein",
+                            "threefarthings",
+                            "treasoncharles",
+                            "truthbetrothed",
+                            "basiliscolike",
+                            "communication",
+                            "countcardinal",
+                            "entertainment",
+                            "faulconbridge",
+                            "insufficience",
+                            "interchanging",
+                            "parrotteacher",
+                            "procrastinate",
+                            "schoolmasters",
+                            "understanding",
+                            "unintelligent",
+                        ],
+                        "definition": [
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            "Insufficiency.",
+                            "of Interchange",
+                            None,
+                            None,
+                            None,
+                            "Knowing; intelligent; skillful; as  he is an understanding man.",
+                            None,
+                        ],
+                    }
+                ),
+                "corpus_q07",
+                order_sensitive=True,
+            ),
+            id="corpus_q07",
         ),
     ],
 )
