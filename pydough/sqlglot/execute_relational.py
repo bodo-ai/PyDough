@@ -546,4 +546,4 @@ def execute_df(
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
-    return session._database.connection.execute_query_df(sql)
+    return session._database.execute_query(sql)

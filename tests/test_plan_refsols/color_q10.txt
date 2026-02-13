@@ -1,0 +1,6 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.identname == t1.colid, type=SEMI, columns={})
+   SCAN(table=CLRS, columns={'identname': identname})
+   FILTER(condition=dos == datetime.date(2024, 7, 4):datetime, columns={'colid': colid})
+    SCAN(table=SHPMNTS, columns={'colid': colid, 'dos': dos})
