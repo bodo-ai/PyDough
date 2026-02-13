@@ -211,10 +211,11 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
     """
     # Check if the folder already exists. If so, skip the setup steps.
     # Note: if you need to regenerate the folder, either delete it or
-    # temporarily disable the condition check below. The regeneration code will
-    # then be invoked the first time a test that depends on this fixture is run.
+    # temporarily override the boolean below. The regeneration code will then be
+    # invoked the first time a test that depends on this fixture is run.
     warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/corpus_iceberg"
-    if not os.path.exists(warehouse_loc):
+    regenerate_iceberg: bool = not os.path.exists(warehouse_loc)
+    if regenerate_iceberg:
         # Create the directory that will serve as the Iceberg catalog.
         os.mkdir(warehouse_loc)
         dir: DirCatalog = DirCatalog("CORPUS_DB", **{WAREHOUSE_LOCATION: warehouse_loc})
@@ -268,7 +269,19 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
 
     # Create the catalog/context pointing to the location of the database.
     catalog = FileSystemCatalog(warehouse_loc)
-    bc = BodoSQLContext(catalog=catalog)
+    bc: BodoSQLContext = BodoSQLContext(catalog=catalog)
+
+    # If regenerating the database, use BodoSQL to replace each table with
+    # itself. Because BodoSQL is being used to write the tables, it will also
+    # update the metadata to include puffin files with theta sketches containing
+    # the approximate NDV statistics for various columns.
+    if regenerate_iceberg:
+        breakpoint()
+        for table_name in ["DICT", "SHAKE"]:
+            bc.sql(
+                f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
+            )
+
     return bc
 
 
@@ -860,25 +873,40 @@ result = COLORSHOP.CALCULATE(**analysis_args)
             PyDoughPandasTest(
                 "result = CORPUS.CALCULATE(n=COUNT(dictionary.WHERE((part_of_speech == 'n.') & STARTSWITH(word, 'n'))))",
                 "CORPUS",
-                lambda: pd.DataFrame({"n": [16]}),
+                lambda: pd.DataFrame({"n": [654]}),
                 "corpus_q01",
             ),
             id="corpus_q01",
         ),
         pytest.param(
             # Which words starting with "aba" appear at least once in the
-            # Shakespeare dialogue sample?
+            # Shakespeare dialogue sample? List the word, part of speech,
+            # and definition. If a word has multiple definitions more than once,
+            # pick the one with the longest definition, breaking ties
+            # alphabetically and ordering the final result alphabetically.
             PyDoughPandasTest(
                 """
 result = (
     dictionary
     .WHERE(STARTSWITH(word, 'aba') & HAS(shakespeare_uses))
-    .CALCULATE(word)
+    .PARTITION(name="words", by=word)
+    .dictionary
+    .BEST(by=(LENGTH(definition).DESC(), definition.ASC()), per='words')
+    .CALCULATE(word, part_of_speech, definition)
     .ORDER_BY(word.ASC())
 )
                 """,
                 "CORPUS",
-                lambda: pd.DataFrame({"word": ["abate"]}),
+                lambda: pd.DataFrame(
+                    {
+                        "word": ["abandoned", "abate"],
+                        "part_of_speech": ["a.", "v. t."],
+                        "definition": [
+                            "Forsaken  deserted.",
+                            "To beat down; to overthrow.",
+                        ],
+                    }
+                ),
                 "corpus_q02",
             ),
             id="corpus_q02",
