@@ -3888,7 +3888,7 @@
           {
             "name": "year",
             "type": "table column",
-            "column name": "year",
+            "column name": "year_pub",
             "data type": "numeric",
             "description": "The year when the publication was published",
             "sample values": [2021, 2020],

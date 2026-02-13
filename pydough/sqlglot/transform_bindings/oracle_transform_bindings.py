@@ -21,7 +21,6 @@ class OracleTransformBindings(BaseTransformBindings):
 
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.ABS: "ABS",
-        pydop.DEFAULT_TO: "NVL",
         pydop.LARGEST: "GREATEST",
         pydop.SMALLEST: "LEAST",
         pydop.STRIP: "TRIM",
@@ -45,14 +44,39 @@ class OracleTransformBindings(BaseTransformBindings):
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_ORACLE_FUNC[operator], expressions=args
             )
+        match operator:
+            case pydop.DEFAULT_TO:
+                # sqlglot convert COALESCE in NVL for Oracle, which is fine for
+                # 2 args but with more sqlglot doesn't handle it correctly.
+                return self.convert_default_to(args, types)
+
         return super().convert_call_to_sqlglot(operator, args, types)
+
+    def convert_default_to(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Convert a DEFAULT_TO PyDough function in COALESCE handling correctly
+        more than 2 arguments.
+
+        Sqlglot converts COALESCE in NVL for Oracle. For 2+ args this becomes a
+        nested NVL call.
+
+        Args:
+            `args`: The arguments for the COALESE expression.
+            `types`: The PyDough types of the arguments.
+
+        Returns:
+            COALESCE expression with its arguments correctly handled
+        """
+        return sqlglot_expressions.Coalesce(this=args[0], expressions=args[1:])
 
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
         Convert a PyDough slice operation to a SQLGlot expression.
-        MySQL uses the SUBSTRING function for slicing.
+        Oracle uses the SUBSTR function for slicing.
 
         Outline of the logic:
         - If the start index is None, it defaults to 1 (1-based indexing).
@@ -61,23 +85,23 @@ class OracleTransformBindings(BaseTransformBindings):
         - b = stop index
         match (a, b):
             case (None, None):
-                return SUBSTRING(x, 1)
+                return SUBSTR(x, 1)
             case (+a, None):
-                return SUBSTRING(x, a + 1)
+                return SUBSTR(x, a + 1)
             case (-a, None):
-                return SUBSTRING(x, a)
+                return SUBSTR(x, a)
             case (None, +b):
-                return SUBSTRING(x, 1, b)
+                return SUBSTR(x, 1, b)
             case (None, -b):
-                return SUBSTRING(x, 1, LENGTH(x) + b)
+                return SUBSTR(x, 1, LENGTH(x) + b)
             case (+a, +b):
-                return SUBSTRING(x, a + 1, GREATEST(b - a, 0))
+                return SUBSTR(x, a + 1, GREATEST(b - a, 0))
             case (-a, -b):
-                return SUBSTRING(x, a, GREATEST(b - a, 0))
+                return SUBSTR(x, a, GREATEST(b - a, 0))
             case (+a, -b):
-                return SUBSTRING(x, a + 1, GREATEST(LENGTH(x) + b - a, 0))
+                return SUBSTR(x, a + 1, GREATEST(LENGTH(x) + b - a, 0))
             case (-a, +b):
-                return SUBSTRING(x, a, b - GREATEST(LENGTH(x) + a, 0))
+                return SUBSTR(x, a, b - GREATEST(LENGTH(x) + a, 0))
         """
 
         assert len(args) == 4

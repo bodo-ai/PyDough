@@ -515,7 +515,7 @@
           {
             "name": "def_",
             "type": "table column",
-            "column name": "def",
+            "column name": "\"def\"",
             "data type": "numeric",
             "description": "Column name normalized from Python reserved word 'DEF'",
             "sample values": [
@@ -656,7 +656,7 @@
           {
             "name": "del_",
             "type": "table column",
-            "column name": "del",
+            "column name": "\"del\"",
             "data type": "numeric",
             "description": "Column name normalized from 'del'",
             "sample values": [
@@ -700,7 +700,7 @@
           {
             "name": "str_",
             "type": "table column",
-            "column name": "str",
+            "column name": "\"str\"",
             "data type": "numeric",
             "description": "Column name normalized from Python reserved word 'str'",
             "sample values": [
