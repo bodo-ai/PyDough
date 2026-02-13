@@ -30,6 +30,11 @@ on:
         type: boolean
         required: false
         default: true
+      run-dialects:
+        description: "Run All Dialect Tests"
+        type: boolean
+        required: false
+        default: false
       run-sf:
         description: "Run Snowflake Tests"
         type: boolean
@@ -165,8 +170,9 @@ jobs:
     needs: [get-msg]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-sf))
     uses: ./.github/workflows/defog_daily_update.yml
     secrets:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
@@ -178,8 +184,9 @@ jobs:
     needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-sf))
     uses: ./.github/workflows/sf_testing.yml
     secrets:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
@@ -195,8 +202,9 @@ jobs:
     needs: [get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-mysql))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-mysql))
     uses: ./.github/workflows/mysql_testing.yml
     secrets:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
@@ -211,8 +219,9 @@ jobs:
     needs: [get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run postgres]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-postgres))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-postgres))
     uses: ./.github/workflows/postgres_testing.yml
     secrets:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
