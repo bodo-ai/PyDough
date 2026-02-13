@@ -1,18 +1,9 @@
-WITH _s1 AS (
-  SELECT
-    CAST((
-      COUNT(DISTINCT coupon_id) * 1.0
-    ) AS REAL) / COUNT(DISTINCT txid) AS cpur,
-    receiver_id
-  FROM main.wallet_transactions_daily
-  WHERE
-    status = 'success'
-  GROUP BY
-    receiver_id
-)
 SELECT
-  merchants.name,
-  _s1.cpur AS CPUR
+  MAX(merchants.name) AS name,
+  CAST(COUNT(DISTINCT wallet_transactions_daily.coupon_id) AS REAL) / COUNT(DISTINCT wallet_transactions_daily.txid) AS CPUR
 FROM main.merchants AS merchants
-JOIN _s1 AS _s1
-  ON _s1.receiver_id = merchants.mid
+JOIN main.wallet_transactions_daily AS wallet_transactions_daily
+  ON merchants.mid = wallet_transactions_daily.receiver_id
+  AND wallet_transactions_daily.status = 'success'
+GROUP BY
+  wallet_transactions_daily.receiver_id

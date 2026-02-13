@@ -526,9 +526,7 @@ def impl_tpch_q22():
         )
         .customers.CALCULATE(cntry_code=phone[:2])
         .WHERE(
-            is_selected_code
-            & (account_balance > global_avg_balance)
-            & (COUNT(orders) == 0)
+            is_selected_code & (account_balance > global_avg_balance) & HASNOT(orders)
         )
         .PARTITION(
             name="countries",

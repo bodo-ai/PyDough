@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxcustid
+    sbtxcustid,
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   sbcustomer.sbcustname AS name,
@@ -13,5 +13,5 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
-  total_amount DESC
+  2 DESC
 LIMIT 5

@@ -27,6 +27,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [STRIP](#strip)
    * [REPLACE](#replace)
    * [STRCOUNT](#strcount)
+   * [GETPART](#getpart)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -437,6 +438,46 @@ Customers.CALCULATE(count_substring= STRCOUNT(name, "")) # returns 0 by default
 |-------------------------------|---------------------------------------|---------------------|
 | `'Alex Rodriguez'`| `STRCOUNT('Alex Rodriguez', 'e')`| `2`    |
 | `'Hello World'`| `STRCOUNT('Hello World', 'll')`          | `1`          |
+
+
+<!-- TOC --><a name="getpart"></a>
+
+### GETPART
+
+The `GETPART` function extracts the N-th part from a string, splitting it by a specified delimiter.
+
+- The first argument is the input string to split.
+- The second argument is the delimiter string.
+- The third argument is the index of the part to extract. This index can be positive (counting from the start, 0-based) or negative (counting from the end, -1 is the last part).
+
+If the index is out of range, `GETPART` returns `None`. If the delimiter is an empty string, the function will not split the input string and the first part will be the entire string.
+
+```py
+# Extracts the first name from a full name
+Customers.CALCULATE(first_name = GETPART(name, " ", 1))
+
+# Extracts the last name from a full name
+Customers.CALCULATE(last_name = GETPART(name, " ", -1))
+
+# Extracts the second part from a hyphen-separated string
+Parts.CALCULATE(second_code = GETPART(code, "-", 2))
+```
+
+| **Input String**      | **Delimiter** | **Index** | **GETPART Result** |
+|---------------------- |-------------- |-----------|--------------------|
+| `"Alex Rodriguez"`    | `" "`         | `1`       | `"Alex"`           |
+| `"Alex Rodriguez"`    | `" "`         | `0`       | `"Alex"`           |
+| `"Alex Rodriguez"`    | `" "`         | `2`       | `"Rodriguez"`      |
+| `"Alex Rodriguez"`    | `" "`         | `-1`      | `"Rodriguez"`      |
+| `"Alex Rodriguez"`    | `""`          | `1`       | `"Alex Rodriguez"` |
+| `"a-b-c-d"`           | `"-"`         | `3`       | `"c"`              |
+| `"a-b-c-d"`           | `"-"`         | `-2`      | `"c"`              |
+| `"a-b-c-d"`           | `"-"`         | `5`       | `None`             |
+| `"a-b-c-d"`           | `"-"`         | `-5`      | `None`             |
+
+> [!NOTE]
+> - Indexing is one-based from the start and negative indices count from the end.
+> - The 0 index will be treated as 1, returning the first part.
 
 <!-- TOC --><a name="datetime-functions"></a>
 
@@ -1365,6 +1406,10 @@ Orders.CALCULATE(
 Here is a list of reference links for the format strings of different databases:
 
 - [SQLite](https://www.sqlite.org/lang_datefunc.html)
+- [Snowflake](https://docs.snowflake.com/en/sql-reference/functions-conversion#label-date-time-format-conversion)
+- [MySQL](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-format)
+- [Postgres](https://www.postgresql.org/docs/current/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE)
+
 
 <!-- TOC --><a name="integer"></a>
 

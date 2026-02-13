@@ -1,5 +1,5 @@
-ROOT(columns=[('ir', ROUND(n_rows / agg_1, 2:numeric))], orderings=[])
- JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'agg_1': t1.n_rows, 'n_rows': t0.n_rows})
+ROOT(columns=[('ir', ROUND((n_rows / agg_1), 2:numeric))], orderings=[])
+ JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'agg_1': t1.n_rows, 'n_rows': t0.n_rows})
   AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
    SCAN(table=main.INCIDENTS, columns={})
   AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})

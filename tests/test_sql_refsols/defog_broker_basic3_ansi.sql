@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    sbtxtickerid,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxtickerid
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   GROUP BY
-    sbtxtickerid
+    1
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
@@ -15,5 +15,5 @@ FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  total_amount DESC
+  3 DESC
 LIMIT 10

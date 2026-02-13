@@ -1,0 +1,8 @@
+ROOT(columns=[('part_size', part_size), ('n_parts', DEFAULT_TO(n_rows, 0:numeric))], orderings=[])
+ JOIN(condition=t0.part_size == t1.part_size, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'part_size': t0.part_size})
+  GENERATED_TABLE(RangeCollection('sizes', part_size=range(1, 60, 5)))
+  AGGREGATE(keys={'part_size': part_size}, aggregations={'n_rows': COUNT()})
+   JOIN(condition=MONOTONIC(t0.part_size, t1.p_size, (t0.part_size + 4:numeric)), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'part_size': t0.part_size})
+    GENERATED_TABLE(RangeCollection('sizes', part_size=range(1, 60, 5)))
+    FILTER(condition=CONTAINS(p_name, 'almond':string), columns={'p_size': p_size})
+     SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_size': p_size})

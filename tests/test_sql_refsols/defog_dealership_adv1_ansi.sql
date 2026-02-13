@@ -16,4 +16,4 @@ WHERE
   DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME), WEEK) <= 8
   AND DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME), WEEK) >= 1
 GROUP BY
-  DATE_TRUNC('WEEK', CAST(payments_received.payment_date AS TIMESTAMP))
+  1

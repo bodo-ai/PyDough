@@ -24,6 +24,6 @@ JOIN _s0 AS _s7
 GROUP BY
   _s0.user_id
 ORDER BY
-  n_other_users DESC,
-  ANY_VALUE(_s0.user_name)
+  2 DESC,
+  1
 LIMIT 7

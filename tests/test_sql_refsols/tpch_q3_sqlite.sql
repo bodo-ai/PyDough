@@ -13,11 +13,11 @@ JOIN tpch.lineitem AS lineitem
 WHERE
   orders.o_orderdate < '1995-03-15'
 GROUP BY
-  lineitem.l_orderkey,
-  orders.o_orderdate,
-  orders.o_shippriority
+  1,
+  3,
+  4
 ORDER BY
-  revenue DESC,
-  o_orderdate,
-  l_orderkey
+  2 DESC,
+  3,
+  1
 LIMIT 10

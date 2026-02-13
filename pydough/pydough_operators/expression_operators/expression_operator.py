@@ -7,6 +7,7 @@ __all__ = ["PyDoughExpressionOperator"]
 from abc import abstractmethod
 from typing import Any
 
+from pydough.errors import PyDoughQDAGException
 from pydough.pydough_operators.base_operator import PyDoughOperator
 from pydough.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
@@ -47,6 +48,15 @@ class PyDoughExpressionOperator(PyDoughOperator):
         return self._public
 
     @property
+    def description(self) -> str | None:
+        """
+        An optional description of the operator. This can be used to
+        provide additional context or information about the operator's
+        functionality.
+        """
+        return None
+
+    @property
     @abstractmethod
     def function_name(self) -> str:
         """
@@ -54,7 +64,7 @@ class PyDoughExpressionOperator(PyDoughOperator):
         be used for other components that are function dependent.
 
         Returns:
-            str: The name used for the function.
+            The name used for the function.
         """
 
     @abstractmethod
@@ -88,4 +98,12 @@ class PyDoughExpressionOperator(PyDoughOperator):
         Raises:
             `PyDoughQDAGException` if `args` is invalid for this operator.
         """
-        return self.deducer.infer_return_type(args)
+
+        try:
+            return self.deducer.infer_return_type(args)
+        except PyDoughQDAGException as e:
+            import pydough
+
+            raise pydough.active_session.error_builder.type_inference_fail(
+                self, args, str(e)
+            )

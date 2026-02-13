@@ -1,0 +1,2 @@
+ROOT(columns=[('key', o_orderkey), ('d1', FORMAT_DATETIME('%d/%m/%Y':string, o_orderdate)), ('d2', FORMAT_DATETIME('%Y:%j':string, o_orderdate)), ('d3', INTEGER(FORMAT_DATETIME('%s':string, o_orderdate))), ('d4', INTEGER(FORMAT_DATETIME_VARIADIC('%Y%m%d':string, o_orderdate, '+39 days':string, 'start of month':string)))], orderings=[(o_totalprice):asc_first], limit=5:numeric)
+ SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice})

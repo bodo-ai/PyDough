@@ -4,11 +4,17 @@ relational representation statements that map to where, having, or qualify
 in SQL.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class Filter(SingleRelational):
@@ -46,8 +52,11 @@ class Filter(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"FILTER(condition={self.condition.to_string(compact)}, columns={self.make_column_string(self.columns, compact)})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_filter(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_filter(self)
 
     def node_copy(
         self,

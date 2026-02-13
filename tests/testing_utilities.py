@@ -3,6 +3,10 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+from types import NoneType
+
+from dateutil import parser  # type: ignore[import-untyped]
+
 __all__ = [
     "AstNodeTestInfo",
     "BackReferenceExpressionInfo",
@@ -19,13 +23,20 @@ __all__ = [
     "TableCollectionInfo",
     "TopKInfo",
     "WhereInfo",
+    "extract_batch_requests_from_logs",
     "graph_fetcher",
     "map_over_dict_values",
+    "temp_env_override",
 ]
 
+import datetime
+import os
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 import pandas as pd
@@ -34,26 +45,23 @@ import pytest
 import pydough
 import pydough.pydough_operators as pydop
 from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.errors import PyDoughTestingException
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
     AstNodeBuilder,
-    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
-    OrderBy,
-    PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Singular,
-    TopK,
-    Where,
 )
 from pydough.relational import (
     ColumnReference,
@@ -72,6 +80,39 @@ from pydough.unqualified import (
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
 graph_fetcher = Callable[[str], GraphMetadata]
+
+
+@contextmanager
+def temp_env_override(env_vars: dict[str, str | None]):
+    """Update the current environment variables with key-value pairs provided
+    in a dictionary and then restore it after.
+
+    Args
+        env_vars (dict(str, str or None)): A dictionary of environment variables to set.
+            A value of None indicates a variable should be removed.
+    """
+
+    def update_env_vars(env_vars):
+        old_env_vars: dict[str, str | None] = {}
+        for k, v in env_vars.items():
+            if k in os.environ:
+                old_env_vars[k] = os.environ[k]
+            else:
+                old_env_vars[k] = None
+
+            if v is None:
+                if k in os.environ:
+                    del os.environ[k]
+            else:
+                os.environ[k] = v
+        return old_env_vars
+
+    old_env = {}
+    try:
+        old_env = update_env_vars(env_vars)
+        yield
+    finally:
+        update_env_vars(old_env)
 
 
 def map_over_dict_values(
@@ -241,7 +282,9 @@ class WindowInfo(AstNodeTestInfo):
             case "RANKING":
                 return f"{self.name}(by=({', '.join(collation_strings)}), levels={self.levels}{kwargs_str})"
             case _:
-                raise Exception(f"Unsupported window function {self.name}")
+                raise PyDoughTestingException(
+                    f"Unsupported window function {self.name}"
+                )
 
     def build(
         self,
@@ -267,7 +310,9 @@ class WindowInfo(AstNodeTestInfo):
                     self.kwargs,
                 )
             case _:
-                raise Exception(f"Unsupported window function {self.name}")
+                raise PyDoughTestingException(
+                    f"Unsupported window function {self.name}"
+                )
 
 
 class ReferenceInfo(AstNodeTestInfo):
@@ -292,7 +337,8 @@ class ReferenceInfo(AstNodeTestInfo):
         assert context is not None, (
             "Cannot call .build() on ReferenceInfo without providing a context"
         )
-        return builder.build_reference(context, self.name)
+        typ: PyDoughType = context.get_expr(self.name).pydough_type
+        return builder.build_reference(context, self.name, typ)
 
 
 class BackReferenceExpressionInfo(AstNodeTestInfo):
@@ -625,13 +671,12 @@ class CalculateInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc: Calculate = builder.build_calculate(context, children)
         args: list[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             args.append((name, expr))
-        return raw_calc.with_terms(args)
+        return builder.build_calculate(context, children, args)
 
 
 class WhereInfo(ChildOperatorInfo):
@@ -657,12 +702,13 @@ class WhereInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception("Must provide a context when building a WHERE clause.")
+            raise PyDoughTestingException(
+                "Must provide a context when building a WHERE clause."
+            )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
-        return raw_where.with_condition(cond)
+        return builder.build_where(context, children, cond)
 
 
 class SingularInfo(ChildOperatorInfo):
@@ -689,7 +735,9 @@ class SingularInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception("Must provide a context when building a Singular clause.")
+            raise PyDoughTestingException(
+                "Must provide a context when building a Singular clause."
+            )
         raw_singular: Singular = builder.build_singular(context)
         return raw_singular
 
@@ -727,17 +775,16 @@ class OrderInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception(
+            raise PyDoughTestingException(
                 "Must provide context and children_contexts when building an ORDER BY clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_order: OrderBy = builder.build_order(context, children)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
-        return raw_order.with_collation(collation)
+        return builder.build_order(context, children, collation)
 
 
 class TopKInfo(ChildOperatorInfo):
@@ -776,17 +823,16 @@ class TopKInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception(
+            raise PyDoughTestingException(
                 "Must provide context and children_contexts when building a TOPK clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_top_k: TopK = builder.build_top_k(context, children, self.records_to_keep)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
-        return raw_top_k.with_collation(collation)
+        return builder.build_top_k(context, children, self.records_to_keep, collation)
 
 
 class PartitionInfo(ChildOperatorInfo):
@@ -821,15 +867,12 @@ class PartitionInfo(ChildOperatorInfo):
             context = builder.build_global_context()
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
         assert len(children) == 1
-        raw_partition: PartitionBy = builder.build_partition(
-            context, children[0], self.name
-        )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)
             assert isinstance(expr, ChildReferenceExpression)
             keys.append(expr)
-        return raw_partition.with_keys(keys)
+        return builder.build_partition(context, children[0], self.name, keys)
 
 
 def make_relational_column_reference(
@@ -840,15 +883,15 @@ def make_relational_column_reference(
     for generating various relational nodes.
 
     Args:
-        name (str): The name of the column in the input.
-        typ (PyDoughType | None): The PyDoughType of the column. Defaults to
+        `name`: The name of the column in the input.
+        `typ`: The PyDoughType of the column. Defaults to
             None.
-        input_name (str | None): The name of the input node. This is
+        `input_name`: The name of the input node. This is
             used by Join to differentiate between the left and right.
             Defaults to None.
 
     Returns:
-        Column: The output column.
+        The output column.
     """
     pydough_type = typ if typ is not None else UnknownType()
     return ColumnReference(name, pydough_type, input_name)
@@ -860,10 +903,10 @@ def make_relational_literal(value: Any, typ: PyDoughType | None = None):
     generating various relational nodes.
 
     Args:
-        value (Any): The value of the literal.
+        `value`: The value of the literal.
 
     Returns:
-        Literal: The output literal.
+        The output literal.
     """
     pydough_type = typ if typ is not None else UnknownType()
     return LiteralExpression(value, pydough_type)
@@ -874,7 +917,7 @@ def build_simple_scan() -> Scan:
     Build a simple scan node for reuse in tests.
 
     Returns:
-        Scan: The Scan node.
+        The Scan node.
     """
     return Scan(
         "table",
@@ -889,38 +932,48 @@ def make_relational_ordering(
     expr: RelationalExpression, ascending: bool = True, nulls_first: bool = True
 ):
     """
-    Create am ordering as a function of a Relational column reference
+    Create an ordering as a function of a Relational column reference
     with the given ascending and nulls_first parameters.
 
     Args:
-        name (str): _description_
-        typ (PyDoughType | None, optional): _description_. Defaults to None.
-        ascending (bool, optional): _description_. Defaults to True.
-        nulls_first (bool, optional): _description_. Defaults to True.
+        `expr`: The expression used as a sorting key.
+        `ascending`: Whether the ordering is ascending or descending.
+        `nulls_first`: Whether the ordering places nulls first or last.
 
     Returns:
-        ExpressionSortInfo: The column ordering information.
+        The column ordering information.
     """
     return ExpressionSortInfo(expr, ascending, nulls_first)
 
 
 def transform_and_exec_pydough(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode] | str,
     graph: GraphMetadata,
+    kwargs: dict | None,
 ) -> UnqualifiedNode:
     """
     Obtains the unqualified node from a PyDough function by invoking the
-    decorator to transform it, then calling the transformed function.
+    decorator to transform it (or evaluating the string if provided), then
+    calling the transformed function.
 
     Args:
-        `pydough_impl`: The PyDough function to be transformed and executed.
+        `pydough_impl`: The PyDough function to be transformed and executed,
+        or the string containing the PyDough code to be executed.
         `graph`: The metadata being used.
+        `kwargs`: The keyword arguments to pass to the PyDough function, if
+        any.
 
     Returns:
         The unqualified node created by running the transformed version of
         `pydough_impl`.
     """
-    return init_pydough_context(graph)(pydough_impl)()
+    kwargs = kwargs if kwargs is not None else {}
+    if isinstance(pydough_impl, str):
+        # If the pydough_impl is a string, parse it with pydough.from_string.
+        return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
+    else:
+        # OTherwise, transform the function with the decorator and call it.
+        return init_pydough_context(graph)(pydough_impl)(**kwargs)
 
 
 @dataclass
@@ -931,7 +984,7 @@ class PyDoughSQLComparisonTest:
     SQL query.
     """
 
-    pydough_function: Callable[[], UnqualifiedNode]
+    pydough_function: Callable[..., UnqualifiedNode]
     """
     Function that returns the PyDough code evaluated by the unit test.
     """
@@ -975,6 +1028,10 @@ class PyDoughSQLComparisonTest:
         fetcher: graph_fetcher,
         database: DatabaseContext,
         config: PyDoughConfigs | None = None,
+        reference_database: DatabaseContext | None = None,
+        coerce_types: bool = False,
+        rtol: float = 1.0e-5,
+        atol: float = 1.0e-5,
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -986,10 +1043,16 @@ class PyDoughSQLComparisonTest:
             by the test and fetches the graph metadata.
             `database`: The database context to use for executing SQL.
             `config`: The PyDough configuration to use for the test, if any.
+            `reference_database`: The database context to use for executing
+                                the reference SQL.
+            `coerce_types`: If True, coerces the types of the result and reference
+            solution DataFrames to ensure compatibility.
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, None
+        )
 
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {"metadata": graph, "database": database}
@@ -1001,7 +1064,11 @@ class PyDoughSQLComparisonTest:
 
         # Obtain the reference solution by executing the refsol SQL query
         sql_text: str = self.sql_function()
-        refsol: pd.DataFrame = database.connection.execute_query_df(sql_text)
+        refsol: pd.DataFrame
+        if reference_database is not None:
+            refsol = reference_database.connection.execute_query_df(sql_text)
+        else:
+            refsol = database.connection.execute_query_df(sql_text)
 
         # If the query does not care about column names, update the answer to use
         # the column names in the refsol.
@@ -1014,8 +1081,15 @@ class PyDoughSQLComparisonTest:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
+        # Harmonize types between result and reference solution
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
+
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol)
+        pd.testing.assert_frame_equal(result, refsol, rtol=rtol, atol=atol)
 
 
 @dataclass
@@ -1026,7 +1100,7 @@ class PyDoughPandasTest:
     a function that returns a Pandas DataFrame. The dataclass contains the
     following fields:
     - `pydough_function`: the function that returns the PyDough code evaluated
-      by the unit test.
+      by the unit test, or a string representing the PyDough code.
     - `graph_name`: the name of the graph that the PyDough code will use.
     - `pd_function`: the function that returns the Pandas DataFrame that should
       be used as the reference solution.
@@ -1038,11 +1112,18 @@ class PyDoughPandasTest:
     - `fix_column_names` (optional): if True, ignore whatever column names are
       in the output and just use the same column names as in the reference
       solution.
+    - `args` (optional): additional arguments to pass to the PyDough function.
+    - `skip_relational`: (optional): if True, does not run the test as part of
+       relational plan testing. Default is False.
+    - `skip_sql`: (optional): if True, does not run the test as part of SQL
+       testing. Default is False.
+    - `fix_output_dialect`: (optional): update refsol to match Dialect behavior
     """
 
-    pydough_function: Callable[[], UnqualifiedNode]
+    pydough_function: Callable[..., UnqualifiedNode] | str
     """
-    Function that returns the PyDough code evaluated by the unit test.
+    Function that returns the PyDough code evaluated by the unit test, or a
+    string representing the PyDough code.
     """
 
     graph_name: str
@@ -1079,12 +1160,34 @@ class PyDoughPandasTest:
     same column names as in the reference solution.
     """
 
+    kwargs: dict | None = None
+    """
+    Any additional keyword arguments to pass to the PyDough function when
+    executing it. If None, no additional keyword arguments are passed.
+    """
+
+    skip_relational: bool = False
+    """
+    If True, does not run the test as part of relational plan testing.
+    """
+
+    skip_sql: bool = False
+    """
+    If True, does not run the test as part of SQL testing.
+    """
+
+    fix_output_dialect: str = "sqlite"
+    """
+    Dialect name to update output
+    """
+
     def run_relational_test(
         self,
         fetcher: graph_fetcher,
         file_path: str,
         update: bool,
         config: PyDoughConfigs | None = None,
+        mask_server: MaskServerInfo | None = None,
     ) -> None:
         """
         Runs a test on the relational plan code generated by the PyDough code,
@@ -1099,21 +1202,30 @@ class PyDoughPandasTest:
             plan text, otherwise compares the generated relational plan text
             against the expected relational plan text in the file.
             `config`: The PyDough configuration to use for the test, if any.
+            `mask_server`: The mask server to use for the test, if any.
         """
+        # Skip if indicated.
+        if self.skip_relational:
+            pytest.skip(f"Skipping relational plan test for {self.test_name}")
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
 
         # Run the PyDough code through the pipeline up until it is converted to
         # a relational plan.
-        if config is None:
-            config = pydough.active_session.config
-        qualified: PyDoughQDAG = qualify_node(root, graph, config)
+        session: PyDoughSession = PyDoughSession()
+        session.metadata = graph
+        session.config = config if config is not None else pydough.active_session.config
+        session.mask_server = mask_server
+        qualified: PyDoughQDAG = qualify_node(root, session)
         assert isinstance(qualified, PyDoughCollectionQDAG), (
             "Expected qualified answer to be a collection, not an expression"
         )
         relational: RelationalRoot = convert_ast_to_relational(
-            qualified, _load_column_selection({"columns": self.columns}), config
+            qualified, _load_column_selection({"columns": self.columns}), session
         )
 
         # Either update the reference solution, or compare the generated
@@ -1135,6 +1247,8 @@ class PyDoughPandasTest:
         update: bool,
         database: DatabaseContext,
         config: PyDoughConfigs | None = None,
+        mask_server: MaskServerInfo | None = None,
+        max_rows: int | None = None,
     ) -> None:
         """
         Runs a test on the SQL code generated by the PyDough code,
@@ -1151,17 +1265,31 @@ class PyDoughPandasTest:
             `database`: The database context to determine what dialect of SQL
             to use when generating the SQL test.
             `config`: The PyDough configuration to use for the test, if any.
+            `mask_server`: The mask server to use for the test, if any.
+            `max_rows`: The maximum number of rows to return from the query.
         """
+        # Skip if indicated.
+        if self.skip_sql:
+            pytest.skip(f"Skipping SQL text test for {self.test_name}")
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
 
         # Convert the PyDough code to SQL text
-        call_kwargs: dict = {"metadata": graph, "database": database}
+        call_kwargs: dict = {
+            "metadata": graph,
+            "database": database,
+            "max_rows": max_rows,
+        }
         if config is not None:
             call_kwargs["config"] = config
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
+        if mask_server is not None:
+            call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
 
         # Either update the reference solution, or compare the generated sql
@@ -1182,6 +1310,9 @@ class PyDoughPandasTest:
         database: DatabaseContext,
         config: PyDoughConfigs | None = None,
         display_sql: bool = False,
+        coerce_types: bool = False,
+        mask_server: MaskServerInfo | None = None,
+        max_rows: int | None = None,
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -1194,23 +1325,29 @@ class PyDoughPandasTest:
             `database`: The database context to use for executing SQL.
             `config`: The PyDough configuration to use for the test, if any.
             `display_sql`: If True, displays the SQL generated by PyDough.
+            `coerce_types`: If True, coerces the types of the result and reference
+            solution DataFrames to ensure compatibility.
+            `max_rows`: The maximum number of rows to return from the query.
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
-
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {
             "metadata": graph,
             "database": database,
             "display_sql": display_sql,
+            "max_rows": max_rows,
         }
         if config is not None:
             call_kwargs["config"] = config
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
+        if mask_server is not None:
+            call_kwargs["mask_server"] = mask_server
         result: pd.DataFrame = to_df(root, **call_kwargs)
-
         # Extract the reference solution from the function
         refsol: pd.DataFrame = self.pd_function()
 
@@ -1220,17 +1357,160 @@ class PyDoughPandasTest:
             assert len(result.columns) == len(refsol.columns)
             result.columns = refsol.columns
 
+        # FIXME:
+        if self.fix_output_dialect == "snowflake":
+            # Update column "q"
+            # Start of Week in Snowflake is Monday
+            if self.test_name == "smoke_b":
+                refsol["q"] = [
+                    "1994-06-06",
+                    "1994-05-23",
+                    "1998-02-16",
+                    "1993-06-07",
+                    "1992-10-19",
+                ]
+
         # If the query is not order-sensitive, sort the DataFrames before comparison
         if not self.order_sensitive:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol)
+        pd.testing.assert_frame_equal(
+            result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
+        )
+
+
+def harmonize_types(column_a, column_b):
+    """
+    Harmonizes data types between two Pandas columns to ensure compatibility
+    for comparison equality check operations.
+
+    The function performs type conversions based on common mismatches, including:
+    - None to ' ' for string and NoneType columns
+    - Decimal to integer conversion
+    - Decimal to float conversion
+    - String to datetime or date conversion
+    - Date to string or datetime conversion
+
+    If no known mismatch pattern is found, the original columns are returned unchanged.
+
+    Parameters:
+        `column_a`: The first column to harmonize.
+        `column_b`: The second column to harmonize.
+
+    Returns:
+        A tuple of the two harmonized columns.
+    """
+    # Different integer types
+    if pd.api.types.is_integer_dtype(column_a) and pd.api.types.is_integer_dtype(
+        column_b
+    ):
+        # cast both to the largest integer type among the two
+        max_bits = max(column_a.dtype.itemsize, column_b.dtype.itemsize) * 8
+        target_type = getattr(pd, f"Int{max_bits}") if max_bits != 64 else "int64"
+        return column_a.astype(target_type), column_b.astype(target_type)
+
+    # bool vs int, convert bool to int.
+    if any(isinstance(elem, bool) for elem in column_a) and any(
+        isinstance(elem, int) for elem in column_b
+    ):
+        return column_a.astype(int), column_b
+    if any(isinstance(elem, int) for elem in column_a) and any(
+        isinstance(elem, bool) for elem in column_b
+    ):
+        return column_a, column_b.astype(int)
+
+    # int vs float
+    if any(isinstance(elem, int) for elem in column_a) and any(
+        isinstance(elem, float) for elem in column_b
+    ):
+        return column_a.astype(float), column_b
+
+    # float vs int
+    if any(isinstance(elem, float) for elem in column_a) and any(
+        isinstance(elem, int) for elem in column_b
+    ):
+        return column_a, column_b.astype(float)
+
+    # Decimal vs float
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, float) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: pd.NA if pd.isna(x) else float(x)
+        ), column_b.apply(lambda x: pd.NA if pd.isna(x) else x)
+
+    # float vs Decimal
+    if any(isinstance(elem, float) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else x), column_b.apply(
+            lambda x: pd.NA if pd.isna(x) else float(x)
+        )
+
+    if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
+        isinstance(elem, (str, NoneType)) for elem in column_b
+    ):
+        return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
+            lambda x: "" if pd.isna(x) else str(x)
+        )
+    # float vs None. Convert to nullable floats
+    if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
+        isinstance(elem, (float, NoneType)) for elem in column_b
+    ):
+        return column_a.astype("Float64"), column_b.astype("Float64")
+
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, int) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else int(x)), column_b
+    if any(isinstance(elem, int) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else int(x))
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, float) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else float(x)), column_b
+    if any(isinstance(elem, float) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
+    if any(isinstance(elem, pd.Timestamp) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        ), column_b
+    if any(isinstance(elem, datetime.date) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        ), column_b
+    return column_a, column_b
 
 
 def run_e2e_error_test(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode] | str,
     error_message: str,
     graph: GraphMetadata,
     columns: dict[str, str] | list[str] | None = None,
@@ -1243,7 +1523,8 @@ def run_e2e_error_test(
     provided `error_message`.
 
     Args:
-        `pydough_impl`: The PyDough function to be tested.
+        `pydough_impl`: The PyDough function to be tested, or the string that
+        should be evaluated to obtain the PyDough code.
         `error_message`: The error message that is expected to be raised.
         `graph`: The metadata graph to use for the test.
         `columns`: The columns argument to use for the test, if any.
@@ -1251,7 +1532,7 @@ def run_e2e_error_test(
         `config`: The PyDough configuration to use for the test, if any.
     """
     with pytest.raises(Exception, match=error_message):
-        root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph, None)
         call_kwargs: dict = {}
         if graph is not None:
             call_kwargs["metadata"] = graph
@@ -1262,3 +1543,66 @@ def run_e2e_error_test(
         if columns is not None:
             call_kwargs["columns"] = columns
         to_df(root, **call_kwargs)
+
+
+def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
+    """
+    Extracts the batch requests made to a mask server from the provided log
+    string. Each batch request will have a corresponding sequence of log lines
+    in the following format (the phrase "Batch request" sometimes followed by
+    the text "(dry run)" if the mask server is in dry run mode):
+
+    ```
+    INFO     pydough.mask_server.mask_server:mask_server.py:149 Batch request to Mask Server (2 items):
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (1) CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (2) CRBNK/CUSTOMERS/c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]
+    ```
+
+    A log message string with those lines would return the following list of
+    sets (if doing a dry run, then "DRY_RUN" is also included in the set):
+
+    ```
+    [
+        {
+            "CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']",
+            "CRBNK/CUSTOMERS/c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]",
+        }
+    ]
+    ```
+
+    Args:
+        `log_str`: The log string to extract batch requests from.
+
+    Returns:
+        A list of sets, each set indicating one of the batch requests made to
+        the mask server during the conversion process and logged in the logger
+        that was dumped into the log string. The format for each set entry is
+        `db_name.table_name.column_name: [expression_list]`.
+    """
+    header_pattern: re.Pattern = re.compile(
+        r"Batch request( \(dry run\))? to Mask Server \((\d+) items?\):"
+    )
+    entry_pattern: re.Pattern = re.compile(r"\(\d+\) (.+)")
+    result: list[set[str]] = []
+    current_set: set[str] = set()
+    lines_remaining: int = 0
+    for line in log_str.splitlines():
+        header_match = re.findall(header_pattern, line)
+        if header_match:
+            assert lines_remaining == 0, (
+                "Malformed log: new batch request started before previous one ended."
+            )
+            current_set = set()
+            if bool(header_match[0][0]):
+                current_set.add("DRY_RUN")
+            lines_remaining = int(header_match[0][1])
+            result.append(current_set)
+        elif lines_remaining > 0:
+            entry_match = re.findall(entry_pattern, line)
+            assert entry_match, "Malformed log: expected batch request entry line."
+            current_set.add(entry_match[0])
+            lines_remaining -= 1
+    assert lines_remaining == 0, (
+        "Malformed log: batch request did not have expected number of entries."
+    )
+    return result

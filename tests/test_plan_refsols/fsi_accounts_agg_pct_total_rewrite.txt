@@ -1,0 +1,5 @@
+ROOT(columns=[('acct_type', UNMASK::(PTY_UNPROTECT([accounttype], 'deAccount'))), ('pct_total_txn', ROUND((DEFAULT_TO(sum_amount, 0:numeric) / RELSUM(args=[DEFAULT_TO(sum_amount, 0:numeric)], partition=[], order=[])), 2:numeric))], orderings=[(ROUND((DEFAULT_TO(sum_amount, 0:numeric) / RELSUM(args=[DEFAULT_TO(sum_amount, 0:numeric)], partition=[], order=[])), 2:numeric)):desc_last], limit=5:numeric)
+ JOIN(condition=t0.accountid == t1.accountid, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'accounttype': t0.accounttype, 'sum_amount': t1.sum_amount})
+  SCAN(table=bodo.fsi.accounts, columns={'accountid': accountid, 'accounttype': accounttype})
+  AGGREGATE(keys={'accountid': accountid}, aggregations={'sum_amount': SUM(amount)})
+   SCAN(table=bodo.fsi.transactions, columns={'accountid': accountid, 'amount': amount})

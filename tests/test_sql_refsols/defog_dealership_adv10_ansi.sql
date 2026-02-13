@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    MAX(payment_date) AS max_payment_date,
-    sale_id
+    sale_id,
+    MAX(payment_date) AS max_payment_date
   FROM main.payments_received
   GROUP BY
-    sale_id
+    1
 )
 SELECT
   ROUND(

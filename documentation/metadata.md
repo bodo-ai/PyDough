@@ -9,10 +9,23 @@ This page document the exact format that the JSON files containing PyDough metad
    * [Collection Type: Simple Table](#collection-type-simple-table)
 - [Properties](#properties)
    * [Property Type: Table Column](#property-type-table-column)
-- [Relationship](#relationship)
+   * [Property Type: Masked Table Column](#property-type-masked-table-column)
+- [Relationships](#relationships)
    * [Relationship Type: Simple Join](#relationship-type-simple-join)
    * [Relationship Type: General Join](#relationship-type-general-join)
    * [Relationship Type: Cartesian Product](#relationship-type-cartesian-product)
+   * [Relationship Type: Custom](#relationship-type-custom)
+   * [Relationship Type: Reverse](#relationship-type-reverse)
+- [Functions](#functions)
+   * [Function Type: SQL Alias](#function-type-sql-alias)
+   * [Function Type: SQL Window Alias](#function-type-sql-window-alias)
+   * [Function Type: SQL Macro](#function-type-sql-macro)
+- [Function Verifiers](#function-verifiers)
+  * [Function Verifier Type: Fixed Arguments](#function-verifier-type-fixed-arguments)
+  * [Function Verifier Type: Argument Range](#function-verifier-type-argument-range)
+- [Function Deducers](#function-deducers)
+  * [Function Deducer Type: Constant](#function-deducer-type-constant)
+  * [Function Deducer Type: Select Argument](#function-deducer-type-select-argument)
 - [PyDough Type Strings](#pydough-type-strings)
 - [Metadata Examples](#metadata-examples)
    * [Example: TPC-H](#example-tpch)
@@ -29,6 +42,7 @@ The core components of the JSON file structure are as follows:
 - Specification for the remaining fields when version is set to V2:
   - `collections` (required): an array of the metadata for each collection in the graph ([see here for more details](#collections))
   - `relationships` (required): an array of the metadata for each relationship in the graph ([see here for more details](#relationships))
+  - `functions` (optional): an array of the metadata for various additional function definitions defined for use within the graph ([see here for more details](#functions))
   - `additional definitions` (optional): an array of strings where each string is a sentence defining a concept/definition within the semantical context of the graph, such as the vocabulary for a specific kind of analysis and how to compute it in terms of the collections/relationships.
   - `verified pydough analysis` (optional): an array of JSON objects where each object represents an instance of a question & answer pair with PyDough using the data from the graph. The object has two fields that are both strings: `question` maps to the question being asked, and `code` is the PyDough code that solves the question using hte graph (can be multiline).
   - `extra semantic info` (optional): an object containing arbitrary additional semantic information about the entire graph (internal use only).
@@ -40,6 +54,7 @@ The core components of the JSON file structure are as follows:
     "version": "V2",
     "collections": [...],
     "relationships": [...],
+    "funcitons": [...],
     "additional definitions": [...]
     "verified pydough analysis": [
       {"question": ..., "code": ...},
@@ -122,11 +137,61 @@ Example of the structure of the metadata for a table column property:
 {
     "name": "account balance",
     "type": "table column",
-    "column_name": "ba_bal",
-    "data_type": "numeric",
+    "column name": "ba_bal",
+    "data type": "numeric",
     "description": "The amount of money currently in the account",
     "sample values": [0.0, 123.45, 999864.00],
     "synonyms": ["amount", "value", "balance"],
+    "extra semantic info": {...}
+}
+```
+
+<!-- TOC --><a name="property-type-masked-table-column"></a>
+### Property Type: Masked Table Column
+
+A property with this type is the same as a regular table column, except the data in the underlying table has been masked using an encryption protocol. The metadata includes the information required to either encrypt values in SQL using the same masking protocol, or unmask previously masked data in SQL queries. 
+
+Properties of this type use the type string "masked table column" and include all the properties from [table column](#property-type-table-column), plus the following additional key-value pairs in their metadata JSON object:
+
+- `unprotect protocol` (required): a Python format string representing the SQL text that is used to unmask the data after reading it from the underlying table. The format string should expect a single placeholder value (e.g. `"SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)".format("c_name")` will generate the SQL text `SUBSTRING(c_name, -1) || SUBSTRING(c_name, 1, LENGTH(c_name) - 1)`).
+- `protect protocol` (required): a Python format string, in the same format as `unprotect protocol`, used to describe how the data was originally masked. This can be used to generate masked values consistent with the encryption scheme, allowing operations such as comparisons between masked data.
+- `protected data type` (optional): same as `data type`, except referring to the type of the data when it is protected, whereas `data type` refers to the raw unprotected column. If omitted, it is assumed that the data type is the same between the unprotected vs protected data.
+- `server masked` (optional): a boolean flag indicating whether the column was masked on a server that is attached to PyDough. If `true`, PyDough can use it to optimize queries by rewriting predicates and expressions to avoid unmasking the data.
+- `server dataset id` (optional): a string that must be provided `server masked` is `true`, indicating the `dataset id` value to be used when looking up this column in a remote server to optimize it by rewriting predicates.
+
+
+Example of the structure of the metadata for a masked table column property where the string data is masked by moving the first character to the end, and unmasked by moving it back to the beginning:
+
+```json
+{
+    "name": "name",
+    "type": "masked table column",
+    "column name": "c_name",
+    "data type": "string",
+    "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
+    "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
+    "description": "The name of the customer",
+    "sample values": ["John Smith", "Adrien Lee", "Anna Rodriguez"],
+    "synonyms": ["full name"],
+    "extra semantic info": {...}
+}
+```
+
+Another example of the structure of the metadata for a masked table column property where the numeric is masked by converting it to a string, switching the `0` digits with asterisks, and left-padding to length 10 with asterisks, then unmasked by reversing the process:
+
+```json
+{
+    "name": "account_id",
+    "type": "masked table column",
+    "column name": "a_id",
+    "data type": "numeric",
+    "protected data type": "string",
+    "unprotect protocol": "INTEGER(REPLACE({0}, '*', '0'))",
+    "protect protocol": "LPAD(REPLACE(STRING({0}), '0', '*'), 10, '*')",
+    "server masked": false,
+    "description": "The id of the bank account",
+    "sample values": [12030061, 4000013, 560003],
+    "synonyms": ["account key", "bank account number"],
     "extra semantic info": {...}
 }
 ```
@@ -135,7 +200,7 @@ Example of the structure of the metadata for a table column property:
 ## Relationships
 
 Every JSON object describing a relationship between two PyDough collection has the following fields:
-- `name` (required): the name of the relationshp, which must be a valid PyDough identifier and must not overlap with the name of other properties/relationships from the source collection.
+- `name` (required): the name of the relationship, which must be a valid PyDough identifier and must not overlap with the name of other properties/relationships from the source collection.
 - `type` (required): the type of PyDough relationship. The currently supported values are ["simple join"](#relationship-type-simple-join), ["general join"](#relationship-type-general-join), ["cartesian product"](#relationship-type-cartesian-product), ["custom"](#relationship-type-custom) and ["reverse"](#relationship-type-reverse)
 - `description` (optional): a semantic description of the relationship's significance.
 - `synonyms` (optional): a list of strings of alternative names for the relationship, for semantic understanding.
@@ -250,6 +315,183 @@ Example of the structure of the metadata for a reverse (flips the earlier define
 }
 ```
 
+<!-- TOC --><a name="functions"></a>
+## Functions
+
+Every JSON object describing a function has the following fields:
+- `name` (required): the name of the function, which must be a valid PyDough identifier and must not overlap with the name of other collections/properties/relationships/functions within the graph. This name will become reserved like other function names in PyDough (`COUNT`, `LOWER`, etc.)
+- `type` (required): the type of function definition. The currently supported values are ["sql alias"](#function-type-sql-alias), ["sql window alias"](#function-type-sql-window-alias) and ["sql macro"](#function-type-sql-macro).
+- `description` (optional): a semantic description of what the function does.
+- `input signature` (optional): a JSON object describing the allowed types of inputs to the function. [See here](#function-verifiers) for the specification of these objects.
+- `output signature` (optional): a JSON object describing the output type of a call to the function. [See here](#function-deducers) for the specification of these objects.
+
+<!-- TOC --><a name="function-type-sql-alias"></a>
+### Function Type: SQL Alias
+
+A function of this type is intended to map to a function in the SQL dialect of the database being used in a 1:1 manner. E.g. if `FOO` in PyDough is an alias for `BAR` in SQL, then `FOO(x, y, z)` becomes `BAR(x, y, z)`. Functions of this type can only be scalar functions or aggregation functions, not window functions. Functions of this type have a type string of "sql alias" and have the following additional key-value pairs in their metadata JSON object:
+
+- `sql function` (required): a string indicating the name of the function in the SQL dialect this function corresponds to.
+- `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
+
+Example of the structure of the metadata for a SQL Alias function named `FORMAT_DATETIME` (a 1:1 mapping to the sqlite `STRFTIME` scalar function):
+
+```json
+{
+  "name": "FORMAT_DATETIME",
+  "type": "sql alias",
+  "sql function": "STRFTIME",
+  "description": "Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+Example of the structure of the metadata for a SQL Alias function named `COMBINE_STRINGS` (a 1:1 mapping to the sqlite `GROUP_CONCAT` aggregation function):
+
+```json
+{
+  "name": "COMBINE_STRINGS",
+  "type": "sql alias",
+  "sql function": "GROUP_CONCAT",
+  "aggregation": true,
+  "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+<!-- TOC --><a name="function-type-sql-window-alias"></a>
+### Function Type: SQL Window Alias
+
+A function of this type is intended to map to a window function in the SQL dialect of the database being used in a 1:1 manner. E.g. if `FOO` in PyDough is an alias for `BAR` in SQL, then `FOO(x, ...)` becomes `BAR(x) OVER (...)`. The `OVER` clause of the window function in SQL is handled by the standard optional keyword arguments to window functions in PyDough (`by`, `per`, `cumulative`, `frame`). Functions of this type have a type string of "sql window alias" and have the following additional key-value pairs in their metadata JSON object:
+
+- `sql function` (required): a string indicating the name of the window function in the SQL dialect that this function corresponds to.
+- `requires order` (optional): a boolean indicating whether the function requires a `by` clause. The default value is `false` (indicating it does not require a `by` clause).
+- `allows frame` (optional): a boolean indicating whether the function allows window frames, either via `cumulative=True` or by providing `frame=...`. The default value is `false` (indicating it does not allow window frames).
+
+These optional arguments work together in the following manner:
+
+|  | **requires order: true** | **requires order: false** |
+|---|---|---|
+| **allows frame: true** | The function must always be called with a `by` clause, but can optionally be called with a `cumulative`/`frame`. | The function can be called with or without a `by` clause, but if it does have a `by` clause it must have a `cumulative`/`frame`. |
+| **allows frame: false** | The function must always be called with a `by` clause, but it cannot be called with a `cumulative`/`frame`. | The function cannot be called with a `by` clause, nor can it be called with a `cumulative`/`frame`. |
+
+Example of the structure of the metadata for a SQL Window Alias function named `RELMIN` (a 1:1 mapping to the sqlite `MIN` window function):
+
+```json
+{
+  "name": "RELMIN",
+  "type": "sql window alias",
+  "sql function": "MIN",
+  "requires order": false,
+  "allows frame": true,
+  "description": "Obtains the smallest value in the window.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+<!-- TOC --><a name="function-type-sql-macro"></a>
+### Function Type: SQL Macro
+
+A function of this type contains a SQL expression using a Python-style format string, where arguments are injected into the string by position. E.g. if `FOO` has the macro text `"CASE WHEN {0} > {1} THEN {0} ELSE {1} END"` and it is called with arguments `x` and `y` that become `C1` and `C2` in SQL, it generates the SQL text `CASE WHEN C1 > C2 THEN C1 ELSE C2 END`. SQL Macro functions can only be scalar functions or aggregation functions, not window functions. They have a type string of "sql macro" and have the following additional key-value pairs in their metadata JSON object:
+
+- `macro text` (required): the Python format string used to inject the SQL text of the arguments.
+- `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
+
+Example of the structure of the metadata for a SQL Macro function named `EPSILON` (returns whether the difference between the first two arguments is at most the third argument):
+
+```json
+{
+  "name": "EPSILON",
+  "type": "sql macro",
+  "macro text": "ABS({1} - {0}) <= {2}",
+  "description": "Returns true if the gap between the first and second argument is at most the third argument.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+Example of the structure of the metadata for a SQL Macro function named `PERCENTAGE` (an aggregation that returns the percentage of rows where the argument is True):
+
+```json
+{
+  "name": "PERCENTAGE",
+  "type": "sql macro",
+  "aggregation": true,
+  "macro text": "(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)",
+  "description": "Returns the percentage of rows where the argument is True.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+<!-- TOC --><a name="function-verifiers"></a>
+## Function Verifiers
+
+The JSON for a function verifier, used in the `input signature` field of a function definition, specifies the rules for determining whether the function is called on valid vs invalid arguments. If a verifier is not provided, the default assumption is that the function can be called on any arguments.
+
+Each verifier has a mandatory string field `type` specifying what kind of verifier it is. The currently supported values are `"fixed arguments"` and `"argument range"`.
+
+<!-- TOC --><a name="function-verifier-type-fixed-arguments"></a>
+### Function Verifier Type: Fixed Arguments
+
+Function verifiers of this type have a type string of `"fixed arguments"` and correspond to a function that has a specific number of allowed arguments, each with one legal type. A call to the function is considered valid only if it has the same number of arguments specified by the verifier, and they are all the same types as the ones contained in the verifier. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a list of type strings ([see here for more information](#pydough-type-strings)). The length of the list is the number of arguments the function is expected to be called on, and each argument is expected to have the type of the corresponding element in the list. If the type can be anything, use `"unknown"`.
+
+Below are several examples the JSON for such verifiers:
+
+- Accepts no arguments: `{"type": "fixed arguments", "value": []}`
+- Accepts one argument, which must be a string: `{"type": "fixed arguments", "value": ["string"]}`
+- Accepts two arguments, which must both be numbers: `{"type": "fixed arguments", "value": ["numeric", "numeric"]}`
+- Accepts two arguments, the first must be a datetime and the second can be anything: `{"type": "fixed arguments", "value": ["datetime", "unknown"]}`
+
+
+<!-- TOC --><a name="function-verifier-type-argument-range"></a>
+### Function Verifier Type: Argument Range
+
+Function verifiers of this type have a type string of `"argument range"` and work the same as [fixed argument verifiers](#function-verifier-type-fixed-arguments) except it is possible to not include all of the arguments, as long as a minimum number of arguments is provided. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a list of type strings ([see here for more information](#pydough-type-strings)). The length of the list is the maximum number of arguments the function is expected to be called on, and each argument that is provided is expected to have the type of the corresponding element in the list. If the type can be anything, use `"unknown"`.
+- `min` (required): an integer indicating the smallest number of arguments that must be provided.
+
+Below are several examples the JSON for such verifiers:
+
+- Accepts up to two arguments of any type: `{"type": "argument range", "value": ["unknown", "unknown"], "min": 0}`
+- Accepts up to two arguments, the first a string and the second a number, but the first must always be provided: `{"type": "argument range", "value": ["string", "numeric"], "min": 1}`
+
+<!-- TOC --><a name="function-deducers"></a>
+## Function Deducers
+
+The JSON for a function deducer, used in the `output signature` field of a function definition, specifies the rules for determining the output type of a call to the function in terms of its input arguments. If a verifier is not provided, the default assumption is that the function call outputs an expression of type `"unknown"`.
+
+Each deducer has a mandatory string field `type` specifying what kind of verifier it is. The currently supported values are `"constant"` and `"select argument"`.
+
+<!-- TOC --><a name="function-deducer-type-constant"></a>
+### Function Deducer Type: Constant
+
+Function deducers of this type have a type string of `"constant"` and correspond to a function call that always returns the same type. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a type string ([see here for more information](#pydough-type-strings)) indicating what type the function always returns.
+
+Below are several examples the JSON for such deducers:
+
+- Always returns a string: `{"type": "constant", "value": "string"}`
+- Always returns a datetime: `{"type": "constant", "value": "datetime"}`
+- The return type is unknown: `{"type": "constant", "value": "unknown"}`
+
+<!-- TOC --><a name="function-deducer-type-select-argument"></a>
+### Function Deducer Type: Select Argument
+
+Function deducers of this type have a type string of `"select argument"` and correspond to a function call that always returns a value of the same type as a specific argument. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a non-negative integer indicating which input argument to the function call should determine the output type of the function when called.
+
+Below are several examples the JSON for such deducers:
+
+- Returns the type of the first argument: `{"type": "select argument", "value": 0}`
+- Returns the type of the second argument: `{"type": "select argument", "value": 1}`
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
@@ -260,9 +502,9 @@ The strings used in the type field for certain properties must be one of the fol
 - `bool`: a boolean.
 - `string`: a string or other bytes-like format (char, varchar, binary, varbinary, etc.).
 - `datetime`: any date/timestamp type, regardless of precision or timezone.
-- `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[int32]` or `array[array[string]]`.
-- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,numeric]` or `map[string,array[date]]`.
-- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
+- `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[numeric]` or `array[array[string]]`.
+- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,numeric]` or `map[string,array[datetime]]`.
+- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:numeric,y:numeric]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:datetime,report:string]]`. Each field name must be a valid Python identifier.
 - `unknown`: an unknown/other type.
 
 <!-- TOC --><a name="metadata-examples"></a>
@@ -273,6 +515,13 @@ The strings used in the type field for certain properties must be one of the fol
 ### Example: TPC-H
 
 This example of a PYDough metadata JSON contains a single knowledge graph for the TPC-H database ([see here for spec details](https://www.tpc.org/TPC_Documents_Current_Versions/pdf/TPC-H_v3.0.1.pdf)).
+
+It also includes several function definitions that make sense in the context of a SQLite Database:
+- `DATE_FORMAT(x, y)` is an alias for `STRFTIME(x, y)`
+- `COMBINE_STRINGS(x, y)` is an alias for `GROUP_CONCAT(x, y)`
+- `RELMIN(x, ...)` is an alias for `MIN(x) OVER (...)`
+- `POSITIVE(x)` is a macro for `x > 0`
+- `PERCENTAGE(x)` is a macro for `(100.0 * SUM(CASE WHEN x THEN 1 END)) / COUNT(*)`
 
 ```json
 [
@@ -1089,6 +1338,52 @@ This example of a PYDough metadata JSON contains a single knowledge graph for th
         "always matches": false,
         "description": "The orders that a customer has placed, each of which contains one or more line items",
         "synonyms": ["transactions", "purchases"]
+      }
+    ],
+    "functions": [
+      {
+        "name": "FORMAT_DATETIME",
+        "type": "sql alias",
+        "sql function": "STRFTIME",
+        "description": "Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.",
+        "input signature": {"type": "fixed arguments", "value": ["string", "datetime"]},
+        "output signature": {"type": "constant", "value": "string"}
+      },
+      {
+        "name": "COMBINE_STRINGS",
+        "type": "sql alias",
+        "aggregation": true,
+        "sql function": "GROUP_CONCAT",
+        "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
+        "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1},
+        "output signature": {"type": "constant", "value": "string"}
+      },
+      {
+        "name": "RELMIN",
+        "type": "sql window alias",
+        "sql function": "MIN",
+        "requires order": false,
+        "allows frame": true,
+        "description": "Obtains the smallest value in the window.",
+        "input signature": {"type": "fixed arguments", "value": ["unknown"]},
+        "output signature": {"type": "select argument", "value": 0}
+      },
+      {
+        "name": "POSITIVE",
+        "type": "sql macro",
+        "macro text": "{0} > 0",
+        "description": "Returns true if the argument is greater than zero.",
+        "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+        "output signature": {"type": "constant", "value": "bool"}
+      },
+      {
+        "name": "PERCENTAGE",
+        "type": "sql macro",
+        "aggregation": true,
+        "macro text": "(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)",
+        "description": "Returns the percentage of rows where the first argument is True.",
+        "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+        "output signature": {"type": "constant", "value": "numeric"}
       }
     ],
     "additional definitions": [

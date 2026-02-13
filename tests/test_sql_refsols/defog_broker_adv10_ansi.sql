@@ -1,22 +1,24 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sbcustomer.sbcustid
-  FROM main.sbcustomer AS sbcustomer
-  JOIN main.sbtransaction AS sbtransaction
-    ON EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbtransaction.sbtxdatetime AS DATETIME))
-    AND EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME))
-    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
+    EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) AS month_sbtxdatetime,
+    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) AS year_sbtxdatetime,
+    sbtxcustid,
+    COUNT(*) AS n_rows
+  FROM main.sbtransaction
   GROUP BY
-    sbcustomer.sbcustid
+    1,
+    2,
+    3
 )
 SELECT
   sbcustomer.sbcustid AS _id,
   sbcustomer.sbcustname AS name,
-  COALESCE(_s3.n_rows, 0) AS num_transactions
+  COALESCE(_s1.n_rows, 0) AS num_transactions
 FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _s3 AS _s3
-  ON _s3.sbcustid = sbcustomer.sbcustid
+LEFT JOIN _s1 AS _s1
+  ON _s1.month_sbtxdatetime = EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))
+  AND _s1.sbtxcustid = sbcustomer.sbcustid
+  AND _s1.year_sbtxdatetime = EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))
 ORDER BY
-  num_transactions DESC
+  3 DESC
 LIMIT 1

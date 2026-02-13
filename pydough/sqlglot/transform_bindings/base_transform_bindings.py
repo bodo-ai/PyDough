@@ -6,24 +6,34 @@ implementations of how to convert them to SQLGlot expressions
 __all__ = ["BaseTransformBindings"]
 
 import re
+from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot import parse_one
 from sqlglot.expressions import Concat
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.errors import PyDoughSQLException
 from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     current_ts_pattern,
+    generate_range_rows,
     offset_pattern,
     pad_helper,
     positive_index,
     trunc_pattern,
 )
+
+if TYPE_CHECKING:
+    from pydough.sqlglot.sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 
 class BaseTransformBindings:
@@ -33,8 +43,9 @@ class BaseTransformBindings:
     subclasses can override its methods to provide dialect-specific changes.
     """
 
-    def __init__(self, configs: PyDoughConfigs):
+    def __init__(self, configs: PyDoughConfigs, visitor: "SQLGlotRelationalVisitor"):
         self._configs = configs
+        self._visitor = visitor
 
     @property
     def configs(self) -> PyDoughConfigs:
@@ -81,7 +92,6 @@ class BaseTransformBindings:
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
-        pydop.SUM: sqlglot_expressions.Sum,
         pydop.AVG: sqlglot_expressions.Avg,
         pydop.MIN: sqlglot_expressions.Min,
         pydop.MAX: sqlglot_expressions.Max,
@@ -160,9 +170,34 @@ class BaseTransformBindings:
                 # Build the expressions on the left since the operator is left-associative.
                 output_expr = func(this=output_expr, expression=apply_parens(arg))
             return output_expr
+        if isinstance(operator, pydop.SqlAliasExpressionFunctionOperator):
+            # For user defined operators that are a 1:1 alias of a function in
+            # the SQL dialect, map to a call of the corresponding function.
+            return sqlglot_expressions.Anonymous(
+                this=operator.sql_function_alias, expressions=args
+            )
+        if isinstance(
+            operator,
+            (
+                pydop.MaskedExpressionFunctionOperator,
+                pydop.SqlMacroExpressionFunctionOperator,
+            ),
+        ):
+            # For user defined operators that are a macro for SQL text, convert
+            # the arguments to SQL text strings then inject them into the macro
+            # as a format string, then re-parse it. The same idea works for the
+            # masking/unmasking operators
+            arg_strings: list[str] = [arg.sql() for arg in args]
+            fmt_string: str
+            if isinstance(operator, pydop.MaskedExpressionFunctionOperator):
+                fmt_string = operator.format_string
+            else:
+                fmt_string = operator.macro_text
+            combined_string: str = fmt_string.format(*arg_strings)
+            return parse_one(combined_string)
         match operator:
             case pydop.NOT:
-                return sqlglot_expressions.Not(this=args[0])
+                return sqlglot_expressions.Not(this=apply_parens(args[0]))
             case pydop.NDISTINCT:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
@@ -195,6 +230,8 @@ class BaseTransformBindings:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
                 return self.convert_round(args, types)
+            case pydop.SUM:
+                return self.convert_sum(args, types)
             case pydop.CEIL:
                 return self.convert_ceil(args, types)
             case pydop.FLOOR:
@@ -211,9 +248,9 @@ class BaseTransformBindings:
                 return self.convert_monotonic(args, types)
             case pydop.SQRT:
                 return self.convert_sqrt(args, types)
-            case pydop.POPULATION_VARIANCE:
+            case pydop.POPULATION_VAR:
                 return self.convert_variance(args, types, "population")
-            case pydop.SAMPLE_VARIANCE:
+            case pydop.SAMPLE_VAR:
                 return self.convert_variance(args, types, "sample")
             case pydop.POPULATION_STD:
                 return self.convert_std(args, types, "population")
@@ -253,6 +290,8 @@ class BaseTransformBindings:
                 return self.convert_smallest_or_largest(args, types, True)
             case pydop.COUNT:
                 return self.convert_count(args, types)
+            case pydop.GETPART:
+                return self.convert_get_part(args, types)
             case pydop.QUANTILE:
                 return self.convert_quantile(args, types)
             case _:
@@ -270,6 +309,14 @@ class BaseTransformBindings:
         if isinstance(expr, sqlglot_expressions.Literal) and expr.is_string:
             return self.handle_datetime_base_arg(expr)
         return expr
+
+    def convert_sum(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a SUM function call to its SQLGlot equivalent.
+        """
+        return sqlglot_expressions.Sum.from_arg_list(args)
 
     def convert_find(
         self,
@@ -337,12 +384,12 @@ class BaseTransformBindings:
         """Convert a `REPLACE` call expression to a SQLGlot expression.
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `REPLACE`, after they were
+            `args` The operands to `REPLACE`, after they were
             converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to `REPLACE`.
+            `types` The PyDough types of the arguments to `REPLACE`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching
+            The SQLGlot expression matching
             the functionality of `REPLACE`.
             In Python, this is equivalent to `X.replace(Y, Z)`.
         """
@@ -368,13 +415,13 @@ class BaseTransformBindings:
         END
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after
+            `args` The operands to `STRCOUNT`, after
             they were converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to
+            `types` The PyDough types of the arguments to
             `STRCOUNT`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching
+            The SQLGlot expression matching
             the functionality of `STRCOUNT`.
             In Python, this is equivalent to `X.count(Y)`.
         """
@@ -410,7 +457,7 @@ class BaseTransformBindings:
         # Take in count if LENGH(Y) > 1 dividing the difference by Y's length:
         # LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
         quotient: SQLGlotExpression = sqlglot_expressions.Div(
-            this=difference, expression=len_substring_count
+            this=apply_parens(difference), expression=len_substring_count
         )
 
         # Cast to Interger:
@@ -575,11 +622,11 @@ class BaseTransformBindings:
                 try:
                     start_idx = int(start.this)
                 except ValueError:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "SLICE function currently only supports the start index being integer literal or absent."
                     )
             else:
-                raise ValueError(
+                raise PyDoughSQLException(
                     "SLICE function currently only supports the start index being integer literal or absent."
                 )
 
@@ -589,11 +636,11 @@ class BaseTransformBindings:
                 try:
                     stop_idx = int(stop.this)
                 except ValueError:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "SLICE function currently only supports the stop index being integer literal or absent."
                     )
             else:
-                raise ValueError(
+                raise PyDoughSQLException(
                     "SLICE function currently only supports the stop index being integer literal or absent."
                 )
 
@@ -603,15 +650,15 @@ class BaseTransformBindings:
                 try:
                     step_idx = int(step.this)
                     if step_idx != 1:
-                        raise ValueError(
+                        raise PyDoughSQLException(
                             "SLICE function currently only supports the step being integer literal 1 or absent."
                         )
                 except ValueError:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "SLICE function currently only supports the step being integer literal 1 or absent."
                     )
             else:
-                raise ValueError(
+                raise PyDoughSQLException(
                     "SLICE function currently only supports the step being integer literal 1 or absent."
                 )
 
@@ -622,7 +669,7 @@ class BaseTransformBindings:
 
         match (start_idx, stop_idx):
             case (None, None):
-                raise string_expr
+                return string_expr
             case (_, None):
                 assert start_idx is not None
                 if start_idx > 0:
@@ -732,7 +779,7 @@ class BaseTransformBindings:
                                     ),
                                     expression=sql_zero,
                                 ),
-                                sql_empty_str,  # If length ≤ 0, return empty string
+                                sql_zero,  # If length ≤ 0, return empty string
                                 # Otherwise calculate actual length
                                 sqlglot_expressions.Sub(
                                     this=stop_idx_adjusted_glot,
@@ -774,7 +821,7 @@ class BaseTransformBindings:
                                             ),
                                             expression=sql_zero,
                                         ),
-                                        sql_empty_str,  # If length ≤ 0, return empty string
+                                        sql_zero,  # If length ≤ 0, return empty string
                                         sqlglot_expressions.Sub(  # Otherwise calculate actual length
                                             this=stop_idx_adjusted_glot,
                                             expression=start_idx_adjusted_glot,
@@ -1207,14 +1254,14 @@ class BaseTransformBindings:
                 not isinstance(args[1], sqlglot_expressions.Literal)
                 or args[1].is_string
             ):
-                raise ValueError(
+                raise PyDoughSQLException(
                     f"Unsupported argument {args[1]} for ROUND."
                     "The precision argument should be an integer literal."
                 )
             try:
                 int(args[1].this)
             except ValueError:
-                raise ValueError(
+                raise PyDoughSQLException(
                     f"Unsupported argument {args[1]} for ROUND."
                     "The precision argument should be an integer literal."
                 )
@@ -1281,14 +1328,14 @@ class BaseTransformBindings:
         assert len(args) == 3
         # Check if unit is a string.
         if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
             )
         x = self.make_datetime_arg(args[1])
         y = self.make_datetime_arg(args[2])
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
         if unit is None:
-            raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+            raise PyDoughSQLException(f"Unsupported argument '{unit}' for DATEDIFF.")
         answer = sqlglot_expressions.DateDiff(
             unit=sqlglot_expressions.Var(this=unit.value), this=y, expression=x
         )
@@ -1341,10 +1388,17 @@ class BaseTransformBindings:
         Returns:
             The SQLGlot expression to truncate `base`.
         """
-        return sqlglot_expressions.DateTrunc(
-            this=self.make_datetime_arg(base),
-            unit=sqlglot_expressions.Var(this=unit.value),
-        )
+        match unit:
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+                return sqlglot_expressions.TimestampTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
+            case _:
+                return sqlglot_expressions.DateTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
 
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
@@ -1362,11 +1416,23 @@ class BaseTransformBindings:
             The SQLGlot expression to add/subtract the specified interval to/from
             `base`.
         """
-        return sqlglot_expressions.DateAdd(
-            this=base,
-            expression=sqlglot_expressions.convert(amt),
-            unit=sqlglot_expressions.Var(this=unit.value),
-        )
+        new_expr: SQLGlotExpression | None = None
+        if amt > 0:
+            new_expr = sqlglot_expressions.DateAdd(
+                this=base,
+                expression=sqlglot_expressions.convert(amt),
+                unit=sqlglot_expressions.Var(this=unit.value),
+            )
+        elif amt < 0:
+            amt *= -1
+            new_expr = sqlglot_expressions.DateSub(
+                this=base,
+                expression=sqlglot_expressions.convert(amt),
+                unit=sqlglot_expressions.Var(this=unit.value),
+            )
+        else:
+            new_expr = base
+        return new_expr
 
     def convert_datetime(
         self,
@@ -1407,7 +1473,7 @@ class BaseTransformBindings:
                 # truncation.
                 unit = DateTimeUnit.from_string(str(trunc_match.group(1)))
                 if unit is None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Unsupported DATETIME modifier string: {arg.this!r}"
                     )
                 result = self.apply_datetime_truncation(result, unit)
@@ -1419,12 +1485,14 @@ class BaseTransformBindings:
                     amt *= -1
                 unit = DateTimeUnit.from_string(str(offset_match.group(3)))
                 if unit is None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Unsupported DATETIME modifier string: {arg.this!r}"
                     )
                 result = self.apply_datetime_offset(result, amt, unit)
             else:
-                raise ValueError(f"Unsupported DATETIME modifier string: {arg.this!r}")
+                raise PyDoughSQLException(
+                    f"Unsupported DATETIME modifier string: {arg.this!r}"
+                )
         return result
 
     def convert_extract_datetime(
@@ -1618,7 +1686,7 @@ class BaseTransformBindings:
                 not isinstance(args[1], sqlglot_expressions.Literal)
                 or not args[1].is_string
             ):
-                raise ValueError(
+                raise PyDoughSQLException(
                     f"STRING(X,Y) requires the second argument to be a string date format literal, but received {args[1]}"
                 )
             return sqlglot_expressions.TimeToStr(this=args[0], format=args[1])
@@ -1730,7 +1798,302 @@ class BaseTransformBindings:
         elif len(args) == 1:
             return sqlglot_expressions.Count(this=args[0])
         else:
-            raise ValueError(f"COUNT expects 0 or 1 argument, got {len(args)}")
+            raise PyDoughSQLException(f"COUNT expects 0 or 1 argument, got {len(args)}")
+
+    def convert_get_part(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a PyDough GETPART(string, delimiter, index) function call into a SQLGlot expression
+        that extracts the N-th part from a delimited string.
+
+        This function builds a SQL query using recursive common table expressions (CTEs) to:
+        - Split the input string into parts based on the given delimiter.
+        - Count the total number of parts.
+        - Handle both positive and negative indices (negative indices count from the end).
+        - Return the part at the specified index, or an empty string if the index is out of range.
+
+        The overall format of the scalar subquery returned is as follows:
+
+        ```sql
+        (
+            WITH RECURSIVE _s0 AS (
+                SELECT
+                    0 AS part_index,
+                    '' AS part,
+                    FIRST_ARGUMENT AS rest,
+                    SECOND_ARGUMENT AS delim,
+                    THIRD_ARGUMENT AS idx
+                UNION ALL
+                SELECT
+                    part_index + 1 AS part_index,
+                    CASE
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
+                        THEN rest
+                        ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+                    END AS part,
+                    CASE
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
+                        THEN ''
+                        ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
+                    END AS rest,
+                    delim,
+                    idx
+                FROM _s0
+                WHERE
+                    rest <> ''
+            )
+            SELECT _s0.part
+            FROM _s0
+            CROSS JOIN (
+                SELECT COUNT(*) - 1 AS total_parts
+                FROM _s0
+            ) AS _s1
+            WHERE
+                _s0.part_index <> 0
+                AND _s0.part_index = CASE
+                    WHEN _s0.idx > 0
+                    THEN _s0.idx
+                    WHEN _s0.idx < 0
+                    THEN _s1.total_parts + _s0.idx + 1
+                    ELSE 1
+                END
+        )
+        ```
+
+        Args:
+            args: A list of three SQLGlot expressions:
+                - args[0]: The input string to split.
+                - args[1]: The delimiter string.
+                - args[2]: The index of the part to extract (can be negative).
+            types: The PyDough types of the arguments.
+
+        Returns:
+            A SQLGlotExpression representing the SQL logic to extract the specified part from the string.
+        """
+
+        assert len(args) == 3
+
+        split_parts_table_name: str = self._visitor._generate_table_alias()
+        part_count_table_name: str = self._visitor._generate_table_alias()
+
+        # Identifiers definitions
+        split_parts: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=split_parts_table_name, quoted=False
+        )
+        part_count: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=part_count_table_name, quoted=False
+        )
+        part_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="part", quoted=False
+        )
+        part_index: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="part_index", quoted=False
+        )
+        idx: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="idx", quoted=False
+        )
+        total_parts: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="total_parts", quoted=False
+        )
+        delim: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="delim", quoted=False
+        )
+        rest: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="rest", quoted=False
+        )
+
+        # Literals definitions
+        literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+        literal_1: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
+        literal_empty: SQLGlotExpression = sqlglot_expressions.Literal.string("")
+
+        # Columns and tables
+        column_part: SQLGlotExpression = sqlglot_expressions.Column(
+            this=part_identifier
+        )
+        column_part_index: SQLGlotExpression = sqlglot_expressions.Column(
+            this=part_index
+        )
+        column_rest: SQLGlotExpression = sqlglot_expressions.Column(this=rest)
+        column_idx: SQLGlotExpression = sqlglot_expressions.Column(
+            this=idx, table=split_parts
+        )
+
+        # First half of the recursive CTE:
+        # SELECT
+        #   0 AS part_index,
+        #   '' AS part,
+        #   input AS rest,
+        #   delim AS delim,
+        #   idx AS idx
+        select_union_params: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[
+                sqlglot_expressions.Alias(this=literal_0, alias=part_index),
+                sqlglot_expressions.Alias(this=literal_empty, alias=part_identifier),
+                sqlglot_expressions.Alias(
+                    this=args[0],  # the first string, the input
+                    alias=rest,
+                ),
+                sqlglot_expressions.Alias(
+                    this=args[1],  # the second string, the delimiter
+                    alias=delim,
+                ),
+                sqlglot_expressions.Alias(
+                    this=args[2],  # the third arg, the index
+                    alias=idx,
+                ),
+            ]
+        )
+
+        # CASE
+        #   WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest
+        #   ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+        # END
+        delim_in_rest: SQLGlotExpression = sqlglot_expressions.StrPosition(
+            this=column_rest, substr=delim
+        )
+        delim_cond: SQLGlotExpression = sqlglot_expressions.Or(
+            this=sqlglot_expressions.EQ(this=delim_in_rest, expression=literal_0),
+            expression=sqlglot_expressions.EQ(this=delim, expression=literal_empty),
+        )
+        new_part: SQLGlotExpression = sqlglot_expressions.Substring(
+            this=column_rest,
+            start=literal_1,
+            length=sqlglot_expressions.Sub(
+                this=delim_in_rest,
+                expression=literal_1,
+            ),
+        )
+        new_part_case: SQLGlotExpression = (
+            sqlglot_expressions.Case().when(delim_cond, column_rest).else_(new_part)
+        )
+
+        # CASE
+        #   WHEN INSTR(rest, delim) = 0 OR delim = '' THEN ''
+        #   ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - LENGTH(delim))
+        # END
+        new_rest: SQLGlotExpression = sqlglot_expressions.Substring(
+            this=column_rest,
+            start=sqlglot_expressions.Add(
+                this=sqlglot_expressions.StrPosition(
+                    this=column_rest,
+                    substr=delim,
+                ),
+                expression=sqlglot_expressions.Length(this=delim),
+            ),
+        )
+        new_rest_case: SQLGlotExpression = (
+            sqlglot_expressions.Case().when(delim_cond, literal_empty).else_(new_rest)
+        )
+
+        # Second half of the recursive CTE:
+        # SELECT
+        #   part_index + 1 AS part_index,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1) END AS part,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN '' ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim)) END AS rest,
+        #   delim,
+        #   idx
+        # FROM split_parts
+        select_union_split_parts: SQLGlotExpression = (
+            sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Add(
+                            this=column_part_index, expression=literal_1
+                        ),
+                        alias=column_part_index,
+                    ),
+                    sqlglot_expressions.Alias(
+                        this=new_part_case, alias=part_identifier
+                    ),
+                    sqlglot_expressions.Alias(this=new_rest_case, alias=rest),
+                    delim,
+                    idx,
+                ],
+            )
+            .from_(split_parts_table_name)
+            .where(sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty))
+        )
+
+        # Union the two halves to create the recursive CTE:
+        split_parts_union: SQLGlotExpression = sqlglot_expressions.Union(
+            this=select_union_params,
+            distinct=False,
+            expression=select_union_split_parts,
+        )
+
+        # Subquery: SELECT COUNT(*) - 1 AS total_parts FROM split_parts
+        part_count_select: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Sub(
+                        this=sqlglot_expressions.Count(
+                            this=sqlglot_expressions.Star(), big_int=True
+                        ),
+                        expression=literal_1,
+                    ),
+                    alias=total_parts,
+                )
+            ]
+        ).from_(split_parts_table_name)
+
+        # Final select:
+        # SELECT part
+        # FROM split_parts, (SELECT COUNT(*) - 1 AS total_parts FROM split_parts)
+        # WHERE part_index != 0
+        # AND part_index = CASE
+        #   WHEN idx > 0 THEN idx
+        #   WHEN idx < 0 THEN total_parts + idx + 1
+        #   ELSE 1 END
+        if_idx_greater_0: SQLGlotExpression = sqlglot_expressions.If(
+            this=sqlglot_expressions.GT(this=column_idx, expression=literal_0),
+            true=column_idx,
+        )
+        if_idx_lower_0: SQLGlotExpression = sqlglot_expressions.If(
+            this=sqlglot_expressions.LT(
+                this=column_idx,
+                expression=literal_0,
+            ),
+            true=sqlglot_expressions.Add(
+                this=sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Column(this=total_parts, table=part_count),
+                    expression=column_idx,
+                ),
+                expression=literal_1,
+            ),
+        )
+        case_idx: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[if_idx_greater_0, if_idx_lower_0], default=literal_1
+        )
+        result: SQLGlotExpression = (
+            sqlglot_expressions.Select(expressions=[column_part])
+            .from_(split_parts_table_name)
+            .join(
+                sqlglot_expressions.Subquery(
+                    this=part_count_select,
+                    alias=sqlglot_expressions.TableAlias(this=part_count_table_name),
+                )
+            )
+            .where(
+                sqlglot_expressions.And(
+                    this=sqlglot_expressions.NEQ(
+                        this=column_part_index, expression=literal_0
+                    ),
+                    expression=sqlglot_expressions.EQ(
+                        this=column_part_index, expression=case_idx
+                    ),
+                )
+            )
+        )
+
+        # Add the WITH clause as a recursive CTE, and wrap the final answer in
+        # a subquery so the single column of the scalar subquery is used as the
+        # answer.
+        result = result.with_(split_parts_table_name, split_parts_union, recursive=True)
+        result = sqlglot_expressions.Subquery(this=result)
+
+        return result
 
     def convert_quantile(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -1762,8 +2125,8 @@ class BaseTransformBindings:
             or args[1].is_string
             or not (0.0 <= float(args[1].this) <= 1.0)
         ):
-            raise ValueError(
-                f"QUANTILE TEST argument to be a numeric literal between 0 and 1, got {args[1]}"
+            raise PyDoughSQLException(
+                f"QUANTILE expected second argument to be a numeric literal between 0 and 1, got {args[1]}"
             )
 
         percentile_disc_function: SQLGlotExpression = (
@@ -1781,3 +2144,74 @@ class BaseTransformBindings:
         )
 
         return within_group_clause
+
+    def convert_ordering(
+        self, arg: SQLGlotExpression, data_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Post-processes a SQLGlot expression used as an ordering key, e.g. if it requires a collation
+        Args:
+            `arg`: The argument being used as an order key.
+            `data_type`: The PyDough types of the order key.
+        Returns:
+            A SQLGlotExpression representing the order key transformed in any necessary way.
+        """
+        return arg
+
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        """
+        Return a SQLGlot expression that represents a single-row, empty (NULL)
+        singleton.
+
+        Returns:
+            A SQLGlotExpression that selects from a one-row VALUES tuple
+            containing a single NULL.
+        """
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
+        )
+
+    def convert_user_generated_collection(
+        self,
+        collection: PyDoughUserGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
+
+        Args:
+            `collection`: The user-generated collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing the user-generated collection.
+        """
+
+        match collection:
+            case RangeGeneratedCollection():
+                return self.convert_user_generated_range(collection)
+            case _:
+                raise PyDoughSQLException(
+                    f"Unsupported user-generated collection type: {type(collection)}"
+                )
+
+    def convert_user_generated_range(
+        self, collection: RangeGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range collection to its SQLGlot
+        representation.
+
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+        # Generate rows for the range, using Tuple.
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, True)
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, [collection.column_name], range_rows
+        )
+
+        return result

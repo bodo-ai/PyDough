@@ -4,7 +4,7 @@ Unit tests the PyDough Relational tree nodes.
 
 import pytest
 
-from pydough.pydough_operators import EQU, LOWER, SUM
+from pydough.pydough_operators import EQU, LOWER, NEQ, SUM
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -528,7 +528,7 @@ def test_invalid_limit(literal: LiteralExpression) -> None:
                     )
                 },
             ),
-            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=SUM, inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
             id="key_and_agg",
         ),
         pytest.param(
@@ -556,7 +556,7 @@ def test_invalid_limit(literal: LiteralExpression) -> None:
                     ),
                 },
             ),
-            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=NumericType())], return_type=NumericType()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
+            "AGGREGATE(keys={}, aggregations={'a': Call(op=SUM, inputs=[Column(name=a, type=NumericType())], return_type=NumericType()), 'b': Call(op=SUM, inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
             id="no_keys",
         ),
         pytest.param(
@@ -1415,9 +1415,8 @@ def test_join_to_string(join: Join, output: str) -> None:
             ),
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                # Note: We don't care that Equals commutes right now.
                 CallExpression(
-                    EQU,
+                    NEQ,
                     BooleanType(),
                     [
                         make_relational_column_reference("a", input_name="t1"),

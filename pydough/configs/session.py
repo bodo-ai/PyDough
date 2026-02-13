@@ -5,6 +5,7 @@ important information like:
 - The active metadata graph.
 - Any PyDough configuration for function behavior.
 - Backend information (SQL dialect, Database connection, etc.)
+- The error builder used to create and format exceptions
 
 In the future this session will also contain other information
 such as any User Defined registration for additional backend
@@ -18,15 +19,21 @@ swap out the active session for a brand new one if they want to preserve
 existing state.
 """
 
+from typing import TYPE_CHECKING, Union
+
 from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
     load_database_context,
 )
+from pydough.errors import PyDoughErrorBuilder
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 
 from .pydough_configs import PyDoughConfigs
+
+if TYPE_CHECKING:
+    from pydough.mask_server import MaskServerInfo
 
 
 class PyDoughSession:
@@ -47,6 +54,8 @@ class PyDoughSession:
         self._database: DatabaseContext = DatabaseContext(
             connection=empty_connection, dialect=DatabaseDialect.ANSI
         )
+        self._error_builder: PyDoughErrorBuilder = PyDoughErrorBuilder()
+        self._mask_server: MaskServerInfo | None = None
 
     @property
     def metadata(self) -> GraphMetadata | None:
@@ -54,7 +63,7 @@ class PyDoughSession:
         Get the active metadata graph.
 
         Returns:
-            GraphMetadata: The active metadata graph.
+            The active metadata graph.
         """
         return self._metadata
 
@@ -64,7 +73,7 @@ class PyDoughSession:
         Set the active metadata graph.
 
         Args:
-            graph (GraphMetadata | None): The metadata graph to set.
+            graph: The metadata graph to set.
         """
         self._metadata = graph
 
@@ -74,7 +83,7 @@ class PyDoughSession:
         Get the active PyDough configuration.
 
         Returns:
-            PyDoughConfigs: The active PyDough configuration.
+            The active PyDough configuration.
         """
         return self._config
 
@@ -84,7 +93,7 @@ class PyDoughSession:
         Set the active PyDough configuration.
 
         Args:
-            config (PyDoughConfigs): The PyDough configuration to set.
+            `config`: The PyDough configuration to set.
         """
         self._config = config
 
@@ -94,7 +103,7 @@ class PyDoughSession:
         Get the active database context.
 
         Returns:
-            DatabaseContext: The active database context.
+            The active database context.
         """
         return self._database
 
@@ -104,9 +113,49 @@ class PyDoughSession:
         Set the active database context.
 
         Args:
-            context (DatabaseContext): The database context to set.
+            `context`: The database context to set.
         """
         self._database = context
+
+    @property
+    def error_builder(self) -> PyDoughErrorBuilder:
+        """
+        Get the active error builder.
+
+        Returns:
+           The active error builder.
+        """
+        return self._error_builder
+
+    @error_builder.setter
+    def error_builder(self, builder: PyDoughErrorBuilder) -> None:
+        """
+        Set the active error builder context.
+
+        Args:
+            The error builder to set.
+        """
+        self._error_builder = builder
+
+    @property
+    def mask_server(self) -> Union["MaskServerInfo", None]:
+        """
+        Get the active mask server information.
+
+        Returns:
+            The active mask server information.
+        """
+        return self._mask_server
+
+    @mask_server.setter
+    def mask_server(self, server_info: Union["MaskServerInfo", None]) -> None:
+        """
+        Set the active mask server information.
+
+        Args:
+            The mask server information to set.
+        """
+        self._mask_server = server_info
 
     def connect_database(self, database_name: str, **kwargs) -> DatabaseContext:
         """
@@ -114,13 +163,13 @@ class PyDoughSession:
         the corresponding context in case the user wants/needs to modify it.
 
         Args:
-            database_name (str): The name of the database to connect to.
+            `database_name`: The name of the database to connect to.
             **kwargs: Additional keyword arguments to pass to the connection.
                 All arguments must be accepted using the supported connect API
                 for the dialect. Most likely the database path will be required.
 
         Returns:
-            DatabaseContext: The newly created database context.
+            The newly created database context.
         """
         context: DatabaseContext = load_database_context(database_name, **kwargs)
         self.database = context
@@ -135,13 +184,13 @@ class PyDoughSession:
         property directly later.
 
         Args:
-            graph_path (str): The path to load the graph. At this time this must be on
+            `graph_path`: The path to load the graph. At this time this must be on
                 the user's local file system.
-            graph_name (str): The name under which to load the graph from the file. This
+            `graph_name`: The name under which to load the graph from the file. This
                 is to allow loading multiple graphs from the same json file.
 
         Returns:
-            GraphMetadata: The loaded metadata graph.
+            The loaded metadata graph.
         """
         graph: GraphMetadata = parse_json_metadata_from_file(graph_path, graph_name)
         self.metadata = graph

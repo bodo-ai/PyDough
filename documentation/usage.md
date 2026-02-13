@@ -13,11 +13,13 @@ This document describes how to set up & interact with PyDough. For instructions 
 - [Evaluation APIs](#evaluation-apis)
    * [`pydough.to_sql`](#pydoughto_sql)
    * [`pydough.to_df`](#pydoughto_df)
+- [Transformation APIs](#transformation-apis)
+   * [`pydough.from_string`](#pydoughfrom_string)
 - [Exploration APIs](#exploration-apis)
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
    * [`pydough.explain_term`](#pydoughexplain_term)
-- [Logging] (#logging)
+- [Logging](#logging)
 
 <!-- TOC end -->
 
@@ -240,6 +242,7 @@ The following configs are used in the behavior of `DAYOFWEEK`, `DATETIME`, and `
 - `DAYOFWEEK` : A function that returns the number of days since the start of the week. Start of week is relative to the `start_of_week` config.
 - `DATETIME` : This function also supports the `start of week` unit, which is relative to the `start_of_week` config.
 - `DATEDIFF` : This function also supports difference between two dates in terms of weeks, which is relative to the `start_of_week` config.
+- `DATE_TRUNC` : This function also supports truncating a date to the start of the week, which is relative to the `start_of_week` config.
 
 The value must be one of the following `DayOfWeek` enum values:
 
@@ -252,6 +255,10 @@ The value must be one of the following `DayOfWeek` enum values:
    - `DayOfWeek.SATURDAY`
 
    The `DayOfWeek` enum is defined in the `pydough.configs` module.
+
+**Note:** In Snowflake, PyDough does not automatically detect changes to `WEEK_START` session parameter. Please configure the `start_of_week` in your PyDough configurations.
+
+
 6. `start_week_as_zero` (default=True): if True, then the first day of the week is considered to be 0. If False, then the first day of the week is considered to be 1. This config is used by  `DAYOFWEEK` function.
 
 ```py
@@ -334,6 +341,30 @@ Just like the knowledge graph & miscellaneous configurations, the database conte
 Below is a list of all supported values for the database name:
 - `sqlite`: uses a SQLite database. [See here](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect) for details on the connection API and what keyword arguments can be passed in.
 
+- `mysql`: uses a MySQL database. [See here](https://dev.mysql.com/doc/connector-python/en/connector-python-example-connecting.html) for details on the connection API and what keyword arguments can be passed in.
+
+- `snowflake`: uses a Snowflake database. [See here](https://docs.snowflake.com/en/user-guide/python-connector.html#connecting-to-snowflake) for details on the connection API and what keyword arguments can be passed in.
+
+- `postgres` or `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
+
+> Note: If you installed PyDough via pip, you can install optional connectors using pip extras:
+>
+> ```bash
+> pip install pydough[mysql]         # Install MySQL connector
+> pip install pydough[snowflake]    # Install Snowflake connector
+> pip install pydough[postgres]    # Install Postgres connector
+> pip install "pydough[mysql,snowflake,postgres]"  # Install all of them at once
+> ```
+
+Here’s a quick reference table showing which connector is needed for each dialect:
+
+| Dialect    | Connector Needed                        |
+|-----------|----------------------------------------|
+| `sqlite`    | Already included with PyDough          |
+| `mysql`     | `mysql-connector-python`               |
+| `snowflake` | `snowflake-connector-python[pandas]`  |
+| `postgres` | `psycopg2-binary`  |
+
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
 ```py
@@ -357,10 +388,61 @@ It is important to ensure that the correct database context is being used for se
 - It controls what SQL dialect is used when translating from PyDough to SQL.
 - The context's database connection is used to execute queries once translated to SQL.
 
+#### Examples with different supported database connectors with PyDough
+- Snowflake: You can connect to a Snowflake database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("snowflake", 
+          user=snowflake_username,
+          password=snowflake_password,
+          account=snowflake_account,
+          warehouse=snowflake_warehouse,
+          database=snowflake_database,
+          schema=snowflake_schema
+    )
+  ```
+You can find a full example of using Snowflake database with PyDough in [this usage guide](./../demos/notebooks/SF_TPCH_q1.ipynb).
+
+- MySQL: You can connect to a mysql database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("mysql", 
+          user=mysql_username,
+          password=mysql_password,
+          database=mysql_tpch_db,
+          host=mysql_host,
+    )
+  ```
+You can find a full example of using MySQL database with PyDough in [this usage guide](./../demos/notebooks/MySQL_TPCH.ipynb).
+
+- Postgres: You can connect to a postgres database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("postgres", 
+          user=postgres_username,
+          password=postgres_password,
+          database=postgres_db,
+          host=postgres_host,
+    )
+  ```
+  Example with a connection object
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    postgres_conn: psycopg2.extensions.connection = psycopg2.connect(
+        dbname=postgres_db,
+        user=postgres_user,
+        password=postgres_password,
+        host=postgres_host,
+        port=postgres_port,
+    )
+    pydough.active_session.connect_database("postgres", connection=postgres_conn)
+  ```
+You can find a full example of using Postgres database with PyDough in [this usage guide](./../demos/notebooks/PG_TPCH.ipynb).
+
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 
-This sections describes various APIs you can use to execute PyDough code. 
+This section describes various APIs you can use to execute PyDough code. 
 
 <!-- TOC --><a name="pydoughto_sql"></a>
 ### `pydough.to_sql`
@@ -371,6 +453,8 @@ The `to_sql` API takes in PyDough code and transforms it into SQL query text wit
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+- `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
+- `max_rows`: a positive integer which, if provided, indicates that the SQL query should produce at most that many rows. E.g. `max_rows=10` will ensure the SQL query ends in `LIMIT 10` (unless the query already ends in a smaller limit).
 
 Below is an example of using `pydough.to_sql` and the output (the SQL output may be outdated if PyDough's SQL conversion process has been updated):
 
@@ -382,34 +466,22 @@ pydough.to_sql(result, columns=["name", "n_custs"])
 ```
 
 ```sql
-SELECT name, COALESCE(agg_0, 0) AS n_custs
-FROM (
-    SELECT name, agg_0
-    FROM (
-        SELECT name, key
-        FROM (
-            SELECT _table_alias_0.name AS name, _table_alias_0.key AS key, _table_alias_1.name AS name_3
-            FROM (
-                SELECT n_name AS name, n_nationkey AS key, n_regionkey AS region_key FROM main.NATION
-            ) AS _table_alias_0
-            LEFT JOIN (
-                SELECT r_name AS name, r_regionkey AS key
-                FROM main.REGION
-            ) AS _table_alias_1
-            ON region_key = _table_alias_1.key
-        )
-        WHERE name_3 = 'EUROPE'
-    )
-    LEFT JOIN (
-        SELECT nation_key, COUNT(*) AS agg_0
-        FROM (
-            SELECT c_nationkey AS nation_key
-            FROM main.CUSTOMER
-        )
-        GROUP BY nation_key
-    )
-    ON key = nation_key
+WITH _s3 AS (
+  SELECT
+    c_nationkey,
+    COUNT(*) AS n_rows
+  FROM tpch.customer
+  GROUP BY
+    1
 )
+SELECT
+  nation.n_name AS name,
+  _s3.n_rows AS n_custs
+FROM tpch.nation AS nation
+JOIN tpch.region AS region
+  ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
+JOIN _s3 AS _s3
+  ON _s3.c_nationkey = nation.n_nationkey
 ```
 
 See the [demo notebooks](../demos/README.md) for more instances of how to use the `to_sql` API.
@@ -424,7 +496,9 @@ The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), b
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+- `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
 - `display_sql`: displays the sql before executing in a logger.
+- `max_rows`: a positive integer which, if provided, indicates that the output should produce at most that many rows. E.g. `max_rows=10` will ensure the result returns at most 10 rows, as if the SQL query ended with `LIMIT 10`.
 
 Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
 
@@ -476,10 +550,185 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
+<!-- TOC --><a name="transformation-apis"></a>
+## Transformation APIs
+
+This section describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
+
+<!-- TOC --><a name="pydoughfrom_string"></a>
+### `pydough.from_string`
+
+The `from_string` API parses a PyDough source code string and transforms it into a PyDough collection. You can then perform operations like `explain()`, `to_sql()`, or `to_df()` on the result.
+
+#### Syntax
+```python
+def from_string(
+    source: str,
+    answer_variable: str | None = None,
+    metadata: GraphMetadata | None = None,
+    environment: dict[str, Any] | None = None,
+) -> UnqualifiedNode:
+```
+
+The first argument `source` is the source code string. It can be a single pydough command or a multi-line pydough code with intermediate results stored in variables. It can optionally take in the following keyword arguments:
+
+- `answer_variable`: The name of the variable that stores the final result of the PyDough code. If not provided, the API expects the final result to be in a variable named `result`. The API returns a PyDough collection holding this value. It is assumed that the PyDough code string includes a variable definition where the name of the variable is the same as `answer_variable` and the value is valid PyDough code; if not it raises an exception.
+- `metadata`: The PyDough knowledge graph to use for the transformation. If omitted, `pydough.active_session.metadata` is used.
+- `environment`: A dictionary representing additional environment context. This serves as the local namespace where the PyDough code will be executed.
+
+Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output. All these examples use the TPC-H dataset that can be downloaded [here](https://github.com/lovasoa/TPCH-sqlite/releases) with the [graph used in the demos directory](../demos/metadata/tpch_demo_graph.json).
+ 
+This first example is of Python code using `pydough.from_string` to generate SQL to get the count of customers in the market segment `"AUTOMOBILE"`. The result will be returned in a variable named `pydough_query` instead of the default `result`, and the market segment `"AUTOMOBILE"` is passed in an environment variable `SEG`.:
+```py
+import pydough
+
+# Setup demo metadata. Make sure you have the TPC-H dataset downloaded locally.
+graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
+pydough.active_session.connect_database("sqlite", database="tpch.db")
+
+# Example of a single line pydough code snippet
+pydough_code = "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
+# Transform the pydough code and get the result from pydough_query
+query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG":"AUTOMOBILE"})
+sql = pydough.to_sql(query)
+```
+
+The value of `sql` is the following SQL query text as a Python string:
+```sql
+SELECT
+  COUNT(*) AS n
+FROM main.customer
+WHERE
+  c_mktsegment = 'AUTOMOBILE'
+```
+
+This next example is of Python code to generate SQL to get the top 5 suppliers with the highest revenue. The code snippet uses variables provided in the environment context to filter by nation, ship mode and year (`TARGET_NATION`, `DESIRED_SHIP_MODE` and `REQUESTED_SHIP_YEAR`):
+```py
+# Example of a multi-line pydough code snippet with intermetiate results
+nation_name = "JAPAN"
+ship_mode = "TRUCK"
+ship_year = 1996
+env = {"TARGET_NATION" : nation_name, "DESIRED_SHIP_MODE" : ship_mode, "REQUESTED_SHIP_YEAR" : ship_year}
+
+pydough_code="""
+# The supply records for the supplier that were from a medium part
+selected_records = supply_records.WHERE(STARTSWITH(part.name, "coral")).CALCULATE(supply_cost)
+
+# The revenue generated by a specific lineitem
+line_revenue = extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+
+# The lineitem purchases for each record that were ordered in REQUESTED_SHIP_YEAR and shipped via DESIRED_SHIP_MODE
+lines_year = selected_records.lines.WHERE((YEAR(ship_date) == REQUESTED_SHIP_YEAR) & (ship_mode == DESIRED_SHIP_MODE)).CALCULATE(rev=line_revenue)
+
+# For each supplier, list their name & selected revenue from REQUESTED_SHIP_YEAR
+selected_suppliers = suppliers.WHERE((nation.name == TARGET_NATION) & HAS(lines_year))
+supplier_info = selected_suppliers.CALCULATE(name, revenue_year=ROUND(SUM(lines_year.rev), 2))
+
+# Pick the 5 suppliers with the highest revenue from REQUESTED_SHIP_YEAR
+result = supplier_info.TOP_K(5, by=revenue_year.DESC())
+"""
+# Transform the pydough code and get the result from result
+query = pydough.from_string(pydough_code, environment=env)
+sql = pydough.to_sql(query)
+```
+
+The value of `sql` is the following SQL query text as a Python string:
+```sql
+WITH _s7 AS (
+  SELECT
+    partsupp.ps_suppkey,
+    SUM(
+      lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) * (
+        1 - lineitem.l_tax
+      ) - lineitem.l_quantity * partsupp.ps_supplycost
+    ) AS sum_rev
+  FROM main.partsupp AS partsupp
+  JOIN main.part AS part
+    ON part.p_name LIKE 'coral%' AND part.p_partkey = partsupp.ps_partkey
+  JOIN main.lineitem AS lineitem
+    ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1996
+    AND lineitem.l_partkey = partsupp.ps_partkey
+    AND lineitem.l_shipmode = 'TRUCK'
+    AND lineitem.l_suppkey = partsupp.ps_suppkey
+  GROUP BY
+    1
+)
+SELECT
+  supplier.s_name AS name,
+  ROUND(COALESCE(_s7.sum_rev, 0), 2) AS revenue_year
+FROM main.supplier AS supplier
+JOIN main.nation AS nation
+  ON nation.n_name = 'JAPAN' AND nation.n_nationkey = supplier.s_nationkey
+JOIN _s7 AS _s7
+  ON _s7.ps_suppkey = supplier.s_suppkey
+ORDER BY
+  2 DESC
+LIMIT 5
+```
+
+This final example is of Python code to generate an SQL query, using 'datetime.date' passed in through the environment.
+```py
+# For every customer, how many urgent orders have they made in year 1996 with a 
+# total price over 100000, and what is the sum of the total prices of all such 
+# orders they made? Sort the result by the sum from highest to lowest, and only
+# include customers with at least one such order
+
+# For this query we set 1 environment variable and 1 function, the year 1996
+# and date function from datetime. Optionally, we could import datetime.date
+# from inside the pydough code string
+import datetime
+env = {"date" : datetime.date, "YEAR" : 1996}
+
+pydough_code="""
+selected_orders=orders.WHERE((order_priority == '1-URGENT') & (total_price > 100000) & 
+  (order_date >= date(YEAR, 1, 1)) & (order_date < date(YEAR + 1, 1, 1)))
+
+result = (
+  customers
+  .WHERE(HAS(selected_orders))
+  .CALCULATE(name, n_orders=COUNT(selected_orders), total=SUM(selected_orders.total_price))
+  .ORDER_BY(total.DESC())
+)
+"""
+
+# Transform the pydough code and get the result from result
+query = pydough.from_string(pydough_code, environment=env)
+sql = pydough.to_sql(query)
+```
+
+The value of `sql` is the following SQL query text as a Python string:
+```sql
+WITH _s1 AS (
+  SELECT
+    o_custkey,
+    COUNT(*) AS n_rows,
+    SUM(o_totalprice) AS sum_o_totalprice
+  FROM main.orders
+  WHERE
+    o_orderdate < CAST('1997-01-01' AS DATE)
+    AND o_orderdate >= CAST('1996-01-01' AS DATE)
+    AND o_orderpriority = '1-URGENT'
+    AND o_totalprice > 100000
+  GROUP BY
+    1
+)
+SELECT
+  customer.c_name AS name,
+  _s1.n_rows AS n_orders,
+  _s1.sum_o_totalprice AS total
+FROM main.customer AS customer
+JOIN _s1 AS _s1
+  ON _s1.o_custkey = customer.c_custkey
+ORDER BY
+  3 DESC
+```
+
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
-This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
+This section describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
 
 See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 
@@ -541,7 +790,9 @@ The `explain` API is a more generic explanation interface that can be called on 
 - A specific property within a specific collection within a metadata graph object (can be accessed as `graph["collection_name"]["property_name"]`)
 - The PyDough code for a collection that could have `to_sql` or `to_df` called on it.
 
-The `explain` API also has an optional `verbose` argument (default=False) that enables displaying additional information.
+The `explain` API has the following optional arguments:
+* `verbose` (default False): specifies whether to include a more detailed explanation, as opposed to a more compact summary. 
+* `session` (default None): if provided, specifies what configs etc. to use when explaining PyDough code objects (if not provided, uses `pydough.active_session`).
 
 Below are examples of each of these behaviors, using a knowledge graph for the TPCH schema.
 
@@ -759,7 +1010,9 @@ The `explain` API is limited in that it can only be called on complete PyDough c
 
 To handle cases where you need to learn about a term within a collection, you can use the `explain_term` API. The first argument to `explain_term` is PyDough code for a collection, which can have `explain` called on it, and the second is PyDough code for a term that can be evaluated within the context of that collection (e.g. a scalar term of the collection, or one of its sub-collections).
 
-The `explain_term` API also has a `verbose` keyword argument (default False) to specify whether to include a more detailed explanation, as opposed to a more compact summary.
+The `explain_term` API has the following optional arguments:
+* `verbose` (default False): specifies whether to include a more detailed explanation, as opposed to a more compact summary. 
+* `session` (default None): if provided, specifies what configs etc. to use when explaining certain terms (if not provided, uses `pydough.active_session`).
 
 Below are examples of using `explain_term`, using a knowledge graph for the TPCH schema. For each of these examples, `european_countries` is the "context" collection, which could have `to_sql` or `to_df` called on it, and `term` is the term being explained with regards to `european_countries`.
 
@@ -882,6 +1135,8 @@ This term is singular with regards to the collection, meaning it can be placed i
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(AVG(customers.acctbal))
 ```
+
+<!-- TOC --><a name="logging"></a>
 ## Logging
 
 Logging is enabled and set to INFO level by default. We can change the log level by setting the environment variable `PYDOUGH_LOG_LEVEL` to the standard levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.

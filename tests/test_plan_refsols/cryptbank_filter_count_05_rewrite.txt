@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(c_phone, ['555-809-1234', '555-870-9123']:array[unknown]), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_phone': c_phone})

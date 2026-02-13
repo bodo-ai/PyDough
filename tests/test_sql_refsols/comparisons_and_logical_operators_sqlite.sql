@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    1
 )
 SELECT
   customer.c_acctbal < 0 AS in_debt,

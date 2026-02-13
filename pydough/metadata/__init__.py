@@ -7,8 +7,9 @@ __all__ = [
     "CollectionMetadata",
     "GeneralJoinMetadata",
     "GraphMetadata",
+    "MaskedTableColumnMetadata",
     "PropertyMetadata",
-    "PyDoughMetadataException",
+    "ScalarAttributeMetadata",
     "SimpleJoinMetadata",
     "SimpleTableMetadata",
     "SubcollectionRelationshipMetadata",
@@ -17,13 +18,14 @@ __all__ = [
 ]
 
 from .collections import CollectionMetadata, SimpleTableMetadata
-from .errors import PyDoughMetadataException
 from .graphs import GraphMetadata
 from .parse import parse_json_metadata_from_file
 from .properties import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
+    MaskedTableColumnMetadata,
     PropertyMetadata,
+    ScalarAttributeMetadata,
     SimpleJoinMetadata,
     SubcollectionRelationshipMetadata,
     TableColumnMetadata,

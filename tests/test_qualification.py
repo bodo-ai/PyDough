@@ -8,8 +8,7 @@ from collections.abc import Callable
 import pytest
 
 from pydough import init_pydough_context
-from pydough.configs import PyDoughConfigs
-from pydough.metadata import GraphMetadata
+from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -63,8 +62,9 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
-from tests.testing_utilities import (
-    graph_fetcher,
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
 )
 
 
@@ -548,7 +548,7 @@ from tests.testing_utilities import (
   │ └─┬─ AccessChild
   │   ├─── TableCollection[customers]
   │   ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance) & (COUNT($1) == 0)]
+  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance) & HASNOT($1)]
   │     └─┬─ AccessChild
   │       └─── SubCollection[orders]
   ├─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.account_balance)]
@@ -608,7 +608,7 @@ from tests.testing_utilities import (
 ──┬─ TPCH
   ├─── TableCollection[customers]
   ├─── Where[nation_key == 6]
-  ├─┬─ TopK[5, $1.order_date.ASC(na_pos='last')]
+  ├─┬─ TopK[5, DEFAULT_TO($1.order_date, datetime.date(2000, 1, 1)).ASC(na_pos='last')]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[orders]
   │   ├─── Where[order_priority == '1-URGENT']
@@ -908,21 +908,21 @@ from tests.testing_utilities import (
   ├─── TopK[10, size.ASC(na_pos='first')]
   └─┬─ Calculate[part_size=part_size, best_order_priority=$1.order_priority, best_order_priority_qty=$1.total_qty]
     └─┬─ AccessChild
-      ├─┬─ Partition[name='priorities', by=order_priority]
-      │ └─┬─ AccessChild
-      │   └─┬─ TPCH
-      │     ├─── TableCollection[orders]
-      │     ├─── Calculate[order_priority=order_priority]
-      │     └─┬─ Where[(YEAR(order_date) == 1998) & (MONTH(order_date) == 1)]
-      │       ├─── SubCollection[lines]
-      │       └─┬─ Where[($1.size == part_size) & (tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
-      │         └─┬─ AccessChild
-      │           └─── SubCollection[part]
-      ├─┬─ Calculate[total_qty=SUM($1.quantity)]
-      │ └─┬─ AccessChild
-      │   └─── PartitionChild[lines]
-      ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
-      └─── Singular
+      └─┬─ TPCH
+        ├─┬─ Partition[name='priorities', by=order_priority]
+        │ └─┬─ AccessChild
+        │   ├─── TableCollection[orders]
+        │   ├─── Calculate[order_priority=order_priority]
+        │   └─┬─ Where[(YEAR(order_date) == 1998) & (MONTH(order_date) == 1)]
+        │     ├─── SubCollection[lines]
+        │     └─┬─ Where[($1.size == part_size) & (tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
+        │       └─┬─ AccessChild
+        │         └─── SubCollection[part]
+        ├─┬─ Calculate[total_qty=KEEP_IF(SUM($1.quantity), SUM($1.quantity) > 0)]
+        │ └─┬─ AccessChild
+        │   └─── PartitionChild[lines]
+        ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=2, allow_ties=False) == 1]
+        └─── Singular
             """,
             id="simple_cross_5",
         ),
@@ -932,31 +932,49 @@ from tests.testing_utilities import (
 ┌─── TPCH
 └─┬─ Calculate[n_pairs=COUNT($1)]
   └─┬─ AccessChild
-    ├─── TableCollection[orders]
-    ├─── Calculate[original_customer_key=customer_key, original_order_key=key, original_order_date=order_date]
-    └─┬─ Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
+    ├─── TableCollection[customers]
+    ├─── Calculate[original_customer_key=key, original_customer_nation_key=nation_key, original_customer_segment=market_segment]
+    └─┬─ Where[account_balance > 9990]
       └─┬─ TPCH
-        ├─── TableCollection[orders]
-        ├─── Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
-        └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
+        ├─── TableCollection[customers]
+        ├─── Where[account_balance > 9990]
+        └─── Where[(nation_key == original_customer_nation_key) & (key > original_customer_key) & (market_segment == original_customer_segment)]
   """,
             id="simple_cross_6",
+        ),
+        pytest.param(
+            simple_range_1,
+            """
+──┬─ TPCH
+  └─── RangeCollection('simple_range', value=range(0, 10))
+            """,
+            id="simple_range_1",
+        ),
+        pytest.param(
+            simple_range_2,
+            """
+──┬─ TPCH
+  ├─── RangeCollection('simple_range', value=range(0, 10))
+  └─── OrderBy[value.DESC(na_pos='last')]
+            """,
+            id="simple_range_2",
         ),
     ],
 )
 def test_qualify_node_to_ast_string(
-    impl: Callable[[], UnqualifiedNode],
+    impl: Callable[..., UnqualifiedNode],
     answer_tree_str: str,
-    get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
     qualified DAG version, with the correct string representation.
     """
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
+    assert empty_sqlite_tpch_session.metadata is not None
+    unqualified: UnqualifiedNode = init_pydough_context(
+        empty_sqlite_tpch_session.metadata
+    )(impl)()
+    qualified: PyDoughQDAG = qualify_node(unqualified, empty_sqlite_tpch_session)
     assert isinstance(qualified, PyDoughCollectionQDAG), (
         "Expected qualified answer to be a collection, not an expression"
     )
@@ -1047,11 +1065,11 @@ def test_qualify_node_to_ast_string(
     ],
 )
 def test_qualify_node_collation(
-    impl: Callable[[], UnqualifiedNode],
+    impl: Callable[..., UnqualifiedNode],
     answer_tree_str: str,
     collation_default_asc: bool,
     propagate_collation: bool,
-    get_sample_graph: graph_fetcher,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -1060,9 +1078,12 @@ def test_qualify_node_collation(
     custom_config: PyDoughConfigs = PyDoughConfigs()
     custom_config.collation_default_asc = collation_default_asc
     custom_config.propagate_collation = propagate_collation
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, custom_config)
+    assert empty_sqlite_tpch_session.metadata is not None
+    empty_sqlite_tpch_session.config = custom_config
+    unqualified: UnqualifiedNode = init_pydough_context(
+        empty_sqlite_tpch_session.metadata
+    )(impl)()
+    qualified: PyDoughQDAG = qualify_node(unqualified, empty_sqlite_tpch_session)
     assert isinstance(qualified, PyDoughCollectionQDAG), (
         "Expected qualified answer to be a collection, not an expression"
     )

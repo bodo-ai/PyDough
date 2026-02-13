@@ -9,9 +9,13 @@ is either SQL text or the actual result of the code execution.
 import pandas as pd
 
 import pydough
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.errors import (
+    PyDoughSessionException,
+)
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -24,12 +28,14 @@ from pydough.unqualified import UnqualifiedNode, qualify_node
 __all__ = ["to_df", "to_sql"]
 
 
-def _load_session_info(
-    **kwargs,
-) -> tuple[GraphMetadata, PyDoughConfigs, DatabaseContext]:
+def _load_session_info(**kwargs) -> PyDoughSession:
     """
     Load the session information from the active session unless it is found
-    in the keyword arguments.
+    in the keyword arguments. The following variants are accepted:
+    - If `session` is found, it is used directly.
+    - If `metadata`, `config`, `mask_server`, and/or `database` are found, they
+      are used to construct a new session.
+    - If none of these are found, the active session is used.
 
     Args:
         **kwargs: The keyword arguments to load the session information from.
@@ -37,12 +43,38 @@ def _load_session_info(
     Returns:
       The metadata graph, configuration settings and Database context.
     """
+
+    # If there are no keyword arguments, return the active session.
+    if len(kwargs) == 0:
+        return pydough.active_session
+
+    # If the session is provided, use it directly. Verify it has a metadata
+    # graph attached, and there are no other keyword arguments.
+    if "session" in kwargs:
+        session = kwargs.pop("session")
+        if not isinstance(session, PyDoughSession):
+            raise PyDoughSessionException(
+                f"Expected `session` to be a PyDoughSession, got {session.__class__.__name__}."
+            )
+        if session.metadata is None:
+            raise PyDoughSessionException(
+                "Cannot evaluate Pydough without a metadata graph. "
+                "Please use `session.load_metadata_graph` to attach a graph to the session."
+            )
+        if kwargs:
+            raise ValueError(f"Unexpected keyword arguments: {kwargs}")
+        return session
+
+    # Otherwise, load the individual components and construct a session.
+    # If any of the components are missing, use the active session's value. The
+    # metadata graph is required, so if it is missing from both the keyword
+    # arguments and the active session, raise an error.
     metadata: GraphMetadata
     if "metadata" in kwargs:
         metadata = kwargs.pop("metadata")
     else:
         if pydough.active_session.metadata is None:
-            raise ValueError(
+            raise PyDoughSessionException(
                 "Cannot evaluate Pydough without a metadata graph. "
                 "Please call `pydough.active_session.load_metadata_graph()`."
             )
@@ -57,8 +89,20 @@ def _load_session_info(
         database = kwargs.pop("database")
     else:
         database = pydough.active_session.database
+    mask_server: MaskServerInfo | None
+    if "mask_server" in kwargs:
+        mask_server = kwargs.pop("mask_server")
+    else:
+        mask_server = pydough.active_session.mask_server
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
-    return metadata, config, database
+
+    # Construct the new session
+    new_session: PyDoughSession = PyDoughSession()
+    new_session._metadata = metadata
+    new_session._config = config
+    new_session._database = database
+    new_session._mask_server = mask_server
+    return new_session
 
 
 def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] | None:
@@ -80,25 +124,18 @@ def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] |
         return None
     elif isinstance(columns_arg, list):
         for column in columns_arg:
-            assert isinstance(column, str), (
-                f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
-            )
+            if not isinstance(column, str):
+                raise pydough.active_session.error_builder.bad_columns(columns_arg)
             result.append((column, column))
     elif isinstance(columns_arg, dict):
         for alias, column in columns_arg.items():
-            assert isinstance(alias, str), (
-                f"Expected alias name in `columns` argument to be a string, found {column.__class__.__name__}"
-            )
-            assert isinstance(column, str), (
-                f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
-            )
+            if not isinstance(column, str) and isinstance(alias, str):
+                raise pydough.active_session.error_builder.bad_columns(columns_arg)
             result.append((alias, column))
     else:
-        raise TypeError(
-            f"Expected `columns` argument to be a list or dictionary, found {columns_arg.__class__.__name__}"
-        )
+        raise pydough.active_session.error_builder.bad_columns(columns_arg)
     if len(result) == 0:
-        raise ValueError("Column selection must not be empty")
+        raise pydough.active_session.error_builder.bad_columns(columns_arg)
     return result
 
 
@@ -107,30 +144,29 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     Convert the given unqualified tree to a SQL string.
 
     Args:
-        node (UnqualifiedNode): The node to convert to SQL.
-        **kwargs: Additional arguments to pass to the conversion for testing.
+        `node`: The node to convert to SQL.
+        `**kwargs`: Additional arguments to pass to the conversion for testing.
             From a user perspective these values should always be derived from
             the active session, but to allow a simple + extensible testing
             infrastructure in the future, any of these can be passed in using
             the name of the field in session.py.
 
     Returns:
-        str: The SQL string corresponding to the unqualified query.
+        The SQL string corresponding to the unqualified query.
     """
-    graph: GraphMetadata
-    config: PyDoughConfigs
-    database: DatabaseContext
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
-    graph, config, database = _load_session_info(**kwargs)
-    qualified: PyDoughQDAG = qualify_node(node, graph, config)
-    if not isinstance(qualified, PyDoughCollectionQDAG):
-        raise TypeError(
-            f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
-        )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, column_selection, config, database.dialect
+    max_rows: int | None = kwargs.pop("max_rows", None)
+    assert (isinstance(max_rows, int) and max_rows > 0) or max_rows is None, (
+        "`max_rows` must be a positive integer or None."
     )
-    return convert_relation_to_sql(relational, database.dialect, config)
+    session: PyDoughSession = _load_session_info(**kwargs)
+    qualified: PyDoughQDAG = qualify_node(node, session)
+    if not isinstance(qualified, PyDoughCollectionQDAG):
+        raise pydough.active_session.error_builder.expected_collection(qualified)
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, column_selection, session
+    )
+    return convert_relation_to_sql(relational, session, max_rows)
 
 
 def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
@@ -139,28 +175,27 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     DataFrame.
 
     Args:
-        node (UnqualifiedNode): The node to convert to a DataFrame.
-        **kwargs: Additional arguments to pass to the conversion for testing.
+        `node`: The node to convert to a DataFrame.
+        `**kwargs`: Additional arguments to pass to the conversion for testing.
             From a user perspective these values should always be derived from
             the active session, but to allow a simple + extensible testing
             infrastructure in the future, any of these can be passed in using
             the name of the field in session.py.
 
     Returns:
-        pd.DataFrame: The DataFrame corresponding to the unqualified query.
+        The DataFrame corresponding to the unqualified query.
     """
-    graph: GraphMetadata
-    config: PyDoughConfigs
-    database: DatabaseContext
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
-    display_sql: bool = bool(kwargs.pop("display_sql", False))
-    graph, config, database = _load_session_info(**kwargs)
-    qualified: PyDoughQDAG = qualify_node(node, graph, config)
-    if not isinstance(qualified, PyDoughCollectionQDAG):
-        raise TypeError(
-            f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
-        )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, column_selection, config, database.dialect
+    max_rows: int | None = kwargs.pop("max_rows", None)
+    assert (isinstance(max_rows, int) and max_rows > 0) or max_rows is None, (
+        "`max_rows` must be a positive integer or None."
     )
-    return execute_df(relational, database, config, display_sql)
+    display_sql: bool = bool(kwargs.pop("display_sql", False))
+    session: PyDoughSession = _load_session_info(**kwargs)
+    qualified: PyDoughQDAG = qualify_node(node, session)
+    if not isinstance(qualified, PyDoughCollectionQDAG):
+        raise pydough.active_session.error_builder.expected_collection(qualified)
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, column_selection, session
+    )
+    return execute_df(relational, session, display_sql, max_rows)

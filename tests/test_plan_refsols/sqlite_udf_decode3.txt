@@ -1,0 +1,3 @@
+ROOT(columns=[('key', o_orderkey), ('val', DECODE3(INTEGER(SLICE(o_orderpriority, None:unknown, 1:numeric, None:unknown)), 1:numeric, 'A':string, 2:numeric, 'B':string, 3:numeric, 'C':string, 'D':string))], orderings=[(o_orderkey):asc_first], limit=10:numeric)
+ FILTER(condition=o_clerk == 'Clerk#000000951':string, columns={'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority})
+  SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority})

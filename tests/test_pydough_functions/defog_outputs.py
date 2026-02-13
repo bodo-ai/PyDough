@@ -740,6 +740,8 @@ def defog_sql_text_dealership_adv2() -> str:
     How many sales did each salesperson make in the past 30 days, inclusive of
     today's date? Return their ID, first name, last name and number of sales
     made, ordered from most to least sales.
+
+    MODIFICATION: using the key as a tiebreaker.
     """
     return """
     WITH recent_sales AS (
@@ -750,7 +752,7 @@ def defog_sql_text_dealership_adv2() -> str:
         GROUP BY sp._id
     ) 
     SELECT _id, first_name, last_name, num_sales FROM recent_sales
-    ORDER BY num_sales DESC;
+    ORDER BY num_sales DESC, _id ASC;
     """
 
 
@@ -1919,4 +1921,1381 @@ def defog_sql_text_ewallet_gen5() -> str:
     AND n.created_at BETWEEN u.created_at 
     AND date(u.created_at, '+1 year') 
     WHERE n.user_id IS NULL;
+    """
+
+
+def defog_sql_text_dermtreatment_basic1() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the top 3 doctor specialties by total drug amount prescribed for
+    treatments started in the past 6 calendar months? Return the specialty,
+    number of treatments, and total drug amount.
+    """
+    return """
+    SELECT d.specialty, COUNT(*) AS num_treatments, 
+    SUM(t.tot_drug_amt) AS total_drug_amt 
+    FROM treatments AS t JOIN doctors AS d 
+    ON t.doc_id = d.doc_id 
+    WHERE t.start_dt >= DATE('now', '-6 months') 
+    GROUP BY d.specialty 
+    ORDER BY total_drug_amt DESC LIMIT 3;	
+    """
+
+
+def defog_sql_text_dermtreatment_basic2() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    For treatments that ended in the year 2022 (from Jan 1st to Dec 31st inclusive),
+    what is the average PASI score at day 100 and number of distinct patients
+    per insurance type? Return the top 5 insurance types sorted by lowest average
+    PASI score first.
+    """
+    return """
+    SELECT p.ins_type, 
+        COUNT(DISTINCT t.patient_id) AS num_patients, 
+        AVG(o.day100_pasi_score) AS avg_pasi_score 
+    FROM treatments AS t 
+    JOIN patients AS p ON t.patient_id = p.patient_id 
+    JOIN outcomes AS o ON t.treatment_id = o.treatment_id 
+    WHERE t.end_dt BETWEEN '2022-01-01' AND '2022-12-31' 
+    GROUP BY p.ins_type 
+    ORDER BY CASE WHEN avg_pasi_score IS NULL THEN 1 ELSE 0 END, avg_pasi_score LIMIT 5;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic3() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the top 5 drugs by number of treatments and average drug amount per
+    treatment? Return the drug name, number of treatments, and average drug amount.
+
+    """
+    return """
+    SELECT 
+        d.drug_name, 
+        COUNT(*) AS num_treatments, 
+        AVG(t.tot_drug_amt) AS avg_drug_amt 
+    FROM treatments AS t 
+    JOIN drugs AS d ON t.drug_id = d.drug_id 
+    GROUP BY d.drug_name 
+    ORDER BY CASE 
+        WHEN num_treatments IS NULL THEN 1 ELSE 0 
+    END DESC, 
+    num_treatments DESC, 
+    CASE 
+        WHEN avg_drug_amt IS NULL THEN 1 ELSE 0 END DESC, 
+        avg_drug_amt DESC 
+    LIMIT 5;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic4() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
+    of distinct patients? Return the diagnosis name, number of patients, and
+    maximum itch score. Only include patients with a registered outcome
+    """
+    return """
+    SELECT di.diag_name, COUNT(DISTINCT t.patient_id) AS num_patients, 
+        MAX(o.day100_itch_vas) AS max_itch_score 
+    FROM treatments AS t 
+    JOIN diagnoses AS di ON t.diag_id = di.diag_id 
+    JOIN outcomes AS o ON t.treatment_id = o.treatment_id 
+    GROUP BY di.diag_name 
+    ORDER BY CASE WHEN max_itch_score IS NULL THEN 1 ELSE 0 END DESC, 
+        max_itch_score DESC, 
+        CASE WHEN num_patients IS NULL THEN 1 ELSE 0 END DESC, 
+        num_patients DESC 
+    LIMIT 3;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic5() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the distinct list of doctor IDs, first names and last names that have
+    prescribed treatments.
+
+    """
+    return """
+    SELECT DISTINCT d.doc_id, d.first_name, d.last_name 
+    FROM treatments AS t JOIN doctors AS d ON t.doc_id = d.doc_id;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic6() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the distinct list of patient IDs, first names and last names that have
+    outcome assessments.
+    """
+    return """
+    SELECT DISTINCT p.patient_id, p.first_name, p.last_name FROM outcomes AS o 
+    JOIN treatments AS t ON o.treatment_id = t.treatment_id 
+    JOIN patients AS p ON t.patient_id = p.patient_id;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic7() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the top 3 insurance types by average patient height in cm? Return
+    the insurance type, average height and average weight.
+    """
+    return """
+    SELECT ins_type, AVG(height_cm) AS avg_height, AVG(weight_kg) AS avg_weight 
+    FROM patients GROUP BY ins_type 
+    ORDER BY CASE WHEN avg_height IS NULL THEN 1 ELSE 0 END DESC, 
+    avg_height DESC 
+    LIMIT 3;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic8() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the top 2 specialties by number of doctors? Return the specialty
+    and number of doctors.
+    """
+    return """
+    SELECT specialty, COUNT(*) AS num_doctors FROM doctors GROUP BY specialty 
+    ORDER BY CASE WHEN num_doctors IS NULL THEN 1 ELSE 0 END DESC, 
+    num_doctors DESC 
+    LIMIT 2;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic9() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the patient IDs, first names and last names of patients who have not
+    received any treatments.
+    """
+    return """
+    SELECT p.patient_id, p.first_name, p.last_name 
+    FROM patients AS p LEFT JOIN treatments AS t ON p.patient_id = t.patient_id
+    WHERE t.patient_id IS NULL;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic10() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the drug IDs and names of drugs that have not been used in any
+    treatments.
+    """
+    return """
+    SELECT d.drug_id, d.drug_name 
+    FROM drugs AS d LEFT JOIN treatments AS t ON d.drug_id = t.drug_id 
+    WHERE t.drug_id IS NULL;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv1() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Which states do doctors who have prescribed biologic drugs reside in?
+    Return the distinct states.
+    """
+    return """
+    WITH doctor_treatment AS (SELECT d.doc_id, d.loc_state 
+        FROM doctors AS d 
+        JOIN treatments AS t ON d.doc_id = t.doc_id 
+        JOIN drugs AS dr ON t.drug_id = dr.drug_id 
+        WHERE dr.drug_type = 'biologic') 
+    SELECT DISTINCT loc_state FROM doctor_treatment; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv2() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the average weight in kg of patients treated with the drug named
+    'Drugalin'? Return the average weight.
+    """
+    return """
+    WITH patient_treatment AS (SELECT p.patient_id, p.weight_kg 
+        FROM patients AS p 
+        JOIN treatments AS t ON p.patient_id = t.patient_id 
+        WHERE t.drug_id = (SELECT drug_id FROM drugs 
+            WHERE drug_name = 'Drugalin')) 
+        SELECT AVG(weight_kg) 
+    FROM patient_treatment;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv3() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    I want the adverse events that have been reported for treatments involving
+    topical drugs. Give me the description, treatment id, drug id and name.
+    """
+    return """
+    SELECT a.description, a.treatment_id, d.drug_id, d.drug_name 
+    FROM adverse_events AS a 
+    JOIN treatments AS t ON a.treatment_id = t.treatment_id 
+    JOIN drugs AS d ON t.drug_id = d.drug_id 
+    WHERE d.drug_type = 'topical';	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv4() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many patients have been diagnosed with 'Psoriasis vulgaris' and treated
+    with a biologic drug? Return the distinct count of patients.
+    """
+    return """
+    WITH patient_diagnosis_treatment AS (SELECT p.patient_id 
+        FROM patients AS p 
+        JOIN treatments AS t ON p.patient_id = t.patient_id 
+        JOIN diagnoses AS d ON t.diag_id = d.diag_id 
+        JOIN drugs AS dr ON t.drug_id = dr.drug_id 
+        WHERE d.diag_name = 'Psoriasis vulgaris' AND dr.drug_type = 'biologic') 
+    SELECT COUNT(DISTINCT patient_id) FROM patient_diagnosis_treatment;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv5() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the NPI for each year? Return the year, number of new patients,
+    and NPI
+    """
+    return """
+    WITH FirstTreatment AS (
+        SELECT p.patient_id, MIN(t.start_dt) AS first_treatment_date
+        FROM patients AS p
+        JOIN treatments AS t ON p.patient_id = t.patient_id
+        GROUP BY p.patient_id
+    ),
+    NewPatientsPerYear AS (
+        SELECT strftime('%Y', first_treatment_date) AS year,
+        COUNT(patient_id) AS new_patients 
+        FROM FirstTreatment 
+        GROUP BY strftime('%Y', first_treatment_date)
+    ), 
+    NPI AS (
+        SELECT year, new_patients, new_patients - LAG(new_patients, 1) 
+        OVER (ORDER BY year) AS npi FROM NewPatientsPerYear
+    ) 
+    SELECT year, new_patients, npi 
+    FROM NPI 
+    ORDER BY year; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv6() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return each doctor's doc_id, specialty, number of distinct drugs prescribed,
+    and SDR
+    """
+    return """
+    WITH doc_drug_counts AS (
+        SELECT d.doc_id, d.specialty, 
+        COUNT(DISTINCT t.drug_id) AS num_drugs_prescribed 
+        FROM doctors AS d 
+        JOIN treatments AS t ON d.doc_id = t.doc_id 
+        GROUP BY d.doc_id
+    ) 
+    SELECT doc_id, specialty, num_drugs_prescribed, DENSE_RANK() 
+    OVER (PARTITION BY specialty 
+        ORDER BY CASE WHEN num_drugs_prescribed IS NULL THEN 1 ELSE 0 END DESC, 
+        num_drugs_prescribed DESC) AS specialty_drug_rank FROM doc_drug_counts;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv7() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many treatments did the patient Alice have in the last 6 months, not
+    including the current month?
+    """
+    return """
+    SELECT COUNT(t.treatment_id) FROM treatments AS t 
+    JOIN patients AS p ON t.patient_id = p.patient_id 
+    WHERE p.first_name = 'Alice' AND 
+        t.start_dt BETWEEN date('now', 'start of month', '-6 months') AND 
+        date('now', 'start of month', '-1 day');	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv8() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the PMPD and PMTC for each of the last 12 months, not including
+    the current month
+    """
+    return """
+    SELECT strftime('%Y-%m', t.start_dt) AS month, 
+        COUNT(DISTINCT t.patient_id) AS patient_count, 
+        COUNT(DISTINCT t.treatment_id) AS treatment_count 
+    FROM treatments AS t 
+        JOIN diagnoses AS d ON t.diag_id = d.diag_id 
+    WHERE t.start_dt >= date('now', '-12 months', 'start of month') AND 
+        t.start_dt < date('now', 'start of month')
+    GROUP BY month; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv9() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many distinct patients had treatments in each of the last 3 months, not
+    including the current month? Out of these, how many had treatments with
+    biologic drugs? Return the month, patient count, and biologic treatment count.
+    """
+    return """
+    SELECT strftime('%Y-%m', t.start_dt) AS MONTH, 
+        COUNT(DISTINCT t.patient_id) AS patient_count, 
+        COUNT(DISTINCT CASE 
+            WHEN d.drug_type = 'biologic' 
+            THEN t.treatment_id END) AS biologic_treatment_count 
+    FROM treatments AS t 
+        JOIN drugs AS d ON t.drug_id = d.drug_id 
+    WHERE t.start_dt >= date('now', '-3 months', 'start of month') AND 
+        t.start_dt < date('now', 'start of month') 
+    GROUP BY month;
+    """
+
+
+def defog_sql_text_dermtreatment_adv10() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Which drug had the highest number of adverse events reported within the same
+    month as the treatment start date (adverse event or treatment can be earlier
+    than the other)? Return the number of adverse events along with the drug's
+    id and name.
+    """
+    return """
+    WITH adverse_events_per_drug AS (SELECT d.drug_id, COUNT(ae.id) AS num_events 
+    FROM adverse_events AS ae 
+        JOIN treatments AS t ON ae.treatment_id = t.treatment_id AND 
+        strftime('%Y-%m', ae.reported_dt) = strftime('%Y-%m', t.start_dt) 
+        JOIN drugs AS d ON t.drug_id = d.drug_id GROUP BY d.drug_id) 
+    SELECT ae.drug_id, d.drug_name, ae.num_events 
+    FROM adverse_events_per_drug AS ae 
+        JOIN drugs AS d USING (drug_id) 
+        ORDER BY ae.num_events DESC LIMIT 1; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv11() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many patients have a Gmail or Yahoo email address?
+    """
+    return """
+    SELECT COUNT(*) FROM patients WHERE email LIKE '%@gmail.com' OR 
+    email LIKE '%@yahoo.com'; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv12() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the first name, last name and specialty of doctors whose first name
+    starts with 'J' or last name contains 'son', case-insensitive.
+    """
+    return """
+    SELECT first_name, last_name, specialty 
+    FROM doctors 
+    WHERE LOWER(first_name) LIKE 'J%' OR 
+    LOWER(last_name) LIKE '%son%'; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv13() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the PIC for female patients?
+    """
+    return """
+    SELECT COUNT(patient_id) AS pic 
+    FROM patients 
+    WHERE gender = 'Female' AND 
+    ins_type = 'private';	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv14() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the CAW for male patients
+    """
+    return """
+    SELECT AVG(weight_kg) AS caw FROM patients WHERE gender = 'Male'; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv15() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Calculate the average DDD for each drug. Return the drug name and average
+    DDD value.
+    """
+    return """
+    SELECT d.drug_name, 
+        AVG(t.tot_drug_amt / NULLIF((JULIANDAY(t.end_dt) - JULIANDAY(t.start_dt)), 0)) AS ddd 
+    FROM treatments AS t 
+        JOIN drugs AS d ON t.drug_id = d.drug_id 
+    WHERE NOT t.end_dt IS NULL 
+    GROUP BY d.drug_name; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv16() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the overall D7D100PIR across all treatments? Return the percentage
+    value.
+    """
+    return """
+    SELECT (AVG(day100_pasi_score) - AVG(day7_pasi_score)) / AVG(day7_pasi_score) * 100 AS d7d100pir 
+    FROM outcomes 
+    WHERE NOT day7_pasi_score IS NULL AND 
+        NOT day100_pasi_score IS NULL;	
+    """
+
+
+def defog_sql_text_dermtreatment_gen1() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the treatment id, treatment start date, adverse event date and
+    description of all adverse events that occured within 10 days after starting
+    treatment
+    """
+    return """
+    SELECT t.treatment_id, 
+        t.start_dt, 
+        ae.reported_dt, 
+        ae.description 
+    FROM adverse_events AS ae 
+        JOIN treatments AS t ON ae.treatment_id = t.treatment_id 
+    WHERE ae.reported_dt BETWEEN t.start_dt AND date(t.start_dt, '+10 days');
+    """
+
+
+def defog_sql_text_dermtreatment_gen2() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    List the last name, year of registration, and first treatment (date and id)
+    by doctors who were registered 2 years ago.
+    """
+    return """
+    WITH doc_first_treatment AS (
+        SELECT d.doc_id, 
+            d.last_name, 
+            d.year_reg, 
+            t.treatment_id, 
+            t.start_dt, 
+            ROW_NUMBER() OVER (PARTITION BY d.doc_id ORDER BY t.start_dt ASC) AS rn 
+        FROM doctors AS d 
+        JOIN treatments AS t ON d.doc_id = t.doc_id 
+        WHERE d.year_reg = strftime('%Y', 'now', '-2 years')
+    ) 
+    SELECT last_name, 
+        year_reg, 
+        start_dt AS first_treatment_date, 
+        treatment_id AS first_treatment_id 
+    FROM doc_first_treatment 
+    WHERE rn = 1;
+    """
+
+
+def defog_sql_text_dermtreatment_gen3() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is average age (in integer years) of all registered male patients with
+    private insurance currently?
+    """
+    return """
+    SELECT AVG(strftime('%Y', 'now') - strftime('%Y', date_of_birth)) AS avg_age 
+    FROM patients 
+    WHERE gender = 'Male' AND ins_type = 'private';
+    """
+
+
+def defog_sql_text_dermtreatment_gen4() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Show all placebo treatment id, start and end date, where there
+    concomitant_meds were started within 2 weeks of starting the treatment.
+    Also return the start and end dates of all concomitant drug usage.
+    """
+    return """
+    SELECT t.treatment_id, 
+        t.start_dt AS treatment_start_date, 
+        t.end_dt AS treatment_end_date, 
+        cm.start_dt AS concomitant_med_start_date, 
+        cm.end_dt AS concomitant_med_end_date 
+    FROM treatments AS t 
+    JOIN concomitant_meds AS cm ON t.treatment_id = cm.treatment_id 
+    WHERE t.is_placebo = 1 AND 
+        cm.start_dt BETWEEN t.start_dt AND date(t.start_dt, '+14 days') 
+    ORDER BY t.treatment_id;
+    """
+
+
+def defog_sql_text_dermtreatment_gen5() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many treatments for diagnoses containing 'psoriasis' (match with
+    wildcards case-insensitively) involve drugs that have been FDA-approved and
+    the treatments have ended within the last 6 months from today?
+    """
+    return """
+    SELECT COUNT(*) 
+    FROM treatments t 
+        JOIN diagnoses d ON t.diag_id = d.diag_id 
+        JOIN drugs dr ON t.drug_id = dr.drug_id 
+    WHERE d.diag_name LIKE '%psoriasis%' AND
+        dr.fda_appr_dt IS NOT NULL AND
+        t.end_dt >= DATE('now', '-6 months');
+    """
+
+
+def defog_sql_text_academic_gen1() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which authors have written publications in both the domain
+    'Machine Learning' and the domain 'Data Science'?
+    """
+    return """
+    SELECT author.name 
+    FROM author 
+    WHERE author.aid IN (
+        SELECT domain_author.aid 
+        FROM domain_author 
+        WHERE domain_author.did IN (
+            SELECT domain.did 
+            FROM DOMAIN 
+            WHERE domain.name IN ('Machine Learning', 'Data Science')
+        ) 
+        GROUP BY 1 HAVING COUNT(DISTINCT domain_author.did) = 2
+    );
+    """
+
+
+def defog_sql_text_academic_gen2() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of citations received by each author?
+    """
+    return """
+    SELECT author.name, SUM(publication.citation_num) AS total_citations 
+    FROM author 
+        JOIN writes ON author.aid = writes.aid 
+        JOIN publication ON writes.pid = publication.pid 
+    GROUP BY author.name 
+    ORDER BY total_citations DESC;
+    """
+
+
+def defog_sql_text_academic_gen3() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of publications published in each year?
+    """
+    return """
+    SELECT publication.year, COUNT(DISTINCT publication.pid) AS total_publications
+    FROM publication
+    GROUP BY publication.year 
+    ORDER BY publication.year NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen4() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the average number of references cited by publications in each
+    domain name?
+    """
+    return """
+    SELECT domain.name, AVG(publication.reference_num) AS average_references
+    FROM domain_publication
+    JOIN publication ON domain_publication.pid = publication.pid
+    JOIN domain ON domain.did = domain_publication.did
+    GROUP BY domain.name;
+    """
+
+
+def defog_sql_text_academic_gen5() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the average number of citations received by publications in each year?
+    """
+    return """
+    SELECT publication.year, AVG(publication.citation_num) AS average_citations 
+    FROM publication 
+    GROUP BY publication.year 
+    ORDER BY publication.year NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen6() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the title of the publication that has received the highest number of
+    citations?
+    """
+    return """
+    SELECT publication.title FROM publication ORDER BY publication.citation_num 
+    DESC LIMIT 1;
+    """
+
+
+def defog_sql_text_academic_gen7() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the top 5 domains with the highest number of authors associated
+    with them?
+    """
+    return """
+    SELECT d.name, COUNT(DISTINCT a.aid) AS author_count 
+    FROM author AS a JOIN domain_author AS da ON a.aid = da.aid 
+        JOIN domain AS d ON da.did = d.did 
+    GROUP BY d.name 
+    ORDER BY author_count DESC NULLS FIRST LIMIT 5;
+    """
+
+
+def defog_sql_text_academic_gen8() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the top 3 titles of the publications that have the highest number
+    of references cited, ordered by the number of references cited in descending
+    order?
+    """
+    return """
+    SELECT publication.title 
+    FROM publication 
+    ORDER BY publication.reference_num DESC NULLS FIRST LIMIT 3;
+    """
+
+
+def defog_sql_text_academic_gen9() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the top 3 publications with the highest number of citations?
+    """
+    return """
+    SELECT publication.title, publication.citation_num 
+    FROM publication 
+    ORDER BY publication.citation_num DESC NULLS FIRST LIMIT 3;
+    """
+
+
+def defog_sql_text_academic_gen10() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the titles of all publications ordered alphabetically?
+    """
+    return """
+    SELECT DISTINCT publication.title 
+    FROM publication 
+    ORDER BY publication.title ASC NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen11() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+
+    What is the ratio of publications to authors in the database?
+    """
+    return """
+    SELECT CAST(
+        COUNT(
+            DISTINCT publication.pid
+        ) AS REAL
+    ) / NULLIF(COUNT(DISTINCT author.aid), 0) AS publication_to_author_ratio 
+    FROM publication, author;
+    """
+
+
+def defog_sql_text_academic_gen12() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the ratio of publications presented in conferences to publications
+    published in journals?
+    """
+    return """
+    SELECT CAST(
+        COUNT(
+            DISTINCT CASE WHEN NOT cid IS NULL THEN pid END
+        ) AS REAL
+    ) / NULLIF(COUNT(DISTINCT CASE WHEN NOT jid IS NULL THEN pid END), 0) AS ratio 
+    FROM publication;
+    """
+
+
+def defog_sql_text_academic_gen13() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the ratio of the total number of publications to the total number of
+    keywords within each domain ID? Show all domain IDs.
+    """
+    return """
+    SELECT domain_publication.did, 
+    CAST(
+        COUNT(
+            DISTINCT domain_publication.pid
+        ) AS REAL
+    ) / NULLIF(COUNT(DISTINCT domain_keyword.kid), 0) AS publication_to_keyword_ratio 
+    FROM domain_publication 
+        LEFT JOIN domain_keyword ON domain_publication.did = domain_keyword.did 
+    GROUP BY domain_publication.did 
+    ORDER BY publication_to_keyword_ratio DESC;
+    """
+
+
+def defog_sql_text_academic_gen14() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How does the ratio of publications to journals change over the years? Return
+    the annual numbers of publications and journals as well.
+    """
+    return """
+    SELECT publication.year, 
+        COUNT(DISTINCT publication.pid) AS num_publications, 
+        COUNT(DISTINCT publication.jid) AS num_journals, 
+        CAST(
+            COUNT(DISTINCT publication.pid) AS REAL
+        ) / NULLIF(
+            COUNT(
+            DISTINCT publication.jid), 0
+        ) AS ratio 
+    FROM publication 
+    GROUP BY publication.year 
+    ORDER BY publication.year NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen15() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How does the ratio of authors to organizations differ by continent?
+    """
+    return """
+    SELECT organization.continent, 
+        CAST(
+            COUNT(DISTINCT author.aid) AS REAL
+        ) / NULLIF(
+            COUNT(DISTINCT organization.oid), 0
+        ) AS ratio 
+    FROM organization 
+        LEFT JOIN author ON author.oid = organization.oid 
+    GROUP BY organization.continent 
+    ORDER BY ratio DESC;
+    """
+
+
+def defog_sql_text_academic_gen16() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which author had the most publications in the year 2021 and how many
+    publications did he/she have that year?
+    """
+    return """
+    SELECT author.name, 
+        COUNT(publication.pid) AS publication_count 
+    FROM writes 
+        JOIN author ON writes.aid = author.aid 
+        JOIN publication ON writes.pid = publication.pid 
+    WHERE publication.year = 2021 
+    GROUP BY author.name 
+    ORDER BY publication_count DESC LIMIT 1;
+    """
+
+
+def defog_sql_text_academic_gen17() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of publications presented in each conference?
+    """
+    return """
+    SELECT conference.name, COUNT(publication.pid) AS total_publications 
+    FROM publication 
+    JOIN conference ON publication.cid = conference.cid 
+    GROUP BY conference.name 
+    ORDER BY total_publications DESC NULLS FIRST;
+    """
+
+
+def defog_sql_text_academic_gen18() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of publications in each journal, ordered by the
+    number of publications in descending order?
+    """
+    return """
+    SELECT journal.name, journal.jid, COUNT(publication.pid) AS total_publications 
+    FROM journal 
+    LEFT JOIN publication ON journal.jid = publication.jid 
+    GROUP BY journal.name, journal.jid 
+    ORDER BY total_publications DESC;
+    """
+
+
+def defog_sql_text_academic_gen19() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How many publications were presented at each conference, ordered by the
+    number of publications in descending order? Give the names of the conferences
+    and their corresponding number of publications.
+    """
+    return """
+    SELECT conference.name, COUNT(publication.pid) AS num_publications 
+    FROM publication 
+        JOIN conference ON publication.cid = conference.cid 
+    GROUP BY conference.name, conference.cid 
+    ORDER BY num_publications DESC;
+    """
+
+
+def defog_sql_text_academic_gen20() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How many publications were published in journals whose names start with the
+    letter 'J'?
+    """
+    return """
+    SELECT COUNT(DISTINCT publication.pid) 
+    FROM publication 
+        JOIN journal ON publication.jid = journal.jid 
+    WHERE LOWER(journal.name) LIKE LOWER('J%');
+    """
+
+
+def defog_sql_text_academic_gen21() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which organizations have authors who have written publications in the
+    domain 'Machine Learning'?
+    """
+    return """
+    SELECT DISTINCT organization.name, organization.oid 
+    FROM organization 
+        JOIN author ON organization.oid = author.oid 
+        JOIN writes ON author.aid = writes.aid 
+        JOIN domain_publication ON writes.pid = domain_publication.pid 
+        JOIN domain ON domain_publication.did = domain.did 
+    WHERE domain.name = 'Machine Learning';
+    """
+
+
+def defog_sql_text_academic_gen22() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which authors belong to the same domain as Martin?,Always filter names using
+    LIKE with percent sign wildcards
+    """
+    return """
+    SELECT DISTINCT a2.name, a2.aid 
+    FROM author AS a1 
+        JOIN domain_author AS da1 ON a1.aid = da1.aid 
+        JOIN domain_author AS da2 ON da1.did = da2.did 
+        JOIN author AS a2 ON da2.aid = a2.aid 
+    WHERE LOWER(LOWER(a1.name)) LIKE LOWER('%martin%');
+    """
+
+
+def defog_sql_text_academic_gen23() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which authors are not part of any organization?
+    """
+    return """
+    SELECT DISTINCT name, aid FROM author WHERE oid IS NULL;
+    """
+
+
+def defog_sql_text_academic_gen24() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the publications written by authors from the 'Sociology' domain and
+    presented at conferences in the year 2020?
+    """
+    return """
+    SELECT DISTINCT publication.title 
+    FROM domain 
+    JOIN domain_author ON domain.did = domain_author.did 
+    JOIN writes ON domain_author.aid = writes.aid 
+    JOIN publication ON writes.pid = publication.pid 
+    JOIN domain_conference ON domain.did = domain_conference.did 
+    WHERE LOWER(domain.name) LIKE LOWER('%Sociology%') 
+    AND publication.year = 2020 
+    AND publication.cid = domain_conference.cid;
+    """
+
+
+def defog_sql_text_academic_gen25() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the names of the authors who have written publications in the
+    domain 'Computer Science'?
+    """
+    return """
+    SELECT DISTINCT author.name 
+    FROM author 
+        JOIN writes ON author.aid = writes.aid 
+        JOIN publication ON writes.pid = publication.pid 
+        JOIN domain_publication ON publication.pid = domain_publication.pid 
+        JOIN domain ON domain_publication.did = domain.did 
+    WHERE LOWER(domain.name) LIKE LOWER('%computer%science%');
+    """
+
+
+def defog_sql_text_restaurants_gen1() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the total number of restaurants serving each type of food?
+    """
+    return """
+    SELECT 
+        restaurant.food_type, 
+        COUNT(DISTINCT restaurant.id) AS total_number_of_restaurants 
+    FROM restaurant GROUP BY restaurant.food_type;
+    """
+
+
+def defog_sql_text_restaurants_gen2() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the total count of restaurants in each city?
+    """
+    return """
+    SELECT 
+        location.city_name, 
+        COUNT(DISTINCT location.restaurant_id) AS total_count 
+        FROM LOCATION GROUP BY location.city_name;
+    """
+
+
+def defog_sql_text_restaurants_gen3() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants serving each type of food?
+    """
+    return """
+    SELECT 
+        restaurant.food_type, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM restaurant 
+    GROUP BY restaurant.food_type 
+    ORDER BY average_rating DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen4() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants serve Italian food in each city?
+    """
+    return """
+    SELECT 
+        restaurant.city_name, 
+        COUNT(*) AS number_of_restaurants 
+    FROM restaurant 
+    WHERE LOWER(restaurant.food_type) LIKE LOWER('%Italian%') 
+    GROUP BY restaurant.city_name 
+    ORDER BY number_of_restaurants DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen5() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants are there in each city? Order the results by the
+    number of restaurants in descending order.
+    """
+    return """
+    SELECT 
+        location.city_name, 
+        COUNT(DISTINCT location.restaurant_id) AS number_of_restaurants 
+    FROM LOCATION 
+    GROUP BY location.city_name 
+    ORDER BY number_of_restaurants DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen6() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    Which street has the most number of restaurants?
+    """
+    return """
+    SELECT street_name 
+    FROM location 
+    GROUP BY street_name 
+    ORDER BY COUNT(restaurant_id) DESC NULLS FIRST LIMIT 1;
+    """
+
+
+def defog_sql_text_restaurants_gen7() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    Which restaurants serve Italian cuisine or are located in New York? Order
+    the results by the restaurant name.
+    """
+    return """
+    SELECT name
+    FROM restaurant 
+    WHERE LOWER(food_type) LIKE LOWER('%Italian%') 
+        OR LOWER(city_name) LIKE LOWER('%New York%') 
+    ORDER BY name NULLS LAST;
+    """
+
+
+def defog_sql_text_restaurants_gen8() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants in each region? Order the results
+    by the region name.
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM restaurant 
+        JOIN geographic ON restaurant.city_name = geographic.city_name 
+    GROUP BY geographic.region 
+    ORDER BY geographic.region NULLS LAST;
+    """
+
+
+def defog_sql_text_restaurants_gen9() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What are the names of the top 3 restaurants with the highest ratings?
+    """
+    return """
+    SELECT restaurant.name 
+    FROM restaurant 
+    ORDER BY restaurant.rating DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_restaurants_gen10() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    List the restaurants starting from the best ratings to the lowest
+    """
+    return """
+    SELECT name, rating 
+    FROM restaurant 
+    ORDER BY rating DESC NULLS FIRST;
+    """
+
+
+def defog_sql_text_restaurants_gen11() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants with rating > 4.5 to the total number of
+    restaurants in the database.
+    """
+    return """
+    SELECT 
+        CAST(COUNT(*) AS REAL) / NULLIF((SELECT COUNT(*) FROM restaurant), 0) AS rating_ratio 
+    FROM restaurant WHERE rating > 4.5;
+    """
+
+
+def defog_sql_text_restaurants_gen12() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants with a rating above 4.0 to restaurants with
+    a rating below 4.0 overall?
+    """
+    return """
+    SELECT CAST(
+        SUM(CASE WHEN restaurant.rating > 4.0 THEN 1 ELSE 0 END) AS REAL
+    ) / NULLIF(
+        SUM(CASE WHEN restaurant.rating < 4.0 THEN 1 ELSE 0 END), 0
+    ) AS ratio 
+    FROM restaurant;
+    """
+
+
+def defog_sql_text_restaurants_gen13() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants with a rating above 4 to restaurants with
+    a rating below 4 in New York?
+    """
+    return """
+    SELECT CAST(
+        COUNT(CASE WHEN rating > 4 THEN 1 END) AS REAL
+    ) / NULLIF(
+        COUNT(CASE WHEN rating < 4 THEN 1 END), 0
+    ) AS ratio 
+    FROM restaurant WHERE LOWER(city_name) LIKE LOWER('New York');
+    """
+
+
+def defog_sql_text_restaurants_gen14() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants serving vegan food to restaurants serving
+    non-vegan food in San Francisco? Match food_type case insensitively
+    """
+    return """
+    SELECT CAST(
+        SUM(CASE WHEN LOWER(restaurant.food_type) LIKE '%vegan%' THEN 1 ELSE 0 END) AS REAL
+    ) / NULLIF(
+        SUM(CASE WHEN NOT LOWER(restaurant.food_type) LIKE '%vegan%' THEN 1 ELSE 0 END), 0
+    ) AS ratio 
+    FROM restaurant 
+    WHERE LOWER(LOWER(restaurant.city_name)) LIKE LOWER('%san francisco%');
+    """
+
+
+def defog_sql_text_restaurants_gen15() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of Italian restaurants out of all restaurants in
+    Los Angeles?
+    """
+    return """
+    SELECT CAST(
+        COUNT(CASE WHEN LOWER(food_type) LIKE LOWER('%Italian%') THEN 1 END) AS REAL
+    ) / NULLIF(
+        COUNT(food_type), 0
+    ) AS ratio 
+    FROM restaurant 
+    WHERE LOWER(city_name) LIKE LOWER('%Los Angeles%');
+    """
+
+
+def defog_sql_text_restaurants_gen16() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What cities have more than one restaurants with the same name, and how many
+    of them are there? Return the city name, restaurant name, and restaurant
+    count
+    """
+    return """
+    SELECT 
+        r.city_name, 
+        r.name, 
+        COUNT(r.id) AS restaurant_count 
+    FROM restaurant AS r 
+    GROUP BY r.city_name, r.name 
+    HAVING COUNT(r.id) > 1;
+    """
+
+
+def defog_sql_text_restaurants_gen17() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants that serve Mexican food in each
+    city?
+    """
+    return """
+    SELECT 
+        location.city_name, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM restaurant JOIN LOCATION ON restaurant.id = location.restaurant_id 
+    WHERE LOWER(restaurant.food_type) LIKE '%mexican%' 
+    GROUP BY location.city_name;
+    """
+
+
+def defog_sql_text_restaurants_gen18() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants in each region?
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM geographic 
+        JOIN restaurant ON geographic.city_name = restaurant.city_name 
+    GROUP BY 1;
+    """
+
+
+def defog_sql_text_restaurants_gen19() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants serve Italian food in each region?
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        COUNT(restaurant.id) AS number_of_restaurants 
+    FROM restaurant 
+        JOIN geographic ON restaurant.city_name = geographic.city_name 
+    WHERE LOWER(restaurant.food_type) LIKE '%italian%' 
+    GROUP BY geographic.region 
+    ORDER BY number_of_restaurants DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen20() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants are there in each region?
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        COUNT(DISTINCT restaurant.id) AS number_of_restaurants 
+    FROM geographic 
+        JOIN restaurant ON geographic.city_name = restaurant.city_name 
+    GROUP BY geographic.region 
+    ORDER BY number_of_restaurants DESC NULLS FIRST;
+    """
+
+
+def defog_sql_text_restaurants_gen21() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    Which city has the highest-rated restaurant?
+    """
+    return """
+    SELECT DISTINCT restaurant.city_name 
+    FROM restaurant 
+    WHERE rating = (SELECT MAX(rating) FROM restaurant);
+    """
+
+
+def defog_sql_text_restaurants_gen22() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What's the name and rating of all the restaurants that have a rating greater
+    than 4 and are located in the city of New York?
+    """
+    return """
+    SELECT restaurant.name, restaurant.rating 
+    FROM restaurant 
+    WHERE restaurant.rating > 4 
+        AND LOWER(restaurant.city_name) LIKE LOWER('%New York%');
+    """
+
+
+def defog_sql_text_restaurants_gen23() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What's the name and food type of all the restaurants located on Market St in
+    San Francisco?
+    """
+    return """
+    SELECT restaurant.name, restaurant.food_type 
+    FROM restaurant 
+        JOIN LOCATION ON restaurant.id = location.restaurant_id 
+    WHERE LOWER(location.street_name) LIKE LOWER('%Market St%') 
+        AND LOWER(location.city_name) LIKE LOWER('%San Francisco%');
+    """
+
+
+def defog_sql_text_restaurants_gen24() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What are the names of the restaurants that serve Italian food?
+    """
+    return """
+    SELECT restaurant.name 
+    FROM restaurant 
+    WHERE LOWER(LOWER(restaurant.food_type)) LIKE LOWER('%italian%');
+    """
+
+
+def defog_sql_text_restaurants_gen25() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What are the names of the restaurants in Los Angeles that have a rating
+    higher than 4?
+    """
+    return """
+    SELECT DISTINCT restaurant.name 
+    FROM restaurant 
+    WHERE LOWER(restaurant.city_name) LIKE LOWER('%Los Angeles%') 
+        AND restaurant.rating > 4 
+    ORDER BY restaurant.name NULLS LAST;
     """

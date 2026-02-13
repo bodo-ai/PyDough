@@ -27,6 +27,7 @@ __all__ = [
     "FLOAT",
     "FLOOR",
     "GEQ",
+    "GETPART",
     "GRT",
     "HAS",
     "HASNOT",
@@ -57,7 +58,7 @@ __all__ = [
     "NOT",
     "PERCENTILE",
     "POPULATION_STD",
-    "POPULATION_VARIANCE",
+    "POPULATION_VAR",
     "POW",
     "POWER",
     "PRESENT",
@@ -73,7 +74,7 @@ __all__ = [
     "ROUND",
     "RPAD",
     "SAMPLE_STD",
-    "SAMPLE_VARIANCE",
+    "SAMPLE_VAR",
     "SECOND",
     "SIGN",
     "SLICE",
@@ -285,8 +286,8 @@ VAR = KeywordBranchingExpressionFunctionOperator(
     kwarg_defaults={"type": "population"},
 )
 # Define VAR with keyword branching for "type" which is represented internally.
-POPULATION_VARIANCE = VAR.with_kwarg("POPULATION_VARIANCE", {"type": "population"})
-SAMPLE_VARIANCE = VAR.with_kwarg("SAMPLE_VARIANCE", {"type": "sample"})
+POPULATION_VAR = VAR.with_kwarg("POPULATION_VAR", {"type": "population"})
+SAMPLE_VAR = VAR.with_kwarg("SAMPLE_VAR", {"type": "sample"})
 
 # Define STD with keyword branching
 STD = KeywordBranchingExpressionFunctionOperator(
@@ -328,4 +329,7 @@ FLOAT = ExpressionFunctionOperator(
 )
 STRING = ExpressionFunctionOperator(
     "STRING", False, RequireArgRange(1, 2), ConstantType(StringType())
+)
+GETPART = ExpressionFunctionOperator(
+    "GETPART", False, RequireNumArgs(3), ConstantType(StringType())
 )

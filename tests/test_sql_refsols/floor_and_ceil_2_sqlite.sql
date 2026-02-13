@@ -15,5 +15,5 @@ SELECT
   END AS total_cost
 FROM tpch.partsupp
 ORDER BY
-  total_cost DESC
+  4 DESC
 LIMIT 10

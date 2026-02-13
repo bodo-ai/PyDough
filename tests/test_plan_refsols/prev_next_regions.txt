@@ -1,3 +1,2 @@
-ROOT(columns=[('two_preceding', two_preceding), ('one_preceding', one_preceding), ('current', r_name), ('one_following', one_following), ('two_following', two_following)], orderings=[(r_name):asc_first])
- PROJECT(columns={'one_following': NEXT(args=[r_name], partition=[], order=[(r_name):asc_last]), 'one_preceding': PREV(args=[r_name], partition=[], order=[(r_name):asc_last]), 'r_name': r_name, 'two_following': PREV(args=[r_name], partition=[], order=[(r_name):asc_last], n=-2), 'two_preceding': PREV(args=[r_name], partition=[], order=[(r_name):asc_last], n=2)})
-  SCAN(table=tpch.REGION, columns={'r_name': r_name})
+ROOT(columns=[('two_preceding', PREV(args=[r_name], partition=[], order=[(r_name):asc_last], n=2)), ('one_preceding', PREV(args=[r_name], partition=[], order=[(r_name):asc_last])), ('current_region', r_name), ('one_following', NEXT(args=[r_name], partition=[], order=[(r_name):asc_last])), ('two_following', PREV(args=[r_name], partition=[], order=[(r_name):asc_last], n=-2))], orderings=[(r_name):asc_first])
+ SCAN(table=tpch.REGION, columns={'r_name': r_name})

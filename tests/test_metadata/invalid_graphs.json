@@ -52,7 +52,7 @@
       "version": "V2",
       "collections": [
         {
-          "name": "0",
+          "name": "Invalid name",
           "type": "simple table",
           "table path": "TableName",
           "unique properties": ["key"],
@@ -66,7 +66,7 @@
       "version": "V2",
       "collections": [
         {
-          "name": "0",
+          "name": "table_name",
           "type": "simple table",
           "table path": "TableName",
           "unique properties": ["key"],
@@ -84,10 +84,406 @@
         {
           "name": "0",
           "type": "simple table",
-          "table path": "TableName",
+          "table path": "`Table Name`",
           "unique properties": ["key"],
           "properties": [
             {"name": true}
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["column_name"],
+          "properties": [
+            {
+              "name": "column_name",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_COLUMN_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "invalid column name",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_UNIQUE_PROPERTY",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["invalid column name"],
+          "properties": [
+            {
+              "name": "invalid column name",
+              "type": "table column",
+              "column name": "\"column name\"",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "RESERVED_PROPERTY_KEYWORD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "\"Table Name\"",
+          "unique properties": ["id"],
+          "properties": [
+            {
+              "name": "id",
+              "type": "table column",
+              "column name": "id",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "RESERVED_PROPERTY_KEYWORD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "`Table Name`",
+          "unique properties": ["CALCULATE"],
+          "properties": [
+            {
+              "name": "CALCULATE",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "RESERVED_PROPERTY_KEYWORD_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "table_name",
+          "unique properties": ["MONOTONIC"],
+          "properties": [
+            {
+              "name": "MONOTONIC",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_RESERVED_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "FROM_RESERVED_SQL_WORD",
+              "type": "table column",
+              "column name": "FROM",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_RESERVED_KEYWORD1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "cast_reserved_sql_word",
+          "type": "simple table",
+          "table path": "cast",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_RESERVED_KEYWORD2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "order_qualified_SQL_name",
+          "type": "simple table",
+          "table path": "main.order",
+          "unique properties": ["order_id"],
+          "properties": [
+            {
+              "name": "order_id",
+              "type": "table column",
+              "column name": "order_id",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SCHEMA_RESERVED_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "count_schema_reserved_SQL_name",
+          "type": "simple table",
+          "table path": "count.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "column name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "\"column\"name\"",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "`column`name`",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "table name",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "\"table\"name\"",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "`table`name`",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SPECIAL_RESERVED_KEYWORD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "special_reserved_keyword_1",
+          "type": "simple table",
+          "table path": "schema_name.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "builtins",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SPECIAL_RESERVED_KEYWORD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "_graph",
+          "type": "simple table",
+          "table path": "schema_name.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
           ]
         }
       ],
@@ -653,11 +1049,11 @@
               "column name": "column_name",
               "data type": "string"
             }
-          ]
+          ],
+          "fizbuzz": 42
         }
       ],
-      "relationships": [],
-      "fizbuzz": 42
+      "relationships": []
     },
     {
       "name": "BAD_CARTESIAN_PRODUCT_MISSING_PARENT",
@@ -2065,6 +2461,1052 @@
         }
       ],
       "relationships": []
+    },
+    {
+      "name": "BAD_FUNCTIONS_LIST",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": 4
+    },
+    {
+      "name": "BAD_FUNCTION_MISSING_NAME",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "type": "sql alias",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_BAD_NAME_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": ["hello", "world"],
+          "type": "sql alias",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_BAD_NAME_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "",
+          "type": "sql alias",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_BAD_NAME_3",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "BAD_FUNCTION_BAD_NAME_3",
+          "type": "sql alias",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_BAD_NAME_4",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "regions",
+          "type": "simple table",
+          "table path": "REGION",
+          "unique properties": [["region_id"]],
+          "properties": [
+            {
+              "name": "region_id",
+              "type": "table column",
+              "column name": "region_id",
+              "data type": "numeric"
+            },
+            {
+              "name": "region_name",
+              "type": "table column",
+              "column name": "region_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "regions",
+          "type": "sql alias",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_DUPLICATE_NAME",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FOO",
+          "type": "sql alias",
+          "sql function": "STRFTIME"
+        },
+        {
+          "name": "FOO",
+          "type": "sql alias",
+          "sql function": "RTRIM"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_MISSING_TYPE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_BAD_TYPE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": 0,
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_BAD_TYPE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "foobar",
+          "sql function": "STRFTIME"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_ALIAS_MISSING_SQL_FUNCTION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_ALIAS_BAD_SQL_FUNCTION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": true
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_ALIAS_BAD_AGGREGATION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "aggregation": "yes"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_ALIAS_BAD_DESCRIPTION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "description": []
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_ALIAS_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "fizz": "buzz"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_WINDOW_ALIAS_MISSING_SQL_FUNCTION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql window alias"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_SQL_FUNCTION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql window alias",
+          "sql function": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_REQUIRES_ORDER",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "requires order": 13
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_ALLOWS_FRAME",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "allows frame": "yes"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_WINDOW_ALIAS_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "aggregation": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_MACRO_MISSING_MACRO_TEXT",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "POSITIVE",
+          "type": "sql macro"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_MACRO_BAD_MACRO_TEXT",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "POSITIVE",
+          "type": "sql macro",
+          "macro text": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_MACRO_BAD_AGGREGATION",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "POSITIVE",
+          "type": "sql macro",
+          "macro text": "{0} > 0",
+          "aggregation": "NO"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SQL_MACRO_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "POSITIVE",
+          "type": "sql macro",
+          "macro text": "{0} > 0",
+          "aggregation": false,
+          "fizz": "buzz"
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_VERIFIER_TYPE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": []
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_VERIFIER_MISSING_TYPE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_VERIFIER_BAD_TYPE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": 0}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_VERIFIER_BAD_TYPE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": "hello world"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_MISSING_VALUE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": "fixed arguments"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": "fixed arguments", "value": 0}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": "fixed arguments", "value": [0]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_3",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": "fixed arguments", "value": ["foo"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "input signature": {"type": "fixed arguments", "value": ["string", "datetime"], "x": 0}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_MISSING_VALUE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "min": 1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": "string", "min": 1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": [["numeric"]], "min": 1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_3",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": ["string", "idk"], "min": 1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_MISSING_MIN",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": ["string", "string"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": ["string", "string"], "min": "one"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": ["string", "string"], "min": -1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_3",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": ["string", "string"], "min": 3}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "COMBINE_STRINGS",
+          "type": "sql alias",
+          "sql function": "GROUP_CONCAT",
+          "aggregation": true,
+          "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_DEDUCER_TYPE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": ""
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_DEDUCER_MISSING_TYPE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_DEDUCER_BAD_TYPE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {"type": 13}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_DEDUCER_BAD_TYPE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {"type": "buzz"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_CONSTANT_DEDUCER_MISSING_VALUE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {"type": "constant"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_CONSTANT_DEDUCER_BAD_VALUE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {"type": "constant", "value": -1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_CONSTANT_DEDUCER_BAD_VALUE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {"type": "constant", "value": "bad-type"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_CONSTANT_DEDUCER_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "FORMAT_DATETIME",
+          "type": "sql alias",
+          "sql function": "STRFTIME",
+          "output signature": {"type": "constant", "value": "datetime", "extra": "field"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_MISSING_VALUE",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "RELMIN",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "requires order": false,
+          "allows frame": true,
+          "output signature": {"type": "select argument"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_BAD_VALUE_1",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "RELMIN",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "requires order": false,
+          "allows frame": true,
+          "output signature": {"type": "select argument", "value": "0"}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_BAD_VALUE_2",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "RELMIN",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "requires order": false,
+          "allows frame": true,
+          "output signature": {"type": "select argument", "value": -1}
+        }
+      ]
+    },
+    {
+      "name": "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_EXTRA_FIELD",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "functions": [
+        {
+          "name": "RELMIN",
+          "type": "sql window alias",
+          "sql function": "MIN",
+          "requires order": false,
+          "allows frame": true,
+          "output signature": {"type": "select argument", "value": 0, "foo": "bar"}
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": true,
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "strdatmeric",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "protected data type": "num",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": [0, 1, 2],
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": 1,
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": "not a boolean"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "c_key", "type": "table column", "column name": "customer_id", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false,
+              "foo": "bar"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "BAD_JOIN_CONDITIONS",

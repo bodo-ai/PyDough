@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=CONTAINS(IFF(ISIN(SLICE(UNMASK::(LOWER([c_fname])), None:unknown, 1:numeric, None:unknown), ['q', 'r', 's']:array[unknown]), UNMASK::(LOWER([c_fname])), UNMASK::(LOWER([c_lname]))), 'ee':string), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_fname': c_fname, 'c_lname': c_lname})

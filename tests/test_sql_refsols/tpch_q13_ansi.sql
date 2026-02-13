@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.orders
   WHERE
     NOT o_comment LIKE '%special%requests%'
   GROUP BY
-    o_custkey
+    1
 )
 SELECT
   COALESCE(_s1.n_rows, 0) AS C_COUNT,
@@ -15,8 +15,8 @@ FROM tpch.customer AS customer
 LEFT JOIN _s1 AS _s1
   ON _s1.o_custkey = customer.c_custkey
 GROUP BY
-  COALESCE(_s1.n_rows, 0)
+  1
 ORDER BY
-  custdist DESC,
-  COALESCE(_s1.n_rows, 0) DESC
+  2 DESC,
+  1 DESC
 LIMIT 10

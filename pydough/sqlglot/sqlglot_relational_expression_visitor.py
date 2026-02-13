@@ -3,16 +3,23 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+__all__ = ["SQLGlotRelationalExpressionVisitor"]
+
 import datetime
 import warnings
+from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.expressions import Column, Identifier
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
+from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 
-from pydough.configs import PyDoughConfigs
+import pydough
+import pydough.pydough_operators as pydop
 from pydough.database_connectors import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -24,10 +31,11 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .sqlglot_helpers import set_glot_alias
+from .sqlglot_helpers import normalize_column_name, set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
-__all__ = ["SQLGlotRelationalExpressionVisitor"]
+if TYPE_CHECKING:
+    from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 
 class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
@@ -38,17 +46,20 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def __init__(
         self,
-        dialect: DatabaseDialect,
+        relational_visitor: "SQLGlotRelationalVisitor",
         correlated_names: dict[str, str],
-        config: PyDoughConfigs,
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
-        self._dialect: DatabaseDialect = dialect
+        self._dialect: DatabaseDialect = relational_visitor._session.database.dialect
         self._correlated_names: dict[str, str] = correlated_names
-        self._config: PyDoughConfigs = config
-        self._bindings: BaseTransformBindings = bindings_from_dialect(dialect, config)
+        self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
+        self._bindings: BaseTransformBindings = bindings_from_dialect(
+            relational_visitor._session.database.dialect,
+            relational_visitor._session.config,
+            self._relational_visitor,
+        )
 
     def reset(self) -> None:
         """
@@ -66,9 +77,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_types: list[PyDoughType] = [
             arg.data_type for arg in call_expression.inputs
         ]
-        output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
-            call_expression.op, input_exprs, input_types
-        )
+        try:
+            output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
+                call_expression.op, input_exprs, input_types
+            )
+        except Exception as e:
+            raise pydough.active_session.error_builder.sql_call_conversion_error(
+                call_expression, e
+            )
         self._stack.append(output_expr)
 
     @staticmethod
@@ -89,9 +105,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         - `-N`: `N PRECEDING`
 
         Args:
-            kwargs (dict[str, object]): The keyword arguments to parse, which
-            may include a `frame` argument or a `cumulative` argument. It is
-            assumed the keyword arguments are the correct types/formats.
+            `kwargs`: The keyword arguments to parse, which may include a
+            `frame` argument or a `cumulative` argument. It is assumed the
+            keyword arguments are the correct types/formats.
 
         Returns:
             The window specification if applicable, otherwise None.
@@ -114,8 +130,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             lower, upper = lower_raw, upper_raw
 
         else:
-            # Otherwise, there is no frame
-            return None
+            # Otherwise, the frame is from unbounded preceding to unbounded following.
+            lower = upper = None
 
         spec_args: dict[str, str] = {"kind": "ROWS"}
 
@@ -160,9 +176,22 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # Visit the inputs in reverse order so we can pop them off in order.
         for arg in reversed(window_expression.inputs):
             arg.accept(self)
-        arg_exprs: list[SQLGlotExpression] = [
-            self._stack.pop() for _ in range(len(window_expression.inputs))
-        ]
+        arg_exprs: list[SQLGlotExpression] = []
+        for _ in range(len(window_expression.inputs)):
+            expr: SQLGlotExpression = self._stack.pop()
+            # Some dialects require a cast before calling a windows function
+            # like AVG with NULL or other datatypes
+            if isinstance(expr, sqlglot_expressions.Null):
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("INTEGER")
+                )
+            # Fix the precision gap. For exmaple: 7.333 now will be 7.333333
+            # which is the exepected value
+            elif window_expression.op.function_name == "RELAVG":
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("DOUBLE")
+                )
+            arg_exprs.append(expr)
         # Do the same with the partition expressions.
         for arg in reversed(window_expression.partition_inputs):
             arg.accept(self)
@@ -174,6 +203,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         for order_arg in window_expression.order_inputs:
             order_arg.expr.accept(self)
             glot_expr: SQLGlotExpression = self._stack.pop()
+            # Skip ordering keys that are literals or NULL.
+            if isinstance(glot_expr, (SQLGlotLiteral, SQLGlotNull)):
+                continue
+            # Invoke the binding's conversion for ordering arguments to
+            # postprocess as needed (e.g. adding collations).
+            # For example, when a string column is sorted in MySQL, we add
+            # collations
+            glot_expr = self._bindings.convert_ordering(
+                glot_expr, order_arg.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:
@@ -196,8 +235,15 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             else:
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
+        # Special case: if we removed all of the order inputs, but the window
+        # call originally had an order, add `ORDER BY 1` as a placeholder.
+        if len(window_expression.order_inputs) > 0 and len(order_exprs) == 0:
+            order_exprs.append(sqlglot_expressions.convert("1"))
         this: SQLGlotExpression
         window_spec: sqlglot_expressions.WindowSpec | None = None
+        input_types: list[PyDoughType] = [
+            arg.data_type for arg in window_expression.inputs
+        ]
         match window_expression.op.function_name:
             case "PERCENTILE":
                 # Extract the number of buckets to use for the percentile
@@ -218,7 +264,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "PREV" | "NEXT":
                 offset = window_expression.kwargs.get("n", 1)
                 if not isinstance(offset, int):
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Invalid 'n' argument to {window_expression.op.function_name}: {offset!r} (expected an integer)"
                     )
                 # By default, we use the LAG function. If doing NEXT, switch
@@ -238,7 +284,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                     )
                 this = func(**lag_args)
             case "RELSUM":
-                this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+                this = self._bindings.convert_call_to_sqlglot(
+                    pydop.SUM, arg_exprs, input_types
+                )
                 window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELAVG":
                 this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
@@ -249,6 +297,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "RELSIZE":
                 this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
                 window_spec = self.get_window_spec(window_expression.kwargs)
+            case _ if isinstance(
+                window_expression.op, pydop.SqlWindowAliasExpressionFunctionOperator
+            ):
+                this = sqlglot_expressions.Anonymous(
+                    this=window_expression.op.sql_function_alias, expressions=arg_exprs
+                )
+                if window_expression.op.allows_frame:
+                    window_spec = self.get_window_spec(window_expression.kwargs)
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
@@ -260,16 +316,29 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             window_args["order"] = sqlglot_expressions.Order(
                 this=None, expressions=order_exprs
             )
-        if window_spec is not None:
-            window_args["spec"] = window_spec
+            if window_spec is not None:
+                window_args["spec"] = window_spec
         self._stack.append(sqlglot_expressions.Window(**window_args))
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed
         # and types do not represent implicit casts.
-        literal: SQLGlotExpression = sqlglot_expressions.convert(
-            literal_expression.value
-        )
+        literal: SQLGlotExpression
+        if isinstance(literal_expression.value, (tuple, list)):
+            # If the literal is a list or tuple, convert each element
+            # individually and create an array literal.
+            elements: list[SQLGlotExpression] = []
+            for element in literal_expression.value:
+                element_expr: SQLGlotExpression
+                if isinstance(element, RelationalExpression):
+                    element.accept(self)
+                    element_expr = self._stack.pop()
+                else:
+                    element_expr = sqlglot_expressions.convert(element)
+                elements.append(element_expr)
+            literal = sqlglot_expressions.Array(expressions=elements)
+        else:
+            literal = sqlglot_expressions.convert(literal_expression.value)
 
         # Special handling: insert cast calls for ansi casting of date/time
         # instead of relying on SQLGlot conversion functions. This is because
@@ -288,7 +357,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             if isinstance(literal_expression.value, datetime.datetime):
                 dt: datetime.datetime = literal_expression.value
                 if dt.tzinfo is not None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "PyDough does not yet support datetime values with a timezone"
                     )
                 literal = sqlglot_expressions.Cast(
@@ -306,21 +375,27 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     @staticmethod
     def make_sqlglot_column(
         column_reference: ColumnReference,
-    ) -> Identifier:
+    ) -> Column:
         """
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
         Args:
-            column_reference (ColumnReference): The column reference to generate
-                an identifier for.
+            `column_reference`: The column reference to generate an identifier
+            for.
         Returns:
-            Identifier: The output identifier.
+            The output identifier.
         """
+        assert column_reference.name is not None
+        column_name: str = column_reference.name
+        quoted, column_name = normalize_column_name(column_name)
+
+        column_ident: Column = Identifier(this=column_name, quoted=quoted)
+
         if column_reference.input_name is not None:
-            full_name = f"{column_reference.input_name}.{column_reference.name}"
-        else:
-            full_name = column_reference.name
-        return Identifier(this=full_name, quoted=False)
+            table_ident = Identifier(this=column_reference.input_name, quoted=False)
+            return Column(this=column_ident, table=table_ident)
+
+        return column_ident
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._stack.append(self.make_sqlglot_column(column_reference))
@@ -333,12 +408,12 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         and assign it the given alias.
 
         Args:
-            expr (RelationalExpression): The relational expression to convert.
-            output_name (str | None): The name to assign to the final SQLGlot expression
+            `expr`: The relational expression to convert.
+            `output_name`: The name to assign to the final SQLGlot expression
                 or None if we should omit any alias.
 
         Returns:
-            SQLGlotExpression: The final SQLGlot expression representing the entire
+            The final SQLGlot expression representing the entire
                 relational tree.
         """
         self.reset()
@@ -351,7 +426,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Interface to get the current SQLGlot expression result based on the current state.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression representing the tree we have already
+            The SQLGlot expression representing the tree we have already
                 visited.
         """
         assert len(self._stack) == 1, "Expected exactly one expression on the stack"

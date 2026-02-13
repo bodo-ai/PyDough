@@ -1,2 +1,2 @@
-ROOT(columns=[('lname', LOWER(c_name)), ('country_code', SLICE(c_phone, 0:numeric, 3:numeric, 1:numeric)), ('adjusted_account_balance', IFF(c_acctbal < 0:numeric, 0:numeric, c_acctbal)), ('is_named_john', LOWER(c_name) < 'john':string)], orderings=[])
+ROOT(columns=[('lname', LOWER(c_name)), ('country_code', SLICE(c_phone, 0:numeric, 3:numeric, 1:numeric)), ('adjusted_account_balance', IFF((c_acctbal < 0:numeric), 0:numeric, c_acctbal)), ('is_named_john', LOWER(c_name) < 'john':string)], orderings=[])
  SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_name': c_name, 'c_phone': c_phone})

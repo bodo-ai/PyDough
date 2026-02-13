@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 import pytest
 
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
 from pydough.types import (
@@ -178,10 +178,11 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], region_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** CalculateInfo(
                     [],
-                    region_name=BackReferenceExpressionInfo("name", 1),
+                    region_name=BackReferenceExpressionInfo("region_name", 1),
                     nation_name=ReferenceInfo("name"),
                 ),
                 "region_nations_backref",
@@ -191,25 +192,30 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], rname=ReferenceInfo("name"))
                 ** TableCollectionInfo("nations")
+                ** CalculateInfo([], nname=ReferenceInfo("name"))
                 ** TableCollectionInfo("customers")
                 ** TableCollectionInfo("orders")
+                ** CalculateInfo([], odate=ReferenceInfo("order_date"))
                 ** SubCollectionInfo("lines")
                 ** CalculateInfo(
                     [
                         SubCollectionInfo("part_and_supplier")
                         ** SubCollectionInfo("supplier")
                         ** SubCollectionInfo("nation")
+                        ** CalculateInfo([], nation_name=ReferenceInfo("name"))
                         ** SubCollectionInfo("region")
                         ** CalculateInfo(
-                            [], nation_name=BackReferenceExpressionInfo("name", 1)
+                            [],
+                            nation_name=BackReferenceExpressionInfo("nation_name", 1),
                         )
                     ],
                     order_year=FunctionInfo(
-                        "YEAR", [BackReferenceExpressionInfo("order_date", 1)]
+                        "YEAR", [BackReferenceExpressionInfo("odate", 1)]
                     ),
-                    customer_region_name=BackReferenceExpressionInfo("name", 4),
-                    customer_nation_name=BackReferenceExpressionInfo("name", 3),
+                    customer_region_name=BackReferenceExpressionInfo("rname", 4),
+                    customer_nation_name=BackReferenceExpressionInfo("nname", 3),
                     supplier_region_name=ChildReferenceExpressionInfo("name", 0),
                     nation_name=ChildReferenceExpressionInfo("nation_name", 0),
                 ),
@@ -450,6 +456,7 @@ from tests.testing_utilities import (
                 ** CalculateInfo(
                     [
                         SubCollectionInfo("lines")
+                        ** CalculateInfo([], quantity=ReferenceInfo("quantity"))
                         ** SubCollectionInfo("part_and_supplier")
                         ** CalculateInfo(
                             [],
@@ -788,18 +795,21 @@ from tests.testing_utilities import (
             (
                 PartitionInfo(
                     TableCollectionInfo("nations")
+                    ** CalculateInfo([], nname=ReferenceInfo("name"))
                     ** SubCollectionInfo("customers")
                     ** SubCollectionInfo("orders")
+                    ** CalculateInfo([], odate=ReferenceInfo("order_date"))
                     ** SubCollectionInfo("lines")
+                    ** CalculateInfo([], extended_price=ReferenceInfo("extended_price"))
                     ** SubCollectionInfo("part_and_supplier")
                     ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** CalculateInfo(
                         [],
                         year=FunctionInfo(
-                            "YEAR", [BackReferenceExpressionInfo("order_date", 4)]
+                            "YEAR", [BackReferenceExpressionInfo("odate", 4)]
                         ),
-                        customer_nation=BackReferenceExpressionInfo("name", 6),
+                        customer_nation=BackReferenceExpressionInfo("nname", 6),
                         supplier_nation=ReferenceInfo("name"),
                         value=BackReferenceExpressionInfo("extended_price", 3),
                     ),
@@ -1040,12 +1050,16 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], rname=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** WhereInfo(
                     [],
                     FunctionInfo(
                         "CONTAINS",
-                        [ReferenceInfo("name"), BackReferenceExpressionInfo("name", 1)],
+                        [
+                            ReferenceInfo("name"),
+                            BackReferenceExpressionInfo("rname", 1),
+                        ],
                     ),
                 ),
                 "nation_name_contains_region_name",
@@ -1055,6 +1069,7 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], rname=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** SubCollectionInfo("customers")
                 ** SubCollectionInfo("orders")
@@ -1069,14 +1084,14 @@ from tests.testing_utilities import (
                     FunctionInfo(
                         "EQU",
                         [
-                            BackReferenceExpressionInfo("name", 4),
+                            BackReferenceExpressionInfo("rname", 4),
                             ChildReferenceExpressionInfo("name", 0),
                         ],
                     ),
                 )
                 ** CalculateInfo(
                     [],
-                    rname=BackReferenceExpressionInfo("name", 4),
+                    rname=BackReferenceExpressionInfo("rname", 4),
                     price=ReferenceInfo("extended_price"),
                 ),
                 "lineitem_regional_shipments",
@@ -1122,6 +1137,7 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], rname=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** SubCollectionInfo("customers")
                 ** SubCollectionInfo("orders")
@@ -1136,7 +1152,7 @@ from tests.testing_utilities import (
                         "EQU",
                         [
                             ReferenceInfo("name"),
-                            BackReferenceExpressionInfo("name", 8),
+                            BackReferenceExpressionInfo("rname", 8),
                         ],
                     ),
                 ),
@@ -1337,11 +1353,12 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], rname=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
                 ** CalculateInfo(
                     [],
-                    region_name=BackReferenceExpressionInfo("name", 1),
+                    region_name=BackReferenceExpressionInfo("rname", 1),
                     nation_name=ReferenceInfo("name"),
                 ),
                 "join_topk",
@@ -1359,11 +1376,12 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], region_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** OrderInfo([], (ReferenceInfo("name"), False, True))
                 ** CalculateInfo(
                     [],
-                    region_name=BackReferenceExpressionInfo("name", 1),
+                    region_name=BackReferenceExpressionInfo("region_name", 1),
                     nation_name=ReferenceInfo("name"),
                 ),
                 "join_order_by",
@@ -1373,11 +1391,12 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], region_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** OrderInfo([], (ReferenceInfo("name"), True, True))
                 ** CalculateInfo(
                     [],
-                    region_name=BackReferenceExpressionInfo("name", 1),
+                    region_name=BackReferenceExpressionInfo("region_name", 1),
                     nation_name=ReferenceInfo("name"),
                 )
                 ** OrderInfo([], (ReferenceInfo("region_name"), False, True)),
@@ -1561,13 +1580,16 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], region_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** CalculateInfo(
                     [],
-                    region_name=BackReferenceExpressionInfo("name", 1),
+                    region_name=BackReferenceExpressionInfo("region_name", 1),
                     nation_name=ReferenceInfo("name"),
                 )
-                ** OrderInfo([], (BackReferenceExpressionInfo("name", 1), False, True)),
+                ** OrderInfo(
+                    [], (BackReferenceExpressionInfo("region_name", 1), False, True)
+                ),
                 "join_order_by_back_reference",
             ),
             id="join_order_by_back_reference",
@@ -1575,12 +1597,15 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], region_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
                 ** CalculateInfo(
                     [],
                     nation_name=ReferenceInfo("name"),
                 )
-                ** OrderInfo([], (BackReferenceExpressionInfo("name", 1), False, True)),
+                ** OrderInfo(
+                    [], (BackReferenceExpressionInfo("region_name", 1), False, True)
+                ),
                 "join_order_by_pruned_back_reference",
             ),
             id="join_order_by_pruned_back_reference",
@@ -2109,10 +2134,11 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("nations")
+                ** CalculateInfo([], nation_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("customers")
                 ** CalculateInfo(
                     [],
-                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=BackReferenceExpressionInfo("nation_name", 1),
                     name=ReferenceInfo("name"),
                     cust_rank=WindowInfo(
                         "RANKING",
@@ -2128,11 +2154,13 @@ from tests.testing_utilities import (
         pytest.param(
             (
                 TableCollectionInfo("regions")
+                ** CalculateInfo([], region_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("nations")
+                ** CalculateInfo([], nation_name=ReferenceInfo("name"))
                 ** SubCollectionInfo("customers")
                 ** CalculateInfo(
                     [],
-                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=BackReferenceExpressionInfo("nation_name", 1),
                     name=ReferenceInfo("name"),
                     cust_rank=WindowInfo(
                         "RANKING",
@@ -2184,7 +2212,7 @@ def relational_test_data(request) -> tuple[CollectionTestInfo, str]:
 def test_ast_to_relational(
     relational_test_data: tuple[CollectionTestInfo, str],
     tpch_node_builder: AstNodeBuilder,
-    default_config: PyDoughConfigs,
+    empty_sqlite_tpch_session: PyDoughSession,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -2195,7 +2223,7 @@ def test_ast_to_relational(
     calc_pipeline, file_name = relational_test_data
     file_path: str = get_plan_test_filename(file_name)
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, None, default_config)
+    relational = convert_ast_to_relational(collection, None, empty_sqlite_tpch_session)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
@@ -2320,7 +2348,7 @@ def relational_alternative_config_test_data(request) -> tuple[CollectionTestInfo
 def test_ast_to_relational_alternative_aggregation_configs(
     relational_alternative_config_test_data: tuple[CollectionTestInfo, str],
     tpch_node_builder: AstNodeBuilder,
-    default_config: PyDoughConfigs,
+    empty_sqlite_tpch_session: PyDoughSession,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -2332,10 +2360,10 @@ def test_ast_to_relational_alternative_aggregation_configs(
     """
     calc_pipeline, file_name = relational_alternative_config_test_data
     file_path: str = get_plan_test_filename(file_name)
-    default_config.sum_default_zero = False
-    default_config.avg_default_zero = True
+    empty_sqlite_tpch_session.config.sum_default_zero = False
+    empty_sqlite_tpch_session.config.avg_default_zero = True
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, None, default_config)
+    relational = convert_ast_to_relational(collection, None, empty_sqlite_tpch_session)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")

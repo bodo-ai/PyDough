@@ -6,9 +6,7 @@ partitioned in a PARTITION clause.
 __all__ = ["PartitionChild"]
 
 
-from functools import cache
-
-from pydough.qdag.errors import PyDoughQDAGException
+import pydough
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
@@ -88,24 +86,34 @@ class PartitionChild(ChildOperatorChildAccess):
     def inherited_downstreamed_terms(self) -> set[str]:
         return self._inherited_downstreamed_terms
 
-    @cache
     def get_term(self, term_name: str):
+        self.verify_term_exists(term_name)
+        # Special handling of terms down-streamed from an ancestor of the
+        # partition child.
         if term_name in self.ancestral_mapping:
+            # Verify that the ancestor name is not also a name in the current
+            # context.
+            if term_name in self.calc_terms:
+                raise pydough.active_session.error_builder.downstream_conflict(
+                    collection=self, term_name=term_name
+                )
             return BackReferenceExpression(
                 self, term_name, self.ancestral_mapping[term_name]
             )
         if term_name in self.inherited_downstreamed_terms:
             context: PyDoughCollectionQDAG = self.child_access
             while term_name not in context.all_terms:
-                if context is self.child_access:
+                if (
+                    context is self.child_access
+                    and term_name in self.ancestor_context.inherited_downstreamed_terms
+                ):
                     context = self.ancestor_context
                 else:
                     assert context.ancestor_context is not None
                     context = context.ancestor_context
-            return Reference(context, term_name)
-
-        elif term_name not in self.all_terms:
-            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
+            return Reference(
+                context, term_name, context.get_expr(term_name).pydough_type
+            )
 
         return super().get_term(term_name)
 
@@ -119,7 +127,6 @@ class PartitionChild(ChildOperatorChildAccess):
     def standalone_string(self) -> str:
         return self.partition_child_name
 
-    @cache
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 

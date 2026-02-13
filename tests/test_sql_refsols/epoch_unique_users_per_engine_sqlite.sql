@@ -1,25 +1,23 @@
-WITH _s2 AS (
+WITH _s0 AS (
   SELECT DISTINCT
     search_engine
   FROM searches
-), _s3 AS (
+), _s1 AS (
   SELECT
-    COUNT(DISTINCT users.user_id) AS ndistinct_user_id,
-    searches.search_engine
-  FROM searches AS searches
-  JOIN users AS users
-    ON searches.search_user_id = users.user_id
+    search_engine,
+    COUNT(DISTINCT search_user_id) AS ndistinct_search_user_id
+  FROM searches
   WHERE
-    CAST(STRFTIME('%Y', searches.search_ts) AS INTEGER) <= 2019
-    AND CAST(STRFTIME('%Y', searches.search_ts) AS INTEGER) >= 2010
+    CAST(STRFTIME('%Y', search_ts) AS INTEGER) <= 2019
+    AND CAST(STRFTIME('%Y', search_ts) AS INTEGER) >= 2010
   GROUP BY
-    searches.search_engine
+    1
 )
 SELECT
-  _s2.search_engine AS engine,
-  COALESCE(_s3.ndistinct_user_id, 0) AS n_users
-FROM _s2 AS _s2
-LEFT JOIN _s3 AS _s3
-  ON _s2.search_engine = _s3.search_engine
+  _s0.search_engine AS engine,
+  COALESCE(_s1.ndistinct_search_user_id, 0) AS n_users
+FROM _s0 AS _s0
+LEFT JOIN _s1 AS _s1
+  ON _s0.search_engine = _s1.search_engine
 ORDER BY
-  _s2.search_engine
+  1

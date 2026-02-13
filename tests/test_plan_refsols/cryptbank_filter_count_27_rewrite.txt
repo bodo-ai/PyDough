@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=(ABSENT(UNMASK::(DATE([c_birthday], '+472 days'))) & ISIN(c_phone, ['555-091-2345', '555-901-2345']:array[unknown])) | ((c_lname != 'LOPEZ':unknown) & (ENDSWITH(UNMASK::(LOWER([c_fname])), 'a':string) | ISIN(c_fname, ['ALICE', 'GRACE', 'LUKE', 'QUEENIE']:array[unknown]) | ISIN(c_fname, ['JAMES', 'NICHOLAS', 'THOMAS']:array[unknown])) & PRESENT(UNMASK::(SUBSTRING([c_addr], -1) || SUBSTRING([c_addr], 1, LENGTH([c_addr]) - 1))) & PRESENT(UNMASK::(DATE([c_birthday], '+472 days')))), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_addr': c_addr, 'c_birthday': c_birthday, 'c_fname': c_fname, 'c_lname': c_lname, 'c_phone': c_phone})

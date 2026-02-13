@@ -6,7 +6,8 @@ __all__ = ["StructType"]
 
 import re
 
-from .errors import PyDoughTypeException
+from pydough.errors import PyDoughTypeException
+
 from .pydough_type import PyDoughType
 
 

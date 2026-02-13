@@ -1,0 +1,6 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.patient_id == t1.patient_id, type=SEMI, columns={})
+   SCAN(table=bodo.health.protected_patients, columns={'patient_id': patient_id})
+   FILTER(condition=(UNMASK::(PTY_UNPROTECT([claim_status], 'deAccount')) == 'Denied':string) & (YEAR(UNMASK::(PTY_UNPROTECT_DOB([claim_date]))) == 2024:numeric) & ISIN(UNMASK::(PTY_UNPROTECT([provider_name], 'deName')), ['Smith Ltd', 'Smith Inc']:array[unknown]), columns={'patient_id': patient_id})
+    SCAN(table=bodo.health.claims, columns={'claim_date': claim_date, 'claim_status': claim_status, 'patient_id': patient_id, 'provider_name': provider_name})

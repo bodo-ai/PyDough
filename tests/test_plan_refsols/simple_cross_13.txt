@@ -1,0 +1,2 @@
+ROOT(columns=[('a', 'foo':string), ('b', 'bar':string), ('c', 'fizz':string), ('d', 'buzz':string), ('e', 'foobar':string), ('f', 'fizzbuzz':string), ('g', 'yay':string)], orderings=[])
+ EMPTYSINGLETON()

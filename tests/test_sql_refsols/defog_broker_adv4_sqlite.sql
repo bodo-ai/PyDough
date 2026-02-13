@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbdptickerid,
     MAX(sbdphigh) AS max_sbdphigh,
-    MIN(sbdplow) AS min_sbdplow,
-    sbdptickerid
+    MIN(sbdplow) AS min_sbdplow
   FROM main.sbdailyprice
   WHERE
     sbdpdate <= '2023-04-04' AND sbdpdate >= '2023-04-01'
   GROUP BY
-    sbdptickerid
+    1
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
@@ -16,5 +16,5 @@ FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbdptickerid = sbticker.sbtickerid
 ORDER BY
-  price_change DESC
+  2 DESC
 LIMIT 3

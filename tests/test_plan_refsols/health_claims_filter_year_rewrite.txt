@@ -1,0 +1,3 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  SCAN(table=bodo.health.claims, columns={})

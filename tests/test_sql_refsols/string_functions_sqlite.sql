@@ -21,7 +21,9 @@ SELECT
   CASE
     WHEN LENGTH('e') = 0
     THEN 0
-    ELSE CAST(CAST(LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', '')) AS REAL) / LENGTH('e') AS INTEGER)
+    ELSE CAST(CAST((
+      LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
+    ) AS REAL) / LENGTH('e') AS INTEGER)
   END AS count_e,
   INSTR(customer.c_name, 'Alex') - 1 AS idx_Alex
 FROM tpch.customer AS customer

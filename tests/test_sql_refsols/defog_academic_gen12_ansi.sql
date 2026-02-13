@@ -1,0 +1,3 @@
+SELECT
+  SUM(NOT cid IS NULL) / NULLIF(SUM(NOT jid IS NULL), 0) AS ratio
+FROM main.publication

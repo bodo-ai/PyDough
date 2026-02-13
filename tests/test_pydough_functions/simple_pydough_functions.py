@@ -237,7 +237,8 @@ def rank_nations_by_region():
 
 def rank_nations_per_region_by_customers():
     return regions.nations.CALCULATE(
-        name, rank=RANKING(by=COUNT(customers).DESC(), per="regions")
+        nation_name=name,
+        rank=RANKING(by=(COUNT(customers).DESC(), region.name), per="regions"),
     ).TOP_K(5, by=rank.ASC())
 
 
@@ -254,24 +255,20 @@ def rank_parts_per_supplier_region_by_size():
                 dense=True,
             ),
         )
-        .TOP_K(15, by=key.ASC())
+        .TOP_K(15, by=(key.ASC(), region.ASC()))
     )
 
 
 def rank_with_filters_a():
-    return (
-        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
-        .WHERE(ENDSWITH(name, "0"))
-        .WHERE(r <= 30)
-    )
+    return customers.CALCULATE(
+        n=name, r=RANKING(by=(account_balance.DESC(), name.ASC()))
+    ).WHERE((ENDSWITH(n, "0")) & (r <= 30))
 
 
 def rank_with_filters_b():
-    return (
-        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
-        .WHERE(r <= 30)
-        .WHERE(ENDSWITH(name, "0"))
-    )
+    return customers.CALCULATE(
+        n=name, r=RANKING(by=(account_balance.DESC(), name.ASC()))
+    ).WHERE((ENDSWITH(name, "0")) & (r <= 30))
 
 
 def rank_with_filters_c():
@@ -279,7 +276,7 @@ def rank_with_filters_c():
         parts.PARTITION(name="sizes", by=size)
         .TOP_K(5, by=size.DESC())
         .parts.CALCULATE(size, name)
-        .WHERE(RANKING(by=retail_price.DESC(), per="sizes") == 1)
+        .WHERE(RANKING(by=(retail_price.DESC(), key.ASC()), per="sizes") == 1)
     )
 
 
@@ -342,10 +339,10 @@ def prev_next_regions():
     return regions.CALCULATE(
         two_preceding=PREV(name, n=2, by=name.ASC()),
         one_preceding=PREV(name, by=name.ASC()),
-        current=name,
+        current_region=name,
         one_following=NEXT(name, by=name.ASC()),
         two_following=PREV(name, n=-2, by=name.ASC()),
-    ).ORDER_BY(current.ASC())
+    ).ORDER_BY(current_region.ASC())
 
 
 def avg_order_diff_per_customer():
@@ -370,7 +367,9 @@ def yoy_change_in_num_orders():
     return years.CALCULATE(
         year,
         current_year_orders=current_year_orders,
-        pct_change=100.0 * (current_year_orders - prev_year_orders) / prev_year_orders,
+        pct_change=100.0
+        * FLOAT(current_year_orders - prev_year_orders)
+        / prev_year_orders,
     ).ORDER_BY(year.ASC())
 
 
@@ -787,17 +786,22 @@ def supplier_pct_national_qty():
         & (ship_mode == "SHIP")
         & CONTAINS(part.name, "tomato")
         & STARTSWITH(part.container, "LG")
+        & (QUARTER(ship_date) < 3)
     )
     supp_qty = SUM(selected_lines.quantity)
     return (
-        nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        nations.WHERE(region.name == "AFRICA")
         .CALCULATE(nation_name=name)
-        .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
+        .suppliers.WHERE((account_balance >= 8000.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
-            nation_name=name,
+            nation_name=nation_name,
             supplier_quantity=supp_qty,
-            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
+            national_qty_pct=100.0
+            * supp_qty
+            / KEEP_IF(
+                RELSUM(supp_qty, per="nations"), RELSUM(supp_qty, per="nations") > 0
+            ),
         )
         .TOP_K(5, by=national_qty_pct.DESC())
     )
@@ -1096,8 +1100,9 @@ def bad_child_reuse_1():
     # number of orders, only keep ones that have orders.
     return (
         customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
-        .TOP_K(10, by=account_balance.DESC())
+        .TOP_K(10, by=(account_balance.DESC(), n_orders.ASC()))
         .WHERE(HAS(orders))
+        .ORDER_BY(cust_key.ASC())
     )
 
 
@@ -1144,7 +1149,7 @@ def bad_child_reuse_5():
     # number of orders, only keep ones that have no orders.
     return (
         customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
-        .TOP_K(10, by=account_balance.DESC())
+        .TOP_K(10, by=(account_balance.DESC(), key.DESC()))
         .WHERE(HASNOT(orders))
     )
 
@@ -1830,13 +1835,16 @@ def hour_minute_day():
     """
     Return the transaction IDs with the hour, minute, and second extracted from
     transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
-    ordered by transaction ID in ascending order.
+    ordered by transaction ID in ascending order. Only considered transactions
+    from 2023.
     """
     return (
         transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
-        .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
+        .WHERE(
+            ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")) & (YEAR(date_time) == 2023)
+        )
         .ORDER_BY(transaction_id.ASC())
     )
 
@@ -1937,7 +1945,7 @@ def abs_round_magic_method():
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
-        transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025) & (MONTH(date_time) > 3))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1956,7 +1964,7 @@ def years_months_days_hours_datediff():
             c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
             c_h_diff=DATEDIFF("H", date_time, y1_datetime),
         )
-        .TOP_K(30, by=years_diff.ASC())
+        .TOP_K(30, by=x.ASC())
     )
 
 
@@ -1985,6 +1993,46 @@ def simple_week_sampler():
     y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
     y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
     return Broker.CALCULATE(
+        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
+        sow1=DATETIME(y_dt, "start of week"),
+        sow2=DATETIME(y_dt2, "start of week"),
+        sow3=DATETIME(y_dt3, "start of week"),
+        sow4=DATETIME(y_dt4, "start of week"),
+        sow5=DATETIME(y_dt5, "start of week"),
+        sow6=DATETIME(y_dt6, "start of week"),
+        sow7=DATETIME(y_dt7, "start of week"),
+        sow8=DATETIME(y_dt8, "start of week"),
+        dayname1=DAYNAME(y_dt),
+        dayname2=DAYNAME(y_dt2),
+        dayname3=DAYNAME(y_dt3),
+        dayname4=DAYNAME(y_dt4),
+        dayname5=DAYNAME(y_dt5),
+        dayname6=DAYNAME(y_dt6),
+        dayname7=DAYNAME(y_dt7),
+        dayname8=DAYNAME(y_dt8),
+        dayofweek1=DAYOFWEEK(y_dt),
+        dayofweek2=DAYOFWEEK(y_dt2),
+        dayofweek3=DAYOFWEEK(y_dt3),
+        dayofweek4=DAYOFWEEK(y_dt4),
+        dayofweek5=DAYOFWEEK(y_dt5),
+        dayofweek6=DAYOFWEEK(y_dt6),
+        dayofweek7=DAYOFWEEK(y_dt7),
+        dayofweek8=DAYOFWEEK(y_dt8),
+    )
+
+
+def simple_week_sampler_tpch():
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+
+    return TPCH.CALCULATE(
         weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
         sow1=DATETIME(y_dt, "start of week"),
         sow2=DATETIME(y_dt2, "start of week"),
@@ -2252,7 +2300,54 @@ def str_count():
             entire_string_match=STRCOUNT(name, name),
             longer_substring=STRCOUNT(lastname, name),
         )
-    )  # end return
+    )
+
+
+def get_part_multiple():
+    k = INTEGER(_id[1:])
+    return (
+        customers.WHERE(k <= 4)
+        .CALCULATE(
+            k,
+            p1=GETPART(name, " ", k),
+            p2=GETPART(name, " ", -k),
+            p3=GETPART(email, ".", k),
+            p4=GETPART(email, ".", -k),
+            p5=GETPART(phone, "-", k),
+            p6=GETPART(phone, "-", -k),
+            p7=GETPART(postal_code, "00", k),
+            p8=GETPART(postal_code, "00", -k),
+            p9=GETPART(name, "!", k),
+            p10=GETPART(name, "@", -k),
+            p11=GETPART(name, "aa", k),
+            p12=GETPART(name, "#$*", -k),
+            p13=GETPART(name, "", k),
+            p14=GETPART("", " ", k),
+            p15=GETPART(name, " ", 0),
+            p16=GETPART(state, state, k),
+            p17=GETPART(GETPART(phone, "-", 1), "5", k),
+            p18=GETPART(postal_code, "0", k),
+        )
+        .ORDER_BY(k.ASC())
+    )
+
+
+def get_part_single():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        last_name=GETPART(name, " ", -1)
+    )
+
+
+def extract_colors():
+    return parts.CALCULATE(
+        key,
+        c1=UPPER(GETPART(name, " ", 1)),
+        c2=UPPER(GETPART(name, " ", 2)),
+        c3=UPPER(GETPART(name, " ", 3)),
+        c4=UPPER(GETPART(name, " ", 4)),
+        c5=UPPER(GETPART(name, " ", 5)),
+        c6=UPPER(GETPART(name, " ", 6)),
+    ).TOP_K(5, by=key.ASC())
 
 
 def singular1():
@@ -2296,10 +2391,13 @@ def singular4():
         customers.WHERE(nation_key == 6)
         .TOP_K(
             5,
-            by=orders.WHERE(order_priority == "1-URGENT")
-            .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
-            .SINGULAR()
-            .order_date.ASC(na_pos="last"),
+            by=DEFAULT_TO(
+                orders.WHERE(order_priority == "1-URGENT")
+                .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
+                .SINGULAR()
+                .order_date,
+                datetime.date(2000, 1, 1),
+            ).ASC(na_pos="last"),
         )
         .CALCULATE(name)
     )
@@ -2501,8 +2599,8 @@ def simple_int_float_string_cast():
         s3=STRING("3"),
         s4=STRING("4.3"),
         s5=STRING("-5.888"),
-        s6=STRING(-6.0),
-        s7=STRING(0.0),
+        s6=STRING(-6.1),
+        s7=STRING(0.1),
         s8=STRING("0.0"),
         s9=STRING("abc def"),
     )
@@ -2563,6 +2661,253 @@ def string_format_specifiers_sqlite():
     )
 
 
+def string_format_specifiers_mysql():
+    # String format specifiers for date/time with a static datetime
+    # Works for MySQL versions >= v8.0.31
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # Abbreviated weekday name: Sun-Sat
+        d1=STRING(static_date, "%a"),
+        # Abbreviated month name: Jan-Dec
+        d2=STRING(static_date, "%b"),
+        # Month numeric (1-12)
+        d3=STRING(static_date, "%c"),
+        # Day of the month with English suffix: 1st, 2nd, 3rd, 4th
+        d4=STRING(static_date, "%D"),
+        # day of month: 00-31
+        d5=STRING(static_date, "%d"),
+        # day of month without leading zero: 0-31
+        d6=STRING(static_date, "%e"),
+        # Microseconds (000000-999999)
+        d7=STRING(static_date, "%f"),
+        # Hour (00-23)
+        d8=STRING(static_date, "%H"),
+        # Hour (01-12)
+        d9=STRING(static_date, "%h"),
+        # Hour (1-12)
+        d10=STRING(static_date, "%I"),
+        # Minutes (00-59)
+        d11=STRING(static_date, "%i"),
+        # Day of year (001-366)
+        d12=STRING(static_date, "%j"),
+        # Hour (0-23)
+        d13=STRING(static_date, "%k"),
+        # Hour (1-12)
+        d14=STRING(static_date, "%l"),
+        # Month name
+        d15=STRING(static_date, "%M"),
+        # Month numeric (01-12)
+        d16=STRING(static_date, "%m"),
+        # AM or PM
+        d17=STRING(static_date, "%p"),
+        # Time, 12-hour (hh:mm:ss followed by AM or PM)
+        d18=STRING(static_date, "%r"),
+        # Seconds (00-59)
+        d19=STRING(static_date, "%S"),
+        # Seconds since Unix epoch (1970-01-01 00:00:00
+        d20=STRING(static_date, "%s"),
+        # Time, 24-hour (hh:mm:ss)
+        d21=STRING(static_date, "%T"),
+        # Week (00..53), where Sunday is the first day of the week; WEEK() mode 0
+        d22=STRING(static_date, "%U"),
+        # Week (00..53), where Monday is the first day of the week; WEEK() mode 1
+        d23=STRING(static_date, "%u"),
+        # Week (01..53), where Sunday is the first day of the week; WEEK() mode 2; used with %X
+        d24=STRING(static_date, "%V"),
+        # Week (01..53), where Monday is the first day of the week; WEEK() mode 3; used with %x
+        d25=STRING(static_date, "%v"),
+        # Weekday name (Sunday..Saturday)
+        d26=STRING(static_date, "%W"),
+        # Day of the week (0=Sunday..6=Saturday)
+        d27=STRING(static_date, "%w"),
+        # Year for the week where Sunday is the first day of the week, numeric,
+        # four digits; used with %V
+        d28=STRING(static_date, "%X"),
+        # Year for the week where Monday is the first day of the week, numeric,
+        # four digits; used with %v
+        d29=STRING(static_date, "%x"),
+        # Year, numeric, four digits
+        d30=STRING(static_date, "%Y"),
+        # Year, numeric, two digits
+        d31=STRING(static_date, "%y"),
+        # ISO 8601 date: YYYY-MM-DD
+        d32=STRING(static_date, "%Y-%m-%d"),
+        # ISO 8601 time: HH:MM
+        d33=STRING(static_date, "%H:%i"),
+    )
+
+
+def string_format_specifiers_postgres():
+    # String format specifiers for date/time with a static datetime
+    # Works for Postgres
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # hour of day (01–12)
+        h1=STRING(static_date, "HH"),
+        # hour of day (01–12)
+        h2=STRING(static_date, "HH12"),
+        # hour of day (00–23)
+        h3=STRING(static_date, "HH24"),
+        # minute (00–59)
+        m1=STRING(static_date, "MI"),
+        # second (00–59)
+        s1=STRING(static_date, "SS"),
+        # millisecond (000–999)
+        ms1=STRING(static_date, "MS"),
+        # microsecond (000000–999999)
+        us1=STRING(static_date, "US"),
+        # tenth of second (0–9)
+        ff1=STRING(static_date, "FF1"),
+        # hundredth of second (00–99)
+        ff2=STRING(static_date, "FF2"),
+        # millisecond (000–999)
+        ff3=STRING(static_date, "FF3"),
+        # tenth of a millisecond (0000–9999)
+        ff4=STRING(static_date, "FF4"),
+        # hundredth of a millisecond (00000–99999)
+        ff5=STRING(static_date, "FF5"),
+        # microsecond (000000–999999)
+        ff6=STRING(static_date, "FF6"),
+        # seconds past midnight (0–86399)
+        ssss1=STRING(static_date, "SSSS"),
+        # seconds past midnight (0–86399)
+        ssss2=STRING(static_date, "SSSSS"),
+        # AM / PM (no periods)
+        am1=STRING(static_date, "AM"),
+        # am / pm (lowercase)
+        am2=STRING(static_date, "am"),
+        # A.M. / P.M. (with periods)
+        am3=STRING(static_date, "A.M."),
+        # a.m. / p.m. (with periods)
+        am4=STRING(static_date, "a.m."),
+        # year with comma (4+ digits)
+        y1=STRING(static_date, "Y,YYY"),
+        # year (4+ digits)
+        y2=STRING(static_date, "YYYY"),
+        # last 3 digits of year
+        y3=STRING(static_date, "YYY"),
+        # last 2 digits of year
+        y4=STRING(static_date, "YY"),
+        # last digit of year
+        y5=STRING(static_date, "Y"),
+        # ISO week-numbering year
+        iy1=STRING(static_date, "IYYY"),
+        # last 3 digits of ISO year
+        iy2=STRING(static_date, "IYY"),
+        # last 2 digits of ISO year
+        iy3=STRING(static_date, "IY"),
+        # last digit of ISO year
+        iy4=STRING(static_date, "I"),
+        # BC / AD (no periods)
+        era1=STRING(static_date, "AD"),
+        # B.C. / A.D. (with periods)
+        era2=STRING(static_date, "A.D."),
+        # full upper-case month name (blank-padded)
+        mon1=STRING(static_date, "MONTH"),
+        # full capitalized month name (blank-padded)
+        mon2=STRING(static_date, "Month"),
+        # full lower-case month name (blank-padded)
+        mon3=STRING(static_date, "month"),
+        # abbreviated upper-case month name
+        mon4=STRING(static_date, "MON"),
+        # abbreviated capitalized month name
+        mon5=STRING(static_date, "Mon"),
+        # abbreviated lower-case month name
+        mon6=STRING(static_date, "mon"),
+        # month number (01–12)
+        mon7=STRING(static_date, "MM"),
+        # full upper-case day name (blank-padded)
+        day1=STRING(static_date, "DAY"),
+        # full capitalized day name (blank-padded)
+        day2=STRING(static_date, "Day"),
+        # full lower-case day name (blank-padded)
+        day3=STRING(static_date, "day"),
+        # abbreviated upper-case day name
+        day4=STRING(static_date, "DY"),
+        # abbreviated capitalized day name
+        day5=STRING(static_date, "Dy"),
+        # abbreviated lower-case day name
+        day6=STRING(static_date, "dy"),
+        # day of year (001–366)
+        doy1=STRING(static_date, "DDD"),
+        # day of ISO year (001–371)
+        doy2=STRING(static_date, "IDDD"),
+        # day of month (01–31)
+        dom1=STRING(static_date, "DD"),
+        # day of week, Sunday (1) to Saturday (7)
+        dow1=STRING(static_date, "D"),
+        # ISO day of week, Monday (1) to Sunday (7)
+        dow2=STRING(static_date, "ID"),
+        # week of month (1–5)
+        wom1=STRING(static_date, "W"),
+        # week of year (1–53)
+        woy1=STRING(static_date, "WW"),
+        # ISO week of year (01–53)
+        woy2=STRING(static_date, "IW"),
+        # century (2 digits)
+        c1=STRING(static_date, "CC"),
+        # Julian Date
+        j1=STRING(static_date, "J"),
+        # quarter
+        q1=STRING(static_date, "Q"),
+        # month in Roman numerals (upper-case)
+        rm1=STRING(static_date, "RM"),
+        # month in Roman numerals (lower-case)
+        rm2=STRING(static_date, "rm"),
+        # time-zone abbreviation (upper-case)
+        tz1=STRING(static_date, "TZ"),
+        # time-zone abbreviation (lower-case)
+        tz2=STRING(static_date, "tz"),
+        # time-zone hours
+        tz3=STRING(static_date, "TZH"),
+        # time-zone minutes
+        tz4=STRING(static_date, "TZM"),
+        # time-zone offset from UTC
+        tz5=STRING(static_date, "OF"),
+    )
+
+
+def string_format_specifiers_snowflake():
+    # String format specifiers for date/time with a static datetime
+    # Works for Snowflake
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # four-digit year
+        d1=STRING(static_date, "YYYY"),
+        # last two digits of the year
+        d2=STRING(static_date, "YY"),
+        # two-digit month (01–12)
+        d3=STRING(static_date, "MM"),
+        # abbreviated month name
+        d4=STRING(static_date, "Mon"),
+        # full month name
+        d5=STRING(static_date, "MMMM"),
+        # two-digit day of month (01–31)
+        d6=STRING(static_date, "DD"),
+        # abbreviated day of week
+        d7=STRING(static_date, "DY"),
+        # full day of week
+        d8=STRING(static_date, "DYDY"),
+        # hour in 24-hour format (00–23)
+        d9=STRING(static_date, "HH24"),
+        # hour in 12-hour format (01–12)
+        d10=STRING(static_date, "HH12"),
+        # minute (00–59)
+        d11=STRING(static_date, "MI"),
+        # second (00–59)
+        d12=STRING(static_date, "SS"),
+        # meridian indicator
+        d13=STRING(static_date, "PM"),
+        # fractional seconds (up to 9 digits)
+        d14=STRING(static_date, ".FF"),
+        # timezone hour and minute
+        d15=STRING(static_date, "TZH:TZM"),
+    )
+
+
 def part_reduced_size():
     # What are the top 5 line items with the highest discounts
     # on parts with the lowest retail prices casted to integers?
@@ -2591,7 +2936,7 @@ def part_reduced_size():
             # AM or PM
             am_pm=STRING(receipt_date, "%H:%M%p"),
         )
-        .TOP_K(5, by=discount.DESC())
+        .TOP_K(5, by=(discount.DESC(), date_dmy.ASC()))
     )
 
 
@@ -2795,7 +3140,7 @@ def simple_cross_5():
     )
     best_priority = (
         CROSS(order_info.PARTITION(name="priorities", by=order_priority))
-        .CALCULATE(total_qty=SUM(lines.quantity))
+        .CALCULATE(total_qty=KEEP_IF(SUM(lines.quantity), SUM(lines.quantity) > 0))
         .BEST(by=total_qty.DESC(), per="sizes")
     )
     return sizes.CALCULATE(
@@ -2806,48 +3151,55 @@ def simple_cross_5():
 
 
 def simple_cross_6():
-    # Count how many combinations of 2 DISTINCT orders exist that were from the
-    # same day from the same customer, only considering orders handled
-    # by any of the clerks whose numbers is at least 900.
-    predicates = INTEGER(clerk[6:]) >= 900
-    original_orders = orders.CALCULATE(
-        original_customer_key=customer_key,
-        original_order_key=key,
-        original_order_date=order_date,
+    # Count how many combinations of 2 DISTINCT customers exist that were from the
+    # same nation, same market segment, only considering customers with an account balance
+    # over 9990, where the first customer has a lower key than the second customer
+    predicates = account_balance > 9990
+    original_customers = customers.CALCULATE(
+        original_customer_key=key,
+        original_customer_nation_key=nation_key,
+        original_customer_segment=market_segment,
     ).WHERE(predicates)
-    other_orders_by_same_customer_same_date = original_orders.CROSS(
-        orders.WHERE(predicates)
+    other_customers_by_same_customer_balance = original_customers.CROSS(
+        customers.WHERE(predicates)
     ).WHERE(
-        (customer_key == original_customer_key)
-        & (key > original_order_key)
-        & (order_date == original_order_date)
+        (nation_key == original_customer_nation_key)
+        & (key > original_customer_key)
+        & (market_segment == original_customer_segment)
     )
-    return TPCH.CALCULATE(n_pairs=COUNT(other_orders_by_same_customer_same_date))
+    return TPCH.CALCULATE(n_pairs=COUNT(other_customers_by_same_customer_balance))
 
 
 def simple_cross_7():
-    # For every order with status P, count how many DIFFERENT orders with
-    # status "P" were made by the same
-    # customer on the same date, considering only the first 5 orders
-    # with the highest number of other orders, breaking ties by key
-    original_orders = orders.WHERE(order_status == "P").CALCULATE(
-        original_customer_key=customer_key,
-        original_order_key=key,
-        original_order_date=order_date,
+    # For every part from Manufacturer#3 of Brand#35
+    # with "tomato" in the name, count how many OTHER parts
+    # from the same manufacturer & brand with "tomato" in the name
+    # have difference of 5 dolars in its retail price, considering only the f
+    # irst 5 parts with the highest number of other parts, breaking ties by part key
+    original_parts = parts.WHERE(
+        (manufacturer == "Manufacturer#3")
+        & (brand == "Brand#35")
+        & (CONTAINS(name, "tomato"))
+    ).CALCULATE(
+        original_part_key=key,
+        original_manufacturer=manufacturer,
+        original_brand=brand,
+        original_price=retail_price,
     )
-    return original_orders.CALCULATE(
-        original_order_key,
-        n_other_orders=COUNT(
+    return original_parts.CALCULATE(
+        original_part_key,
+        n_other_parts=COUNT(
             CROSS(
-                orders.WHERE(
-                    (customer_key == original_customer_key)
-                    & (order_status == "P")
-                    & (key > original_order_key)
-                    & (order_date == original_order_date)
+                parts.WHERE(
+                    (manufacturer == original_manufacturer)
+                    & (brand == original_brand)
+                    & (CONTAINS(name, "tomato"))
+                    & (key > original_part_key)
+                    & (ABS(retail_price - original_price) < 5.0)
                 )
             )
         ),
-    ).TOP_K(5, by=[n_other_orders.DESC(), original_order_key.ASC()])
+    ).TOP_K(5, by=[n_other_parts.DESC(), original_part_key.ASC()])
 
 
 def simple_cross_8():
@@ -2923,6 +3275,72 @@ def simple_cross_12():
     )
 
 
+def simple_cross_13():
+    # Silly case of crossing 2+ global contexts to get shared variables
+    return (
+        TPCH.CALCULATE(a="foo")
+        .CROSS(TPCH.CALCULATE(b="bar").CROSS(TPCH.CALCULATE(c="fizz")))
+        .CROSS(
+            (TPCH.CALCULATE(d="buzz").CROSS(TPCH.CALCULATE(e="foobar"))).CROSS(
+                TPCH.CALCULATE(f="fizzbuzz").CROSS(TPCH.CALCULATE(g="yay"))
+            )
+        )
+        .CALCULATE(a, b, c, d, e, f, g)
+    )
+
+
+def simple_cross_14():
+    # Using cross to introduce global variables instead of referencing an
+    # ancestor context. In this case, for each region accesses the name, a
+    # string 'foo', and counts how many nations in that region start with
+    # either A, B, or C.
+    global_vars = CROSS(TPCH.CALCULATE(x="foo", letters=["A", "B", "C"])).SINGULAR()
+    return regions.CALCULATE(
+        region_name=name,
+        x=global_vars.x,
+        n=COUNT(nations.WHERE(ISIN(name[:1], global_vars.letters))),
+    ).ORDER_BY(region_name.ASC())
+
+
+def simple_cross_15():
+    # Crossing 2+ partition clauses to get all distinct combinations of the
+    # grouping keys, which in this case are just a binary variable. Each clause
+    # is the regions grouped on whether the name of the region contains a
+    # specified letter, and the key is that latter (if present) or '_' (if not).
+    ra = (
+        regions.CALCULATE(a=IFF(CONTAINS(name, "A"), "A", "*"))
+        .PARTITION(name="a_groups", by=a)
+        .CALCULATE(a)
+    )
+    re = (
+        regions.CALCULATE(e=IFF(CONTAINS(name, "E"), "E", "*"))
+        .PARTITION(name="e_groups", by=e)
+        .CALCULATE(e)
+    )
+    ri = (
+        regions.CALCULATE(i=IFF(CONTAINS(name, "I"), "I", "*"))
+        .PARTITION(name="i_groups", by=i)
+        .CALCULATE(i)
+    )
+    ro = (
+        regions.CALCULATE(o=IFF(CONTAINS(name, "O"), "O", "*"))
+        .PARTITION(name="o_groups", by=o)
+        .CALCULATE(o)
+    )
+    return (ra.CROSS(re)).CROSS(ri.CROSS(ro)).CALCULATE(a, e, i, o).ORDER_BY(a, e, i, o)
+
+
+def simple_cross_16():
+    # Strange way to count how many customers have the an account balance
+    # within 10 of the global minimum, and how many suppliers have an account
+    # balance within 10 of the global maximum.
+    glob1 = TPCH.CALCULATE(min_balance=MIN(customers.account_balance))
+    cust = customers.WHERE(account_balance <= (CROSS(glob1).min_balance + 10.0))
+    glob2 = TPCH.CALCULATE(max_balance=MAX(suppliers.account_balance))
+    supp = suppliers.WHERE(account_balance >= (CROSS(glob2).max_balance - 10.0))
+    return TPCH.CALCULATE(n1=COUNT(cust), n2=COUNT(supp))
+
+
 def quantile_function_test_1():
     selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
     return TPCH.CALCULATE(
@@ -2982,4 +3400,202 @@ def quantile_function_test_4():
         orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
         orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
         orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
+
+
+def double_cross():
+    # For each of the first 10 weeks of orders, identify the ratio between the
+    # cumulative number of lines returned via train versus the cumulative numbe
+    # of urgent orders with status F. Also return the numbers of orders/lines in
+    # each week.
+    global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
+    order_week_info = (
+        global_info.orders.CALCULATE(ord_wk=DATEDIFF("week", min_date, order_date))
+        .WHERE((ord_wk < 10) & (order_status == "F") & (order_priority == "1-URGENT"))
+        .PARTITION(name="weeks", by=ord_wk)
+        .CALCULATE(ord_wk, n_orders=COUNT(orders))
+    )
+    line_week_info = (
+        global_info.lines.CALCULATE(line_wk=DATEDIFF("week", min_date, receipt_date))
+        .WHERE(
+            (line_wk < 10)
+            & (return_flag == "R")
+            & (YEAR(receipt_date) == 1992)
+            & (ship_mode == "RAIL")
+        )
+        .PARTITION(name="weeks", by=line_wk)
+        .CALCULATE(line_wk, n_lines=COUNT(lines))
+    )
+    return (
+        order_week_info.CROSS(line_week_info)
+        .WHERE(ord_wk == line_wk)
+        .CALCULATE(
+            wk=ord_wk,
+            n_lines=n_lines,
+            n_orders=n_orders,
+            lpo=ROUND(
+                RELSUM(n_lines, by=line_wk.ASC(), cumulative=True)
+                / RELSUM(n_orders, by=ord_wk.ASC(), cumulative=True),
+                4,
+            ),
+        )
+        .ORDER_BY(wk.ASC())
+    )
+
+
+def pagerank(n_iters):
+    """
+    Computes the PageRank computation on the PAGERANK graph, starting with the
+    base page_rank values with an even distribution of 1.0 / n, where n is the
+    number of sites in the graph, then iteratively updates the page_rank values
+    based on the outgoing links and the damping factor d. Repeats the process
+    for n_iters iterations, returning the final page_rank values for each site,
+    rounded to 5 decimal places. Makes the following assumptions:
+
+    - If a site has no outgoing links, then it has a single entry in
+      `outgoing_links` where `target_key` is null.
+    - If there is a site with no incoming links, and there are no sites w/o
+      any outgoing links, the site w/o the incoming link has a dummy link where
+      the source & target key are the same, which should be ignored in the
+      PageRank calculation.
+    """
+
+    # The dampening factor
+    d = 0.85
+
+    # The expression used to determine the number of sites the graph links to,
+    # accounting for sites without links (which implicitly link to everything)
+    # and sites with a dummy link to themselves (which should be ignored).
+    n_out_expr = SUM(
+        outgoing_links.CALCULATE(
+            n_target=IFF(ABSENT(target_key), n, INTEGER((source_key != target_key)))
+        ).n_target
+    )
+
+    # The seed value for the PageRank computation, which is evenly distributed.
+    # Also computes the number of sites in the graph & the number of sites each
+    # site links to, which are both used downstream.
+    source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n)
+
+    if n_iters > 0:
+        source = source.CALCULATE(n_out=n_out_expr, damp_modifier=0.15 / n)
+
+    # Repeats the following procedure for n_iters iterations to build the next
+    # generation of PageRank values from the current generation.
+    for i in range(n_iters):
+        # For each site, find all sites that it links to and accumulate the
+        # PageRank values from the current site (divided by the # of links) in
+        # those linked sites, while also considering the damping factor. Uses
+        # RELSUM after partitioning on the destination site to perform the
+        # accumulation, then filters to only keep the one row of the
+        # destination site that came from the self-link. This ensures that each
+        # site is included once after each iteration, and the `n_out` value for
+        # that site is daisy-chained to the next iteration.
+        source = (
+            source.outgoing_links.CALCULATE(
+                dummy_link=PRESENT(target_key) & (source_key == target_key),
+                consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key)),
+            )
+            .target_site.PARTITION(name=f"s{i}", by=key)
+            .target_site.CALCULATE(
+                damp_modifier,
+                n_out,
+                page_rank=damp_modifier
+                + d * RELSUM(consider_link * page_rank / n_out, per=f"s{i}"),
+            )
+            .WHERE(dummy_link)
+        )
+
+    # Output the final PageRank values, rounded to 5 decimal places,
+    return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())
+
+
+def agg_simplification_1():
+    # Partition the tickers on the value
+    # `LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))`, then for every
+    # combination of 1, 2, -1, -3, 0, 0.5, null, and the partition key, call
+    # the aggregation functions SUM, COUNT, NDISTINCT, AVG, MIN, MAX,
+    # ANYTHING, and MEDIAN, and QUANTILE on each of the inputs.
+    kwargs = {}
+    args = [
+        tickers.one,
+        tickers.two,
+        tickers.negative_one,
+        tickers.negative_three,
+        tickers.zero,
+        tickers.half,
+        tickers.null,
+        tickers.aug_exchange,
+    ]
+    functions = [
+        ("su", SUM),
+        ("co", COUNT),
+        ("nd", NDISTINCT),
+        ("av", AVG),
+        ("mi", MIN),
+        ("ma", MAX),
+        ("an", ANYTHING),
+        ("me", MEDIAN),
+    ]
+    for prefix, func in functions:
+        for idx, arg in enumerate(args):
+            kwargs[f"{prefix}{idx + 1}"] = func(arg)
+    for idx, arg in enumerate(args):
+        kwargs[f"qu{idx + 1}"] = QUANTILE(arg, (idx + 1) / 10)
+    return (
+        tickers.CALCULATE(
+            aug_exchange=LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))
+        )
+        .CALCULATE(
+            one=1,
+            two=2,
+            negative_one=-1,
+            negative_three=-3,
+            zero=0,
+            half=0.5,
+            null=None,
+        )
+        .PARTITION(name="exchanges", by=aug_exchange)
+        .CALCULATE(
+            aug_exchange,
+            **kwargs,
+        )
+        .ORDER_BY(aug_exchange.ASC())
+    )
+
+
+def agg_simplification_2():
+    # Partition the customers by city/state then by state to compute the
+    # following aggregations per-state:
+    # 1. Number of cities pers state
+    # 2. Total number of customers per state
+    # 3. Total postal code sum per state
+    # 4. Total number of customers with names starting with "j" per state
+    # 5. Minimum phone number per state
+    # 6. Maximum phone number per state
+    # 7-9: Convoluted ways to pass around the lowercase state name
+    return (
+        customers.PARTITION(name="cities", by=(city, state))
+        .CALCULATE(
+            n=COUNT(customers),
+            nj=COUNT(KEEP_IF(customers.name, STARTSWITH(LOWER(customers.name), "j"))),
+            sz=SUM(INTEGER(customers.postal_code)),
+            minp=MIN(customers.phone),
+            maxp=MAX(customers.phone),
+            anys=ANYTHING(LOWER(customers.state)),
+        )
+        .PARTITION(name="states", by=state)
+        .CALCULATE(
+            state,
+            a1=COUNT(cities),
+            a2=SUM(cities.n),
+            a3=SUM(cities.nj),
+            a4=SUM(cities.sz),
+            a5=MIN(cities.minp),
+            a6=MAX(cities.maxp),
+            a7=MIN(cities.anys),
+            a8=MAX(cities.anys),
+            a9=ANYTHING(cities.anys),
+        )
+        .ORDER_BY(state.ASC())
     )

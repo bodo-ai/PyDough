@@ -6,15 +6,18 @@ nodes as an intermediary representation.
 __all__ = ["convert_ast_to_relational"]
 
 
+import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseDialect
+from pydough.configs import PyDoughSession
+from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
+from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
+    MaskedTableColumnMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
 )
@@ -36,6 +39,7 @@ from pydough.relational import (
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
+    GeneratedTable,
     Join,
     JoinCardinality,
     JoinType,
@@ -43,12 +47,17 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
+    RelationalExpressionDispatcher,
+    RelationalExpressionShuttle,
+    RelationalExpressionShuttleDispatcher,
+    RelationalExpressionVisitor,
     RelationalNode,
     RelationalRoot,
     Scan,
     WindowCallExpression,
 )
 from pydough.types import BooleanType, NumericType, UnknownType
+from pydough.types.pydough_type import PyDoughType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
@@ -79,10 +88,16 @@ from .hybrid_operations import (
     HybridPartition,
     HybridPartitionChild,
     HybridRoot,
+    HybridUserGeneratedCollection,
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .join_aggregate_transpose import pull_aggregates_above_joins
+from .join_key_substitution import join_key_substitution
+from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
+from .projection_pullup import pullup_projections
+from .relational_simplification import simplify_expressions
 
 
 @dataclass
@@ -312,9 +327,7 @@ class RelTranslation:
             case HybridSidedRefExpr():
                 # For sided references, access the referenced expression from
                 # the lhs output.
-                result = self.translate_expression(
-                    HybridRefExpr(condition.name, condition.typ), lhs_result
-                )
+                result = self.translate_expression(condition.expr, lhs_result)
                 return self.rename_inputs(result, lhs_alias)
             case HybridFunctionExpr():
                 # For function calls, recursively convert the arguments, then
@@ -426,6 +439,7 @@ class RelTranslation:
         rhs_result: TranslationOutput,
         join_type: JoinType,
         join_cardinality: JoinCardinality,
+        reverse_join_cardinality: JoinCardinality,
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None,
         join_cond: HybridExpr | None,
         child_idx: int | None,
@@ -442,6 +456,8 @@ class RelTranslation:
             onto `rhs_result`.
             `join_cardinality`: the cardinality of the join to be used to connect
             `lhs_result` onto `rhs_result`.
+            `reverse_join_cardinality`: the cardinality of the join from the
+            perspective of `rhs_result`.
             `join_keys`: a list of tuples in the form `(lhs_key, rhs_key)` that
             represent the equi-join keys used for the join from either side.
             This can be None if the `join_cond` is provided instead.
@@ -486,6 +502,7 @@ class RelTranslation:
             join_type,
             join_columns,
             join_cardinality,
+            reverse_join_cardinality,
             correl_name=lhs_result.correlated_name,
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
@@ -494,14 +511,16 @@ class RelTranslation:
         cond_terms: list[RelationalExpression] = []
         if join_keys is not None:
             for lhs_key, rhs_key in sorted(join_keys, key=repr):
-                lhs_key_column: ColumnReference = lhs_result.expressions[
-                    lhs_key
-                ].with_input(input_aliases[0])
-                rhs_key_column: ColumnReference = rhs_result.expressions[
-                    rhs_key
-                ].with_input(input_aliases[1])
+                lhs_expr: RelationalExpression = self.translate_expression(
+                    lhs_key, lhs_result
+                )
+                lhs_expr = self.rename_inputs(lhs_expr, input_aliases[0])
+                rhs_expr: RelationalExpression = self.translate_expression(
+                    rhs_key, rhs_result
+                )
+                rhs_expr = self.rename_inputs(rhs_expr, input_aliases[1])
                 cond: RelationalExpression = CallExpression(
-                    pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
+                    pydop.EQU, BooleanType(), [lhs_expr, rhs_expr]
                 )
                 cond_terms.append(cond)
             out_rel.condition = RelationalExpression.form_conjunction(cond_terms)
@@ -513,6 +532,18 @@ class RelTranslation:
         else:
             # Cartesian join case
             out_rel.condition = LiteralExpression(True, BooleanType())
+
+        # If the join type is non-ANTI but the condition is always True,
+        # then just promote to an INNER join, and remove the filtering aspect
+        # from the cardinality in both directions
+        if (
+            join_type != JoinType.ANTI
+            and isinstance(out_rel.condition, LiteralExpression)
+            and bool(out_rel.condition.value)
+        ):
+            out_rel._join_type = JoinType.INNER
+            out_rel._cardinality = out_rel._cardinality.remove_filter()
+            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -587,17 +618,24 @@ class RelTranslation:
             ConnectionType.NO_MATCH_AGGREGATION,
         )
         out_columns: dict[HybridExpr, ColumnReference] = {}
-        keys: dict[str, ColumnReference] = {}
+        keys: dict[str, RelationalExpression] = {}
         aggregations: dict[str, CallExpression] = {}
         used_names: set[str] = set()
         # First, propagate all key columns into the output, and add them to
         # the keys mapping of the aggregate.
         for agg_key in agg_keys:
-            agg_key_expr = self.translate_expression(agg_key, context)
-            assert isinstance(agg_key_expr, ColumnReference)
-            out_columns[agg_key] = agg_key_expr
-            keys[agg_key_expr.name] = agg_key_expr
-            used_names.add(agg_key_expr.name)
+            agg_key_expr: RelationalExpression = self.translate_expression(
+                agg_key, context
+            )
+            key_name: str
+            if isinstance(agg_key_expr, ColumnReference):
+                out_columns[agg_key] = agg_key_expr
+                key_name = agg_key_expr.name
+            else:
+                key_name = self.get_column_name("expr", used_names)
+                out_columns[agg_key] = ColumnReference(key_name, agg_key_expr.data_type)
+            keys[key_name] = agg_key_expr
+            used_names.add(key_name)
         # Then, add all of the agg calls to the aggregations mapping of the
         # the aggregate, and add references to the corresponding dummy-names
         # to the output.
@@ -658,11 +696,20 @@ class RelTranslation:
                 join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
                     child.subtree.join_keys
                 )
+
+                # If handling the child of a partition, remove any join keys
+                # where the LHS is a simple reference, since those keys are
+                # guaranteed to be present due to the partitioning.
                 if (
                     isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
                     and child_idx == 0
                 ):
-                    join_keys = None
+                    new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                    if join_keys is not None:
+                        for lhs_key, rhs_key in join_keys:
+                            if not isinstance(lhs_key, HybridRefExpr):
+                                new_join_keys.append((lhs_key, rhs_key))
+                    join_keys = new_join_keys if len(new_join_keys) > 0 else None
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -674,9 +721,9 @@ class RelTranslation:
                         | ConnectionType.ANTI
                     ):
                         cardinality: JoinCardinality = JoinCardinality.SINGULAR_ACCESS
-                        if child.connection_type.is_anti or (
-                            child.connection_type.is_semi
-                            and not child.subtree.always_exists()
+                        if (
+                            child.connection_type.is_anti
+                            or not child.get_always_exists()
                         ):
                             cardinality = JoinCardinality.SINGULAR_FILTER
                         if child.connection_type.is_aggregation:
@@ -684,11 +731,19 @@ class RelTranslation:
                             child_output = self.apply_aggregations(
                                 child, child_output, child.subtree.agg_keys
                             )
+                        # Optimize SEMI to INNER for singular subtrees
+                        join_type = child.connection_type.join_type
+                        if (
+                            child.connection_type == ConnectionType.SEMI
+                            and child.subtree.is_singular()
+                        ):
+                            join_type = JoinType.INNER
                         context = self.join_outputs(
                             context,
                             child_output,
-                            child.connection_type.join_type,
+                            join_type,
                             cardinality,
+                            child.reverse_cardinality,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -703,6 +758,7 @@ class RelTranslation:
                             child_output,
                             child.connection_type.join_type,
                             JoinCardinality.SINGULAR_FILTER,
+                            child.reverse_cardinality,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -730,7 +786,10 @@ class RelTranslation:
             # If handling the data for a partition, pull every aggregation key
             # into the current context since it is now accessible as a normal
             # ref instead of a child ref.
-            if isinstance(hybrid.pipeline[pipeline_idx], HybridPartition):
+            if (
+                isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
+                and child_idx == 0
+            ):
                 partition = hybrid.pipeline[pipeline_idx]
                 assert isinstance(partition, HybridPartition)
                 for key_name in partition.key_names:
@@ -741,6 +800,21 @@ class RelTranslation:
                     )
                     context.expressions[hybrid_ref] = context.expressions[key_expr]
         return context
+
+    def is_masked_column(self, expr: HybridExpr) -> bool:
+        """
+        Checks if a given expression is a masked column expression.
+
+        Args:
+            `expr`: the expression to check.
+
+        Returns:
+            True if the expression is a masked column expression, False
+            otherwise.
+        """
+        return isinstance(expr, HybridColumnExpr) and isinstance(
+            expr.column.column_property, MaskedTableColumnMetadata
+        )
 
     def build_simple_table_scan(
         self, node: HybridCollectionAccess
@@ -783,7 +857,33 @@ class RelTranslation:
                 assert isinstance(expr, ColumnReference)
                 real_names.add(expr.name)
             uniqueness.add(frozenset(real_names))
-        answer = Scan(node.collection.collection.table_path, scan_columns, uniqueness)
+        answer: RelationalNode = Scan(
+            node.collection.collection.table_path, scan_columns, uniqueness
+        )
+
+        # If any of the columns are masked, insert a projection on top to unmask
+        # them.
+        if any(self.is_masked_column(expr) for expr in node.terms.values()):
+            unmask_columns: dict[str, RelationalExpression] = {}
+            for name, hybrid_expr in node.terms.items():
+                if self.is_masked_column(hybrid_expr):
+                    assert isinstance(hybrid_expr, HybridColumnExpr)
+                    assert isinstance(
+                        hybrid_expr.column.column_property, MaskedTableColumnMetadata
+                    )
+                    unmask_columns[name] = CallExpression(
+                        pydop.MaskedExpressionFunctionOperator(
+                            hybrid_expr.column.column_property,
+                            node.collection.collection.table_path,
+                            True,
+                        ),
+                        hybrid_expr.column.column_property.unprotected_data_type,
+                        [ColumnReference(name, hybrid_expr.typ)],
+                    )
+                else:
+                    unmask_columns[name] = ColumnReference(name, hybrid_expr.typ)
+            answer = Project(answer, unmask_columns)
+
         return TranslationOutput(answer, out_columns)
 
     def translate_sub_collection(
@@ -828,6 +928,18 @@ class RelTranslation:
             else cardinality.add_filter()
         )
 
+        # Infer the cardinality of the join from the perspective of the new
+        # collection to the parent. Also, if the parent has any
+        # additional filters on its side that means a row may not always
+        # exist, then update the reverse cardinality since it may be filtering.
+        reverse_cardinality: JoinCardinality = (
+            HybridTree.infer_metadata_reverse_cardinality(
+                collection_access.subcollection_property
+            )
+        )
+        if (not reverse_cardinality.filters) and (not parent.always_exists()):
+            reverse_cardinality = reverse_cardinality.add_filter()
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None
         match collection_access.subcollection_property:
@@ -857,6 +969,7 @@ class RelTranslation:
             rhs_output,
             JoinType.INNER,
             cardinality,
+            reverse_cardinality,
             join_keys,
             join_cond,
             None,
@@ -1023,7 +1136,7 @@ class RelTranslation:
         # it relative to the input context.
         for name in node.new_expressions:
             name = node.renamings.get(name, name)
-            hybrid_expr: HybridExpr = node.terms[name]
+            hybrid_expr: HybridExpr = node.new_expressions[name]
             ref_expr: HybridRefExpr = HybridRefExpr(name, hybrid_expr.typ)
             rel_expr: RelationalExpression = self.translate_expression(
                 hybrid_expr, context
@@ -1042,6 +1155,7 @@ class RelTranslation:
         self,
         node: HybridPartitionChild,
         context: TranslationOutput | None,
+        preceding_hybrid: HybridTree | None,
     ) -> TranslationOutput:
         """
         Converts a step into the child of a PARTITION node into a join between
@@ -1053,6 +1167,8 @@ class RelTranslation:
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts.
+            `preceding_hybrid`: the previous layer in the hybrid tree above the
+            current level.
 
         Returns:
             The TranslationOutput payload containing expressions for both the
@@ -1088,6 +1204,9 @@ class RelTranslation:
             child_output,
             JoinType.INNER,
             JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.SINGULAR_ACCESS
+            if preceding_hybrid is not None and preceding_hybrid.always_exists()
+            else JoinCardinality.SINGULAR_FILTER,
             join_keys,
             None,
             None,
@@ -1142,19 +1261,22 @@ class RelTranslation:
         return TranslationOutput(child_result.relational_node, new_expressions)
 
     def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
-        """Converts a HybridRoot node into a relational tree.
-        This method shifts all expressions in the given context back by one level,
-        effectively removing the HybridRoot from the context (re-aligning them to the parent context's scope).
-        This is needed when stepping out of a nested context.
-        The HybridRoot itself does not introduce a new relational operation but serves as a logical boundary.
-        This method prepares the context so that subsequent operations refer to the correct expression depth.
+        """
+        Converts a HybridRoot node into a relational tree. This method shifts
+        all expressions in the given context back by one level, effectively
+        removing the HybridRoot from the context (re-aligning them to the
+        parent context's scope). This is needed when stepping out of a nested
+        context. The HybridRoot itself does not introduce a new relational
+        operation but serves as a logical boundary. This method prepares the
+        context so that subsequent operations refer to the correct expression
+        depth.
 
         Args:
-            context (TranslationOutput): The current translation context
-            associated with the HybridRoot. Must not be None.
+            `context`: The current translation context associated with the
+            HybridRoot. Must not be None.
 
         Returns:
-            TranslationOutput: The translated output payload.
+            The translated output payload.
         """
         new_expressions: dict[HybridExpr, ColumnReference] = {}
         for expr, column_ref in context.expressions.items():
@@ -1162,6 +1284,29 @@ class RelTranslation:
             if shifted_expr is not None:
                 new_expressions[shifted_expr] = column_ref
         return TranslationOutput(context.relational_node, new_expressions)
+
+    def build_user_generated_table(
+        self, node: HybridUserGeneratedCollection
+    ) -> TranslationOutput:
+        """Builds a user-generated table from the given hybrid user-generated collection.
+
+        Args:
+            `node`: The user-generated collection node to translate.
+
+        Returns:
+            The translated output payload.
+        """
+        collection = node._user_collection.collection
+        out_columns: dict[HybridExpr, ColumnReference] = {}
+        gen_columns: dict[str, RelationalExpression] = {}
+        for column_name, column_type in collection.column_names_and_types:
+            hybrid_ref = HybridRefExpr(column_name, column_type)
+            col_ref = ColumnReference(column_name, column_type)
+            out_columns[hybrid_ref] = col_ref
+            gen_columns[column_name] = col_ref
+
+        answer = GeneratedTable(collection)
+        return TranslationOutput(answer, out_columns)
 
     def rel_translation(
         self,
@@ -1245,6 +1390,7 @@ class RelTranslation:
                             result,
                             JoinType.INNER,
                             JoinCardinality.PLURAL_ACCESS,
+                            JoinCardinality.SINGULAR_ACCESS,
                             join_keys,
                             None,
                             None,
@@ -1261,7 +1407,11 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                result = self.translate_partition_child(operation, context)
+                result = self.translate_partition_child(
+                    operation,
+                    context,
+                    preceding_hybrid[0] if preceding_hybrid is not None else None,
+                )
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calculate(operation, context)
@@ -1286,6 +1436,19 @@ class RelTranslation:
             case HybridRoot():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_hybridroot(context)
+            case HybridUserGeneratedCollection():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.build_user_generated_table(operation)
+                result = self.join_outputs(
+                    context,
+                    result,
+                    JoinType.INNER,
+                    JoinCardinality.PLURAL_ACCESS,
+                    JoinCardinality.SINGULAR_ACCESS,
+                    [],
+                    None,
+                    None,
+                )
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
@@ -1301,19 +1464,29 @@ class RelTranslation:
         """
         Transforms the final PyDough collection by appending it with an extra
         CALCULATE containing all of the columns that are output.
+        Args:
+            `node`: the PyDough QDAG collection node to be translated.
+            `output_cols`: a list of tuples in the form `(alias, column)`
+            describing every column that should be in the output, in the order
+        they should appear, and the alias they should be given. If None, uses
+        the most recent CALCULATE in the node to determine the columns.
+        Returns:
+            The PyDoughCollectionQDAG with an additional CALCULATE at the end
+            that contains all of the columns that should be in the output.
         """
         # Fetch all of the expressions that should be kept in the final output
         final_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
         if output_cols is None:
             for name in node.calc_terms:
-                final_terms.append((name, Reference(node, name)))
+                name_typ: PyDoughType = node.get_expr(name).pydough_type
+                final_terms.append((name, Reference(node, name, name_typ)))
             final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         else:
             for _, column in output_cols:
-                final_terms.append((column, Reference(node, column)))
+                column_typ: PyDoughType = node.get_expr(column).pydough_type
+                final_terms.append((column, Reference(node, column, column_typ)))
         children: list[PyDoughCollectionQDAG] = []
-        final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
-        return final_calc
+        return Calculate(node, children, final_terms)
 
 
 def make_relational_ordering(
@@ -1324,14 +1497,12 @@ def make_relational_ordering(
     Converts a list of collation expressions into a list of ExpressionSortInfo.
 
     Args:
-        collation (list[CollationExpression]): The list of collation
-            expressions to convert.
-        expressions (dict[HybridExpr, ColumnReference]): The dictionary of
-            expressions to use for the relational ordering.
+        `collation`: The list of collation expressions to convert.
+        `expressions`: The dictionary of expressions to use for the relational
+        ordering.
 
     Returns:
-        list[ExpressionSortInfo]: The ordering expressions converted into
-        ExpressionSortInfo.
+        The ordering expressions converted into `ExpressionSortInfo`.
     """
     orderings: list[ExpressionSortInfo] = []
     for col_expr in collation:
@@ -1402,7 +1573,11 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
 
 
 def optimize_relational_tree(
-    root: RelationalRoot, configs: PyDoughConfigs
+    root: RelationalRoot,
+    session: PyDoughSession,
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ],
 ) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
@@ -1410,42 +1585,110 @@ def optimize_relational_tree(
 
     Args:
         `root`: the relational root to optimize.
-        `configs`: the configuration settings to use during optimization.
+        `configs`: PyDough session used during optimization.
+        `additional_shuttles`: additional relational expression shuttles or
+        visitors to use for expression simplification.
 
     Returns:
         The optimized relational root.
     """
-    # Step 1: push filters down as far as possible
-    root._input = push_filters(root.input, set())
 
-    # Step 2: merge adjacent projections, unless it would result in excessive
-    # duplicate subexpression computations.
-    root = confirm_root(merge_projects(root))
+    # Start by pruning unused columns. This is done early to remove as many dead
+    # names as possible so that steps that require generating column names can
+    # use nicer names instead of generating nastier ones to avoid collisions.
+    # It also speeds up all subsequent steps by reducing the total number of
+    # objects inside the plan.
+    pruner: ColumnPruner = ColumnPruner()
+    root = pruner.prune_unused_columns(root)
 
-    # Step 3: split aggregations on top of joins so part of the aggregate
-    # happens underneath the join.
-    root = confirm_root(split_partial_aggregates(root, configs))
+    # Run a pass that substitutes join keys when the only columns used by one
+    # side of the join are the join keys. This will make some joins redundant
+    # and allow them to be deleted later. Then, re-run column pruning.
+    root = confirm_root(join_key_substitution(root))
+    root = pruner.prune_unused_columns(root)
 
-    # Step 4: delete aggregations that are inferred to be redundant due to
-    # operating on already unique data.
-    root = remove_redundant_aggs(root)
-
-    # Step 5: re-run projection merging.
-    root = confirm_root(merge_projects(root))
-
-    # Step 6: prune unused columns.
-    root = ColumnPruner().prune_unused_columns(root)
-
-    # Step 7: bubble up names from the leaf nodes to further encourage simpler
-    # naming without aliases, and also to delete duplicate columns where
-    # possible.
+    # Bubble up names from the leaf nodes to further encourage simpler naming
+    # without aliases, and also to delete duplicate columns where possible.
+    # This is done early to maximize the chances that a nicer name will be used
+    # for aggregations before projection pullup eliminates many of those names
+    # by pulling the aggregated expression inputs into the aggregate call.
     root = bubble_column_names(root)
 
-    # Step 8: re-run column pruning.
-    root = ColumnPruner().prune_unused_columns(root)
+    # Run projection pullup to move projections as far up the tree as possible.
+    # This is done as soon as possible to make joins redundant if they only
+    # exist to compute a scalar projection and then link it with the data.
+    root = confirm_root(pullup_projections(root))
 
-    # Step 9: re-run projection merging.
+    # Push filters down as far as possible
+    root = confirm_root(push_filters(root, session))
+
+    # Merge adjacent projections, unless it would result in excessive duplicate
+    # subexpression computations.
     root = confirm_root(merge_projects(root))
+
+    # Split aggregations on top of joins so part of the aggregate happens
+    # underneath the join.
+    root = confirm_root(split_partial_aggregates(root, session))
+
+    # Delete aggregations that are inferred to be redundant due to operating on
+    # already unique data.
+    root = remove_redundant_aggs(root)
+
+    # Re-run projection merging since the removal of redundant aggregations may
+    # have created redundant projections that can be deleted.
+    root = confirm_root(merge_projects(root))
+
+    # Re-run column pruning after the various steps, which may have rendered
+    # more columns unused. This is done befre the next step to remove as many
+    # column names as possible so the column bubbling step can try to use nicer
+    # names without worrying about collisions.
+    root = pruner.prune_unused_columns(root)
+
+    # Re-run column bubbling now that the columns have been pruned again.
+    root = bubble_column_names(root)
+
+    # Run the following pipeline twice:
+    #   A: projection pullup
+    #   B: expression simplification (followed by additional shuttles)
+    #   C: filter pushdown
+    #   D: join-aggregate transpose
+    #   E: projection pullup again
+    #   F: redundant aggregation removal
+    #   G: join key substitution
+    #   H: column pruning
+    # This is done because pullup will create more opportunities for expression
+    # simplification, which will allow more filters to be pushed further down,
+    # and the combination of those together will create more opportunities for
+    # column pruning, the latter of which will unlock more opportunities for
+    # pullup and pushdown and so on.
+    for _ in range(2):
+        root = confirm_root(pullup_projections(root))
+        simplify_expressions(root, session)
+        # Run all of the other shuttles/visitors over the entire tree.
+        for shuttle_or_visitor in additional_shuttles:
+            if isinstance(shuttle_or_visitor, RelationalExpressionShuttle):
+                root.accept(RelationalExpressionShuttleDispatcher(shuttle_or_visitor))
+            else:
+                root.accept(RelationalExpressionDispatcher(shuttle_or_visitor, True))
+        root = confirm_root(push_filters(root, session))
+        root = confirm_root(pull_aggregates_above_joins(root))
+        root = confirm_root(pullup_projections(root))
+        root = remove_redundant_aggs(root)
+        root = confirm_root(join_key_substitution(root))
+        root = pruner.prune_unused_columns(root)
+
+    # Re-run projection merging, without pushing into joins. This will allow
+    # some redundant projections created by pullup to be removed entirely.
+    root = confirm_root(merge_projects(root, push_into_joins=False))
+
+    # Re-run column bubbling to further simplify the final names of columns in
+    # the output now that more columns have been pruned, and delete any new
+    # duplicate columns that were created during the pullup step.
+    root = bubble_column_names(root)
+
+    # Re-run column pruning one last time to remove any columns that are no
+    # longer used after the final round of transformations.
+    root = pruner.prune_unused_columns(root)
 
     return root
 
@@ -1453,8 +1696,7 @@ def optimize_relational_tree(
 def convert_ast_to_relational(
     node: PyDoughCollectionQDAG,
     columns: list[tuple[str, str]] | None,
-    configs: PyDoughConfigs,
-    dialect: DatabaseDialect = DatabaseDialect.ANSI,
+    session: PyDoughSession,
 ) -> RelationalRoot:
     """
     Main API for converting from the collection QDAG form into relational
@@ -1466,8 +1708,8 @@ def convert_ast_to_relational(
         describing every column that should be in the output, in the order
         they should appear, and the alias they should be given. If None, uses
         the most recent CALCULATE in the node to determine the columns.
-        `configs`: the configuration settings to use during translation.
-        `dialect`: the database dialect being used.
+        `session`: the PyDough session used to fetch configuration settings
+        and SQL dialect information.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
@@ -1482,7 +1724,7 @@ def convert_ast_to_relational(
 
     # Convert the QDAG node to a hybrid tree, including any necessary
     # transformations such as de-correlation.
-    hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
+    hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
 
     # Then, invoke relational conversion procedure. The first element in the
@@ -1496,6 +1738,22 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    optimized_result: RelationalRoot = optimize_relational_tree(raw_result, configs)
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ] = []
+    # Add the mask literal comparison shuttle if the environment variable
+    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1. If a masking rewrite server has
+    # been attached to the session, include the shuttles for that as well.
+    if os.getenv("PYDOUGH_ENABLE_MASK_REWRITES") == "1":
+        if session.mask_server is not None:
+            candidate_shuttle: MaskServerCandidateVisitor = MaskServerCandidateVisitor()
+            additional_shuttles.append(candidate_shuttle)
+            additional_shuttles.append(
+                MaskServerRewriteShuttle(session.mask_server, candidate_shuttle)
+            )
+        additional_shuttles.append(MaskLiteralComparisonShuttle())
+    optimized_result: RelationalRoot = optimize_relational_tree(
+        raw_result, session, additional_shuttles
+    )
 
     return optimized_result

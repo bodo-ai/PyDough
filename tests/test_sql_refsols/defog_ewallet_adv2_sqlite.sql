@@ -37,10 +37,4 @@ WHERE
     '-21 day'
   )
 GROUP BY
-  DATE(
-    notifications.created_at,
-    '-' || CAST((
-      CAST(STRFTIME('%w', DATETIME(notifications.created_at)) AS INTEGER) + 6
-    ) % 7 AS TEXT) || ' days',
-    'start of day'
-  )
+  1

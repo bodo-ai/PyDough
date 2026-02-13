@@ -4,6 +4,8 @@ This node is responsible for enforcing the final orderings and columns as well
 as any other traits that impact the shape/display of the final output.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
@@ -11,6 +13,10 @@ from pydough.relational.relational_expressions import (
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class RelationalRoot(SingleRelational):
@@ -25,6 +31,7 @@ class RelationalRoot(SingleRelational):
         input: RelationalNode,
         ordered_columns: list[tuple[str, RelationalExpression]],
         orderings: list[ExpressionSortInfo] | None = None,
+        limit: RelationalExpression | None = None,
     ) -> None:
         columns = dict(ordered_columns)
         assert len(columns) == len(ordered_columns), (
@@ -35,6 +42,7 @@ class RelationalRoot(SingleRelational):
         self._orderings: list[ExpressionSortInfo] = (
             [] if orderings is None else orderings
         )
+        self._limit: RelationalExpression | None = limit
 
     @property
     def ordered_columns(self) -> list[tuple[str, RelationalExpression]]:
@@ -50,6 +58,13 @@ class RelationalRoot(SingleRelational):
         any.
         """
         return self._orderings
+
+    @property
+    def limit(self) -> RelationalExpression | None:
+        """
+        The limit on the number of rows in the final output, if any.
+        """
+        return self._limit
 
     def node_equals(self, other: RelationalNode) -> bool:
         return (
@@ -67,12 +82,19 @@ class RelationalRoot(SingleRelational):
         orderings: list[str] = [
             ordering.to_string(compact) for ordering in self.orderings
         ]
-        return (
-            f"ROOT(columns=[{', '.join(columns)}], orderings=[{', '.join(orderings)}])"
-        )
+        kwargs: list[tuple[str, str]] = [
+            ("columns", f"[{', '.join(columns)}]"),
+            ("orderings", f"[{', '.join(orderings)}]"),
+        ]
+        if self.limit is not None:
+            kwargs.append(("limit", self.limit.to_string(compact)))
+        return f"ROOT({', '.join(f'{k}={v}' for k, v in kwargs)})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_root(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_root(self)
 
     def node_copy(
         self,
@@ -81,4 +103,6 @@ class RelationalRoot(SingleRelational):
     ) -> RelationalNode:
         assert len(inputs) == 1, "Root node should have exactly one input"
         assert columns == self.columns, "Root columns should not be modified"
-        return RelationalRoot(inputs[0], self.ordered_columns, self.orderings)
+        return RelationalRoot(
+            inputs[0], self.ordered_columns, self.orderings, self.limit
+        )

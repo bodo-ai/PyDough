@@ -21,6 +21,10 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.errors import PyDoughSQLException
+from pydough.types import PyDoughType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
+
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
 """
 The types of SQLGlot expressions that need to be wrapped in parenthesis for the
@@ -165,11 +169,15 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y-01-01 00:00:00'"
             case DateTimeUnit.QUARTER:
-                raise ValueError("Quarter unit does not have a truncation string.")
+                raise PyDoughSQLException(
+                    "Quarter unit does not have a truncation string."
+                )
             case DateTimeUnit.MONTH:
                 return "'%Y-%m-01 00:00:00'"
             case DateTimeUnit.WEEK:
-                raise ValueError("Week unit does not have a truncation string.")
+                raise PyDoughSQLException(
+                    "Week unit does not have a truncation string."
+                )
             case DateTimeUnit.DAY:
                 return "'%Y-%m-%d 00:00:00'"
             case DateTimeUnit.HOUR:
@@ -188,7 +196,9 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y'"
             case DateTimeUnit.QUARTER:
-                raise ValueError("Quarter unit does not have an extraction string.")
+                raise PyDoughSQLException(
+                    "Quarter unit does not have an extraction string."
+                )
             case DateTimeUnit.MONTH:
                 return "'%m'"
             case DateTimeUnit.WEEK:
@@ -257,22 +267,24 @@ def pad_helper(
         try:
             required_len = int(args[1].this)
             if required_len < 0:
-                raise ValueError()
+                raise PyDoughSQLException(
+                    f"{pad_func} function requires the length argument to be a non-negative integer literal."
+                )
         except ValueError:
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"{pad_func} function requires the length argument to be a non-negative integer literal."
             )
     else:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the length argument to be a non-negative integer literal."
         )
 
     if not isinstance(args[2], sqlglot_expressions.Literal) or not args[2].is_string:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the padding argument to be a string literal of length 1."
         )
     if len(str(args[2].this)) != 1:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the padding argument to be a string literal of length 1."
         )
 
@@ -281,3 +293,274 @@ def pad_helper(
     required_len_glot = sqlglot_expressions.convert(required_len)
     pad_string_glot = sqlglot_expressions.convert(str(args[2].this) * required_len)
     return col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len
+
+
+def expand_variance(
+    args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+) -> SQLGlotExpression:
+    """
+    Converts a variance calculation (population or sample) to an equivalent
+    SQLGlot expression.
+
+    Args:
+        `args`: The arguments to the variance function.
+        `types`: The types of the arguments.
+        `type`: The type of variance to calculate.
+
+    Returns:
+        The SQLGlot expression to calculate the population variance
+        of the argument.
+    """
+    arg = args[0]
+    # Formula: (SUM(X*X) - (SUM(X)*SUM(X) / COUNT(X))) / COUNT(X) for population variance
+    # For sample variance, divide by (COUNT(X) - 1) instead of COUNT(X)
+
+    # SUM(X*X)
+    square_expr = apply_parens(
+        sqlglot_expressions.Pow(
+            this=arg, expression=sqlglot_expressions.Literal.number(2)
+        )
+    )
+    sum_squares_expr = sqlglot_expressions.Sum(this=square_expr)
+
+    # SUM(X)
+    sum_expr = sqlglot_expressions.Sum(this=arg)
+
+    # COUNT(X)
+    count_expr = sqlglot_expressions.Count(this=arg)
+
+    # (SUM(X)*SUM(X))
+    sum_squared_expr = sqlglot_expressions.Pow(
+        this=sum_expr, expression=sqlglot_expressions.Literal.number(2)
+    )
+
+    # ((SUM(X)*SUM(X)) / COUNT(X))
+    mean_sum_squared_expr = apply_parens(
+        sqlglot_expressions.Div(
+            this=apply_parens(sum_squared_expr), expression=apply_parens(count_expr)
+        )
+    )
+
+    # (SUM(X*X) - (SUM(X)*SUM(X) / COUNT(X)))
+    numerator = sqlglot_expressions.Sub(
+        this=sum_squares_expr, expression=apply_parens(mean_sum_squared_expr)
+    )
+
+    if type == "population":
+        # Divide by COUNT(X)
+        return apply_parens(
+            sqlglot_expressions.Div(
+                this=apply_parens(numerator), expression=apply_parens(count_expr)
+            )
+        )
+    elif type == "sample":
+        # Divide by (COUNT(X) - 1)
+        denominator = sqlglot_expressions.Sub(
+            this=count_expr, expression=sqlglot_expressions.Literal.number(1)
+        )
+        return apply_parens(
+            sqlglot_expressions.Div(
+                this=apply_parens(numerator), expression=apply_parens(denominator)
+            )
+        )
+    else:
+        raise ValueError(f"Unsupported type: {type}")
+
+
+def expand_std(
+    args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+) -> SQLGlotExpression:
+    """
+    Converts a standard deviation calculation to an equivalent
+    SQLGlot expression.
+
+    Args:
+        `args`: The arguments to the standard deviation function.
+        `types`: The types of the arguments.
+        `type`: The type of standard deviation to calculate.
+
+    Returns:
+        The SQLGlot expression to calculate the standard deviation
+        of the argument.
+    """
+    variance = expand_variance(args, types, type)
+    return sqlglot_expressions.Pow(
+        this=variance, expression=sqlglot_expressions.Literal.number(0.5)
+    )
+
+
+def create_constant_table(
+    table_name: str,
+    column_names: list[str],
+    rows: list[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Generate a SQL that represents a constant table using the given list of
+    columns and rows. The final SQLGlot expression corresponds to the SQL:
+    For MySQL:
+    SELECT {column_names} FROM ( VALUES {rows} ) AS table_name ({column_names})
+    For sqlite:
+    SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} ) AS {table_name}
+
+    Args:
+        `table_name`: The name of the table
+        `column_names`: List with all column names
+        `rows`: The data for each row
+
+    Returns:
+        The SQLGlot expression for the constant table.
+
+    Note: This function is only used to generate tables for MySQL and Sqlite
+    dialects
+    """
+    assert column_names != []
+
+    expr_table: SQLGlotExpression = sqlglot_expressions.Identifier(
+        this=table_name, quoted=False
+    )
+
+    columns_list: list[SQLGlotExpression] = [
+        sqlglot_expressions.Identifier(this=column, quoted=False)
+        for column in column_names
+    ]
+
+    result: SQLGlotExpression
+
+    if len(rows) == 0:
+        # Example:
+        # column_list = ['X', 'Y'] and types = ['INT', 'VARCHAR']
+        # SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y WHERE FALSE
+        result = create_empty_constant_table(columns_list, ["INT"] * len(columns_list))
+    else:
+        # Create the VALUES expression
+        values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
+
+        table_alias = sqlglot_expressions.TableAlias(
+            this=expr_table, columns=columns_list
+        )
+
+        # Subquery with alias for the VALUES expression
+        aliased_values = sqlglot_expressions.Subquery(
+            this=values_expr, alias=table_alias
+        )
+
+        # List of columns to select
+        select_columns: list[SQLGlotExpression] = []
+        # Determine if ROWS() are used. MySQL uses ROWS and sqlite doesn't
+        rows_used: bool = isinstance(rows[0], sqlglot_expressions.Anonymous)
+
+        for idx, column in enumerate(columns_list):
+            # Sqlite referred by default its values' columns as column1, column2
+            # and so on. Aliases are used to rename those. MySQL can rename
+            # their columns directly.
+            if not rows_used:
+                column_enum: str = f"column{idx + 1}"
+                select_columns.append(
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Column(this=column_enum), alias=column
+                    )
+                )
+            else:
+                select_columns.append(sqlglot_expressions.Column(this=column))
+
+        result = sqlglot_expressions.Select(expressions=select_columns).from_(
+            aliased_values
+        )
+
+    return result
+
+
+def create_empty_constant_table(
+    column_list: list[SQLGlotExpression], types: list[str]
+) -> SQLGlotExpression:
+    """
+    Construct a SQLGlot expression representing an empty user-defined constant
+    table with specified columns and types.
+
+    For example, for column_list = ['X', 'Y'] and types = ['INT', 'VARCHAR'],
+    the resulting SQLGlot expression corresponds to the SQL:
+        SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y
+        WHERE FALSE
+
+    Args:
+        `column_list`: List of all the column names.
+        `types`: List of types for each column respectively.
+
+    Notes:
+        - The length of column_list and types must match.
+
+    Returns:
+        The SQLGlot expression for an empty user collection.
+    """
+
+    assert len(column_list) == len(types)
+
+    expressions: list[SQLGlotExpression] = []
+
+    for idx, column in enumerate(column_list):
+        expressions.append(
+            sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Null(),
+                    to=sqlglot_expressions.DataType.build(types[idx]),
+                ),
+                alias=column,
+            )
+        )
+
+    return sqlglot_expressions.Select(expressions=expressions).where(
+        sqlglot_expressions.Boolean(this=False)
+    )
+
+
+def is_empty_range(collection: RangeGeneratedCollection) -> bool:
+    """
+    Helper function to determine if a range collection is empty.
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+    Returns:
+        True if the range is empty, False otherwise.
+    """
+
+    # Determine if the range is empty. An empty range occurs when:
+    # - step > 0 and start >= end
+    # - step < 0 and start <= end
+    # - step == 0
+    return (
+        (collection.step > 0 and collection.start >= collection.end)
+        or (collection.step < 0 and collection.start <= collection.end)
+        or (collection.step == 0)
+    )
+
+
+def generate_range_rows(
+    collection: RangeGeneratedCollection, use_tuple: bool
+) -> list[SQLGlotExpression]:
+    """
+    Helper function to generate the rows for a given range collection
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+        `use_tuple`: If `True` the rows are build with Tuple (used with sqlite).
+        If `False` the rows are build with ROW (used with MySQL)
+
+    Returns:
+        List of sqlglot expressions for the range, empty if it is an empty range
+    """
+
+    if is_empty_range(collection):
+        return []
+
+    range_rows: list[SQLGlotExpression] = [
+        # [(i), ... ]
+        sqlglot_expressions.Tuple(expressions=[sqlglot_expressions.Literal.number(i)])
+        if use_tuple
+        # [ROW(i), ... ]
+        else sqlglot_expressions.Anonymous(
+            this="ROW", expressions=[sqlglot_expressions.Literal.number(i)]
+        )
+        for i in range(collection.start, collection.end, collection.step)
+    ]
+
+    return range_rows

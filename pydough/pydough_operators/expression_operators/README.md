@@ -22,7 +22,7 @@ The expression_operators module provides functionality to define and manage vari
 
 ### [keyword_branching_operators.py](keyword_branching_operators.py)
 
-- `KeywordBranchingExpressionFunctionOperator`: Implementation class for PyDough operators that return an `ExpressionFunctionOperator` and represent a function call that supports keyword arguments, such as `VAR` or `STD`. For example, `VAR` can be set with the keyword argument `type="population"` or `type="sample"`, thereby creating two different operators, `POPULATION_VARIANCE` and `SAMPLE_VARIANCE`.
+- `KeywordBranchingExpressionFunctionOperator`: Implementation class for PyDough operators that return an `ExpressionFunctionOperator` and represent a function call that supports keyword arguments, such as `VAR` or `STD`. For example, `VAR` can be set with the keyword argument `type="population"` or `type="sample"`, thereby creating two different operators, `POPULATION_VAR` and `SAMPLE_VAR`.
 
 ### [binary_operators.py](binary_operators.py)
 
@@ -84,8 +84,8 @@ These functions must be called on singular data as a function.
 - `FIND`: returns the index(0-indexed) of the first occurrence of the second argument within the first argument, or -1 if the second argument is not found.
 - `STRIP`: returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces. If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
 - `REPLACE`: returns the first argument with all instances of the second argument replaced by the third argument. If the third argument is not provided, all instances of the second argument are removed from the first argument.
-
 - `STRCOUNT`: returns how many times the second argument appears in the first argument. If one or both arguments are an empty string the return would be 0
+- `GETPART`: extracts the N-th part from a string, splitting it by a specified delimiter. The first argument is the input string, the second argument is the delimiter string, and the third argument is the index of the part to extract (can be positive for counting from the start, or negative for counting from the end; 1-based indexing). If the index is out of range, returns a `None` value. If the delimiter is an empty string the string will not be splitted, the first part is the entire string.
 
 ##### Datetime Functions
 
@@ -145,9 +145,9 @@ These functions can be called on plural data to aggregate it into a singular exp
 - `NDISTINCT`: counts how many unique values exist in a plural expression (special: see collection aggregations).
 - `VAR`: the basic operation for variance, which is used to create the other variance functions with different types of keyword arguments. Note: `VAR` is not a valid PyDough function operator, but it is used internally to represent the basic variance operation.
 - `STD`: the basic operation for standard deviation, which is used to create the other standard deviation functions with different types of keyword arguments. Note: `STD` is not a valid PyDough function operator, but it is used internally to represent the basic standard deviation operation.
-- `SAMPLE_VARIANCE`: returns the sample variance of the values of a plural expression.
+- `SAMPLE_VAR`: returns the sample variance of the values of a plural expression.
 - `SAMPLE_STD`: returns the sample standard deviation of the values of a plural expression.
-- `POPULATION_VARIANCE`: returns the population variance of the values of a plural expression.
+- `POPULATION_VAR`: returns the population variance of the values of a plural expression.
 - `POPULATION_STD`: returns the population standard deviation of the values of a plural expression.
 
 ##### Collection Aggregations

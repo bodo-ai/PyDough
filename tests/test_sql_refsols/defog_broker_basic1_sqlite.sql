@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbtxcustid,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxcustid
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE(DATETIME('now', '-30 day'), 'start of day')
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   sbcustomer.sbcustcountry AS country,
@@ -17,4 +17,4 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 GROUP BY
-  sbcustomer.sbcustcountry
+  1

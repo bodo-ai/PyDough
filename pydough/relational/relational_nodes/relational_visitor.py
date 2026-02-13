@@ -8,6 +8,7 @@ operations (e.g. string generation).
 
 from abc import ABC, abstractmethod
 
+from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
 from .filter import Filter
@@ -36,13 +37,13 @@ class RelationalVisitor(ABC):
         Clear any internal state to allow reusing this visitor.
         """
 
-    def visit_inputs(self, node) -> None:
+    def visit_inputs(self, node: RelationalNode) -> None:
         """
         Visit all inputs of the provided node. This is a helper method
         to avoid repeating the same code in each visit method.
 
         Args:
-            node (Relational): The node whose inputs should be visited.
+            `node`: The node whose inputs should be visited.
         """
         for child in node.inputs:
             child.accept(self)
@@ -53,7 +54,7 @@ class RelationalVisitor(ABC):
         Visit a Scan node.
 
         Args:
-            scan (Scan): The scan node to visit.
+            `scan`: The scan node to visit.
         """
 
     @abstractmethod
@@ -62,7 +63,7 @@ class RelationalVisitor(ABC):
         Visit a Join node.
 
         Args:
-            join (Join): The join node to visit.
+            `join`: The join node to visit.
         """
 
     @abstractmethod
@@ -71,7 +72,7 @@ class RelationalVisitor(ABC):
         Visit a Project node.
 
         Args:
-            project (Project): The project node to visit.
+            `project`: The project node to visit.
         """
 
     @abstractmethod
@@ -80,7 +81,7 @@ class RelationalVisitor(ABC):
         Visit a filter node.
 
         Args:
-            filter (Filter): The filter node to visit.
+            `filter`: The filter node to visit.
         """
 
     @abstractmethod
@@ -89,7 +90,7 @@ class RelationalVisitor(ABC):
         Visit an Aggregate node.
 
         Args:
-            aggregate (Aggregate): The aggregate node to visit.
+            `aggregate`: The aggregate node to visit.
         """
 
     @abstractmethod
@@ -98,7 +99,7 @@ class RelationalVisitor(ABC):
         Visit a Limit node.
 
         Args:
-            limit (Limit): The limit node to visit.
+            `limit`: The limit node to visit.
         """
 
     @abstractmethod
@@ -107,7 +108,7 @@ class RelationalVisitor(ABC):
         Visit an EmptySingleton node.
 
         Args:
-            singleton (EmptySingleton): The empty singleton node to visit.
+            `singleton`: The empty singleton node to visit.
         """
 
     @abstractmethod
@@ -116,5 +117,14 @@ class RelationalVisitor(ABC):
         Visit a root node.
 
         Args:
-            root (Root): The root node to visit.
+            `root`: The root node to visit.
+        """
+
+    @abstractmethod
+    def visit_generated_table(self, generated_table) -> None:
+        """
+        Visit a GeneratedTable node.
+
+        Args:
+            `generated_table`: The generated table node to visit.
         """

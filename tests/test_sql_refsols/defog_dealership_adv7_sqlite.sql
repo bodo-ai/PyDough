@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    AVG(sale_price) AS avg_sale_price,
-    car_id
+    car_id,
+    AVG(sale_price) AS avg_sale_price
   FROM main.sales
   GROUP BY
-    car_id
+    1
 )
 SELECT
   cars.make,

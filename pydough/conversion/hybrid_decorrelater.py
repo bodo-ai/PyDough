@@ -8,6 +8,10 @@ __all__ = ["HybridDecorrelater"]
 
 import copy
 
+import pydough.pydough_operators as pydop
+from pydough.relational import JoinCardinality
+from pydough.types import BooleanType
+
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
     HybridBackRefExpr,
@@ -40,7 +44,7 @@ class HybridDecorrelater:
         self.children_indices: list[int] = []
 
     def make_decorrelate_parent(
-        self, hybrid: HybridTree, child_idx: int, min_steps: int, max_steps: int
+        self, hybrid: HybridTree, child_idx: int, max_steps: int
     ) -> tuple[HybridTree, int, int]:
         """
         Creates a snapshot of the ancestry of the hybrid tree that contains
@@ -52,9 +56,6 @@ class HybridDecorrelater:
             in the de-correlation of a correlated child.
             `child_idx`: The index of the correlated child of hybrid that the
             snapshot is being created to aid in the de-correlation of.
-            `min_steps`: The index of the last pipeline operator that
-            needs to be included in the snapshot in order for the child to be
-            derivable.
             `max_steps`: The index of the first pipeline operator that cannot
             occur because it depends on the correlated child.
 
@@ -67,7 +68,10 @@ class HybridDecorrelater:
             to the PARTITION edge case. The third entry is how many operators
             in the pipeline were copied over from the root.
         """
-        if isinstance(hybrid.pipeline[0], HybridPartition) and child_idx == 0:
+        if (
+            isinstance(hybrid.pipeline[0], HybridPartition)
+            and hybrid.children[child_idx].max_steps == 1
+        ):
             # Special case: if the correlated child is the data argument of a
             # partition operation, then the parent to snapshot is actually the
             # parent of the level containing the partition operation. In this
@@ -80,7 +84,6 @@ class HybridDecorrelater:
             result = self.make_decorrelate_parent(
                 hybrid.parent,
                 -1,
-                len(hybrid.parent.pipeline) - 1,
                 len(hybrid.parent.pipeline),
             )
             return result[0], result[1] + 1, 1
@@ -99,7 +102,7 @@ class HybridDecorrelater:
         original_max_steps: int = max_steps
         new_correlated_children: set[int] = set()
         for idx, child in enumerate(new_hybrid.children):
-            if child.min_steps < min_steps and child.max_steps <= original_max_steps:
+            if child.max_steps < original_max_steps:
                 new_children.append(child)
                 if idx in hybrid.correlated_children:
                     new_correlated_children.add(len(new_children) - 1)
@@ -294,8 +297,8 @@ class HybridDecorrelater:
                         new_parent_uni_keys,
                     )
                 if isinstance(operation, HybridCalculate):
-                    for str, expr in operation.new_expressions.items():
-                        operation.new_expressions[str] = operation.terms[name]
+                    for name, expr in operation.new_expressions.items():
+                        operation.new_expressions[name] = operation.terms[name]
                 if isinstance(operation, HybridFilter):
                     operation.condition = self.remove_correl_refs(
                         operation.condition,
@@ -351,6 +354,10 @@ class HybridDecorrelater:
             child_height += 1
             child_root = child_root.parent
         # Link the top level of the child subtree to the new parent.
+        original_join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
+            child.subtree.join_keys
+        )
+        original_general_join: HybridExpr | None = child.subtree.general_join_condition
         new_parent.add_successor(child_root)
         # Update the join keys to join on the unique keys of all the ancestors,
         # and the aggregation keys along with them.
@@ -375,6 +382,37 @@ class HybridDecorrelater:
                 parent_agg_keys.append(lhs_key)
             current_level = current_level.parent
             additional_levels += 1
+
+        # Copy over all existing join/general conditions into a new filter at
+        # the bottom of the child subtree, in case any new filters were pushed
+        # into those join connections that are now being deleted by the use of
+        # a new parent link.
+        new_conds: list[HybridExpr] = []
+        if original_join_keys is not None:
+            for lhs_key, rhs_key in original_join_keys:
+                if (lhs_key, rhs_key) in new_join_keys:
+                    continue
+                new_conds.append(
+                    HybridFunctionExpr(
+                        pydop.EQU,
+                        [lhs_key.shift_back(rhs_shift), rhs_key],
+                        BooleanType(),
+                    )
+                )
+        if original_general_join is not None:
+            new_conds.append(original_general_join.expand_sided(rhs_shift))
+        if len(new_conds) > 0:
+            conjunction: HybridExpr
+            if len(new_conds) == 1:
+                conjunction = new_conds[0]
+            else:
+                conjunction = HybridFunctionExpr(pydop.BAN, new_conds, BooleanType())
+            child.subtree.add_operation(
+                HybridFilter(child.subtree.pipeline[-1], conjunction)
+            )
+
+        # Replace the original parent link with the new one using the uniqueness
+        # keys of the parent to link it to the de-correlated child.
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
         # Replace any correlated references to the original parent with BACK references.
@@ -393,6 +431,13 @@ class HybridDecorrelater:
         )
         if child.connection_type.is_aggregation or is_faux_agg:
             child.subtree.agg_keys = new_agg_keys
+
+        # Mark the reverse cardinality as SINGULAR_ACCESS since each record of
+        # the de-correlated child can only match with one record of the
+        # original parent due to the join keys being based on the uniqueness
+        # keys of the original parent.
+        child.reverse_cardinality = JoinCardinality.SINGULAR_ACCESS
+
         # If the child is such that we don't need to keep rows from the parent
         # without a match, replace the parent & its ancestors with a
         # HybridPullUp node (and replace any other deleted nodes with no-ops).
@@ -472,7 +517,6 @@ class HybridDecorrelater:
                         self.make_decorrelate_parent(
                             original_parent,
                             child_idx,
-                            hybrid.children[child_idx].min_steps,
                             hybrid.children[child_idx].max_steps,
                         )
                     )

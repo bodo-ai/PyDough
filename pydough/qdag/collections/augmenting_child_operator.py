@@ -7,8 +7,6 @@ WHERE.
 __all__ = ["AugmentingChildOperator"]
 
 
-from functools import cache
-
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import CollationExpression, PyDoughExpressionQDAG
 
@@ -76,7 +74,6 @@ class AugmentingChildOperator(ChildOperator):
     def get_expression_position(self, expr_name: str) -> int:
         return self.preceding_context.get_expression_position(expr_name)
 
-    @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
         from pydough.qdag.expressions import Reference
 
@@ -84,10 +81,10 @@ class AugmentingChildOperator(ChildOperator):
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)
         elif isinstance(term, PyDoughExpressionQDAG):
-            term = Reference(self.preceding_context, term_name)
+            typ = self.preceding_context.get_expr(term_name).pydough_type
+            term = Reference(self.preceding_context, term_name, typ)
         return term
 
-    @cache
     def to_string(self) -> str:
         return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 

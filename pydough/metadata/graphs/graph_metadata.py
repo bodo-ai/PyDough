@@ -2,8 +2,16 @@
 Definition of PyDough metadata for a graph.
 """
 
+from typing import TYPE_CHECKING
+
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import HasType, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.errors import HasType, PyDoughMetadataException, is_valid_name
+
+if TYPE_CHECKING:
+    from pydough.pydough_operators import (
+        ExpressionFunctionOperator,
+    )
 
 
 class GraphMetadata(AbstractMetadata):
@@ -17,6 +25,7 @@ class GraphMetadata(AbstractMetadata):
         "version",
         "collections",
         "relationships",
+        "functions",
         "additional definitions",
         "verified pydough analysis",
         "extra semantic info",
@@ -34,12 +43,15 @@ class GraphMetadata(AbstractMetadata):
         synonyms: list[str] | None,
         extra_semantic_info: dict | None,
     ):
-        is_valid_name.verify(name, "graph name")
+        is_valid_name.verify(name, f"graph name {name!r}")
         self._additional_definitions: list[str] | None = additional_definitions
         self._verified_pydough_analysis: list[dict] | None = verified_pydough_analysis
         self._name: str = name
         self._collections: dict[str, AbstractMetadata] = {}
-        super().__init__(description, synonyms, extra_semantic_info)
+        self._functions: dict[str, ExpressionFunctionOperator] = {}
+        self._description = description
+        self._synonyms = synonyms
+        self._extra_semantic_info = extra_semantic_info
 
     @property
     def name(self) -> str:
@@ -54,6 +66,13 @@ class GraphMetadata(AbstractMetadata):
         The collections contained within the graph.
         """
         return self._collections
+
+    @property
+    def functions(self) -> dict[str, "ExpressionFunctionOperator"]:
+        """
+        The user defined functions contained within the graph.
+        """
+        return self._functions
 
     @property
     def error_name(self) -> str:
@@ -131,3 +150,46 @@ class GraphMetadata(AbstractMetadata):
 
     def __getitem__(self, key: str):
         return self.get_collection(key)
+
+    def get_function_names(self) -> list[str]:
+        """
+        Fetches all of the names of user defined functions in the graph.
+        """
+        return list(self.functions)
+
+    def get_function(self, function_name: str) -> "ExpressionFunctionOperator":
+        """
+        Fetches a specific function's metadata from within the graph by name.
+        """
+        if function_name not in self.functions:
+            raise PyDoughMetadataException(
+                f"{self.error_name} does not have a function named {function_name!r}"
+            )
+        return self.functions[function_name]
+
+    def add_function(self, name: str, function: "ExpressionFunctionOperator") -> None:
+        """
+        Adds a new user defined function to the graph.
+
+        Args:
+            `name`: the name of the function.
+            `function`: the function operator being inserted into the graph.
+
+        Raises:
+            `PyDoughMetadataException`: if `function` cannot be inserted
+            into the graph because of a name collision.
+        """
+        is_valid_name.verify(name, f"function name {name!r}")
+        if name == self.name:
+            raise PyDoughMetadataException(
+                f"Function name {name!r} cannot be the same as the graph name {self.name!r}"
+            )
+        if name in self.get_collection_names():
+            raise PyDoughMetadataException(
+                f"Function name {name!r} cannot be the same as a collection name in {self.error_name}"
+            )
+        if name in self.functions:
+            raise PyDoughMetadataException(
+                f"Function {name!r} already exists in {self.error_name}"
+            )
+        self.functions[name] = function

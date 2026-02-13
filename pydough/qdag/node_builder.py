@@ -4,12 +4,11 @@ Definitions of utilities used to build PyDough QDAG nodes.
 
 __all__ = ["AstNodeBuilder"]
 
-
+from pydough.errors import PyDoughMetadataException, PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
     PropertyMetadata,
-    PyDoughMetadataException,
     TableColumnMetadata,
 )
 from pydough.pydough_operators import (
@@ -18,7 +17,11 @@ from pydough.pydough_operators import (
     PyDoughOperator,
     builtin_registered_operators,
 )
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
+)
 from pydough.types import PyDoughType
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
@@ -33,7 +36,6 @@ from .collections import (
     TopK,
     Where,
 )
-from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -156,14 +158,15 @@ class AstNodeBuilder:
         )
 
     def build_reference(
-        self, collection: PyDoughCollectionQDAG, name: str
+        self, collection: PyDoughCollectionQDAG, name: str, typ: PyDoughType
     ) -> Reference:
         """
-        Creates a new reference to an expression from a preceding collection.
+        Creates a new reference to an expression in the collection.
 
         Args:
             `collection`: the collection that the reference comes from.
             `name`: the name of the expression being referenced.
+            `typ`: the PyDough type of the expression being referenced.
 
         Returns:
             The newly created PyDough Reference.
@@ -172,7 +175,7 @@ class AstNodeBuilder:
             `PyDoughQDAGException`: if `name` does not refer to an expression in
             the collection.
         """
-        return Reference(collection, name)
+        return Reference(collection, name, typ)
 
     def build_child_reference_expression(
         self,
@@ -259,95 +262,100 @@ class AstNodeBuilder:
         self,
         preceding_context: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
+        terms: list[tuple[str, PyDoughExpressionQDAG]],
     ) -> Calculate:
         """
-        Creates a CALCULATE instance, but `with_terms` still needs to be called on
-        the output.
+        Creates a CALCULATE instance.
 
         Args:
             `preceding_context`: the preceding collection.
-            `children`: the child collections accessed by the CALCULATE term.
+            `children`: the child collections accessed by the CALCULATE clause.
+            `terms`: the terms to be defined in the CALCULATE.
 
         Returns:
-            The newly created PyDough CALCULATE term.
+            The newly created PyDough CALCULATE clause.
         """
-        return Calculate(preceding_context, children)
+        return Calculate(preceding_context, children, terms)
 
     def build_where(
         self,
         preceding_context: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
+        condition: PyDoughExpressionQDAG,
     ) -> Where:
         """
-        Creates a WHERE instance, but `with_condition` still needs to be called on
-        the output.
+        Creates a WHERE instance.
 
         Args:
             `preceding_context`: the preceding collection.
             `children`: the child collections accessed by the WHERE term.
+            `condition`: the condition to be applied in the WHERE clause.
 
         Returns:
             The newly created PyDough WHERE instance.
         """
-        return Where(preceding_context, children)
+        return Where(preceding_context, children, condition)
 
     def build_order(
         self,
         preceding_context: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
+        collation: list[CollationExpression],
     ) -> OrderBy:
         """
-        Creates a ORDERBY instance, but `with_collation` still needs to be called on
-        the output.
+        Creates a ORDERBY instance.
 
         Args:
             `preceding_context`: the preceding collection.
             `children`: the child collections accessed by the ORDERBY term.
+            `collation`: the collation expressions to be used in the ORDERBY.
 
         Returns:
             The newly created PyDough ORDERBY instance.
         """
-        return OrderBy(preceding_context, children)
+        return OrderBy(preceding_context, children, collation)
 
     def build_top_k(
         self,
         preceding_context: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
         records_to_keep: int,
+        collation: list[CollationExpression],
     ) -> TopK:
         """
-        Creates a TOP K instance, but `with_collation` still needs to be called on
-        the output.
+        Creates a TOP K instance.
 
         Args:
             `preceding_context`: the preceding collection.
             `children`: the child collections accessed by the ORDERBY term.
             `records_to_keep`: the `K` value in the TOP K.
+            `collation`: the collation expressions to be used in the TOP K.
 
         Returns:
             The newly created PyDough TOP K instance.
         """
-        return TopK(preceding_context, children, records_to_keep)
+        return TopK(preceding_context, children, records_to_keep, collation)
 
     def build_partition(
         self,
         preceding_context: PyDoughCollectionQDAG,
         child: PyDoughCollectionQDAG,
         name: str,
+        keys: list[ChildReferenceExpression],
     ) -> PartitionBy:
         """
-        Creates a PARTITION BY instance, but `with_keys` still needs to be called on
-        the output.
+        Creates a PARTITION BY instance.
 
         Args:
             `preceding_context`: the preceding collection.
             `child`: the child that is the input to the PARTITION BY term.
             `name`: the name that is used to refer to the partitioned data.
+            `keys`: the partitioning keys to be used in the PARTITION BY.
 
         Returns:
             The newly created PyDough PARTITION BY instance.
         """
-        return PartitionBy(preceding_context, child, name)
+        return PartitionBy(preceding_context, child, name, keys)
 
     def build_child_reference_collection(
         self,
@@ -392,3 +400,26 @@ class AstNodeBuilder:
             The newly created PyDough SINGULAR instance.
         """
         return Singular(preceding_context)
+
+    def build_generated_collection(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+        user_collection: PyDoughUserGeneratedCollection,
+    ) -> PyDoughUserGeneratedCollectionQDag:
+        """
+        Creates a new user-defined collection.
+
+        Args:
+            `preceding_context`: the preceding collection that the
+            user-defined collection is based on.
+            `user_collection`: the user-defined collection to be created.
+
+        Returns:
+            The newly created user-defined collection.
+        """
+        collection_qdag: PyDoughUserGeneratedCollectionQDag = (
+            PyDoughUserGeneratedCollectionQDag(
+                ancestor=preceding_context, collection=user_collection
+            )
+        )
+        return collection_qdag

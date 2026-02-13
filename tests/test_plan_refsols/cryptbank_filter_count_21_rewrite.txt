@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(c_birthday, ['1990-07-31', '1991-03-13', '1992-05-06', '1993-01-01', '1994-06-15']:array[unknown]), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_birthday': c_birthday})

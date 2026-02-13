@@ -29,8 +29,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     datediff,
     datetime_sampler,
+    extract_colors,
     floor_and_ceil,
     floor_and_ceil_2,
+    get_part_multiple,
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
@@ -49,6 +51,19 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     week_offset,
     window_sliding_frame_relsize,
     window_sliding_frame_relsum,
+)
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+    simple_range_3,
+    simple_range_4,
+    simple_range_5,
+    user_range_collection_1,
+    user_range_collection_2,
+    user_range_collection_3,
+    user_range_collection_4,
+    user_range_collection_5,
+    user_range_collection_6,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -137,6 +152,12 @@ from tests.testing_utilities import (
             id="simple_var_std",
         ),
         pytest.param(
+            extract_colors,
+            None,
+            "extract_colors",
+            id="extract_colors",
+        ),
+        pytest.param(
             quantile_function_test_1, None, "quantile_test_1", id="quantile_test_1"
         ),
         pytest.param(
@@ -183,10 +204,76 @@ from tests.testing_utilities import (
         pytest.param(
             casting_functions, None, "casting_functions", id="casting_functions"
         ),
+        pytest.param(
+            simple_range_1,
+            None,
+            "simple_range_1",
+            id="simple_range_1",
+        ),
+        pytest.param(
+            simple_range_2,
+            None,
+            "simple_range_2",
+            id="simple_range_2",
+        ),
+        pytest.param(
+            simple_range_3,
+            None,
+            "simple_range_3",
+            id="simple_range_3",
+        ),
+        pytest.param(
+            simple_range_4,
+            None,
+            "simple_range_4",
+            id="simple_range_4",
+        ),
+        pytest.param(
+            simple_range_5,
+            None,
+            "simple_range_5",
+            id="simple_range_5",
+        ),
+        pytest.param(
+            user_range_collection_1,
+            None,
+            "user_range_collection_1",
+            id="user_range_collection_1",
+        ),
+        pytest.param(
+            user_range_collection_2,
+            None,
+            "user_range_collection_2",
+            id="user_range_collection_2",
+        ),
+        pytest.param(
+            user_range_collection_3,
+            None,
+            "user_range_collection_3",
+            id="user_range_collection_3",
+        ),
+        pytest.param(
+            user_range_collection_4,
+            None,
+            "user_range_collection_4",
+            id="user_range_collection_4",
+        ),
+        pytest.param(
+            user_range_collection_5,
+            None,
+            "user_range_collection_5",
+            id="user_range_collection_5",
+        ),
+        pytest.param(
+            user_range_collection_6,
+            None,
+            "user_range_collection_6",
+            id="user_range_collection_6",
+        ),
     ],
 )
 def test_pydough_to_sql_tpch(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     test_name: str,
     get_sample_graph: graph_fetcher,
@@ -260,10 +347,13 @@ def test_pydough_to_sql_tpch(
             "Broker",
             id="window_sliding_frame_relsum",
         ),
+        pytest.param(
+            get_part_multiple, "get_part_multiple", "Broker", id="get_part_multiple"
+        ),
     ],
 )
 def test_pydough_to_sql_defog(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,

@@ -1,16 +1,9 @@
-WITH _s1 AS (
-  SELECT
-    COUNT(*) AS total_transactions,
-    sender_id
-  FROM main.wallet_transactions_daily
-  WHERE
-    sender_type = 0
-  GROUP BY
-    sender_id
-)
 SELECT
-  users.uid AS user_id,
-  _s1.total_transactions
+  wallet_transactions_daily.sender_id AS user_id,
+  COUNT(*) AS total_transactions
 FROM main.users AS users
-JOIN _s1 AS _s1
-  ON _s1.sender_id = users.uid
+JOIN main.wallet_transactions_daily AS wallet_transactions_daily
+  ON users.uid = wallet_transactions_daily.sender_id
+  AND wallet_transactions_daily.sender_type = 0
+GROUP BY
+  1

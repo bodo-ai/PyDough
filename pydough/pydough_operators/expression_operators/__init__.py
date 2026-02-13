@@ -32,6 +32,7 @@ __all__ = [
     "FLOAT",
     "FLOOR",
     "GEQ",
+    "GETPART",
     "GRT",
     "HAS",
     "HASNOT",
@@ -57,13 +58,14 @@ __all__ = [
     "MONOTONIC",
     "MONTH",
     "MUL",
+    "MaskedExpressionFunctionOperator",
     "NDISTINCT",
     "NEQ",
     "NEXT",
     "NOT",
     "PERCENTILE",
     "POPULATION_STD",
-    "POPULATION_VARIANCE",
+    "POPULATION_VAR",
     "POW",
     "POWER",
     "PRESENT",
@@ -80,7 +82,7 @@ __all__ = [
     "ROUND",
     "RPAD",
     "SAMPLE_STD",
-    "SAMPLE_VARIANCE",
+    "SAMPLE_VAR",
     "SECOND",
     "SIGN",
     "SLICE",
@@ -93,6 +95,9 @@ __all__ = [
     "STRIP",
     "SUB",
     "SUM",
+    "SqlAliasExpressionFunctionOperator",
+    "SqlMacroExpressionFunctionOperator",
+    "SqlWindowAliasExpressionFunctionOperator",
     "UPPER",
     "VAR",
     "YEAR",
@@ -103,6 +108,7 @@ from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator import PyDoughExpressionOperator
 from .expression_window_operators import ExpressionWindowOperator
 from .keyword_branching_operators import KeywordBranchingExpressionFunctionOperator
+from .masked_expression_function_operator import MaskedExpressionFunctionOperator
 from .registered_expression_operators import (
     ABS,
     ABSENT,
@@ -128,6 +134,7 @@ from .registered_expression_operators import (
     FLOAT,
     FLOOR,
     GEQ,
+    GETPART,
     GRT,
     HAS,
     HASNOT,
@@ -158,7 +165,7 @@ from .registered_expression_operators import (
     NOT,
     PERCENTILE,
     POPULATION_STD,
-    POPULATION_VARIANCE,
+    POPULATION_VAR,
     POW,
     POWER,
     PRESENT,
@@ -174,7 +181,7 @@ from .registered_expression_operators import (
     ROUND,
     RPAD,
     SAMPLE_STD,
-    SAMPLE_VARIANCE,
+    SAMPLE_VAR,
     SECOND,
     SIGN,
     SLICE,
@@ -190,4 +197,9 @@ from .registered_expression_operators import (
     UPPER,
     VAR,
     YEAR,
+)
+from .sql_alias_expression_function_operators import SqlAliasExpressionFunctionOperator
+from .sql_macro_expression_function_operators import SqlMacroExpressionFunctionOperator
+from .sql_window_alias_expression_function_operators import (
+    SqlWindowAliasExpressionFunctionOperator,
 )

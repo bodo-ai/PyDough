@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=MONOTONIC(Timestamp('2020-03-28 09:20:00'):datetime, UNMASK::(DATETIME([a_open_ts], '+123456789 seconds')), datetime.datetime(2020, 9, 20, 8, 30):datetime), columns={})
+   SCAN(table=CRBNK.ACCOUNTS, columns={'a_open_ts': a_open_ts})

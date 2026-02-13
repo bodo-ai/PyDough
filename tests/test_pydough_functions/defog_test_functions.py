@@ -61,6 +61,37 @@ __all__ = [
     "impl_defog_dealership_gen3",
     "impl_defog_dealership_gen4",
     "impl_defog_dealership_gen5",
+    "impl_defog_dermtreatment_adv1",
+    "impl_defog_dermtreatment_adv10",
+    "impl_defog_dermtreatment_adv11",
+    "impl_defog_dermtreatment_adv12",
+    "impl_defog_dermtreatment_adv13",
+    "impl_defog_dermtreatment_adv14",
+    "impl_defog_dermtreatment_adv15",
+    "impl_defog_dermtreatment_adv16",
+    "impl_defog_dermtreatment_adv2",
+    "impl_defog_dermtreatment_adv3",
+    "impl_defog_dermtreatment_adv4",
+    "impl_defog_dermtreatment_adv5",
+    "impl_defog_dermtreatment_adv6",
+    "impl_defog_dermtreatment_adv7",
+    "impl_defog_dermtreatment_adv8",
+    "impl_defog_dermtreatment_adv9",
+    "impl_defog_dermtreatment_basic1",
+    "impl_defog_dermtreatment_basic10",
+    "impl_defog_dermtreatment_basic2",
+    "impl_defog_dermtreatment_basic3",
+    "impl_defog_dermtreatment_basic4",
+    "impl_defog_dermtreatment_basic5",
+    "impl_defog_dermtreatment_basic6",
+    "impl_defog_dermtreatment_basic7",
+    "impl_defog_dermtreatment_basic8",
+    "impl_defog_dermtreatment_basic9",
+    "impl_defog_dermtreatment_gen1",
+    "impl_defog_dermtreatment_gen2",
+    "impl_defog_dermtreatment_gen3",
+    "impl_defog_dermtreatment_gen4",
+    "impl_defog_dermtreatment_gen5",
     "impl_defog_ewallet_adv1",
     "impl_defog_ewallet_adv10",
     "impl_defog_ewallet_adv11",
@@ -90,6 +121,7 @@ __all__ = [
 ]
 
 import datetime
+
 
 # ruff: noqa
 # mypy: ignore-errors
@@ -255,7 +287,7 @@ def impl_defog_broker_adv8():
         & (date_time >= DATETIME("now", "start of week", "-1 week"))
     )
     return Broker.CALCULATE(
-        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) > 0),
+        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) != 0),
         total_amount=SUM(selected_txns.amount),
     )
 
@@ -681,7 +713,7 @@ def impl_defog_dealership_adv2():
     return (
         salespeople.WHERE(HAS(selected_sales))
         .CALCULATE(_id, first_name, last_name, num_sales=COUNT(selected_sales))
-        .ORDER_BY(num_sales.DESC())
+        .ORDER_BY(num_sales.DESC(), _id.ASC())
     )
 
 
@@ -695,8 +727,9 @@ def impl_defog_dealership_adv3():
     model names, engine_type and vin_number, match case-insensitively and allow
     partial matches using LIKE with wildcards.
     """
-    return cars.WHERE(CONTAINS(LOWER(vin_number), "m5")).CALCULATE(
-        make, model, num_sales=COUNT(sale_records)
+    selected_cars = cars.WHERE(CONTAINS(LOWER(vin_number), "m5"))
+    return selected_cars.PARTITION(name="car_models", by=(make, model)).CALCULATE(
+        make, model, num_sales=COUNT(cars.sale_records)
     )
 
 
@@ -710,12 +743,14 @@ def impl_defog_dealership_adv4():
     """
     date_threshold = DATETIME("now", "-30 days")
 
-    selected_sales = sale_records.WHERE(sale_date >= date_threshold)
+    selected_sales = cars.WHERE(CONTAINS(LOWER(make), "toyota")).sale_records.WHERE(
+        sale_date >= date_threshold
+    )
 
-    return cars.WHERE(CONTAINS(LOWER(make), "toyota")).CALCULATE(
+    return Dealership.CALCULATE(
         num_sales=COUNT(selected_sales),
         total_revenue=KEEP_IF(
-            SUM(selected_sales.sale_price), COUNT(selected_sales) > 0
+            SUM(selected_sales.sale_price), COUNT(selected_sales) != 0
         ),
     )
 
@@ -883,7 +918,7 @@ def impl_defog_dealership_adv12():
     price that was sold on the same day it went out of inventory?
     """
     same_date_snapshot = car.inventory_snapshots.WHERE(
-        (snapshot_date == sale_date) & (is_in_inventory == 0)
+        (snapshot_date == sale_date) & (~is_in_inventory)
     )
 
     return (
@@ -1298,7 +1333,7 @@ def impl_defog_ewallet_adv4():
     # Calculate the number of transactions and the total amount for the filtered transactions
     return Ewallet.CALCULATE(
         num_transactions=COUNT(us_transactions),
-        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) > 0),
+        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) != 0),
     )
 
 
@@ -1744,3 +1779,1346 @@ def impl_defog_ewallet_gen5():
     return users.WHERE(HASNOT(selected_notifications)).CALCULATE(
         username=username, email=email, created_at=created_at
     )
+
+
+def impl_defog_dermtreatment_basic1():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the top 3 doctor specialties by total drug amount prescribed for
+    treatments started in the past 6 calendar months? Return the specialty,
+    number of treatments, and total drug amount.
+    """
+    # Obtain the specialty groups
+    specialties = doctors.PARTITION(name="specialties", by=specialty)
+
+    # Find the treatments from the doctors within the specialty in the past 6 months
+    recent_treatments = doctors.prescribed_treatments.WHERE(
+        start_date >= DATETIME("now", "-6 months", "start of day")
+    )
+
+    # Calculate totals for each specialty
+    return (
+        specialties.WHERE(HAS(recent_treatments))
+        .CALCULATE(
+            specialty,
+            num_treatments=COUNT(recent_treatments),
+            total_drug_amount=SUM(recent_treatments.total_drug_amount),
+        )
+        .TOP_K(3, by=total_drug_amount.DESC())
+    )
+
+
+def impl_defog_dermtreatment_basic2():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    For treatments that ended in the year 2022 (from Jan 1st to Dec 31st inclusive),
+    what is the average PASI score at day 100 and number of distinct patients
+    per insurance type? Return the top 5 insurance types sorted by lowest average
+    PASI score first.
+    """
+
+    # First, filter treatments to those that ended in 2022 and have a recorded day 100 PASI score.
+    # Then, extract the insurance type from the associated patient to use as a partition key.
+    treatments_info = treatments.WHERE(
+        (YEAR(end_date) == 2022)
+        & (HAS(outcome_records.WHERE(PRESENT(day100_pasi_score))))
+    ).CALCULATE(insurance_type=patient.insurance_type)
+
+    # Partition the filtered treatments by insurance type. For each type, calculate the
+    # average day 100 PASI score and the count of distinct patients.
+    return (
+        treatments_info.PARTITION(name="insurance_groups", by=insurance_type)
+        .CALCULATE(
+            insurance_type=insurance_type,
+            num_distinct_patients=NDISTINCT(treatments.patient_id),
+            avg_pasi_score_day100=AVG(treatments.outcome_records.day100_pasi_score),
+        )
+        .TOP_K(5, by=avg_pasi_score_day100.ASC())
+    )
+
+
+def impl_defog_dermtreatment_basic3():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the top 5 drugs by number of treatments and average drug amount per
+    treatment? Return the drug name, number of treatments, and average drug amount.
+    """
+
+    return drugs.CALCULATE(
+        drug_name,
+        num_treatments=COUNT(treatments_used_in),
+        avg_drug_amount=AVG(treatments_used_in.total_drug_amount),
+    ).TOP_K(
+        5,
+        by=(
+            num_treatments.DESC(),
+            avg_drug_amount.DESC(),
+            drug_name.ASC(),
+        ),
+    )
+
+
+def impl_defog_dermtreatment_basic4():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
+    of distinct patients? Return the diagnosis name, number of patients, and
+    maximum itch score. Only include patients with a registered outcome
+    """
+
+    selected_treatments = treatments_for.WHERE(HAS(outcome_records))
+    return (
+        diagnoses.WHERE(HAS(selected_treatments)).CALCULATE(
+            diagnosis_name=name,
+            num_patients=NDISTINCT(selected_treatments.patient_id),
+            max_itch_score=MAX(selected_treatments.outcome_records.day100_itch_vas),
+        )
+    ).TOP_K(3, by=(max_itch_score.DESC(), num_patients.DESC()))
+
+
+def impl_defog_dermtreatment_basic5():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the distinct list of doctor IDs, first names and last names that have
+    prescribed treatments.
+    """
+
+    return doctors.WHERE(HAS(prescribed_treatments)).CALCULATE(
+        doc_id, first_name, last_name
+    )
+
+
+def impl_defog_dermtreatment_basic6():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the distinct list of patient IDs, first names and last names that have
+    outcome assessments.
+    """
+    return patients.WHERE(HAS(treatments_received.outcome_records)).CALCULATE(
+        patient_id, first_name, last_name
+    )
+
+
+def impl_defog_dermtreatment_basic7():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the top 3 insurance types by average patient height in cm? Return
+    the insurance type, average height and average weight.
+    """
+
+    return (
+        patients.PARTITION(name="insurance_groups", by=insurance_type)
+        .CALCULATE(
+            insurance_type,
+            avg_height=AVG(patients.height),
+            avg_weight=AVG(patients.weight),
+        )
+        .TOP_K(3, by=avg_height.DESC())
+    )
+
+
+def impl_defog_dermtreatment_basic8():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the top 2 specialties by number of doctors? Return the specialty
+    and number of doctors.
+    """
+
+    return (
+        doctors.PARTITION(name="specialty_groups", by=specialty)
+        .CALCULATE(specialty, num_doctors=COUNT(doctors))
+        .TOP_K(2, by=num_doctors.DESC())
+    )
+
+
+def impl_defog_dermtreatment_basic9():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the patient IDs, first names and last names of patients who have not
+    received any treatments.
+    """
+
+    return patients.WHERE(HASNOT(treatments_received)).CALCULATE(
+        patient_id, first_name, last_name
+    )
+
+
+def impl_defog_dermtreatment_basic10():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the drug IDs and names of drugs that have not been used in any
+    treatments.
+    """
+
+    return drugs.WHERE(HASNOT(treatments_used_in)).CALCULATE(drug_id, drug_name)
+
+
+def impl_defog_dermtreatment_adv1():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Which states do doctors who have prescribed biologic drugs reside in?
+    Return the distinct states.
+    """
+
+    doctors_biologic_prescribed = doctors.prescribed_treatments.WHERE(
+        drug.drug_type == "biologic"
+    ).CALCULATE(state=doctor.state)
+
+    return doctors_biologic_prescribed.PARTITION(name="states", by=state).CALCULATE(
+        state
+    )
+
+
+def impl_defog_dermtreatment_adv2():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the average weight in kg of patients treated with the drug named
+    'Drugalin'? Return the average weight.
+    """
+    return DermTreatment.CALCULATE(
+        avg_weight=AVG(
+            treatments.WHERE(LOWER(drug.drug_name) == "drugalin").patient.weight
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv3():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    I want the adverse events that have been reported for treatments involving
+    topical drugs. Give me the description, treatment id, drug id and name.
+    """
+
+    return adverse_events.WHERE(treatment.drug.drug_type == "topical").CALCULATE(
+        description,
+        treatment_id,
+        treatment.drug.drug_id,
+        treatment.drug.drug_name,
+    )
+
+
+def impl_defog_dermtreatment_adv4():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many patients have been diagnosed with 'Psoriasis vulgaris' and treated
+    with a biologic drug? Return the distinct count of patients.
+    """
+
+    return DermTreatment.CALCULATE(
+        patient_count=COUNT(
+            patients.WHERE(
+                HAS(
+                    treatments_received.WHERE(
+                        (LOWER(diagnosis.name) == "psoriasis vulgaris")
+                        & (LOWER(drug.drug_type) == "biologic")
+                    )
+                )
+            )
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv5():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the NPI for each year? Return the year, number of new patients,
+    and NPI
+    """
+
+    # Step 1: For each patient who has received treatment, find their first treatment year
+    patients_with_first_treatment = patients.WHERE(HAS(treatments_received)).CALCULATE(
+        first_treatment_year=MIN(
+            treatments_received.CALCULATE(start_year=YEAR(start_date)).start_year
+        ),
+    )
+
+    # Step 2: Group by year to count new patients per year
+    new_patients_by_year = patients_with_first_treatment.PARTITION(
+        name="years", by=first_treatment_year
+    ).CALCULATE(number_of_new_patients=COUNT(patients))
+
+    # Step 3: Calculate NPI (increase compared to previous year)
+    return (
+        new_patients_by_year.CALCULATE(
+            npi=number_of_new_patients
+            - DEFAULT_TO(
+                PREV(number_of_new_patients, by=first_treatment_year.ASC()),
+                number_of_new_patients,
+            ),
+        )
+        .CALCULATE(
+            year=STRING(first_treatment_year),
+            number_of_new_patients=number_of_new_patients,
+            npi=KEEP_IF(npi, npi != 0),
+        )
+        .ORDER_BY(year.ASC())
+    )
+
+
+def impl_defog_dermtreatment_adv6():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return each doctor's doc_id, specialty, number of distinct drugs prescribed,
+    and SDR
+    """
+
+    # First, calculate the number of distinct drugs prescribed by each doctor
+    doctor_drug_counts = doctors.CALCULATE(
+        num_distinct_drugs=NDISTINCT(prescribed_treatments.drug_id)
+    ).WHERE(HAS(prescribed_treatments))
+
+    # Then partition by specialty to enable ranking within each specialty
+    specialty_groups = doctor_drug_counts.PARTITION(name="specialties", by=specialty)
+
+    # Calculate the rank within each specialty
+    return specialty_groups.doctors.CALCULATE(
+        doc_id=doc_id,
+        specialty=specialty,
+        num_distinct_drugs=num_distinct_drugs,
+        SDRSDR=RANKING(
+            by=num_distinct_drugs.DESC(), per="specialties", allow_ties=True, dense=True
+        ),
+    )
+
+
+def impl_defog_dermtreatment_adv7():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many treatments did the patient Alice have in the last 6 months, not
+    including the current month?
+    """
+
+    start_of_current_month = DATETIME("now", "start of month")
+    start_of_period = DATETIME("now", "start of month", "-6 months")
+
+    selected_treatments = treatments.WHERE(
+        (start_date >= start_of_period)
+        & (start_date < start_of_current_month)
+        & (LOWER(patient.first_name) == "alice")
+    )
+
+    return DermTreatment.CALCULATE(num_treatments=COUNT(selected_treatments))
+
+
+def impl_defog_dermtreatment_adv8():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the PMPD and PMTC for each of the last 12 months, not including
+    the current month
+    """
+
+    # Get treatments with month info
+    treatment_info = treatments.CALCULATE(
+        start_month=DATETIME(start_date, "start of month"),
+    ).WHERE(
+        (start_month < DATETIME("now", "start of month"))
+        & (start_month >= DATETIME("now", "start of month", "-12 months"))
+    )
+
+    # Partition by month and calculate counts
+    return (
+        treatment_info.PARTITION(name="months", by=start_month)
+        .CALCULATE(
+            start_month=JOIN_STRINGS(
+                "-", YEAR(start_month), LPAD(MONTH(start_month), 2, "0")
+            ),
+            PMPD=NDISTINCT(treatments.diagnosis_id),  # Distinct diagnoses per month
+            PMTC=COUNT(treatments),  # Total treatments per month
+        )
+        .ORDER_BY(start_month.DESC())
+    )
+
+
+def impl_defog_dermtreatment_adv9():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many distinct patients had treatments in each of the last 3 months, not
+    including the current month? Out of these, how many had treatments with
+    biologic drugs? Return the month, patient count, and biologic treatment count.
+    """
+
+    # Get treatments from the last 3 months (excluding current month)
+    # First, calculate the date range for the last 3 months
+    recent_treatments = treatments.WHERE(
+        (start_date >= DATETIME("now", "start of month", "-3 months"))
+        & (start_date < DATETIME("now", "start of month"))
+    ).CALCULATE(
+        patient_id,
+        treatment_month=JOIN_STRINGS(
+            "-", YEAR(start_date), LPAD(MONTH(start_date), 2, "0")
+        ),
+        is_biologic=drug.drug_type == "biologic",
+    )
+
+    # Partition by month to group treatments
+    monthly_groups = recent_treatments.PARTITION(name="months", by=treatment_month)
+
+    # Calculate distinct patient counts for each month
+    return monthly_groups.CALCULATE(
+        month=treatment_month,
+        patient_count=NDISTINCT(treatments.patient_id),
+        biologic_treatment_count=NDISTINCT(treatments.WHERE(is_biologic).patient_id),
+    ).ORDER_BY(month.DESC())
+
+
+def impl_defog_dermtreatment_adv10():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Which drug had the highest number of adverse events reported within the same
+    month as the treatment start date (adverse event or treatment can be earlier
+    than the other)? Return the number of adverse events along with the drug's
+    id and name.
+    """
+
+    # Identify all the adverse events for each drug that were the same month the
+    # the treatment started in.
+    same_month_adverse_events = treatments_used_in.CALCULATE(
+        treatment_start_date=start_date
+    ).adverse_events.WHERE(
+        DATETIME(treatment_start_date, "start of month")
+        == DATETIME(reported_date, "start of month")
+    )
+
+    # For each drug count the number of such events
+    drug_ae_counts = drugs.WHERE(HAS(same_month_adverse_events)).CALCULATE(
+        drug_id, drug_name, num_adverse_events=COUNT(same_month_adverse_events)
+    )
+
+    # Find the drug with the highest number of adverse events
+    return drug_ae_counts.TOP_K(1, by=num_adverse_events.DESC())
+
+
+def impl_defog_dermtreatment_adv11():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many patients have a Gmail or Yahoo email address?
+    """
+
+    return DermTreatment.CALCULATE(
+        num_patients_with_gmail_or_yahoo=COUNT(
+            patients.WHERE(
+                ENDSWITH(email, "@gmail.com") | ENDSWITH(email, "@yahoo.com")
+            )
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv12():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the first name, last name and specialty of doctors whose first name
+    starts with 'J' or last name contains 'son', case-insensitive.
+    """
+
+    return doctors.WHERE(
+        STARTSWITH(LOWER(first_name), "j") | CONTAINS(LOWER(last_name), "son")
+    ).CALCULATE(first_name, last_name, specialty)
+
+
+def impl_defog_dermtreatment_adv13():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the PIC for female patients?
+    """
+
+    return DermTreatment.CALCULATE(
+        PIC_female=COUNT(
+            patients.WHERE((gender == "Female") & (insurance_type == "private"))
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv14():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the CAW for male patients
+    """
+
+    return DermTreatment.CALCULATE(
+        CAW_male=AVG(patients.WHERE(gender == "Male").weight)
+    )
+
+
+def impl_defog_dermtreatment_adv15():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Calculate the average DDD for each drug. Return the drug name and average
+    DDD value.
+    """
+    # Find all treatments the drug was used in that have finished
+    selected_treatments = treatments_used_in.WHERE(PRESENT(end_date))
+
+    return drugs.WHERE(HAS(selected_treatments)).CALCULATE(
+        drug_name,
+        avg_ddd=AVG(
+            selected_treatments.CALCULATE(
+                ddd=total_drug_amount / DATEDIFF("days", start_date, end_date),
+            ).ddd
+        ),
+    )
+
+
+def impl_defog_dermtreatment_adv16():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the overall D7D100PIR across all treatments? Return the percentage
+    value.
+    """
+
+    # Filter outcomes to only include those with non-null PASI scores for both
+    # day 7 and day 100
+    valid_outcomes = outcomes.WHERE(
+        PRESENT(day7_pasi_score) & PRESENT(day100_pasi_score)
+    )
+
+    # Calculate the overall D7D100PIR
+    return DermTreatment.CALCULATE(
+        d7d100pir=(
+            AVG(valid_outcomes.day100_pasi_score) - AVG(valid_outcomes.day7_pasi_score)
+        )
+        / AVG(valid_outcomes.day7_pasi_score)
+        * 100
+    )
+
+
+def impl_defog_dermtreatment_gen1():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the treatment id, treatment start date, adverse event date and
+    description of all adverse events that occured within 10 days after starting
+    treatment
+    """
+    return adverse_events.WHERE(
+        DATEDIFF("days", treatment.start_date, reported_date) <= 10
+    ).CALCULATE(
+        treatment_id,
+        treatment_start_date=treatment.start_date,
+        adverse_event_date=reported_date,
+        description=description,
+    )
+
+
+def impl_defog_dermtreatment_gen2():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    List the last name, year of registration, and first treatment (date and id)
+    by doctors who were registered 2 years ago.
+    """
+    # Doctor's first treatment
+    first_treatment = prescribed_treatments.BEST(per="doctors", by=start_date.ASC())
+
+    # Find doctors registered 2 years ago and their first treatment
+    return doctors.WHERE(year_reg == YEAR(DATETIME("now", "-2 years"))).CALCULATE(
+        last_name,
+        year_reg,
+        first_treatment_date=first_treatment.start_date,
+        first_treatment_id=first_treatment.treatment_id,
+    )
+
+
+def impl_defog_dermtreatment_gen3():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is average age (in integer years) of all registered male patients with
+    private insurance currently?
+    """
+    return DermTreatment.CALCULATE(
+        average_age=AVG(
+            patients.WHERE((gender == "Male") & (insurance_type == "private"))
+            .CALCULATE(age_in_years=DATEDIFF("years", date_of_birth, DATETIME("now")))
+            .age_in_years
+        )
+    )
+
+
+def impl_defog_dermtreatment_gen4():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Show all placebo treatment id, start and end date, where there
+    concomitant_meds were started within 2 weeks of starting the treatment.
+    Also return the start and end dates of all concomitant drug usage.
+    """
+    return (
+        treatments.WHERE(is_placebo == True)
+        .concomitant_meds.WHERE(
+            treatment.is_placebo
+            & (DATEDIFF("days", treatment.start_date, start_date) <= 14)
+        )
+        .CALCULATE(
+            treatment.treatment_id,
+            treatment_start_date=treatment.start_date,
+            treatment_end_date=treatment.end_date,
+            concomitant_med_start_date=start_date,
+            concomitant_med_end_date=end_date,
+        )
+    )
+
+
+def impl_defog_dermtreatment_gen5():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many treatments for diagnoses containing 'psoriasis' (match with
+    wildcards case-insensitively) involve drugs that have been FDA-approved and
+    the treatments have ended within the last 6 months from today?
+    """
+    return DermTreatment.CALCULATE(
+        num_treatments=COUNT(
+            treatments.WHERE(
+                CONTAINS(LOWER(diagnosis.name), "psoriasis")
+                & PRESENT(drug.fda_approval_date)
+                & PRESENT(end_date)
+                & (end_date >= DATETIME("now", "-6 months", "start of day"))
+            )
+        )
+    )
+
+
+def impl_defog_academic_gen1():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which authors have written publications in both the domain
+    'Machine Learning' and the domain 'Data Science'?
+    """
+    selected_domains = author_publications.publication.publication_domains.WHERE(
+        ISIN(domain.name, ("Data Science", "Machine Learning"))
+    )
+    return authors.WHERE(NDISTINCT(selected_domains.domain_id) == 2).CALCULATE(name)
+
+
+def impl_defog_academic_gen2():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of citations received by each author?
+    """
+    publications_selected = author_publications.publication
+    return authors.WHERE(HAS(publications_selected)).CALCULATE(
+        name, total_citations=SUM(publications_selected.citation_num)
+    )
+
+
+def impl_defog_academic_gen3():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of publications published in each year?
+    """
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year, COUNT(publications)
+    )
+
+
+def impl_defog_academic_gen4():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the average number of references cited by publications in each
+    domain name?
+    """
+    return domains.CALCULATE(
+        name, average_references=AVG(domain_publications.publication.reference_num)
+    )
+
+
+def impl_defog_academic_gen5():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the average number of citations received by publications in each year?
+    """
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year, average_citations=AVG(publications.citation_num)
+    )
+
+
+def impl_defog_academic_gen6():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the title of the publication that has received the highest number of
+    citations?
+    """
+    return publications.CALCULATE(title).TOP_K(1, by=citation_num.DESC())
+
+
+def impl_defog_academic_gen7():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the top 5 domains with the highest number of authors associated
+    with them?
+    """
+    return domains.CALCULATE(
+        name, author_count=NDISTINCT(domain_authors.author_id)
+    ).TOP_K(5, by=(author_count.DESC(), name.DESC()))
+
+
+def impl_defog_academic_gen8():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the top 3 titles of the publications that have the highest number
+    of references cited, ordered by the number of references cited in descending
+    order?
+    """
+    return publications.CALCULATE(title).TOP_K(3, by=reference_num.DESC())
+
+
+def impl_defog_academic_gen9():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the top 3 publications with the highest number of citations?
+    """
+    return publications.CALCULATE(title, citation_num).TOP_K(3, by=citation_num.DESC())
+
+
+def impl_defog_academic_gen10():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the titles of all publications ordered alphabetically?
+    """
+    return publications.CALCULATE(title).ORDER_BY(title.ASC())
+
+
+def impl_defog_academic_gen11():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+
+    What is the ratio of publications to authors in the database?
+    """
+    n_pub = COUNT(publications)
+    n_auth = COUNT(authors)
+    return Academic.CALCULATE(
+        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth != 0)
+    )
+
+
+def impl_defog_academic_gen12():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the ratio of publications presented in conferences to publications
+    published in journals?
+    """
+    n_confs = SUM(PRESENT(publications.conference_id))
+    n_jours = SUM(PRESENT(publications.journal_id))
+    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours != 0))
+
+
+def impl_defog_academic_gen13():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the ratio of the total number of publications to the total number of
+    keywords within each domain ID? Show all domain IDs.
+    """
+
+    n_pubs = COUNT(domain_publications)
+    n_keys = COUNT(domain_keywords)
+    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys != 0))
+
+
+def impl_defog_academic_gen14():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How does the ratio of publications to journals change over the years? Return
+    the annual numbers of publications and journals as well.
+    """
+    n_pubs = COUNT(publications)
+    n_jours = NDISTINCT(publications.journal_id)
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year,
+        num_publications=n_pubs,
+        num_journals=n_jours,
+        ratio=n_pubs / KEEP_IF(n_jours, n_jours != 0),
+    )
+
+
+def impl_defog_academic_gen15():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How does the ratio of authors to organizations differ by continent?
+    """
+    return (
+        organizations.PARTITION(name="continents", by=continent)
+        .CALCULATE(
+            continent,
+            ratio=COUNT(organizations.authors) / COUNT(organizations),
+        )
+        .ORDER_BY(ratio.DESC())
+    )
+
+
+def impl_defog_academic_gen16():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which author had the most publications in the year 2021 and how many
+    publications did he/she have that year?
+    """
+    selected_pubs = author_publications.publication.WHERE(year == 2021)
+    return (
+        authors.WHERE(HAS(selected_pubs))
+        .CALCULATE(
+            name,
+            count_publication=NDISTINCT(selected_pubs.publication_id),
+        )
+        .TOP_K(1, by=count_publication.DESC())
+    )
+
+
+def impl_defog_academic_gen17():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of publications presented in each conference?
+    """
+    return conferences.CALCULATE(name, count_publications=COUNT(proceedings)).ORDER_BY(
+        count_publications.DESC(), name.DESC()
+    )
+
+
+def impl_defog_academic_gen18():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of publications in each journal, ordered by the
+    number of publications in descending order?
+    """
+    return journals.CALCULATE(
+        name, journal_id, num_publications=COUNT(archives)
+    ).ORDER_BY(num_publications.DESC())
+
+
+def impl_defog_academic_gen19():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How many publications were presented at each conference, ordered by the
+    number of publications in descending order? Give the names of the conferences
+    and their corresponding number of publications.
+    """
+    return conferences.CALCULATE(name, num_publications=COUNT(proceedings)).ORDER_BY(
+        num_publications.DESC(), name.ASC()
+    )
+
+
+def impl_defog_academic_gen20():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How many publications were published in journals whose names start with the
+    letter 'J'?
+    """
+    selected_publications = publications.WHERE(STARTSWITH(LOWER(publisher.name), "j"))
+    return Academic.CALCULATE(n=COUNT(selected_publications))
+
+
+def impl_defog_academic_gen21():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which organizations have authors who have written publications in the
+    domain 'Machine Learning'?
+    """
+    ml_publications = (
+        authors.author_publications.publication.publication_domains.domain.WHERE(
+            name == "Machine Learning"
+        )
+    )
+    return organizations.CALCULATE(
+        oranization_name=name, organization_id=organization_id
+    ).WHERE(HAS(ml_publications))
+
+
+def impl_defog_academic_gen22():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which authors belong to the same domain as Martin?,Always filter names using
+    LIKE with percent sign wildcards
+    """
+    martin_domains = author_domains.domain.domain_authors.author.WHERE(
+        CONTAINS(LOWER(name), "martin")
+    )
+
+    return authors.WHERE(HAS(martin_domains)).CALCULATE(name, author_id)
+
+
+def impl_defog_academic_gen23():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which authors are not part of any organization?
+    """
+    return authors.WHERE(HASNOT(organization)).CALCULATE(name, author_id)
+
+
+def impl_defog_academic_gen24():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the publications written by authors from the 'Sociology' domain and
+    presented at conferences in the year 2020?
+    """
+
+    sociology_author = publication_authors.author.author_domains.domain.WHERE(
+        CONTAINS(LOWER(name), "sociology")
+    ).domain_conferences.WHERE((conference_id == publication_conference_id))
+    return (
+        publications.CALCULATE(publication_conference_id=conference_id)
+        .WHERE((year == 2020) & HAS(sociology_author))
+        .CALCULATE(title)
+    )
+
+
+def impl_defog_academic_gen25():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the names of the authors who have written publications in the
+    domain 'Computer Science'?
+    """
+    return (
+        authors.CALCULATE(author_name=name)
+        .author_publications.publication.publication_domains.domain.WHERE(
+            name == "Computer Science"
+        )
+        .PARTITION(name="authors", by=author_name)
+        .CALCULATE(author_name)
+    )
+
+
+def impl_defog_restaurants_gen1():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the total number of restaurants serving each type of food?
+    """
+    return restaurants.PARTITION(name="food", by=food_type).CALCULATE(
+        food_type, restaurants=COUNT(restaurants)
+    )
+
+
+def impl_defog_restaurants_gen2():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the total count of restaurants in each city?
+    """
+    return locations.PARTITION(name="city", by=city_name).CALCULATE(
+        city_name, total_count=COUNT(locations)
+    )
+
+
+def impl_defog_restaurants_gen3():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants serving each type of food?
+    """
+    return (
+        restaurants.PARTITION(name="food", by=food_type)
+        .CALCULATE(food_type, avg_rating=AVG(restaurants.rating))
+        .ORDER_BY(avg_rating.DESC(), food_type.DESC())
+    )
+
+
+def impl_defog_restaurants_gen4():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants serve Italian food in each city?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "italian")
+        .PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, num_restaurants=COUNT(restaurants))
+        .ORDER_BY(num_restaurants.DESC(), city_name.DESC())
+    )
+
+
+def impl_defog_restaurants_gen5():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants are there in each city? Order the results by the
+    number of restaurants in descending order.
+    """
+    return (
+        locations.PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, num_restaurants=COUNT(locations))
+        .ORDER_BY(num_restaurants.DESC(), city_name.DESC())
+    )
+
+
+def impl_defog_restaurants_gen6():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which street has the most number of restaurants?
+    """
+    return (
+        locations.PARTITION(name="streets", by=street_name)
+        .TOP_K(1, by=COUNT(locations).DESC())
+        .CALCULATE(street_name)
+    )
+
+
+def impl_defog_restaurants_gen7():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which restaurants serve Italian cuisine or are located in New York? Order
+    the results by the restaurant name.
+    """
+    return restaurants.WHERE(
+        (LOWER(food_type) == "italian") | (LOWER(city_name) == "new york")
+    ).CALCULATE(name)
+
+
+def impl_defog_restaurants_gen8():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants in each region? Order the results
+    by the region name.
+    """
+    return (
+        locations.CALCULATE(region_name=city.region)
+        .PARTITION(name="region", by=region_name)
+        .CALCULATE(region_name, avg_rating=AVG(locations.restaurant.rating))
+        .ORDER_BY(region_name.ASC(), avg_rating.DESC())
+    )
+
+
+def impl_defog_restaurants_gen9():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What are the names of the top 3 restaurants with the highest ratings?
+    """
+    return restaurants.CALCULATE(name).TOP_K(3, by=(rating.DESC(), name.DESC()))
+
+
+def impl_defog_restaurants_gen10():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    List the restaurants starting from the best ratings to the lowest
+    """
+    return restaurants.CALCULATE(name, rating).ORDER_BY(rating.DESC(), name.DESC())
+
+
+def impl_defog_restaurants_gen11():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants with rating > 4.5 to the total number of
+    restaurants in the database.
+    """
+    high_rated_restaurants = restaurants.WHERE(rating > 4.5)
+    return Restaurants.CALCULATE(
+        ratio=(COUNT(high_rated_restaurants) / COUNT(restaurants))
+    )
+
+
+def impl_defog_restaurants_gen12():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants with a rating above 4.0 to restaurants with
+    a rating below 4.0 overall?
+    """
+    n_hi_rating = SUM(restaurants.rating > 4.0)
+    n_lo_rating = SUM(restaurants.rating < 4.0)
+    return Restaurants.CALCULATE(
+        ratio=n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0)
+    )
+
+
+def impl_defog_restaurants_gen13():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants with a rating above 4 to restaurants with
+    a rating below 4 in New York?
+    """
+    nyc_restaurants = restaurants.WHERE(LOWER(city_name) == "new york")
+    n_hi_rating = SUM(nyc_restaurants.rating > 4.0)
+    n_lo_rating = SUM(nyc_restaurants.rating < 4.0)
+    return Restaurants.CALCULATE(
+        ratio=(n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0))
+    )
+
+
+def impl_defog_restaurants_gen14():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants serving vegan food to restaurants serving
+    non-vegan food in San Francisco? Match food_type case insensitively
+    """
+    sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
+    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
+    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
+    return Restaurants.CALCULATE(
+        ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
+    )
+
+
+def impl_defog_restaurants_gen15():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of Italian restaurants out of all restaurants in
+    Los Angeles?
+    """
+    la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
+    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la = COUNT(la_restaurants)
+    return Restaurants.CALCULATE(ratio=(n_la_italian / KEEP_IF(n_la, n_la != 0)))
+
+
+def impl_defog_restaurants_gen16():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What cities have more than one restaurants with the same name, and how many
+    of them are there? Return the city name, restaurant name, and restaurant
+    count
+    """
+    return (
+        restaurants.PARTITION(name="cities", by=(city_name, name))
+        .CALCULATE(city_name, name, n_restaurants=COUNT(restaurants))
+        .WHERE(n_restaurants > 1)
+    )
+
+
+def impl_defog_restaurants_gen17():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants that serve Mexican food in each
+    city?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "mexican")
+        .PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, avg_rating=AVG(restaurants.rating))
+    )
+
+
+def impl_defog_restaurants_gen18():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants in each region?
+    """
+    return (
+        cities.WHERE(HAS(restaurants))
+        .PARTITION(name="regions", by=region)
+        .CALCULATE(rest_region=region, avg_rating=AVG(cities.restaurants.rating))
+        .ORDER_BY(region.ASC())
+    )
+
+
+def impl_defog_restaurants_gen19():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants serve Italian food in each region?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "italian")
+        .CALCULATE(rest_region=city.region)
+        .PARTITION(name="regions", by=rest_region)
+        .CALCULATE(rest_region, n_restaurants=COUNT(restaurants))
+        .ORDER_BY(n_restaurants.DESC(), rest_region.ASC())
+    )
+
+
+def impl_defog_restaurants_gen20():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants are there in each region?
+    """
+    return (
+        restaurants.CALCULATE(rest_region=city.region)
+        .PARTITION(name="regions", by=rest_region)
+        .CALCULATE(rest_region, n_restaurants=COUNT(restaurants))
+        .ORDER_BY(n_restaurants.DESC(), rest_region.ASC())
+    )
+
+
+def impl_defog_restaurants_gen21():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which city has the highest-rated restaurant?
+    """
+    return restaurants.TOP_K(1, by=rating.DESC()).CALCULATE(city_name)
+
+
+def impl_defog_restaurants_gen22():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What's the name and rating of all the restaurants that have a rating greater
+    than 4 and are located in the city of New York?
+    """
+    return restaurants.WHERE((rating > 4) & (LOWER(city_name) == "new york")).CALCULATE(
+        name, rating
+    )
+
+
+def impl_defog_restaurants_gen23():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What's the name and food type of all the restaurants located on Market St in
+    San Francisco?
+    """
+    return locations.WHERE(
+        (LOWER(street_name) == "market st") & (LOWER(city_name) == "san francisco")
+    ).CALCULATE(restaurant.name, restaurant.food_type)
+
+
+def impl_defog_restaurants_gen24():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What are the names of the restaurants that serve Italian food?
+    """
+    return restaurants.WHERE((LOWER(food_type) == "italian")).CALCULATE(name)
+
+
+def impl_defog_restaurants_gen25():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    WWhat are the names of the restaurants in Los Angeles that have a rating
+    higher than 4?
+    """
+    return restaurants.WHERE(
+        (rating > 4) & (LOWER(city_name) == "los angeles")
+    ).CALCULATE(name)

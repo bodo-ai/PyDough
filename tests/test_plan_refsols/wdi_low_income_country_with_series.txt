@@ -1,0 +1,6 @@
+ROOT(columns=[('country_code', CountryCode)], orderings=[])
+ JOIN(condition=t0.CountryCode == t1.Countrycode, type=SEMI, columns={'CountryCode': t0.CountryCode})
+  FILTER(condition=IncomeGroup == 'Low income':string, columns={'CountryCode': CountryCode})
+   SCAN(table=main.Country, columns={'CountryCode': CountryCode, 'IncomeGroup': IncomeGroup})
+  FILTER(condition=Seriescode == 'DT.DOD.DECT.CD':string, columns={'Countrycode': Countrycode})
+   SCAN(table=main.CountryNotes, columns={'Countrycode': Countrycode, 'Seriescode': Seriescode})

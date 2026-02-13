@@ -1,0 +1,2 @@
+ROOT(columns=[('value', value)], orderings=[(value):desc_last])
+ GENERATED_TABLE(RangeCollection('simple_range', value=range(0, 10)))

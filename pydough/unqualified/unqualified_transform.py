@@ -1,15 +1,20 @@
 """
 Logic for transforming raw Python code into PyDough code by replacing undefined
-variables with unqualified nodes by prepending with with `_ROOT.`.
+variables with unqualified nodes by prepending it with `_ROOT.`.
 """
 
-__all__ = ["init_pydough_context", "transform_cell", "transform_code"]
+__all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
 
 import ast
+import builtins
 import inspect
 import types
+from typing import Any
 
+from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
+
+from .unqualified_node import UnqualifiedNode
 
 
 class AddRootVisitor(ast.NodeTransformer):
@@ -151,7 +156,7 @@ class AddRootVisitor(ast.NodeTransformer):
         unrecognized_var: bool = False
         if not any(node.id in scope for scope in self._scope_stack):
             try:
-                eval(node.id)
+                eval(node.id, {"__builtins__": builtins}, {})
             except NameError:
                 unrecognized_var = True
         if unrecognized_var:
@@ -360,8 +365,8 @@ def transform_code(
     source: str, graph_dict: dict[str, GraphMetadata], known_names: set[str]
 ) -> ast.AST:
     """
-    Transforms the source code into a new Python QDAG that has had the PyDough
-    decorator removed, had the definition of `_ROOT` injected at the top of the
+    Transforms the source code into a new Python QDAG that has the PyDough
+    decorator removed, has the definition of `_ROOT` injected at the top of the
     function body, and prepend unknown variables with `_ROOT.`
 
     Args:
@@ -411,6 +416,88 @@ def transform_cell(cell: str, graph_name: str, known_names: set[str]) -> str:
     new_tree = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
     return ast.unparse(new_tree)
+
+
+def from_string(
+    source: str,
+    answer_variable: str | None = None,
+    metadata: GraphMetadata | None = None,
+    environment: dict[str, Any] | None = None,
+) -> UnqualifiedNode:
+    """
+    Parses and transforms a PyDough source string, returning an unqualified node
+    on which operations like `explain()`, `to_sql()`, or `to_df()` can be
+    called.
+
+    Args:
+        `source`: a valid PyDough code string that will be executed to define
+        the PyDough code.
+        `answer_variable`: The name of the variable that holds the result of the
+        PyDough code. If not provided, assumes the answer is `result`.
+        `metadata`: The metadata graph to use. If not provided,
+        `active_session.metadata` will be used.
+        `environment`: A dictionary of variables that will be available
+        in the environment where the PyDough code is executed. If not provided,
+        uses an empty dictionary.
+
+    Returns:
+        A PyDough UnualifiedNode object representing the result of the
+        transformed PyDough code.
+    """
+    import pydough
+
+    # Verify if graph is provided. Otherwise use pydough.active_session.metadata
+    if metadata is None:
+        metadata = pydough.active_session.metadata
+        if metadata is None:
+            raise ValueError(
+                "No active graph set in PyDough session."
+                " Please set a graph using"
+                " pydough.active_session.load_metadata_graph(...)"
+            )
+    # Verify if environment is provided
+    if environment is None:
+        environment = {}
+
+    # Verify if answer_variable is provided
+    if answer_variable is None:
+        answer_variable = "result"
+
+    # Transform PyDough code into valid Python code
+    known_names: set[str] = set(environment.keys())
+    graph_name: str = "_graph"
+    visitor: ast.NodeTransformer = AddRootVisitor(graph_name, known_names)
+    try:
+        tree: ast.AST = ast.parse(source)
+    except SyntaxError as e:
+        raise ValueError(
+            f"Syntax error in source PyDough code:\n{source}\n{str(e)}"
+        ) from e
+    assert isinstance(tree, ast.AST)
+    new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
+    assert isinstance(new_tree, ast.AST)
+
+    # Execute the transformed PyDough code to get the UnqualifiedNode answer
+    transformed_code: str = ast.unparse(new_tree)
+    try:
+        compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
+    except SyntaxError as e:
+        raise ValueError(f"Syntax error in transformed PyDough code:\n{str(e)}") from e
+    execution_context: dict[str, Any] = environment | {graph_name: metadata}
+    exec(compile_ast, {}, execution_context)
+
+    # Check if answer_variable exists in execution_context after code execution
+    if answer_variable not in execution_context:
+        raise PyDoughUnqualifiedException(
+            f"PyDough code expected to store the answer in a variable named '{answer_variable}'."
+        )
+    ret_val = execution_context[answer_variable]
+    # Check if answer is an UnqualifiedNode
+    if not isinstance(ret_val, UnqualifiedNode):
+        raise PyDoughUnqualifiedException(
+            f"Expected variable {answer_variable!r} in the text to store PyDough code, instead found {ret_val.__class__.__name__!r}."
+        )
+    return ret_val
 
 
 def init_pydough_context(graph: GraphMetadata):

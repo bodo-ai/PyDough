@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    sbtxcustid,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxcustid
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   sbcustomer.sbcustname AS name,

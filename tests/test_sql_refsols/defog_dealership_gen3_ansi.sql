@@ -6,8 +6,8 @@ FROM main.payments_received
 WHERE
   DATEDIFF(CURRENT_TIMESTAMP(), CAST(payment_date AS DATETIME), WEEK) = 1
 GROUP BY
-  payment_date,
-  payment_method
+  1,
+  2
 ORDER BY
-  payment_date DESC,
-  payment_method
+  1 DESC,
+  2

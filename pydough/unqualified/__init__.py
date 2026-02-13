@@ -5,7 +5,6 @@ into PyDough QDAG nodes.
 """
 
 __all__ = [
-    "PyDoughUnqualifiedException",
     "UnqualifiedAccess",
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalculate",
@@ -20,6 +19,7 @@ __all__ = [
     "UnqualifiedWhere",
     "UnqualifiedWindow",
     "display_raw",
+    "from_string",
     "init_pydough_context",
     "qualify_node",
     "qualify_term",
@@ -27,7 +27,6 @@ __all__ = [
     "transform_code",
 ]
 
-from .errors import PyDoughUnqualifiedException
 from .qualification import qualify_node, qualify_term
 from .unqualified_node import (
     UnqualifiedAccess,
@@ -44,4 +43,9 @@ from .unqualified_node import (
     UnqualifiedWindow,
     display_raw,
 )
-from .unqualified_transform import init_pydough_context, transform_cell, transform_code
+from .unqualified_transform import (
+    from_string,
+    init_pydough_context,
+    transform_cell,
+    transform_code,
+)

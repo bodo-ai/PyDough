@@ -12,10 +12,10 @@ WITH _s0 AS (
     AND eras.er_name = 'Cold War'
     AND eras.er_start_year <= CAST(STRFTIME('%Y', _s2.ev_dt) AS INTEGER)
   GROUP BY
-    _s2.ev_key
+    1
 )
 SELECT
-  COUNT(*) AS n_events
+  COUNT(DISTINCT _s0.ev_key) AS n_events
 FROM _s0 AS _s0
 JOIN times AS times
   ON times.t_end_hour > CAST(STRFTIME('%H', _s0.ev_dt) AS INTEGER)

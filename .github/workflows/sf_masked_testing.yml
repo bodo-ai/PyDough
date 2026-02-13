@@ -1,0 +1,71 @@
+name: Run Snowflake Tests
+
+on:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: "JSON string of Python versions"
+        type: string
+        required: true
+    secrets:
+      SF_FULL_USERNAME:
+        required: true
+      SF_FULL_PASSWORD:
+        required: true
+      SF_PARTIAL_USERNAME:
+        required: true
+      SF_PARTIAL_PASSWORD:
+        required: true
+      SF_NONE_USERNAME:
+        required: true
+      SF_NONE_PASSWORD:
+        required: true
+      SF_MASKED_ACCOUNT:
+        required: true
+      PYDOUGH_MASK_SERVER_PATH:
+        required: true
+
+jobs:
+  sf-tests:
+    name: Snowflake Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions) }}
+
+    env:
+      SF_FULL_USERNAME: ${{ secrets.SF_FULL_USERNAME }}
+      SF_FULL_PASSWORD: ${{ secrets.SF_FULL_PASSWORD }}
+      SF_PARTIAL_USERNAME: ${{ secrets.SF_PARTIAL_USERNAME }}
+      SF_PARTIAL_PASSWORD: ${{ secrets.SF_PARTIAL_PASSWORD }}
+      SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
+      SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
+      SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
+      PYDOUGH_MASK_SERVER_PATH: ${{ secrets.PYDOUGH_MASK_SERVER_PATH }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Create virtual environment
+        # See note in sf_testing.yml about why we use `uv venv` here.
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[snowflake]"
+
+      - name: Confirm Snowflake connector is installed
+        run: uv run python -c "import snowflake.connector; print(snowflake.connector.__version__)"
+
+      - name: Run Snowflake Tests
+        run: uv run pytest -m sf_masked tests/ -rs

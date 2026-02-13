@@ -4,14 +4,19 @@ relational representation for any grouping operation that optionally involves
 keys and aggregate functions.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     CallExpression,
-    ColumnReference,
     RelationalExpression,
 )
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class Aggregate(SingleRelational):
@@ -24,7 +29,7 @@ class Aggregate(SingleRelational):
     def __init__(
         self,
         input: RelationalNode,
-        keys: dict[str, ColumnReference],
+        keys: dict[str, RelationalExpression],
         aggregations: dict[str, CallExpression],
     ) -> None:
         total_cols: dict[str, RelationalExpression] = {**keys, **aggregations}
@@ -32,14 +37,14 @@ class Aggregate(SingleRelational):
             "Keys and aggregations must have unique names"
         )
         super().__init__(input, total_cols)
-        self._keys: dict[str, ColumnReference] = keys
+        self._keys: dict[str, RelationalExpression] = keys
         self._aggregations: dict[str, CallExpression] = aggregations
         assert all(agg.is_aggregation for agg in aggregations.values()), (
             "All functions used in aggregations must be aggregation functions"
         )
 
     @property
-    def keys(self) -> dict[str, ColumnReference]:
+    def keys(self) -> dict[str, RelationalExpression]:
         """
         The keys for the aggregation operation.
         """
@@ -63,8 +68,11 @@ class Aggregate(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"AGGREGATE(keys={self.make_column_string(self.keys, compact)}, aggregations={self.make_column_string(self.aggregations, compact)})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_aggregate(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_aggregate(self)
 
     def node_copy(
         self,
@@ -78,11 +86,8 @@ class Aggregate(SingleRelational):
         keys = {}
         aggregations = {}
         for key, val in columns.items():
-            if isinstance(val, ColumnReference):
-                keys[key] = val
-            else:
-                assert isinstance(val, CallExpression), (
-                    "All columns must be references or functions"
-                )
+            if isinstance(val, CallExpression) and val.op.is_aggregation:
                 aggregations[key] = val
+            else:
+                keys[key] = val
         return Aggregate(inputs[0], keys, aggregations)

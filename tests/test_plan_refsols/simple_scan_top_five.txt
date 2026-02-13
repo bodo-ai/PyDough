@@ -1,3 +1,2 @@
-ROOT(columns=[('key', o_orderkey)], orderings=[(o_orderkey):asc_first])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'o_orderkey': o_orderkey}, orderings=[(o_orderkey):asc_first])
-  SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})
+ROOT(columns=[('key', o_orderkey)], orderings=[(o_orderkey):asc_first], limit=5:numeric)
+ SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})

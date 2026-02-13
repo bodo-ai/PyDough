@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -90,8 +91,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     deep_best_analysis,
+    double_cross,
     double_partition,
     dumb_aggregation,
+    extract_colors,
     first_order_in_year,
     first_order_per_customer,
     floor_and_ceil,
@@ -142,6 +145,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_10,
     simple_cross_11,
     simple_cross_12,
+    simple_cross_13,
+    simple_cross_14,
+    simple_cross_15,
+    simple_cross_16,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -176,7 +183,21 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+    simple_range_3,
+    simple_range_4,
+    simple_range_5,
+    user_range_collection_1,
+    user_range_collection_2,
+    user_range_collection_3,
+    user_range_collection_4,
+    user_range_collection_5,
+    user_range_collection_6,
+)
 
+from .conftest import tpch_custom_test_data_dialect_replacements
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
@@ -1028,11 +1049,11 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000018",
-                            "Customer#000000153",
-                            "Customer#000000204",
-                            "Customer#000000284",
-                            "Customer#000000312",
+                            "Customer#000047056",
+                            "Customer#000019210",
+                            "Customer#000094175",
+                            "Customer#000012947",
+                            "Customer#000139547",
                         ]
                     }
                 ),
@@ -1410,38 +1431,305 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000009271",
-                            "Supplier#000000543",
-                            "Supplier#000007718",
-                            "Supplier#000006460",
-                            "Supplier#000002509",
+                            "Supplier#000002367",
+                            "Supplier#000003027",
+                            "Supplier#000004494",
+                            "Supplier#000005363",
+                            "Supplier#000005639",
                         ],
                         "nation_name": [
-                            "MOZAMBIQUE",
+                            "ALGERIA",
+                            "ALGERIA",
+                            "ALGERIA",
                             "MOROCCO",
-                            "MOZAMBIQUE",
-                            "MOROCCO",
-                            "ETHIOPIA",
+                            "KENYA",
                         ],
-                        "supplier_quantity": [
-                            49,
-                            46,
-                            39,
-                            27,
-                            68,
-                        ],
+                        "supplier_quantity": [11, 23, 17, 24, 32],
                         "national_qty_pct": [
-                            41.88034188,
-                            36.80000000,
-                            33.33333333,
-                            21.60000000,
-                            21.58730159,
+                            15.068493150684931,
+                            31.506849315068493,
+                            23.28767123287671,
+                            100.0,
+                            100.0,
                         ],
                     }
                 ),
                 "supplier_pct_national_qty",
             ),
             id="supplier_pct_national_qty",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " regions"
+                " .nations"
+                " .customers"
+                " .BEST(by=account_balance.DESC(), per='regions')"
+                " .CALCULATE(key)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame({"key": [2487, 61453, 76011, 81976, 144232]}),
+                "richest_customer_key_per_region",
+            ),
+            id="richest_customer_key_per_region",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " lines"
+                " .TOP_K(7, by=(order_key.ASC(), line_number.ASC()))"
+                " .CALCULATE(order_key, line_number, part_size=part_and_supplier.part.size, supplier_nation=part_and_supplier.supplier.nation.key)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_key": [1, 1, 1, 1, 1, 1, 2],
+                        "line_number": [1, 2, 3, 4, 5, 6, 1],
+                        "part_size": [9, 47, 16, 20, 44, 46, 19],
+                        "supplier_nation": [23, 13, 5, 24, 20, 8, 0],
+                    }
+                ),
+                "top_lineitems_info_1",
+            ),
+            id="top_lineitems_info_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " parts"
+                " .CALCULATE(part_size=size, selected_part_key=key)"
+                " .supply_records.CALCULATE(selected_supplier_key=supplier_key)"
+                " .CROSS(nations.CALCULATE(supplier_nation=key).suppliers.supply_records.lines)"
+                " .WHERE((part_key == selected_part_key) & (supplier_key == selected_supplier_key))"
+                " .TOP_K(7, by=(order_key.ASC(), line_number.ASC()))"
+                " .CALCULATE(order_key, line_number, part_size, supplier_nation)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_key": [1, 1, 1, 1, 1, 1, 2],
+                        "line_number": [1, 2, 3, 4, 5, 6, 1],
+                        "part_size": [9, 47, 16, 20, 44, 46, 19],
+                        "supplier_nation": [23, 13, 5, 24, 20, 8, 0],
+                    }
+                ),
+                "top_lineitems_info_2",
+            ),
+            id="top_lineitems_info_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key).WHERE(nation_key == 1)"
+                " .nation"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [18],
+                    }
+                ),
+                "many_net_filter_1",
+            ),
+            id="many_net_filter_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation.WHERE(key == 2)"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [10],
+                    }
+                ),
+                "many_net_filter_2",
+            ),
+            id="many_net_filter_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .customers.WHERE(nation_key == 3)"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [14],
+                    }
+                ),
+                "many_net_filter_3",
+            ),
+            id="many_net_filter_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key).WHERE(nation_key == 4)"
+                " .nation"
+                " .region"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [88],
+                    }
+                ),
+                "many_net_filter_4",
+            ),
+            id="many_net_filter_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation.WHERE(key == 5)"
+                " .region"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [81],
+                    }
+                ),
+                "many_net_filter_5",
+            ),
+            id="many_net_filter_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region"
+                " .nations.WHERE(key == 6)"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [77],
+                    }
+                ),
+                "many_net_filter_6",
+            ),
+            id="many_net_filter_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region"
+                " .nations"
+                " .customers.WHERE(nation_key == 7)"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [81],
+                    }
+                ),
+                "many_net_filter_7",
+            ),
+            id="many_net_filter_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation.WHERE(region_key == 0)"
+                " .region"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [403],
+                    }
+                ),
+                "many_net_filter_8",
+            ),
+            id="many_net_filter_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region.WHERE(key == 1)"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [399],
+                    }
+                ),
+                "many_net_filter_9",
+            ),
+            id="many_net_filter_9",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region"
+                " .nations.WHERE(region_key == 2)"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [401],
+                    }
+                ),
+                "many_net_filter_10",
+            ),
+            id="many_net_filter_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key).WHERE(~ISIN(nation_key, list(range(0, 25, 3))))"
+                " .nation.WHERE(region_key < 3)"
+                " .region"
+                " .nations.WHERE(region_key > 0)"
+                " .customers.WHERE(~ISIN(nation_key, list(range(1, 25, 3))))"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [269],
+                    }
+                ),
+                "many_net_filter_11",
+            ),
+            id="many_net_filter_11",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -1708,6 +1996,25 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                extract_colors,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 6)),
+                        "c1": ["GOLDENROD", "BLUSH", "SPRING", "CORNFLOWER", "FOREST"],
+                        "c2": ["LAVENDER", "THISTLE", "GREEN", "CHOCOLATE", "BROWN"],
+                        "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
+                        "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
+                        "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
+                        "c6": [None] * 5,
+                    }
+                ),
+                "extract_colors",
+            ),
+            id="extract_colors",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_int_float_string_cast,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -1730,8 +2037,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "s3": ["3"],
                         "s4": ["4.3"],
                         "s5": ["-5.888"],
-                        "s6": ["-6.0"],
-                        "s7": ["0.0"],
+                        "s6": ["-6.1"],
+                        "s7": ["0.1"],
                         "s8": ["0.0"],
                         "s9": ["abc def"],
                     }
@@ -1771,9 +2078,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "d23": ["07-15-2023"],
                     }
                 ),
-                "string_format_specifiers_sqlite",
+                "string_format_specifiers",
             ),
-            id="string_format_specifiers_sqlite",
+            id="string_format_specifiers",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2095,7 +2402,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "n_pairs": [22],
+                        "n_pairs": [100],
                     }
                 ),
                 "simple_cross_6",
@@ -2108,8 +2415,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "original_order_key": [13569, 74754, 112352, 113347, 122566],
-                        "n_other_orders": [1] * 5,
+                        "original_part_key": [12850, 7635, 14848, 51810, 914],
+                        "n_other_parts": [9, 8, 8, 8, 7],
                     }
                 ),
                 "simple_cross_7",
@@ -2216,6 +2523,65 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                simple_cross_13,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["foo"],
+                        "b": ["bar"],
+                        "c": ["fizz"],
+                        "d": ["buzz"],
+                        "e": ["foobar"],
+                        "f": ["fizzbuzz"],
+                        "g": ["yay"],
+                    }
+                ),
+                "simple_cross_13",
+            ),
+            id="simple_cross_13",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_14,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "x": ["foo"] * 5,
+                        "n": [1, 3, 1, 0, 0],
+                    }
+                ),
+                "simple_cross_14",
+            ),
+            id="simple_cross_14",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_15,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["*"] * 8 + ["A"] * 8,
+                        "e": list("****EEEE") * 2,
+                        "i": list("**II") * 4,
+                        "o": list("*O") * 8,
+                    }
+                ),
+                "simple_cross_15",
+            ),
+            id="simple_cross_15",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_16,
+                "TPCH",
+                lambda: pd.DataFrame({"n1": [142], "n2": [8]}),
+                "simple_cross_16",
+            ),
+            id="simple_cross_16",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_var_std,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2298,14 +2664,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "chain3": ["2023-10-01"],
                         "plus_1q": ["2023-04-15 12:30:45"],
                         "plus_2q": ["2023-07-15 12:30:45"],
-                        "plus_3q": ["2023-10-15 00:00:00"],
+                        "plus_3q": ["2023-10-15"],
                         "minus_1q": ["2022-10-15 12:30:45"],
                         "minus_2q": ["2022-07-15 12:30:45"],
-                        "minus_3q": ["2022-04-15 00:00:00"],
-                        "syntax1": ["2023-08-15 00:00:00"],
-                        "syntax2": ["2024-02-15 00:00:00"],
-                        "syntax3": ["2024-08-15 00:00:00"],
-                        "syntax4": ["2022-08-15 00:00:00"],
+                        "minus_3q": ["2022-04-15"],
+                        "syntax1": ["2023-08-15"],
+                        "syntax2": ["2024-02-15"],
+                        "syntax3": ["2024-08-15"],
+                        "syntax4": ["2022-08-15"],
                         "q_diff1": [1],
                         "q_diff2": [2],
                         "q_diff3": [3],
@@ -2346,6 +2712,161 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "order_quarter_test",
             ),
             id="order_quarter_test",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                double_cross,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "wk": list(range(1, 10)),
+                        "n_lines": [9, 23, 58, 143, 195, 274, 348, 393, 503],
+                        "n_orders": [891, 847, 870, 918, 893, 850, 854, 863, 824],
+                        "lpo": [
+                            0.0101,
+                            0.0184,
+                            0.0345,
+                            0.0661,
+                            0.0969,
+                            0.1332,
+                            0.1715,
+                            0.2066,
+                            0.2492,
+                        ],
+                    }
+                ),
+                "double_cross",
+            ),
+            id="double_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nation.WHERE(region.name == 'ASIA')\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(asian_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [30183],
+                    }
+                ),
+                "redundant_has",
+            ),
+            id="redundant_has",
+        ),
+        # Nested HAS on singular chain (supplier -> nation -> region), both should optimize to INNER
+        pytest.param(
+            PyDoughPandasTest(
+                "african_regions = region.WHERE(name == 'AFRICA')\n"
+                "african_nations = nation.WHERE(HAS(african_regions))\n"
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(african_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1955],
+                    }
+                ),
+                "redundant_has_nested",
+            ),
+            id="redundant_has_nested",
+        ),
+        # HAS on plural relationship (orders) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(total_price > 400000)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [3533],
+                    }
+                ),
+                "redundant_has_on_plural",
+            ),
+            id="redundant_has_on_plural",
+        ),
+        # HAS on singular relationship with additional filter
+        pytest.param(
+            PyDoughPandasTest(
+                "european_nations = nation.WHERE(region.name == 'EUROPE')\n"
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(european_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1987],
+                    }
+                ),
+                "redundant_has_singular_chain",
+            ),
+            id="redundant_has_singular_chain",
+        ),
+        # HAS on plural relationship (lineitems) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(orders.WHERE(HAS(lines.WHERE(quantity > 49)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [115066],
+                    }
+                ),
+                "redundant_has_on_plural_lineitems",
+            ),
+            id="redundant_has_on_plural_lineitems",
+        ),
+        # No optimization , stay as ANTI.
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HASNOT(nation.WHERE(region.name == 'AFRICA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [8045],
+                    }
+                ),
+                "redundant_has_not_on_singular",
+            ),
+            id="redundant_has_not_on_singular",
+        ),
+        # HAS containing CROSS with correlated filter back to outer context.
+        # Customers who have a supplier from their same nation (via CROSS).
+        # Should NOT optimize since CROSS creates a plural relationship.
+        pytest.param(
+            PyDoughPandasTest(
+                "selected = customers.CALCULATE(my_nation_key=nation.key)\n"
+                "result = TPCH.CALCULATE(\n"
+                "    n=COUNT(selected.WHERE(HAS(\n"
+                "        CROSS(suppliers).WHERE(nation.key == my_nation_key)\n"
+                "    )))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "has_cross_correlated",
+            ),
+            id="has_cross_correlated",
+        ),
+        # HAS containing CROSS with correlated filter and SINGULAR.
+        # The filter ensures exactly one match per row, SINGULAR enforces it.
+        # Optimizes to INNER JOIN since SINGULAR makes the relationship singular.
+        pytest.param(
+            PyDoughPandasTest(
+                "selected = customers.CALCULATE(my_nation_key=nation.key)\n"
+                "result = TPCH.CALCULATE(\n"
+                "    n=COUNT(selected.WHERE(HAS(\n"
+                "        CROSS(nations).WHERE(key == my_nation_key).SINGULAR()\n"
+                "    )))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "has_cross_correlated_singular",
+            ),
+            id="has_cross_correlated_singular",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2473,6 +2994,24 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [92333]}),
+                "has_equals_one",
+            ),
+            id="has_equals_one",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HASNOT(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [57667]}),
+                "hasnot_equals_one",
+            ),
+            id="hasnot_equals_one",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 aggregation_analytics_1,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2572,7 +3111,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [1052.98, 1085.81, 1062.33, 1040.95, 1146.71],
                         "orders_1_percent": [
                             5999.3,
                             7003.64,
@@ -2655,7 +3194,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [1052.98, 1085.81, 1062.33, 1040.95, 1146.71],
                         "orders_1_percent": [
                             5999.3,
                             7003.64,
@@ -2738,7 +3277,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [5390.99, 2622.17, 10183.86, 10722.74, 15050.91],
                         "orders_1_percent": [
                             5390.99,
                             2622.17,
@@ -2779,7 +3318,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             298230.29,
                             263862.04,
                             230003.53,
-                            252977.53,
+                            246470.76,
                         ],
                         "orders_99_percent": [
                             389176.08,
@@ -2800,6 +3339,222 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "quantile_function_test_4",
             ),
             id="quantile_function_test_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_1,
+                "TPCH",
+                lambda: pd.DataFrame({"value": range(10)}),
+                "simple_range_1",
+            ),
+            id="simple_range_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_2,
+                "TPCH",
+                lambda: pd.DataFrame({"value": range(9, -1, -1)}),
+                "simple_range_2",
+            ),
+            id="simple_range_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_3,
+                "TPCH",
+                lambda: pd.DataFrame({"foo": range(15, 20)}),
+                "simple_range_3",
+            ),
+            id="simple_range_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_4,
+                "TPCH",
+                lambda: pd.DataFrame({"foo": range(10, 0, -1)}),
+                "simple_range_4",
+            ),
+            id="simple_range_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_5,
+                "TPCH",
+                # TODO: even though generated SQL has CAST(NULL AS INT) AS x
+                # it returns x as object datatype.
+                # using `x: range(-1)` returns int64 so temp. using dtype=object
+                lambda: pd.DataFrame({"x": pd.Series(range(-1), dtype="object")}),
+                "simple_range_5",
+            ),
+            id="simple_range_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [
+                            1,
+                            6,
+                            11,
+                            16,
+                            21,
+                            26,
+                            31,
+                            36,
+                            41,
+                            46,
+                            51,
+                            56,
+                            61,
+                            66,
+                            71,
+                            76,
+                            81,
+                            86,
+                            91,
+                            96,
+                        ],
+                        "n_parts": [
+                            228,
+                            225,
+                            206,
+                            234,
+                            228,
+                            221,
+                            231,
+                            208,
+                            245,
+                            226,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    }
+                ),
+                "user_range_collection_1",
+            ),
+            id="user_range_collection_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "x": [0, 2, 4, 6, 8],
+                        "n_prefix": [1, 56, 56, 56, 56],
+                        "n_suffix": [101, 100, 100, 100, 100],
+                    }
+                ),
+                "user_range_collection_2",
+            ),
+            id="user_range_collection_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "x": [0, 2, 4, 6, 8],
+                        "n_prefix": [1, 56, 56, 56, 56],
+                        "n_suffix": [101, 100, 100, 100, 100],
+                    }
+                ),
+                "user_range_collection_3",
+            ),
+            id="user_range_collection_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [1, 2, 4, 5, 6, 10],
+                        "name": [
+                            "azure lime burnished blush salmon",
+                            "spring green chocolate azure navajo",
+                            "cornflower bisque thistle floral azure",
+                            "azure aquamarine tomato lace peru",
+                            "antique cyan tomato azure dim",
+                            "red cream rosy hot azure",
+                        ],
+                        "retail_price": [
+                            1217.13,
+                            1666.60,
+                            1863.87,
+                            1114.16,
+                            1716.72,
+                            1746.81,
+                        ],
+                    }
+                ),
+                "user_range_collection_4",
+            ),
+            id="user_range_collection_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_5,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [1, 11, 21, 31, 41, 51, 6, 16, 26, 36, 46, 56],
+                        "n_parts": [
+                            1135,
+                            1067,
+                            1128,
+                            1109,
+                            1038,
+                            0,
+                            1092,
+                            1154,
+                            1065,
+                            1094,
+                            1088,
+                            0,
+                        ],
+                    }
+                ),
+                "user_range_collection_5",
+            ),
+            id="user_range_collection_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_6,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [
+                            1990,
+                            1991,
+                            1992,
+                            1993,
+                            1994,
+                            1995,
+                            1996,
+                            1997,
+                            1998,
+                            1999,
+                            2000,
+                        ],
+                        "n_orders": [0, 0, 1, 2, 0, 0, 1, 1, 2, 0, 0],
+                    }
+                ),
+                "user_range_collection_6",
+            ),
+            id="user_range_collection_6",
         ),
     ],
 )
@@ -2826,6 +3581,29 @@ def test_pipeline_until_relational_tpch_custom(
     file_path: str = get_plan_test_filename(tpch_custom_pipeline_test_data.test_name)
     tpch_custom_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
+    )
+
+
+def test_pipeline_until_sql_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
+    """
+
+    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
+        empty_context_database.dialect, tpch_custom_pipeline_test_data
+    )
+
+    file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
+    )
+    tpch_custom_pipeline_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database
     )
 
 
@@ -2935,13 +3713,13 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             simple_scan,
             [],
-            "Column selection must not be empty",
+            "Expected `columns` argument to be a non-empty list",
             id="bad_columns_1",
         ),
         pytest.param(
             simple_scan,
             {},
-            "Column selection must not be empty",
+            "Expected `columns` argument to be a non-empty dictionary",
             id="bad_columns_2",
         ),
         pytest.param(
@@ -2970,7 +3748,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_1,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'c_name'. Did you mean: name, comment, phone?"
+                "Unrecognized term of TPCH.customers: 'c_name'. Did you mean: name, key, phone?"
             ),
             id="bad_name_1",
         ),
@@ -2986,7 +3764,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_3,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'. Did you mean: fizz, BUZZ, bar?"
+                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'. Did you mean: fizz, BUZZ, foo?"
             ),
             id="bad_name_3",
         ),
@@ -2994,7 +3772,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_4,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers.orders: 'totalPrice'. Did you mean: total_price, clerk, lines?"
+                "Unrecognized term of TPCH.customers.orders: 'totalPrice'. Did you mean: total_price, clerk, key?"
             ),
             id="bad_name_4",
         ),
@@ -3002,7 +3780,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers.orders: 'c_name'. Did you mean: clerk, comment, customer, lines, key, order_date?"
+                "Unrecognized term of TPCH.customers.orders: 'c_name'. Did you mean: key, lines, clerk, comment, customer?"
             ),
             id="bad_name_5",
         ),
@@ -3010,7 +3788,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, address, phone, comment, key, name, nation?"
+                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, key, name, address, phone?"
             ),
             id="bad_name_6",
         ),
@@ -3026,7 +3804,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_8,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'n123ame'. Did you mean: name, nation, phone?"
+                "Unrecognized term of TPCH.customers: 'n123ame'. Did you mean: name, key, phone?"
             ),
             id="bad_name_8",
         ),
@@ -3034,7 +3812,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_9,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: '__phone__'. Did you mean: phone, nation, address?"
+                "Unrecognized term of TPCH.customers: '__phone__'. Did you mean: phone, key, name?"
             ),
             id="bad_name_9",
         ),
@@ -3066,7 +3844,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_13,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, account_balance, nation_key, address?"
+                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, name, orders, address, key?"
             ),
             id="bad_name_13",
         ),
@@ -3074,7 +3852,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_14,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'keyname'. Did you mean: name, key, phone?"
+                "Unrecognized term of TPCH.customers: 'keyname'. Did you mean: key, name, phone?"
             ),
             id="bad_name_14",
         ),
@@ -3082,7 +3860,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_15,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'namekey'. Did you mean: name, key, nation, nation_key?"
+                "Unrecognized term of TPCH.customers: 'namekey'. Did you mean: name, key, nation?"
             ),
             id="bad_name_15",
         ),
@@ -3090,7 +3868,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_16,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: comment, name, nation, orders, address, key, phone?"
+                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: name, key, comment, nation, orders?"
             ),
             id="bad_name_16",
         ),
@@ -3106,7 +3884,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_18,
             None,
             re.escape(
-                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'nords'. Did you mean: n_orders, lines, clerk, key, year?"
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'nords'. Did you mean: n_orders, key, lines, year, clerk?"
             ),
             id="bad_name_18",
         ),
@@ -3122,7 +3900,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_20,
             None,
             re.escape(
-                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'orders'. Did you mean: n_orders, clerk, lines?"
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'orders'. Did you mean: n_orders, clerk, key, lines, year?"
             ),
             id="bad_name_20",
         ),
@@ -3138,7 +3916,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_22,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, De_Institutionalizations?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, PROFESSION_alization?"
             ),
             id="bad_name_22",
         ),
@@ -3146,7 +3924,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_23,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation'. Did you mean: PROFESSION_alization, over_intellect_ualiz_ation, anthro_pomorph_IZATION?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation'. Did you mean: PROFESSION_alization, nations, parts, regions?"
             ),
             id="bad_name_23",
         ),
@@ -3154,7 +3932,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_24,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_'. Did you mean: anthro_pomorph_IZATION, over_intellect_ualiz_ation, De_Institutionalizations?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_'. Did you mean: nations, parts, anthro_pomorph_IZATION, lines, regions?"
             ),
             id="bad_name_24",
         ),
@@ -3162,7 +3940,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_25,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'anthropomorphization_and_overintellectualization_and_ultrarevolutionaries'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, anthro_pomorph_IZATION, ultra_revolution_aries, De_Institutionalizations?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'anthropomorphization_and_overintellectualization_and_ultrarevolutionaries'. Did you mean: over_intellect_ualiz_ation, anthro_pomorph_IZATION, OVERIN_tellectualizers, ultra_revolution_aries?"
             ),
             id="bad_name_25",
         ),
@@ -3196,7 +3974,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, comment, key?"
+                "nclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.regions.CALCULATE(name=name).TPCH.regions"
             ),
             id="bad_cross_5",
         ),
@@ -3204,11 +3982,10 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: lines, supply_records, container, size, comment, key, name?"
+                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: size, lines, key, name, supply_records?"
             ),
             id="bad_cross_6",
         ),
-        # NOTE: raised exception with an empty message
         pytest.param(
             bad_cross_7,
             None,
@@ -3219,7 +3996,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_8,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(r1=name).TPCH.nations: 'r_key'. Did you mean: key, name, r1?"
+                "Unrecognized term of TPCH.regions.CALCULATE(r1=name).TPCH.nations: 'r_key'. Did you mean: key, r1, name?"
             ),
             id="bad_cross_8",
         ),
@@ -3238,7 +4015,7 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_11,
             None,
-            "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, nations, key?",
+            "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, key, nations?",
             id="bad_cross_11",
         ),
         pytest.param(
@@ -3292,7 +4069,7 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,

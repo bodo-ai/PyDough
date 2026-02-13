@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sbtxtickerid
+    sbtxtickerid,
+    COUNT(*) AS n_rows
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE(DATETIME('now', '-10 day'), 'start of day')
     AND sbtxtype = 'buy'
   GROUP BY
-    sbtxtickerid
+    1
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
@@ -16,5 +16,5 @@ FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  tx_count DESC
+  2 DESC
 LIMIT 2

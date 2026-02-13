@@ -1,0 +1,5 @@
+SELECT
+  CAST(COALESCE(SUM(CASE WHEN rating > 4.0 THEN 1 ELSE 0 END), 0) AS DOUBLE PRECISION) / NULLIF(SUM(CASE WHEN rating < 4.0 THEN 1 ELSE 0 END), 0) AS ratio
+FROM main.restaurant
+WHERE
+  LOWER(city_name) = 'new york'

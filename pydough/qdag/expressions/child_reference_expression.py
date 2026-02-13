@@ -6,11 +6,9 @@ collection of a child operator, e.g. `orders.order_date` in
 
 __all__ = ["ChildReferenceExpression"]
 
-from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 
 from .expression_qdag import PyDoughExpressionQDAG
 from .reference import Reference
@@ -29,10 +27,15 @@ class ChildReferenceExpression(Reference):
         self._child_idx: int = child_idx
         self._term_name: str = term_name
         self._expression: PyDoughExpressionQDAG = self._collection.get_expr(term_name)
-        if not self.expression.is_singular(collection.starting_predecessor):
-            raise PyDoughQDAGException(
-                f"Cannot reference plural expression {self.expression} from {self.collection}"
-            )
+        self._term_type = self._expression.pydough_type
+        collection.verify_singular_terms([self.expression])
+
+    @property
+    def expression(self) -> PyDoughExpressionQDAG:
+        """
+        The expression that the ChildReferenceExpression refers to.
+        """
+        return self._expression
 
     @property
     def child_idx(self) -> int:
@@ -42,7 +45,6 @@ class ChildReferenceExpression(Reference):
         """
         return self._child_idx
 
-    @cache
     def is_singular(self, context: PyDoughQDAG) -> bool:
         # Child reference expressions are already known to be singular relative
         # to the child collection to the via their construction, so they are

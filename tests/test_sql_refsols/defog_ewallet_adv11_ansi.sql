@@ -1,23 +1,18 @@
-WITH _s1 AS (
-  SELECT
-    COALESCE(
-      SUM(
-        DATEDIFF(CAST(session_end_ts AS DATETIME), CAST(session_start_ts AS DATETIME), SECOND)
-      ),
-      0
-    ) AS total_duration,
-    user_id
-  FROM main.user_sessions
-  WHERE
-    session_end_ts < '2023-06-08' AND session_start_ts >= '2023-06-01'
-  GROUP BY
-    user_id
-)
 SELECT
-  users.uid,
-  _s1.total_duration
+  user_sessions.user_id AS uid,
+  SUM(
+    DATEDIFF(
+      CAST(user_sessions.session_end_ts AS DATETIME),
+      CAST(user_sessions.session_start_ts AS DATETIME),
+      SECOND
+    )
+  ) AS total_duration
 FROM main.users AS users
-JOIN _s1 AS _s1
-  ON _s1.user_id = users.uid
+JOIN main.user_sessions AS user_sessions
+  ON user_sessions.session_end_ts < '2023-06-08'
+  AND user_sessions.session_start_ts >= '2023-06-01'
+  AND user_sessions.user_id = users.uid
+GROUP BY
+  1
 ORDER BY
-  total_duration DESC
+  2 DESC
