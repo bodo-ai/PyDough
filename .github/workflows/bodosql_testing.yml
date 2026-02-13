@@ -9,7 +9,7 @@ on:
         required: true
 
 jobs:
-  sf-tests:
+  bodosql-tests:
     name: BodoSQL Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
