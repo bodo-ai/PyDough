@@ -245,8 +245,8 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
                 schema=dict_pyarrow.schema,
             )
 
-            # Evolve the table spec to partition on the first letter of the word, the
-            # part of speech, and the number of characters.
+            # Evolve the table spec to partition on the first letter of the
+            # word, the part of speech, and the number of characters.
             (
                 dict_table.update_spec()
                 .add_field("WORD", "truncate[1]")
@@ -258,8 +258,8 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
             # Load the data to the Iceberg table
             dict_table.append(dict_pyarrow)
 
-            # Create the Iceberg table definition for the Shakespeare table, and load
-            # the data into it.
+            # Create the Iceberg table definition for the Shakespeare table, and
+            # load the data into it.
             shake_table: IcebergTable = dircat.create_table(
                 "SHAKE",
                 schema=shake_pyarrow.schema,
@@ -292,15 +292,26 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
     # If regenerating the database, use BodoSQL to replace each table with
     # itself. Because BodoSQL is being used to write the tables, it will also
     # update the metadata to include puffin files with theta sketches containing
-    # the approximate NDV statistics for various columns.
+    # the approximate NDV statistics for various columns. By replacing the
+    # table with itself, the partitions will be maintained while the theta
+    # sketches will be generated and added to the metadata. If the table was
+    # generated with a different name, it would not know to maintain the
+    # partitions.
     if regenerate_iceberg:
-        # Get all the table names from a DDL command given to the BodoSQL
-        # context.
-        table_names: list[str] = bc.sql('SHOW TABLES IN "."')["NAME"].tolist()
-        for table_name in table_names:
-            bc.sql(
-                f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
-            )
+        try:
+            # Get all the table names from a DDL command given to the BodoSQL
+            # context.
+            table_names: list[str] = bc.sql('SHOW TABLES IN "."')["NAME"].tolist()
+            for table_name in table_names:
+                bc.sql(
+                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
+                )
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(warehouse_loc):
+                shutil.rmtree(warehouse_loc)
+            raise e
 
     return bc
 
