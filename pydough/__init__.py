@@ -16,10 +16,11 @@ __all__ = [
     "range_collection",
     "to_df",
     "to_sql",
+    "to_table",
 ]
 
 from .configs import PyDoughSession
-from .evaluation import to_df, to_sql
+from .evaluation import to_df, to_sql, to_table
 from .exploration import explain, explain_structure, explain_term
 from .logger import get_logger
 from .metadata import parse_json_metadata_from_file

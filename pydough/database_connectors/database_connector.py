@@ -76,6 +76,22 @@ class DatabaseConnection:
             data = self.cursor.fetchall()
             return pd.DataFrame(data, columns=column_names)
 
+    def execute_ddl(self, sql: str) -> None:
+        """Create a cursor object using the connection and execute the DDL query.
+
+        Args:
+            `sql`: The DDL SQL query to execute.
+        """
+        self._cursor = self._connection.cursor()
+        try:
+            self.cursor.execute(sql)
+            self._connection.commit()
+        except Exception as e:
+            print(f"ERROR WHILE EXECUTING DDL:\n{sql}")
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                sql, e, False
+            ) from e
+
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
 

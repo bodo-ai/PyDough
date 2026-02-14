@@ -217,6 +217,7 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_3,
     simple_range_4,
     simple_range_5,
+    simple_to_table,
     user_range_collection_1,
     user_range_collection_2,
     user_range_collection_3,
@@ -226,7 +227,12 @@ from tests.test_pydough_functions.user_collections import (
 )
 
 from .conftest import tpch_custom_test_data_dialect_replacements
-from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
+from .testing_utilities import (
+    PyDoughPandasTest,
+    graph_fetcher,
+    run_e2e_error_test,
+    run_e2e_test_to_table,
+)
 
 
 @pytest.fixture(
@@ -4803,4 +4809,21 @@ def test_pipeline_e2e_errors(
         graph,
         columns=columns,
         database=sqlite_tpch_db_context,
+    )
+
+
+def test_pipeline_e2e_to_table(
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    """
+    Test that a simple to_table call can be materialized and executed on the
+    database.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    run_e2e_test_to_table(
+        simple_to_table,
+        graph,
+        get_sample_graph,
+        sqlite_tpch_db_context,
     )

@@ -7,6 +7,8 @@ from types import NoneType
 
 from dateutil import parser  # type: ignore[import-untyped]
 
+from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+
 __all__ = [
     "AstNodeTestInfo",
     "BackReferenceExpressionInfo",
@@ -1090,6 +1092,38 @@ class PyDoughSQLComparisonTest:
 
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(result, refsol, rtol=rtol, atol=atol)
+
+
+def run_e2e_test_to_table(
+    pydough_function: Callable[..., UnqualifiedNode] | str,
+    graph: GraphMetadata,
+    fetcher: graph_fetcher,
+    database: DatabaseContext,
+    config: PyDoughConfigs | None = None,
+):
+    """
+    Runs an end-to-end test using `to_table` to ensure DDL is generated correctly,
+    comparing the result of the PyDough code against the reference solution.
+
+    Args:
+        `fetcher`: The function that takes in the name of the graph used
+        by the test and fetches the graph metadata.
+        `database`: The database context to use for executing SQL.
+        `config`: The PyDough configuration to use for the test, if any.
+    """
+    # Obtain the graph and the unqualified node
+    root: UnqualifiedNode = transform_and_exec_pydough(pydough_function, graph, None)
+
+    # call_kwargs: dict = {"metadata": graph, "database": database}
+    # if config is not None:
+    #     call_kwargs["config"] = config
+    # collection = to_table(root, **call_kwargs)
+    # assert isinstance(collection, UnqualifiedGeneratedCollection), "to_table did not return a UnqualifiedGeneratedCollection as expected"
+    assert isinstance(root, UnqualifiedGeneratedCollection), (
+        f"Expected UnqualifiedGeneratedCollection, got {type(root)}"
+    )
+    # If we got here without an exception, the test is successful.
+    # TODO: generate logger and ensure that the generated DDL is correct.
 
 
 @dataclass

@@ -1028,3 +1028,8 @@ def dataframe_collection_bad_7():
         }
     )
     return pydough.dataframe_collection("unsupported_df", df_unsupported, ["col1"])
+
+
+def simple_to_table():
+    asian_countries = nations.WHERE(region.name == "ASIA")
+    return pydough.to_table(asian_countries, name="asian_countries", temp=True)
