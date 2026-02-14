@@ -1,0 +1,34 @@
+SELECT
+  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) AS O_YEAR,
+  NVL(
+    SUM(
+      CASE
+        WHEN NATION_2.n_name = 'BRAZIL'
+        THEN LINEITEM.l_extendedprice * (
+          1 - LINEITEM.l_discount
+        )
+        ELSE 0
+      END
+    ),
+    0
+  ) / NVL(SUM(LINEITEM.l_extendedprice * (
+    1 - LINEITEM.l_discount
+  )), 0) AS MKT_SHARE
+FROM TPCH.LINEITEM LINEITEM
+JOIN TPCH.PART PART
+  ON LINEITEM.l_partkey = PART.p_partkey AND PART.p_type = 'ECONOMY ANODIZED STEEL'
+JOIN TPCH.ORDERS ORDERS
+  ON EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) IN (1995, 1996)
+  AND LINEITEM.l_orderkey = ORDERS.o_orderkey
+JOIN TPCH.CUSTOMER CUSTOMER
+  ON CUSTOMER.c_custkey = ORDERS.o_custkey
+JOIN TPCH.NATION NATION
+  ON CUSTOMER.c_nationkey = NATION.n_nationkey
+JOIN TPCH.REGION REGION
+  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'AMERICA'
+JOIN TPCH.SUPPLIER SUPPLIER
+  ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
+JOIN TPCH.NATION NATION_2
+  ON NATION_2.n_nationkey = SUPPLIER.s_nationkey
+GROUP BY
+  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME))

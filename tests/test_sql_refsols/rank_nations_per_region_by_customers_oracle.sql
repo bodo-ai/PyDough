@@ -1,0 +1,19 @@
+WITH "_S1" AS (
+  SELECT
+    c_nationkey AS C_NATIONKEY,
+    COUNT(*) AS N_ROWS
+  FROM TPCH.CUSTOMER
+  GROUP BY
+    c_nationkey
+)
+SELECT
+  NATION.n_name AS nation_name,
+  ROW_NUMBER() OVER (PARTITION BY NATION.n_regionkey ORDER BY "_S1".N_ROWS DESC, REGION.r_name) AS rank
+FROM TPCH.NATION NATION
+JOIN "_S1" "_S1"
+  ON NATION.n_nationkey = "_S1".C_NATIONKEY
+JOIN TPCH.REGION REGION
+  ON NATION.n_regionkey = REGION.r_regionkey
+ORDER BY
+  2 NULLS FIRST
+FETCH FIRST 5 ROWS ONLY

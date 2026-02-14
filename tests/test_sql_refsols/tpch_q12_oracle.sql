@@ -1,0 +1,18 @@
+SELECT
+  LINEITEM.l_shipmode AS L_SHIPMODE,
+  NVL(SUM(ORDERS.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS HIGH_LINE_COUNT,
+  NVL(SUM(NOT ORDERS.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS LOW_LINE_COUNT
+FROM TPCH.LINEITEM LINEITEM
+JOIN TPCH.ORDERS ORDERS
+  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
+WHERE
+  EXTRACT(YEAR FROM CAST(LINEITEM.l_receiptdate AS DATETIME)) = 1994
+  AND LINEITEM.l_commitdate < LINEITEM.l_receiptdate
+  AND LINEITEM.l_commitdate > LINEITEM.l_shipdate
+  AND (
+    LINEITEM.l_shipmode = 'MAIL' OR LINEITEM.l_shipmode = 'SHIP'
+  )
+GROUP BY
+  LINEITEM.l_shipmode
+ORDER BY
+  1 NULLS FIRST

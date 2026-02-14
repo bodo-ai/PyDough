@@ -1,0 +1,13 @@
+SELECT
+  ADVERSE_EVENTS.treatment_id,
+  TREATMENTS.start_dt AS treatment_start_date,
+  ADVERSE_EVENTS.reported_dt AS adverse_event_date,
+  ADVERSE_EVENTS.description
+FROM MAIN.ADVERSE_EVENTS ADVERSE_EVENTS
+JOIN MAIN.TREATMENTS TREATMENTS
+  ON ADVERSE_EVENTS.treatment_id = TREATMENTS.treatment_id
+  AND DATEDIFF(
+    CAST(ADVERSE_EVENTS.reported_dt AS DATETIME),
+    CAST(TREATMENTS.start_dt AS DATETIME),
+    DAY
+  ) <= 10
