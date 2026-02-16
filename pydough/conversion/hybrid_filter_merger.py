@@ -3,6 +3,51 @@ Logic to merge multiple subtrees in the hybrid tree into one if they are the
 same except one of them has more filters than the other and is only used in
 a COUNT aggregation, meaning the filter can be implemented by doing a SUM on
 the less-filtered subtree where the SUM argument is the additional filters.
+
+Suppose the current tree has five children `A`, `B`, `C`, `D` and `E` which
+are identical except that their lowest levels have the following pipelines, and
+the only reference from the current tree to these children is a `COUNT(*)`
+aggregation on each of them:
+- `A`: `Collection[table1] -> FILTER(u) -> FILTER(v & w)`
+- `B`: `Collection[table1] -> FILTER(v)`
+- `C`: `Collection[table1] -> FILTER(x) -> LIMIT(1000) -> FILTER(u) -> FILTER(v)`
+- `D`: `Collection[table1] -> FILTER(x) -> LIMIT(1000) -> FILTER(v) -> FILTER(y)`
+- `E`: `Collection[table1] -> FILTER(x) -> LIMIT(1000) -> FILTER(v & w) -> FILTER(z)`
+
+The protocol will detect that `A` can be merged onto `B` since they are
+identical except that `A` has extra filters `u` and `w`, so the a subset will
+occur on A->B.
+
+The protocol will then detect that `C`, `D` and `E` all have the same common
+prefix with different filters after the LIMIT clause (u & v, v & y, v & w & z),
+so it will attempt to merge all three of them. For the sake of arbitrariness,
+assume that it does (D, E) -> C as a a non-subset merge.
+
+When doing the subset merge of A->B, child A will be deleted and the reference
+to `COUNT(*)` on A will be replaced with a reference to `SUM(IFF(u & w, 1, 0))`
+on B, since the SUM will count how many of the rows where `v` is true also
+satisfy the conditions `u` and `w`, which is exactly the same as the original
+COUNT on A which had `u`, `v` and `w`.
+
+When doing the subset merge of (D, E) -> C, child D and E will be deleted, and
+child C will be transformed into the following subtree (call this `C'`):
+
+`Collection[table1] -> FILTER(x) -> LIMIT(1000) -> FILTER(u | (v & y) | (v & w & z)) -> FILTER(v | (v & y) | (v & w & z))`
+
+This will ensure that `C'` contains all the rows that were in `C`, `D` or `E`.
+Then to get the correct counts for `C`, `D` and `E`, the original `COUNT(*)`
+references on each of them will be transformed into the following aggregations
+on `C'` (note that `v` appeared in all 3 children, so it is a given than `v` is
+true in `C'`):
+- `C`: `SUM(IFF(u, 1, 0))`, since `C` had `u & v` and `C'` covers `v`.
+- `D`: `SUM(IFF(y, 1, 0))`, since `C` had `v & y` and `C'` covers `v`.
+- `E`: `SUM(IFF(w & z, 1, 0))`, since `C` had `v & w & z` and `C'` covers `v`.
+
+This does result in some redundant filters in `C'` which can be optimized away
+by later transformations at the relational/SQLGlot level into the equivalent of
+the following:
+
+`Collection[table1] -> FILTER(x) -> LIMIT(1000) -> FILTER(v & (u | y | (w & z))`
 """
 
 import copy
@@ -77,16 +122,6 @@ class HybridFilterMerger:
                 mergeable_children, child_filters, child_isomorphisms
             )
 
-            # Create a secondary mapping to indicate pools of children that were
-            # not merged by the dag because there was no child with a filter
-            # subset relationship, but are still isomorphic to one another.
-            # These are stored in the form of a pool of isomorphic children,
-            # where one member of the pool is the key and the rest are the
-            # value.
-            secondary_merges: dict[int, set[int]] = self.make_secondary_merges(
-                mergeable_children, child_isomorphisms, filter_dag
-            )
-
             # Build up a dictionary indicating all COUNT(*) references in the
             # tree that have been replaced with a SUM(cond) reference in a
             # different child of the tree.
@@ -119,6 +154,16 @@ class HybridFilterMerger:
                     replacement_map,
                     must_delete,
                 )
+
+            # Create a secondary mapping to indicate pools of children that were
+            # not merged by the dag because there was no child with a filter
+            # subset relationship, but are still isomorphic to one another.
+            # These are stored in the form of a pool of isomorphic children,
+            # where one member of the pool is the key and the rest are the
+            # value.
+            secondary_merges: dict[int, set[int]] = self.make_secondary_merges(
+                mergeable_children, child_isomorphisms, filter_dag
+            )
 
             # For each (target <- source_pool), run the more advanced algorithm
             # which combines multiple children with distinct sets of filters.
@@ -203,7 +248,7 @@ class HybridFilterMerger:
             next(
                 name
                 for name, expr in tree.children[source_idx].aggs.items()
-                if repr(expr) == "COUNT()"
+                if expr.operator == pydop.COUNT and len(expr.args) == 0
             ),
             source_idx,
             NumericType(),
@@ -354,8 +399,8 @@ class HybridFilterMerger:
             `tree`: The tree whose children we are checking.
 
         Returns:
-            A set of the indices of the children that are only used by a COUNT
-            aggregation that is not ONLY_MATCH.
+            A set of the indices of the children that are only used by a single
+            COUNT(*) aggregation.
         """
         return {
             idx
@@ -363,7 +408,10 @@ class HybridFilterMerger:
             if (
                 child.connection_type
                 in (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
-                and {repr(v) for v in child.aggs.values()} == {"COUNT()"}
+                and len(child.aggs.values()) == 1
+                and (singleton := next(iter(child.aggs.values()))).operator
+                == pydop.COUNT
+                and len(singleton.args) == 0
             )
         }
 
@@ -493,7 +541,7 @@ class HybridFilterMerger:
 
         # Build initial edges from each mergeable child to another isomorphic
         # child that is a subset of its filter list.
-        for idx in mergeable_children:
+        for idx in sorted(mergeable_children):
             for other_idx in sorted(child_isomorphisms[idx]):
                 if child_filters[other_idx] < child_filters[idx]:
                     dag[idx] = other_idx
