@@ -10,7 +10,7 @@ WITH _u_0 AS (
   SELECT
     drug_id,
     AVG(
-      tot_drug_amt / DATEDIFF(DAY, CAST(start_dt AS DATETIME), CAST(end_dt AS DATETIME))
+      tot_drug_amt / NULLIF(DATEDIFF(DAY, CAST(start_dt AS DATETIME), CAST(end_dt AS DATETIME)), 0)
     ) AS avg_ddd
   FROM dermtreatment.treatments
   WHERE

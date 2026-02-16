@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     drug_id,
     AVG(
-      tot_drug_amt / DATEDIFF(CAST(end_dt AS DATETIME), CAST(start_dt AS DATETIME), DAY)
+      tot_drug_amt / NULLIF(DATEDIFF(CAST(end_dt AS DATETIME), CAST(start_dt AS DATETIME), DAY), 0)
     ) AS avg_ddd
   FROM main.treatments
   WHERE

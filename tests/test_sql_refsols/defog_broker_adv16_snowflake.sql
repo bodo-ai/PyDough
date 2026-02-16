@@ -16,8 +16,8 @@ SELECT
     100.0 * (
       COALESCE(_s1.sum_sbtxamount, 0) - COALESCE(_s1.sum_expr, 0)
     )
-  ) / COALESCE(_s1.sum_sbtxamount, 0) AS SPM
-FROM broker.sbticker AS sbticker
+  ) / NULLIF(_s1.sum_sbtxamount, 0) AS SPM
+FROM main.sbticker AS sbticker
 JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY

@@ -1,6 +1,6 @@
 SELECT
-  COUNT_IF(status = 'success') / COUNT(*) AS _expr0
-FROM ewallet.wallet_transactions_daily
+  COUNT_IF(status = 'success') / NULLIF(COUNT(*), 0) AS _expr0
+FROM main.wallet_transactions_daily
 WHERE
   DATEDIFF(
     MONTH,
