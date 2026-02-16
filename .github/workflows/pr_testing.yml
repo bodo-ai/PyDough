@@ -273,8 +273,9 @@ jobs:
     needs: [get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run bodosql]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-bodosql))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-bodosql))
     uses: ./.github/workflows/bodosql_testing.yml
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
