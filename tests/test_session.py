@@ -12,20 +12,40 @@ ensure that we don't affect other tests, or that in the teardown step
 we replace the active session with a new default session.
 """
 
+from collections.abc import Callable
+
 import pandas as pd
 import pytest
 
 import pydough
-from pydough.configs import ConfigProperty, PyDoughConfigs, PyDoughSession
+from pydough.configs import (
+    ConfigProperty,
+    DivisionByZeroBehavior,
+    PyDoughConfigs,
+    PyDoughSession,
+)
 from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
     load_database_context,
 )
+from pydough.errors import PyDoughSQLException
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 from pydough.unqualified import UnqualifiedNode
-from tests.test_pydough_functions.simple_pydough_functions import simple_scan
+from tests.test_pydough_functions.simple_pydough_functions import (
+    division_with_complex_operands,
+    division_with_iff_denom_false_branch,
+    division_with_iff_denom_true_branch,
+    division_with_keep_if_denom,
+    division_with_multiple_ops,
+    simple_division_by_zero,
+    simple_scan,
+)
+from tests.testing_utilities import (
+    PyDoughPandasTest,
+    graph_fetcher,
+)
 
 
 @pytest.mark.parametrize(
@@ -140,3 +160,293 @@ FROM tpch.orders
         assert output == output_query.strip()
     finally:
         pydough.active_session.metadata = old_metadata
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                DivisionByZeroBehavior.DATABASE,
+                PyDoughPandasTest(
+                    simple_division_by_zero,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_by_zero_database",
+                ),
+            ),
+            id="database",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    simple_division_by_zero,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_by_zero_null",
+                ),
+            ),
+            id="null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    simple_division_by_zero,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0]}),
+                    "division_by_zero_zero",
+                ),
+            ),
+            id="zero",
+        ),
+        # Multiple operations: a*(c / b) + z
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_multiple_ops,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_multiple_ops_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="multiple_ops_zero",
+        ),
+        # Complex operands: (a+b)/(z*2)
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_complex_operands,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_complex_operands_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="complex_operands_zero",
+        ),
+        # KEEP_IF already in denominator
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_keep_if_denom,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_keep_if_denom_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="keep_if_denom_zero",
+        ),
+        # IFF in denominator - divisor in true branch
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_iff_denom_true_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_iff_true_branch_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_true_branch_zero",
+        ),
+        # IFF in denominator - divisor in false branch
+        pytest.param(
+            (
+                DivisionByZeroBehavior.ZERO,
+                PyDoughPandasTest(
+                    division_with_iff_denom_false_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [0.0]}),
+                    "division_iff_false_branch_zero",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_false_branch_zero",
+        ),
+        # Also test these weird variants with the NULL behavior
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_multiple_ops,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_multiple_ops_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="multiple_ops_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_complex_operands,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_complex_operands_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="complex_operands_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_keep_if_denom,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_keep_if_denom_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="keep_if_denom_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_iff_denom_true_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_iff_true_branch_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_true_branch_null",
+        ),
+        pytest.param(
+            (
+                DivisionByZeroBehavior.NULL,
+                PyDoughPandasTest(
+                    division_with_iff_denom_false_branch,
+                    "TPCH",
+                    lambda: pd.DataFrame({"computed_value": [None]}),
+                    "division_iff_false_branch_null",
+                    skip_relational=True,
+                ),
+            ),
+            id="iff_false_branch_null",
+        ),
+    ],
+)
+def division_by_zero_test_data(
+    request,
+) -> tuple[DivisionByZeroBehavior, PyDoughPandasTest]:
+    """
+    Test data for division by zero SQL generation tests.
+    """
+    return request.param
+
+
+def test_division_by_zero_to_sql(
+    division_by_zero_test_data: tuple[DivisionByZeroBehavior, PyDoughPandasTest],
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Tests that division by zero SQL is correctly generated for all dialects.
+    """
+    division_by_zero_config, test_data = division_by_zero_test_data
+
+    # Create config with the specified division_by_zero behavior
+    config = PyDoughConfigs()
+    config.division_by_zero = division_by_zero_config
+
+    file_path: str = get_sql_test_filename(
+        test_data.test_name, empty_context_database.dialect
+    )
+    test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database, config=config
+    )
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(simple_division_by_zero, id="simple"),
+        pytest.param(division_with_multiple_ops, id="multiple_ops"),
+        pytest.param(division_with_complex_operands, id="complex_operands"),
+        pytest.param(division_with_iff_denom_false_branch, id="iff_false_branch"),
+    ],
+)
+def division_e2e_test_func(request) -> Callable:
+    """
+    Test functions that trigger actual division-by-zero behavior.
+    These all use TOP_K(1, by=computed_value.ASC(na_pos="first")) which
+    guarantees the row with division-by-zero is selected (nulls/zeros first).
+    """
+    return request.param
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "division_by_zero_config",
+    [
+        pytest.param(DivisionByZeroBehavior.DATABASE, id="database"),
+        pytest.param(DivisionByZeroBehavior.NULL, id="null"),
+        pytest.param(DivisionByZeroBehavior.ZERO, id="zero"),
+    ],
+)
+def test_division_by_zero_e2e(
+    division_by_zero_config: DivisionByZeroBehavior,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+    division_e2e_test_func: Callable,
+) -> None:
+    """
+    Tests division by zero behavior across all supported databases.
+    All test functions use TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    to ensure the division-by-zero row is selected.
+    """
+    db_context, graph = all_dialects_tpch_db_context
+
+    new_configs: PyDoughConfigs = PyDoughConfigs()
+    new_configs.division_by_zero = division_by_zero_config
+
+    root: UnqualifiedNode = pydough.init_pydough_context(graph)(
+        division_e2e_test_func
+    )()
+
+    # DATABASE mode: Snowflake/Postgres throw errors, SQLite/MySQL return NULL
+    if division_by_zero_config == DivisionByZeroBehavior.DATABASE:
+        if db_context.dialect in (DatabaseDialect.SNOWFLAKE, DatabaseDialect.POSTGRES):
+            with pytest.raises(PyDoughSQLException, match="[Dd]ivision by zero"):
+                pydough.to_df(
+                    root,
+                    metadata=graph,
+                    database=db_context,
+                    config=new_configs,
+                )
+            return
+
+    output: pd.DataFrame = pydough.to_df(
+        root,
+        metadata=graph,
+        database=db_context,
+        config=new_configs,
+    )
+
+    # Snowflake returns uppercase column names
+    col_name: str = (
+        "COMPUTED_VALUE"
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else "computed_value"
+    )
+
+    # Determine expected result based on config
+    if division_by_zero_config == DivisionByZeroBehavior.ZERO:
+        expected_df = pd.DataFrame({col_name: [0.0]})
+    else:
+        # DATABASE (for sqlite/mysql) and NULL both return NULL
+        expected_df = pd.DataFrame({col_name: [None]})
+
+    pd.testing.assert_frame_equal(output, expected_df, check_dtype=False)
