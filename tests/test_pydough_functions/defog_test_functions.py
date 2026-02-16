@@ -861,8 +861,8 @@ def impl_defog_dealership_adv8():
         .PARTITION(name="per_month", by=month_start)
         .CALCULATE(
             month=STRING(month_start, "%Y-%m-%d"),
-            PMSPS=DEFAULT_TO(COUNT(filtered_sales), 0),
-            PMSR=DEFAULT_TO(SUM(filtered_sales.sale_price), 0),
+            PMSPS=COUNT(filtered_sales),
+            PMSR=SUM(filtered_sales.sale_price),
         )
         .ORDER_BY(month_start.ASC())
     )

@@ -194,7 +194,10 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_bad_5,
     dataframe_collection_bad_6,
     dataframe_collection_bad_7,
+    dataframe_collection_bad_8,
+    dataframe_collection_bad_9,
     dataframe_collection_best,
+    dataframe_collection_correlation,
     dataframe_collection_cross,
     dataframe_collection_datatypes,
     dataframe_collection_highest_rating,
@@ -208,10 +211,12 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_teacher_count,
     dataframe_collection_teacher_lowest_rating,
     dataframe_collection_top_k,
+    dataframe_collection_unique_partition,
     dataframe_collection_where,
     dataframe_collection_where_date,
     dataframe_collection_window_functions,
-    simple_dataframe_1,
+    simple_dataframe_collection_1,
+    simple_dataframe_collection_2,
     simple_range_1,
     simple_range_2,
     simple_range_3,
@@ -3623,7 +3628,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
-                simple_dataframe_1,
+                simple_dataframe_collection_1,
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -3640,9 +3645,30 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         ],
                     }
                 ),
-                "simple_dataframe_1",
+                "simple_dataframe_collection_1",
             ),
-            id="simple_dataframe_1",
+            id="simple_dataframe_collection_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_dataframe_collection_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "user_id": [1, 2, 3, 4],
+                        "signup_date": pd.to_datetime(
+                            [
+                                "2024-01-10",
+                                "2024-01-12",
+                                "2024-02-01",
+                                "2024-02-01",
+                            ]
+                        ),
+                    }
+                ),
+                "simple_dataframe_collection_2",
+            ),
+            id="simple_dataframe_collection_2",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -4218,6 +4244,72 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="dataframe_collection_teacher_count",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_unique_partition,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_name": [
+                            "Anil",
+                            "Anil",
+                            "Anil",
+                            "David",
+                            "David",
+                            "David",
+                            "Ian",
+                            "Ian",
+                            "Ian",
+                            "Mike",
+                            "Mike",
+                            "Mike",
+                        ],
+                        "last_name": [
+                            "Lee",
+                            "Smith",
+                            "Taylor",
+                            "Smith",
+                            "Taylor",
+                            "Thomas",
+                            "Lee",
+                            "Taylor",
+                            "Thomas",
+                            "Lee",
+                            "Smith",
+                            "Thomas",
+                        ],
+                    }
+                ),
+                "dataframe_collection_unique_partition",
+            ),
+            id="dataframe_collection_unique_partition",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                dataframe_collection_correlation,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "first_name": [
+                            "Anil",
+                            "Anil",
+                            "Anil",
+                            "David",
+                            "David",
+                            "David",
+                            "Ian",
+                            "Ian",
+                            "Ian",
+                            "Mike",
+                            "Mike",
+                            "Mike",
+                        ],
+                    }
+                ),
+                "dataframe_collection_correlation",
+            ),
+            id="dataframe_collection_correlation",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -4779,9 +4871,25 @@ def test_pipeline_e2e_tpch_custom(
             dataframe_collection_bad_7,
             None,
             re.escape(
-                "Not existing column from 'unique_column_names' in the dataframe."
+                "The following column(s) from 'unique_column_names' are missing in the dataframe: col1"
             ),
             id="dataframe_collection_bad_7",
+        ),
+        pytest.param(
+            dataframe_collection_bad_8,
+            None,
+            re.escape(
+                "The following column(s) from 'filter_columns' are missing in the dataframe: no_exists"
+            ),
+            id="dataframe_collection_bad_8",
+        ),
+        pytest.param(
+            dataframe_collection_bad_9,
+            None,
+            re.escape(
+                "The following column(s) from 'unique_column_names' are missing in `filter_columns`: id"
+            ),
+            id="dataframe_collection_bad_9",
         ),
     ],
 )

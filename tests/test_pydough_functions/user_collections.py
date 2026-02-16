@@ -154,7 +154,7 @@ def user_range_collection_6():
     )
 
 
-def simple_dataframe_1():
+def simple_dataframe_collection_1():
     # Generates a simple dataframe collection
     df = pd.DataFrame(
         {
@@ -173,6 +173,32 @@ def simple_dataframe_1():
     )
     return pydough.dataframe_collection(
         name="rainbow", dataframe=df, unique_column_names=["idx"]
+    )
+
+
+def simple_dataframe_collection_2():
+    # Generates a simple dataframe collection with filtered columns
+    df = pd.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            "country": ["US", "CR", "US", "MX"],
+            "age": [25, 30, 22, 30],
+            "signup_date": pd.to_datetime(
+                [
+                    "2024-01-10",
+                    "2024-01-12",
+                    "2024-02-01",
+                    "2024-02-01",
+                ]
+            ),
+        }
+    )
+
+    return pydough.dataframe_collection(
+        name="users",
+        dataframe=df,
+        unique_column_names=["user_id"],
+        filter_columns=["user_id", "signup_date"],
     )
 
 
@@ -554,54 +580,60 @@ def dataframe_collection_window_functions():
     )
 
 
+# Common definition of the dataframes used in the following tests
+# All the classes being taught
+class_df = pd.DataFrame(
+    {
+        "key": [15112, 15122, 15150, 15210, 15251],
+        "class_name": [
+            "Programming Fundamentals",
+            "Imperative Programming",
+            "Functional Programming",
+            "Parallel Algorithms",
+            "Theoretical CS",
+        ],
+        "language": ["Python", "C", "SML", "SML", None],
+    }
+)
+
+# All the teachers
+teacher_df = pd.DataFrame(
+    {
+        "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
+        "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
+    }
+)
+
+# All the records of a teacher teaching a class for a specific semester
+teaching_df = pd.DataFrame(
+    {
+        "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
+        "teacher_id": [1 + (i**3) % 12 for i in range(30)],
+        "semester": (
+            ["2020-09-01"] * 5
+            + ["2021-02-01"] * 5
+            + ["2021-09-01"] * 5
+            + ["2022-02-01"] * 5
+            + ["2022-09-01"] * 5
+            + ["2023-02-01"] * 5
+        ),
+        "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
+    }
+)
+
+
 def dataframe_collection_taught_recently():
     # For each class, which teacher has taught it the most recently?
-    # All the classes being taught
-    class_df = pd.DataFrame(
-        {
-            "key": [15112, 15122, 15150, 15210, 15251],
-            "class_name": [
-                "Programming Fundamentals",
-                "Imperative Programming",
-                "Functional Programming",
-                "Parallel Algorithms",
-                "Theoretical CS",
-            ],
-            "language": ["Python", "C", "SML", "SML", None],
-        }
-    )
+
     class_tbl = pydough.dataframe_collection(
         "classes", class_df, ["key", "class_name"]
     ).CALCULATE(key, class_name, language)
 
-    # All the teachers
-    teacher_df = pd.DataFrame(
-        {
-            "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
-            "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
-        }
-    )
     teacher_tbl = pydough.dataframe_collection(
         "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
     ).CALCULATE(tid, first_name, last_name)
 
-    # All the records of a teacher teaching a class for a specific semester
-    teaching_df = pd.DataFrame(
-        {
-            "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
-            "teacher_id": [1 + (i**3) % 12 for i in range(30)],
-            "semester": (
-                ["2020-09-01"] * 5
-                + ["2021-02-01"] * 5
-                + ["2021-09-01"] * 5
-                + ["2022-02-01"] * 5
-                + ["2022-09-01"] * 5
-                + ["2023-02-01"] * 5
-            ),
-            "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
-        }
-    )
     teaching_tbl = pydough.dataframe_collection(
         "teaching", teaching_df, ["class_key", "teacher_id", "semester"]
     ).CALCULATE(class_key, teacher_id, semester, rating)
@@ -623,52 +655,14 @@ def dataframe_collection_taught_recently():
 def dataframe_collection_highest_rating():
     # For each class, which teacher had the highest rating when teaching that class?
 
-    # All the classes being taught
-    class_df = pd.DataFrame(
-        {
-            "key": [15112, 15122, 15150, 15210, 15251],
-            "class_name": [
-                "Programming Fundamentals",
-                "Imperative Programming",
-                "Functional Programming",
-                "Parallel Algorithms",
-                "Theoretical CS",
-            ],
-            "language": ["Python", "C", "SML", "SML", None],
-        }
-    )
     class_tbl = pydough.dataframe_collection(
         "classes", class_df, ["key", "class_name"]
     ).CALCULATE(key, class_name, language)
 
-    # All the teachers
-    teacher_df = pd.DataFrame(
-        {
-            "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
-            "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
-        }
-    )
     teacher_tbl = pydough.dataframe_collection(
         "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
     ).CALCULATE(tid, first_name, last_name)
 
-    # All the records of a teacher teaching a class for a specific semester
-    teaching_df = pd.DataFrame(
-        {
-            "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
-            "teacher_id": [1 + (i**3) % 12 for i in range(30)],
-            "semester": (
-                ["2020-09-01"] * 5
-                + ["2021-02-01"] * 5
-                + ["2021-09-01"] * 5
-                + ["2022-02-01"] * 5
-                + ["2022-09-01"] * 5
-                + ["2023-02-01"] * 5
-            ),
-            "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
-        }
-    )
     teaching_tbl = pydough.dataframe_collection(
         "teaching", teaching_df, ["class_key", "teacher_id", "semester"]
     ).CALCULATE(class_key, teacher_id, semester, rating)
@@ -690,52 +684,14 @@ def dataframe_collection_highest_rating():
 def dataframe_collection_teacher_class():
     # For each teacher, what class+semester have they taught most recently?
 
-    # All the classes being taught
-    class_df = pd.DataFrame(
-        {
-            "key": [15112, 15122, 15150, 15210, 15251],
-            "class_name": [
-                "Programming Fundamentals",
-                "Imperative Programming",
-                "Functional Programming",
-                "Parallel Algorithms",
-                "Theoretical CS",
-            ],
-            "language": ["Python", "C", "SML", "SML", None],
-        }
-    )
     class_tbl = pydough.dataframe_collection(
         "classes", class_df, ["key", "class_name"]
     ).CALCULATE(key, class_name, language)
 
-    # All the teachers
-    teacher_df = pd.DataFrame(
-        {
-            "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
-            "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
-        }
-    )
     teacher_tbl = pydough.dataframe_collection(
         "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
     ).CALCULATE(tid, first_name, last_name)
 
-    # All the records of a teacher teaching a class for a specific semester
-    teaching_df = pd.DataFrame(
-        {
-            "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
-            "teacher_id": [1 + (i**3) % 12 for i in range(30)],
-            "semester": (
-                ["2020-09-01"] * 5
-                + ["2021-02-01"] * 5
-                + ["2021-09-01"] * 5
-                + ["2022-02-01"] * 5
-                + ["2022-09-01"] * 5
-                + ["2023-02-01"] * 5
-            ),
-            "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
-        }
-    )
     teaching_tbl = pydough.dataframe_collection(
         "teaching", teaching_df, ["class_key", "teacher_id", "semester"]
     ).CALCULATE(class_key, teacher_id, semester, rating)
@@ -759,52 +715,14 @@ def dataframe_collection_teacher_lowest_rating():
     # For each teacher, what class+semester were they the lowest rated when
     # teaching?
 
-    # All the classes being taught
-    class_df = pd.DataFrame(
-        {
-            "key": [15112, 15122, 15150, 15210, 15251],
-            "class_name": [
-                "Programming Fundamentals",
-                "Imperative Programming",
-                "Functional Programming",
-                "Parallel Algorithms",
-                "Theoretical CS",
-            ],
-            "language": ["Python", "C", "SML", "SML", None],
-        }
-    )
     class_tbl = pydough.dataframe_collection(
         "classes", class_df, ["key", "class_name"]
     ).CALCULATE(key, class_name, language)
 
-    # All the teachers
-    teacher_df = pd.DataFrame(
-        {
-            "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
-            "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
-        }
-    )
     teacher_tbl = pydough.dataframe_collection(
         "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
     ).CALCULATE(tid, first_name, last_name)
 
-    # All the records of a teacher teaching a class for a specific semester
-    teaching_df = pd.DataFrame(
-        {
-            "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
-            "teacher_id": [1 + (i**3) % 12 for i in range(30)],
-            "semester": (
-                ["2020-09-01"] * 5
-                + ["2021-02-01"] * 5
-                + ["2021-09-01"] * 5
-                + ["2022-02-01"] * 5
-                + ["2022-09-01"] * 5
-                + ["2023-02-01"] * 5
-            ),
-            "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
-        }
-    )
     teaching_tbl = pydough.dataframe_collection(
         "teaching", teaching_df, ["class_key", "teacher_id", "semester"]
     ).CALCULATE(class_key, teacher_id, semester, rating)
@@ -824,52 +742,14 @@ def dataframe_collection_language_highest_rating():
     # For each programming language, what is the teacher who received the
     # highest rating when teaching a class in that language?
 
-    # All the classes being taught
-    class_df = pd.DataFrame(
-        {
-            "key": [15112, 15122, 15150, 15210, 15251],
-            "class_name": [
-                "Programming Fundamentals",
-                "Imperative Programming",
-                "Functional Programming",
-                "Parallel Algorithms",
-                "Theoretical CS",
-            ],
-            "language": ["Python", "C", "SML", "SML", None],
-        }
-    )
     class_tbl = pydough.dataframe_collection(
         "classes", class_df, ["key", "class_name"]
     ).CALCULATE(key, class_name, language)
 
-    # All the teachers
-    teacher_df = pd.DataFrame(
-        {
-            "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
-            "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
-        }
-    )
     teacher_tbl = pydough.dataframe_collection(
         "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
     ).CALCULATE(tid, first_name, last_name)
 
-    # All the records of a teacher teaching a class for a specific semester
-    teaching_df = pd.DataFrame(
-        {
-            "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
-            "teacher_id": [1 + (i**3) % 12 for i in range(30)],
-            "semester": (
-                ["2020-09-01"] * 5
-                + ["2021-02-01"] * 5
-                + ["2021-09-01"] * 5
-                + ["2022-02-01"] * 5
-                + ["2022-09-01"] * 5
-                + ["2023-02-01"] * 5
-            ),
-            "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
-        }
-    )
     teaching_tbl = pydough.dataframe_collection(
         "teaching", teaching_df, ["class_key", "teacher_id", "semester"]
     ).CALCULATE(class_key, teacher_id, semester, rating)
@@ -895,52 +775,10 @@ def dataframe_collection_teacher_count():
     # For each teacher, count how many different teachers have taught the same
     # class as them at some point.
 
-    # All the classes being taught
-    class_df = pd.DataFrame(
-        {
-            "key": [15112, 15122, 15150, 15210, 15251],
-            "class_name": [
-                "Programming Fundamentals",
-                "Imperative Programming",
-                "Functional Programming",
-                "Parallel Algorithms",
-                "Theoretical CS",
-            ],
-            "language": ["Python", "C", "SML", "SML", None],
-        }
-    )
-    class_tbl = pydough.dataframe_collection(
-        "classes", class_df, ["key", "class_name"]
-    ).CALCULATE(key, class_name, language)
-
-    # All the teachers
-    teacher_df = pd.DataFrame(
-        {
-            "tid": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            "first_name": ["Anil", "Mike", "Ian", "David"] * 3,
-            "last_name": ["Lee"] * 3 + ["Smith"] * 3 + ["Taylor"] * 3 + ["Thomas"] * 3,
-        }
-    )
     teacher_tbl = pydough.dataframe_collection(
         "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
     ).CALCULATE(tid, first_name, last_name)
 
-    # All the records of a teacher teaching a class for a specific semester
-    teaching_df = pd.DataFrame(
-        {
-            "class_key": [15112, 15122, 15150, 15210, 15251] * 6,
-            "teacher_id": [1 + (i**3) % 12 for i in range(30)],
-            "semester": (
-                ["2020-09-01"] * 5
-                + ["2021-02-01"] * 5
-                + ["2021-09-01"] * 5
-                + ["2022-02-01"] * 5
-                + ["2022-09-01"] * 5
-                + ["2023-02-01"] * 5
-            ),
-            "rating": [round(((i + 7.2) ** 4) % 12, 2) for i in range(30)],
-        }
-    )
     teaching_tbl = pydough.dataframe_collection(
         "teaching", teaching_df, ["class_key", "teacher_id", "semester"]
     )
@@ -955,6 +793,34 @@ def dataframe_collection_teacher_count():
         .WHERE(tid == teacher_1)
         .PARTITION(name="classes", by=(first_name, last_name))
         .CALCULATE(first_name, last_name, n_teachers=COUNT(teachers))
+    )
+
+
+def dataframe_collection_unique_partition():
+    teacher_tbl = pydough.dataframe_collection(
+        "teachers", teacher_df, ["tid", ["first_name", "last_name"]]
+    ).CALCULATE(tid, first_name, last_name)
+
+    return teacher_tbl.PARTITION(name="names", by=(first_name, last_name))
+
+
+def dataframe_collection_correlation():
+    # For each class, how many different classes are taught in the same language?
+
+    classes_collection = pydough.dataframe_collection(
+        "classes", class_df, ["key", "class_name"]
+    )
+
+    other_classes_same_language = (
+        CROSS(classes_collection.CALCULATE(language, key))
+        .WHERE((language == original_language))
+        .CALCULATE(metric=(key != original_key))
+    )
+
+    return classes_collection.CALCULATE(
+        original_language=language, original_key=key
+    ).CALCULATE(
+        class_name, language, n_other_classes=SUM(other_classes_same_language.metric)
     )
 
 
@@ -1028,3 +894,29 @@ def dataframe_collection_bad_7():
         }
     )
     return pydough.dataframe_collection("unsupported_df", df_unsupported, ["col1"])
+
+
+def dataframe_collection_bad_8():
+    # Wrong filter_columns (not in the dataframe)
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df", df_unsupported, ["id"], ["id", "no_exists"]
+    )
+
+
+def dataframe_collection_bad_9():
+    # Wrong unique_column_names (not in filter_columns)
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df", df_unsupported, ["id"], ["name"]
+    )

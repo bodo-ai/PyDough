@@ -1585,6 +1585,15 @@ It takes in the following arguments:
 
 - `name`: The name of the dataframe collection.
 - `dataframe`: Pandas DataFrame containing the corresponding data.
+- `unique_column_names`: List of strings or list of strings
+`(list [str | list[ str ]])` representing the unique properties for the dataframe 
+collection. For example: ["column1", ["column2", "column3"]] indicates `column1`
+is a unique property and the combination of column2 and column3 is also unique.
+- `filter_columns`(optional): List of filter/selected columns from the dataframe.
+If provided, indicates all columns from the original dataframe that will be in the
+final dataframe collection. 
+
+**Note**: All columns in `unique_column_names` must be included in `filter_columns`; otherwise, an error will be raised. 
 
 #### Datatypes
 `dataframe_collection` doesn't support mix datatypes in one column.
@@ -1609,7 +1618,7 @@ df = pd.DataFrame({
   "color": ["red", "orange", "yellow", "green", "blue", "indigo", "violet", None]
   "idx": range(8)
 })
-rainbow_table = pydough.dataframe_collection(name='rainbow', dataframe=df)
+rainbow_table = pydough.dataframe_collection(name='rainbow', dataframe=df, unique_column_names=["idx"])
 df = pydough.to_df(rainbow_table)
 print(df)
 ```
