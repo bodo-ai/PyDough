@@ -9,7 +9,7 @@ from pydough.relational import RelationalRoot
 from pydough.sqlglot import convert_relation_to_sql
 from pydough.types import PyDoughType
 from pydough.unqualified import UnqualifiedNode, qualify_node
-from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 from pydough.user_collections.view_collection import ViewGeneratedCollection
 
 from .evaluate_unqualified import _load_session_info
@@ -91,7 +91,6 @@ def _generate_create_ddl(
         sql_text = f"{create_keyword} {temp_keyword}{object_type} {name} AS ({sql})"
     else:
         sql_text = f"{create_keyword} {temp_keyword}{object_type} {name} AS {sql}"
-    print(f"Generated DDL:\n{sql_text}")
     return sql_text
 
 
@@ -102,7 +101,7 @@ def to_table(
     replace: bool = False,
     temp: bool = False,
     **kwargs,
-) -> UnqualifiedGeneratedCollection:
+) -> PyDoughUserGeneratedCollection:
     """
     Materialize the given PyDough query as a database temporary view/table,
     and return a collection reference that can be used
@@ -120,7 +119,7 @@ def to_table(
             when the database session closes. Default is False.
 
     Returns:
-        An UnqualifiedGeneratedCollection that can be used in subsequent
+        A PyDoughUserGeneratedCollection that can be used in subsequent
         PyDough queries to reference the created view/table.
 
     """
@@ -151,8 +150,6 @@ def to_table(
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
-    # TODO: remove the print
-    print(f"Executing DDL to create view/table:\n{ddl}")
 
     # Execute the DDL via the session's database connection
     session.database.connection.execute_ddl(ddl)
@@ -166,5 +163,5 @@ def to_table(
         is_temp=temp,
     )
 
-    # Step 5: Wrap and return as UnqualifiedGeneratedCollection
-    return UnqualifiedGeneratedCollection(view_collection)
+    # Step 5: return the collection reference
+    return view_collection

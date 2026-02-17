@@ -7,7 +7,7 @@ from types import NoneType
 
 from dateutil import parser  # type: ignore[import-untyped]
 
-from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 __all__ = [
     "AstNodeTestInfo",
@@ -46,7 +46,7 @@ import pytest
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough import init_pydough_context, to_df, to_sql
+from pydough import init_pydough_context, to_df, to_sql, to_table
 from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -974,7 +974,7 @@ def transform_and_exec_pydough(
         # If the pydough_impl is a string, parse it with pydough.from_string.
         return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
     else:
-        # OTherwise, transform the function with the decorator and call it.
+        # Otherwise, transform the function with the decorator and call it.
         return init_pydough_context(graph)(pydough_impl)(**kwargs)
 
 
@@ -1092,38 +1092,6 @@ class PyDoughSQLComparisonTest:
 
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(result, refsol, rtol=rtol, atol=atol)
-
-
-def run_e2e_test_to_table(
-    pydough_function: Callable[..., UnqualifiedNode] | str,
-    graph: GraphMetadata,
-    fetcher: graph_fetcher,
-    database: DatabaseContext,
-    config: PyDoughConfigs | None = None,
-):
-    """
-    Runs an end-to-end test using `to_table` to ensure DDL is generated correctly,
-    comparing the result of the PyDough code against the reference solution.
-
-    Args:
-        `fetcher`: The function that takes in the name of the graph used
-        by the test and fetches the graph metadata.
-        `database`: The database context to use for executing SQL.
-        `config`: The PyDough configuration to use for the test, if any.
-    """
-    # Obtain the graph and the unqualified node
-    root: UnqualifiedNode = transform_and_exec_pydough(pydough_function, graph, None)
-
-    # call_kwargs: dict = {"metadata": graph, "database": database}
-    # if config is not None:
-    #     call_kwargs["config"] = config
-    # collection = to_table(root, **call_kwargs)
-    # assert isinstance(collection, UnqualifiedGeneratedCollection), "to_table did not return a UnqualifiedGeneratedCollection as expected"
-    assert isinstance(root, UnqualifiedGeneratedCollection), (
-        f"Expected UnqualifiedGeneratedCollection, got {type(root)}"
-    )
-    # If we got here without an exception, the test is successful.
-    # TODO: generate logger and ensure that the generated DDL is correct.
 
 
 @dataclass
@@ -1418,6 +1386,75 @@ class PyDoughPandasTest:
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )
+
+    def run_e2e_test_to_table(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        as_view: bool = False,
+        replace: bool = False,
+        temp: bool = False,
+        config: PyDoughConfigs | None = None,
+    ) -> None:
+        """
+        Runs an end-to-end test using `to_table` to ensure DDL is generated correctly,
+        comparing the result of the PyDough code against the reference solution.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `database`: The database context to use for executing SQL.
+            `config`: The PyDough configuration to use for the test, if any.
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
+
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}"
+        collection = to_table(
+            root,
+            name=table_name,
+            as_view=as_view,
+            replace=replace,
+            temp=temp,
+            **call_kwargs,
+        )
+        assert isinstance(collection, PyDoughUserGeneratedCollection), (
+            "to_table did not return a PyDoughUserGeneratedCollection as expected"
+        )
+        verify_table_created_correctly(database, table_name, collection.columns)
+
+
+def verify_table_created_correctly(
+    database: DatabaseContext,
+    table_name: str,
+    expected_columns: list[str] | None = None,
+) -> None:
+    """
+    Verifies that a table was created correctly in the database by comparing the actual schema of the table against the expected schema.
+
+    Args:
+        `database`: The database context to use for executing SQL.
+        `table_name`: The name of the table to verify.
+        `expected_schema`: A dictionary mapping column names to expected data types.
+    """
+    # Query the database for the schema of the created table
+    actual_table_columns = database.connection.get_table_columns(table_name)
+    # Compare the actual columns against the expected columns
+    assert actual_table_columns == expected_columns, (
+        f"Columns of table {table_name} do not match expected columns. Actual: {actual_table_columns}, Expected: {expected_columns}"
+    )
+    # Anything else to verify about the created table can be added here,
+    # such as checking if it's a view or a temp table, etc.?
+    # I didn't add datatype verification because that needs changes to the way
+    # DDL is generated in PyDough to ensure we have the expected data types
+    # available in the test, which is a larger change that I wanted to avoid
+    # for now. Plus will vary across dialects.
 
 
 def harmonize_types(column_a, column_b):

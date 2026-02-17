@@ -217,7 +217,7 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_3,
     simple_range_4,
     simple_range_5,
-    simple_to_table,
+    simple_to_table_1,
     user_range_collection_1,
     user_range_collection_2,
     user_range_collection_3,
@@ -231,7 +231,6 @@ from .testing_utilities import (
     PyDoughPandasTest,
     graph_fetcher,
     run_e2e_error_test,
-    run_e2e_test_to_table,
 )
 
 
@@ -4830,18 +4829,58 @@ def test_pipeline_e2e_errors(
     )
 
 
+@pytest.fixture(
+    params=[
+        pytest.param(
+            PyDoughPandasTest(
+                simple_to_table_1,
+                "TPCH",
+                lambda: pd.DataFrame(),
+                "simple_to_table_1",
+            ),
+            id="simple_to_table_1",
+        ),
+    ]
+)
+def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests on custom queries using the TPC-H database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
+    """
+    return request.param
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "as_view, replace, temp",
+    [
+        (False, False, False),
+        # (False, False, True),
+        # (False, True, False),
+        # (False, True, True),
+        # (True, False, False),
+        # (True, False, True),
+        # (True, True, False),
+        # (True, True, True),
+    ],
+)
 def test_pipeline_e2e_to_table(
+    tpch_custom_to_table_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
+    as_view: bool,
+    replace: bool,
+    temp: bool,
 ):
     """
     Test that a simple to_table call can be materialized and executed on the
     database.
     """
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    run_e2e_test_to_table(
-        simple_to_table,
-        graph,
+    tpch_custom_to_table_test_data.run_e2e_test_to_table(
         get_sample_graph,
         sqlite_tpch_db_context,
+        as_view=as_view,
+        replace=replace,
+        temp=temp,
     )
