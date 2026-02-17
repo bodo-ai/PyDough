@@ -2,8 +2,12 @@
 Unit tests for the PyDough metadata module.
 """
 
+from typing import Any
+
 import pytest
 
+from pydough import parse_metadata_from_list
+from pydough.errors import PyDoughMetadataException
 from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
@@ -424,3 +428,64 @@ def test_semantic_info(get_sample_graph: graph_fetcher) -> None:
         "suppliers of part",
     ]
     assert empty_semantic_property.extra_semantic_info is None
+
+
+@pytest.mark.parametrize(
+    "file_name, graph_name, valid",
+    [
+        pytest.param(
+            "sample_graphs.json",
+            "TPCH",
+            True,
+            id="parse-from-list-tpch-graph",
+        ),
+        pytest.param(
+            "keywords_graph.json",
+            "keywords",
+            True,
+            id="parse-from-list-keywords-graph",
+        ),
+        pytest.param(
+            "masked_graphs.json",
+            "CRYPTBANK",
+            True,
+            id="parse-from-list-cryptobank-graph",
+        ),
+        pytest.param(
+            "sf_masked_examples.json",
+            "HEALTH",
+            True,
+            id="parse-from-list-health-graph",
+        ),
+        pytest.param(
+            "sf_masked_examples.json",
+            "INVALID_GRAPH_NAME",
+            False,
+            id="parse-from-list-INVALID_GRAPH_NAME",
+        ),
+    ],
+)
+def test_parse_from_list(
+    file_name: str,
+    graph_name: str,
+    valid: bool,
+    get_custom_datasets_graph_list: Any,
+) -> None:
+    """
+    Tests that parse_metadata_from_list successfully extracts a valid graph
+    from a properly formatted list of metadata dictionaries.
+
+    Verifies:
+    - The function returns a GraphMetadata object
+    - The returned graph has the correct name
+    """
+    json_list = get_custom_datasets_graph_list(file_name)
+    if valid:
+        graph: GraphMetadata = parse_metadata_from_list(json_list, graph_name)
+        assert graph.name == graph_name
+    else:
+        with pytest.raises(
+            PyDoughMetadataException,
+            match=f"PyDough metadata graph '{graph_name}' not found in list",
+        ):
+            parse_metadata_from_list(json_list, graph_name)
