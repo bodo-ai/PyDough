@@ -7,7 +7,7 @@ WITH _s1 AS (
     (15122, 'Imperative Programming', 'C'),
     (15150, 'Functional Programming', 'SML'),
     (15210, 'Parallel Algorithms', 'SML'),
-    (15251, 'Theoretical CS', NULL)) AS classes(key, class_name, language)
+    (15251, 'Theoretical CS', NULL)) AS classes_2(key, class_name, language)
 )
 SELECT
   ANY_VALUE(column2) AS class_name,

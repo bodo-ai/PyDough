@@ -4290,20 +4290,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "first_name": [
-                            "Anil",
-                            "Anil",
-                            "Anil",
-                            "David",
-                            "David",
-                            "David",
-                            "Ian",
-                            "Ian",
-                            "Ian",
-                            "Mike",
-                            "Mike",
-                            "Mike",
+                        "class_name": [
+                            "Programming Fundamentals",
+                            "Imperative Programming",
+                            "Functional Programming",
+                            "Parallel Algorithms",
                         ],
+                        "language": ["Python", "C", "SML", "SML"],
+                        "n_other_classes": [0, 0, 1, 1],
                     }
                 ),
                 "dataframe_collection_correlation",

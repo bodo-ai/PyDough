@@ -396,6 +396,33 @@ def expand_std(
     )
 
 
+def rename_user_collection(
+    known_collections: list[str],
+    current_name: str,
+) -> str:
+    """
+    Helper function to rename a user collection to avoid naming conflicts with other
+    collections in the same query.
+
+    Args:
+    `known_collections`: The list of known collection names that are user-generated.
+    `current_name`: The current name of the collection to potentially rename.
+
+    Returns:
+        A name for the collection that is unique among the known collections.
+    """
+    if current_name not in known_collections:
+        # If the current name is not in the list of known collections, it's used
+        # as it is.
+        known_collections.append(current_name)
+        return current_name
+    else:
+        # Otherwise, it's renamed by adding an index to the end of the name.
+        idx: int = known_collections.count(current_name) + 1
+        known_collections.append(current_name)
+        return f"{current_name}_{idx}"
+
+
 def create_constant_table(
     table_name: str,
     column_names: list[str],
