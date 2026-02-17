@@ -5,6 +5,7 @@ The logic used to parse PyDough metadata from a JSON file.
 __all__ = ["parse_json_metadata_from_file"]
 
 import json
+from typing import Any
 
 from pydough.errors import PyDoughMetadataException
 from pydough.errors.error_utils import (
@@ -76,6 +77,51 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
     raise PyDoughMetadataException(
         f"PyDough metadata file located at {file_path!r} does not "
         + f"contain a graph named {graph_name!r}"
+    )
+
+
+def parse_metadata_from_list(
+    json_list: list[dict[str, Any]], graph_name: str
+) -> GraphMetadata:
+    """
+    Parses a list of JSON objects to obtain a specific PyDough metadata graph.
+
+    Args:
+        `json_list`: a list of JSON objects representing PyDough metadata graphs.
+        Each object must contain a "name" field (string) identifying the graph
+        and a "version" field (string) specifying the metadata version.
+        `graph_name`: the name of the graph from the metadata list that is
+        being requested. This should match the "name" field of one of the objects.
+
+    Returns:
+        The metadata for the PyDough graph, including all of the collections
+        and properties defined within.
+
+    Raises:
+        `PyDoughMetadataException`: if any graph object in the list is malformed,
+        if the specified version is not recognized, or if no graph with the given
+        name exists in the list.
+    """
+    for graph_json in json_list:
+        HasType(dict).verify(graph_json, "metadata for PyDough graph")
+        HasPropertyWith("name", is_string).verify(
+            graph_json, "metadata for PyDough graph"
+        )
+        name: str = extract_string(graph_json, "name", "metadata for PyDough graph")
+        if name == graph_name:
+            version: str = extract_string(
+                graph_json, "version", "metadata for PyDough graph"
+            )
+            match version:
+                case "V2":
+                    return parse_graph_v2(name, graph_json)
+                case _:
+                    raise PyDoughMetadataException(
+                        f"Unrecognized PyDough metadata version: {version!r}"
+                    )
+    # If we reach this point, then the graph was not found in the list
+    raise PyDoughMetadataException(
+        f"PyDough metadata graph {graph_name!r} not found in list"
     )
 
 
