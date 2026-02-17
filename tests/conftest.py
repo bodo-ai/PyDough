@@ -3,6 +3,7 @@ Definitions of various fixtures used in PyDough tests that are automatically
 available.
 """
 
+import json
 import logging
 import os
 import sqlite3
@@ -10,6 +11,7 @@ import subprocess
 import time
 from collections.abc import Callable
 from functools import cache
+from typing import Any
 
 import boto3
 import httpx
@@ -2312,3 +2314,21 @@ def clean_pydough_logger():
     # After test (cleanup)
     reset_logger("pydough")
     reset_logger("pydough.mask_server")
+
+
+@pytest.fixture(scope="session")
+def get_custom_datasets_graph_list() -> Any:
+    """
+    Returns the json object for the given metadata file name.
+    """
+
+    @cache
+    def impl(file_name: str) -> Any:
+        file_path: str = os.path.join(
+            os.path.dirname(__file__), "test_metadata", file_name
+        )
+        with open(file_path) as f:
+            as_json = json.load(f)
+        return as_json
+
+    return impl

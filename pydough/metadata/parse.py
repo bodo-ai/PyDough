@@ -2,7 +2,7 @@
 The logic used to parse PyDough metadata from a JSON file.
 """
 
-__all__ = ["parse_json_metadata_from_file"]
+__all__ = ["parse_json_metadata_from_file", "parse_metadata_from_list"]
 
 import json
 from typing import Any
@@ -80,9 +80,7 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
     )
 
 
-def parse_metadata_from_list(
-    json_list: list[dict[str, Any]], graph_name: str
-) -> GraphMetadata:
+def parse_metadata_from_list(json_list: Any, graph_name: str) -> GraphMetadata:
     """
     Parses a list of JSON objects to obtain a specific PyDough metadata graph.
 
