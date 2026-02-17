@@ -6,7 +6,7 @@ WITH _s0 AS (
   SELECT
     partsupp.ps_suppkey,
     MAX(_s0.avg_p_retailprice) AS anything_avg_p_retailprice,
-    SUM(IIF(NOT part.p_retailprice IS NULL, 1, 0)) AS sum_expr,
+    SUM(NOT part.p_retailprice IS NULL) AS sum_expr,
     SUM(part.p_retailprice) AS sum_p_retailprice
   FROM _s0 AS _s0
   JOIN tpch.supplier AS supplier

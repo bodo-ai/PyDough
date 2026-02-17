@@ -12,7 +12,7 @@ WITH _s1 AS (
 ), _s7 AS (
   SELECT
     _s3.region,
-    SUM(IFF(NOT restaurant.rating IS NULL, 1, 0)) AS sum_expr,
+    COUNT_IF(NOT restaurant.rating IS NULL) AS sum_expr,
     SUM(restaurant.rating) AS sum_rating
   FROM main.location AS location
   LEFT JOIN _s1 AS _s3
