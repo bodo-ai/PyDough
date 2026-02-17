@@ -135,7 +135,7 @@ def test_connect_sqlite_database() -> None:
     assert database is session.database
     assert database.connection is not empty_connection
     assert database.dialect is DatabaseDialect.SQLITE
-    result: pd.DataFrame = session.database.execute_query("Select 1 as A")
+    result: pd.DataFrame = session.database.execute_query_df("Select 1 as A")
     pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
 
 

@@ -138,14 +138,14 @@ class DatabaseContext:
     connection: DatabaseConnection | BodoSQLContext
     dialect: DatabaseDialect
 
-    def execute_query(self, sql: str) -> pd.DataFrame:
+    def execute_query_df(self, sql: str) -> pd.DataFrame:
         """Execute a SQL query using the database connection and return the
-        results as a Pandas DataFrame.
+        result as a Pandas DataFrame.
 
         Args:
             `sql`: The SQL query to execute.
         Returns:
-            A Pandas DataFrame containing the results of the query.
+            A Pandas DataFrame containing the result of the query.
         """
         if isinstance(self.connection, DatabaseConnection):
             return self.connection.execute_query_df(sql)

@@ -1,4 +1,4 @@
-name: Run Snowflake Tests
+name: Run BodoSQL Tests
 
 on:
   workflow_call:

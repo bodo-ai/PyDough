@@ -1160,7 +1160,7 @@ def bodosql_e2e_tests(request) -> PyDoughPandasTest:
 
 
 @pytest.mark.bodosql
-def test_pipeline_until_relational_masked_sf(
+def test_pipeline_until_relational_bodosql(
     bodosql_e2e_tests: PyDoughPandasTest,
     bodosql_graphs: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
