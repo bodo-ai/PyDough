@@ -22,7 +22,7 @@ WITH _t1 AS (
         1 - lineitem.l_discount
       )
       ELSE NULL
-    END AS expr_2
+    END AS expr_7
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
@@ -46,7 +46,7 @@ SELECT
   AVG(l_extendedprice * (
     1 - l_discount
   )) AS mean_rev,
-  AVG(expr_2) AS median_rev
+  AVG(expr_7) AS median_rev
 FROM _t1
 GROUP BY
   n_nationkey
