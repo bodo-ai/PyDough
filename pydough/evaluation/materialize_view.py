@@ -1,3 +1,6 @@
+import warnings
+from dataclasses import dataclass
+
 import pydough
 from pydough.configs import PyDoughSession
 from pydough.conversion import convert_ast_to_relational
@@ -42,6 +45,46 @@ def _infer_schema_from_relational(
     return column_names, column_types
 
 
+@dataclass(frozen=True)
+class CreateCapabilities:
+    """
+    Class to define the capabilities of the different database dialects
+    for CREATE statements.
+    This is used to determine which syntax options are available
+    for creating views/tables in different databases.
+    """
+
+    replace_table: bool = True
+    temp_table: bool = True
+    replace_view: bool = True
+    temp_view: bool = True
+
+
+CREATE_CAPABILITIES: dict[DatabaseDialect, CreateCapabilities] = {
+    DatabaseDialect.SNOWFLAKE: CreateCapabilities(
+        temp_view=False,
+    ),
+    DatabaseDialect.POSTGRES: CreateCapabilities(
+        replace_table=False,
+        temp_view=False,
+    ),
+    DatabaseDialect.MYSQL: CreateCapabilities(
+        replace_table=False,
+        temp_view=False,
+    ),
+    DatabaseDialect.SQLITE: CreateCapabilities(
+        replace_table=False,
+        replace_view=False,
+    ),
+    DatabaseDialect.ANSI: CreateCapabilities(),
+}
+"""
+Mapping of database dialects to their CREATE statement capabilities.
+This is used to determine which options are available when generating 
+the DDL for creating views/tables in different databases.
+"""
+
+
 def _generate_create_ddl(
     name: str,
     sql: str,
@@ -65,33 +108,49 @@ def _generate_create_ddl(
         The DDL string to execute.
     """
     # Handle differences in CREATE syntax for different databases.
-    # Make sure it works with all supported databases (MySQL, Postgres, Snowflake, SQLite).
-
-    create_keyword = "CREATE"
-    if replace:
-        if db_dialect in (
-            DatabaseDialect.ANSI,
-            DatabaseDialect.SNOWFLAKE,
-            DatabaseDialect.POSTGRES,
-        ):
-            create_keyword += " OR REPLACE"
-        # MySQL does not support CREATE OR REPLACE for tables, only for views
-        elif db_dialect == DatabaseDialect.MYSQL and as_view:
-            create_keyword += " OR REPLACE"
-        else:
-            raise PyDoughSessionException(
-                f"CREATE OR REPLACE is not supported for {db_dialect.name} when creating a table."
-            )
-    temp_keyword = "TEMPORARY " if temp else ""
+    create_caps = CREATE_CAPABILITIES[db_dialect]
     object_type = "VIEW" if as_view else "TABLE"
 
-    # SQLite requires parentheses around the SELECT for views
-    sql_text = ""
-    if db_dialect == DatabaseDialect.SQLITE and as_view:
-        sql_text = f"{create_keyword} {temp_keyword}{object_type} {name} AS ({sql})"
-    else:
-        sql_text = f"{create_keyword} {temp_keyword}{object_type} {name} AS {sql}"
-    return sql_text
+    if temp:
+        allowed = create_caps.temp_view if as_view else create_caps.temp_table
+        if not allowed:
+            raise PyDoughSessionException(
+                f"TEMP {object_type} not supported for {db_dialect.name}"
+            )
+
+    if as_view and not temp and db_dialect == DatabaseDialect.SQLITE:
+        # Sqlite does not support creating persistent views that reference attached databases.
+        # like tpch.oreder Only temporary views are supported.
+        # Override to be temporary and raise a warning.
+        temp = True
+        warnings.warn(
+            "SQLite does not support creating persistent views that reference attached databases. "
+            "Only temporary views are supported. The view will be created as TEMPORARY."
+        )
+        # TODO: ask the team
+        # Another option would be to raise an error and
+        # require the user to explicitly choose temp=True.
+        # raise PyDoughSessionException(
+        #     f"SQLite does not support creating persistent views that reference attached databases. "
+        #     f"Only temporary views are supported."
+        # )
+
+    if replace:
+        allowed = create_caps.replace_view if as_view else create_caps.replace_table
+        if not allowed:
+            raise PyDoughSessionException(
+                f"CREATE OR REPLACE {object_type} not supported for {db_dialect.name}"
+            )
+
+    create = "CREATE"
+    if replace:
+        create += " OR REPLACE"
+    if temp:
+        create += " TEMPORARY"
+
+    create += f" {object_type}"
+
+    return f"{create} {name} AS {sql}"
 
 
 def to_table(

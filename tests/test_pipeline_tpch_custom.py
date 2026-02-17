@@ -217,7 +217,6 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_3,
     simple_range_4,
     simple_range_5,
-    simple_to_table_1,
     user_range_collection_1,
     user_range_collection_2,
     user_range_collection_3,
@@ -4833,12 +4832,12 @@ def test_pipeline_e2e_errors(
     params=[
         pytest.param(
             PyDoughPandasTest(
-                simple_to_table_1,
+                window_filter_order_1,
                 "TPCH",
                 lambda: pd.DataFrame(),
-                "simple_to_table_1",
+                "window_filter_order_1",
             ),
-            id="simple_to_table_1",
+            id="window_filter_order_1",
         ),
     ]
 )
@@ -4851,16 +4850,23 @@ def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
+# TODO: test other dialects
 @pytest.mark.execute
 @pytest.mark.parametrize(
     "as_view, replace, temp",
     [
         (False, False, False),
-        # (False, False, True),
+        (False, False, True),
+        (True, False, True),
+        # Sqlite cannot create persistent views that reference attached databases.
+        # like tpch.oreder Only temporary views are supported.
+        # For now, replace it to a temporary view.
+        # TODO: is there a way around this?
+        (True, False, False),
+        # These should faile. Sqlite does not support replacing views or tables, so replace=True should cause an error.
+        # TODO: move to another test.
         # (False, True, False),
         # (False, True, True),
-        # (True, False, False),
-        # (True, False, True),
         # (True, True, False),
         # (True, True, True),
     ],
