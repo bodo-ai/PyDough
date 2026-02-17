@@ -3318,6 +3318,57 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "c1 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '1')).TOP_K(100, by=key.ASC())\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING')).TOP_K(100, by=key.ASC())\n"
+                "c3 = customers.TOP_K(100, by=key.ASC()).WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '1'))\n"
+                "c4 = customers.TOP_K(100, by=key.ASC()).WHERE((market_segment == 'BUILDING'))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1),"
+                " n2=COUNT(c2),"
+                " n3=COUNT(c3),"
+                " n4=COUNT(c4),"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [100],
+                        "n2": [100],
+                        "n3": [10],
+                        "n4": [20],
+                    }
+                ),
+                "count_multiple_filters_x",
+                skip_sql=True,
+            ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE((market_segment == 'BUILDING')).CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==1)\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING')).CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==2)\n"
+                "c3 = customers.CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==1)\n"
+                "c4 = customers.CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==2)\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1),"
+                " n2=COUNT(c2),"
+                " n3=COUNT(c3),"
+                " n4=COUNT(c4),"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [20],
+                        "n2": [44],
+                        "n3": [78],
+                        "n4": [161],
+                    }
+                ),
+                "count_multiple_filters_y",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_y",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 order_quarter_test,
                 "TPCH",
                 lambda: pd.DataFrame(
