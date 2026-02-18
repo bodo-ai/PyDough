@@ -40,6 +40,7 @@ from .sqlglot_transform_utils import (
     offset_pattern,
     pad_helper,
     positive_index,
+    rename_user_collection,
     trunc_pattern,
 )
 
@@ -57,6 +58,7 @@ class BaseTransformBindings:
     def __init__(self, configs: PyDoughConfigs, visitor: "SQLGlotRelationalVisitor"):
         self._configs = configs
         self._visitor = visitor
+        self._known_collections: list[str] = []
 
     @property
     def configs(self) -> PyDoughConfigs:
@@ -135,6 +137,13 @@ class BaseTransformBindings:
         respectively.
         """
         return True
+
+    @property
+    def known_collections(self) -> list[str]:
+        """
+        The list of known collection names that are user-generated.
+        """
+        return self._known_collections
 
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
@@ -2234,6 +2243,12 @@ class BaseTransformBindings:
         Returns:
             A SQLGlotExpression representing the user-generated collection.
         """
+
+        # Rename the collection to ensure it is unique in the query,
+        # to avoid naming conflicts with other collections.
+        collection.name = rename_user_collection(
+            self.known_collections, collection.name
+        )
 
         match collection:
             case RangeGeneratedCollection():

@@ -49,7 +49,10 @@ def range_collection(
 
 
 def dataframe_collection(
-    name: str, dataframe: pd.DataFrame, unique_column_names: list[str | list[str]]
+    name: str,
+    dataframe: pd.DataFrame,
+    unique_column_names: list[str | list[str]],
+    filter_columns: list[str] = [],
 ) -> UnqualifiedGeneratedCollection:
     """
     Implementation of the `pydough.dataframe_collection` function, which provides
@@ -60,6 +63,9 @@ def dataframe_collection(
         `dataframe` : The dataframe of the collection
         `unique_column_names`: List of unique properties or unique combinations
         in the collection.
+        `filter_columns`: List of columns use to filter the original dataframe.
+        This are the columns that will be in the Dataframe collection. If empty
+        the dataframe will use all columns.
 
     Returns:
         A collection with the given dataframe.
@@ -70,9 +76,16 @@ def dataframe_collection(
         raise TypeError(
             f"Expected 'dataframe' to be a Pandas DataFrame, got {type(dataframe).__name__}"
         )
-    if not isinstance(unique_column_names, list):
+    if not DataframeGeneratedCollection.valid_unique_column_names(unique_column_names):
         raise TypeError(
-            f"Expected 'unique_column_names' to be a list of string, got {type(unique_column_names).__name__}"
+            f"Expected 'unique_column_names' to be list[list | list[str]], got {type(unique_column_names).__name__}"
+        )
+
+    if not isinstance(filter_columns, list) and all(
+        isinstance(col, str) for col in filter_columns
+    ):
+        raise TypeError(
+            f"Expected 'filter_columns' to a list of string, got {type(filter_columns).__name__}"
         )
 
     unique_flatten_columns: list[str] = [
@@ -81,13 +94,31 @@ def dataframe_collection(
         for col in ([item] if isinstance(item, str) else item)
     ]
 
-    if not all(col in dataframe.columns for col in unique_flatten_columns):
+    missing_columns: set[str] = set(unique_flatten_columns) - set(dataframe.columns)
+
+    if missing_columns:
+        missing = ", ".join(sorted(missing_columns))
         raise ValueError(
-            "Not existing column from 'unique_column_names' in the dataframe."
+            f"The following column(s) from 'unique_column_names' "
+            f"are missing in the dataframe: {missing}"
         )
 
+    # All unique_columns must be inside filter_columns
+    if len(filter_columns) > 0:
+        missing_columns = set(unique_flatten_columns) - set(filter_columns)
+
+        if missing_columns:
+            missing = ", ".join(sorted(missing_columns))
+            raise ValueError(
+                f"The following column(s) from 'unique_column_names' "
+                f"are missing in `filter_columns`: {missing}"
+            )
+
     dataframe_collection = DataframeGeneratedCollection(
-        name=name, dataframe=dataframe, unique_column_names=unique_column_names
+        name=name,
+        dataframe=dataframe,
+        unique_column_names=unique_column_names,
+        filter_columns=filter_columns,
     )
 
     return UnqualifiedGeneratedCollection(dataframe_collection)

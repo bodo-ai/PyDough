@@ -1,0 +1,5 @@
+ROOT(columns=[('class_name', anything_class_name), ('language', anything_language), ('n_other_classes', DEFAULT_TO(sum_metric, 0:numeric))], orderings=[])
+ AGGREGATE(keys={'key': key}, aggregations={'anything_class_name': ANYTHING(class_name), 'anything_language': ANYTHING(language), 'sum_metric': SUM((key != key_2))})
+  JOIN(condition=t0.language == t1.language, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'class_name': t0.class_name, 'key': t0.key, 'key_2': t1.key, 'language': t0.language})
+   GENERATED_TABLE(DataframeCollection(name='classes', shape=(5, 3), columns=['key', 'class_name', 'language']))
+   GENERATED_TABLE(DataframeCollection(name='classes', shape=(5, 3), columns=['key', 'class_name', 'language']))

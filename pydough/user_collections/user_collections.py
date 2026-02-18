@@ -41,6 +41,11 @@ class PyDoughUserGeneratedCollection(ABC):
         """Return the name used for the collection."""
         return self._name
 
+    @name.setter
+    def name(self, new_name: str) -> None:
+        """Set a new name for the collection."""
+        self._name = new_name
+
     @property
     def columns(self) -> list[str]:
         """Return column names."""
