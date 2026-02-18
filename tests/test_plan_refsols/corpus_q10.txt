@@ -1,0 +1,7 @@
+ROOT(columns=[('verb', Word), ('n', n_rows)], orderings=[(n_rows):desc_last, (Word):asc_first], limit=10:numeric)
+ AGGREGATE(keys={'POS': POS, 'Word': Word}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=(LOWER(t1.Definition) == t0.Word) | CONTAINS(LOWER(t1.Definition), JOIN_STRINGS('':string, ' ':string, t0.Word, ' ':string)) | ENDSWITH(LOWER(t1.Definition), JOIN_STRINGS('':string, ' ':string, t0.Word)) | STARTSWITH(LOWER(t1.Definition), JOIN_STRINGS('':string, t0.Word, ' ':string)), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'POS': t0.POS, 'Word': t0.Word})
+   FILTER(condition=(POS == 'v. t.':string) & CONTAINS(Word, 'sh':string), columns={'POS': POS, 'Word': Word})
+    SCAN(table=DICT, columns={'POS': POS, 'Word': Word})
+   FILTER(condition=POS == 'a.':string, columns={'Definition': Definition})
+    SCAN(table=DICT, columns={'Definition': Definition, 'POS': POS})

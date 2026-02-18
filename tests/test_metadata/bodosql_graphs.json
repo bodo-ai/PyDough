@@ -261,6 +261,17 @@
         "description": "The company that handled the shipment"
       }
     ],
+    "functions": [
+      {
+        "name": "LISTOF",
+        "type": "sql alias",
+        "aggregation": true,
+        "sql function": "ARRAY_AGG",
+        "description": "Aggregates a collection of elements into an array.",
+        "input signature": {"type": "fixed arguments", "value": ["unknown"]},
+        "output signature": {"type": "constant", "value": "array[unknown]"}
+      }
+    ],
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}

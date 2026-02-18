@@ -1,0 +1,4 @@
+ROOT(columns=[('act', ACT), ('scene', SCENE), ('n_lines', n_rows), ('pct_lines', ROUND(((100:numeric * n_rows) / RELSUM(args=[n_rows], partition=[], order=[])), 2:numeric))], orderings=[(ACT):asc_first, (SCENE):asc_first])
+ AGGREGATE(keys={'ACT': ACT, 'SCENE': SCENE}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=PLAY == 'much ado about nothing':string, columns={'ACT': ACT, 'SCENE': SCENE})
+   SCAN(table=SHAKE, columns={'ACT': ACT, 'PLAY': PLAY, 'SCENE': SCENE})

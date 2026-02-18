@@ -1,0 +1,4 @@
+ROOT(columns=[('hex_code', chex), ('names', listof_identname)], orderings=[(chex):asc_first])
+ FILTER(condition=n_rows >= 3:numeric, columns={'chex': chex, 'listof_identname': listof_identname})
+  AGGREGATE(keys={'chex': chex}, aggregations={'listof_identname': LISTOF(identname), 'n_rows': COUNT()})
+   SCAN(table=CLRS, columns={'chex': chex, 'identname': identname})
