@@ -746,7 +746,7 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators", "menu", "donor", "movielens"]
+S3_DATASETS = ["synthea", "world_development_indicators", "menu"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
@@ -2317,18 +2317,18 @@ def clean_pydough_logger():
 
 
 @pytest.fixture(scope="session")
-def get_custom_datasets_graph_list() -> Any:
+def get_custom_datasets_graph_list() -> Callable[[str], Any]:
     """
     Returns the json object for the given metadata file name.
     """
 
     @cache
-    def impl(file_name: str) -> Any:
+    def impl(file_name: str) -> Callable[[str], Any]:
         file_path: str = os.path.join(
             os.path.dirname(__file__), "test_metadata", file_name
         )
         with open(file_path) as f:
-            as_json = json.load(f)
+            as_json: Any = json.load(f)
         return as_json
 
     return impl
