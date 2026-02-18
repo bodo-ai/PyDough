@@ -12,7 +12,7 @@ SELECT
   (
     (
       COALESCE(SUM(_s0.sum_sale_price), 0) - COALESCE(SUM(cars.cost), 0)
-    ) / COALESCE(SUM(cars.cost), 0)
+    ) / NULLIF(SUM(cars.cost), 0)
   ) * 100 AS GPM
 FROM _s0 AS _s0
 JOIN dealership.cars AS cars

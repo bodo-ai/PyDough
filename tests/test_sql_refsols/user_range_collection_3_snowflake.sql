@@ -25,11 +25,11 @@ WITH a AS (
   FROM TABLE(GENERATOR(ROWCOUNT => 501))
 ), _s5 AS (
   SELECT
-    a.x,
+    a_2.x,
     COUNT(*) AS n_rows
-  FROM a_2 AS a
-  JOIN b_2 AS b
-    ON ENDSWITH(CAST(b.y AS TEXT), CAST(a.x AS TEXT))
+  FROM a_2 AS a_2
+  JOIN b_2 AS b_2
+    ON ENDSWITH(CAST(b_2.y AS TEXT), CAST(a_2.x AS TEXT))
   GROUP BY
     1
 )

@@ -1,5 +1,5 @@
 SELECT
-  COALESCE(SUM(status = 'success'), 0) / COUNT(*) AS _expr0
+  COALESCE(SUM(status = 'success'), 0) / NULLIF(COUNT(*), 0) AS _expr0
 FROM ewallet.wallet_transactions_daily
 WHERE
   (

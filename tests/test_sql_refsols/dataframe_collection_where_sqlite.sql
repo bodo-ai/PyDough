@@ -1,14 +1,4 @@
-WITH _s0 AS (
-  SELECT
-    thresholds_collection.column1 AS region_name,
-    thresholds_collection.column2 AS min_account_balance
-  FROM (VALUES
-    ('AFRICA', 5000.32),
-    ('AMERICA', 8000.0),
-    ('ASIA', 4600.32),
-    ('EUROPE', 6400.5),
-    ('MIDDLE EAST', 8999.99)) AS thresholds_collection
-), _s1 AS (
+WITH _s1 AS (
   SELECT
     s_acctbal,
     s_nationkey
@@ -33,11 +23,16 @@ WITH _s0 AS (
 ), _s12 AS (
   SELECT DISTINCT
     _s5.r_name
-  FROM _s0 AS _s0
+  FROM (VALUES
+    ('AFRICA', 5000.32),
+    ('AMERICA', 8000.0),
+    ('ASIA', 4600.32),
+    ('EUROPE', 6400.5),
+    ('MIDDLE EAST', 8999.99)) AS thresholds_collection
   JOIN _s1 AS _s1
-    ON _s0.min_account_balance < _s1.s_acctbal
+    ON _s1.s_acctbal > thresholds_collection.column2
   JOIN _s5 AS _s5
-    ON _s0.region_name = _s5.r_name AND _s1.s_nationkey = _s5.n_nationkey
+    ON _s1.s_nationkey = _s5.n_nationkey AND _s5.r_name = thresholds_collection.column1
 ), _s11 AS (
   SELECT
     _s8.n_nationkey,
@@ -49,11 +44,17 @@ WITH _s0 AS (
   SELECT
     _s11.r_name,
     COUNT(*) AS n_rows
-  FROM _s0 AS _s6
+  FROM (VALUES
+    ('AFRICA', 5000.32),
+    ('AMERICA', 8000.0),
+    ('ASIA', 4600.32),
+    ('EUROPE', 6400.5),
+    ('MIDDLE EAST', 8999.99)) AS thresholds_collection_2
   JOIN _s1 AS _s7
-    ON _s6.min_account_balance < _s7.s_acctbal
+    ON _s7.s_acctbal > thresholds_collection_2.column2
   JOIN _s11 AS _s11
-    ON _s11.n_nationkey = _s7.s_nationkey AND _s11.r_name = _s6.region_name
+    ON _s11.n_nationkey = _s7.s_nationkey
+    AND _s11.r_name = thresholds_collection_2.column1
   GROUP BY
     1
 )

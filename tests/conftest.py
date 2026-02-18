@@ -19,7 +19,12 @@ from botocore.exceptions import ClientError
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import DayOfWeek, PyDoughConfigs, PyDoughSession
+from pydough.configs import (
+    DayOfWeek,
+    DivisionByZeroBehavior,
+    PyDoughConfigs,
+    PyDoughSession,
+)
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -102,6 +107,7 @@ def default_config() -> PyDoughConfigs:
     config.avg_default_zero = False
     config.start_of_week = DayOfWeek.SUNDAY
     config.start_week_as_zero = True
+    config.division_by_zero = DivisionByZeroBehavior.DATABASE
     return config
 
 
@@ -118,6 +124,7 @@ def defog_config() -> PyDoughConfigs:
     config.avg_default_zero = False
     config.start_of_week = DayOfWeek.MONDAY
     config.start_week_as_zero = True
+    config.division_by_zero = DivisionByZeroBehavior.NULL
     return config
 
 
@@ -541,6 +548,60 @@ def sqlite_tpch_session(
     return empty_sqlite_tpch_session
 
 
+@pytest.fixture(
+    params=[
+        pytest.param("sqlite", id="sqlite"),
+        pytest.param(
+            "snowflake",
+            id="snowflake",
+            marks=[pytest.mark.snowflake],
+        ),
+        pytest.param(
+            "mysql",
+            id="mysql",
+            marks=[pytest.mark.mysql],
+        ),
+        pytest.param(
+            "postgres",
+            id="postgres",
+            marks=[pytest.mark.postgres],
+        ),
+    ],
+)
+def all_dialects_tpch_db_context(
+    request,
+    get_sample_graph: graph_fetcher,
+    get_sf_sample_graph: graph_fetcher,
+) -> tuple[DatabaseContext, GraphMetadata]:
+    """
+    General fixture providing TPCH database context and graph metadata
+    for each supported database dialect. Uses lazy fixture loading to
+    avoid triggering setup for unused databases.
+
+    Returns:
+        A tuple of (DatabaseContext, GraphMetadata) for the TPCH graph.
+    """
+    match request.param:
+        case "sqlite":
+            db_context = request.getfixturevalue("sqlite_tpch_db_context")
+            return db_context, get_sample_graph("TPCH")
+        case "snowflake":
+            sf_conn = request.getfixturevalue("sf_conn_db_context")
+            return (
+                sf_conn("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+                get_sf_sample_graph("TPCH"),
+            )
+        case "mysql":
+            mysql_conn = request.getfixturevalue("mysql_conn_db_context")
+            return mysql_conn("tpch"), get_sample_graph("TPCH")
+        case "postgres":
+            db_context = request.getfixturevalue("postgres_conn_db_context")
+            return db_context, get_sample_graph("TPCH")
+    # Default fallback
+    db_context = request.getfixturevalue("sqlite_tpch_db_context")
+    return db_context, get_sample_graph("TPCH")
+
+
 @pytest.fixture(scope="session")
 def defog_graphs() -> graph_fetcher:
     """
@@ -726,7 +787,7 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators", "menu"]
+S3_DATASETS = ["synthea", "world_development_indicators", "menu", "donor", "movielens"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.

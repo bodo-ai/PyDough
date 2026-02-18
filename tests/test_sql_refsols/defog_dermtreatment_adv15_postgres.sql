@@ -10,9 +10,13 @@ WITH _u_0 AS (
   SELECT
     drug_id,
     AVG(
-      CAST(CAST(tot_drug_amt AS DOUBLE PRECISION) / (
-        CAST(end_dt AS DATE) - CAST(start_dt AS DATE)
-      ) AS DECIMAL)
+      CAST(CAST(tot_drug_amt AS DOUBLE PRECISION) / CASE
+        WHEN (
+          CAST(end_dt AS DATE) - CAST(start_dt AS DATE)
+        ) <> 0
+        THEN CAST(end_dt AS DATE) - CAST(start_dt AS DATE)
+        ELSE NULL
+      END AS DECIMAL)
     ) AS avg_ddd
   FROM main.treatments
   WHERE
