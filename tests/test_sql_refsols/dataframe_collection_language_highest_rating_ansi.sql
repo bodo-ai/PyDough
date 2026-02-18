@@ -76,5 +76,5 @@ SELECT
   _s3.first_name,
   _s3.last_name
 FROM _t0 AS _t0
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.tid = _t0.teacher_id

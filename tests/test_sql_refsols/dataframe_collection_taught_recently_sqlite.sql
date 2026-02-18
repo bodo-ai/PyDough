@@ -49,7 +49,7 @@ SELECT
   teachers.column2 AS teacher_first_name,
   teachers.column3 AS teacher_last_name
 FROM _t AS _t
-JOIN (VALUES
+LEFT JOIN (VALUES
   (1, 'Anil', 'Lee'),
   (2, 'Mike', 'Lee'),
   (3, 'Ian', 'Lee'),

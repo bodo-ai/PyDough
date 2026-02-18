@@ -74,5 +74,5 @@ SELECT
   _t0.semester AS recent_semester,
   _s3.class_name
 FROM _t0 AS _t0
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.key = _t0.class_key

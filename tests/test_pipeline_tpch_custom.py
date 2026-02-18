@@ -4215,9 +4215,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "x": [0, 2, 4, 6, 8],
-                        "n_prefix": [1, 56, 56, 56, 56],
-                        "n_suffix": [101, 100, 100, 100, 100],
+                        "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                        "n_prefix": [1, 56, 56, 55, 56, 55, 56, 55, 56, 55],
+                        "n_suffix": [101, 0, 100, 0, 100, 0, 100, 0, 100, 0],
                     }
                 ),
                 "user_range_collection_2",
@@ -4990,9 +4990,10 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "Imperative Programming",
                             "Functional Programming",
                             "Parallel Algorithms",
+                            "Theoretical CS",
                         ],
-                        "language": ["Python", "C", "SML", "SML"],
-                        "n_other_classes": [0, 0, 1, 1],
+                        "language": ["Python", "C", "SML", "SML", None],
+                        "n_other_classes": [0, 0, 1, 1, 0],
                     }
                 ),
                 "dataframe_collection_correlation",

@@ -503,25 +503,6 @@ WITH _s1 AS (
     (996),
     (998),
     (1000)) AS b(y)
-), _s4 AS (
-  SELECT
-    column1 AS x,
-    COUNT(*) AS n_rows
-  FROM (VALUES
-    (0),
-    (1),
-    (2),
-    (3),
-    (4),
-    (5),
-    (6),
-    (7),
-    (8),
-    (9)) AS a(x)
-  JOIN _s1 AS _s1
-    ON CAST(_s1.y AS TEXT) LIKE CONCAT(CAST(column1 AS TEXT), '%')
-  GROUP BY
-    1
 ), _s3 AS (
   SELECT
     column1 AS y
@@ -1048,11 +1029,25 @@ WITH _s1 AS (
     1
 )
 SELECT
-  _s4.x,
-  _s4.n_rows AS n_prefix,
-  _s5.n_rows AS n_suffix
-FROM _s4 AS _s4
+  column1 AS x,
+  COUNT(*) AS n_prefix,
+  ANY_VALUE(_s5.n_rows) AS n_suffix
+FROM (VALUES
+  (0),
+  (1),
+  (2),
+  (3),
+  (4),
+  (5),
+  (6),
+  (7),
+  (8),
+  (9)) AS a(x)
+JOIN _s1 AS _s1
+  ON CAST(_s1.y AS TEXT) LIKE CONCAT(CAST(column1 AS TEXT), '%')
 JOIN _s5 AS _s5
-  ON _s4.x = _s5.x
+  ON _s5.x = column1
+GROUP BY
+  1
 ORDER BY
   1

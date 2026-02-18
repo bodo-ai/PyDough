@@ -57,7 +57,7 @@ SELECT
   _t.semester AS recent_semester,
   classes.column2 AS class_name
 FROM _t AS _t
-JOIN (VALUES
+LEFT JOIN (VALUES
   (15112, 'Programming Fundamentals', 'Python'),
   (15122, 'Imperative Programming', 'C'),
   (15150, 'Functional Programming', 'SML'),
