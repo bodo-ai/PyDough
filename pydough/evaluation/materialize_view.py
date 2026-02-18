@@ -12,12 +12,12 @@ from pydough.relational import RelationalRoot
 from pydough.sqlglot import convert_relation_to_sql
 from pydough.types import PyDoughType
 from pydough.unqualified import UnqualifiedNode, qualify_node
-from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
 from pydough.user_collections.view_collection import ViewGeneratedCollection
 
 from .evaluate_unqualified import _load_session_info
 
-all = ["to_table"]
+__all__ = ["to_table"]
 
 
 def _infer_schema_from_relational(
@@ -102,7 +102,7 @@ def _generate_create_ddl(
         as_view: True to create a VIEW, False to create a TABLE
         replace: True to use CREATE OR REPLACE
         temp: True to create a TEMPORARY view/table
-        database_context: The database context to determine the database type for syntax differences.
+        db_dialect: The database dialect to generate the DDL for
 
     Returns:
         The DDL string to execute.
@@ -120,7 +120,7 @@ def _generate_create_ddl(
 
     if as_view and not temp and db_dialect == DatabaseDialect.SQLITE:
         # Sqlite does not support creating persistent views that reference attached databases.
-        # like tpch.oreder Only temporary views are supported.
+        # like tpch.order Only temporary views are supported.
         # Override to be temporary and raise a warning.
         temp = True
         warnings.warn(
@@ -160,7 +160,7 @@ def to_table(
     replace: bool = False,
     temp: bool = False,
     **kwargs,
-) -> PyDoughUserGeneratedCollection:
+) -> UnqualifiedGeneratedCollection:
     """
     Materialize the given PyDough query as a database temporary view/table,
     and return a collection reference that can be used
@@ -178,8 +178,9 @@ def to_table(
             when the database session closes. Default is False.
 
     Returns:
-        A PyDoughUserGeneratedCollection that can be used in subsequent
-        PyDough queries to reference the created view/table.
+        An UnqualifiedGeneratedCollection that can be used in subsequent
+        PyDough queries (e.g., with .CALCULATE(), .WHERE()) to reference
+        the created view/table.
 
     """
 
@@ -187,9 +188,10 @@ def to_table(
     session: PyDoughSession = _load_session_info(**kwargs)
     if session.database is None:
         raise PyDoughSessionException(
-            "Cannot create view/table without a database connection."
+            "Cannot create view/table without a database connection.\n"
             "Please configure a database connection in the session."
         )
+    # session.metadata = graph
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise pydough.active_session.error_builder.expected_collection(qualified)
@@ -222,5 +224,6 @@ def to_table(
         is_temp=temp,
     )
 
-    # Step 5: return the collection reference
-    return view_collection
+    # Step 5: Wrap in UnqualifiedGeneratedCollection so it can be used in
+    # PyDough queries (e.g., with .CALCULATE(), .WHERE())
+    return UnqualifiedGeneratedCollection(view_collection)

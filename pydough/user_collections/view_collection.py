@@ -1,7 +1,7 @@
 """
 A user-defined collection representing a database [temporary] view/table.
 Usage:
-`pydough.to_table(query, name='view_name', is_view=True, is_temp=False)`
+`pydough.to_table(query, name='view_name', as_view=True, temp=False, replace=True)`
 
 This module defines a collection that represents a materialized
 [temporary] view/table created in the database from a PyDough query result.
@@ -29,6 +29,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
         types: list[PyDoughType],
         is_view: bool = True,
         is_temp: bool = False,
+        unique_columns: list[str | list[str]] | None = None,
     ) -> None:
         """
         Initialize a ViewGeneratedCollection.
@@ -39,10 +40,16 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
             types: List of PyDoughType for each column
             is_view: True if this is a VIEW, False if it's a TABLE. Default is True (VIEW).
             is_temp: True if this is a temporary view/table. Default is False (permanent).
+            unique_columns: List of unique column names or column combinations.
+                If None, defaults to treating all columns together as a unique key.
         """
         super().__init__(name=name, columns=columns, types=types)
         self._is_view = is_view
         self._is_temp = is_temp
+        # Default to all columns as the unique key if not specified
+        self._unique_columns = (
+            unique_columns if unique_columns is not None else [columns]
+        )
 
     @property
     def types(self) -> list[PyDoughType]:
@@ -68,12 +75,12 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
     @property
     def unique_column_names(self) -> list[str | list[str]]:
         """
-        Return the list of unique column names.
+        Return the list of unique column names or column combinations.
 
-        For views/tables, we cannot determine uniqueness constraints
-        from the query alone, so we return an empty list.
+        If not explicitly set, defaults to treating all columns together
+        as a unique key (conservative assumption).
         """
-        return []
+        return self._unique_columns
 
     def is_singular(self) -> bool:
         """
@@ -111,4 +118,5 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
             and self.types == other.types
             and self._is_view == other._is_view
             and self._is_temp == other._is_temp
+            and self._unique_columns == other._unique_columns
         )

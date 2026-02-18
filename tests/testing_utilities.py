@@ -7,8 +7,6 @@ from types import NoneType
 
 from dateutil import parser  # type: ignore[import-untyped]
 
-from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
-
 __all__ = [
     "AstNodeTestInfo",
     "BackReferenceExpressionInfo",
@@ -952,6 +950,7 @@ def transform_and_exec_pydough(
     pydough_impl: Callable[..., UnqualifiedNode] | str,
     graph: GraphMetadata,
     kwargs: dict | None,
+    session: PyDoughSession | None = None,
 ) -> UnqualifiedNode:
     """
     Obtains the unqualified node from a PyDough function by invoking the
@@ -964,6 +963,9 @@ def transform_and_exec_pydough(
         `graph`: The metadata being used.
         `kwargs`: The keyword arguments to pass to the PyDough function, if
         any.
+        `session`: An optional PyDoughSession to use during string execution.
+        This allows functions like `pydough.to_table` to access database
+        connections when called within string code.
 
     Returns:
         The unqualified node created by running the transformed version of
@@ -972,7 +974,9 @@ def transform_and_exec_pydough(
     kwargs = kwargs if kwargs is not None else {}
     if isinstance(pydough_impl, str):
         # If the pydough_impl is a string, parse it with pydough.from_string.
-        return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
+        return pydough.from_string(
+            pydough_impl, metadata=graph, environment=kwargs, session=session
+        )
     else:
         # Otherwise, transform the function with the decorator and call it.
         return init_pydough_context(graph)(pydough_impl)(**kwargs)
@@ -1052,8 +1056,15 @@ class PyDoughSQLComparisonTest:
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+        # Create a session with the database so that functions like pydough.to_table
+        # can access it when called within string code
+        session = PyDoughSession()
+        session.metadata = graph
+        session.database = database
+        if config is not None:
+            session.config = config
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, None
+            self.pydough_function, graph, None, session=session
         )
 
         # Obtain the DataFrame result from the PyDough code
@@ -1333,8 +1344,17 @@ class PyDoughPandasTest:
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+        # Create a session with the database so that functions like pydough.to_table
+        # can access it when called within string code
+        session = PyDoughSession()
+        session.metadata = graph
+        session.database = database
+        if config is not None:
+            session.config = config
+        if mask_server is not None:
+            session.mask_server = mask_server
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, self.kwargs
+            self.pydough_function, graph, self.kwargs, session=session
         )
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {
@@ -1424,10 +1444,15 @@ class PyDoughPandasTest:
             temp=temp,
             **call_kwargs,
         )
-        assert isinstance(collection, PyDoughUserGeneratedCollection), (
-            "to_table did not return a PyDoughUserGeneratedCollection as expected"
+        # to_table returns an UnqualifiedGeneratedCollection wrapping a ViewGeneratedCollection
+        from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+
+        assert isinstance(collection, UnqualifiedGeneratedCollection), (
+            "to_table did not return an UnqualifiedGeneratedCollection as expected"
         )
-        verify_table_created_correctly(database, table_name, collection.columns)
+        # Access the inner PyDoughUserGeneratedCollection to get columns
+        inner_collection = collection._parcel[0]
+        verify_table_created_correctly(database, table_name, inner_collection.columns)
 
 
 def verify_table_created_correctly(

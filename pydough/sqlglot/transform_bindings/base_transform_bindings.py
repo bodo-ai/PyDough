@@ -2315,10 +2315,13 @@ class BaseTransformBindings:
         table_ref = sqlglot_expressions.to_table(collection.name)
 
         # Build SELECT col1, col2, ... FROM view_name
+        # We must explicitly select columns (not SELECT *) so that the
+        # column names are available for merging selects in the SQL generator
+        column_exprs = [
+            sqlglot_expressions.column(col_name) for col_name in collection.columns
+        ]
         result: SQLGlotExpression = (
-            sqlglot_expressions.Select()
-            .select(sqlglot_expressions.Star())
-            .from_(table_ref)
+            sqlglot_expressions.Select().select(*column_exprs).from_(table_ref)
         )
 
         return result

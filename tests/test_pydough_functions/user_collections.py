@@ -1030,9 +1030,12 @@ def dataframe_collection_bad_7():
     return pydough.dataframe_collection("unsupported_df", df_unsupported, ["col1"])
 
 
-# def asian_countries_node():
-#     return nations.WHERE(region.name == "ASIA")
-
-
 def simple_to_table_1():
-    return nations.WHERE(region.name == "ASIA")
+    asian_countries = nations.WHERE(region.name == "ASIA")
+    asian_countries_tmp = pydough.to_table(
+        asian_countries, name="asian_nations", replace=True
+    )
+    # return asian_countries_tmp.CALCULATE(n=COUNT(orders))
+    return orders.CALCULATE(
+        n=COUNT(CROSS(asian_countries_tmp).WHERE(key == customer.nation.key))
+    )

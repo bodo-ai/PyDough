@@ -4240,6 +4240,249 @@ from .testing_utilities import (
             ),
             id="dataframe_collection_teacher_count",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t1')\n"
+                "result = asian_tmp.CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"name": ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"]}
+                ),
+                "to_table_test_1",
+            ),
+            id="to_table_test_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_countries = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_countries_tmp = pydough.to_table(asian_countries, name='asian_nations_t2')\n"
+                "result = asian_countries_tmp.WHERE(CONTAINS(name, 'I')).CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"]}
+                ),
+                "to_table_test_2",
+            ),
+            id="to_table_test_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t3')\n"
+                "result = CROSS(asian_tmp).CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [8, 9, 12, 18, 21],
+                        "name": ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"],
+                    }
+                ),
+                "to_table_test_3",
+            ),
+            id="to_table_test_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4')\n"
+                "result = CROSS(asian_tmp).PARTITION(name='by_nation', by=nation_key).CALCULATE(nation_key, cnt=COUNT(asian_tmp)).TOP_K(10, by=cnt.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_orders": [8, 8, 9, 9, 12, 12, 18, 18, 21, 21],
+                        "avg_price": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                    }
+                ),
+                "to_table_test_4",
+            ),
+            id="to_table_test_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t5')\n"
+                "result = customers.CALCULATE(name, cust_nation_key=nation.key).WHERE(HAS(CROSS(asian_tmp).WHERE(nation_key == cust_nation_key))).CALCULATE(name).TOP_K(5, by=name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000001",
+                            "Customer#000000002",
+                            "Customer#000000003",
+                            "Customer#000000004",
+                            "Customer#000000005",
+                        ]
+                    }
+                ),
+                "to_table_test_5",
+            ),
+            id="to_table_test_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "expensive_orders = orders.CALCULATE(okey=key, total=total_price)\n"
+                "orders_tmp = pydough.to_table(expensive_orders, name='expensive_orders')\n"
+                "result = CROSS(orders_tmp).TOP_K(10, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_orders": [
+                            972901,
+                            1750466,
+                            2185667,
+                            2199712,
+                            2232932,
+                            3043270,
+                            3586919,
+                            4515876,
+                            4576548,
+                            4722021,
+                        ],
+                        "avg_price": [
+                            508668.52,
+                            555285.16,
+                            511359.88,
+                            515531.82,
+                            522720.61,
+                            530604.44,
+                            522644.48,
+                            510061.6,
+                            525590.57,
+                            544089.09,
+                        ],
+                    }
+                ),
+                "to_table_test_6",
+            ),
+            id="to_table_test_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t7')\n"
+                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
+                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs')\n"
+                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=nation_name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "CHINA", "CHINA", "CHINA", "CHINA"],
+                        "ckey": [7, 19, 75, 82, 118],
+                    }
+                ),
+                "to_table_test_7",
+            ),
+            id="to_table_test_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t8')\n"
+                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
+                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t8')\n"
+                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=ckey)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "CHINA", "INDIA", "INDIA", "JAPAN"],
+                        "ckey": [7, 19, 9, 21, 25],
+                    }
+                ),
+                "to_table_test_8",
+            ),
+            id="to_table_test_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "order_summary = orders.CALCULATE(okey=key, total=total_price, ckey=customer.key)\n"
+                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t9')\n"
+                "result = CROSS(summary_tmp).CALCULATE(okey, total, rank=RANKING(by=total.DESC())).TOP_K(5, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "total": [
+                            555285.16,
+                            522720.61,
+                            530604.44,
+                            525590.57,
+                            544089.09,
+                        ],
+                        "rank": [1, 5, 3, 4, 2],
+                    }
+                ),
+                "to_table_test_9",
+            ),
+            id="to_table_test_9",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "recent_orders = orders.WHERE(order_date > DATETIME('1995-01-01')).CALCULATE(okey=key, odate=order_date)\n"
+                "recent_tmp = pydough.to_table(recent_orders, name='recent_orders')\n"
+                "result = CROSS(recent_tmp).WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=odate)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [2277, 16262, 17058, 33476, 52640],
+                        "odate": [
+                            pd.Timestamp("1995-01-02"),
+                            pd.Timestamp("1995-01-02"),
+                            pd.Timestamp("1995-01-02"),
+                            pd.Timestamp("1995-01-02"),
+                            pd.Timestamp("1995-01-02"),
+                        ],
+                    }
+                ),
+                "to_table_test_10",
+            ),
+            id="to_table_test_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "parts_summary = parts.WHERE(size > 10).CALCULATE(pkey=key, pname=name, psize=size)\n"
+                "parts_tmp = pydough.to_table(parts_summary, name='parts_summary')\n"
+                "result = CROSS(parts_tmp).CALCULATE(pkey, pname, psize).TOP_K(5, by=psize.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "pkey": [232, 273, 414, 436, 679],
+                        "pname": [
+                            "ivory peru lavender orange dark",
+                            "pink white sky burnished coral",
+                            "pink brown purple puff snow",
+                            "turquoise yellow dim purple antique",
+                            "purple blanched linen metallic indian",
+                        ],
+                        "psize": [50, 50, 50, 50, 50],
+                    }
+                ),
+                "to_table_test_11",
+            ),
+            id="to_table_test_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "order_summary = orders.CALCULATE(okey=key, total=total_price)\n"
+                "summary_tmp = pydough.to_table(order_summary, name='order_summary')\n"
+                "result = CROSS(summary_tmp).WHERE(total > 1000).CALCULATE(okey, total).TOP_K(5, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_orders": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "avg_price": [
+                            555285.16,
+                            522720.61,
+                            530604.44,
+                            525590.57,
+                            544089.09,
+                        ],
+                    }
+                ),
+                "to_table_test_12",
+            ),
+            id="to_table_test_12",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -4860,11 +5103,13 @@ def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
         (True, False, True),
         # Sqlite cannot create persistent views that reference attached databases.
         # like tpch.oreder Only temporary views are supported.
-        # For now, replace it to a temporary view.
-        # TODO: is there a way around this?
+        # For now, generated DDL will replace it to a temporary view.
+        # TODO: how to remove references to attached database
+        # in generated SQL for views?
         (True, False, False),
-        # These should faile. Sqlite does not support replacing views or tables, so replace=True should cause an error.
-        # TODO: move to another test.
+        # Sqlite does not support replacing views or tables,
+        # so replace=True should cause an error.
+        # TODO: move to an error check test.
         # (False, True, False),
         # (False, True, True),
         # (True, True, False),
