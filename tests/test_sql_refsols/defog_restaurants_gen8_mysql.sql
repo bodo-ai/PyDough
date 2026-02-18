@@ -12,7 +12,7 @@ WITH _s1 AS (
 ), _s7 AS (
   SELECT
     _s3.region,
-    SUM(CASE WHEN NOT restaurant.rating IS NULL THEN 1 ELSE 0 END) AS sum_expr,
+    SUM(NOT restaurant.rating IS NULL) AS sum_expr,
     SUM(restaurant.rating) AS sum_rating
   FROM main.location AS location
   LEFT JOIN _s1 AS _s3

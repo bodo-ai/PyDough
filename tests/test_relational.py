@@ -4,7 +4,7 @@ Unit tests the PyDough Relational tree nodes.
 
 import pytest
 
-from pydough.pydough_operators import EQU, LOWER, SUM
+from pydough.pydough_operators import EQU, LOWER, NEQ, SUM
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -1415,9 +1415,8 @@ def test_join_to_string(join: Join, output: str) -> None:
             ),
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                # Note: We don't care that Equals commutes right now.
                 CallExpression(
-                    EQU,
+                    NEQ,
                     BooleanType(),
                     [
                         make_relational_column_reference("a", input_name="t1"),

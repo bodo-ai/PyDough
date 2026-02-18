@@ -2565,9 +2565,7 @@ def impl_defog_academic_gen11():
     """
     n_pub = COUNT(publications)
     n_auth = COUNT(authors)
-    return Academic.CALCULATE(
-        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth != 0)
-    )
+    return Academic.CALCULATE(publication_to_author_ratio=n_pub / n_auth)
 
 
 def impl_defog_academic_gen12():
@@ -2580,7 +2578,7 @@ def impl_defog_academic_gen12():
     """
     n_confs = SUM(PRESENT(publications.conference_id))
     n_jours = SUM(PRESENT(publications.journal_id))
-    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours != 0))
+    return Academic.CALCULATE(ratio=n_confs / n_jours)
 
 
 def impl_defog_academic_gen13():
@@ -2594,7 +2592,7 @@ def impl_defog_academic_gen13():
 
     n_pubs = COUNT(domain_publications)
     n_keys = COUNT(domain_keywords)
-    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys != 0))
+    return domains.CALCULATE(domain_id, ratio=n_pubs / n_keys)
 
 
 def impl_defog_academic_gen14():
@@ -2611,7 +2609,7 @@ def impl_defog_academic_gen14():
         year,
         num_publications=n_pubs,
         num_journals=n_jours,
-        ratio=n_pubs / KEEP_IF(n_jours, n_jours != 0),
+        ratio=n_pubs / n_jours,
     )
 
 
@@ -2937,9 +2935,7 @@ def impl_defog_restaurants_gen12():
     """
     n_hi_rating = SUM(restaurants.rating > 4.0)
     n_lo_rating = SUM(restaurants.rating < 4.0)
-    return Restaurants.CALCULATE(
-        ratio=n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0)
-    )
+    return Restaurants.CALCULATE(ratio=n_hi_rating / n_lo_rating)
 
 
 def impl_defog_restaurants_gen13():
@@ -2953,9 +2949,7 @@ def impl_defog_restaurants_gen13():
     nyc_restaurants = restaurants.WHERE(LOWER(city_name) == "new york")
     n_hi_rating = SUM(nyc_restaurants.rating > 4.0)
     n_lo_rating = SUM(nyc_restaurants.rating < 4.0)
-    return Restaurants.CALCULATE(
-        ratio=(n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0))
-    )
+    return Restaurants.CALCULATE(ratio=(n_hi_rating / n_lo_rating))
 
 
 def impl_defog_restaurants_gen14():
@@ -2967,11 +2961,9 @@ def impl_defog_restaurants_gen14():
     non-vegan food in San Francisco? Match food_type case insensitively
     """
     sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
-    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
-    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
-    return Restaurants.CALCULATE(
-        ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
-    )
+    n_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) == "vegan"))
+    n_non_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) != "vegan"))
+    return Restaurants.CALCULATE(ratio=n_vegan / n_non_vegan)
 
 
 def impl_defog_restaurants_gen15():
@@ -2983,9 +2975,9 @@ def impl_defog_restaurants_gen15():
     Los Angeles?
     """
     la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
-    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la_italian = COUNT(la_restaurants.WHERE(LOWER(food_type) == "italian"))
     n_la = COUNT(la_restaurants)
-    return Restaurants.CALCULATE(ratio=(n_la_italian / KEEP_IF(n_la, n_la != 0)))
+    return Restaurants.CALCULATE(ratio=(n_la_italian / n_la))
 
 
 def impl_defog_restaurants_gen16():

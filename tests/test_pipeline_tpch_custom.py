@@ -2692,6 +2692,683 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600))), "
+                " n2=COUNT(customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_a",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(MONOTONIC(500, account_balance, 600))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                ").WHERE(HAS(c1))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_b",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(MONOTONIC(500, account_balance, 600))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                ").WHERE(HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_c",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_c",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(MONOTONIC(500, account_balance, 600))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                ").WHERE(HAS(c1) & HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [268],
+                    }
+                ),
+                "count_multiple_filters_d",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_d",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600))), "
+                " n2=COUNT(customers.WHERE(market_segment == 'BUILDING')), "
+                " n3=COUNT(customers.WHERE((market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))), "
+                " n4=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600) & STARTSWITH(phone, '11'))), "
+                " n5=COUNT(customers.WHERE(STARTSWITH(phone, '11') & (market_segment == 'BUILDING'))), "
+                " n6=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600) & STARTSWITH(phone, '11') & (market_segment == 'BUILDING'))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1379],
+                        "n2": [30142],
+                        "n3": [268],
+                        "n4": [54],
+                        "n5": [1261],
+                        "n6": [19],
+                    }
+                ),
+                "count_multiple_filters_e",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_e",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(customers), "
+                " n2=COUNT(customers.WHERE(market_segment == 'BUILDING')), "
+                " n3=COUNT(customers.WHERE(MONOTONIC(500, account_balance, 600))), "
+                " n4=COUNT(customers.WHERE(STARTSWITH(phone, '11'))), "
+                " n5=COUNT(customers.WHERE(STARTSWITH(phone, '11') & (market_segment == 'BUILDING'))), "
+                " n6=COUNT(customers.WHERE(STARTSWITH(phone, '11') & (market_segment == 'BUILDING') & MONOTONIC(500, account_balance, 600))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [150000],
+                        "n2": [30142],
+                        "n3": [1379],
+                        "n4": [5975],
+                        "n5": [1261],
+                        "n6": [19],
+                    }
+                ),
+                "count_multiple_filters_f",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_f",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(PERCENTILE(by=account_balance.ASC()) == 100)\n"
+                "c2 = customers.WHERE(nation.name == 'GERMANY').WHERE(PERCENTILE(by=account_balance.ASC()) == 100)\n"
+                "c3 = customers.WHERE(nation.name == 'GERMANY')\n"
+                "c4 = customers.WHERE(nation.name == 'CHINA').WHERE(PERCENTILE(by=account_balance.ASC()) == 100)\n"
+                "c5 = customers.WHERE((PERCENTILE(by=account_balance.ASC()) == 100) & (nation.name == 'CHINA'))\n"
+                "c6 = customers.WHERE(nation.name == 'CHINA')\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                " n4=COUNT(c4), "
+                " n5=COUNT(c5), "
+                " n6=COUNT(c6), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1500],
+                        "n2": [59],
+                        "n3": [5908],
+                        "n4": [60],
+                        "n5": [57],
+                        "n6": [6024],
+                    }
+                ),
+                "count_multiple_filters_g",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_g",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n5=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [298994, 299103, 301740, 303286, 296877],
+                        "n3": [59767, 59902, 60166, 60373, 60135],
+                        "n4": [59511, 60232, 60246, 60901, 59201],
+                        "n5": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_h",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_h",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n5=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ").WHERE(HAS(nations.customers.orders.WHERE(order_priority == '2-HIGH')))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [298994, 299103, 301740, 303286, 296877],
+                        "n3": [59767, 59902, 60166, 60373, 60135],
+                        "n4": [59511, 60232, 60246, 60901, 59201],
+                        "n5": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_i",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_i",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [59767, 59902, 60166, 60373, 60135],
+                        "n3": [59511, 60232, 60246, 60901, 59201],
+                        "n4": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_j",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_j",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders.WHERE(order_priority == '1-URGENT')), "
+                " n3=COUNT(nations.customers.orders.WHERE(order_priority == '2-HIGH')), "
+                " n4=COUNT(nations.customers.orders.WHERE(order_priority == '3-MEDIUM')), "
+                ").WHERE(HAS(nations.customers.orders.WHERE(order_priority == '1-URGENT')))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [59767, 59902, 60166, 60373, 60135],
+                        "n3": [59511, 60232, 60246, 60901, 59201],
+                        "n4": [59597, 59230, 60485, 60375, 59036],
+                    }
+                ),
+                "count_multiple_filters_k",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_k",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))), "
+                " n3=COUNT(nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))), "
+                " n4=COUNT(nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_l",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_l",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_m",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_m",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_n",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_n",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c3))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_o",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_o",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = nations.customers.orders.WHERE((order_priority == '1-URGENT') | (order_priority == '2-HIGH'))\n"
+                "c2 = nations.customers.orders.WHERE((order_priority == '2-HIGH') | (order_priority == '3-MEDIUM'))\n"
+                "c3 = nations.customers.orders.WHERE((order_priority == '3-MEDIUM') | (order_priority == '4-NOT SPECIFIED'))\n"
+                "result = regions.CALCULATE("
+                " region_name=name, "
+                " n1=COUNT(nations.customers), "
+                " n2=COUNT(c1), "
+                " n3=COUNT(c2), "
+                " n4=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c2) & HAS(c3))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n1": [29764, 29952, 30183, 30197, 29904],
+                        "n2": [119278, 120134, 120412, 121274, 119336],
+                        "n3": [119108, 119462, 120731, 121276, 118237],
+                        "n4": [119665, 119193, 121015, 121129, 117975],
+                    }
+                ),
+                "count_multiple_filters_p",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_p",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = orders.WHERE(order_priority == '1-URGENT')\n"
+                "c2 = orders.WHERE(order_priority == '2-HIGH')\n"
+                "c3 = orders.WHERE(order_priority == '3-MEDIUM')\n"
+                "result = customers.WHERE(ISIN(key, [2, 3, 4, 17, 23, 26, 380, 827])).CALCULATE("
+                " customer_key=key, "
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_key": [2, 3, 4, 17, 23, 26, 380, 827],
+                        "n1": [4, 0, 3, 0, 2, 0, 2, 0],
+                        "n2": [1, 0, 5, 0, 0, 1, 0, 4],
+                        "n3": [0, 0, 7, 2, 3, 2, 0, 0],
+                    }
+                ),
+                "count_multiple_filters_q",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_q",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = orders.WHERE(order_priority == '1-URGENT')\n"
+                "c2 = orders.WHERE(order_priority == '2-HIGH')\n"
+                "c3 = orders.WHERE(order_priority == '3-MEDIUM')\n"
+                "result = customers.WHERE(ISIN(key, [2, 3, 4, 17, 23, 26, 380, 827])).CALCULATE("
+                " customer_key=key, "
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ").WHERE(HAS(c1))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_key": [2, 4, 23, 380],
+                        "n1": [4, 3, 2, 2],
+                        "n2": [1, 5, 0, 0],
+                        "n3": [0, 7, 3, 0],
+                    }
+                ),
+                "count_multiple_filters_r",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_r",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = orders.WHERE(order_priority == '1-URGENT')\n"
+                "c2 = orders.WHERE(order_priority == '2-HIGH')\n"
+                "c3 = orders.WHERE(order_priority == '3-MEDIUM')\n"
+                "result = customers.WHERE(ISIN(key, [2, 3, 4, 17, 23, 26, 380, 827])).CALCULATE("
+                " customer_key=key, "
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ").WHERE(HAS(c2))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_key": [2, 4, 26, 827],
+                        "n1": [4, 3, 0, 0],
+                        "n2": [1, 5, 1, 4],
+                        "n3": [0, 7, 2, 0],
+                    }
+                ),
+                "count_multiple_filters_s",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_s",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = orders.WHERE(order_priority == '1-URGENT')\n"
+                "c2 = orders.WHERE(order_priority == '2-HIGH')\n"
+                "c3 = orders.WHERE(order_priority == '3-MEDIUM')\n"
+                "result = customers.WHERE(ISIN(key, [2, 3, 4, 17, 23, 26, 380, 827])).CALCULATE("
+                " customer_key=key, "
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ").WHERE(HAS(c3))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_key": [4, 17, 23, 26],
+                        "n1": [3, 0, 2, 0],
+                        "n2": [5, 0, 0, 1],
+                        "n3": [7, 2, 3, 2],
+                    }
+                ),
+                "count_multiple_filters_t",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_t",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = orders.WHERE(order_priority == '1-URGENT')\n"
+                "c2 = orders.WHERE(order_priority == '2-HIGH')\n"
+                "c3 = orders.WHERE(order_priority == '3-MEDIUM')\n"
+                "result = customers.WHERE(ISIN(key, [2, 3, 4, 17, 23, 26, 380, 827])).CALCULATE("
+                " customer_key=key, "
+                " n1=COUNT(c1), "
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ").WHERE(HAS(c1) & HAS(c2) & HAS(c3))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_key": [4],
+                        "n1": [3],
+                        "n2": [5],
+                        "n3": [7],
+                    }
+                ),
+                "count_multiple_filters_u",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_u",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE(market_segment == 'BUILDING')\n"
+                "c2 = c1.WHERE(MONOTONIC(500, account_balance, 1000))\n"
+                "c3 = c1.WHERE(~MONOTONIC(500, account_balance, 1000))\n"
+                "result = TPCH.CALCULATE("
+                " n2=COUNT(c2), "
+                " n3=COUNT(c3), "
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n2": [1394],
+                        "n3": [28748],
+                    }
+                ),
+                "count_multiple_filters_v",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_v",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '30'))\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '31'))\n"
+                "c3 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '32'))\n"
+                "c4 = customers.WHERE((market_segment == 'HOUSEHOLD') & STARTSWITH(phone, '30'))\n"
+                "c5 = customers.WHERE((market_segment == 'HOUSEHOLD') & STARTSWITH(phone, '31'))\n"
+                "c6 = customers.WHERE((market_segment == 'HOUSEHOLD') & STARTSWITH(phone, '32'))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1),"
+                " n2=COUNT(c2),"
+                " n3=COUNT(c3),"
+                " n4=COUNT(c4),"
+                " n5=COUNT(c5),"
+                " n6=COUNT(c6),"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [1182],
+                        "n2": [1230],
+                        "n3": [1207],
+                        "n4": [1206],
+                        "n5": [1215],
+                        "n6": [1265],
+                    }
+                ),
+                "count_multiple_filters_w",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_w",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '1')).TOP_K(100, by=key.ASC())\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING')).TOP_K(100, by=key.ASC())\n"
+                "c3 = customers.TOP_K(100, by=key.ASC()).WHERE((market_segment == 'BUILDING') & STARTSWITH(phone, '1'))\n"
+                "c4 = customers.TOP_K(100, by=key.ASC()).WHERE((market_segment == 'BUILDING'))\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1),"
+                " n2=COUNT(c2),"
+                " n3=COUNT(c3),"
+                " n4=COUNT(c4),"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [100],
+                        "n2": [100],
+                        "n3": [10],
+                        "n4": [20],
+                    }
+                ),
+                "count_multiple_filters_x",
+                skip_sql=True,
+            ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "c1 = customers.WHERE((market_segment == 'BUILDING')).CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==1)\n"
+                "c2 = customers.WHERE((market_segment == 'BUILDING')).CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==2)\n"
+                "c3 = customers.CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==1)\n"
+                "c4 = customers.CALCULATE(n=RANKING(by=ROUND(account_balance/10).DESC(), allow_ties=True, dense=True)).WHERE(n==2)\n"
+                "result = TPCH.CALCULATE("
+                " n1=COUNT(c1),"
+                " n2=COUNT(c2),"
+                " n3=COUNT(c3),"
+                " n4=COUNT(c4),"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": [20],
+                        "n2": [44],
+                        "n3": [78],
+                        "n4": [161],
+                    }
+                ),
+                "count_multiple_filters_y",
+                skip_sql=True,
+            ),
+            id="count_multiple_filters_y",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 order_quarter_test,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2738,6 +3415,135 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "double_cross",
             ),
             id="double_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nation.WHERE(region.name == 'ASIA')\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(asian_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [30183],
+                    }
+                ),
+                "redundant_has",
+            ),
+            id="redundant_has",
+        ),
+        # Nested HAS on singular chain (supplier -> nation -> region), both should optimize to INNER
+        pytest.param(
+            PyDoughPandasTest(
+                "african_regions = region.WHERE(name == 'AFRICA')\n"
+                "african_nations = nation.WHERE(HAS(african_regions))\n"
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(african_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1955],
+                    }
+                ),
+                "redundant_has_nested",
+            ),
+            id="redundant_has_nested",
+        ),
+        # HAS on plural relationship (orders) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(total_price > 400000)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [3533],
+                    }
+                ),
+                "redundant_has_on_plural",
+            ),
+            id="redundant_has_on_plural",
+        ),
+        # HAS on singular relationship with additional filter
+        pytest.param(
+            PyDoughPandasTest(
+                "european_nations = nation.WHERE(region.name == 'EUROPE')\n"
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HAS(european_nations))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1987],
+                    }
+                ),
+                "redundant_has_singular_chain",
+            ),
+            id="redundant_has_singular_chain",
+        ),
+        # HAS on plural relationship (lineitems) - should NOT optimize, stays SEMI
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(orders.WHERE(HAS(lines.WHERE(quantity > 49)))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [115066],
+                    }
+                ),
+                "redundant_has_on_plural_lineitems",
+            ),
+            id="redundant_has_on_plural_lineitems",
+        ),
+        # No optimization , stay as ANTI.
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(suppliers.WHERE(HASNOT(nation.WHERE(region.name == 'AFRICA')))))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [8045],
+                    }
+                ),
+                "redundant_has_not_on_singular",
+            ),
+            id="redundant_has_not_on_singular",
+        ),
+        # HAS containing CROSS with correlated filter back to outer context.
+        # Customers who have a supplier from their same nation (via CROSS).
+        # Should NOT optimize since CROSS creates a plural relationship.
+        pytest.param(
+            PyDoughPandasTest(
+                "selected = customers.CALCULATE(my_nation_key=nation.key)\n"
+                "result = TPCH.CALCULATE(\n"
+                "    n=COUNT(selected.WHERE(HAS(\n"
+                "        CROSS(suppliers).WHERE(nation.key == my_nation_key)\n"
+                "    )))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "has_cross_correlated",
+            ),
+            id="has_cross_correlated",
+        ),
+        # HAS containing CROSS with correlated filter and SINGULAR.
+        # The filter ensures exactly one match per row, SINGULAR enforces it.
+        # Optimizes to INNER JOIN since SINGULAR makes the relationship singular.
+        pytest.param(
+            PyDoughPandasTest(
+                "selected = customers.CALCULATE(my_nation_key=nation.key)\n"
+                "result = TPCH.CALCULATE(\n"
+                "    n=COUNT(selected.WHERE(HAS(\n"
+                "        CROSS(nations).WHERE(key == my_nation_key).SINGULAR()\n"
+                "    )))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [150000],
+                    }
+                ),
+                "has_cross_correlated_singular",
+            ),
+            id="has_cross_correlated_singular",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2862,6 +3668,24 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "bad_child_reuse_5",
             ),
             id="bad_child_reuse_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [92333]}),
+                "has_equals_one",
+            ),
+            id="has_equals_one",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HASNOT(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [57667]}),
+                "hasnot_equals_one",
+            ),
+            id="hasnot_equals_one",
         ),
         pytest.param(
             PyDoughPandasTest(
