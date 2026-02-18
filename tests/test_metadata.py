@@ -2,6 +2,7 @@
 Unit tests for the PyDough metadata module.
 """
 
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -437,31 +438,31 @@ def test_semantic_info(get_sample_graph: graph_fetcher) -> None:
             "sample_graphs.json",
             "TPCH",
             True,
-            id="parse-from-list-tpch-graph",
+            id="sample-valid",
         ),
         pytest.param(
             "keywords_graph.json",
             "keywords",
             True,
-            id="parse-from-list-keywords-graph",
+            id="keywords-valid",
         ),
         pytest.param(
             "masked_graphs.json",
             "CRYPTBANK",
             True,
-            id="parse-from-list-cryptobank-graph",
+            id="masked-valid",
         ),
         pytest.param(
             "sf_masked_examples.json",
             "HEALTH",
             True,
-            id="parse-from-list-health-graph",
+            id="sf_masked-valid",
         ),
         pytest.param(
             "sf_masked_examples.json",
             "INVALID_GRAPH_NAME",
             False,
-            id="parse-from-list-INVALID_GRAPH_NAME",
+            id="sf_masked-invalid",
         ),
     ],
 )
@@ -469,7 +470,7 @@ def test_parse_from_list(
     file_name: str,
     graph_name: str,
     valid: bool,
-    get_custom_datasets_graph_list: Any,
+    get_custom_datasets_graph_list: Callable[[str], Any],
 ) -> None:
     """
     Tests that parse_metadata_from_list successfully extracts a valid graph
