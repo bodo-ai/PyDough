@@ -347,15 +347,17 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # specific dialect is responsible for translating into its own logic.
         # Rather than have that logic show up in the ANSI sql text, we will
         # instead create the CAST calls ourselves.
+        date: datetime.date
+        dt: datetime.datetime
         if self._dialect == DatabaseDialect.ANSI:
             if isinstance(literal_expression.value, datetime.date):
-                date: datetime.date = literal_expression.value
+                date = literal_expression.value
                 literal = sqlglot_expressions.Cast(
                     this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
                     to=sqlglot_expressions.DataType.build("DATE"),
                 )
             if isinstance(literal_expression.value, datetime.datetime):
-                dt: datetime.datetime = literal_expression.value
+                dt = literal_expression.value
                 if dt.tzinfo is not None:
                     raise PyDoughSQLException(
                         "PyDough does not yet support datetime values with a timezone"
@@ -363,6 +365,29 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 literal = sqlglot_expressions.Cast(
                     this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
                     to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
+        elif self._dialect == DatabaseDialect.ORACLE:
+            if isinstance(literal_expression.value, datetime.date):
+                date = literal_expression.value
+                literal = sqlglot_expressions.Anonymous(
+                    this="TO_DATE",
+                    expressions=[
+                        sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                        sqlglot_expressions.Literal.string("YYYY-MM-DD"),
+                    ],
+                )
+            if isinstance(literal_expression.value, datetime.datetime):
+                dt = literal_expression.value
+                if dt.tzinfo is not None:
+                    raise PyDoughSQLException(
+                        "PyDough does not yet support datetime values with a timezone"
+                    )
+                literal = sqlglot_expressions.Anonymous(
+                    this="TO_TIMESTAMP",
+                    expressions=[
+                        sqlglot_expressions.convert(dt.isoformat(sep=" ")),
+                        sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
+                    ],
                 )
         self._stack.append(literal)
 

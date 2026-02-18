@@ -169,23 +169,22 @@ def test_pipeline_e2e_oracle_tpch_simple_week(
         dayofweeks.append(dayofweek)
 
     # Create dictionary for DataFrame
-    data_dict = {"weeks_diff": [weeks_diff]}
+    data_dict = {"WEEKS_DIFF": [weeks_diff]}
 
     # Add start of week columns
     for i in range(len(dates)):
-        data_dict[f"sow{i + 1}"] = [sows[i]]
+        data_dict[f"SOW{i + 1}"] = [sows[i]]
 
     # Add day name columns
     for i in range(len(dates)):
-        data_dict[f"dayname{i + 1}"] = [daynames[i]]
+        data_dict[f"DAYNAME{i + 1}"] = [daynames[i]]
 
     # Add day of week columns
     for i in range(len(dates)):
-        data_dict[f"dayofweek{i + 1}"] = [dayofweeks[i]]
+        data_dict[f"DAYOFWEEK{i + 1}"] = [dayofweeks[i]]
 
     # Create DataFrame with expected results
     expected_df = pd.DataFrame(data_dict)
-
     for col_name in result.columns:
         result[col_name], expected_df[col_name] = harmonize_types(
             result[col_name], expected_df[col_name]

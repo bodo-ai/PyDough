@@ -12,12 +12,28 @@ import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 
 from .base_transform_bindings import BaseTransformBindings
+from .sqlglot_transform_utils import (
+    DateTimeUnit,
+    apply_parens,
+)
 
 
 class OracleTransformBindings(BaseTransformBindings):
     """
     Subclass of BaseTransformBindings for the Oracle dialect.
     """
+
+    @property
+    def dialect_dow_mapping(self) -> dict[str, int]:
+        return {
+            "Sunday": 1,
+            "Monday": 2,
+            "Tuesday": 3,
+            "Wednesday": 4,
+            "Thursday": 5,
+            "Friday": 6,
+            "Saturday": 7,
+        }
 
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.ABS: "ABS",
@@ -329,3 +345,169 @@ class OracleTransformBindings(BaseTransformBindings):
             ],
         )
         return result
+
+    def convert_datediff(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        assert len(args) == 3
+        # Check if unit is a string.
+        if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
+            raise ValueError(
+                f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
+            )
+        date1 = self.make_datetime_arg(args[1])
+        date2 = self.make_datetime_arg(args[2])
+
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
+        if unit is None:
+            raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+
+        year_diff: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=sqlglot_expressions.Extract(
+                this=sqlglot_expressions.Var(this="YEAR"), expression=date2
+            ),
+            expression=sqlglot_expressions.Extract(
+                this=sqlglot_expressions.Var(this="YEAR"), expression=date1
+            ),
+        )
+
+        match unit:
+            case DateTimeUnit.YEAR:
+                # EXTRACT(YEAR FROM date2) - EXTRACT(YEAR FROM date1)
+                return year_diff
+            case DateTimeUnit.QUARTER:
+                # (EXTRACT(YEAR FROM date2) - EXTRACT(YEAR FROM date1)) * 4 +
+                # (EXTRACT(QUATER FROM date2) - EXTRACT(QUARTER FROM date1))
+                quarter_diff: SQLGlotExpression = sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Extract(
+                        this=sqlglot_expressions.Var(this="QUARTER"), expression=date2
+                    ),
+                    expression=sqlglot_expressions.Extract(
+                        this=sqlglot_expressions.Var(this="QUARTER"), expression=date1
+                    ),
+                )
+
+                return sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Mul(
+                        this=apply_parens(year_diff),
+                        expression=sqlglot_expressions.Literal.number(4),
+                    ),
+                    expression=apply_parens(quarter_diff),
+                )
+
+            case DateTimeUnit.MONTH:
+                # EXTRACT(YEAR FROM date2) - EXTRACT(YEAR FROM date1)) * 12 +
+                # (EXTRACT(MONTH FROM date2) - EXTRACT(MONTH FROM date1))
+                month_diff: SQLGlotExpression = sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Extract(
+                        this=sqlglot_expressions.Var(this="MONTH"), expression=date2
+                    ),
+                    expression=sqlglot_expressions.Extract(
+                        this=sqlglot_expressions.Var(this="MONTH"), expression=date1
+                    ),
+                )
+                return sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Mul(
+                        this=apply_parens(year_diff),
+                        expression=sqlglot_expressions.Literal.number(12),
+                    ),
+                    expression=apply_parens(month_diff),
+                )
+
+            case DateTimeUnit.WEEK:
+                # raw_delta = number of days between date1 and date2
+                # dow1 = DAYOFWEEK(date1)
+                # dow2 = DAYOFWEEK(date2)
+                # result = INTEGER((raw_delta + dow1 - dow2) / 7)
+                raw_delta: SQLGlotExpression = sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Cast(
+                        this=date2, to=sqlglot_expressions.DataType(this="DATE")
+                    ),
+                    expression=sqlglot_expressions.Cast(
+                        this=date1, to=sqlglot_expressions.DataType(this="DATE")
+                    ),
+                )
+
+                dow1: SQLGlotExpression = self.convert_dayofweek([date1], [types[1]])
+                dow2: SQLGlotExpression = self.convert_dayofweek([date2], [types[2]])
+
+                division: SQLGlotExpression = sqlglot_expressions.Div(
+                    this=apply_parens(
+                        sqlglot_expressions.Add(
+                            this=raw_delta,
+                            expression=sqlglot_expressions.Sub(
+                                this=dow1, expression=dow2
+                            ),
+                        )
+                    ),
+                    expression=sqlglot_expressions.Literal.number(7),
+                )
+
+                return sqlglot_expressions.Anonymous(
+                    this="FLOOR", expressions=[division]
+                )
+
+            case DateTimeUnit.DAY:
+                # TRUNC*date2 - date1) -> in Oracle this will return the difference in
+                # days as a number
+                return sqlglot_expressions.Anonymous(
+                    this="TRUNC",
+                    expressions=[
+                        sqlglot_expressions.Sub(this=date2, expression=date1),
+                    ],
+                )
+
+            case DateTimeUnit.HOUR:
+                # TRUNC((date2 - date1) * 24)
+                hours_diff: SQLGlotExpression = sqlglot_expressions.Mul(
+                    this=sqlglot_expressions.Sub(this=date2, expression=date1),
+                    expression=sqlglot_expressions.Literal.number(24),
+                )
+                return sqlglot_expressions.Anonymous(
+                    this="TRUNC", expressions=[hours_diff]
+                )
+
+            case DateTimeUnit.MINUTE:
+                # TRUNC((date2 - date1) * 24 * 60)
+                minute_diff = sqlglot_expressions.Mul(
+                    this=sqlglot_expressions.Sub(this=date2, expression=date1),
+                    expression=sqlglot_expressions.Literal.number(24 * 60),
+                )
+                return sqlglot_expressions.Anonymous(
+                    this="TRUNC", expressions=[minute_diff]
+                )
+
+            case DateTimeUnit.SECOND:
+                # TRUNC((date2 - date1) * 24 * 60 * 60)
+                second_diff: SQLGlotExpression = sqlglot_expressions.Mul(
+                    this=sqlglot_expressions.Sub(this=date2, expression=date1),
+                    expression=sqlglot_expressions.Literal.number(24 * 60 * 60),
+                )
+                return sqlglot_expressions.Anonymous(
+                    this="TRUNC", expressions=[second_diff]
+                )
+
+            case _:
+                raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+
+    def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        return sqlglot_expressions.ToChar(
+            this=base,
+            format=sqlglot_expressions.Literal.string("D"),
+        )
+
+    def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        offset: int = (-self.start_of_week_offset) % 7 - 1
+        dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
+
+        return sqlglot_expressions.Mod(
+            this=apply_parens(
+                sqlglot_expressions.Add(
+                    this=dow_expr,
+                    expression=sqlglot_expressions.Literal.number(offset),
+                )
+            ),
+            expression=sqlglot_expressions.Literal.number(7),
+        )
