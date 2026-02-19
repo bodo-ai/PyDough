@@ -28,6 +28,7 @@ MANIFEST
 test-output.xml
 *.db
 tests/gen_data/corpus_iceberg/
+demos/notebooks/creds.json
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
