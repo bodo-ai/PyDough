@@ -9,7 +9,7 @@ WITH "_S1" AS (
 )
 SELECT
   DRUGS.drug_name,
-  NVL("_S1".N_ROWS, 0) AS num_treatments,
+  COALESCE("_S1".N_ROWS, 0) AS num_treatments,
   "_S1".AVG_TOT_DRUG_AMT AS avg_drug_amount
 FROM MAIN.DRUGS DRUGS
 LEFT JOIN "_S1" "_S1"

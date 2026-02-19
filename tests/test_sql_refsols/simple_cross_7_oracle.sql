@@ -18,7 +18,7 @@ WITH "_S3" AS (
 )
 SELECT
   PART.p_partkey AS original_part_key,
-  NVL("_S3".N_ROWS, 0) AS n_other_parts
+  COALESCE("_S3".N_ROWS, 0) AS n_other_parts
 FROM TPCH.PART PART
 LEFT JOIN "_S3" "_S3"
   ON PART.p_partkey = "_S3".P_PARTKEY

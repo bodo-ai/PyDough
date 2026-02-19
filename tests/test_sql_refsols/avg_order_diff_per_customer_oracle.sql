@@ -2,11 +2,7 @@ WITH "_T1" AS (
   SELECT
     CUSTOMER.c_name AS C_NAME,
     ORDERS.o_custkey AS O_CUSTKEY,
-    DATEDIFF(
-      CAST(ORDERS.o_orderdate AS DATETIME),
-      CAST(LAG(ORDERS.o_orderdate, 1) OVER (PARTITION BY ORDERS.o_custkey ORDER BY ORDERS.o_orderdate) AS DATETIME),
-      DAY
-    ) AS DAY_DIFF
+    CAST(ORDERS.o_orderdate AS DATE) - CAST(LAG(ORDERS.o_orderdate, 1) OVER (PARTITION BY ORDERS.o_custkey ORDER BY ORDERS.o_orderdate) AS DATE) AS DAY_DIFF
   FROM TPCH.CUSTOMER CUSTOMER
   JOIN TPCH.NATION NATION
     ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'JAPAN'

@@ -6,7 +6,10 @@ SELECT
   CUSTOMER.c_name LIKE '%z' AS ends_with_z,
   CUSTOMER.c_name LIKE '%sub%' AS contains_sub,
   CUSTOMER.c_name LIKE '%test%' AS matches_like,
-  LISTAGG('::', CUSTOMER.c_name, NATION.n_name) AS joined_string,
+  LTRIM(
+    NVL2(CUSTOMER.c_name, '::' || CUSTOMER.c_name, NULL) || NVL2(NATION.n_name, '::' || NATION.n_name, NULL),
+    '::'
+  ) AS joined_string,
   CASE
     WHEN LENGTH(CUSTOMER.c_name) >= 20
     THEN SUBSTR(CUSTOMER.c_name, 1, 20)

@@ -17,6 +17,6 @@ SELECT
   "_S1".MAX_NAME AS max_name,
   "_S1".COUNT_CAST AS count_cast,
   "_S1".AVG_QUOTE AS quote_avg,
-  NVL("_S1".SUM_NAME, 0) AS sum_name
+  COALESCE("_S1".SUM_NAME, 0) AS sum_name
 FROM "_S0" "_S0"
 CROSS JOIN "_S1" "_S1"

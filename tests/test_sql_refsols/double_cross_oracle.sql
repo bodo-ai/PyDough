@@ -8,25 +8,69 @@ WITH "_T3" AS (
   FROM "_T3"
 ), "_S2" AS (
   SELECT
-    DATEDIFF(CAST(ORDERS.o_orderdate AS DATETIME), CAST("_S0".MIN_O_ORDERDATE AS DATETIME), WEEK) AS ORD_WK,
+    FLOOR(
+      (
+        CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S0".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(ORDERS.o_orderdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
+    ) AS ORD_WK,
     COUNT(*) AS N_ROWS
   FROM "_S0" "_S0"
   JOIN TPCH.ORDERS ORDERS
-    ON DATEDIFF(CAST(ORDERS.o_orderdate AS DATETIME), CAST("_S0".MIN_O_ORDERDATE AS DATETIME), WEEK) < 10
+    ON FLOOR(
+      (
+        CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S0".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(ORDERS.o_orderdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
+    ) < 10
     AND ORDERS.o_orderpriority = '1-URGENT'
     AND ORDERS.o_orderstatus = 'F'
   GROUP BY
-    DATEDIFF(CAST(ORDERS.o_orderdate AS DATETIME), CAST("_S0".MIN_O_ORDERDATE AS DATETIME), WEEK)
+    FLOOR(
+      (
+        CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S0".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(ORDERS.o_orderdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
+    )
 ), "_S3" AS (
   SELECT
     MIN(O_ORDERDATE) AS MIN_O_ORDERDATE
   FROM "_T3"
 ), "_T0" AS (
   SELECT
-    DATEDIFF(
-      CAST(LINEITEM.l_receiptdate AS DATETIME),
-      CAST("_S3".MIN_O_ORDERDATE AS DATETIME),
-      WEEK
+    FLOOR(
+      (
+        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
     ) AS LINE_WK,
     "_S2".ORD_WK,
     ANY_VALUE("_S2".N_ROWS) AS ANYTHING_N_ROWS,
@@ -34,24 +78,48 @@ WITH "_T3" AS (
   FROM "_S2" "_S2"
   CROSS JOIN "_S3" "_S3"
   JOIN TPCH.LINEITEM LINEITEM
-    ON DATEDIFF(
-      CAST(LINEITEM.l_receiptdate AS DATETIME),
-      CAST("_S3".MIN_O_ORDERDATE AS DATETIME),
-      WEEK
+    ON EXTRACT(YEAR FROM CAST(LINEITEM.l_receiptdate AS DATE)) = 1992
+    AND FLOOR(
+      (
+        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
     ) < 10
-    AND EXTRACT(YEAR FROM CAST(LINEITEM.l_receiptdate AS DATETIME)) = 1992
     AND LINEITEM.l_returnflag = 'R'
     AND LINEITEM.l_shipmode = 'RAIL'
-    AND "_S2".ORD_WK = DATEDIFF(
-      CAST(LINEITEM.l_receiptdate AS DATETIME),
-      CAST("_S3".MIN_O_ORDERDATE AS DATETIME),
-      WEEK
+    AND "_S2".ORD_WK = FLOOR(
+      (
+        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
     )
   GROUP BY
-    DATEDIFF(
-      CAST(LINEITEM.l_receiptdate AS DATETIME),
-      CAST("_S3".MIN_O_ORDERDATE AS DATETIME),
-      WEEK
+    FLOOR(
+      (
+        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+          MOD((
+            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+          ), 7)
+        ) - (
+          MOD((
+            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+          ), 7)
+        )
+      ) / 7
     ),
     "_S2".ORD_WK
 )

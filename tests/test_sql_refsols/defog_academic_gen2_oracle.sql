@@ -10,7 +10,7 @@ WITH "_S3" AS (
 )
 SELECT
   AUTHOR.name,
-  NVL("_S3".SUM_CITATION_NUM, 0) AS total_citations
+  COALESCE("_S3".SUM_CITATION_NUM, 0) AS total_citations
 FROM MAIN.AUTHOR AUTHOR
 JOIN "_S3" "_S3"
   ON AUTHOR.aid = "_S3".AID

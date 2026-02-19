@@ -1449,7 +1449,8 @@ def impl_defog_ewallet_adv11():
     duration first.
     """
     selected_sessions = sessions.WHERE(
-        (session_start >= "2023-06-01") & (session_end < "2023-06-08")
+        (session_start >= DATETIME("2023-06-01"))
+        & (session_end < DATETIME("2023-06-08"))
     ).CALCULATE(duration=DATEDIFF("seconds", session_start, session_end))
     return (
         users.WHERE(HAS(selected_sessions))

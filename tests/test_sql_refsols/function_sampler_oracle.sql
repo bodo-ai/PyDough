@@ -1,5 +1,8 @@
 SELECT
-  LISTAGG('-', REGION.r_name, NATION.n_name, SUBSTR(CUSTOMER.c_name, 17)) AS a,
+  LTRIM(
+    NVL2(REGION.r_name, '-' || REGION.r_name, NULL) || NVL2(NATION.n_name, '-' || NATION.n_name, NULL) || NVL2(SUBSTR(CUSTOMER.c_name, 17), '-' || SUBSTR(CUSTOMER.c_name, 17), NULL),
+    '-'
+  ) AS a,
   ROUND(CUSTOMER.c_acctbal, 1) AS b,
   CASE WHEN SUBSTR(CUSTOMER.c_phone, 1, 1) = '3' THEN CUSTOMER.c_name ELSE NULL END AS c,
   NOT CASE

@@ -5,7 +5,7 @@ WITH "_S1" AS (
     SUM(tot_drug_amt) AS SUM_TOT_DRUG_AMT
   FROM MAIN.TREATMENTS
   WHERE
-    start_dt >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 6, MONTH), 'DAY')
+    start_dt >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTOYMINTERVAL(6, 'month'), 'DAY')
   GROUP BY
     doc_id
 ), "_T1" AS (
@@ -22,7 +22,7 @@ WITH "_S1" AS (
 SELECT
   SPECIALTY AS specialty,
   SUM_N_ROWS AS num_treatments,
-  NVL(SUM_SUM_TOT_DRUG_AMT, 0) AS total_drug_amount
+  COALESCE(SUM_SUM_TOT_DRUG_AMT, 0) AS total_drug_amount
 FROM "_T1"
 WHERE
   SUM_N_ROWS <> 0

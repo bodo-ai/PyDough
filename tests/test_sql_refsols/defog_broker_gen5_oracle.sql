@@ -3,8 +3,8 @@ SELECT
   AVG(sbtxprice) AS avg_price
 FROM MAIN.SBTRANSACTION
 WHERE
-  EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) IN (1, 2, 3)
-  AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
+  EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATE)) IN (1, 2, 3)
+  AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATE)) = 2023
   AND sbtxstatus = 'success'
 GROUP BY
   TRUNC(CAST(sbtxdatetime AS TIMESTAMP), 'MONTH')

@@ -4,13 +4,13 @@ WITH "_S1" AS (
     receiver_id AS RECEIVER_ID
   FROM MAIN.WALLET_TRANSACTIONS_DAILY
   WHERE
-    created_at >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 150, DAY), 'DAY')
+    created_at >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTODSINTERVAL(150, 'day'), 'DAY')
     AND receiver_type = 1
 )
 SELECT
   ANY_VALUE(MERCHANTS.name) AS merchant_name,
-  NVL(NULLIF(COUNT("_S1".RECEIVER_ID), 0), 0) AS total_transactions,
-  NVL(SUM("_S1".AMOUNT), 0) AS total_amount
+  COUNT("_S1".RECEIVER_ID) AS total_transactions,
+  COALESCE(SUM("_S1".AMOUNT), 0) AS total_amount
 FROM MAIN.MERCHANTS MERCHANTS
 LEFT JOIN "_S1" "_S1"
   ON MERCHANTS.mid = "_S1".RECEIVER_ID

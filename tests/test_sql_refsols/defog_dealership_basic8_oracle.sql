@@ -10,8 +10,8 @@ WITH "_S1" AS (
 SELECT
   CARS.make,
   CARS.model,
-  NVL("_S1".N_ROWS, 0) AS total_sales,
-  NVL("_S1".SUM_SALE_PRICE, 0) AS total_revenue
+  COALESCE("_S1".N_ROWS, 0) AS total_sales,
+  COALESCE("_S1".SUM_SALE_PRICE, 0) AS total_revenue
 FROM MAIN.CARS CARS
 LEFT JOIN "_S1" "_S1"
   ON CARS."_id" = "_S1".CAR_ID

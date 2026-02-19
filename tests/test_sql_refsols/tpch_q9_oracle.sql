@@ -1,7 +1,7 @@
 SELECT
   NATION.n_name AS NATION,
-  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) AS O_YEAR,
-  NVL(
+  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) AS O_YEAR,
+  COALESCE(
     SUM(
       LINEITEM.l_extendedprice * (
         1 - LINEITEM.l_discount
@@ -22,7 +22,7 @@ JOIN TPCH.PARTSUPP PARTSUPP
   ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
   AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
 GROUP BY
-  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)),
+  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)),
   NATION.n_name
 ORDER BY
   1 NULLS FIRST,

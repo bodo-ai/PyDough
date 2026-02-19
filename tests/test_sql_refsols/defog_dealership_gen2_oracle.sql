@@ -4,7 +4,7 @@ FROM MAIN.PAYMENTS_MADE
 WHERE
   (
     MOD((
-      DAY_OF_WEEK(payment_date) + 6
+      TO_CHAR(payment_date, 'D') + 5
     ), 7)
   ) IN (5, 6)
   AND vendor_name = 'Utility Company'

@@ -10,7 +10,7 @@ WITH "_S1" AS (
 )
 SELECT
   COLUMN1 AS part_size,
-  NVL("_S1".N_ROWS, 0) AS n_parts
+  COALESCE("_S1".N_ROWS, 0) AS n_parts
 FROM (VALUES
   (1),
   (6),

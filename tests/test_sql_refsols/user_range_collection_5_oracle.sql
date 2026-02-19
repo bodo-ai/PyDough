@@ -30,7 +30,7 @@ WITH "_S2" AS (
 )
 SELECT
   "_S2".PART_SIZE AS part_size,
-  NVL("_S3".N_ROWS, 0) AS n_parts
+  COALESCE("_S3".N_ROWS, 0) AS n_parts
 FROM "_S2" "_S2"
 LEFT JOIN "_S3" "_S3"
   ON "_S2".PART_SIZE = "_S3".PART_SIZE

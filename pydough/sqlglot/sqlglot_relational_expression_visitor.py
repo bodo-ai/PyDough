@@ -383,9 +383,11 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                         "PyDough does not yet support datetime values with a timezone"
                     )
                 literal = sqlglot_expressions.Anonymous(
-                    this="TO_TIMESTAMP",
+                    this="TO_DATE",
                     expressions=[
-                        sqlglot_expressions.convert(dt.isoformat(sep=" ")),
+                        sqlglot_expressions.convert(
+                            literal_expression.value.strftime("%Y-%m-%d %H:%M:%S")
+                        ),
                         sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
                     ],
                 )

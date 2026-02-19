@@ -5,7 +5,9 @@ WITH "_S1" AS (
     SUM(sale_price) AS SUM_SALE_PRICE
   FROM MAIN.SALES
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP, CAST(sale_date AS DATETIME), DAY) <= 30
+    (
+      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(sale_date AS DATE)
+    ) <= 30
   GROUP BY
     salesperson_id
 )
@@ -13,7 +15,7 @@ SELECT
   SALESPERSONS.first_name,
   SALESPERSONS.last_name,
   "_S1".N_ROWS AS total_sales,
-  NVL("_S1".SUM_SALE_PRICE, 0) AS total_revenue
+  COALESCE("_S1".SUM_SALE_PRICE, 0) AS total_revenue
 FROM MAIN.SALESPERSONS SALESPERSONS
 JOIN "_S1" "_S1"
   ON SALESPERSONS."_id" = "_S1".SALESPERSON_ID

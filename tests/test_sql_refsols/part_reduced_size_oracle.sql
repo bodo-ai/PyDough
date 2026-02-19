@@ -11,11 +11,18 @@ WITH "_S0" AS (
 SELECT
   CAST("_S0".P_SIZE / 2.5 AS DOUBLE PRECISION) AS reduced_size,
   CAST("_S0".P_RETAILPRICE AS INT) AS retail_price_int,
-  LISTAGG('', 'old size: ', CAST("_S0".P_SIZE AS CLOB)) AS message,
+  LTRIM(
+    NVL2('old size: ', 'old size: ', NULL) || NVL2(
+      CAST("_S0".P_SIZE AS VARCHAR2(4000)),
+      '' || CAST("_S0".P_SIZE AS VARCHAR2(4000)),
+      NULL
+    ),
+    ''
+  ) AS message,
   LINEITEM.l_discount AS discount,
-  TO_CHAR(LINEITEM.l_receiptdate, 'DD-MM-YYYY') AS date_dmy,
-  TO_CHAR(LINEITEM.l_receiptdate, 'MM/DD') AS date_md,
-  TO_CHAR(LINEITEM.l_receiptdate, 'HH24:MIP.M.') AS am_pm
+  TO_CHAR(LINEITEM.l_receiptdate, '%d-%m-%Y') AS date_dmy,
+  TO_CHAR(LINEITEM.l_receiptdate, '%m/%d') AS date_md,
+  TO_CHAR(LINEITEM.l_receiptdate, '%H:%M%p') AS am_pm
 FROM "_S0" "_S0"
 JOIN TPCH.LINEITEM LINEITEM
   ON LINEITEM.l_partkey = "_S0".P_PARTKEY

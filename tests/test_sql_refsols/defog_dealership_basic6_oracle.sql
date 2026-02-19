@@ -1,7 +1,7 @@
 SELECT
   CUSTOMERS.state,
   COUNT(DISTINCT SALES.customer_id) AS unique_customers,
-  NVL(SUM(SALES.sale_price), 0) AS total_revenue
+  COALESCE(SUM(SALES.sale_price), 0) AS total_revenue
 FROM MAIN.SALES SALES
 JOIN MAIN.CUSTOMERS CUSTOMERS
   ON CUSTOMERS."_id" = SALES.customer_id

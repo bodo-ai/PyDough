@@ -5,7 +5,7 @@ WITH "_S0" AS (
     SUM(sale_price) AS SUM_SALE_PRICE
   FROM MAIN.SALES
   WHERE
-    EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
+    EXTRACT(YEAR FROM CAST(sale_date AS DATE)) = 2023
   GROUP BY
     TRUNC(CAST(sale_date AS TIMESTAMP), 'QUARTER'),
     customer_id

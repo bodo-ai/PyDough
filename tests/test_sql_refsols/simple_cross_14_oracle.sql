@@ -11,7 +11,7 @@ WITH "_S1" AS (
 SELECT
   REGION.r_name AS region_name,
   'foo' AS x,
-  NVL("_S1".N_ROWS, 0) AS n
+  COALESCE("_S1".N_ROWS, 0) AS n
 FROM TPCH.REGION REGION
 LEFT JOIN "_S1" "_S1"
   ON REGION.r_regionkey = "_S1".N_REGIONKEY

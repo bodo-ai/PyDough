@@ -27,7 +27,7 @@ WITH "_S4" AS (
 SELECT
   "_S5".C_NAME AS customer_name,
   "_S4".O_ORDERKEY AS order_key,
-  DATEDIFF(CAST("_S4".O_ORDERDATE AS DATETIME), CAST("_S5".O_ORDERDATE AS DATETIME), DAY) AS days_since_first_order
+  CAST("_S4".O_ORDERDATE AS DATE) - CAST("_S5".O_ORDERDATE AS DATE) AS days_since_first_order
 FROM "_S4" "_S4"
 LEFT JOIN "_S5" "_S5"
   ON "_S4".O_CUSTKEY = "_S5".C_CUSTKEY

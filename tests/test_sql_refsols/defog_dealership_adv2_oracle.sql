@@ -4,7 +4,9 @@ WITH "_S1" AS (
     COUNT(*) AS N_ROWS
   FROM MAIN.SALES
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP, CAST(sale_date AS DATETIME), DAY) <= 30
+    (
+      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(sale_date AS DATE)
+    ) <= 30
   GROUP BY
     salesperson_id
 )

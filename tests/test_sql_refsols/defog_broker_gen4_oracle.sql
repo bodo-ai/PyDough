@@ -12,7 +12,7 @@ WITH "_S1" AS (
 SELECT
   SBCUSTOMER.sbcustid AS "_id",
   SBCUSTOMER.sbcustname AS name,
-  NVL("_S1".N_ROWS, 0) AS num_tx
+  COALESCE("_S1".N_ROWS, 0) AS num_tx
 FROM MAIN.SBCUSTOMER SBCUSTOMER
 LEFT JOIN "_S1" "_S1"
   ON SBCUSTOMER.sbcustid = "_S1".SBTXCUSTID

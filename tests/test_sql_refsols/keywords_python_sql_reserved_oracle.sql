@@ -1,7 +1,7 @@
 SELECT
   """," AS "dbl_quote_dot",
   "." AS "dot",
-  "." + NVL("FLOAT", str, 1) AS addition,
+  "." + COALESCE("FLOAT", str, 1) AS addition,
   "__col__" AS "col",
   "__col1__" AS "col1",
   def AS def_,

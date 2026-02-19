@@ -5,9 +5,9 @@ WITH "_T1" AS (
   JOIN EVENTS EVENTS
     ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
   JOIN ERAS ERAS
-    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
+    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATE))
     AND ERAS.er_name = 'Cold War'
-    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
+    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATE))
   GROUP BY
     SEARCHES.search_id
 ), "_S5" AS (

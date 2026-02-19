@@ -1,11 +1,11 @@
 WITH "_T3" AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) AS YEAR_O_ORDERDATE,
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) AS YEAR_O_ORDERDATE,
     o_orderpriority AS O_ORDERPRIORITY,
     COUNT(*) AS N_ROWS
   FROM TPCH.ORDERS
   GROUP BY
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)),
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)),
     o_orderpriority
 ), "_T2" AS (
   SELECT

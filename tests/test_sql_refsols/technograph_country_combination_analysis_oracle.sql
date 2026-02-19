@@ -35,7 +35,7 @@ WITH "_S0" AS (
 SELECT
   "_S0".CO_NAME AS factory_country,
   "_S1".CO_NAME AS purchase_country,
-  ROUND(NVL("_S9".SUM_N_ROWS, 0) / NVL("_S9".N_ROWS, 0), 2) AS ir
+  ROUND(COALESCE("_S9".SUM_N_ROWS, 0) / COALESCE("_S9".N_ROWS, 0), 2) AS ir
 FROM "_S0" "_S0"
 CROSS JOIN "_S0" "_S1"
 LEFT JOIN "_S9" "_S9"

@@ -5,8 +5,8 @@ WITH "_T" AS (
     RANK() OVER (ORDER BY snapshot_date DESC) AS "_W"
   FROM MAIN.INVENTORY_SNAPSHOTS
   WHERE
-    EXTRACT(MONTH FROM CAST(snapshot_date AS DATETIME)) = 3
-    AND EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
+    EXTRACT(MONTH FROM CAST(snapshot_date AS DATE)) = 3
+    AND EXTRACT(YEAR FROM CAST(snapshot_date AS DATE)) = 2023
 )
 SELECT
   CARS."_id",

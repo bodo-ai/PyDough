@@ -58,9 +58,9 @@ WITH "_T2" AS (
 )
 SELECT
   COUNTRIES.co_name AS country_name,
-  ROUND(NVL("_S3".SUM_N_ROWS, 0) / "_S3".N_ROWS, 2) AS made_ir,
-  ROUND(NVL("_S7".SUM_N_ROWS, 0) / "_S7".N_ROWS, 2) AS sold_ir,
-  ROUND(NVL("_S13".SUM_N_ROWS, 0) / NVL("_S13".N_ROWS, 0), 2) AS user_ir
+  ROUND(COALESCE("_S3".SUM_N_ROWS, 0) / "_S3".N_ROWS, 2) AS made_ir,
+  ROUND(COALESCE("_S7".SUM_N_ROWS, 0) / "_S7".N_ROWS, 2) AS sold_ir,
+  ROUND(COALESCE("_S13".SUM_N_ROWS, 0) / COALESCE("_S13".N_ROWS, 0), 2) AS user_ir
 FROM MAIN.COUNTRIES COUNTRIES
 JOIN "_S3" "_S3"
   ON COUNTRIES.co_id = "_S3".DE_PRODUCTION_COUNTRY_ID

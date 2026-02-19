@@ -46,5 +46,5 @@ SELECT
   NULL AS s44,
   NULL AS s45,
   NULL AS s46,
-  NVL(MAX(sbcustname), '') LIKE '%r%' AS s47
+  COALESCE(MAX(sbcustname), '') LIKE '%r%' AS s47
 FROM MAIN.SBCUSTOMER

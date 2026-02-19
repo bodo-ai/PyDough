@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   100 * (
-    NVL(SUM(sbcuststatus = 'active'), 0) / COUNT(*)
+    COALESCE(SUM(sbcuststatus = 'active'), 0) / COUNT(*)
   ) AS ar
 FROM MAIN.SBCUSTOMER
 WHERE

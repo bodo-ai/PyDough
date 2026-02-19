@@ -8,7 +8,7 @@ WITH "_S1" AS (
 )
 SELECT
   DOMAIN.name,
-  NVL("_S1".NDISTINCT_AID, 0) AS author_count
+  COALESCE("_S1".NDISTINCT_AID, 0) AS author_count
 FROM MAIN.DOMAIN DOMAIN
 LEFT JOIN "_S1" "_S1"
   ON DOMAIN.did = "_S1".DID

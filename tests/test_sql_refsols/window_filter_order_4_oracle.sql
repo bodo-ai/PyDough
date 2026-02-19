@@ -6,7 +6,7 @@ WITH "_T2" AS (
     ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'GERMANY'
   JOIN TPCH.ORDERS ORDERS
     ON CUSTOMER.c_custkey = ORDERS.o_custkey
-    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1992
+    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) = 1992
   GROUP BY
     ORDERS.o_custkey
 ), "_T" AS (

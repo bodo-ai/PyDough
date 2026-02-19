@@ -10,7 +10,7 @@ WITH "_T1" AS (
 SELECT
   SBCUSTOMER.sbcustname AS name,
   (
-    100.0 * NVL("_T1".SUM_EXPR, 0)
+    100.0 * COALESCE("_T1".SUM_EXPR, 0)
   ) / "_T1".N_ROWS AS success_rate
 FROM MAIN.SBCUSTOMER SBCUSTOMER
 JOIN "_T1" "_T1"

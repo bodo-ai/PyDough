@@ -15,7 +15,7 @@ WITH "_S6" AS (
   JOIN TPCH.PART PART
     ON PART.p_container LIKE 'SM%' AND PART.p_partkey = PARTSUPP.ps_partkey
   JOIN TPCH.LINEITEM LINEITEM
-    ON EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)) IN (1995, 1996)
+    ON EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATE)) IN (1995, 1996)
     AND LINEITEM.l_partkey = PARTSUPP.ps_partkey
     AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
   GROUP BY
@@ -24,7 +24,7 @@ WITH "_S6" AS (
 )
 SELECT
   PART.p_name AS part_name,
-  ROUND(NVL("_S6".SUM_REVENUE, 0), 2) AS revenue_generated
+  ROUND(COALESCE("_S6".SUM_REVENUE, 0), 2) AS revenue_generated
 FROM "_S6" "_S6"
 JOIN TPCH.PART PART
   ON PART.p_partkey = "_S6".PS_PARTKEY

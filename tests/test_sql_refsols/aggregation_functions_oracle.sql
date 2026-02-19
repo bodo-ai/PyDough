@@ -52,7 +52,7 @@ WITH "_S1" AS (
     C_NATIONKEY
 )
 SELECT
-  NVL(SUM_C_ACCTBAL, 0) AS sum_value,
+  COALESCE(SUM_C_ACCTBAL, 0) AS sum_value,
   AVG_C_ACCTBAL AS avg_value,
   AVG_EXPR_17 AS median_value,
   MIN_C_ACCTBAL AS min_value,

@@ -22,7 +22,7 @@ WITH "_T1" AS (
   JOIN TPCH.PART PART
     ON PART.p_container LIKE 'LG%' AND PART.p_partkey = PARTSUPP.ps_partkey
   JOIN TPCH.LINEITEM LINEITEM
-    ON EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)) IN (1995, 1996)
+    ON EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATE)) IN (1995, 1996)
     AND LINEITEM.l_partkey = PARTSUPP.ps_partkey
     AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
   GROUP BY
@@ -31,7 +31,7 @@ WITH "_T1" AS (
 )
 SELECT
   PART.p_name AS part_name,
-  ROUND(NVL("_S11".SUM_REVENUE, 0), 2) AS revenue_generated
+  ROUND(COALESCE("_S11".SUM_REVENUE, 0), 2) AS revenue_generated
 FROM TPCH.PARTSUPP PARTSUPP
 JOIN "_T1" "_T1"
   ON PARTSUPP.ps_suppkey = "_T1".S_SUPPKEY

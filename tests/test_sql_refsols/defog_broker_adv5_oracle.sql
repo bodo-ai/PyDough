@@ -1,15 +1,28 @@
 WITH "_S0" AS (
   SELECT
-    LISTAGG(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))) >= 2
-        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 1, 2)
-        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))), (
-          2 * -1
-        ))
-      END
+    LTRIM(
+      NVL2(
+        EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
+        '-' || EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
+        NULL
+      ) || NVL2(
+        CASE
+          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
+          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
+          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
+            2 * -1
+          ))
+        END,
+        '-' || CASE
+          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
+          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
+          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
+            2 * -1
+          ))
+        END,
+        NULL
+      ),
+      '-'
     ) AS MONTH,
     sbdptickerid AS SBDPTICKERID,
     COUNT(sbdpclose) AS COUNT_SBDPCLOSE,
@@ -18,16 +31,29 @@ WITH "_S0" AS (
     SUM(sbdpclose) AS SUM_SBDPCLOSE
   FROM MAIN.SBDAILYPRICE
   GROUP BY
-    LISTAGG(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))) >= 2
-        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 1, 2)
-        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))), (
-          2 * -1
-        ))
-      END
+    LTRIM(
+      NVL2(
+        EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
+        '-' || EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
+        NULL
+      ) || NVL2(
+        CASE
+          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
+          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
+          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
+            2 * -1
+          ))
+        END,
+        '-' || CASE
+          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
+          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
+          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
+            2 * -1
+          ))
+        END,
+        NULL
+      ),
+      '-'
     ),
     sbdptickerid
 ), "_T0" AS (
@@ -55,5 +81,8 @@ SELECT
     (
       SUM_SUM_SBDPCLOSE / SUM_COUNT_SBDPCLOSE
     ) - LAG(SUM_SUM_SBDPCLOSE / SUM_COUNT_SBDPCLOSE, 1) OVER (PARTITION BY SBTICKERSYMBOL ORDER BY MONTH)
-  ) / LAG(SUM_SUM_SBDPCLOSE / SUM_COUNT_SBDPCLOSE, 1) OVER (PARTITION BY SBTICKERSYMBOL ORDER BY MONTH) AS momc
+  ) / NULLIF(
+    LAG(SUM_SUM_SBDPCLOSE / SUM_COUNT_SBDPCLOSE, 1) OVER (PARTITION BY SBTICKERSYMBOL ORDER BY MONTH),
+    0
+  ) AS momc
 FROM "_T0"

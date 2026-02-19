@@ -23,7 +23,9 @@ WITH "_T1" AS (
   FROM "_T1" "_T6"
   CROSS JOIN "_T4" "_T7"
   JOIN "_S3" "_S7"
-    ON "_S7".CA_DT < DATE_ADD(CAST("_T7".PR_RELEASE AS TIMESTAMP), 2, 'YEAR')
+    ON "_S7".CA_DT < (
+      CAST("_T7".PR_RELEASE AS TIMESTAMP) + NUMTOYMINTERVAL(2, 'year')
+    )
     AND "_S7".CA_DT >= "_T7".PR_RELEASE
   JOIN MAIN.DEVICES DEVICES
     ON "_S7".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS TIMESTAMP), 'DAY')
@@ -43,7 +45,9 @@ WITH "_T1" AS (
   FROM "_T1" "_T3"
   CROSS JOIN "_T4" "_T4"
   JOIN "_S3" "_S3"
-    ON "_S3".CA_DT < DATE_ADD(CAST("_T4".PR_RELEASE AS TIMESTAMP), 2, 'YEAR')
+    ON "_S3".CA_DT < (
+      CAST("_T4".PR_RELEASE AS TIMESTAMP) + NUMTOYMINTERVAL(2, 'year')
+    )
     AND "_S3".CA_DT >= "_T4".PR_RELEASE
   LEFT JOIN "_S15" "_S15"
     ON "_S15".CA_DT = "_S3".CA_DT AND "_S15".CO_NAME = "_T3".CO_NAME
@@ -54,7 +58,7 @@ WITH "_T1" AS (
 SELECT
   "_T1".CO_NAME AS country_name,
   "_S17".START_OF_YEAR AS start_of_year,
-  NVL("_S17".SUM_N_ROWS, 0) AS n_purchases
+  COALESCE("_S17".SUM_N_ROWS, 0) AS n_purchases
 FROM "_T1" "_T1"
 LEFT JOIN "_S17" "_S17"
   ON "_S17".CO_NAME = "_T1".CO_NAME

@@ -10,6 +10,6 @@ WITH "_S0" AS (
   FROM MAIN.RESTAURANT
 )
 SELECT
-  "_S0".N_ROWS / "_S1".N_ROWS AS ratio
+  "_S0".N_ROWS / NULLIF("_S1".N_ROWS, 0) AS ratio
 FROM "_S0" "_S0"
 CROSS JOIN "_S1" "_S1"

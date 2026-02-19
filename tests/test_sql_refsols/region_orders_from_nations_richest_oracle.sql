@@ -27,7 +27,7 @@ WITH "_T" AS (
 )
 SELECT
   REGION.r_name AS region_name,
-  NVL("_S5".SUM_N_ROWS, 0) AS n_orders
+  COALESCE("_S5".SUM_N_ROWS, 0) AS n_orders
 FROM TPCH.REGION REGION
 LEFT JOIN "_S5" "_S5"
   ON REGION.r_regionkey = "_S5".N_REGIONKEY

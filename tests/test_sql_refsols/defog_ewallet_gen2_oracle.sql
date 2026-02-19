@@ -3,7 +3,7 @@ WITH "_S0" AS (
     MIN(snapshot_date) AS MIN_SNAPSHOT_DATE
   FROM MAIN.USER_SETTING_SNAPSHOT
   WHERE
-    EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
+    EXTRACT(YEAR FROM CAST(snapshot_date AS DATE)) = 2023
 ), "_S1" AS (
   SELECT
     snapshot_date AS SNAPSHOT_DATE,
@@ -11,7 +11,7 @@ WITH "_S0" AS (
     AVG(tx_limit_monthly) AS AVG_TX_LIMIT_MONTHLY
   FROM MAIN.USER_SETTING_SNAPSHOT
   WHERE
-    EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
+    EXTRACT(YEAR FROM CAST(snapshot_date AS DATE)) = 2023
   GROUP BY
     snapshot_date
 )

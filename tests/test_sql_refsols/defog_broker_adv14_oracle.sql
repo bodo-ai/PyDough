@@ -5,7 +5,9 @@ WITH "_S1" AS (
     SUM(sbdpclose) AS SUM_SBDPCLOSE
   FROM MAIN.SBDAILYPRICE
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP, CAST(sbdpdate AS DATETIME), DAY) <= 7
+    (
+      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(sbdpdate AS DATE)
+    ) <= 7
   GROUP BY
     sbdptickerid
 )

@@ -18,7 +18,7 @@ WITH "_S4" AS (
 )
 SELECT
   "_S4".R_NAME AS region_name,
-  NVL("_S5".N_ROWS, 0) AS n_other_nations
+  COALESCE("_S5".N_ROWS, 0) AS n_other_nations
 FROM "_S4" "_S4"
 LEFT JOIN "_S5" "_S5"
   ON "_S4".R_REGIONKEY = "_S5".R_REGIONKEY

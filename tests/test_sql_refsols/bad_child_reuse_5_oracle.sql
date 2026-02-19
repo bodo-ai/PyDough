@@ -24,7 +24,7 @@ WITH "_T2" AS (
 )
 SELECT
   "_S2".C_CUSTKEY AS cust_key,
-  NVL("_S2".N_ROWS, 0) AS n_orders
+  COALESCE("_S2".N_ROWS, 0) AS n_orders
 FROM "_S2" "_S2"
 JOIN "_T2" "_S3"
   ON "_S2".C_CUSTKEY = "_S3".O_CUSTKEY

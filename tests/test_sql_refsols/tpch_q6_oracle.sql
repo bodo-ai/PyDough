@@ -1,5 +1,5 @@
 SELECT
-  NVL(SUM(l_extendedprice * l_discount), 0) AS REVENUE
+  COALESCE(SUM(l_extendedprice * l_discount), 0) AS REVENUE
 FROM TPCH.LINEITEM
 WHERE
   l_discount <= 0.07

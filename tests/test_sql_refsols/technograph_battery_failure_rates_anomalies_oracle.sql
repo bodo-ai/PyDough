@@ -11,7 +11,7 @@ WITH "_S7" AS (
 SELECT
   COUNTRIES.co_name AS country_name,
   PRODUCTS.pr_name AS product_name,
-  ROUND(NVL(SUM("_S7".N_ROWS), 0) / COUNT(*), 2) AS ir
+  ROUND(COALESCE(SUM("_S7".N_ROWS), 0) / COUNT(*), 2) AS ir
 FROM MAIN.COUNTRIES COUNTRIES
 JOIN MAIN.DEVICES DEVICES
   ON COUNTRIES.co_id = DEVICES.de_production_country_id

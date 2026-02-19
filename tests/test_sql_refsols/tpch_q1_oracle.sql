@@ -1,12 +1,12 @@
 SELECT
   l_returnflag AS L_RETURNFLAG,
   l_linestatus AS L_LINESTATUS,
-  NVL(SUM(l_quantity), 0) AS SUM_QTY,
-  NVL(SUM(l_extendedprice), 0) AS SUM_BASE_PRICE,
-  NVL(SUM(l_extendedprice * (
+  COALESCE(SUM(l_quantity), 0) AS SUM_QTY,
+  COALESCE(SUM(l_extendedprice), 0) AS SUM_BASE_PRICE,
+  COALESCE(SUM(l_extendedprice * (
     1 - l_discount
   )), 0) AS SUM_DISC_PRICE,
-  NVL(SUM(l_extendedprice * (
+  COALESCE(SUM(l_extendedprice * (
     1 - l_discount
   ) * (
     1 + l_tax

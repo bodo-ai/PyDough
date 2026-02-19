@@ -4,15 +4,21 @@ WITH "_S3" AS (
     COUNT(*) AS N_ROWS
   FROM MAIN.COUPONS COUPONS
   JOIN MAIN.MERCHANTS MERCHANTS
-    ON COUPONS.merchant_id = MERCHANTS.mid
-    AND DATEDIFF(CAST(COUPONS.created_at AS DATETIME), CAST(MERCHANTS.created_at AS DATETIME), MONTH) = 0
+    ON (
+      (
+        EXTRACT(YEAR FROM CAST(COUPONS.created_at AS DATE)) - EXTRACT(YEAR FROM CAST(MERCHANTS.created_at AS DATE))
+      ) * 12 + (
+        EXTRACT(MONTH FROM CAST(COUPONS.created_at AS DATE)) - EXTRACT(MONTH FROM CAST(MERCHANTS.created_at AS DATE))
+      )
+    ) = 0
+    AND COUPONS.merchant_id = MERCHANTS.mid
   GROUP BY
     COUPONS.merchant_id
 )
 SELECT
   MERCHANTS.mid AS merchant_id,
   MERCHANTS.name AS merchant_name,
-  NVL("_S3".N_ROWS, 0) AS coupons_per_merchant
+  COALESCE("_S3".N_ROWS, 0) AS coupons_per_merchant
 FROM MAIN.MERCHANTS MERCHANTS
 LEFT JOIN "_S3" "_S3"
   ON MERCHANTS.mid = "_S3".MERCHANT_ID

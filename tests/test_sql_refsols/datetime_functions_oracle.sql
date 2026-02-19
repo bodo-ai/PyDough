@@ -1,27 +1,48 @@
 SELECT
-  CURRENT_TIMESTAMP AS ts_now_1,
-  TRUNC(CURRENT_TIMESTAMP, 'DAY') AS ts_now_2,
-  TRUNC(CURRENT_TIMESTAMP, 'MONTH') AS ts_now_3,
-  DATE_ADD(CURRENT_TIMESTAMP, 1, 'HOUR') AS ts_now_4,
+  SYS_EXTRACT_UTC(SYSTIMESTAMP) AS ts_now_1,
+  TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'DAY') AS ts_now_2,
+  TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH') AS ts_now_3,
+  SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTODSINTERVAL(1, 'hour') AS ts_now_4,
   TO_DATE('2025-01-01', 'YYYY-MM-DD') AS ts_now_5,
   TO_DATE('1995-10-08', 'YYYY-MM-DD') AS ts_now_6,
-  EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) AS year_col,
+  EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) AS year_col,
   2020 AS year_py,
   1995 AS year_pd,
-  EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) AS month_col,
+  EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) AS month_col,
   2 AS month_str,
   1 AS month_dt,
-  EXTRACT(DAY FROM CAST(o_orderdate AS DATETIME)) AS day_col,
+  EXTRACT(DAY FROM CAST(o_orderdate AS DATE)) AS day_col,
   25 AS day_str,
   23 AS hour_str,
   59 AS minute_str,
   59 AS second_ts,
-  DATEDIFF(CAST('1992-01-01' AS TIMESTAMP), CAST(o_orderdate AS DATETIME), DAY) AS dd_col_str,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1992-01-01' AS TIMESTAMP), DAY) AS dd_str_col,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), TIME_STR_TO_TIME('1995-10-10 00:00:00'), MONTH) AS dd_pd_col,
-  DATEDIFF(TIME_STR_TO_TIME('1992-01-01 12:30:45'), CAST(o_orderdate AS DATETIME), YEAR) AS dd_col_dt,
-  DATEDIFF(TIME_STR_TO_TIME('1992-01-01 12:30:45'), CAST('1992-01-01' AS TIMESTAMP), WEEK) AS dd_dt_str,
-  DAY_OF_WEEK(o_orderdate) AS dow_col,
+  CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE) - CAST(o_orderdate AS DATE) AS dd_col_str,
+  CAST(o_orderdate AS DATE) - CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE) AS dd_str_col,
+  (
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
+  ) * 12 + (
+    EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - EXTRACT(MONTH FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
+  ) AS dd_pd_col,
+  EXTRACT(YEAR FROM TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS')) - EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) AS dd_col_dt,
+  FLOOR(
+    (
+      TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS') - CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE) + (
+        MOD((
+          TO_CHAR('1992-01-01', 'D') + -1
+        ), 7)
+      ) - (
+        MOD(
+          (
+            TO_CHAR(TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS'), 'D') + -1
+          ),
+          7
+        )
+      )
+    ) / 7
+  ) AS dd_dt_str,
+  MOD((
+    TO_CHAR(o_orderdate, 'D') + -1
+  ), 7) AS dow_col,
   3 AS dow_str1,
   4 AS dow_str2,
   5 AS dow_str3,
@@ -32,19 +53,19 @@ SELECT
   3 AS dow_dt,
   2 AS dow_pd,
   CASE
-    WHEN DAY_OF_WEEK(o_orderdate) = 0
+    WHEN TO_CHAR(o_orderdate, 'D') = 1
     THEN 'Sunday'
-    WHEN DAY_OF_WEEK(o_orderdate) = 1
+    WHEN TO_CHAR(o_orderdate, 'D') = 2
     THEN 'Monday'
-    WHEN DAY_OF_WEEK(o_orderdate) = 2
+    WHEN TO_CHAR(o_orderdate, 'D') = 3
     THEN 'Tuesday'
-    WHEN DAY_OF_WEEK(o_orderdate) = 3
+    WHEN TO_CHAR(o_orderdate, 'D') = 4
     THEN 'Wednesday'
-    WHEN DAY_OF_WEEK(o_orderdate) = 4
+    WHEN TO_CHAR(o_orderdate, 'D') = 5
     THEN 'Thursday'
-    WHEN DAY_OF_WEEK(o_orderdate) = 5
+    WHEN TO_CHAR(o_orderdate, 'D') = 6
     THEN 'Friday'
-    WHEN DAY_OF_WEEK(o_orderdate) = 6
+    WHEN TO_CHAR(o_orderdate, 'D') = 7
     THEN 'Saturday'
   END AS dayname_col,
   'Monday' AS dayname_str1,

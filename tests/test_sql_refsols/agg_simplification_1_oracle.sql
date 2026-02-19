@@ -167,7 +167,7 @@ SELECT
   0 AS su5,
   N_ROWS * 0.5 AS su6,
   0 AS su7,
-  NVL(AUG_EXCHANGE, 0) AS su8,
+  COALESCE(AUG_EXCHANGE, 0) AS su8,
   N_ROWS AS co1,
   N_ROWS AS co2,
   N_ROWS AS co3,

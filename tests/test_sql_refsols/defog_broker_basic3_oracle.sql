@@ -9,8 +9,8 @@ WITH "_S1" AS (
 )
 SELECT
   SBTICKER.sbtickersymbol AS symbol,
-  NVL("_S1".N_ROWS, 0) AS num_transactions,
-  NVL("_S1".SUM_SBTXAMOUNT, 0) AS total_amount
+  COALESCE("_S1".N_ROWS, 0) AS num_transactions,
+  COALESCE("_S1".SUM_SBTXAMOUNT, 0) AS total_amount
 FROM MAIN.SBTICKER SBTICKER
 LEFT JOIN "_S1" "_S1"
   ON SBTICKER.sbtickerid = "_S1".SBTXTICKERID

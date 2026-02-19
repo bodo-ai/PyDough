@@ -7,12 +7,7 @@ WITH "_S1" AS (
     sale_id
 )
 SELECT
-  ROUND(
-    AVG(
-      DATEDIFF(CAST("_S1".MAX_PAYMENT_DATE AS DATETIME), CAST(SALES.sale_date AS DATETIME), DAY)
-    ),
-    2
-  ) AS avg_days_to_payment
+  ROUND(AVG(CAST("_S1".MAX_PAYMENT_DATE AS DATE) - CAST(SALES.sale_date AS DATE)), 2) AS avg_days_to_payment
 FROM MAIN.SALES SALES
 LEFT JOIN "_S1" "_S1"
   ON SALES."_id" = "_S1".SALE_ID

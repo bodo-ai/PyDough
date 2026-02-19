@@ -2189,7 +2189,7 @@
           {
             "name": "uid",
             "type": "table column",
-            "column name": "uid",
+            "column name": "\"UID\"",
             "data type": "numeric",
             "description": "The unique identifier for each user in the system",
             "sample values": [1, 3, 5, 10, 11],

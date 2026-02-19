@@ -5,14 +5,14 @@ WITH "_S1" AS (
     SUM(sbtxamount) AS SUM_SBTXAMOUNT
   FROM MAIN.SBTRANSACTION
   WHERE
-    sbtxdatetime >= TRUNC(DATE_SUB(CURRENT_TIMESTAMP, 30, DAY), 'DAY')
+    sbtxdatetime >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTODSINTERVAL(30, 'day'), 'DAY')
   GROUP BY
     sbtxcustid
 )
 SELECT
   SBCUSTOMER.sbcustcountry AS country,
-  NVL(SUM("_S1".N_ROWS), 0) AS num_transactions,
-  NVL(SUM("_S1".SUM_SBTXAMOUNT), 0) AS total_amount
+  COALESCE(SUM("_S1".N_ROWS), 0) AS num_transactions,
+  COALESCE(SUM("_S1".SUM_SBTXAMOUNT), 0) AS total_amount
 FROM MAIN.SBCUSTOMER SBCUSTOMER
 LEFT JOIN "_S1" "_S1"
   ON SBCUSTOMER.sbcustid = "_S1".SBTXCUSTID

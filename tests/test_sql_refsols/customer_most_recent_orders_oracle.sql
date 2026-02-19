@@ -16,7 +16,7 @@ WITH "_T" AS (
 )
 SELECT
   CUSTOMER.c_name AS name,
-  NVL("_S1".SUM_O_TOTALPRICE, 0) AS total_recent_value
+  COALESCE("_S1".SUM_O_TOTALPRICE, 0) AS total_recent_value
 FROM TPCH.CUSTOMER CUSTOMER
 JOIN "_S1" "_S1"
   ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY

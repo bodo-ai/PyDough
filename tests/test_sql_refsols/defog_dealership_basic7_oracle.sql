@@ -1,7 +1,7 @@
 SELECT
   payment_method,
   COUNT(*) AS total_payments,
-  NVL(SUM(payment_amount), 0) AS total_amount
+  COALESCE(SUM(payment_amount), 0) AS total_amount
 FROM MAIN.PAYMENTS_RECEIVED
 GROUP BY
   payment_method

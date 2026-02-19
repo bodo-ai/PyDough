@@ -1,5 +1,5 @@
 SELECT
-  NVL(SUM(LINEITEM.l_extendedprice * (
+  COALESCE(SUM(LINEITEM.l_extendedprice * (
     1 - LINEITEM.l_discount
   )), 0) AS REVENUE
 FROM TPCH.LINEITEM LINEITEM

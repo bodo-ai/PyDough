@@ -20,7 +20,7 @@ SELECT
   PRODUCTS.pr_name AS product,
   PRODUCTS.pr_brand AS product_brand,
   PRODUCTS.pr_type AS product_type,
-  ROUND(NVL("_S3".SUM_N_ROWS, 0) / "_S3".N_ROWS, 2) AS ir
+  ROUND(COALESCE("_S3".SUM_N_ROWS, 0) / "_S3".N_ROWS, 2) AS ir
 FROM MAIN.PRODUCTS PRODUCTS
 JOIN "_S3" "_S3"
   ON PRODUCTS.pr_id = "_S3".DE_PRODUCT_ID
