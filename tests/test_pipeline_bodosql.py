@@ -33,6 +33,8 @@ from bodo.io.iceberg.catalog.dir import DirCatalog
 from pyiceberg.catalog import WAREHOUSE_LOCATION
 from pyiceberg.table import Table as IcebergTable
 
+from pydough.database_connectors import load_database_context
+
 from pyarrow.csv import read_csv as pyarrow_read_csv
 
 
@@ -424,7 +426,7 @@ result = (
                             "#848482",
                             "#696969",
                         ],
-                        "vol_shipped": [
+                        "ship_date": [
                             datetime.date(2024, 1, 1),
                             datetime.date(2024, 1, 4),
                             datetime.date(2024, 1, 2),
@@ -1059,8 +1061,8 @@ result = (
             id="corpus_q03",
         ),
         pytest.param(
-            # How many words appear in the Shakespeare dialogue sample of act
-            # 5 of Macbeth?
+            # Which 5 plays had the most words in them in the Shakespeare
+            # dialogue sample?
             PyDoughPandasTest(
                 """
 result = (
@@ -1580,9 +1582,8 @@ def test_pipeline_sql_bodosql(
     results.
     """
 
-    ctx: DatabaseContext = DatabaseContext(
-        bodosql_sample_contexts[bodosql_e2e_tests.graph_name],
-        dialect=DatabaseDialect.SNOWFLAKE,
+    ctx: DatabaseContext = load_database_context(
+        "bodosql", context=bodosql_sample_contexts[bodosql_e2e_tests.graph_name]
     )
     file_path: str = get_sql_test_filename(bodosql_e2e_tests.test_name, ctx.dialect)
     bodosql_e2e_tests.run_sql_test(
@@ -1604,9 +1605,8 @@ def test_pipeline_e2e_bodosql(
     Test executing tests end-to-end with BodoSQL, comparing against expected
     results.
     """
-    ctx: DatabaseContext = DatabaseContext(
-        bodosql_sample_contexts[bodosql_e2e_tests.graph_name],
-        dialect=DatabaseDialect.SNOWFLAKE,
+    ctx: DatabaseContext = load_database_context(
+        "bodosql", context=bodosql_sample_contexts[bodosql_e2e_tests.graph_name]
     )
     bodosql_e2e_tests.run_e2e_test(
         bodosql_graphs,

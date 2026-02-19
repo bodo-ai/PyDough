@@ -195,7 +195,7 @@
             "sample values": ["Pallette Emporium", "Rainbow Inc.", "Hue Depot"]
           }
         ],
-        "description": "The customers in the database",
+        "description": "The companies in the database",
         "synonyms": ["clients", "buyers",  "users"]
       }
     ],

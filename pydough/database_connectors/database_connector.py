@@ -135,7 +135,7 @@ class DatabaseContext:
     the required corresponding dialect.
     """
 
-    connection: DatabaseConnection | BodoSQLContext
+    connection: DatabaseConnection | "BodoSQLContext"
     dialect: DatabaseDialect
 
     def execute_query_df(self, sql: str) -> pd.DataFrame:
@@ -151,7 +151,23 @@ class DatabaseContext:
             return self.connection.execute_query_df(sql)
         else:
             # Otherwise it is a BodoSQLContext
-            pyd_logger = get_logger(__name__)
-            bodosql_plan: str = self.connection.generate_plan(sql, show_cost=True)
-            pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
-            return self.connection.sql(sql)
+            try:
+                from bodosql import BodoSQLContext as BCTX
+            except ImportError:
+                raise ImportError(
+                    "BodoSQL connector is not installed. Please install it with"
+                    " `pip install bodosql`."
+                )
+            assert isinstance(self.connection, BCTX), (
+                f"Expected connection to be either DatabaseConnection or BodoSQLContext, but got {type(self.connection).__name__}"
+            )
+            try:
+                pyd_logger = get_logger(__name__)
+                bodosql_plan: str = self.connection.generate_plan(sql, show_cost=True)
+                pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
+                return self.connection.sql(sql)
+            except Exception as e:
+                print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
+                raise pydough.active_session.error_builder.sql_runtime_failure(
+                    sql, e, True
+                ) from e

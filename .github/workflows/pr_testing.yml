@@ -60,6 +60,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-bodosql:
+        description: "Run BodoSQL Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
