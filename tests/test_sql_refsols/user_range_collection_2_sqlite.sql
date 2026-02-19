@@ -1,6 +1,12 @@
-WITH _s0 AS (
+WITH _s3 AS (
   SELECT
-    a.column1 AS x
+    a_2.column1 AS x,
+    SUM(CAST(b.column1 AS TEXT) LIKE (
+      '%' || CAST(a_2.column1 AS TEXT)
+    )) AS sum_expr,
+    SUM(CAST(b.column1 AS TEXT) LIKE (
+      CAST(a_2.column1 AS TEXT) || '%'
+    )) AS sum_expr_5
   FROM (VALUES
     (0),
     (1),
@@ -11,11 +17,8 @@ WITH _s0 AS (
     (6),
     (7),
     (8),
-    (9)) AS a
-), _s1 AS (
-  SELECT
-    b.column1 AS y
-  FROM (VALUES
+    (9)) AS a_2
+  JOIN (VALUES
     (0),
     (2),
     (4),
@@ -517,35 +520,31 @@ WITH _s0 AS (
     (996),
     (998),
     (1000)) AS b
-), _s4 AS (
-  SELECT
-    _s0.x,
-    COUNT(*) AS n_rows
-  FROM _s0 AS _s0
-  JOIN _s1 AS _s1
-    ON CAST(_s1.y AS TEXT) LIKE (
-      CAST(_s0.x AS TEXT) || '%'
+    ON CAST(b.column1 AS TEXT) LIKE (
+      '%' || CAST(a_2.column1 AS TEXT)
     )
-  GROUP BY
-    1
-), _s5 AS (
-  SELECT
-    _s2.x,
-    COUNT(*) AS n_rows
-  FROM _s0 AS _s2
-  JOIN _s1 AS _s3
-    ON CAST(_s3.y AS TEXT) LIKE (
-      '%' || CAST(_s2.x AS TEXT)
+    OR CAST(b.column1 AS TEXT) LIKE (
+      CAST(a_2.column1 AS TEXT) || '%'
     )
   GROUP BY
     1
 )
 SELECT
-  _s4.x,
-  _s4.n_rows AS n_prefix,
-  _s5.n_rows AS n_suffix
-FROM _s4 AS _s4
-JOIN _s5 AS _s5
-  ON _s4.x = _s5.x
+  a.column1 AS x,
+  COALESCE(_s3.sum_expr_5, 0) AS n_prefix,
+  COALESCE(_s3.sum_expr, 0) AS n_suffix
+FROM (VALUES
+  (0),
+  (1),
+  (2),
+  (3),
+  (4),
+  (5),
+  (6),
+  (7),
+  (8),
+  (9)) AS a
+LEFT JOIN _s3 AS _s3
+  ON _s3.x = a.column1
 ORDER BY
   1

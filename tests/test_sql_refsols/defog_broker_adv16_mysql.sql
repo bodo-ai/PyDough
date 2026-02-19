@@ -17,7 +17,7 @@ SELECT
       COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.sum_expr, 0)
     )
   ) / NULLIF(_s1.sum_sbTxAmount, 0) AS SPM
-FROM main.sbTicker AS sbTicker
+FROM broker.sbTicker AS sbTicker
 JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid
 ORDER BY

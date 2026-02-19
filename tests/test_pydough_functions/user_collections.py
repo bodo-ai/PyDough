@@ -522,12 +522,16 @@ def dataframe_collection_best():
         .BEST(by=tax_price.ASC(), per="orders")
         .SINGULAR()
     )
-    return customers.CALCULATE(
-        name,
-        order_key=cheapest_order.key,
-        order_priority=cheapest_order.order_priority,
-        cheapest_order_price=cheapest_order.tax_price,
-    ).TOP_K(5, by=cheapest_order_price.ASC())
+    return (
+        customers.WHERE(HAS(cheapest_order))
+        .CALCULATE(
+            name,
+            order_key=cheapest_order.key,
+            order_priority=cheapest_order.order_priority,
+            cheapest_order_price=cheapest_order.tax_price,
+        )
+        .TOP_K(5, by=cheapest_order_price.ASC())
+    )
 
 
 # Windows functions
@@ -811,16 +815,14 @@ def dataframe_collection_correlation():
         "classes", class_df, ["key", "class_name"]
     )
 
-    other_classes_same_language = (
-        CROSS(classes_collection.CALCULATE(language, key))
-        .WHERE((language == original_language))
-        .CALCULATE(metric=(key != original_key))
-    )
+    other_classes_same_language = CROSS(
+        classes_collection.CALCULATE(language, key)
+    ).WHERE((language == original_language) & (key != original_key))
 
     return classes_collection.CALCULATE(
         original_language=language, original_key=key
     ).CALCULATE(
-        class_name, language, n_other_classes=SUM(other_classes_same_language.metric)
+        class_name, language, n_other_classes=COUNT(other_classes_same_language)
     )
 
 

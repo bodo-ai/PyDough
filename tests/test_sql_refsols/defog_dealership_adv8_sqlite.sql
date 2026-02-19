@@ -1,5 +1,5 @@
-WITH _s0 AS (
-  SELECT
+WITH _s6 AS (
+  SELECT DISTINCT
     months_range.column1 AS month_start
   FROM (VALUES
     ('2025-08-01 00:00:00'),
@@ -8,19 +8,21 @@ WITH _s0 AS (
     ('2025-11-01 00:00:00'),
     ('2025-12-01 00:00:00'),
     ('2026-01-01 00:00:00')) AS months_range
-), _s6 AS (
-  SELECT DISTINCT
-    _s0.month_start
-  FROM _s0 AS _s0
   CROSS JOIN main.sales AS sales
 ), _s7 AS (
   SELECT
-    _s2.month_start,
+    months_range_2.column1 AS month_start,
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
-  FROM _s0 AS _s2
+  FROM (VALUES
+    ('2025-08-01 00:00:00'),
+    ('2025-09-01 00:00:00'),
+    ('2025-10-01 00:00:00'),
+    ('2025-11-01 00:00:00'),
+    ('2025-12-01 00:00:00'),
+    ('2026-01-01 00:00:00')) AS months_range_2
   JOIN main.sales AS sales
-    ON STRFTIME('%Y-%m', _s2.month_start) = STRFTIME('%Y-%m', sales.sale_date)
+    ON STRFTIME('%Y-%m', months_range_2.column1) = STRFTIME('%Y-%m', sales.sale_date)
   JOIN main.salespersons AS salespersons
     ON CAST(STRFTIME('%Y', salespersons.hire_date) AS INTEGER) <= 2023
     AND CAST(STRFTIME('%Y', salespersons.hire_date) AS INTEGER) >= 2022

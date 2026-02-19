@@ -51,7 +51,7 @@ SELECT
   teachers.first_name,
   teachers.last_name
 FROM _t AS _t
-JOIN (VALUES
+LEFT JOIN (VALUES
   ROW(1, 'Anil', 'Lee'),
   ROW(2, 'Mike', 'Lee'),
   ROW(3, 'Ian', 'Lee'),

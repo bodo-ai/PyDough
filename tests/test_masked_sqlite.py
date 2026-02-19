@@ -1475,6 +1475,7 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 5, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
                     "DRY_RUN",
                 },
                 {
@@ -1519,6 +1520,7 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 5, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'u', 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'AND', 2, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'AND', 2, 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
                     "DRY_RUN",
                 },
                 {
@@ -1549,10 +1551,6 @@ def test_pipeline_e2e_cryptbank(
             + ")",
             [
                 {
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'i']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'o']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'u']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
@@ -1561,8 +1559,8 @@ def test_pipeline_e2e_cryptbank(
                     "DRY_RUN",
                 },
                 {
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
@@ -1594,6 +1592,7 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 4, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'i', 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'AND', 2, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'u']",
                     "DRY_RUN",
                 },
                 {
@@ -1624,16 +1623,24 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 3, 'AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'AND', 3, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
                     "DRY_RUN",
                 },
                 {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
@@ -1665,6 +1672,7 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'AND', 2, 'CONTAINS', 2, '__col__', 'i', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'AND', 2, 'CONTAINS', 2, '__col__', 'o', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
                     "DRY_RUN",
                 },
                 {

@@ -1,5 +1,5 @@
 ROOT(columns=[('language', language), ('rating', rating), ('first_name', first_name), ('last_name', last_name)], orderings=[])
- JOIN(condition=t0.teacher_id == t1.tid, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'first_name': t1.first_name, 'language': t0.language, 'last_name': t1.last_name, 'rating': t0.rating})
+ JOIN(condition=t0.teacher_id == t1.tid, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'first_name': t1.first_name, 'language': t0.language, 'last_name': t1.last_name, 'rating': t0.rating})
   FILTER(condition=1:numeric == RANKING(args=[], partition=[language], order=[(rating):desc_first], allow_ties=False), columns={'language': language, 'rating': rating, 'teacher_id': teacher_id})
    JOIN(condition=t0.key == t1.class_key, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'language': t0.language, 'rating': t1.rating, 'teacher_id': t1.teacher_id})
     FILTER(condition=PRESENT(language), columns={'key': key, 'language': language})

@@ -3,3 +3,6 @@ SELECT
 FROM restaurants.restaurant
 WHERE
   LOWER(city_name) = 'san francisco'
+  AND (
+    LOWER(food_type) <> 'vegan' OR LOWER(food_type) = 'vegan'
+  )
