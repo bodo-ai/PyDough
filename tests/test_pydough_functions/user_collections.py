@@ -815,11 +815,9 @@ def dataframe_collection_correlation():
         "classes", class_df, ["key", "class_name"]
     )
 
-    other_classes_same_language = (
-        CROSS(classes_collection.CALCULATE(language, key)).WHERE(
-            (language == original_language) & (key != original_key)
-        )
-    )
+    other_classes_same_language = CROSS(
+        classes_collection.CALCULATE(language, key)
+    ).WHERE((language == original_language) & (key != original_key))
 
     return classes_collection.CALCULATE(
         original_language=language, original_key=key
