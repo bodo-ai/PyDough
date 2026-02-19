@@ -819,7 +819,6 @@ def dataframe_collection_correlation():
         CROSS(classes_collection.CALCULATE(language, key)).WHERE(
             (language == original_language) & (key != original_key)
         )
-        # .CALCULATE(metric=(key != original_key))
     )
 
     return classes_collection.CALCULATE(
