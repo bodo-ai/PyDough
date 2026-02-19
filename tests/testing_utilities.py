@@ -47,7 +47,7 @@ import pydough.pydough_operators as pydop
 from pydough import init_pydough_context, to_df, to_sql, to_table
 from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.errors import PyDoughTestingException
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.mask_server import MaskServerInfo
@@ -1342,6 +1342,14 @@ class PyDoughPandasTest:
             solution DataFrames to ensure compatibility.
             `max_rows`: The maximum number of rows to return from the query.
         """
+        # Skip Snowflake since TPCH is shared database and we can't write to it
+        if (
+            database.dialect == DatabaseDialect.SNOWFLAKE
+            and self.graph_name == "TPCH"
+            and self.test_name.startswith("to_table")
+        ):
+            pytest.skip("""Skipping Snowflake TPCH to_table tests since it uses
+            the Snowflake TPCH database which we don't have write access to.""")
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
         # Create a session with the database so that functions like pydough.to_table

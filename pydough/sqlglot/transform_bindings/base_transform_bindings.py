@@ -2244,11 +2244,14 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the user-generated collection.
         """
 
-        # Rename the collection to ensure it is unique in the query,
-        # to avoid naming conflicts with other collections.
-        collection.name = rename_user_collection(
-            self.known_collections, collection.name
-        )
+        if not isinstance(collection, ViewGeneratedCollection):
+            # For views/tables, don't rename because these are actual database
+            # table names, not generated aliases.
+            # Rename range/dataframe collection to ensure it is unique in the query,
+            # to avoid naming conflicts with other collections.
+            collection.name = rename_user_collection(
+                self.known_collections, collection.name
+            )
 
         match collection:
             case RangeGeneratedCollection():
