@@ -92,9 +92,9 @@ def _generate_create_ddl(
     replace: bool,
     temp: bool,
     db_dialect: DatabaseDialect,
-) -> str:
+) -> tuple[list[str], bool]:
     """
-    Generate the CREATE DDL statement for a view or table.
+    Generate the CREATE DDL statement(s) for a view or table.
 
     Args:
         name: The name of the view/table (can be 'db.schema.name')
@@ -105,11 +105,14 @@ def _generate_create_ddl(
         db_dialect: The database dialect to generate the DDL for
 
     Returns:
-        The DDL string to execute.
+        A tuple of (ddl_statements, actual_temp) where:
+        - ddl_statements is a list of DDL strings to execute in order
+        - actual_temp is the final temp value (may differ from input due to dialect limitations)
     """
     # Handle differences in CREATE syntax for different databases.
     create_caps = CREATE_CAPABILITIES[db_dialect]
     object_type = "VIEW" if as_view else "TABLE"
+    ddl_statements: list[str] = []
 
     if temp:
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
@@ -127,30 +130,29 @@ def _generate_create_ddl(
             "SQLite does not support creating persistent views that reference attached databases. "
             "Only temporary views are supported. The view will be created as TEMPORARY."
         )
-        # TODO: ask the team
-        # Another option would be to raise an error and
-        # require the user to explicitly choose temp=True.
-        # raise PyDoughSessionException(
-        #     f"SQLite does not support creating persistent views that reference attached databases. "
-        #     f"Only temporary views are supported."
-        # )
 
-    if replace:
-        allowed = create_caps.replace_view if as_view else create_caps.replace_table
-        if not allowed:
-            raise PyDoughSessionException(
-                f"CREATE OR REPLACE {object_type} not supported for {db_dialect.name}"
-            )
+    # Check if we can use CREATE OR REPLACE
+    can_replace = create_caps.replace_view if as_view else create_caps.replace_table
+
+    # For databases that don't support CREATE OR REPLACE TABLE,
+    # use DROP TABLE IF EXISTS + CREATE TABLE pattern
+    if replace and not can_replace:
+        drop_stmt = f"DROP {object_type} IF EXISTS {name}"
+        ddl_statements.append(drop_stmt)
+        # Don't add OR REPLACE since we're using DROP first
+        replace = False
 
     create = "CREATE"
-    if replace:
+    if replace and can_replace:
         create += " OR REPLACE"
     if temp:
         create += " TEMPORARY"
 
     create += f" {object_type}"
 
-    return f"{create} {name} AS {sql}"
+    ddl_statements.append(f"{create} {name} AS {sql}")
+
+    return ddl_statements, temp
 
 
 def to_table(
@@ -204,7 +206,7 @@ def to_table(
     column_names, column_types = _infer_schema_from_relational(relational)
 
     # Step 3: Generate and execute DDL to create view/table
-    ddl: str = _generate_create_ddl(
+    ddl_statements, actual_temp = _generate_create_ddl(
         name, sql, as_view, replace, temp, session.database.dialect
     )
     display_sql: bool = bool(kwargs.pop("display_sql", False))
@@ -212,16 +214,19 @@ def to_table(
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
 
-    # Execute the DDL via the session's database connection
-    session.database.connection.execute_ddl(ddl)
+    # Execute the DDL statement(s) via the session's database connection
+    # (may include DROP IF EXISTS before CREATE for some dialects)
+    for ddl in ddl_statements:
+        session.database.connection.execute_ddl(ddl)
 
     # Step 4: Create ViewGeneratedCollection with the inferred schema
+    # Use actual_temp which may differ from the input temp due to dialect limitations
     view_collection = ViewGeneratedCollection(
         name=name,
         columns=column_names,
         types=column_types,
         is_view=as_view,
-        is_temp=temp,
+        is_temp=actual_temp,
     )
 
     # Step 5: Wrap in UnqualifiedGeneratedCollection so it can be used in

@@ -134,3 +134,14 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
     @property
     def tree_item_string(self) -> str:
         return self.collection.to_string()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PyDoughUserGeneratedCollectionQDag):
+            return False
+        return (
+            self.collection == other.collection
+            and self.ancestor_context == other.ancestor_context
+        )
+
+    def __hash__(self) -> int:
+        return hash(self.to_string())
