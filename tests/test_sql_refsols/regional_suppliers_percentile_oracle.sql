@@ -1,0 +1,22 @@
+WITH "_S3" AS (
+  SELECT
+    ps_suppkey AS PS_SUPPKEY,
+    COUNT(*) AS N_ROWS
+  FROM TPCH.PARTSUPP
+  GROUP BY
+    ps_suppkey
+), "_T" AS (
+  SELECT
+    SUPPLIER.s_name AS S_NAME,
+    NTILE(1000) OVER (PARTITION BY NATION.n_regionkey ORDER BY "_S3".N_ROWS, SUPPLIER.s_name) AS "_W"
+  FROM TPCH.NATION NATION
+  JOIN TPCH.SUPPLIER SUPPLIER
+    ON NATION.n_nationkey = SUPPLIER.s_nationkey
+  JOIN "_S3" "_S3"
+    ON SUPPLIER.s_suppkey = "_S3".PS_SUPPKEY
+)
+SELECT
+  S_NAME AS name
+FROM "_T"
+WHERE
+  "_W" = 1000

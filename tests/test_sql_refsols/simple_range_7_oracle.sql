@@ -1,0 +1,20 @@
+SELECT
+  COLUMN1 + COLUMN1 AS s,
+  COUNT(*) AS n,
+  AVG(CAST(COLUMN1 * COLUMN1 AS DOUBLE PRECISION)) AS a
+FROM (VALUES
+  (1),
+  (2),
+  (3),
+  (4),
+  (5),
+  (6)) AS D1(X)
+CROSS JOIN (VALUES
+  (1),
+  (2),
+  (3),
+  (4),
+  (5),
+  (6)) AS D2(Y)
+GROUP BY
+  COLUMN1 + COLUMN1

@@ -1,0 +1,43 @@
+WITH "_S0" AS (
+  SELECT
+    s_nationkey AS S_NATIONKEY,
+    s_suppkey AS S_SUPPKEY
+  FROM TPCH.SUPPLIER
+), "_T2" AS (
+  SELECT
+    n_name AS N_NAME,
+    n_nationkey AS N_NATIONKEY
+  FROM TPCH.NATION
+  WHERE
+    n_name = 'GERMANY'
+), "_S8" AS (
+  SELECT
+    SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty) AS SUM_METRIC
+  FROM TPCH.PARTSUPP PARTSUPP
+  JOIN "_S0" "_S0"
+    ON PARTSUPP.ps_suppkey = "_S0".S_SUPPKEY
+  JOIN "_T2" "_T2"
+    ON "_S0".S_NATIONKEY = "_T2".N_NATIONKEY
+), "_S9" AS (
+  SELECT
+    PARTSUPP.ps_partkey AS PS_PARTKEY,
+    SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty) AS SUM_EXPR
+  FROM TPCH.PARTSUPP PARTSUPP
+  JOIN "_S0" "_S4"
+    ON PARTSUPP.ps_suppkey = "_S4".S_SUPPKEY
+  JOIN "_T2" "_T4"
+    ON "_S4".S_NATIONKEY = "_T4".N_NATIONKEY
+  GROUP BY
+    PARTSUPP.ps_partkey
+)
+SELECT
+  "_S9".PS_PARTKEY,
+  COALESCE("_S9".SUM_EXPR, 0) AS VALUE
+FROM "_S8" "_S8"
+JOIN "_S9" "_S9"
+  ON (
+    COALESCE("_S8".SUM_METRIC, 0) * 0.0001
+  ) < COALESCE("_S9".SUM_EXPR, 0)
+ORDER BY
+  2 DESC NULLS LAST
+FETCH FIRST 10 ROWS ONLY

@@ -1,0 +1,24 @@
+WITH "_S1" AS (
+  SELECT
+    salesperson_id AS SALESPERSON_ID,
+    COUNT(*) AS N_ROWS,
+    SUM(sale_price) AS SUM_SALE_PRICE
+  FROM MAIN.SALES
+  WHERE
+    sale_date >= (
+      SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTOYMINTERVAL(3, 'month')
+    )
+  GROUP BY
+    salesperson_id
+)
+SELECT
+  SALESPERSONS.first_name,
+  SALESPERSONS.last_name,
+  COALESCE("_S1".N_ROWS, 0) AS total_sales,
+  COALESCE("_S1".SUM_SALE_PRICE, 0) AS total_revenue
+FROM MAIN.SALESPERSONS SALESPERSONS
+LEFT JOIN "_S1" "_S1"
+  ON SALESPERSONS."_id" = "_S1".SALESPERSON_ID
+ORDER BY
+  4 DESC NULLS LAST
+FETCH FIRST 3 ROWS ONLY

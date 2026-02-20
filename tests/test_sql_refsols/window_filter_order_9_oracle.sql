@@ -1,0 +1,30 @@
+WITH "_S3" AS (
+  SELECT
+    1 AS EXPR_0,
+    COALESCE(SUM(ORDERS.o_totalprice), 0) AS TOTAL_SPENT,
+    CUSTOMER.c_custkey AS C_CUSTKEY
+  FROM TPCH.CUSTOMER CUSTOMER
+  LEFT JOIN TPCH.ORDERS ORDERS
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+  WHERE
+    CUSTOMER.c_mktsegment = 'BUILDING'
+  GROUP BY
+    CUSTOMER.c_custkey
+), "_T" AS (
+  SELECT
+    "_S3".EXPR_0,
+    ORDERS.o_totalprice AS O_TOTALPRICE,
+    AVG(CAST("_S3".TOTAL_SPENT AS DOUBLE PRECISION)) OVER () AS "_W"
+  FROM TPCH.ORDERS ORDERS
+  LEFT JOIN "_S3" "_S3"
+    ON ORDERS.o_custkey = "_S3".C_CUSTKEY
+  WHERE
+    ORDERS.o_clerk = 'Clerk#000000001'
+)
+SELECT
+  COUNT(*) AS n
+FROM "_T"
+WHERE
+  EXPR_0 IS NULL AND O_TOTALPRICE < (
+    0.05 * "_W"
+  )

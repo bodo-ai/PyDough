@@ -1,0 +1,24 @@
+SELECT
+  LTRIM(
+    NVL2(REGION.r_name, '-' || REGION.r_name, NULL) || NVL2(NATION.n_name, '-' || NATION.n_name, NULL) || NVL2(SUBSTR(CUSTOMER.c_name, 17), '-' || SUBSTR(CUSTOMER.c_name, 17), NULL),
+    '-'
+  ) AS a,
+  ROUND(CUSTOMER.c_acctbal, 1) AS b,
+  CASE WHEN SUBSTR(CUSTOMER.c_phone, 1, 1) = '3' THEN CUSTOMER.c_name ELSE NULL END AS c,
+  NOT CASE
+    WHEN SUBSTR(CUSTOMER.c_phone, 2, GREATEST(1, 0)) = '1'
+    THEN CUSTOMER.c_name
+    ELSE NULL
+  END IS NULL AS d,
+  CASE WHEN SUBSTR(CUSTOMER.c_phone, 15) = '7' THEN CUSTOMER.c_name ELSE NULL END IS NULL AS e,
+  ROUND(CUSTOMER.c_acctbal, 0) AS f
+FROM TPCH.REGION REGION
+JOIN TPCH.NATION NATION
+  ON NATION.n_regionkey = REGION.r_regionkey
+JOIN TPCH.CUSTOMER CUSTOMER
+  ON CUSTOMER.c_acctbal <= 100.0
+  AND CUSTOMER.c_acctbal >= 0.0
+  AND CUSTOMER.c_nationkey = NATION.n_nationkey
+ORDER BY
+  CUSTOMER.c_address NULLS FIRST
+FETCH FIRST 10 ROWS ONLY

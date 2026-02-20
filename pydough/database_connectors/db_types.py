@@ -35,6 +35,11 @@ if TYPE_CHECKING:
     PostgresConn: TypeAlias = psycopg2.connection  # type: ignore
     PostgresCursor: TypeAlias = psycopg2.cursor  # type: ignore
 
+    import oracledb
+
+    OracleConn: TypeAlias = oracledb.connection
+    OracleCursor: TypeAlias = oracledb.cursor
+
     # TBD: Placeholder lines to add other dialects.
     # 1. Replace with actual dialect module
     # import dialect1_module
@@ -44,8 +49,12 @@ if TYPE_CHECKING:
     # Dialect1_Cursor: TypeAlias = dialect1_module.Cursor
 
     # 4. Define the type aliases for database connections and cursors
-    DBConnection: TypeAlias = SQLiteConn | SnowflakeConn | MySQLConn | PostgresConn
-    DBCursor: TypeAlias = SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgresCursor
+    DBConnection: TypeAlias = (
+        SQLiteConn | SnowflakeConn | MySQLConn | PostgresConn | OracleConn
+    )  # type: ignore
+    DBCursor: TypeAlias = (
+        SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgresCursor | OracleCursor
+    )  # type: ignore
 
 else:
     DBConnection: TypeAlias = Any
@@ -58,6 +67,8 @@ else:
     MySQLCursor: TypeAlias = Any
     PostgresConn: TypeAlias = Any
     PostgresCursor: TypeAlias = Any
+    OracleConn: TypeAlias = Any
+    OracleCursor: TypeAlias = Any
 
 # This allows us to use these type aliases in the rest of the code
 # without worrying about whether the specific database modules are available.
@@ -66,6 +77,8 @@ __all__ = [
     "DBCursor",
     "MySQLConn",
     "MySQLCursor",
+    "OracleConn",
+    "OracleCursor",
     "PostgresConn",
     "PostgresCursor",
     "SQLiteConn",

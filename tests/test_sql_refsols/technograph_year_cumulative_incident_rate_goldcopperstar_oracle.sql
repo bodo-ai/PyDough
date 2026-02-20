@@ -1,0 +1,83 @@
+WITH "_S14" AS (
+  SELECT
+    ANY_VALUE(pr_release) AS ANYTHING_PR_RELEASE
+  FROM MAIN.PRODUCTS
+  WHERE
+    pr_name = 'GoldCopper-Star'
+), "_S6" AS (
+  SELECT
+    ca_dt AS CA_DT
+  FROM MAIN.CALENDAR
+), "_T5" AS (
+  SELECT
+    pr_id AS PR_ID,
+    pr_name AS PR_NAME
+  FROM MAIN.PRODUCTS
+  WHERE
+    pr_name = 'GoldCopper-Star'
+), "_S7" AS (
+  SELECT
+    "_S0".CA_DT,
+    COUNT(*) AS N_ROWS
+  FROM "_S6" "_S0"
+  JOIN MAIN.INCIDENTS INCIDENTS
+    ON "_S0".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS TIMESTAMP), 'DAY')
+  JOIN MAIN.DEVICES DEVICES
+    ON DEVICES.de_id = INCIDENTS.in_device_id
+  JOIN "_T5" "_T5"
+    ON DEVICES.de_product_id = "_T5".PR_ID
+  GROUP BY
+    "_S0".CA_DT
+), "_S13" AS (
+  SELECT
+    "_S8".CA_DT,
+    COUNT(*) AS N_ROWS
+  FROM "_S6" "_S8"
+  JOIN MAIN.DEVICES DEVICES
+    ON "_S8".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS TIMESTAMP), 'DAY')
+  JOIN "_T5" "_T7"
+    ON DEVICES.de_product_id = "_T7".PR_ID
+  GROUP BY
+    "_S8".CA_DT
+), "_S15" AS (
+  SELECT
+    EXTRACT(YEAR FROM CAST("_S6".CA_DT AS DATE)) AS YEAR_CA_DT,
+    SUM("_S7".N_ROWS) AS SUM_EXPR_4,
+    SUM("_S13".N_ROWS) AS SUM_N_ROWS
+  FROM "_S6" "_S6"
+  LEFT JOIN "_S7" "_S7"
+    ON "_S6".CA_DT = "_S7".CA_DT
+  LEFT JOIN "_S13" "_S13"
+    ON "_S13".CA_DT = "_S6".CA_DT
+  GROUP BY
+    EXTRACT(YEAR FROM CAST("_S6".CA_DT AS DATE))
+)
+SELECT
+  "_S15".YEAR_CA_DT - EXTRACT(YEAR FROM CAST("_S14".ANYTHING_PR_RELEASE AS DATE)) AS years_since_release,
+  ROUND(
+    SUM(COALESCE("_S15".SUM_EXPR_4, 0)) OVER (ORDER BY "_S15".YEAR_CA_DT ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE("_S15".SUM_N_ROWS, 0)) OVER (ORDER BY "_S15".YEAR_CA_DT ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    2
+  ) AS cum_ir,
+  ROUND(
+    (
+      100.0 * (
+        COALESCE("_S15".SUM_N_ROWS, 0) - LAG(COALESCE("_S15".SUM_N_ROWS, 0), 1) OVER (ORDER BY "_S15".YEAR_CA_DT)
+      )
+    ) / LAG(COALESCE("_S15".SUM_N_ROWS, 0), 1) OVER (ORDER BY "_S15".YEAR_CA_DT),
+    2
+  ) AS pct_bought_change,
+  ROUND(
+    (
+      100.0 * (
+        COALESCE("_S15".SUM_EXPR_4, 0) - LAG(COALESCE("_S15".SUM_EXPR_4, 0), 1) OVER (ORDER BY "_S15".YEAR_CA_DT)
+      )
+    ) / LAG(COALESCE("_S15".SUM_EXPR_4, 0), 1) OVER (ORDER BY "_S15".YEAR_CA_DT),
+    2
+  ) AS pct_incident_change,
+  COALESCE("_S15".SUM_N_ROWS, 0) AS bought,
+  COALESCE("_S15".SUM_EXPR_4, 0) AS incidents
+FROM "_S14" "_S14"
+JOIN "_S15" "_S15"
+  ON "_S15".YEAR_CA_DT >= EXTRACT(YEAR FROM CAST("_S14".ANYTHING_PR_RELEASE AS DATE))
+ORDER BY
+  1 NULLS FIRST

@@ -1,0 +1,36 @@
+WITH "_S1" AS (
+  SELECT
+    TRUNC(CAST(payment_date AS TIMESTAMP), 'MONTH') AS START_MONTH,
+    SUM(payment_amount) AS SUM_PAYMENT_AMOUNT
+  FROM MAIN.PAYMENTS_RECEIVED
+  GROUP BY
+    TRUNC(CAST(payment_date AS TIMESTAMP), 'MONTH')
+), "_T0" AS (
+  SELECT
+    DATETIME("_S1".START_MONTH, COLUMN1 || ' months') AS DT,
+    SUM(CASE WHEN COLUMN1 > 0 THEN 0 ELSE COALESCE("_S1".SUM_PAYMENT_AMOUNT, 0) END) AS SUM_PAYMENT
+  FROM (VALUES
+    (0),
+    (1),
+    (2),
+    (3),
+    (4),
+    (5),
+    (6),
+    (7),
+    (8),
+    (9),
+    (10),
+    (11)) AS MONTHS(N)
+  JOIN "_S1" "_S1"
+    ON (
+      TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH') + NUMTODSINTERVAL(1, 'hour')
+    ) >= DATETIME("_S1".START_MONTH, COLUMN1 || ' months')
+  GROUP BY
+    DATETIME("_S1".START_MONTH, COLUMN1 || ' months')
+)
+SELECT
+  DT AS dt,
+  SUM_PAYMENT AS total_payments,
+  SUM_PAYMENT - LAG(SUM_PAYMENT, 1) OVER (ORDER BY DT) AS MoM_change
+FROM "_T0"

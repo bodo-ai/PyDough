@@ -1,0 +1,12 @@
+SELECT
+  SUPPLIER.s_name AS name,
+  REGION.r_name AS region_name,
+  SUPPLIER.s_acctbal - LAG(SUPPLIER.s_acctbal, 1) OVER (PARTITION BY NATION.n_regionkey ORDER BY SUPPLIER.s_acctbal) AS acctbal_delta
+FROM TPCH.REGION REGION
+JOIN TPCH.NATION NATION
+  ON NATION.n_regionkey = REGION.r_regionkey
+JOIN TPCH.SUPPLIER SUPPLIER
+  ON NATION.n_nationkey = SUPPLIER.s_nationkey
+ORDER BY
+  3 DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY

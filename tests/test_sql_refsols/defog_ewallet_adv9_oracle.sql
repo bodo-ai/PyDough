@@ -1,0 +1,12 @@
+SELECT
+  TRUNC(CAST(created_at AS TIMESTAMP), 'MONTH') AS year_month,
+  COUNT(DISTINCT sender_id) AS active_users
+FROM MAIN.WALLET_TRANSACTIONS_DAILY
+WHERE
+  created_at < TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH')
+  AND created_at >= (
+    TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH') + NUMTOYMINTERVAL(2, 'month')
+  )
+  AND sender_type = 0
+GROUP BY
+  TRUNC(CAST(created_at AS TIMESTAMP), 'MONTH')

@@ -1,0 +1,26 @@
+WITH "_T" AS (
+  SELECT
+    o_custkey AS O_CUSTKEY,
+    o_orderdate AS O_ORDERDATE,
+    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_totalprice DESC) AS "_W"
+  FROM TPCH.ORDERS
+  WHERE
+    o_orderpriority = '1-URGENT'
+), "_S1" AS (
+  SELECT
+    O_CUSTKEY,
+    O_ORDERDATE
+  FROM "_T"
+  WHERE
+    "_W" = 1
+)
+SELECT
+  CUSTOMER.c_name AS name
+FROM TPCH.CUSTOMER CUSTOMER
+LEFT JOIN "_S1" "_S1"
+  ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
+WHERE
+  CUSTOMER.c_nationkey = 6
+ORDER BY
+  COALESCE("_S1".O_ORDERDATE, TO_DATE('2000-01-01', 'YYYY-MM-DD'))
+FETCH FIRST 5 ROWS ONLY

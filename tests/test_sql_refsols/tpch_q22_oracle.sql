@@ -1,0 +1,22 @@
+WITH "_S0" AS (
+  SELECT
+    AVG(c_acctbal) AS AVG_C_ACCTBAL
+  FROM TPCH.CUSTOMER
+  WHERE
+    c_acctbal > 0.0
+    AND SUBSTR(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+)
+SELECT
+  SUBSTR(CUSTOMER.c_phone, 1, 2) AS CNTRY_CODE,
+  COUNT(*) AS NUM_CUSTS,
+  COALESCE(SUM(CUSTOMER.c_acctbal), 0) AS TOTACCTBAL
+FROM "_S0" "_S0"
+JOIN TPCH.CUSTOMER CUSTOMER
+  ON CUSTOMER.c_acctbal > "_S0".AVG_C_ACCTBAL
+  AND SUBSTR(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+JOIN TPCH.ORDERS ORDERS
+  ON CUSTOMER.c_custkey = ORDERS.o_custkey
+GROUP BY
+  SUBSTR(CUSTOMER.c_phone, 1, 2)
+ORDER BY
+  1 NULLS FIRST

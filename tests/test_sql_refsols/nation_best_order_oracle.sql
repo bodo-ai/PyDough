@@ -1,0 +1,36 @@
+WITH "_T3" AS (
+  SELECT
+    CUSTOMER.c_name AS C_NAME,
+    CUSTOMER.c_nationkey AS C_NATIONKEY,
+    ORDERS.o_orderkey AS O_ORDERKEY,
+    ORDERS.o_totalprice AS O_TOTALPRICE,
+    (
+      100.0 * ORDERS.o_totalprice
+    ) / SUM(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS VALUE_PERCENTAGE
+  FROM TPCH.CUSTOMER CUSTOMER
+  JOIN TPCH.ORDERS ORDERS
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) = 1998
+), "_T" AS (
+  SELECT
+    C_NAME,
+    C_NATIONKEY,
+    O_ORDERKEY,
+    O_TOTALPRICE,
+    VALUE_PERCENTAGE,
+    ROW_NUMBER() OVER (PARTITION BY C_NATIONKEY ORDER BY O_TOTALPRICE DESC) AS "_W"
+  FROM "_T3"
+)
+SELECT
+  NATION.n_name AS nation_name,
+  "_T".C_NAME AS customer_name,
+  "_T".O_ORDERKEY AS order_key,
+  "_T".O_TOTALPRICE AS order_value,
+  "_T".VALUE_PERCENTAGE AS value_percentage
+FROM TPCH.NATION NATION
+JOIN TPCH.REGION REGION
+  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
+JOIN "_T" "_T"
+  ON NATION.n_nationkey = "_T".C_NATIONKEY AND "_T"."_W" = 1
+ORDER BY
+  1 NULLS FIRST

@@ -1,0 +1,28 @@
+WITH "_T1" AS (
+  SELECT
+    co_name AS CO_NAME
+  FROM MAIN.COUNTRIES
+  WHERE
+    NOT co_name LIKE '%C%'
+), "_S5" AS (
+  SELECT DISTINCT
+    TRUNC(CAST(CALENDAR.ca_dt AS TIMESTAMP), 'YEAR') AS START_OF_YEAR,
+    "_T3".CO_NAME
+  FROM "_T1" "_T3"
+  JOIN MAIN.PRODUCTS PRODUCTS
+    ON PRODUCTS.pr_name = 'AmethystCopper-I'
+  JOIN MAIN.CALENDAR CALENDAR
+    ON CALENDAR.ca_dt < (
+      CAST(PRODUCTS.pr_release AS TIMESTAMP) + NUMTOYMINTERVAL(2, 'year')
+    )
+    AND CALENDAR.ca_dt >= PRODUCTS.pr_release
+)
+SELECT
+  "_T1".CO_NAME AS country_name,
+  "_S5".START_OF_YEAR AS start_of_year
+FROM "_T1" "_T1"
+LEFT JOIN "_S5" "_S5"
+  ON "_S5".CO_NAME = "_T1".CO_NAME
+ORDER BY
+  1 NULLS FIRST,
+  2 NULLS FIRST

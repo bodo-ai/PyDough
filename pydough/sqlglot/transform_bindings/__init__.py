@@ -19,6 +19,7 @@ from pydough.database_connectors import DatabaseDialect
 
 from .base_transform_bindings import BaseTransformBindings
 from .mysql_transform_bindings import MySQLTransformBindings
+from .oracle_transform_bindings import OracleTransformBindings
 from .postgres_transform_bindings import PostgresTransformBindings
 from .sf_transform_bindings import SnowflakeTransformBindings
 from .sqlite_transform_bindings import SQLiteTransformBindings
@@ -55,5 +56,7 @@ def bindings_from_dialect(
             return MySQLTransformBindings(configs, visitor)
         case DatabaseDialect.POSTGRES:
             return PostgresTransformBindings(configs, visitor)
+        case DatabaseDialect.ORACLE:
+            return OracleTransformBindings(configs, visitor)
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")

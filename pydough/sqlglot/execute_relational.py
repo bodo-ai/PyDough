@@ -11,6 +11,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
@@ -204,7 +205,7 @@ def apply_sqlglot_optimizer(
 
     # Replaces any grouping or ordering keys that point to a clause in the
     # SELECT with an index (e.g. ORDER BY 1, GROUP BY 1, 2)
-    replace_keys_with_indices(glot_expr)
+    replace_keys_with_indices(glot_expr, dialect)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
@@ -214,10 +215,16 @@ def apply_sqlglot_optimizer(
     # SQL.
     remove_tuple_row_values(glot_expr)
 
+    # Quote identifiers when required
+    # For Oracle add quotes to all alias starting with _
+    quote_oracle_identifiers(glot_expr, dialect)
+
     return glot_expr
 
 
-def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
+def replace_keys_with_indices(
+    glot_expr: SQLGlotExpression, dialect: SQLGlotDialect
+) -> None:
     """
     Runs a transformation postprocessing pass on the SQLGlot AST to make the
     following changes:
@@ -293,7 +300,9 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
                         expression.expressions[expr_idx] = collate
 
         # Replace GROUP BY keys that are in the select clause with indices.
-        if expression.args.get("group") is not None:
+        # Oracle does not support indices in the GROUP BY, for this dialect this
+        # step is skipped
+        if expression.args.get("group") is not None and dialect != OracleDialect:
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
                 # Only replace with the index if the key expression appears in
@@ -350,9 +359,11 @@ def fix_column_case(
             # Handle expressions with aliases
             if isinstance(expr, Alias):
                 identifier = expr.args.get("alias")
+                quoted = quoted or identifier.args.get("quoted", False)
                 identifier.set("this", col_name)
                 identifier.set("quoted", quoted)
             elif isinstance(expr, Column):
+                quoted = quoted or expr.this.this.args.get("quoted", False)
                 expr.this.this.set("this", col_name)
                 expr.this.this.set("quoted", quoted)
 
@@ -466,6 +477,34 @@ def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
             remove_tuple_row_values(arg)
 
 
+def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -> None:
+    """
+    Add quotes to all Identifiers that start with '_'. Identifiers that start with
+    '_' are invalid for Oracle unless they are quoted.
+
+    Note: This only is required for the Oracle dialect.
+
+    Args:
+        expr: The SQLGlot expression to visit.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    if dialect != OracleDialect:
+        return
+
+    if isinstance(expr, (sqlglot_expressions.Identifier)):
+        # Identifiers starting with _ are required to be quoted for Oracle
+        if expr.this.startswith("_"):
+            new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
+            expr.replace(new_identifier)
+
+    # Recursively visit the subexpressions.
+    for arg in expr.iter_expressions():
+        if isinstance(arg, SQLGlotExpression):
+            quote_oracle_identifiers(arg, dialect)
+
+
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     """
     Convert the given DatabaseDialect to the corresponding SQLGlotDialect.
@@ -488,6 +527,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return MySQLDialect()
         case DatabaseDialect.POSTGRES:
             return PostgresDialect()
+        case DatabaseDialect.ORACLE:
+            return OracleDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 

@@ -1,0 +1,25 @@
+SELECT
+  1 AS i1,
+  CAST(2.2 AS INT) AS i2,
+  CAST('3' AS INT) AS i3,
+  CAST('4.3' AS INT) AS i4,
+  CAST('-5.888' AS INT) AS i5,
+  CAST(-6.0 AS INT) AS i6,
+  1.0 AS f1,
+  2.2 AS f2,
+  CAST('3' AS DOUBLE PRECISION) AS f3,
+  CAST('4.3' AS DOUBLE PRECISION) AS f4,
+  CAST('-5.888' AS DOUBLE PRECISION) AS f5,
+  -6.0 AS f6,
+  0.0 AS f7,
+  CAST(1 AS VARCHAR2(4000)) AS s1,
+  CAST(2.2 AS VARCHAR2(4000)) AS s2,
+  '3' AS s3,
+  '4.3' AS s4,
+  '-5.888' AS s5,
+  CAST(-6.1 AS VARCHAR2(4000)) AS s6,
+  CAST(0.1 AS VARCHAR2(4000)) AS s7,
+  '0.0' AS s8,
+  'abc def' AS s9
+FROM (VALUES
+  (NULL)) AS "_Q_0"("_COL_0")

@@ -1,0 +1,22 @@
+WITH "_S0" AS (
+  SELECT DISTINCT
+    p_size AS P_SIZE
+  FROM TPCH.PART
+  ORDER BY
+    1 DESC NULLS LAST
+  FETCH FIRST 5 ROWS ONLY
+), "_T" AS (
+  SELECT
+    PART.p_size AS SIZE_1,
+    PART.p_name AS P_NAME,
+    ROW_NUMBER() OVER (PARTITION BY "_S0".P_SIZE ORDER BY PART.p_retailprice DESC, PART.p_partkey) AS "_W"
+  FROM "_S0" "_S0"
+  JOIN TPCH.PART PART
+    ON PART.p_size = "_S0".P_SIZE
+)
+SELECT
+  P_NAME AS pname,
+  SIZE_1 AS psize
+FROM "_T"
+WHERE
+  "_W" = 1

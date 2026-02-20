@@ -1,0 +1,38 @@
+WITH "_T1" AS (
+  SELECT
+    merchant_id AS MERCHANT_ID,
+    start_date AS START_DATE
+  FROM MAIN.COUPONS
+), "_S1" AS (
+  SELECT
+    MERCHANT_ID,
+    MIN(START_DATE) AS MIN_START_DATE
+  FROM "_T1"
+  GROUP BY
+    MERCHANT_ID
+), "_S4" AS (
+  SELECT
+    MERCHANTS.mid AS MID,
+    "_S1".MIN_START_DATE,
+    ANY_VALUE(MERCHANTS.created_at) AS ANYTHING_CREATED_AT,
+    MAX(COUPONS.cid) AS MAX_CID
+  FROM MAIN.MERCHANTS MERCHANTS
+  LEFT JOIN "_S1" "_S1"
+    ON MERCHANTS.mid = "_S1".MERCHANT_ID
+  LEFT JOIN MAIN.COUPONS COUPONS
+    ON COUPONS.merchant_id = MERCHANTS.mid AND COUPONS.start_date = "_S1".MIN_START_DATE
+  GROUP BY
+    MERCHANTS.mid,
+    "_S1".MIN_START_DATE
+)
+SELECT
+  "_S4".MID AS merchants_id,
+  "_S4".ANYTHING_CREATED_AT AS merchant_registration_date,
+  "_S4".MIN_START_DATE AS earliest_coupon_start_date,
+  "_S4".MAX_CID AS earliest_coupon_id
+FROM "_S4" "_S4"
+JOIN "_T1" "_S5"
+  ON "_S4".MID = "_S5".MERCHANT_ID
+  AND "_S5".START_DATE <= (
+    CAST("_S4".ANYTHING_CREATED_AT AS TIMESTAMP) + NUMTOYMINTERVAL(1, 'year')
+  )

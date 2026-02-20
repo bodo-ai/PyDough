@@ -1,0 +1,79 @@
+WITH "_T2" AS (
+  SELECT
+    ca_dt AS CA_DT
+  FROM MAIN.CALENDAR
+  WHERE
+    EXTRACT(YEAR FROM CAST(ca_dt AS DATE)) IN (2020, 2021)
+), "_T5" AS (
+  SELECT
+    co_id AS CO_ID,
+    co_name AS CO_NAME
+  FROM MAIN.COUNTRIES
+  WHERE
+    co_name = 'CN'
+), "_S7" AS (
+  SELECT
+    "_T4".CA_DT,
+    COUNT(*) AS N_ROWS
+  FROM "_T2" "_T4"
+  JOIN MAIN.CALENDAR CALENDAR
+    ON CALENDAR.ca_dt >= (
+      CAST("_T4".CA_DT AS TIMESTAMP) + NUMTOYMINTERVAL(6, 'month')
+    )
+  JOIN MAIN.DEVICES DEVICES
+    ON CALENDAR.ca_dt = TRUNC(CAST(DEVICES.de_purchase_ts AS TIMESTAMP), 'DAY')
+  JOIN "_T5" "_T5"
+    ON DEVICES.de_production_country_id = "_T5".CO_ID
+  GROUP BY
+    "_T4".CA_DT
+), "_S15" AS (
+  SELECT
+    "_T7".CA_DT,
+    COUNT(*) AS N_ROWS
+  FROM "_T2" "_T7"
+  JOIN MAIN.INCIDENTS INCIDENTS
+    ON "_T7".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS TIMESTAMP), 'DAY')
+  JOIN MAIN.DEVICES DEVICES
+    ON DEVICES.de_id = INCIDENTS.in_device_id
+  JOIN "_T5" "_T8"
+    ON DEVICES.de_production_country_id = "_T8".CO_ID
+  GROUP BY
+    "_T7".CA_DT
+), "_T0" AS (
+  SELECT
+    EXTRACT(MONTH FROM CAST("_T2".CA_DT AS DATE)) AS MONTH_CA_DT,
+    EXTRACT(YEAR FROM CAST("_T2".CA_DT AS DATE)) AS YEAR_CA_DT,
+    SUM("_S7".N_ROWS) AS SUM_EXPR_3,
+    SUM("_S15".N_ROWS) AS SUM_N_ROWS
+  FROM "_T2" "_T2"
+  LEFT JOIN "_S7" "_S7"
+    ON "_S7".CA_DT = "_T2".CA_DT
+  LEFT JOIN "_S15" "_S15"
+    ON "_S15".CA_DT = "_T2".CA_DT
+  GROUP BY
+    EXTRACT(MONTH FROM CAST("_T2".CA_DT AS DATE)),
+    EXTRACT(YEAR FROM CAST("_T2".CA_DT AS DATE))
+)
+SELECT
+  LTRIM(
+    NVL2(YEAR_CA_DT, '-' || YEAR_CA_DT, NULL) || NVL2(
+      CASE
+        WHEN LENGTH(MONTH_CA_DT) >= 2
+        THEN SUBSTR(MONTH_CA_DT, 1, 2)
+        ELSE SUBSTR(CONCAT('00', MONTH_CA_DT), -2)
+      END,
+      '-' || CASE
+        WHEN LENGTH(MONTH_CA_DT) >= 2
+        THEN SUBSTR(MONTH_CA_DT, 1, 2)
+        ELSE SUBSTR(CONCAT('00', MONTH_CA_DT), -2)
+      END,
+      NULL
+    ),
+    '-'
+  ) AS month,
+  ROUND((
+    1000000.0 * COALESCE(SUM_N_ROWS, 0)
+  ) / COALESCE(SUM_EXPR_3, 0), 2) AS ir
+FROM "_T0"
+ORDER BY
+  MONTH_CA_DT NULLS FIRST

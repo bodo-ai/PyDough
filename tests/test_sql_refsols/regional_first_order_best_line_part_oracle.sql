@@ -1,0 +1,40 @@
+WITH "_T" AS (
+  SELECT
+    NATION.n_regionkey AS N_REGIONKEY,
+    ORDERS.o_orderkey AS O_ORDERKEY,
+    ROW_NUMBER() OVER (PARTITION BY NATION.n_regionkey ORDER BY ORDERS.o_orderdate, ORDERS.o_orderkey) AS "_W"
+  FROM TPCH.NATION NATION
+  JOIN TPCH.CUSTOMER CUSTOMER
+    ON CUSTOMER.c_nationkey = NATION.n_nationkey
+  JOIN TPCH.ORDERS ORDERS
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) = 1992
+), "_T_2" AS (
+  SELECT
+    LINEITEM.l_partkey AS L_PARTKEY,
+    "_T".N_REGIONKEY,
+    ROW_NUMBER() OVER (PARTITION BY "_T".N_REGIONKEY ORDER BY LINEITEM.l_quantity DESC, LINEITEM.l_linenumber) AS "_W"
+  FROM "_T" "_T"
+  JOIN TPCH.LINEITEM LINEITEM
+    ON EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATE)) = 1992
+    AND LINEITEM.l_orderkey = "_T".O_ORDERKEY
+  WHERE
+    "_T"."_W" = 1
+), "_S9" AS (
+  SELECT
+    "_T".N_REGIONKEY,
+    PART.p_name AS P_NAME
+  FROM "_T_2" "_T"
+  JOIN TPCH.PART PART
+    ON PART.p_partkey = "_T".L_PARTKEY
+  WHERE
+    "_T"."_W" = 1
+)
+SELECT
+  REGION.r_name AS region_name,
+  "_S9".P_NAME AS part_name
+FROM TPCH.REGION REGION
+LEFT JOIN "_S9" "_S9"
+  ON REGION.r_regionkey = "_S9".N_REGIONKEY
+ORDER BY
+  1 NULLS FIRST

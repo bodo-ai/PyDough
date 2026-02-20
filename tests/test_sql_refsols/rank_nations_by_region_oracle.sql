@@ -1,0 +1,6 @@
+SELECT
+  NATION.n_name AS name,
+  RANK() OVER (ORDER BY REGION.r_name) AS rank
+FROM TPCH.NATION NATION
+JOIN TPCH.REGION REGION
+  ON NATION.n_regionkey = REGION.r_regionkey

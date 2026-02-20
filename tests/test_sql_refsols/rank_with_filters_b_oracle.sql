@@ -1,0 +1,12 @@
+WITH "_T0" AS (
+  SELECT
+    ROW_NUMBER() OVER (ORDER BY c_acctbal DESC, c_name) AS R,
+    c_name AS C_NAME
+  FROM TPCH.CUSTOMER
+)
+SELECT
+  C_NAME AS n,
+  R AS r
+FROM "_T0"
+WHERE
+  C_NAME LIKE '%0' AND R <= 30
