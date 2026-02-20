@@ -54,9 +54,9 @@ def simple_range_5():
     return pydough.range_collection("T3", "x", -1)
 
 
-def simple_range_6():
-    # Generate a table with 1 column named `name space` which is an empty range
-    return pydough.range_collection("quoted_name", '"name space"', 5)
+def simple_range_9():
+    # Generate a table with 1 column named `name space`
+    return pydough.range_collection('"quoted-name"', '"name space"', 5)
 
 
 def user_range_collection_1():
@@ -197,6 +197,12 @@ def simple_dataframe_collection_2():
                 ]
             ),
         }
+    )
+    return pydough.dataframe_collection(
+        name="users",
+        dataframe=df,
+        unique_column_names=["user_id"],
+        column_subset=["user_id", "signup_date"],
     )
 
 

@@ -44,6 +44,7 @@ from pydough.relational import RelationalRoot
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 
 from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
@@ -99,7 +100,6 @@ def convert_relation_to_sql(
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(
         session.database.dialect
     )
-
     # Apply the SQLGlot optimizer to the AST.
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
@@ -345,12 +345,16 @@ def fix_column_case(
     if hasattr(glot_expr, "expressions"):
         for idx, (col_name, _) in enumerate(ordered_columns):
             expr = glot_expr.expressions[idx]
+            # Takes care of the quoted names
+            quoted, col_name = normalize_column_name(col_name)
             # Handle expressions with aliases
             if isinstance(expr, Alias):
                 identifier = expr.args.get("alias")
                 identifier.set("this", col_name)
+                identifier.set("quoted", quoted)
             elif isinstance(expr, Column):
                 expr.this.this.set("this", col_name)
+                expr.this.this.set("quoted", quoted)
 
 
 def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:

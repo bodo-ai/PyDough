@@ -1,8 +1,8 @@
 SELECT
   users.user_id,
-  users."`name""[" AS """`name""""[""",
-  users."space country" AS """space country""",
-  users."CAST" AS ""CAST""
+  users."`name""[",
+  users."space country",
+  users."CAST"
 FROM (VALUES
   (1, 'Alice', 'US', 25),
   (2, 'Bob', 'CR', 30),

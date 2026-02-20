@@ -230,7 +230,7 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_3,
     simple_range_4,
     simple_range_5,
-    simple_range_6,
+    simple_range_9,
     user_range_collection_1,
     user_range_collection_2,
     user_range_collection_3,
@@ -4109,17 +4109,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
-                simple_range_6,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {'"name space"': pd.Series(range(5), dtype="object")}
-                ),
-                "simple_range_6",
-            ),
-            id="simple_range_6",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
                 "r = pydough.range_collection('tbl', 'v', 0, 500, 13).CALCULATE(first_digit=INTEGER(STRING(v)[:1]))\n"
                 "result = r.PARTITION(name='digits', by=first_digit).CALCULATE(first_digit, n=COUNT(tbl))",
                 "TPCH",
@@ -4172,6 +4161,17 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 kwargs={"pydough": pydough},
             ),
             id="simple_range_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_9,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {'"name space"': pd.Series(range(5), dtype="object")}
+                ),
+                "simple_range_9",
+            ),
+            id="simple_range_9",
         ),
         pytest.param(
             PyDoughPandasTest(
