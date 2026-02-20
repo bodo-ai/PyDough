@@ -233,15 +233,8 @@ def simple_dataframe_collection_4():
         {
             "user_id": [1, 2, 3, 4],
             "country": ["US", "CR", "US", "MX"],
-            "age": [25, 30, 22, 30],
-            "signup_date": pd.to_datetime(
-                [
-                    "2024-01-10",
-                    "2024-01-12",
-                    "2024-02-01",
-                    "2024-02-01",
-                ]
-            ),
+            "user_list": [[12, 4], [23, 5], [56, 3], [23, 6, 7]],
+            "date": [{"a": 1}, {"b": 2}, {"c": 3}, {"d": 4}],
         }
     )
 
@@ -249,6 +242,7 @@ def simple_dataframe_collection_4():
         name="users",
         dataframe=df,
         unique_column_names=["user_id"],
+        column_subset=["user_id", "country"],
     )
 
 

@@ -226,6 +226,7 @@ from tests.test_pydough_functions.user_collections import (
     simple_dataframe_collection_1,
     simple_dataframe_collection_2,
     simple_dataframe_collection_3,
+    simple_dataframe_collection_4,
     simple_range_1,
     simple_range_2,
     simple_range_3,
@@ -4401,6 +4402,17 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_dataframe_collection_3",
             ),
             id="simple_dataframe_collection_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_dataframe_collection_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"user_id": [1, 2, 3, 4], "country": ["US", "CR", "US", "MX"]}
+                ),
+                "simple_dataframe_collection_4",
+            ),
+            id="simple_dataframe_collection_4",
         ),
         pytest.param(
             PyDoughPandasTest(
