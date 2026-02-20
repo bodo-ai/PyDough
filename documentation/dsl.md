@@ -1585,15 +1585,16 @@ It takes in the following arguments:
 
 - `name`: The name of the dataframe collection.
 - `dataframe`: Pandas DataFrame containing the corresponding data.
-- `unique_column_names`: List of strings or list of strings
+- `unique_column_names`: List of strings or list of list of strings
 `(list [str | list[ str ]])` representing the unique properties for the dataframe 
 collection. For example: ["column1", ["column2", "column3"]] indicates `column1`
 is a unique property and the combination of column2 and column3 is also unique.
-- `filter_columns`(optional): List of filter/selected columns from the dataframe.
-If provided, indicates all columns from the original dataframe that will be in the
-final dataframe collection. 
+- `column_subset` (optional): List of filter/selected columns from the dataframe.
+If provided, indicates a subset of the columns from the original dataframe that will be in the
+final dataframe collection, and the order they will be in. If omitted, indicates that
+all of the columns should be included in the same order they are currently present
 
-**Note**: All columns in `unique_column_names` must be included in `filter_columns`; otherwise, an error will be raised. 
+**Note**: All columns in `unique_column_names` must be included in `column_subset`; otherwise, an error will be raised. 
 
 #### Datatypes
 `dataframe_collection` doesn't support mix datatypes in one column.

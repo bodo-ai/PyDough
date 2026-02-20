@@ -52,7 +52,7 @@ def dataframe_collection(
     name: str,
     dataframe: pd.DataFrame,
     unique_column_names: list[str | list[str]],
-    filter_columns: list[str] = [],
+    column_subset: list[str] = [],
 ) -> UnqualifiedGeneratedCollection:
     """
     Implementation of the `pydough.dataframe_collection` function, which provides
@@ -63,7 +63,7 @@ def dataframe_collection(
         `dataframe` : The dataframe of the collection
         `unique_column_names`: List of unique properties or unique combinations
         in the collection.
-        `filter_columns`: List of columns use to filter the original dataframe.
+        `column_subset`: List of columns use to filter the original dataframe.
         This are the columns that will be in the Dataframe collection. If empty
         the dataframe will use all columns.
 
@@ -81,11 +81,15 @@ def dataframe_collection(
             f"Expected 'unique_column_names' to be list[list | list[str]], got {type(unique_column_names).__name__}"
         )
 
-    if not isinstance(filter_columns, list) and all(
-        isinstance(col, str) for col in filter_columns
-    ):
+    if not isinstance(column_subset, list):
         raise TypeError(
-            f"Expected 'filter_columns' to a list of string, got {type(filter_columns).__name__}"
+            f"Expected 'column_subset' to be a list, got {type(column_subset).__name__}"
+        )
+
+    if not all(isinstance(col, str) for col in column_subset):
+        raise TypeError(
+            "Expected 'column_subset' to be a list of string, "
+            "but found non-string element(s)"
         )
 
     unique_flatten_columns: list[str] = [
@@ -103,22 +107,22 @@ def dataframe_collection(
             f"are missing in the dataframe: {missing}"
         )
 
-    # All unique_columns must be inside filter_columns
-    if len(filter_columns) > 0:
-        missing_columns = set(unique_flatten_columns) - set(filter_columns)
+    # All unique_columns must be inside column_subset
+    if len(column_subset) > 0:
+        missing_columns = set(unique_flatten_columns) - set(column_subset)
 
         if missing_columns:
             missing = ", ".join(sorted(missing_columns))
             raise ValueError(
                 f"The following column(s) from 'unique_column_names' "
-                f"are missing in `filter_columns`: {missing}"
+                f"are missing in `column_subset`: {missing}"
             )
 
     dataframe_collection = DataframeGeneratedCollection(
         name=name,
         dataframe=dataframe,
         unique_column_names=unique_column_names,
-        filter_columns=filter_columns,
+        column_subset=column_subset,
     )
 
     return UnqualifiedGeneratedCollection(dataframe_collection)

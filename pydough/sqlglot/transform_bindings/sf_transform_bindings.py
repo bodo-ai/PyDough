@@ -12,6 +12,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
@@ -224,6 +225,16 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             A SQLGlotExpression representing the user-generated range as table.
         """
 
+        name_quoted, name_normalized = normalize_column_name(collection.name)
+        name_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=name_normalized, quoted=name_quoted
+        )
+
+        column_quoted, column_normalized = normalize_column_name(collection.column_name)
+        column_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=column_normalized, quoted=column_quoted
+        )
+
         # Calculate the number of rows needed for the range (end-start)/step
         row_count: int = math.ceil(
             (collection.end - collection.start) / collection.step
@@ -239,9 +250,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                             this=sqlglot_expressions.Null(),
                             to=sqlglot_expressions.DataType.build("INTEGER"),
                         ),
-                        alias=sqlglot_expressions.Identifier(
-                            this=collection.column_name
-                        ),
+                        alias=column_identifier,
                     )
                 ],
             ).where(sqlglot_expressions.false())
@@ -282,9 +291,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 expressions=[
                     sqlglot_expressions.Alias(
                         this=final_expr,
-                        alias=sqlglot_expressions.Identifier(
-                            this=collection.column_name
-                        ),
+                        alias=column_identifier,
                     )
                 ]
             ).from_(
@@ -312,7 +319,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             # WITH table_name AS ( ...inner_select... )
             subquery: SQLGlotExpression = sqlglot_expressions.Subquery(
                 this=inner_select,
-                alias=sqlglot_expressions.Identifier(this=collection.name),
+                alias=name_identifier,
             )
 
             # 5. Outer SELECT that references the subquery
@@ -320,7 +327,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             query = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Column(
-                        this=collection.column_name, table=collection.name
+                        this=column_identifier, table=name_identifier
                     )
                 ]
             ).from_(subquery)

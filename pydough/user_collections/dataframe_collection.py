@@ -50,9 +50,9 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         name: str,
         dataframe: pd.DataFrame,
         unique_column_names: list[str | list[str]],
-        filter_columns: list[str] = [],
+        column_subset: list[str] = [],
     ) -> None:
-        dataframe = self.filter_dataframe(dataframe, filter_columns)
+        dataframe = self.filter_dataframe(dataframe, column_subset)
         super().__init__(
             name=name,
             columns=list(dataframe.columns),
@@ -257,35 +257,35 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
 
     @staticmethod
     def filter_dataframe(
-        dataframe: pd.DataFrame, filter_columns: list[str]
+        dataframe: pd.DataFrame, column_subset: list[str]
     ) -> pd.DataFrame:
         """
         Filter the dataframe to include only the specified columns.
 
         Args:
             `dataframe`: The Pandas DataFrame to be filtered.
-            `filter_columns`: List of column names to keep. If empty, the original
+            `column_subset`: List of column names to keep. If empty, the original
                 dataframe is returned unchanged.
 
         Returns:
             The filtered dataframe containing only the specified columns,
-            or the original dataframe if filter_columns is empty.
+            or the original dataframe if column_subset is empty.
 
         Raises:
-            ValueError: If one or more columns in filter_columns are not
+            ValueError: If one or more columns in column_subset are not
                 present in the dataframe.
         """
-        if not filter_columns:
-            # If there are not filter columns, return the dataframe as it is
+        if not column_subset:
+            # If there are not column_subset, return the dataframe as it is
             return dataframe
 
-        missing_columns = set(filter_columns) - set(dataframe.columns)
+        missing_columns = set(column_subset) - set(dataframe.columns)
 
         if missing_columns:
             missing = ", ".join(sorted(missing_columns))
             raise ValueError(
-                f"The following column(s) from 'filter_columns' "
+                f"The following column(s) from 'column_subset' "
                 f"are missing in the dataframe: {missing}"
             )
 
-        return dataframe[filter_columns]
+        return dataframe[column_subset]

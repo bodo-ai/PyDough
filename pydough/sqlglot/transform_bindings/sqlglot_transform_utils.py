@@ -23,6 +23,7 @@ from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.errors import PyDoughSQLException
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -453,13 +454,20 @@ def create_constant_table(
     """
     assert column_names != []
 
+    table_quoted, name_normalized = normalize_column_name(table_name)
     expr_table: SQLGlotExpression = sqlglot_expressions.Identifier(
-        this=table_name, quoted=False
+        this=name_normalized, quoted=table_quoted
     )
 
+    # Normalize the column names, deleting quotes and keeping track of which
+    # column names were quoted to begin with.
+    normalized_column_names: list[tuple[bool, str]] = [
+        normalize_column_name(col) for col in column_names
+    ]
+
     columns_list: list[SQLGlotExpression] = [
-        sqlglot_expressions.Identifier(this=column, quoted=False)
-        for column in column_names
+        sqlglot_expressions.Identifier(this=column, quoted=quoted)
+        for quoted, column in normalized_column_names
     ]
 
     result: SQLGlotExpression
