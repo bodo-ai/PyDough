@@ -973,6 +973,8 @@ def transform_and_exec_pydough(
     """
     kwargs = kwargs if kwargs is not None else {}
     if isinstance(pydough_impl, str):
+        if session is None:
+            session = kwargs.get("session", None)
         # If the pydough_impl is a string, parse it with pydough.from_string.
         return pydough.from_string(
             pydough_impl, metadata=graph, environment=kwargs, session=session
@@ -1287,6 +1289,27 @@ class PyDoughPandasTest:
 
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+        if "to_table" in file_path:
+            if database.dialect == DatabaseDialect.SNOWFLAKE:
+                pytest.skip(
+                    "Skipping SQL text test for to_table tests on Snowflake since they use the Snowflake TPCH database which we don't have write access to."
+                )
+            else:
+                # For to_table tests, we need to create a session and execute the
+                # PyDough code to get the resulting table name, since the SQL text
+                # generation needs to know the table name to generate the correct SQL.
+                session = PyDoughSession()
+                session.metadata = graph
+                session.database = database
+                if config is not None:
+                    session.config = config
+                if mask_server is not None:
+                    session.mask_server = mask_server
+                # Add session to kwargs so that it can be used when executing the PyDough code
+                if self.kwargs is None:
+                    self.kwargs = {}
+                self.kwargs["session"] = session
+
         root: UnqualifiedNode = transform_and_exec_pydough(
             self.pydough_function, graph, self.kwargs
         )

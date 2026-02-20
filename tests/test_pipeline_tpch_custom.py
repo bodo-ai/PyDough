@@ -5005,502 +5005,6 @@ from .testing_utilities import (
             ),
             id="dataframe_collection_correlation",
         ),
-        # NOTE: all tests  have temporary and/or replace tables to ensure that we don't have
-        # to worry about cleanup after tests, and to allow testing
-        # works with multiple runs without interference from previous runs
-        # Test 1: UnqualifiedWhere: Basic WHERE filter,
-        # then CALCULATE on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t1', temp=True)\n"
-                "result = asian_tmp.CALCULATE(name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {"name": ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"]}
-                ),
-                "to_table_test_1",
-            ),
-            id="to_table_test_1",
-        ),
-        # Test 2: UnqualifiedWhere: WHERE followed by WHERE on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_countries = nations.WHERE(region.name == 'ASIA')\n"
-                "asian_countries_tmp = pydough.to_table(asian_countries, name='asian_nations_t2', replace=True)\n"
-                "result = asian_countries_tmp.WHERE(CONTAINS(name, 'I')).CALCULATE(name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {"name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"]}
-                ),
-                "to_table_test_2",
-            ),
-            id="to_table_test_2",
-        ),
-        # Test 3: UnqualifiedWhere: Using CROSS to access
-        # materialized view columns
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t3', replace=True, temp=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(key, name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [8, 9, 12, 18, 21],
-                        "name": ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"],
-                    }
-                ),
-                "to_table_test_3",
-            ),
-            id="to_table_test_3",
-        ),
-        # Test 4: UnqualifiedCalculate: WHERE + CALCULATE,
-        # then access materialized view using CROSS and select columns.
-        # Get 5 Asian nations ordered by nation_key
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).ORDER_BY(nation_key.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_key": [8, 9, 12, 18, 21],
-                        "nation_name": [
-                            "INDIA",
-                            "INDONESIA",
-                            "JAPAN",
-                            "CHINA",
-                            "VIETNAM",
-                        ],
-                    }
-                ),
-                "to_table_test_4",
-            ),
-            id="to_table_test_4",
-        ),
-        # Test 5: UnqualifiedCalculate: WHERE + CALCULATE,
-        # then HAS correlation with materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key)\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t5', temp=True)\n"
-                "result = customers.CALCULATE(name, cust_nation_key=nation.key).WHERE(HAS(CROSS(asian_tmp).WHERE(nation_key == cust_nation_key))).CALCULATE(name).TOP_K(5, by=name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            "Customer#000000001",
-                            "Customer#000000002",
-                            "Customer#000000003",
-                            "Customer#000000004",
-                            "Customer#000000005",
-                        ]
-                    }
-                ),
-                "to_table_test_5",
-            ),
-            id="to_table_test_5",
-        ),
-        # Test 6: UnqualifiedCalculate: CALCULATE,
-        # then TOP_K on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "expensive_orders = orders.CALCULATE(okey=key, total=total_price)\n"
-                "orders_tmp = pydough.to_table(expensive_orders, name='expensive_orders_t6', replace=True)\n"
-                "result = CROSS(orders_tmp).TOP_K(10, by=total.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "total_orders": [
-                            972901,
-                            1750466,
-                            2185667,
-                            2199712,
-                            2232932,
-                            3043270,
-                            3586919,
-                            4515876,
-                            4576548,
-                            4722021,
-                        ],
-                        "avg_price": [
-                            508668.52,
-                            555285.16,
-                            511359.88,
-                            515531.82,
-                            522720.61,
-                            530604.44,
-                            522644.48,
-                            510061.6,
-                            525590.57,
-                            544089.09,
-                        ],
-                    }
-                ),
-                "to_table_test_6",
-            ),
-            id="to_table_test_6",
-        ),
-        # Test 7: Multiple to_table: Two materialized views joined via CROSS
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t7', replace=True, temp=True)\n"
-                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
-                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t7', temp=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=nation_name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": ["CHINA", "CHINA", "CHINA", "CHINA", "CHINA"],
-                        "ckey": [7, 19, 75, 82, 118],
-                    }
-                ),
-                "to_table_test_7",
-            ),
-            id="to_table_test_7",
-        ),
-        # Test 8: Multiple to_table: Two materialized views joined,
-        # different sort column
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t8', replace=True, temp=True)\n"
-                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
-                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t8', replace=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=ckey)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": ["CHINA", "CHINA", "INDIA", "INDIA", "JAPAN"],
-                        "ckey": [7, 19, 9, 21, 25],
-                    }
-                ),
-                "to_table_test_8",
-            ),
-            id="to_table_test_8",
-        ),
-        # Test 9: UnqualifiedCalculate: CALCULATE with relationship traversal,
-        # then RANKING window function
-        pytest.param(
-            PyDoughPandasTest(
-                "order_summary = orders.CALCULATE(okey=key, total=total_price, ckey=customer.key)\n"
-                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t9', temp=True)\n"
-                "result = CROSS(summary_tmp).CALCULATE(okey, total, rank=RANKING(by=total.DESC())).TOP_K(5, by=total.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "okey": [1750466, 2232932, 3043270, 4576548, 4722021],
-                        "total": [
-                            555285.16,
-                            522720.61,
-                            530604.44,
-                            525590.57,
-                            544089.09,
-                        ],
-                        "rank": [1, 5, 3, 4, 2],
-                    }
-                ),
-                "to_table_test_9",
-            ),
-            id="to_table_test_9",
-        ),
-        # Test 10: UnqualifiedWhere + UnqualifiedCalculate: Date filter,
-        # then second WHERE on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "recent_orders = orders.WHERE(order_date > DATETIME('1995-01-01')).CALCULATE(okey=key, odate=order_date)\n"
-                "recent_tmp = pydough.to_table(recent_orders, name='recent_orders_t10', replace=True)\n"
-                "result = CROSS(recent_tmp).WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=odate)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "okey": [2277, 16262, 17058, 33476, 52640],
-                        "odate": [date(1995, 1, 2)] * 5,
-                    }
-                ),
-                "to_table_test_10",
-            ),
-            id="to_table_test_10",
-        ),
-        # Test 11: UnqualifiedWhere + UnqualifiedCalculate: WHERE on parts,
-        # then CALCULATE on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "parts_summary = parts.WHERE(size > 10).CALCULATE(pkey=key, pname=name, psize=size)\n"
-                "parts_tmp = pydough.to_table(parts_summary, name='parts_summary_t11', replace=True, temp=True)\n"
-                "result = CROSS(parts_tmp).CALCULATE(pkey, pname, psize).TOP_K(5, by=psize.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "pkey": [232, 273, 414, 436, 679],
-                        "pname": [
-                            "ivory peru lavender orange dark",
-                            "pink white sky burnished coral",
-                            "pink brown purple puff snow",
-                            "turquoise yellow dim purple antique",
-                            "purple blanched linen metallic indian",
-                        ],
-                        "psize": [50, 50, 50, 50, 50],
-                    }
-                ),
-                "to_table_test_11",
-            ),
-            id="to_table_test_11",
-        ),
-        # Test 12: UnqualifiedCalculate: CALCULATE,
-        # then WHERE on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "order_summary = orders.CALCULATE(okey=key, total=total_price)\n"
-                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t12', temp=True)\n"
-                "result = CROSS(summary_tmp).WHERE(total > 1000).CALCULATE(okey, total).TOP_K(5, by=total.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "total_orders": [1750466, 2232932, 3043270, 4576548, 4722021],
-                        "avg_price": [
-                            555285.16,
-                            522720.61,
-                            530604.44,
-                            525590.57,
-                            544089.09,
-                        ],
-                    }
-                ),
-                "to_table_test_12",
-            ),
-            id="to_table_test_12",
-        ),
-        # Test 13: UnqualifiedRoot: Direct table reference (no transformations)
-        pytest.param(
-            PyDoughPandasTest(
-                "nations_copy = pydough.to_table(nations, name='nations_t13', replace=True)\n"
-                "result = CROSS(nations_copy).CALCULATE(key, name).TOP_K(5, by=key.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [0, 1, 2, 3, 4],
-                        "name": [
-                            "ALGERIA",
-                            "ARGENTINA",
-                            "BRAZIL",
-                            "CANADA",
-                            "EGYPT",
-                        ],
-                    }
-                ),
-                "to_table_test_13",
-            ),
-            id="to_table_test_13",
-        ),
-        # Test 14: UnqualifiedOrderBy: ORDER_BY collection to to_table,
-        # then TOP_K on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "sorted_nations = nations.ORDER_BY(name.DESC())\n"
-                "sorted_tmp = pydough.to_table(sorted_nations, name='sorted_nations_t14', temp=True, replace=True)\n"
-                "result = CROSS(sorted_tmp).CALCULATE(key, name).TOP_K(5, by=name.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [21, 24, 23, 20, 22],
-                        "name": [
-                            "VIETNAM",
-                            "UNITED STATES",
-                            "UNITED KINGDOM",
-                            "SAUDI ARABIA",
-                            "RUSSIA",
-                        ],
-                    }
-                ),
-                "to_table_test_14",
-            ),
-            id="to_table_test_14",
-        ),
-        # Test 15: UnqualifiedTopK: TOP_K before materialization
-        pytest.param(
-            PyDoughPandasTest(
-                "top_nations = nations.TOP_K(3, by=key.ASC())\n"
-                "top_tmp = pydough.to_table(top_nations, name='top_nations_t15', temp=True)\n"
-                "result = CROSS(top_tmp).CALCULATE(key, name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [0, 1, 2],
-                        "name": ["ALGERIA", "ARGENTINA", "BRAZIL"],
-                    }
-                ),
-                "to_table_test_15",
-            ),
-            id="to_table_test_15",
-        ),
-        # Test 16: UnqualifiedPartition: PARTITION materialization
-        pytest.param(
-            PyDoughPandasTest(
-                "nation_regions = nations.CALCULATE(nkey=key, rkey=region.key)"
-                ".PARTITION(name='by_region', by=rkey)\n"
-                "counts_tmp = pydough.to_table(nation_regions, name='region_counts_t16', replace=True)\n"
-                "result = CROSS(counts_tmp).CALCULATE(rkey).ORDER_BY(rkey.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "rkey": [0, 1, 2, 3, 4],
-                    }
-                ),
-                "to_table_test_16",
-            ),
-            id="to_table_test_16",
-        ),
-        # Test 17: UnqualifiedSingular: SINGULAR single-row materialization
-        pytest.param(
-            PyDoughPandasTest(
-                "first_nation = nations.TOP_K(1, by=key.ASC()).SINGULAR()\n"
-                "first_tmp = pydough.to_table(first_nation, name='first_nation_t17', temp=True, replace=True)\n"
-                "result = CROSS(first_tmp).CALCULATE(key, name)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [0],
-                        "name": ["ALGERIA"],
-                    }
-                ),
-                "to_table_test_17",
-            ),
-            id="to_table_test_17",
-        ),
-        # Test 18: UnqualifiedBest: BEST per group materialization
-        pytest.param(
-            PyDoughPandasTest(
-                "best_nation_per_region = regions.nations"
-                ".BEST(by=key.ASC(), per='regions')\n"
-                "best_tmp = pydough.to_table(best_nation_per_region, name='best_nation_t18', temp=True)\n"
-                "result = CROSS(best_tmp).CALCULATE(key, name).ORDER_BY(key.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [0, 1, 4, 6, 8],
-                        "name": ["ALGERIA", "ARGENTINA", "EGYPT", "FRANCE", "INDIA"],
-                    }
-                ),
-                "to_table_test_18",
-            ),
-            id="to_table_test_18",
-        ),
-        # Test 19: to_table result as input
-        pytest.param(
-            PyDoughPandasTest(
-                "step1 = nations.WHERE(region.name == 'ASIA').CALCULATE(nkey=key, nname=name)\n"
-                "step1_tmp = pydough.to_table(step1, name='step1_t19', temp=True)\n"
-                "step2 = step1_tmp.WHERE(nkey < 15)\n"
-                "step2_tmp = pydough.to_table(step2, name='step2_t19', temp=True)\n"
-                "result = CROSS(step2_tmp).CALCULATE(nkey, nname).ORDER_BY(nkey.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "nkey": [8, 9, 12],
-                        "nname": ["INDIA", "INDONESIA", "JAPAN"],
-                    }
-                ),
-                "to_table_test_19",
-            ),
-            id="to_table_test_19",
-        ),
-        # Test 20: range_collection + to_table
-        pytest.param(
-            PyDoughPandasTest(
-                "numbers = pydough.range_collection('nums', 'num', 1, 6, 1)\n"
-                "nums_tmp = pydough.to_table(numbers, name='nums_t20', replace=True)\n"
-                "result = CROSS(nums_tmp).CALCULATE(num).WHERE(num > 2)",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "num": [3, 4, 5],
-                    }
-                ),
-                "to_table_test_20",
-            ),
-            id="to_table_test_20",
-        ),
-        # Test 21: dataframe_collection + to_table
-        pytest.param(
-            PyDoughPandasTest(
-                "users = pydough.dataframe_collection('users', users_df, ['user_id'])\n"
-                "users_tmp = pydough.to_table(users, name='users_t21', temp=True, replace=True)\n"
-                "result = CROSS(users_tmp).CALCULATE(user_id, user_name).ORDER_BY(user_id.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "user_id": [1, 2, 3],
-                        "user_name": ["Alice", "Bob", "Charlie"],
-                    }
-                ),
-                "to_table_test_21",
-                kwargs={
-                    "users_df": pd.DataFrame(
-                        {"user_id": [1, 2, 3], "user_name": ["Alice", "Bob", "Charlie"]}
-                    )
-                },
-            ),
-            id="to_table_test_21",
-        ),
-        # Test 22: Combined - range_collection + dataframe_collection + to_table
-        # Note: Need intermediate CALCULATE to project columns before second CROSS
-        pytest.param(
-            PyDoughPandasTest(
-                "multipliers = pydough.range_collection('mults', 'mult', 1, 4, 1)\n"
-                "mult_tmp = pydough.to_table(multipliers, name='mult_t22', replace=True)\n"
-                "products = pydough.dataframe_collection('products', products_df, ['pid'])\n"
-                "prod_tmp = pydough.to_table(products, name='prod_t22', replace=True)\n"
-                "result = CROSS(mult_tmp).CALCULATE(mult).CROSS(prod_tmp)"
-                ".CALCULATE(mult, pid, pname=product_name)"
-                ".ORDER_BY(mult.ASC(), pid.ASC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "mult": [1, 1, 2, 2, 3, 3],
-                        "pid": [10, 20, 10, 20, 10, 20],
-                        "pname": [
-                            "Apple",
-                            "Banana",
-                            "Apple",
-                            "Banana",
-                            "Apple",
-                            "Banana",
-                        ],
-                    }
-                ),
-                "to_table_test_22",
-                kwargs={
-                    "products_df": pd.DataFrame(
-                        {"pid": [10, 20], "product_name": ["Apple", "Banana"]}
-                    )
-                },
-            ),
-            id="to_table_test_22",
-        ),
-        # Test 23: UnqualifiedCalculate + UnqualifiedPartition:
-        # WHERE + CALCULATE with relationship traversal,
-        # then PARTITION and COUNT on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
-                "result = CROSS(asian_tmp).PARTITION(name='by_nation', by=nation_key).CALCULATE(nation_key, cnt=COUNT(asian_tmp)).TOP_K(10, by=cnt.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "total_orders": [8, 8, 9, 9, 12, 12, 18, 18, 21, 21],
-                        "avg_price": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-                    }
-                ),
-                "to_table_test_23",
-            ),
-            id="to_table_test_23",
-            marks=pytest.mark.skip("FIXME: Problem is test fails with MySQL only"),
-        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -6102,6 +5606,555 @@ def test_pipeline_e2e_errors(
         graph,
         columns=columns,
         database=sqlite_tpch_db_context,
+    )
+
+
+@pytest.fixture(
+    params=[
+        # NOTE: all tests  have temporary and/or replace tables to ensure that we don't have
+        # to worry about cleanup after tests, and to allow testing
+        # works with multiple runs without interference from previous runs
+        # Test 1: UnqualifiedWhere: Basic WHERE filter,
+        # then CALCULATE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t1', temp=True)\n"
+                "result = asian_tmp.CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"name": ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"]}
+                ),
+                "to_table_test_1",
+            ),
+            id="to_table_test_1",
+        ),
+        # Test 2: UnqualifiedWhere: WHERE followed by WHERE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_countries = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_countries_tmp = pydough.to_table(asian_countries, name='asian_nations_t2', replace=True)\n"
+                "result = asian_countries_tmp.WHERE(CONTAINS(name, 'I')).CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"]}
+                ),
+                "to_table_test_2",
+            ),
+            id="to_table_test_2",
+        ),
+        # Test 3: UnqualifiedWhere: Using CROSS to access
+        # materialized view columns
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t3', replace=True, temp=True)\n"
+                "result = CROSS(asian_tmp).CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [8, 9, 12, 18, 21],
+                        "name": ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"],
+                    }
+                ),
+                "to_table_test_3",
+            ),
+            id="to_table_test_3",
+        ),
+        # Test 4: UnqualifiedCalculate: WHERE + CALCULATE,
+        # then access materialized view using CROSS and select columns.
+        # Get 5 Asian nations ordered by nation_key
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
+                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).ORDER_BY(nation_key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_key": [8, 9, 12, 18, 21],
+                        "nation_name": [
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "CHINA",
+                            "VIETNAM",
+                        ],
+                    }
+                ),
+                "to_table_test_4",
+            ),
+            id="to_table_test_4",
+        ),
+        # Test 5: UnqualifiedCalculate: WHERE + CALCULATE,
+        # then HAS correlation with materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t5', temp=True)\n"
+                "result = customers.CALCULATE(name, cust_nation_key=nation.key).WHERE(HAS(CROSS(asian_tmp).WHERE(nation_key == cust_nation_key))).CALCULATE(name).TOP_K(5, by=name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000001",
+                            "Customer#000000002",
+                            "Customer#000000003",
+                            "Customer#000000004",
+                            "Customer#000000005",
+                        ]
+                    }
+                ),
+                "to_table_test_5",
+            ),
+            id="to_table_test_5",
+        ),
+        # Test 6: UnqualifiedCalculate: CALCULATE,
+        # then TOP_K on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "expensive_orders = orders.CALCULATE(okey=key, total=total_price)\n"
+                "orders_tmp = pydough.to_table(expensive_orders, name='expensive_orders_t6', replace=True)\n"
+                "result = CROSS(orders_tmp).TOP_K(10, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_orders": [
+                            972901,
+                            1750466,
+                            2185667,
+                            2199712,
+                            2232932,
+                            3043270,
+                            3586919,
+                            4515876,
+                            4576548,
+                            4722021,
+                        ],
+                        "avg_price": [
+                            508668.52,
+                            555285.16,
+                            511359.88,
+                            515531.82,
+                            522720.61,
+                            530604.44,
+                            522644.48,
+                            510061.6,
+                            525590.57,
+                            544089.09,
+                        ],
+                    }
+                ),
+                "to_table_test_6",
+            ),
+            id="to_table_test_6",
+        ),
+        # Test 7: Multiple to_table: Two materialized views joined via CROSS
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t7', replace=True, temp=True)\n"
+                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
+                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t7', temp=True)\n"
+                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=nation_name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "CHINA", "CHINA", "CHINA", "CHINA"],
+                        "ckey": [7, 19, 75, 82, 118],
+                    }
+                ),
+                "to_table_test_7",
+            ),
+            id="to_table_test_7",
+        ),
+        # Test 8: Multiple to_table: Two materialized views joined,
+        # different sort column
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t8', replace=True, temp=True)\n"
+                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
+                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t8', replace=True)\n"
+                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=ckey)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "CHINA", "INDIA", "INDIA", "JAPAN"],
+                        "ckey": [7, 19, 9, 21, 25],
+                    }
+                ),
+                "to_table_test_8",
+            ),
+            id="to_table_test_8",
+        ),
+        # Test 9: UnqualifiedCalculate: CALCULATE with relationship traversal,
+        # then RANKING window function
+        pytest.param(
+            PyDoughPandasTest(
+                "order_summary = orders.CALCULATE(okey=key, total=total_price, ckey=customer.key)\n"
+                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t9', temp=True)\n"
+                "result = CROSS(summary_tmp).CALCULATE(okey, total, rank=RANKING(by=total.DESC())).TOP_K(5, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "total": [
+                            555285.16,
+                            522720.61,
+                            530604.44,
+                            525590.57,
+                            544089.09,
+                        ],
+                        "rank": [1, 5, 3, 4, 2],
+                    }
+                ),
+                "to_table_test_9",
+            ),
+            id="to_table_test_9",
+        ),
+        # Test 10: UnqualifiedWhere + UnqualifiedCalculate: Date filter,
+        # then second WHERE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "recent_orders = orders.WHERE(order_date > DATETIME('1995-01-01')).CALCULATE(okey=key, odate=order_date)\n"
+                "recent_tmp = pydough.to_table(recent_orders, name='recent_orders_t10', replace=True)\n"
+                "result = CROSS(recent_tmp).WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=odate)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [2277, 16262, 17058, 33476, 52640],
+                        "odate": [date(1995, 1, 2)] * 5,
+                    }
+                ),
+                "to_table_test_10",
+            ),
+            id="to_table_test_10",
+        ),
+        # Test 11: UnqualifiedWhere + UnqualifiedCalculate: WHERE on parts,
+        # then CALCULATE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "parts_summary = parts.WHERE(size > 10).CALCULATE(pkey=key, pname=name, psize=size)\n"
+                "parts_tmp = pydough.to_table(parts_summary, name='parts_summary_t11', replace=True, temp=True)\n"
+                "result = CROSS(parts_tmp).CALCULATE(pkey, pname, psize).TOP_K(5, by=psize.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "pkey": [232, 273, 414, 436, 679],
+                        "pname": [
+                            "ivory peru lavender orange dark",
+                            "pink white sky burnished coral",
+                            "pink brown purple puff snow",
+                            "turquoise yellow dim purple antique",
+                            "purple blanched linen metallic indian",
+                        ],
+                        "psize": [50, 50, 50, 50, 50],
+                    }
+                ),
+                "to_table_test_11",
+            ),
+            id="to_table_test_11",
+        ),
+        # Test 12: UnqualifiedCalculate: CALCULATE,
+        # then WHERE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "order_summary = orders.CALCULATE(okey=key, total=total_price)\n"
+                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t12', temp=True)\n"
+                "result = CROSS(summary_tmp).WHERE(total > 1000).CALCULATE(okey, total).TOP_K(5, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_orders": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "avg_price": [
+                            555285.16,
+                            522720.61,
+                            530604.44,
+                            525590.57,
+                            544089.09,
+                        ],
+                    }
+                ),
+                "to_table_test_12",
+            ),
+            id="to_table_test_12",
+        ),
+        # Test 13: UnqualifiedRoot: Direct table reference (no transformations)
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_copy = pydough.to_table(nations, name='nations_t13', replace=True)\n"
+                "result = CROSS(nations_copy).CALCULATE(key, name).TOP_K(5, by=key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 1, 2, 3, 4],
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "EGYPT",
+                        ],
+                    }
+                ),
+                "to_table_test_13",
+            ),
+            id="to_table_test_13",
+        ),
+        # Test 14: UnqualifiedOrderBy: ORDER_BY collection to to_table,
+        # then TOP_K on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "sorted_nations = nations.ORDER_BY(name.DESC())\n"
+                "sorted_tmp = pydough.to_table(sorted_nations, name='sorted_nations_t14', temp=True, replace=True)\n"
+                "result = CROSS(sorted_tmp).CALCULATE(key, name).TOP_K(5, by=name.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [21, 24, 23, 20, 22],
+                        "name": [
+                            "VIETNAM",
+                            "UNITED STATES",
+                            "UNITED KINGDOM",
+                            "SAUDI ARABIA",
+                            "RUSSIA",
+                        ],
+                    }
+                ),
+                "to_table_test_14",
+            ),
+            id="to_table_test_14",
+        ),
+        # Test 15: UnqualifiedTopK: TOP_K before materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "top_nations = nations.TOP_K(3, by=key.ASC())\n"
+                "top_tmp = pydough.to_table(top_nations, name='top_nations_t15', temp=True)\n"
+                "result = CROSS(top_tmp).CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 1, 2],
+                        "name": ["ALGERIA", "ARGENTINA", "BRAZIL"],
+                    }
+                ),
+                "to_table_test_15",
+            ),
+            id="to_table_test_15",
+        ),
+        # Test 16: UnqualifiedPartition: PARTITION materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "nation_regions = nations.CALCULATE(nkey=key, rkey=region.key)"
+                ".PARTITION(name='by_region', by=rkey)\n"
+                "counts_tmp = pydough.to_table(nation_regions, name='region_counts_t16', replace=True)\n"
+                "result = CROSS(counts_tmp).CALCULATE(rkey).ORDER_BY(rkey.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                    }
+                ),
+                "to_table_test_16",
+            ),
+            id="to_table_test_16",
+        ),
+        # Test 17: UnqualifiedSingular: SINGULAR single-row materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "first_nation = nations.TOP_K(1, by=key.ASC()).SINGULAR()\n"
+                "first_tmp = pydough.to_table(first_nation, name='first_nation_t17', temp=True, replace=True)\n"
+                "result = CROSS(first_tmp).CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0],
+                        "name": ["ALGERIA"],
+                    }
+                ),
+                "to_table_test_17",
+            ),
+            id="to_table_test_17",
+        ),
+        # Test 18: UnqualifiedBest: BEST per group materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "best_nation_per_region = regions.nations"
+                ".BEST(by=key.ASC(), per='regions')\n"
+                "best_tmp = pydough.to_table(best_nation_per_region, name='best_nation_t18', temp=True)\n"
+                "result = CROSS(best_tmp).CALCULATE(key, name).ORDER_BY(key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 1, 4, 6, 8],
+                        "name": ["ALGERIA", "ARGENTINA", "EGYPT", "FRANCE", "INDIA"],
+                    }
+                ),
+                "to_table_test_18",
+            ),
+            id="to_table_test_18",
+        ),
+        # Test 19: to_table result as input
+        pytest.param(
+            PyDoughPandasTest(
+                "step1 = nations.WHERE(region.name == 'ASIA').CALCULATE(nkey=key, nname=name)\n"
+                "step1_tmp = pydough.to_table(step1, name='step1_t19', temp=True)\n"
+                "step2 = step1_tmp.WHERE(nkey < 15)\n"
+                "step2_tmp = pydough.to_table(step2, name='step2_t19', temp=True)\n"
+                "result = CROSS(step2_tmp).CALCULATE(nkey, nname).ORDER_BY(nkey.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nkey": [8, 9, 12],
+                        "nname": ["INDIA", "INDONESIA", "JAPAN"],
+                    }
+                ),
+                "to_table_test_19",
+            ),
+            id="to_table_test_19",
+        ),
+        # Test 20: range_collection + to_table
+        pytest.param(
+            PyDoughPandasTest(
+                "numbers = pydough.range_collection('nums', 'num', 1, 6, 1)\n"
+                "nums_tmp = pydough.to_table(numbers, name='nums_t20', replace=True)\n"
+                "result = CROSS(nums_tmp).CALCULATE(num).WHERE(num > 2)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "num": [3, 4, 5],
+                    }
+                ),
+                "to_table_test_20",
+            ),
+            id="to_table_test_20",
+        ),
+        # Test 21: dataframe_collection + to_table
+        pytest.param(
+            PyDoughPandasTest(
+                "users = pydough.dataframe_collection('users', users_df, ['user_id'])\n"
+                "users_tmp = pydough.to_table(users, name='users_t21', temp=True, replace=True)\n"
+                "result = CROSS(users_tmp).CALCULATE(user_id, user_name).ORDER_BY(user_id.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "user_id": [1, 2, 3],
+                        "user_name": ["Alice", "Bob", "Charlie"],
+                    }
+                ),
+                "to_table_test_21",
+                kwargs={
+                    "users_df": pd.DataFrame(
+                        {"user_id": [1, 2, 3], "user_name": ["Alice", "Bob", "Charlie"]}
+                    )
+                },
+            ),
+            id="to_table_test_21",
+        ),
+        # Test 22: Combined - range_collection + dataframe_collection + to_table
+        # Note: Need intermediate CALCULATE to project columns before second CROSS
+        pytest.param(
+            PyDoughPandasTest(
+                "multipliers = pydough.range_collection('mults', 'mult', 1, 4, 1)\n"
+                "mult_tmp = pydough.to_table(multipliers, name='mult_t22', replace=True)\n"
+                "products = pydough.dataframe_collection('products', products_df, ['pid'])\n"
+                "prod_tmp = pydough.to_table(products, name='prod_t22', replace=True)\n"
+                "result = CROSS(mult_tmp).CALCULATE(mult).CROSS(prod_tmp)"
+                ".CALCULATE(mult, pid, pname=product_name)"
+                ".ORDER_BY(mult.ASC(), pid.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "mult": [1, 1, 2, 2, 3, 3],
+                        "pid": [10, 20, 10, 20, 10, 20],
+                        "pname": [
+                            "Apple",
+                            "Banana",
+                            "Apple",
+                            "Banana",
+                            "Apple",
+                            "Banana",
+                        ],
+                    }
+                ),
+                "to_table_test_22",
+                kwargs={
+                    "products_df": pd.DataFrame(
+                        {"pid": [10, 20], "product_name": ["Apple", "Banana"]}
+                    )
+                },
+            ),
+            id="to_table_test_22",
+        ),
+        # Test 23: UnqualifiedCalculate + UnqualifiedPartition:
+        # WHERE + CALCULATE with relationship traversal,
+        # then PARTITION and COUNT on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
+                "result = CROSS(asian_tmp).PARTITION(name='by_nation', by=nation_key).CALCULATE(nation_key, cnt=COUNT(asian_tmp)).TOP_K(10, by=cnt.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_orders": [8, 8, 9, 9, 12, 12, 18, 18, 21, 21],
+                        "avg_price": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                    }
+                ),
+                "to_table_test_23",
+            ),
+            id="to_table_test_23",
+            marks=pytest.mark.skip("FIXME: Problem is test fails with MySQL only"),
+        ),
+    ],
+)
+def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests on custom queries using the TPC-H database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
+    """
+    return request.param
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_tpch_to_table(
+    tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    get_plan_test_filename: Callable[[str], str],
+    update_tests: bool,
+):
+    """
+    Test executing to_table e2e tests for the TPC-H database.
+    Plus, test/update expected SQL output for the to_table tests.
+    """
+    tpch_custom_pipeline_to_table_test_data.run_e2e_test(
+        get_sample_graph, sqlite_tpch_db_context, coerce_types=True
+    )
+
+    # Relational output
+    # relational_file_path: str = get_plan_test_filename(tpch_custom_pipeline_to_table_test_data.test_name)
+    # tpch_custom_pipeline_to_table_test_data.run_relational_test(
+    #     get_sample_graph, relational_file_path, update_tests
+    # )
+
+    # SQL output
+
+    tpch_custom_pipeline_to_table_test_data = (
+        tpch_custom_test_data_dialect_replacements(
+            sqlite_tpch_db_context.dialect, tpch_custom_pipeline_to_table_test_data
+        )
+    )
+
+    sql_file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_to_table_test_data.test_name,
+        sqlite_tpch_db_context.dialect,
+    )
+    tpch_custom_pipeline_to_table_test_data.run_sql_test(
+        get_sample_graph, sql_file_path, update_tests, sqlite_tpch_db_context
     )
 
 

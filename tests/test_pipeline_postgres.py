@@ -2,12 +2,15 @@
 Integration tests for the PyDough workflow on the TPC-H queries using Postgres.
 """
 
+from collections.abc import Callable
+
 import pandas as pd
 import pytest
 
 from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -596,4 +599,35 @@ def test_pipeline_e2e_postgres_custom_datasets(
 
     custom_datasets_test_data.run_e2e_test(
         get_custom_datasets_graph, postgres_conn_db_context, coerce_types=True
+    )
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_postgres_tpch_to_table(
+    tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    postgres_conn_db_context: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Test executing to_table e2e tests for the TPC-H database.
+    Plus, test/update expected SQL output for the to_table tests.
+    """
+    tpch_custom_pipeline_to_table_test_data.run_e2e_test(
+        get_sample_graph, postgres_conn_db_context, coerce_types=True
+    )
+
+    tpch_custom_pipeline_to_table_test_data = (
+        tpch_custom_test_data_dialect_replacements(
+            postgres_conn_db_context.dialect, tpch_custom_pipeline_to_table_test_data
+        )
+    )
+
+    file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_to_table_test_data.test_name,
+        postgres_conn_db_context.dialect,
+    )
+    tpch_custom_pipeline_to_table_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, postgres_conn_db_context
     )

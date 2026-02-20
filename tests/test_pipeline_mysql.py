@@ -10,6 +10,7 @@ import pytest
 from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -603,4 +604,37 @@ def test_pipeline_e2e_mysql_custom_datasets(
         get_custom_datasets_graph,
         mysql_conn_db_context(custom_datasets_test_data.graph_name.lower()),
         coerce_types=True,
+    )
+
+
+@pytest.mark.mysql
+@pytest.mark.execute
+def test_pipeline_e2e_mysql_tpch_to_table(
+    tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    mysql_conn_db_context: Callable[[str], DatabaseContext],
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Test executing to_table e2e tests for the TPC-H database.
+    Plus, test/update expected SQL output for the to_table tests.
+    """
+    tpch_custom_pipeline_to_table_test_data.run_e2e_test(
+        get_sample_graph, mysql_conn_db_context("tpch"), coerce_types=True
+    )
+
+    tpch_custom_pipeline_to_table_test_data = (
+        tpch_custom_test_data_dialect_replacements(
+            mysql_conn_db_context("tpch").dialect,
+            tpch_custom_pipeline_to_table_test_data,
+        )
+    )
+
+    file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_to_table_test_data.test_name,
+        mysql_conn_db_context("tpch").dialect,
+    )
+    tpch_custom_pipeline_to_table_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, mysql_conn_db_context("tpch")
     )
