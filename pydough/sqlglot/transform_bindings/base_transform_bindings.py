@@ -28,6 +28,7 @@ from pydough.types import (
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.user_collections.view_collection import ViewGeneratedCollection
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
@@ -2233,7 +2234,8 @@ class BaseTransformBindings:
         collection: PyDoughUserGeneratedCollection,
     ) -> SQLGlotExpression:
         """
-        Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
+        Converts a user-generated collection (e.g., range, dataframe, or
+        [temporary] view/table) into a SQLGlot expression.
 
         Args:
             `collection`: The user-generated collection to convert.
@@ -2242,17 +2244,22 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the user-generated collection.
         """
 
-        # Rename the collection to ensure it is unique in the query,
-        # to avoid naming conflicts with other collections.
-        collection.name = rename_user_collection(
-            self.known_collections, collection.name
-        )
+        if not isinstance(collection, ViewGeneratedCollection):
+            # For views/tables, don't rename because these are actual database
+            # table names, not generated aliases.
+            # Rename range/dataframe collection to ensure it is unique in the query,
+            # to avoid naming conflicts with other collections.
+            collection.name = rename_user_collection(
+                self.known_collections, collection.name
+            )
 
         match collection:
             case RangeGeneratedCollection():
                 return self.convert_user_generated_range(collection)
             case DataframeGeneratedCollection():
                 return self.convert_user_generated_dataframe(collection)
+            case ViewGeneratedCollection():
+                return self.convert_user_generated_view(collection)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
@@ -2302,6 +2309,37 @@ class BaseTransformBindings:
             collection.columns,
             dataframe_rows,
             self,
+        )
+
+        return result
+
+    def convert_user_generated_view(
+        self, collection: ViewGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated view/table collection to its SQLGlot
+        representation. Since the view/table already exists in the database,
+        we just generate a SELECT from the view/table name.
+
+        Args:
+            `collection`: The user-generated view collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing a SELECT from the view/table.
+        """
+
+        # Create the table reference
+        # Handle qualified names like "db.schema.table"
+        table_ref = sqlglot_expressions.to_table(collection.name)
+
+        # Build SELECT col1, col2, ... FROM view_name
+        # We must explicitly select columns (not SELECT *) so that the
+        # column names are available for merging selects in the SQL generator
+        column_exprs = [
+            sqlglot_expressions.column(col_name) for col_name in collection.columns
+        ]
+        result: SQLGlotExpression = (
+            sqlglot_expressions.Select().select(*column_exprs).from_(table_ref)
         )
 
         return result

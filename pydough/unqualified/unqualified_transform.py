@@ -11,6 +11,7 @@ import inspect
 import types
 from typing import Any
 
+from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
 
@@ -423,6 +424,7 @@ def from_string(
     answer_variable: str | None = None,
     metadata: GraphMetadata | None = None,
     environment: dict[str, Any] | None = None,
+    session: PyDoughSession | None = None,
 ) -> UnqualifiedNode:
     """
     Parses and transforms a PyDough source string, returning an unqualified node
@@ -439,6 +441,11 @@ def from_string(
         `environment`: A dictionary of variables that will be available
         in the environment where the PyDough code is executed. If not provided,
         uses an empty dictionary.
+        `session`: A PyDoughSession to use during execution. If provided, this
+        session will be temporarily bound to `pydough.active_session` during
+        code execution, allowing functions like `pydough.to_table` to access
+        the database connection. If not provided, only metadata is temporarily
+        set on the active session.
 
     Returns:
         A PyDough UnualifiedNode object representing the result of the
@@ -446,9 +453,12 @@ def from_string(
     """
     import pydough
 
-    # Verify if graph is provided. Otherwise use pydough.active_session.metadata
+    # If session is provided, use its metadata if metadata is not explicitly provided
     if metadata is None:
-        metadata = pydough.active_session.metadata
+        if session is not None:
+            metadata = session.metadata
+        else:
+            metadata = pydough.active_session.metadata
         if metadata is None:
             raise ValueError(
                 "No active graph set in PyDough session."
@@ -464,7 +474,9 @@ def from_string(
         answer_variable = "result"
 
     # Transform PyDough code into valid Python code
-    known_names: set[str] = set(environment.keys())
+    # Include "pydough" as a known name so that pydough.to_table, etc. are not
+    # transformed into _ROOT.pydough.to_table
+    known_names: set[str] = set(environment.keys()) | {"pydough"}
     graph_name: str = "_graph"
     visitor: ast.NodeTransformer = AddRootVisitor(graph_name, known_names)
     try:
@@ -483,8 +495,26 @@ def from_string(
         compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
     except SyntaxError as e:
         raise ValueError(f"Syntax error in transformed PyDough code:\n{str(e)}") from e
-    execution_context: dict[str, Any] = environment | {graph_name: metadata}
-    exec(compile_ast, {}, execution_context)
+    execution_context: dict[str, Any] = environment | {
+        graph_name: metadata,
+        "pydough": pydough,
+    }
+    # Temporarily set the active session (or just metadata) so that functions like
+    # pydough.to_table can access session info during execution
+    old_session = pydough.active_session
+    try:
+        if session is not None:
+            # Use the provided session temporarily
+            pydough.active_session = session
+        else:
+            # Just set the metadata on the existing session
+            pydough.active_session.metadata = metadata
+        exec(compile_ast, {}, execution_context)
+    finally:
+        if session is not None:
+            pydough.active_session = old_session
+        else:
+            pydough.active_session.metadata = old_session.metadata
 
     # Check if answer_variable exists in execution_context after code execution
     if answer_variable not in execution_context:

@@ -76,6 +76,44 @@ class DatabaseConnection:
             data = self.cursor.fetchall()
             return pd.DataFrame(data, columns=column_names)
 
+    def execute_ddl(self, sql: str) -> None:
+        """Create a cursor object using the connection and execute the DDL query.
+
+        Args:
+            `sql`: The DDL SQL query to execute.
+        """
+        self._cursor = self._connection.cursor()
+        try:
+            self.cursor.execute(sql)
+            self._connection.commit()
+        except Exception as e:
+            print(f"ERROR WHILE EXECUTING DDL:\n{sql}")
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                sql, e, False
+            ) from e
+
+    def get_table_columns(self, table_name: str) -> pd.DataFrame:
+        """Get the columns of a table.
+
+        Args:
+            `table_name`: The name of the table to get the schema for.
+        Returns:
+            A list of column names in the table.
+        """
+        self._cursor = self._connection.cursor()
+        try:
+            # This is a generic query that should work on most databases to get
+            # the schema of a table. It may need to be customized for specific
+            # databases.
+            self.cursor.execute(f"SELECT * FROM {table_name} LIMIT 0")
+            column_names = [description[0] for description in self.cursor.description]
+            return column_names
+        except Exception as e:
+            print(f"ERROR WHILE GETTING COLUMN NAMES FOR TABLE {table_name}")
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                f"Failed to get column names for table {table_name}", e, False
+            ) from e
+
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
 

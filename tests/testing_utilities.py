@@ -44,10 +44,10 @@ import pytest
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough import init_pydough_context, to_df, to_sql
+from pydough import init_pydough_context, to_df, to_sql, to_table
 from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.errors import PyDoughTestingException
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.mask_server import MaskServerInfo
@@ -950,6 +950,7 @@ def transform_and_exec_pydough(
     pydough_impl: Callable[..., UnqualifiedNode] | str,
     graph: GraphMetadata,
     kwargs: dict | None,
+    session: PyDoughSession | None = None,
 ) -> UnqualifiedNode:
     """
     Obtains the unqualified node from a PyDough function by invoking the
@@ -962,6 +963,9 @@ def transform_and_exec_pydough(
         `graph`: The metadata being used.
         `kwargs`: The keyword arguments to pass to the PyDough function, if
         any.
+        `session`: An optional PyDoughSession to use during string execution.
+        This allows functions like `pydough.to_table` to access database
+        connections when called within string code.
 
     Returns:
         The unqualified node created by running the transformed version of
@@ -970,9 +974,11 @@ def transform_and_exec_pydough(
     kwargs = kwargs if kwargs is not None else {}
     if isinstance(pydough_impl, str):
         # If the pydough_impl is a string, parse it with pydough.from_string.
-        return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
+        return pydough.from_string(
+            pydough_impl, metadata=graph, environment=kwargs, session=session
+        )
     else:
-        # OTherwise, transform the function with the decorator and call it.
+        # Otherwise, transform the function with the decorator and call it.
         return init_pydough_context(graph)(pydough_impl)(**kwargs)
 
 
@@ -1050,8 +1056,15 @@ class PyDoughSQLComparisonTest:
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+        # Create a session with the database so that functions like pydough.to_table
+        # can access it when called within string code
+        session = PyDoughSession()
+        session.metadata = graph
+        session.database = database
+        if config is not None:
+            session.config = config
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, None
+            self.pydough_function, graph, None, session=session
         )
 
         # Obtain the DataFrame result from the PyDough code
@@ -1329,10 +1342,27 @@ class PyDoughPandasTest:
             solution DataFrames to ensure compatibility.
             `max_rows`: The maximum number of rows to return from the query.
         """
+        # Skip Snowflake since TPCH is shared database and we can't write to it
+        if (
+            database.dialect == DatabaseDialect.SNOWFLAKE
+            and self.graph_name == "TPCH"
+            and self.test_name.startswith("to_table")
+        ):
+            pytest.skip("""Skipping Snowflake TPCH to_table tests since it uses
+            the Snowflake TPCH database which we don't have write access to.""")
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+        # Create a session with the database so that functions like pydough.to_table
+        # can access it when called within string code
+        session = PyDoughSession()
+        session.metadata = graph
+        session.database = database
+        if config is not None:
+            session.config = config
+        if mask_server is not None:
+            session.mask_server = mask_server
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, self.kwargs
+            self.pydough_function, graph, self.kwargs, session=session
         )
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {
@@ -1384,6 +1414,80 @@ class PyDoughPandasTest:
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )
+
+    def run_e2e_test_to_table(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        as_view: bool = False,
+        replace: bool = False,
+        temp: bool = False,
+        config: PyDoughConfigs | None = None,
+    ) -> None:
+        """
+        Runs an end-to-end test using `to_table` to ensure DDL is generated correctly,
+        comparing the result of the PyDough code against the reference solution.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `database`: The database context to use for executing SQL.
+            `config`: The PyDough configuration to use for the test, if any.
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
+
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}"
+        collection = to_table(
+            root,
+            name=table_name,
+            as_view=as_view,
+            replace=replace,
+            temp=temp,
+            **call_kwargs,
+        )
+        # to_table returns an UnqualifiedGeneratedCollection wrapping a ViewGeneratedCollection
+        from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+
+        assert isinstance(collection, UnqualifiedGeneratedCollection), (
+            "to_table did not return an UnqualifiedGeneratedCollection as expected"
+        )
+        # Access the inner PyDoughUserGeneratedCollection to get columns
+        inner_collection = collection._parcel[0]
+        verify_table_created_correctly(database, table_name, inner_collection.columns)
+
+
+def verify_table_created_correctly(
+    database: DatabaseContext,
+    table_name: str,
+    expected_columns: list[str] | None = None,
+) -> None:
+    """
+    Verifies that a table was created correctly in the database by comparing the actual schema of the table against the expected schema.
+
+    Args:
+        `database`: The database context to use for executing SQL.
+        `table_name`: The name of the table to verify.
+        `expected_schema`: A dictionary mapping column names to expected data types.
+    """
+    # Query the database for the schema of the created table
+    actual_table_columns = database.connection.get_table_columns(table_name)
+    # Compare the actual columns against the expected columns
+    assert actual_table_columns == expected_columns, (
+        f"Columns of table {table_name} do not match expected columns. Actual: {actual_table_columns}, Expected: {expected_columns}"
+    )
+    # Anything else to verify about the created table can be added here,
+    # such as checking if it's a view or a temp table, etc.?
+    # I didn't add datatype verification because that needs changes to the way
+    # DDL is generated in PyDough to ensure we have the expected data types
+    # available in the test, which is a larger change that I wanted to avoid
+    # for now. Plus will vary across dialects.
 
 
 def harmonize_types(column_a, column_b):

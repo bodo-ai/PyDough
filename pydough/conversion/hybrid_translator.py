@@ -1569,9 +1569,14 @@ class HybridTranslator:
                 hybrid_collection = HybridUserGeneratedCollection(node)
                 # Create a new hybrid tree for the user-generated collection.
                 successor_hybrid = HybridTree(hybrid_collection, node.ancestral_mapping)
-                hybrid = self.make_hybrid_tree(
-                    node.ancestor_context, parent, is_aggregate
-                )
+                # Handle the case where the ancestor is a ChildOperatorChildAccess
+                # (which happens when using CROSS at the top level with a
+                # generated collection). In that case, unwrap it and process the
+                # inner child_access (typically a GlobalContext).
+                ancestor_context = node.ancestor_context
+                if isinstance(ancestor_context, ChildOperatorChildAccess):
+                    ancestor_context = ancestor_context.child_access
+                hybrid = self.make_hybrid_tree(ancestor_context, parent, is_aggregate)
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case ChildOperatorChildAccess():
