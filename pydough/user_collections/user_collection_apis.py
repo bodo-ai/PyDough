@@ -6,6 +6,12 @@ __all__ = ["dataframe_collection", "range_collection"]
 
 import pandas as pd
 
+from pydough.errors.error_utils import (
+    NonEmptyListOf,
+    ValidSQLName,
+    is_string,
+    unique_properties_predicate,
+)
 from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -70,27 +76,39 @@ def dataframe_collection(
     Returns:
         A collection with the given dataframe.
     """
+    # Validate name
     if not isinstance(name, str):
         raise TypeError(f"Expected 'name' to be a string, got {type(name).__name__}")
+
+    if not ValidSQLName().is_valid_sql_identifier(name):
+        raise ValueError(
+            f"Invalid collection name '{name}'. Must be a valid SQL identifier."
+        )
+
+    # Validate dataframe
     if not isinstance(dataframe, pd.DataFrame):
         raise TypeError(
             f"Expected 'dataframe' to be a Pandas DataFrame, got {type(dataframe).__name__}"
         )
-    if not DataframeGeneratedCollection.valid_unique_column_names(unique_column_names):
-        raise TypeError(
-            f"Expected 'unique_column_names' to be list[list | list[str]], got {type(unique_column_names).__name__}"
+
+    NonEmptyListOf(is_string).verify(list(dataframe.columns), "dataframe columns")
+
+    invalid_cols = [
+        col
+        for col in list(dataframe.columns)
+        if not ValidSQLName().is_valid_sql_identifier(col)
+    ]
+    if len(invalid_cols) > 0:
+        raise ValueError(
+            f"Invalid column name(s) in dataframe: {', '.join(invalid_cols)}. "
+            f"All column names must be valid SQL identifiers."
         )
 
-    if not isinstance(column_subset, list):
-        raise TypeError(
-            f"Expected 'column_subset' to be a list, got {type(column_subset).__name__}"
-        )
+    if len(dataframe) == 0:
+        raise ValueError("DataFrame has no rows. Must have at least one row.")
 
-    if not all(isinstance(col, str) for col in column_subset):
-        raise TypeError(
-            "Expected 'column_subset' to be a list of string, "
-            "but found non-string element(s)"
-        )
+    # Validate unique_column_names
+    unique_properties_predicate.verify(unique_column_names, "unique_column_names")
 
     unique_flatten_columns: list[str] = [
         col
@@ -108,7 +126,11 @@ def dataframe_collection(
         )
 
     # All unique_columns must be inside column_subset
+
     if len(column_subset) > 0:
+        # Validate column_subset
+        NonEmptyListOf(is_string).verify(column_subset, "column_subset")
+
         missing_columns = set(unique_flatten_columns) - set(column_subset)
 
         if missing_columns:

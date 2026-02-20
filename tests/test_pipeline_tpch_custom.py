@@ -203,6 +203,7 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_bad_14,
     dataframe_collection_bad_15,
     dataframe_collection_bad_16,
+    dataframe_collection_bad_17,
     dataframe_collection_best,
     dataframe_collection_correlation,
     dataframe_collection_cross,
@@ -4370,7 +4371,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "user_id": [1, 2, 3, 4],
                         "signup_date": pd.to_datetime(
                             [
                                 "2024-01-10",
@@ -4379,6 +4379,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                                 "2024-02-01",
                             ]
                         ),
+                        "user_id": [1, 2, 3, 4],
                     }
                 ),
                 "simple_dataframe_collection_2",
@@ -5574,7 +5575,9 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             dataframe_collection_bad_4,
             None,
-            re.escape("DataFrame is empty. Must have at least one non-empty column."),
+            re.escape(
+                "dataframe columns must be a non-empty list where each element must be a string"
+            ),
             id="dataframe_collection_bad_4",
         ),
         pytest.param(
@@ -5604,14 +5607,16 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             dataframe_collection_bad_8,
             None,
-            re.escape("Expected 'column_subset' to be a list, got str"),
+            re.escape(
+                "column_subset must be a non-empty list where each element must be a string"
+            ),
             id="dataframe_collection_bad_8",
         ),
         pytest.param(
             dataframe_collection_bad_9,
             None,
             re.escape(
-                "Expected 'column_subset' to be a list of string, but found non-string element(s)"
+                "column_subset must be a non-empty list where each element must be a string"
             ),
             id="dataframe_collection_bad_9",
         ),
@@ -5648,20 +5653,34 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             dataframe_collection_bad_14,
             None,
-            re.escape("Duplicate column names found: ['id', 'id']"),
+            re.escape(
+                "Invalid column name(s) in dataframe: 1thcolumn, column-name, user@name. All column names must be valid SQL identifiers."
+            ),
             id="dataframe_collection_bad_14",
         ),
         pytest.param(
             dataframe_collection_bad_15,
             None,
-            re.escape("Duplicate column names found: ['id', 'id']"),
+            re.escape(
+                "unique_column_names must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string"
+            ),
             id="dataframe_collection_bad_15",
         ),
         pytest.param(
             dataframe_collection_bad_16,
             None,
-            re.escape("Duplicate column names found: ['id', 'id']"),
+            re.escape(
+                "unique_column_names must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string"
+            ),
             id="dataframe_collection_bad_16",
+        ),
+        pytest.param(
+            dataframe_collection_bad_17,
+            None,
+            re.escape(
+                "dataframe columns must be a non-empty list where each element must be a string"
+            ),
+            id="dataframe_collection_bad_17",
         ),
     ],
 )

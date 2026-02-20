@@ -202,7 +202,7 @@ def simple_dataframe_collection_2():
         name="users",
         dataframe=df,
         unique_column_names=["user_id"],
-        column_subset=["user_id", "signup_date"],
+        column_subset=["signup_date", "user_id"],
     )
 
 
@@ -215,6 +215,33 @@ def simple_dataframe_collection_3():
             '"`name""["': ["Alice", "Bob", "Charlie", "David"],
             '"space country"': ["US", "CR", "US", "MX"],
             '"CAST"': [25, 30, 22, 30],
+        }
+    )
+
+    return pydough.dataframe_collection(
+        name="users",
+        dataframe=df,
+        unique_column_names=["user_id"],
+    )
+
+
+def simple_dataframe_collection_4():
+    # Dataframe collection with a dataframe with invalid datatypes but
+    # those are not selected to the final dataframe collection because of
+    # the column_subset parameter, so it should work without errors
+    df = pd.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            "country": ["US", "CR", "US", "MX"],
+            "age": [25, 30, 22, 30],
+            "signup_date": pd.to_datetime(
+                [
+                    "2024-01-10",
+                    "2024-01-12",
+                    "2024-02-01",
+                    "2024-02-01",
+                ]
+            ),
         }
     )
 
@@ -887,7 +914,7 @@ def dataframe_collection_bad_3():
 def dataframe_collection_bad_4():
     # Empty dataframe
     df_empty = pd.DataFrame({})
-    return pydough.dataframe_collection("empty_df", df_empty, [])
+    return pydough.dataframe_collection("empty_df", df_empty, ["id"])
 
 
 def dataframe_collection_bad_5():
@@ -1035,6 +1062,21 @@ def dataframe_collection_bad_16():
         {
             "id": [1, 2, 3, 4, 5],
             "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df",
+        df_unsupported,
+        ["id", []],
+    )
+
+
+def dataframe_collection_bad_17():
+    # Columns are not valid sql identifiers
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            1: ["John", "Jane", "Mike", "David", "Tom"],
         }
     )
     return pydough.dataframe_collection(

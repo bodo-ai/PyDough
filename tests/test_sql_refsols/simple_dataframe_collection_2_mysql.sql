@@ -1,8 +1,8 @@
 SELECT
-  users.user_id,
-  users.signup_date
+  users.signup_date,
+  users.user_id
 FROM (VALUES
-  ROW(1, CAST('2024-01-10 00:00:00' AS DATETIME)),
-  ROW(2, CAST('2024-01-12 00:00:00' AS DATETIME)),
-  ROW(3, CAST('2024-02-01 00:00:00' AS DATETIME)),
-  ROW(4, CAST('2024-02-01 00:00:00' AS DATETIME))) AS users(user_id, signup_date)
+  ROW(CAST('2024-01-10 00:00:00' AS DATETIME), 1),
+  ROW(CAST('2024-01-12 00:00:00' AS DATETIME), 2),
+  ROW(CAST('2024-02-01 00:00:00' AS DATETIME), 3),
+  ROW(CAST('2024-02-01 00:00:00' AS DATETIME), 4)) AS users(signup_date, user_id)
