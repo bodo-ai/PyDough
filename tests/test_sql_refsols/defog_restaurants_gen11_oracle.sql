@@ -1,15 +1,3 @@
-WITH "_S0" AS (
-  SELECT
-    COUNT(*) AS N_ROWS
-  FROM MAIN.RESTAURANT
-  WHERE
-    rating > 4.5
-), "_S1" AS (
-  SELECT
-    COUNT(*) AS N_ROWS
-  FROM MAIN.RESTAURANT
-)
 SELECT
-  "_S0".N_ROWS / NULLIF("_S1".N_ROWS, 0) AS ratio
-FROM "_S0" "_S0"
-CROSS JOIN "_S1" "_S1"
+  SUM(rating > 4.5) / NULLIF(COUNT(*), 0) AS ratio
+FROM MAIN.RESTAURANT

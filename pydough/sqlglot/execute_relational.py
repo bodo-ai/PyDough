@@ -359,9 +359,11 @@ def fix_column_case(
             # Handle expressions with aliases
             if isinstance(expr, Alias):
                 identifier = expr.args.get("alias")
+                quoted = quoted or identifier.args.get("quoted", False)
                 identifier.set("this", col_name)
                 identifier.set("quoted", quoted)
             elif isinstance(expr, Column):
+                quoted = quoted or expr.this.this.args.get("quoted", False)
                 expr.this.this.set("this", col_name)
                 expr.this.this.set("quoted", quoted)
 

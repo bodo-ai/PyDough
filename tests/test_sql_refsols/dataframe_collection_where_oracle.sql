@@ -1,0 +1,65 @@
+WITH "_S1" AS (
+  SELECT
+    s_acctbal AS S_ACCTBAL,
+    s_nationkey AS S_NATIONKEY
+  FROM TPCH.SUPPLIER
+), "_S2" AS (
+  SELECT
+    n_nationkey AS N_NATIONKEY,
+    n_regionkey AS N_REGIONKEY
+  FROM TPCH.NATION
+), "_S3" AS (
+  SELECT
+    r_name AS R_NAME,
+    r_regionkey AS R_REGIONKEY
+  FROM TPCH.REGION
+), "_S5" AS (
+  SELECT
+    "_S2".N_NATIONKEY,
+    "_S3".R_NAME
+  FROM "_S2" "_S2"
+  JOIN "_S3" "_S3"
+    ON "_S2".N_REGIONKEY = "_S3".R_REGIONKEY
+), "_S12" AS (
+  SELECT DISTINCT
+    "_S5".R_NAME
+  FROM (VALUES
+    ('AFRICA', 5000.32),
+    ('AMERICA', 8000.0),
+    ('ASIA', 4600.32),
+    ('EUROPE', 6400.5),
+    ('MIDDLE EAST', 8999.99)) AS THRESHOLDS_COLLECTION(REGION_NAME, MIN_ACCOUNT_BALANCE)
+  JOIN "_S1" "_S1"
+    ON COLUMN2 < "_S1".S_ACCTBAL
+  JOIN "_S5" "_S5"
+    ON COLUMN1 = "_S5".R_NAME AND "_S1".S_NATIONKEY = "_S5".N_NATIONKEY
+), "_S11" AS (
+  SELECT
+    "_S8".N_NATIONKEY,
+    "_S9".R_NAME
+  FROM "_S2" "_S8"
+  JOIN "_S3" "_S9"
+    ON "_S8".N_REGIONKEY = "_S9".R_REGIONKEY
+), "_S13" AS (
+  SELECT
+    "_S11".R_NAME,
+    COUNT(*) AS N_ROWS
+  FROM (VALUES
+    ('AFRICA', 5000.32),
+    ('AMERICA', 8000.0),
+    ('ASIA', 4600.32),
+    ('EUROPE', 6400.5),
+    ('MIDDLE EAST', 8999.99)) AS THRESHOLDS_COLLECTION_2(REGION_NAME, MIN_ACCOUNT_BALANCE)
+  JOIN "_S1" "_S7"
+    ON COLUMN2 < "_S7".S_ACCTBAL
+  JOIN "_S11" "_S11"
+    ON COLUMN1 = "_S11".R_NAME AND "_S11".N_NATIONKEY = "_S7".S_NATIONKEY
+  GROUP BY
+    "_S11".R_NAME
+)
+SELECT
+  "_S12".R_NAME AS sup_region_name,
+  "_S13".N_ROWS AS n_suppliers
+FROM "_S12" "_S12"
+JOIN "_S13" "_S13"
+  ON "_S12".R_NAME = "_S13".R_NAME

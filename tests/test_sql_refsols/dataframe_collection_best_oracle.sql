@@ -1,0 +1,32 @@
+WITH "_S1" AS (
+  SELECT
+    COLUMN1 AS PRIORITY_LVL,
+    COLUMN2 AS TAX_RATE
+  FROM (VALUES
+    ('1-URGENT', 0.05),
+    ('2-HIGH', 0.04),
+    ('3-MEDIUM', 0.03),
+    ('4-NOT SPECIFIED', 0.02)) AS PRIORITY_TAXES(PRIORITY_LVL, TAX_RATE)
+), "_T" AS (
+  SELECT
+    ORDERS.o_custkey AS O_CUSTKEY,
+    ORDERS.o_orderkey AS O_ORDERKEY,
+    ORDERS.o_orderpriority AS O_ORDERPRIORITY,
+    ORDERS.o_totalprice AS O_TOTALPRICE,
+    "_S1".TAX_RATE,
+    ROW_NUMBER() OVER (PARTITION BY ORDERS.o_orderkey ORDER BY ORDERS.o_totalprice + ORDERS.o_totalprice * "_S1".TAX_RATE) AS "_W"
+  FROM TPCH.ORDERS ORDERS
+  JOIN "_S1" "_S1"
+    ON ORDERS.o_orderpriority = "_S1".PRIORITY_LVL
+)
+SELECT
+  CUSTOMER.c_name AS name,
+  "_T".O_ORDERKEY AS order_key,
+  "_T".O_ORDERPRIORITY AS order_priority,
+  "_T".O_TOTALPRICE + "_T".O_TOTALPRICE * "_T".TAX_RATE AS cheapest_order_price
+FROM TPCH.CUSTOMER CUSTOMER
+JOIN "_T" "_T"
+  ON CUSTOMER.c_custkey = "_T".O_CUSTKEY AND "_T"."_W" = 1
+ORDER BY
+  4 NULLS FIRST
+FETCH FIRST 5 ROWS ONLY

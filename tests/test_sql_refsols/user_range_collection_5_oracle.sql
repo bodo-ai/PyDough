@@ -1,6 +1,7 @@
-WITH "_S2" AS (
+WITH "_S3" AS (
   SELECT
-    COLUMN1 AS PART_SIZE
+    COLUMN1 AS PART_SIZE,
+    COUNT(*) AS N_ROWS
   FROM (VALUES
     (1),
     (6),
@@ -13,24 +14,31 @@ WITH "_S2" AS (
     (41),
     (46),
     (51),
-    (56)) AS SIZES(PART_SIZE)
-), "_S3" AS (
-  SELECT
-    "_S0".PART_SIZE,
-    COUNT(*) AS N_ROWS
-  FROM "_S2" "_S0"
+    (56)) AS SIZES_2(PART_SIZE)
   JOIN TPCH.PART PART
-    ON PART.p_name LIKE '%almond%'
+    ON COLUMN1 <= PART.p_size
+    AND PART.p_name LIKE '%almond%'
     AND PART.p_size <= (
-      "_S0".PART_SIZE + 4
+      COLUMN1 + 4
     )
-    AND PART.p_size >= "_S0".PART_SIZE
   GROUP BY
-    "_S0".PART_SIZE
+    COLUMN1
 )
 SELECT
-  "_S2".PART_SIZE AS part_size,
+  COLUMN1 AS part_size,
   COALESCE("_S3".N_ROWS, 0) AS n_parts
-FROM "_S2" "_S2"
+FROM (VALUES
+  (1),
+  (6),
+  (11),
+  (16),
+  (21),
+  (26),
+  (31),
+  (36),
+  (41),
+  (46),
+  (51),
+  (56)) AS SIZES(PART_SIZE)
 LEFT JOIN "_S3" "_S3"
-  ON "_S2".PART_SIZE = "_S3".PART_SIZE
+  ON COLUMN1 = "_S3".PART_SIZE
