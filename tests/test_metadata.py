@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
+import json
 
 from pydough import parse_metadata_from_list
 from pydough.errors import PyDoughMetadataException
@@ -490,3 +491,53 @@ def test_parse_from_list(
             match=f"PyDough metadata graph '{graph_name}' not found in list",
         ):
             parse_metadata_from_list(json_list, graph_name)
+
+
+@pytest.mark.parametrize(
+    "graph_name, json_str, error_msg",
+    [
+        pytest.param(
+            "json_array",
+            '[{"name": "json_array", "version": "V2", "collections": [], "relationships": []}]',
+            None,
+            id="correct-json-array",
+        ),
+        pytest.param(
+            "Not_A_List",
+            '{"name": "not_a_list", "version": "V2", "collections": [], "relationships": []}',
+            "PyDough metadata is expected to be a JSON array containing JSON objects representing metadata graphs, received: dict.",
+            id="not-a-list",
+        ),
+        pytest.param(
+            "not_found",
+            '[{"name": "json_array", "version": "V2", "collections": [], "relationships": []}]',
+            "PyDough metadata graph 'not_found' not found in list",
+            id="graph-not-found",
+        ),
+    ],
+)
+def test_parse_from_list_inline(
+    graph_name: str,
+    json_str: str,
+    error_msg: str | None
+) -> None:
+    """
+    Tests that parse_metadata_from_list successfully extracts a valid graph
+    from a properly formatted list of metadata dictionaries.
+
+    Verifies:
+    - The function returns a GraphMetadata object
+    - The returned graph has the correct name
+    """
+    graph: GraphMetadata
+    metadata: Any = json.loads(json_str)
+    if not error_msg:
+        graph = parse_metadata_from_list(metadata, graph_name)
+        assert graph.name == graph_name
+    else:
+        with pytest.raises(
+            PyDoughMetadataException,
+            match=error_msg,
+        ):
+            graph = parse_metadata_from_list(metadata, graph_name)
+            assert graph.name == graph_name
