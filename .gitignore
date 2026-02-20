@@ -28,6 +28,7 @@ MANIFEST
 test-output.xml
 *.db
 tests/gen_data/corpus_iceberg/
+tests/gen_data/fashion_iceberg/
 demos/notebooks/creds.json
 
 # PyInstaller

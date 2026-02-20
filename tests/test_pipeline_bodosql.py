@@ -10,6 +10,13 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 import datetime
+import logging
+import subprocess
+import sys
+import bodo
+from io import StringIO
+from bodo.spawn.utils import set_global_config
+from pydough.logger import get_logger
 from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.database_connectors import DatabaseContext
@@ -22,7 +29,7 @@ import shutil
 from pyiceberg.schema import Schema as IcebergSchema
 from pyiceberg.partitioning import PartitionSpec, PartitionField
 
-from tests.testing_utilities import graph_fetcher
+from tests.testing_utilities import graph_fetcher, temp_env_override
 import numpy as np
 import numpy.typing as npt
 
@@ -39,7 +46,27 @@ from pyarrow.csv import read_csv as pyarrow_read_csv
 
 
 @pytest.fixture(scope="session")
-def bodosql_color_ctx() -> BodoSQLContext:
+def bodosql_setup():
+    """
+    Set certain configurations for Bodo/BodoSQL before any tests are run, and
+    reset them back to their original values after all tests are done.
+    """
+    old_bodo_sql_style = bodo.bodo_sql_style
+    old_spawn_mode = bodo.spawn_mode
+    spawner = bodo.spawn.spawner.get_spawner()
+    set_global_config("bodo.bodo_sql_style", "SPARK")
+    spawner.set_config("bodo.bodo_sql_style", "SPARK")
+    set_global_config("bodo.spawn_mode", False)
+    spawner.set_config("bodo.spawn_mode", False)
+    yield
+    set_global_config("bodo.bodo_sql_style", old_bodo_sql_style)
+    spawner.set_config("bodo.bodo_sql_style", old_bodo_sql_style)
+    set_global_config("bodo.spawn_mode", old_spawn_mode)
+    spawner.set_config("bodo.spawn_mode", old_spawn_mode)
+
+
+@pytest.fixture(scope="session")
+def bodosql_color_ctx(bodosql_setup) -> BodoSQLContext:
     """
     BodoSQL Context definition for the COLORSHOP dataset, which is a locally
     defined series of tables:
@@ -202,7 +229,7 @@ def bodosql_color_ctx() -> BodoSQLContext:
 
 
 @pytest.fixture(scope="session")
-def bodosql_corpus_ctx() -> BodoSQLContext:
+def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
     """
     BodoSQL Context definition for the CORPUS dataset, which is defined via
     a filesystem Iceberg catalog and has the following tables:
@@ -251,11 +278,7 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
                 .commit()
             )
 
-            # Load the data to the Iceberg table
-            dict_table.append(dict_pyarrow)
-
-            # Create the Iceberg table definition for the Shakespeare table, and
-            # load the data into it.
+            # Create the Iceberg table definition for the Shakespeare table.
             shake_table: IcebergTable = dircat.create_table(
                 "SHAKE",
                 schema=shake_pyarrow.schema,
@@ -271,9 +294,6 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
                 .commit()
             )
 
-            # Load the data to the Iceberg table
-            shake_table.append(shake_pyarrow)
-
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
             # warehouse directory if it was created.
@@ -281,26 +301,31 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
                 shutil.rmtree(warehouse_loc)
             raise e
 
-    # Create the catalog/context pointing to the location of the database.
+    # Create the catalog/context pointing to the location of the database, with
+    # dummy local tables for the two tables which will later be used to populate
+    # the Iceberg tables if regeneration is needed. These dummy tables contain
+    # the real data but are only used so that the BodoSQLContext can use them
+    # as a read source to write into the Iceberg tables.
     catalog = FileSystemCatalog(warehouse_loc)
-    bc: BodoSQLContext = BodoSQLContext(catalog=catalog)
+    temp_tables: dict[str, pd.DataFrame] = {}
+    if regenerate_iceberg:
+        temp_tables["TEMP_DICT"] = dict_pyarrow.to_pandas()
+        temp_tables["TEMP_SHAKE"] = shake_pyarrow.to_pandas()
+    bc: BodoSQLContext = BodoSQLContext(temp_tables, catalog=catalog)
 
-    # If regenerating the database, use BodoSQL to replace each table with
-    # itself. Because BodoSQL is being used to write the tables, it will also
-    # update the metadata to include puffin files with theta sketches containing
-    # the approximate NDV statistics for various columns. By replacing the
-    # table with itself, the partitions will be maintained while the theta
-    # sketches will be generated and added to the metadata. If the table was
-    # generated with a different name, it would not know to maintain the
-    # partitions.
+    # If regenerating the database, use BodoSQL to populate each of the Iceberg
+    # tables from the corresponding temp table. This ensures that the partitions
+    # are properly maintained by the Iceberg write step using the same
+    # partitions that the Iceberg tables are already defined with, but also
+    # ensures that the metadata is updated to include the puffin files with
+    # theta sketches containing the approximate NDV statistics for various
+    # columns.
     if regenerate_iceberg:
         try:
-            # Get all the table names from a DDL command given to the BodoSQL
-            # context.
-            table_names: list[str] = bc.sql('SHOW TABLES IN "."')["NAME"].tolist()
-            for table_name in table_names:
+            # For each temp table, populate the real Iceberg version from it.
+            for table_name in ["DICT", "SHAKE"]:
                 bc.sql(
-                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
+                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM TEMP_{table_name}"
                 )
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
@@ -313,8 +338,151 @@ def bodosql_corpus_ctx() -> BodoSQLContext:
 
 
 @pytest.fixture(scope="session")
+def bodosql_fashion_ctx(bodosql_setup) -> BodoSQLContext:
+    """
+    BodoSQL Context definition for the FASHIONSTORE dataset, which is defined
+    via a filesystem Iceberg catalog and has a subset of the tables from
+    this dataset: https://www.kaggle.com/datasets/joycemara/european-fashion-store-multitable-dataset
+    - `CUST`: the dataset_fashion_store_customers table
+    - `PROD`: the dataset_fashion_store_products table
+    - `SALE`: the dataset_fashion_store_sales table
+    - `ITEM`: the dataset_fashion_store_salesitems table
+    - `STOK`: the dataset_fashion_store_stock table
+
+    """
+    # Check if the folder already exists. If so, skip the setup steps.
+    # Note: if you need to regenerate the folder, either delete it or
+    # temporarily override the boolean below. The regeneration code will then be
+    # invoked the first time a test that depends on this fixture is run.
+    warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/fashion_iceberg"
+    regenerate_iceberg: bool = not os.path.exists(warehouse_loc)
+    if regenerate_iceberg:
+        # Create the directory that will serve as the Iceberg catalog.
+        try:
+            os.mkdir(warehouse_loc)
+            dircat: DirCatalog = DirCatalog(
+                "FASHION_DB", **{WAREHOUSE_LOCATION: warehouse_loc}
+            )
+
+            # Read the CSV files as PyArrow tables
+            cust_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/dataset_fashion_store_customers.csv.gz"
+            )
+            prod_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/dataset_fashion_store_products.csv.gz"
+            )
+            sale_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/dataset_fashion_store_sales.csv.gz"
+            )
+            item_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/dataset_fashion_store_salesitems.csv.gz"
+            )
+            stok_pyarrow: PyArrowTable = pyarrow_read_csv(
+                f"{os.path.dirname(__file__)}/gen_data/dataset_fashion_store_stock.csv.gz"
+            )
+
+            # Create the Iceberg table definition for the CUST table.
+            cust_table: IcebergTable = dircat.create_table(
+                "CUST",
+                schema=cust_pyarrow.schema,
+            )
+
+            # Evolve the table spec to partition on the country and by bucketing
+            # the customer keys.
+            (
+                cust_table.update_spec()
+                .add_field("country", "identity", "cntry")
+                .add_field("customer_id", "bucket[10]")
+                .commit()
+            )
+
+            # Load the data into the Iceberg table.
+            cust_table.append(cust_pyarrow)
+
+            # Create the Iceberg table definition for the PROD table.
+            prod_table: IcebergTable = dircat.create_table(
+                "PROD",
+                schema=prod_pyarrow.schema,
+            )
+
+            # Evolve the table spec to partition on the category and by
+            # bucketing the product keys.
+            (
+                prod_table.update_spec()
+                .add_field("category", "identity")
+                .add_field("product_id", "bucket[10]")
+                .commit()
+            )
+
+            # Load the data into the Iceberg table.
+            prod_table.append(prod_pyarrow)
+
+            # Create the Iceberg table definition for the SALE table.
+            sale_table: IcebergTable = dircat.create_table(
+                "SALE",
+                schema=sale_pyarrow.schema,
+            )
+
+            # Evolve the table spec to partition by bucketing the customer
+            # and sale keys.
+            (
+                sale_table.update_spec()
+                .add_field("customer_id", "bucket[10]")
+                .add_field("sale_id", "bucket[15]")
+                .commit()
+            )
+
+            # Load the data into the Iceberg table.
+            sale_table.append(sale_pyarrow)
+
+            # Create the Iceberg table definition for the ITEM table.
+            item_table: IcebergTable = dircat.create_table(
+                "ITEM",
+                schema=item_pyarrow.schema,
+            )
+
+            # Evolve the table spec to partition by bucketing the sale and
+            # product keys.
+            (
+                item_table.update_spec()
+                .add_field("sale_id", "bucket[15]")
+                .add_field("product_id", "bucket[10]")
+                .commit()
+            )
+
+            # Load the data into the Iceberg table.
+            item_table.append(item_pyarrow)
+
+            # Create the Iceberg table definition for the STOK table.
+            stok_table: IcebergTable = dircat.create_table(
+                "STOK",
+                schema=stok_pyarrow.schema,
+            )
+
+            # Evolve the table spec to partition by bucketing the product keys.
+            (stok_table.update_spec().add_field("product_id", "bucket[10]").commit())
+
+            # Load the data into the Iceberg table.
+            stok_table.append(stok_pyarrow)
+
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(warehouse_loc):
+                shutil.rmtree(warehouse_loc)
+            raise e
+
+    # Create the catalog/context pointing to the location of the database.
+    catalog = FileSystemCatalog(warehouse_loc)
+    bc: BodoSQLContext = BodoSQLContext(catalog=catalog)
+    return bc
+
+
+@pytest.fixture(scope="session")
 def bodosql_sample_contexts(
-    bodosql_color_ctx: BodoSQLContext, bodosql_corpus_ctx: BodoSQLContext
+    bodosql_color_ctx: BodoSQLContext,
+    bodosql_corpus_ctx: BodoSQLContext,
+    bodosql_fashion_ctx: BodoSQLContext,
 ) -> dict[str, BodoSQLContext]:
     """
     Mapping of graph names to the various BodoSQL Contexts for the sample
@@ -322,10 +490,12 @@ def bodosql_sample_contexts(
 
     * `COLORSHOP`
     * `CORPUS`
+    * `FASHIONSTORE`
     """
     return {
         "COLORSHOP": bodosql_color_ctx,
         "CORPUS": bodosql_corpus_ctx,
+        "FASHIONSTORE": bodosql_fashion_ctx,
     }
 
 
@@ -954,7 +1124,7 @@ result = (
                 "COLORSHOP",
                 lambda: pd.DataFrame(
                     {
-                        "names": [
+                        "hex_code": [
                             "#008000",
                             "#0f0",
                             "#0ff",
@@ -1003,6 +1173,18 @@ result = (
                 order_sensitive=True,
             ),
             id="color_q16",
+        ),
+        pytest.param(
+            # List all colors whose name ends with `yz`.
+            PyDoughPandasTest(
+                "result = colors.WHERE(ENDSWITH(name, 'yz'))",
+                "COLORSHOP",
+                lambda: pd.DataFrame(
+                    {"key": [], "name": [], "hex_code": [], "r": [], "g": [], "b": []}
+                ),
+                "color_q17",
+            ),
+            id="color_q17",
         ),
         pytest.param(
             # How many nouns start with N?
@@ -1057,6 +1239,14 @@ result = (
                 "CORPUS",
                 lambda: pd.DataFrame({"n": [62]}),
                 "corpus_q03",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 539. Reading 2 files",
+                        "Iceberg Filter Pushed Down:\npie.And(pie.EqualTo('PLAY', literal(f0)), pie.EqualTo('ACT', literal(f1)))"
+                        "",
+                        "Columns ['PLAY'] using dictionary encoding to reduce memory usage.",
+                    ]
+                },
             ),
             id="corpus_q03",
         ),
@@ -1175,6 +1365,15 @@ result = (
                         "pericles",
                         "king john",
                         "othello",
+                    ]
+                },
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 4419. Reading 41 files",
+                        "Iceberg Filter Pushed Down:\npie.And(pie.LessThan('WORD', literal(f0)), pie.EqualTo('POS', literal(f1)))",
+                        "Total number of files is 539. Reading 91 files",
+                        "Iceberg Filter Pushed Down:\npie.And(pie.LessThan('LINEWORD', literal(f0)), pie.In('PLAY', literal(f1)))",
+                        "Columns ['PLAY', 'PLAYER', 'LINEWORD'] using dictionary encoding to reduce memory usage.",
                     ]
                 },
             ),
@@ -1300,6 +1499,11 @@ result = CORPUS.CALCULATE(**letter_counts)
                     }
                 ),
                 "corpus_q08",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "BodoPhysicalMinRowNumberFilter",
+                    ]
+                },
             ),
             id="corpus_q08",
         ),
@@ -1392,6 +1596,12 @@ result = (
                     }
                 ),
                 "corpus_q10",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 4419. Reading 334 files",
+                        "Total number of files is 4419. Reading 464 files",
+                    ]
+                },
             ),
             id="corpus_q10",
         ),
@@ -1429,13 +1639,19 @@ result = (
                             45.0,
                             100.0,
                             100.0,
-                            100.01,
+                            100.0,
                             87.5,
                             12.5,
                         ],
                     }
                 ),
                 "corpus_q11",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 539. Reading 8 files",
+                        "BodoPhysicalWindow",
+                    ]
+                },
             ),
             id="corpus_q11",
         ),
@@ -1542,6 +1758,278 @@ result = (
             ),
             id="corpus_q13",
         ),
+        pytest.param(
+            # List all words with more than 25 characters.
+            PyDoughPandasTest(
+                "result = dictionary.WHERE(length > 25)",
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {"word": [], "part_of_speech": [], "length": [], "definition": []}
+                ),
+                "corpus_q14",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 4419. Reading 0 files",
+                    ]
+                },
+            ),
+            id="corpus_q14",
+        ),
+        pytest.param(
+            # What is the percentage of words in the Shakespeare dialogue sample
+            # that are not in the dictionary sample?
+            PyDoughPandasTest(
+                """
+result = (
+    CORPUS
+    .CALCULATE(
+        pct=ROUND(100 * COUNT(shakespeare.WHERE(~HAS(word_definitions))) / COUNT(shakespeare), 2)
+    )
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame({"pct": [28.21]}),
+                "corpus_q15",
+            ),
+            id="corpus_q15",
+        ),
+        pytest.param(
+            # For every vowel, what is the median character count for all nouns
+            # in the dictionary sample that start with that vowel?
+            PyDoughPandasTest(
+                """
+result = (
+    dictionary
+    .CALCULATE(first_letter=word[:1])
+    .WHERE((part_of_speech == 'n.') & ISIN(first_letter, ['a', 'e', 'i', 'o', 'u', 'y']))
+    .PARTITION(name='vowels', by=first_letter)
+    .CALCULATE(first_letter, median_length=MEDIAN(dictionary.length))
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "first_letter": ["a", "e", "i", "o", "u", "y"],
+                        "median_length": [9.0, 9.0, 10.0, 8.0, 9.0, 5.0],
+                    }
+                ),
+                "corpus_q16",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 4419. Reading 517 files",
+                    ]
+                },
+            ),
+            id="corpus_q16",
+        ),
+        pytest.param(
+            # For each character in the Tempest with at least 3 lines in the
+            # Shakespeare dialogue sample, collect all the words in their third
+            # line into a single string.
+            PyDoughPandasTest(
+                """
+result = (
+    shakespeare
+    .WHERE(play == 'the tempest')
+    .PARTITION(name='characters', by=player)
+    .shakespeare
+    .WHERE(RANKING(by=(act.ASC(), scene.ASC(), line.ASC()), per='characters', allow_ties=True, dense=True) == 3)
+    .PARTITION(name='characters', by=player)
+    .CALCULATE(player, third_line_words=COMBINE_STRINGS(shakespeare.word, ' '))
+    .ORDER_BY(player.ASC())
+)
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "player": ["adrian", "alonso", "antonio", "ariel", "boatswain"],
+                        "third_line_words": [
+                            "yet",
+                            "prithee peace",
+                            "we are less afraid to be drowned than thou art",
+                            "to swim to dive into the fire to ride",
+                            "yare yare take in the topsail tend to the",
+                        ],
+                    }
+                ),
+                "corpus_q17",
+            ),
+            id="corpus_q17",
+        ),
+        pytest.param(
+            # Count how many times a word in the Shakespeare dialogue sample for
+            # Cymbeline is a noun in the dictionary sample whose character count
+            # is equal to the act in the line it is uttered in (e.g. words in
+            # act 5 with 5 letters). This test is partially to confirm through
+            # the Bodo logger that Iceberg runtime join filters are being
+            # derived. Only words where the character count is 3-5 should be
+            # read from the dictionary sample since the Shakespeare dialogue
+            # sample only contains lines from acts 3-5 from Cymbeline.
+            PyDoughPandasTest(
+                """
+noun_definition = word_definitions.WHERE(part_of_speech == 'n.').SINGULAR()
+selected_words = (
+    shakespeare
+    .WHERE(
+        (play == 'cymbeline') &
+        (LENGTH(word) == act) &
+        HAS(noun_definition) &
+        (noun_definition.length == act)
+    )
+)
+result = CORPUS.CALCULATE(n=COUNT(selected_words))
+                """,
+                "CORPUS",
+                lambda: pd.DataFrame(
+                    {
+                        "selected_words": [209],
+                    }
+                ),
+                "corpus_q18",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Iceberg Filter Pushed Down:\npie.And(pie.EqualTo('POS', literal(f0)), pie.NotNull('CCOUNT'), pie.NotNull('WORD'))",
+                        "Runtime join filter expression: ((ds.field('{CCOUNT}').isin([3, 4, 5])))",
+                        "Total number of files is 4419. Reading 104 files",
+                    ]
+                },
+            ),
+            id="corpus_q18",
+        ),
+        pytest.param(
+            # For each red dress with silk in the name, which country has the
+            # highest amount in stock, and what is that amount?
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .WHERE(CONTAINS(name, 'Silk') & (color == 'Red') & (category == 'Dresses'))
+    .CALCULATE(product_name=name)
+    .stocks
+    .BEST(by=quantity.DESC(), per='products')
+    .CALCULATE(product_name, country, quantity)
+    .ORDER_BY(product_name.ASC())
+)
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame(
+                    {
+                        "product_name": ["Essential Silk Dress", " Vintage Silk Dress"],
+                        "country": ["France", "France"],
+                        "quantity": [39, 45],
+                    }
+                ),
+                "fashion_q01",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 50. Reading 10 files",
+                        "Runtime join filter expression: ((ds.field('{product_id}').isin([155, 319])))",
+                        "Total number of files is 10. Reading 1 files",
+                    ]
+                },
+            ),
+            id="fashion_q01",
+        ),
+        pytest.param(
+            # For each green sleepwear with linen in the name, count how many
+            # purchaes of that product were from each country.
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .WHERE(CONTAINS(name, 'Linen') & (color == 'Green') & (category == 'Sleepwear'))
+    .CALCULATE(product_name=name)
+    .sale_items
+    .sale
+    .customer
+    .PARTITION(name='product_country', by=(product_name, country))
+    .CALCULATE(product_name, country, n_purchases=COUNT(customer))
+    .ORDER_BY(product_name.ASC(), country.ASC())
+)
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame(
+                    {
+                        "product_name": ["Bold Linen Set"] * 3
+                        + ["Modern Linen Set"] * 4
+                        + ["Polished Linen Set"] * 2,
+                        "qty_purchased": [
+                            "Italy",
+                            "Netherlands",
+                            "Spain",
+                            "France",
+                            "Germany",
+                            "Italy",
+                            "Spain",
+                            "Germany",
+                            "Italy",
+                        ],
+                        "n_purchases": [1, 1, 1, 1, 1, 1, 1, 2, 1],
+                    }
+                ),
+                "fashion_q02",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 50. Reading 10 files",
+                        "Runtime join filter expression: ((ds.field('{product_id}').isin([226, 430, 75])))",
+                        "Total number of files is 150. Reading 45 files",
+                        "Runtime join filter expression: ((ds.field('{sale_id}').isin([1206, 1263, 128, 1300, 295, 40, 572, 621, 706, 966])))",
+                        "Total number of files is 150. Reading 69 files",
+                        "Runtime join filter expression: ((ds.field('{customer_id}').isin([115, 147, 268, 326, 506, 701, 720, 86, 96, 974]))",
+                        "Total number of files is 60. Reading 41 files",
+                    ]
+                },
+            ),
+            id="fashion_q02",
+        ),
+        pytest.param(
+            # Which 3 products were purchased the most times by young Spanish
+            # customers who joined in 2024, by quantity purchased? Break ties
+            # alphabeticall by product name.
+            PyDoughPandasTest(
+                """
+selected_sale_items = (
+    sale_items
+    .WHERE(
+        (sale.customer.country == 'Spain') & 
+        (sale.customer.age_range == '16-25') &
+        (YEAR(sale.customer.signup_date) == 2024)
+    )
+)
+result = (
+    products
+    .WHERE(HAS(selected_sale_items))
+    .CALCULATE(product_name=name, qty_purchased=SUM(selected_sale_items.quantity))
+    .TOP_K(3, by=(qty_purchased.DESC(), product_name.ASC()))
+)
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame(
+                    {
+                        "product_name": [
+                            "Soft Crew Set",
+                            "Relaxed Satin Dress",
+                            "Bold Boxy Shoes",
+                        ],
+                        "qty_purchased": [11, 7, 5],
+                    }
+                ),
+                "fashion_q03",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 60. Reading 9 files",
+                        "Runtime join filter expression: ((ds.field('{customer_id}').isin([214, 410, 443, 480, 79, 874, 888, 944, 979]))",
+                        "Total number of files is 150. Reading 111 files",
+                        "Runtime join filter expression: ((ds.field('{sale_id}').isin([1084, 114, 1199, 1281, 1320, 1329, 133, 172, 262, 281, 314, 330, 530, 551, 620, 665, 701, 73, 746, 802, 832, 838, 885]))",
+                        "Runtime join filter expression: ((ds.field('{product_id}').isin([114, 125, 129, 133, 152, 155, 158, 160, 170, 177, 178, 181, 2, 231, 239, 246, 246, 251, 255, 267, 276, 28, 287, 298, 299, 304, 308, 317, 326, 34, 360, 371, 388, 399, 401, 405, 421, 429, 432, 439, 443, 459, 468, 473, 490, 59, 62, 63, 63, 63, 68, 69, 71, 76, 83, 90, 96))",
+                    ]
+                },
+            ),
+            id="fashion_q03",
+            marks=pytest.mark.skip(
+                "TODO: address Bodo/BodoSQL issues with Iceberg read on this specific test"
+            ),
+        ),
     ],
 )
 def bodosql_e2e_tests(request) -> PyDoughPandasTest:
@@ -1594,6 +2082,7 @@ def test_pipeline_sql_bodosql(
     )
 
 
+@temp_env_override({"BODO_JOIN_UNIQUE_VALUES_LIMIT": "100", "BODO_SPAWN_MODE": "0"})
 @pytest.mark.bodosql
 @pytest.mark.execute
 def test_pipeline_e2e_bodosql(
@@ -1608,8 +2097,78 @@ def test_pipeline_e2e_bodosql(
     ctx: DatabaseContext = load_database_context(
         "bodosql", context=bodosql_sample_contexts[bodosql_e2e_tests.graph_name]
     )
+
+    planner_log_tests: bool = (
+        bodosql_e2e_tests.extra_test_data is not None
+        and "bodosql_plan_log_messages" in bodosql_e2e_tests.extra_test_data
+    )
+    bodo_log_tests: bool = (
+        bodosql_e2e_tests.extra_test_data is not None
+        and "bodo_logger_messages" in bodosql_e2e_tests.extra_test_data
+    )
+
+    # Set up the PyDough databse connection logger to capture log messages
+    # if the test is configured to do so.
+    planner_buf: StringIO | None = None
+    planner_handler: logging.StreamHandler | None = None
+    if planner_log_tests:
+        planner_buf = StringIO()
+        planner_handler = logging.StreamHandler(planner_buf)
+        db_connector_logger: logging.Logger = get_logger(
+            "pydough.database_connectors.database_connector",
+            default_level=logging.DEBUG,
+            handlers=[planner_handler],
+        )
+        db_connector_logger.propagate = False
+
+    # Set up the Bodo logger to capture log messages if the test is configured
+    # to do so.
+    bodo_buf: StringIO | None = None
+    bodo_handler: logging.StreamHandler | None = None
+    if bodo_log_tests:
+        bodo_buf = StringIO()
+        bodo_handler = logging.StreamHandler(bodo_buf)
+        bodo_handler.setLevel(logging.DEBUG)
+        bodo_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        bodo_logger: logging.Logger = logging.getLogger("Bodo Default Logger")
+        bodo_logger.setLevel(logging.DEBUG)
+        bodo_logger.addHandler(bodo_handler)
+        bodo.set_verbose_level(2)
+        bodo.set_bodo_verbose_logger(bodo_logger)
+
     bodosql_e2e_tests.run_e2e_test(
         bodosql_graphs,
         ctx,
         coerce_types=True,
     )
+
+    # If the test is configured to check for specific log messages from the
+    # BodoSQL planner, flush the logs and check that each expected message is
+    # present in the captured logs.
+    captured_output: str
+    if planner_log_tests:
+        planner_handler.flush()
+        captured_output = planner_buf.getvalue()
+        for log_message in bodosql_e2e_tests.extra_test_data.get(
+            "bodosql_plan_log_messages", []
+        ):
+            assert log_message in captured_output, (
+                f"Expected log message not found: {log_message}"
+            )
+
+    # If the test is configured to check for specific log messages from Bodo,
+    # flush the logs and check that each expected message is present in the
+    # captured logs.
+    if bodo_log_tests:
+        bodo_handler.flush()
+        captured_output = bodo_buf.getvalue()
+        for log_message in bodosql_e2e_tests.extra_test_data.get(
+            "bodo_logger_messages", []
+        ):
+            assert log_message in captured_output, (
+                f"Expected log message not found: {log_message}"
+            )
+        bodo.user_logging.restore_default_bodo_verbose_level()
+        bodo.user_logging.restore_default_bodo_verbose_logger()

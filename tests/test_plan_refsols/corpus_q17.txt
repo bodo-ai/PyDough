@@ -1,0 +1,5 @@
+ROOT(columns=[('player', PLAYER), ('third_line_words', third_line_words)], orderings=[(PLAYER):asc_first])
+ AGGREGATE(keys={'PLAYER': PLAYER}, aggregations={'third_line_words': COMBINE_STRINGS(LINEWORD, ' ':string)})
+  FILTER(condition=3:numeric == RANKING(args=[], partition=[PLAYER], order=[(ACT):asc_last, (SCENE):asc_last, (LINE):asc_last], allow_ties=True, dense=True), columns={'LINEWORD': LINEWORD, 'PLAYER': PLAYER})
+   FILTER(condition=PLAY == 'the tempest':string, columns={'ACT': ACT, 'LINE': LINE, 'LINEWORD': LINEWORD, 'PLAYER': PLAYER, 'SCENE': SCENE})
+    SCAN(table=SHAKE, columns={'ACT': ACT, 'LINE': LINE, 'LINEWORD': LINEWORD, 'PLAY': PLAY, 'PLAYER': PLAYER, 'SCENE': SCENE})

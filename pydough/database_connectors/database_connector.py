@@ -8,7 +8,7 @@ __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Union, cast
 
 import pandas as pd
 
@@ -135,7 +135,7 @@ class DatabaseContext:
     the required corresponding dialect.
     """
 
-    connection: DatabaseConnection | "BodoSQLContext"
+    connection: Union[DatabaseConnection, "BodoSQLContext"]
     dialect: DatabaseDialect
 
     def execute_query_df(self, sql: str) -> pd.DataFrame:
@@ -165,6 +165,9 @@ class DatabaseContext:
                 pyd_logger = get_logger(__name__)
                 bodosql_plan: str = self.connection.generate_plan(sql, show_cost=True)
                 pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
+                print()
+                print(__name__)
+                print(bodosql_plan)
                 return self.connection.sql(sql)
             except Exception as e:
                 print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")

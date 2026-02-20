@@ -1,0 +1,6 @@
+ROOT(columns=[('product_name', product_name), ('country', country), ('quantity', stock_quantity)], orderings=[(product_name):asc_first])
+ FILTER(condition=1:numeric == RANKING(args=[], partition=[product_id], order=[(stock_quantity):desc_first], allow_ties=False), columns={'country': country, 'product_name': product_name, 'stock_quantity': stock_quantity})
+  JOIN(condition=t0.product_id == t1.product_id, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'country': t1.country, 'product_id': t1.product_id, 'product_name': t0.product_name, 'stock_quantity': t1.stock_quantity})
+   FILTER(condition=(category == 'Dresses':string) & (color == 'Red':string) & CONTAINS(product_name, 'Silk':string), columns={'product_id': product_id, 'product_name': product_name})
+    SCAN(table=PROD, columns={'category': category, 'color': color, 'product_id': product_id, 'product_name': product_name})
+   SCAN(table=STOK, columns={'country': country, 'product_id': product_id, 'stock_quantity': stock_quantity})

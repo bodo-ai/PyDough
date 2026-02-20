@@ -1112,7 +1112,11 @@ class PyDoughPandasTest:
     - `fix_column_names` (optional): if True, ignore whatever column names are
       in the output and just use the same column names as in the reference
       solution.
-    - `args` (optional): additional arguments to pass to the PyDough function.
+    - `kwargs` (optional): additional keyword arguments to pass to the PyDough
+      function, or to use as the environment when evaluating the PyDough code if
+      it is provided as a string.
+    - `extra_test_data` (optional): a dictionary of any additional data that
+      should be used by the test to handle additional checks or logic.
     - `skip_relational`: (optional): if True, does not run the test as part of
        relational plan testing. Default is False.
     - `skip_sql`: (optional): if True, does not run the test as part of SQL
@@ -1164,6 +1168,14 @@ class PyDoughPandasTest:
     """
     Any additional keyword arguments to pass to the PyDough function when
     executing it. If None, no additional keyword arguments are passed.
+    """
+
+    extra_test_data: dict | None = None
+    """
+    A dictionary of any additional data that should be used by the test to
+    handle additional checks or logic. For example, this could be used to store
+    expected logging messages for tests that will verify the logging messages
+    match certain values.
     """
 
     skip_relational: bool = False
@@ -1380,6 +1392,10 @@ class PyDoughPandasTest:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
+
+        print()
+        print(result.to_string())
+        print(refsol.to_string())
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
