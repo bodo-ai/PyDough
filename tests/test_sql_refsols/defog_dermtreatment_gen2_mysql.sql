@@ -4,7 +4,7 @@ WITH _t AS (
     start_dt,
     treatment_id,
     ROW_NUMBER() OVER (PARTITION BY doc_id ORDER BY CASE WHEN start_dt IS NULL THEN 1 ELSE 0 END, start_dt) AS _w
-  FROM main.treatments
+  FROM treatments
 ), _s1 AS (
   SELECT
     doc_id,
@@ -19,7 +19,7 @@ SELECT
   doctors.year_reg,
   _s1.start_dt AS first_treatment_date,
   _s1.treatment_id AS first_treatment_id
-FROM main.doctors AS doctors
+FROM doctors AS doctors
 LEFT JOIN _s1 AS _s1
   ON _s1.doc_id = doctors.doc_id
 WHERE

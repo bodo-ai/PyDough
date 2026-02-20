@@ -1,7 +1,7 @@
 SELECT
   city_name COLLATE utf8mb4_bin AS city_name,
   COUNT(*) AS num_restaurants
-FROM main.location
+FROM restaurants.location
 GROUP BY
   1
 ORDER BY

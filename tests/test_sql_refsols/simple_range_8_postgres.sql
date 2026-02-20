@@ -1,0 +1,11 @@
+SELECT
+  (
+    d1.x + d2.y
+  ) + d3.z AS s,
+  COUNT(*) AS n,
+  AVG(CAST(d1.x * d2.y * d3.z AS DECIMAL)) AS a
+FROM GENERATE_SERIES(1, 4, 1) AS d1(x)
+CROSS JOIN GENERATE_SERIES(1, 4, 1) AS d2(y)
+CROSS JOIN GENERATE_SERIES(1, 4, 1) AS d3(z)
+GROUP BY
+  1

@@ -6,7 +6,7 @@ WITH _s2 AS (
       LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 2, '0')
     ) AS month,
     COUNT(*) AS n_rows
-  FROM main.sbCustomer
+  FROM broker.sbCustomer
   WHERE
     sbcustjoindate < STR_TO_DATE(
       CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
@@ -31,8 +31,8 @@ WITH _s2 AS (
       LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)), 2, '0')
     ) AS month,
     AVG(sbTransaction.sbtxamount) AS avg_sbTxAmount
-  FROM main.sbCustomer AS sbCustomer
-  JOIN main.sbTransaction AS sbTransaction
+  FROM broker.sbCustomer AS sbCustomer
+  JOIN broker.sbTransaction AS sbTransaction
     ON EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
     AND EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
     AND sbCustomer.sbcustid = sbTransaction.sbtxcustid

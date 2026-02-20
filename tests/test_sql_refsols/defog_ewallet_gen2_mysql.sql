@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     MIN(snapshot_date) AS min_snapshot_date
-  FROM main.user_setting_snapshot
+  FROM ewallet.user_setting_snapshot
   WHERE
     EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
 ), _s1 AS (
@@ -9,7 +9,7 @@ WITH _s0 AS (
     snapshot_date,
     AVG(tx_limit_daily) AS avg_tx_limit_daily,
     AVG(tx_limit_monthly) AS avg_tx_limit_monthly
-  FROM main.user_setting_snapshot
+  FROM ewallet.user_setting_snapshot
   WHERE
     EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
   GROUP BY

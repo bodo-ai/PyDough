@@ -1,7 +1,7 @@
 SELECT
   sbtxstatus AS status,
   COUNT(*) AS num_transactions
-FROM main.sbTransaction
+FROM broker.sbTransaction
 GROUP BY
   1
 ORDER BY

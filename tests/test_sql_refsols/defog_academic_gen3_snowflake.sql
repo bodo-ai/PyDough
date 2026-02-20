@@ -1,6 +1,6 @@
 SELECT
   year,
   COUNT(*) AS _expr0
-FROM main.publication
+FROM academic.publication
 GROUP BY
   1

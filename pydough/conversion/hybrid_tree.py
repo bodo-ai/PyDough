@@ -692,7 +692,7 @@ class HybridTree:
         # At the root, only this node’s type matters for reverse cardinality.
         # Deeper nodes do not affect parent-child match guarantees.
         match self.pipeline[0]:
-            case HybridRoot():
+            case HybridRoot() | HybridUserGeneratedCollection():
                 # If the parent of the child is a root, it means a cross join
                 # is occurring, so the cardinality depends on whether
                 # the parent context is singular or plural.
@@ -771,7 +771,9 @@ class HybridTree:
         start_operation: HybridOperation = self.pipeline[0]
         match start_operation:
             case HybridRoot():
-                return True
+                # A root operation always has a match with the parent context,
+                # since it is a vacuous connection.
+                pass
             case HybridCollectionAccess():
                 if isinstance(start_operation.collection, TableCollection):
                     # Regular table collection accesses always exist.
@@ -800,11 +802,15 @@ class HybridTree:
                 # record for each parent, by definition.
                 pass
             case HybridUserGeneratedCollection():
-                return start_operation.user_collection.collection.always_exists()
+                # For user-generated collections, existence depends on the
+                # underlying collection.
+                if not start_operation.user_collection.collection.always_exists():
+                    return False
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {start_operation.__class__.__name__}"
                 )
+
         # Check the operations after the start of the pipeline, returning False if
         # there are any operations that could remove a row.
         for operation in self.pipeline[1:]:
@@ -821,6 +827,7 @@ class HybridTree:
                         f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
                     )
 
+        # Make sure none of the children prune the current tree.
         for child in self.children:
             if child.connection_type.is_anti:
                 return False
@@ -976,7 +983,7 @@ class HybridTree:
                 continue
             if (
                 self.children[child_idx].connection_type.is_semi
-                and not self.children[child_idx].subtree.always_exists()
+                and not self.children[child_idx].get_always_exists()
             ) or self.children[child_idx].connection_type.is_anti:
                 children_to_delete.discard(child_idx)
 

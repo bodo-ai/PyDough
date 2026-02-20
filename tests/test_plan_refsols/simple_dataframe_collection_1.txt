@@ -1,0 +1,2 @@
+ROOT(columns=[('idx', idx), ('color', color)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='rainbow', shape=(8, 2), columns=['idx', 'color']))

@@ -121,6 +121,9 @@ __all__ = [
 ]
 
 import datetime
+import pandas as pd
+
+import pydough
 
 
 # ruff: noqa
@@ -834,22 +837,34 @@ def impl_defog_dealership_adv8():
     Order by month ascending. PMSPS = per month salesperson sales count. PMSR =
     per month sales revenue in dollars. Truncate date to month for aggregation.
     """
-    eligible_salespersons = salespeople.WHERE(
-        (YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023)
+
+    now = pd.Timestamp.today().normalize().replace(day=1)
+
+    months = pd.date_range(
+        start=now - pd.DateOffset(months=6),
+        end=now - pd.DateOffset(months=1),
+        freq="MS",  # Month Start
     )
+    date_range_df = pd.DataFrame({"month_start": months})
+    date_range = pydough.dataframe_collection(
+        "months_range", date_range_df, ["month_start"]
+    ).CALCULATE(month_start)
+
+    filtered_sales = sales.WHERE(
+        (YEAR(salesperson.hire_date) >= 2022)
+        & (YEAR(salesperson.hire_date) <= 2023)
+        & (STRING(sale_date, "%Y-%m") == STRING(month_start, "%Y-%m"))
+    )
+
     return (
-        sales.WHERE(
-            MONOTONIC(
-                1, DATEDIFF("months", sale_date, DATETIME("now", "start of month")), 6
-            )
-            & HAS(
-                salespeople.WHERE((YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023))
-            )
+        date_range.CROSS(sales)
+        .PARTITION(name="per_month", by=month_start)
+        .CALCULATE(
+            month=STRING(month_start, "%Y-%m-%d"),
+            PMSPS=COUNT(filtered_sales),
+            PMSR=SUM(filtered_sales.sale_price),
         )
-        .CALCULATE(sale_price, sale_month=DATETIME(sale_date, "start of month"))
-        .PARTITION(name="months", by=sale_month)
-        .CALCULATE(sale_month, PMSPS=COUNT(sales), PMSR=SUM(sales.sale_price))
-        .ORDER_BY(sale_month.ASC())
+        .ORDER_BY(month_start.ASC())
     )
 
 
@@ -943,22 +958,28 @@ def impl_defog_dealership_adv13():
     value). Return all months in your answer, including those where there were
     no payments.
     """
-    # TODO (gh #162): add user created collections support to PyDough
 
-    filtered_payments = payments_received.CALCULATE(
-        payment_amount,
-        month=DATETIME(payment_date, "start of month"),
+    all_months = pydough.range_collection("months", "n", 0, 12).CALCULATE(n)
+
+    group_payments = (
+        payments_received.CALCULATE(
+            start_month=DATETIME(payment_date, "start of month")
+        )
+        .PARTITION(name="month", by=start_month)
+        .CALCULATE(total_payments=SUM(payments_received.payment_amount))
     )
 
-    monthly_totals = filtered_payments.PARTITIOn(name="months", by=month).CALCULATE(
-        total_payments=SUM(payments_received.payment_amount)
+    return (
+        all_months.CROSS(group_payments)
+        .CALCULATE(dt=ADD_MONTHS(start_month, n), payment=IFF(n > 0, 0, total_payments))
+        .WHERE(dt <= DATETIME("now", "start of month", "+1 hour"))
+        .PARTITION(name="full_months", by=dt)
+        .CALCULATE(
+            dt,
+            total_payments=SUM(month.payment),
+            MoM_change=SUM(month.payment) - PREV(SUM(month.payment), by=dt.ASC()),
+        )
     )
-
-    return monthly_totals.CALCULATE(
-        month,
-        total_payments,
-        MoM_change=total_payments - PREV(total_payments, by=month.ASC()),
-    ).ORDER_BY(month.ASC())
 
 
 def impl_defog_dealership_adv14():
@@ -2962,9 +2983,9 @@ def impl_defog_restaurants_gen14():
     non-vegan food in San Francisco? Match food_type case insensitively
     """
     sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
-    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
-    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
-    return Restaurants.CALCULATE(ratio=(n_vegan / n_non_vegan))
+    n_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) == "vegan"))
+    n_non_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) != "vegan"))
+    return Restaurants.CALCULATE(ratio=n_vegan / n_non_vegan)
 
 
 def impl_defog_restaurants_gen15():
@@ -2976,7 +2997,7 @@ def impl_defog_restaurants_gen15():
     Los Angeles?
     """
     la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
-    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la_italian = COUNT(la_restaurants.WHERE(LOWER(food_type) == "italian"))
     n_la = COUNT(la_restaurants)
     return Restaurants.CALCULATE(ratio=(n_la_italian / n_la))
 

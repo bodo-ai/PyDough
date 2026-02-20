@@ -263,7 +263,23 @@ def get_mysql_defog_graphs() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
-def get_oracle_defog_graphs() -> graph_fetcher:
+def get_postgres_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Postgres.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/postgres_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_postgres_oracle_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database in Oracle.
     """
@@ -636,6 +652,33 @@ def defog_graphs() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
+def get_dialect_defog_graphs(
+    defog_graphs,
+    get_mysql_defog_graphs,
+    get_sf_defog_graphs,
+    get_postgres_defog_graphs,
+) -> Callable[[DatabaseDialect, str], GraphMetadata]:
+    """
+    Returns the graphs for the defog database based on the dialect
+    """
+    # Setup the directory to be the main PyDough directory.
+
+    def impl(dialect: DatabaseDialect, name: str) -> GraphMetadata:
+        match dialect:
+            case DatabaseDialect.MYSQL:
+                return get_mysql_defog_graphs(name)
+            case DatabaseDialect.SNOWFLAKE:
+                return get_sf_defog_graphs(name)
+            case DatabaseDialect.POSTGRES:
+                return get_postgres_defog_graphs(name)
+            case _:
+                # Use the base graph
+                return defog_graphs(name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def masked_graphs() -> graph_fetcher:
     """
     Returns the graphs for the masked databases.
@@ -778,7 +821,7 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators", "menu"]
+S3_DATASETS = ["synthea", "world_development_indicators", "menu", "donor", "movielens"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.

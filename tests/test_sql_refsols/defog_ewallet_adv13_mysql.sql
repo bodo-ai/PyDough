@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS TUC
-FROM main.user_sessions
+FROM ewallet.user_sessions
 WHERE
   session_end_ts >= CAST(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '1' MONTH) AS DATE)
   OR session_start_ts >= CAST(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '1' MONTH) AS DATE)

@@ -1,6 +1,6 @@
 SELECT
   food_type,
   COUNT(*) AS restaurants
-FROM main.restaurant
+FROM restaurants.restaurant
 GROUP BY
   1

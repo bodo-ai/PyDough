@@ -3,7 +3,7 @@ WITH _t0 AS (
     city_name,
     name,
     COUNT(*) AS n_rows
-  FROM main.restaurant
+  FROM restaurants.restaurant
   GROUP BY
     1,
     2

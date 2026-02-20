@@ -3,7 +3,7 @@ WITH _t AS (
     balance,
     user_id,
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY CASE WHEN updated_at IS NULL THEN 1 ELSE 0 END DESC, updated_at DESC) AS _w
-  FROM main.wallet_user_balance_daily
+  FROM ewallet.wallet_user_balance_daily
 )
 SELECT
   user_id,

@@ -1,8 +1,8 @@
 SELECT
   NULLIF(COUNT(*), 0) AS n_transactions,
   COALESCE(SUM(sbTransaction.sbtxamount), 0) AS total_amount
-FROM main.sbTransaction AS sbTransaction
-JOIN main.sbCustomer AS sbCustomer
+FROM broker.sbTransaction AS sbTransaction
+JOIN broker.sbCustomer AS sbCustomer
   ON LOWER(sbCustomer.sbcustcountry) = 'usa'
   AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
 WHERE
