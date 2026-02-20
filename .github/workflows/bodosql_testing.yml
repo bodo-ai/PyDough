@@ -1,0 +1,48 @@
+name: Run BodoSQL Tests
+
+on:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: "JSON string of Python versions"
+        type: string
+        required: true
+
+jobs:
+  bodosql-tests:
+    name: BodoSQL Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Create virtual environment
+        # uv requires an existing virtual environment to install packages.
+        # Running `uv venv` creates the `.venv` directory so that subsequent
+        # `uv pip install` commands install dependencies inside this environment.
+        # Without this step, `uv pip install` fails with 
+        # "No virtual environment found".
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[bodo]"
+
+      - name: Confirm BodoSQL and related dependencies are installed
+        run: uv run python -c "import bodo; import bodosql; import pyarrow; import pyiceberg; print(bodo.__version__, bodosql.__version__, pyarrow.__version__, pyiceberg.__version__)"
+
+      - name: Run BodoSQL Tests
+        run: uv run pytest -m bodosql tests/ -rs

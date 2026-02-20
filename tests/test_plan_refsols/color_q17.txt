@@ -1,0 +1,3 @@
+ROOT(columns=[('key', identname), ('name', colorname), ('hex_code', chex), ('red', r), ('green', g), ('blue', b)], orderings=[])
+ FILTER(condition=ENDSWITH(colorname, 'yz':string), columns={'b': b, 'chex': chex, 'colorname': colorname, 'g': g, 'identname': identname, 'r': r})
+  SCAN(table=CLRS, columns={'b': b, 'chex': chex, 'colorname': colorname, 'g': g, 'identname': identname, 'r': r})

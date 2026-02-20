@@ -14,6 +14,7 @@ __all__ = [
     "false_when_null_columns",
     "fetch_or_insert",
     "get_conjunctions",
+    "get_window_partition_columns",
     "only_references_columns",
     "partition_expressions",
     "passthrough_column_mapping",
@@ -28,6 +29,7 @@ from pydough.types import BooleanType
 from .relational_expressions import (
     CallExpression,
     ColumnReference,
+    ColumnReferenceFinder,
     CorrelatedReference,
     ExpressionSortInfo,
     LiteralExpression,
@@ -291,6 +293,58 @@ def contains_window(expr: RelationalExpression) -> bool:
             raise NotImplementedError(
                 f"contains_window not implemented for {expr.__class__.__name__}"
             )
+
+
+def find_window_functions(
+    expr: RelationalExpression, window_functions: set[WindowCallExpression]
+) -> None:
+    """
+    Finds all window functions in an expression and puts them in a set.
+
+    Args:
+        `expr`: The expression to check for any window function subexpressions.
+        `window_functions`: A set to put the window functions in. This is
+        modified in-place by the function call.
+    """
+    match expr:
+        case WindowCallExpression():
+            window_functions.add(expr)
+            for arg in expr.inputs:
+                find_window_functions(arg, window_functions)
+            for partition_arg in expr.partition_inputs:
+                find_window_functions(partition_arg, window_functions)
+            for order_arg in expr.order_inputs:
+                find_window_functions(order_arg.expr, window_functions)
+        case CallExpression():
+            for arg in expr.inputs:
+                find_window_functions(arg, window_functions)
+        case _:
+            pass
+
+
+def get_window_partition_columns(expr: RelationalExpression) -> set[str]:
+    """
+    Obtains the set of column names that are used as partition keys in each
+    window function within a relational expression.
+
+    Args:
+        `expr`: The expression to check.
+
+    Returns:
+        The set of column names that are used as partition keys in each window
+        function within `expr`.
+    """
+    window_functions: set[WindowCallExpression] = set()
+    find_window_functions(expr, window_functions)
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    window_partition_sets: list[set[str]] = []
+    for window in window_functions:
+        finder.reset()
+        for partition_arg in window.partition_inputs:
+            partition_arg.accept_shuttle(finder)
+        column_names: set[str] = {ref.name for ref in finder.get_column_references()}
+        window_partition_sets.append(column_names)
+    return set.intersection(*window_partition_sets) if window_partition_sets else set()
 
 
 def passthrough_column_mapping(node: RelationalNode) -> dict[str, RelationalExpression]:

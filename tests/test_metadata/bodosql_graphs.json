@@ -1,0 +1,859 @@
+[
+  {
+    "name": "COLORSHOP",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "colors",
+        "type": "simple table",
+        "table path": "CLRS",
+        "unique properties": ["key", "name"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "identname",
+            "data type": "string",
+            "description": "Neat string identifier name for the color, all lowercase, with underscores instead of spaces and no punctuation",
+            "sample values": ["antique_white", "tractor_red", "vermilion_cinnabar", "aquamarine"],
+            "synonyms": ["neat name", "compact name", "identifier"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "colorname",
+            "data type": "string",
+            "description": "Full name of the color, with capitalization, spaces, parenthesis, etc.",
+            "sample values": ["Antique White", "Tractor Red", "Vermilion (Cinnabar)", "Aquamarine"]
+          },
+          {
+            "name": "hex_code",
+            "type": "table column",
+            "column name": "chex",
+            "data type": "string",
+            "description": "Hexadecimal representation of the color, either in 3 or 6 character format, with a # at the beginning",
+            "sample values": ["#0ff", "#8db600", "#ffbf00", "#00008b"],
+            "synonyms": ["hexadecimal", "hex"]
+          },
+          {
+            "name": "red",
+            "type": "table column",
+            "column name": "r",
+            "data type": "numeric",
+            "description": "The red component of the color in RGB, from 0 to 255",
+            "sample values": [0, 16, 141, 240, 255],
+            "synonyms": ["r", "red value", "rgb red"]
+          },
+          {
+            "name": "green",
+            "type": "table column",
+            "column name": "g",
+            "data type": "numeric",
+            "description": "The green component of the color in RGB, from 0 to 255",
+            "sample values": [0, 10, 50, 213, 255],
+            "synonyms": ["g", "green value", "rgb green"]
+          },
+          {
+            "name": "blue",
+            "type": "table column",
+            "column name": "b",
+            "data type": "numeric",
+            "description": "The blue component of the color in RGB, from 0 to 255",
+            "sample values": [0, 1, 100, 185, 255],
+            "synonyms": ["b", "blue value", "rgb blue"]
+          }
+        ],
+        "description": "The various colors in the database",
+        "synonyms": ["shades", "hues", "swatches"]
+      },
+      {
+        "name": "shipments",
+        "type": "simple table",
+        "table path": "SHPMNTS",
+        "unique properties": ["key"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "sid",
+            "data type": "numeric",
+            "description": "Unique identifier for the shipment",
+            "sample values": [1, 20, 104, 564],
+            "synonyms": ["shipment id"]
+          },
+          {
+            "name": "color_key",
+            "type": "table column",
+            "column name": "colid",
+            "data type": "string",
+            "description": "The key of the color being shipped",
+            "sample values": ["color id"]
+          },
+          {
+            "name": "customer_key",
+            "type": "table column",
+            "column name": "cusid",
+            "data type": "numeric",
+            "description": "Key of the customer requesting the shipment",
+            "sample values": [1, 2, 4, 9],
+            "synonyms": ["customer id"]
+          },
+          {
+            "name": "company_key",
+            "type": "table column",
+            "column name": "comid",
+            "data type": "numeric",
+            "description": "Key of the company responsible for the shipment",
+            "sample values": [2, 3, 5, 7, 8],
+            "synonyms": ["company id"]
+          },
+          {
+            "name": "ship_date",
+            "type": "table column",
+            "column name": "dos",
+            "data type": "datetime",
+            "description": "The date that the shipment was sent out",
+            "sample values": ["2026-01-01", "2024-02-15", "2025-03-20", "2024-04-10"],
+            "synonyms": ["shipment date", "date shipped", "order date"]
+          },
+          {
+            "name": "volume",
+            "type": "table column",
+            "column name": "vol",
+            "data type": "numeric",
+            "description": "How many liters of the color were shipped",
+            "sample values": [0.1, 0.5, 1.0, 2.0, 4.5],
+            "synonyms": ["liters", "quantity", "amount"]
+          },
+          {
+            "name": "price",
+            "type": "table column",
+            "column name": "prc",
+            "data type": "numeric",
+            "description": "Price in dollars for the shipment",
+            "sample values": [19.99, 49.99, 100.0, 250.5],
+            "synonyms": ["cost", "total price", "shipment price"]
+          }
+        ],
+        "description": "The various shipments in the database, including what color was shipped, how much of it was shipped, when it was shipped, and who it was shipped to and from",
+        "synonyms": ["orders", "purchases"]
+      },
+      { "name": "customers",
+        "type": "simple table",
+        "table path": "CUST",
+        "unique properties": ["key", ["first_name", "last_name"]],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "cstid",
+            "data type": "numeric",
+            "description": "Unique identifier for the customer",
+            "sample values": [1, 2, 4, 9],
+            "synonyms": ["customer id"]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "cstfname",
+            "data type": "string",
+            "description": "Customer's first name",
+            "sample values": ["Rahul", "Janet", "Alice", "Marcel"]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "cstlname",
+            "data type": "string",
+            "description": "Customer's last name",
+            "sample values": ["Sharma", "Smith", "Johnson", "Garcia"]
+          }
+        ],
+        "description": "The customers in the database",
+        "synonyms": ["clients", "buyers",  "users"]
+      },
+      { "name": "companies",
+        "type": "simple table",
+        "table path": "SUPLS",
+        "unique properties": ["key", "name"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "supid",
+            "data type": "numeric",
+            "description": "Unique identifier for the company",
+            "sample values": [2, 4, 5],
+            "synonyms": ["company id"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "supname",
+            "data type": "string",
+            "description": "The company name",
+            "sample values": ["Pallette Emporium", "Rainbow Inc.", "Hue Depot"]
+          }
+        ],
+        "description": "The companies in the database",
+        "synonyms": ["clients", "buyers",  "users"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "shipments",
+        "parent collection": "colors",
+        "child collection": "shipments",
+        "singular": false,
+        "always matches": false,
+        "keys": {"key": ["color_key"]},
+        "description": "The shipments of the color",
+        "synonyms": ["orders", "requests", "purchases"]
+      },
+      {
+        "type": "reverse",
+        "name": "color",
+        "original parent": "colors",
+        "original property": "shipments",
+        "singular": true,
+        "always matches": true,
+        "description": "The color that was shipped"
+      },
+      {
+        "type": "simple join",
+        "name": "shipments",
+        "parent collection": "customers",
+        "child collection": "shipments",
+        "singular": false,
+        "always matches": false,
+        "keys": {"key": ["customer_key"]},
+        "description": "The shipments ordered by the customer",
+        "synonyms": ["orders", "requests", "purchases"]
+      },
+      {
+        "type": "reverse",
+        "name": "customer",
+        "original parent": "customers",
+        "original property": "shipments",
+        "singular": true,
+        "always matches": true,
+        "description": "The customer that placed the shipment"
+      }, 
+      {
+        "type": "simple join",
+        "name": "shipments",
+        "parent collection": "companies",
+        "child collection": "shipments",
+        "singular": false,
+        "always matches": true,
+        "keys": {"key": ["company_key"]},
+        "description": "The shipments handled by the company",
+        "synonyms": ["orders", "requests", "purchases"]
+      },
+      {
+        "type": "reverse",
+        "name": "company",
+        "original parent": "companies",
+        "original property": "shipments",
+        "singular": true,
+        "always matches": true,
+        "description": "The company that handled the shipment"
+      }
+    ],
+    "functions": [
+      {
+        "name": "LISTOF",
+        "type": "sql alias",
+        "aggregation": true,
+        "sql function": "ARRAY_AGG",
+        "description": "Aggregates a collection of elements into an array.",
+        "input signature": {"type": "fixed arguments", "value": ["unknown"]},
+        "output signature": {"type": "constant", "value": "array[unknown]"}
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  },
+  {
+    "name": "CORPUS",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "dictionary",
+        "type": "simple table",
+        "table path": "DICT",
+        "unique properties": [["word", "part_of_speech"]],
+        "properties": [
+          {
+            "name": "word",
+            "type": "table column",
+            "column name": "Word",
+            "data type": "string",
+            "description": "The word in the dictionary, in lowercase",
+            "sample values": ["abacus", "iridectomy", "justice", "lurking"]
+          },
+          {
+            "name": "part_of_speech",
+            "type": "table column",
+            "column name": "POS",
+            "data type": "string",
+            "description": "The part of speech that the word belongs to in a shorthand form",
+            "sample values": ["n.", "v.", "adj.", "adv.", "n. pl.", "v. t."]
+          },
+          {
+            "name": "length",
+            "type": "table column",
+            "column name": "Ccount",
+            "data type": "numeric",
+            "description": "The number of characters in the word",
+            "sample values": [5, 7, 8, 12],
+            "synonyms": ["number of characters", "word size"]
+          },
+          {
+            "name": "definition",
+            "type": "table column",
+            "column name": "Definition",
+            "data type": "string",
+            "description": "The definition of the word with that given part of speech",
+            "sample values": ["The act of abacinating", "Abandonment; relinquishment.", "A lady; mistress.", "A female tyrant."],
+            "synonyms": ["meaning", "explanation"]
+          }
+        ],
+        "description": "The various words registred in this dictionary with their definitions; each word can have multiple entries if it belongs to multiple parts of speech.",
+        "synonyms": ["words"]
+      },
+      {
+        "name": "shakespeare",
+        "type": "simple table",
+        "table path": "SHAKE",
+        "unique properties": ["key", ["data_line", "line_word_index"]],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "PKHASH",
+            "data type": "numeric",
+            "description": "Unique identifier for the word within a line of dialogue in a Shakespeare play",
+            "sample values": [534377729, 511587732, 758182205, 436869060],
+            "synonyms": ["line word id"]
+          },
+          {
+            "name": "data_line",
+            "type": "table column",
+            "column name": "DATALINE",
+            "data type": "numeric",
+            "description": "Identifier for each line of dialogue in a Shakespeare play",
+            "sample values": [800, 1475, 3455],
+            "synonyms": ["line id"]
+          },
+          {
+            "name": "play",
+            "type": "table column",
+            "column name": "PLAY",
+            "data type": "string",
+            "description": "Name of the shakespeare play that the line/word are from (lowercase).",
+            "sample values": ["henry iv", "much ado about nothing", "othello", "romeo and juliet"],
+            "synonyms": ["play name"]
+          },
+          {
+            "name": "act",
+            "type": "table column",
+            "column name": "ACT",
+            "data type": "numeric",
+            "description": "Act from the play that the line/word are from",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["act number"]
+          },
+          {
+            "name": "scene",
+            "type": "table column",
+            "column name": "SCENE",
+            "data type": "numeric",
+            "description": "Scene within the act of the play that the line/word are from",
+            "sample values": [1, 2, 5, 7, 8],
+            "synonyms": ["act scene number"]
+          },
+          {
+            "name": "line",
+            "type": "table column",
+            "column name": "LINE",
+            "data type": "numeric",
+            "description": "Line within the scene of the act of the play that the line/word are from",
+            "sample values": [1, 10, 50, 103, 254],
+            "synonyms": ["act scene line number", "line number within scene"]
+          },
+          {
+            "name": "player",
+            "type": "table column",
+            "column name": "PLAYER",
+            "data type": "string",
+            "description": "Name of the character saying the line/word (lowercase)",
+            "sample values": ["bardolph", "bastard of orleans", "beatrice", "autolycus"],
+            "synonyms": ["character name"]
+          },
+          {
+            "name": "word",
+            "type": "table column",
+            "column name": "LINEWORD",
+            "data type": "string",
+            "description": "The word being said in the line of the play, in lowercase",
+            "sample values": ["vizards", "money", "of", "the", "kings"],
+            "synonyms": ["word within line"]
+          },
+          {
+            "name": "line_word_index",
+            "type": "table column",
+            "column name": "LINEWORDIDX",
+            "data type": "numeric",
+            "description": "The position of the word within the line of dialog, starting at 1 for the first word in the line",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["word position"]
+          }
+        ],
+        "description": "Lines of dialogue from shakespeare plays, broken down into 1 row per word",
+        "synonyms": ["shakespeare dialogue words"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "word_definitions",
+        "parent collection": "shakespeare",
+        "child collection": "dictionary",
+        "singular": false,
+        "always matches": false,
+        "keys": {"word": ["word"]},
+        "description": "Some potential definitions of the word within the dialogue",
+        "synonyms": ["definitions", "meanings", "explanations"]
+      },
+      {
+        "type": "reverse",
+        "name": "shakespeare_uses",
+        "original parent": "shakespeare",
+        "original property": "word_definitions",
+        "singular": false,
+        "always matches": false,
+        "description": "The instances of the word being used in a line of Shakespeare's dialogue"
+      }
+    ],
+    "functions": [
+      {
+        "name": "COMBINE_STRINGS",
+        "type": "sql alias",
+        "aggregation": true,
+        "sql function": "LISTAGG",
+        "description": "Aggregates a collection of strings into a single string, using an optional delimiter.",
+        "input signature": {"type": "argument range", "value": ["array[string]", "string"], "min": 1},
+        "output signature": {"type": "constant", "value": "string"}
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  },
+  {
+    "name": "FASHIONSTORE",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "customers",
+        "type": "simple table",
+        "table path": "CUST",
+        "unique properties": ["key"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "numeric",
+            "description": "Unique identifier for the customer",
+            "sample values": [1, 24, 300, 513, 968],
+            "synonyms": ["customer id"]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "country",
+            "data type": "string",
+            "description": "Country of the customer",
+            "sample values": ["France", "Germany", "Spain", "Italy"],
+            "synonyms": ["nation", "nationality"]
+          },
+          {
+            "name": "age_range",
+            "type": "table column",
+            "column name": "age_range",
+            "data type": "string",
+            "description": "Age range of the customer in 10-year increments from 16 to 65",
+            "sample values": ["16-25", "26-35", "36-45", "46-55", "56-65"],
+            "synonyms": ["generation", "age group"]
+          },
+          {
+            "name": "signup_date",
+            "type": "table column",
+            "column name": "signup_date",
+            "data type": "string",
+            "description": "The date the customer signed up",
+            "sample values": ["2025-04-24", "2024-04-12", "2025-06-11", "2024-01-13"],
+            "synonyms": ["registration date", "signup day"]
+          }
+        ],
+        "description": "The customers registered with the database.",
+        "synonyms": ["clients", "users", "buyers", "purchasers"]
+      },
+      {
+        "name": "products",
+        "type": "simple table",
+        "table path": "PROD",
+        "unique properties": ["key", "name"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "product_id",
+            "data type": "numeric",
+            "description": "Unique identifier for the product",
+            "sample values": [1, 24, 300, 350, 499],
+            "synonyms": ["product id"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "product_name",
+            "data type": "string",
+            "description": "Name of the product",
+            "sample values": ["Soft Wrap Dress", "Soft High-Waist Trousers", "Modern High-Waist Shoes"]
+          },
+          {
+            "name": "category",
+            "type": "table column",
+            "column name": "category",
+            "data type": "string",
+            "description": "Category of the clothing",
+            "sample values": ["Dresses", "T-Shirts", "Sleepwear", "Shoes", "Pants"],
+            "synonyms": ["clothing type", "apparel type"]
+          },
+          {
+            "name": "color",
+            "type": "table column",
+            "column name": "color",
+            "data type": "string",
+            "description": "Color of the product",
+            "sample values": ["Black", "Green", "Blue", "Red", "White"],
+            "synonyms": ["product color", "color of the item"]
+          },
+          {
+            "name": "size",
+            "type": "table column",
+            "column name": "size",
+            "data type": "string",
+            "description": "Size of the product, either in standard XS/S/M/L/XL sizing or in numeric waist sizes for pants and shoes",
+            "sample values": ["XS", "S", "M", "L", "XL", "35", "36", "38", "40"]
+          },
+          {
+            "name": "catalog_price",
+            "type": "table column",
+            "column name": "catalog_price",
+            "data type": "numeric",
+            "description": "The catalog price of the product",
+            "sample values": [23.90, 40.41, 60.00, 78.45]
+          },
+          {
+            "name": "cost_price",
+            "type": "table column",
+            "column name": "cost_price",
+            "data type": "numeric",
+            "description": "The cost price of the product",
+            "sample values": [14.81, 20.70, 20.82, 53.76]
+          }
+        ],
+        "description": "The clothing products listed in the database, along with their attributes such as category, color, size, and prices.",
+        "synonyms": ["clothes", "apparel"]
+      },
+      {
+        "name": "sales",
+        "type": "simple table",
+        "table path": "SALE",
+        "unique properties": ["key"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "sale_id",
+            "data type": "numeric",
+            "description": "Unique identifier for the sale",
+            "sample values": [10, 503, 786, 1011],
+            "synonyms": ["sale id", "sale identifier"]
+          },
+          {
+            "name": "customer_key",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "numeric",
+            "description": "Identifier for the customer associated with the sale",
+            "sample values": [195, 518, 439, 349, 727],
+            "synonyms": ["customer id", "customer identifier"]
+          },
+          {
+            "name": "channel",
+            "type": "table column",
+            "column name": "channel",
+            "data type": "string",
+            "description": "The sales channel through which the sale was made",
+            "sample values": ["E-commerce", "App Mobile"],
+            "synonyms": ["sales channel", "medium"]
+          },
+          {
+            "name": "discounted",
+            "type": "table column",
+            "column name": "discounted",
+            "data type": "bool",
+            "description": "Indicates whether the sale was discounted",
+            "synonyms": ["is discounted", "discount applied"]
+          },
+          {
+            "name": "total_amount",
+            "type": "table column",
+            "column name": "total_amount",
+            "data type": "numeric",
+            "description": "The total amount of the sale",
+            "sample values": [299.70, 681.05, 324.50, 287.85],
+            "synonyms": ["total", "cost", "sale value"]
+          },
+          {
+            "name": "sale_date",
+            "type": "table column",
+            "column name": "sale_date",
+            "data type": "datetime",
+            "description": "The date of the sale",
+            "sample values": ["2025-05-21", "2025-04-21", "2025-06-16"],
+            "synonyms": ["date of transaction", "purchase date"]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "country",
+            "data type": "string",
+            "description": "The country where the sale took place",
+            "sample values": ["France", "Germany"],
+            "synonyms": ["sale location"]
+          }
+        ],
+        "description": "All sales made by customers registered in the database",
+        "synonyms": ["purchases", "transactions", "orders"]
+      },
+      {
+        "name": "items",
+        "type": "simple table",
+        "table path": "ITEM",
+        "unique properties": ["key"],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "item_id",
+            "data type": "numeric",
+            "description": "Unique identifier for the sale item",
+            "sample values": [2270, 1170, 2496, 1273, 1829],
+            "synonyms": ["item id", "item identifier"]
+          },
+          {
+            "name": "sale_key",
+            "type": "table column",
+            "column name": "sale_id",
+            "data type": "numeric",
+            "description": "Identifier for the sale that the item was a part of",
+            "sample values": [658, 336, 1255, 331, 1079],
+            "synonyms": ["sale id", "sale identifier"]
+          },
+          {
+            "name": "product_key",
+            "type": "table column",
+            "column name": "product_id",
+            "data type": "numeric",
+            "description": "Identifier for the product associated with the sale item which was purchased as part of the sale",
+            "sample values": [403, 284, 71, 98, 98],
+            "synonyms": ["product id", "product identifier"]
+          },
+          {
+            "name": "quantity",
+            "type": "table column",
+            "column name": "quantity",
+            "data type": "numeric",
+            "description": "The quantity of the product purchased in the sale item",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["volume", "amount", "number purchased"]
+          },
+          {
+            "name": "original_price",
+            "type": "table column",
+            "column name": "original_price",
+            "data type": "numeric",
+            "description": "The original price of the product before any discounts",
+            "sample values": [20.82, 20.82, 20.29, 16.69, 15.31]
+          },
+          {
+            "name": "unit_price",
+            "type": "table column",
+            "column name": "unit_price",
+            "data type": "numeric",
+            "description": "The price of a single unit of the product",
+            "sample values": [81.8, 81.79, 80.76, 78.52, 78.52]
+          },
+          {
+            "name": "discount_amount",
+            "type": "table column",
+            "column name": "discount_amount",
+            "data type": "numeric",
+            "description": "The amount of discount applied to the product within the sale",
+            "sample values": [0.0, 5.21, 10.18, 15.62, 15.3]
+          },
+          {
+            "name": "discount_percent",
+            "type": "table column",
+            "column name": "discount_percent",
+            "data type": "numeric",
+            "description": "The percentage of discount applied to the product within the sale",
+            "sample values": ["0.00%", "30.00%", "10.00%"]
+          },
+          {
+            "name": "total",
+            "type": "table column",
+            "column name": "item_total",
+            "data type": "numeric",
+            "description": "The total amount for the sale item after applying discounts, accounting for the quantity purchased",
+            "sample values": [58.25, 58.11, 58.11, 58.11, 58.09],
+            "synonyms": ["total amount", "item total"]
+          }
+        ],
+        "description": "The records of individual items purchased as part of a sale, including what product was purchased, how many of it were purchased, and the price and discounts applied to it within the sale.",
+        "synonyms": ["order items", "sale components"]
+      },
+      {
+        "name": "stocks",
+        "type": "simple table",
+        "table path": "STOK",
+        "unique properties": [["country", "product_key"]],
+        "properties": [
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "country",
+            "data type": "string",
+            "description": "The country where the stock is located",
+            "sample values": ["France", "Germany"],
+            "synonyms": ["nation"]
+          },
+          {
+            "name": "product_key",
+            "type": "table column",
+            "column name": "product_id",
+            "data type": "numeric",
+            "description": "The key of the product whose stock is being recorded",
+            "sample values": [1, 102, 213, 500],
+            "synonyms": ["product identifier", "product id"]
+          },
+          {
+            "name": "quantity",
+            "type": "table column",
+            "column name": "stock_quantity",
+            "data type": "numeric",
+            "description": "The quantity of stock available in the country",
+            "sample values": [61, 24, 81, 70, 30],
+            "synonyms": ["stock amount", "inventory"]
+          }
+        ],
+        "description": "The records of how much of each product is in stock in each country.",
+        "synonyms": ["inventory records", "stock levels"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "purchases",
+        "parent collection": "customers",
+        "child collection": "sales",
+        "singular": false,
+        "always matches": false,
+        "keys": {"key": ["customer_key"]},
+        "description": "The sales made by the customer",
+        "synonyms": ["sales", "orders", "buys"]
+      },
+      {
+        "type": "reverse",
+        "name": "customer",
+        "original parent": "customers",
+        "original property": "purchases",
+        "singular": true,
+        "always matches": true,
+        "description": "The customer who made the purchase"
+      },
+      {
+        "type": "simple join",
+        "name": "items",
+        "parent collection": "sales",
+        "child collection": "items",
+        "singular": false,
+        "always matches": true,
+        "keys": {"key": ["sale_key"]},
+        "description": "The items purchased as part of the sale",
+        "synonyms": ["contents", "components", "purchased items"]
+      },
+      {
+        "type": "reverse",
+        "name": "sale",
+        "original parent": "sales",
+        "original property": "items",
+        "singular": true,
+        "always matches": true,
+        "description": "The sale to which the items belong"
+      },
+      {
+        "type": "simple join",
+        "name": "product",
+        "parent collection": "items",
+        "child collection": "products",
+        "singular": true,
+        "always matches": true,
+        "keys": {"product_key": ["key"]},
+        "description": "The product that was purchased in the sale item",
+        "synonyms": ["product details", "item product"]
+      },
+      {
+        "type": "reverse",
+        "name": "sale_items",
+        "original parent": "items",
+        "original property": "product",
+        "singular": false,
+        "always matches": false,
+        "description": "The sale items for the product"
+      },
+      {
+        "type": "simple join",
+        "name": "stocks",
+        "parent collection": "products",
+        "child collection": "stocks",
+        "singular": false,
+        "always matches": true,
+        "keys": {"key": ["product_key"]},
+        "description": "The various regional stock information for the product",
+        "synonyms": ["product details", "item product"]
+      },
+      {
+        "type": "reverse",
+        "name": "product",
+        "original parent": "products",
+        "original property": "stocks",
+        "singular": true,
+        "always matches": true,
+        "description": "The product associated with the stock record"
+      }
+    ],
+    "functions": [],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  }
+]

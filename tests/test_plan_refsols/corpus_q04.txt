@@ -1,0 +1,3 @@
+ROOT(columns=[('play', PLAY), ('n_words', n_rows)], orderings=[(n_rows):desc_last], limit=5:numeric)
+ AGGREGATE(keys={'PLAY': PLAY}, aggregations={'n_rows': COUNT()})
+  SCAN(table=SHAKE, columns={'PLAY': PLAY})

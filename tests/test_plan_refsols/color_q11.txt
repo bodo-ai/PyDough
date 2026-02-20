@@ -1,0 +1,4 @@
+ROOT(columns=[('n', ndistinct_colid)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'ndistinct_colid': NDISTINCT(colid)})
+  FILTER(condition=dos == datetime.date(2024, 7, 4):datetime, columns={'colid': colid})
+   SCAN(table=SHPMNTS, columns={'colid': colid, 'dos': dos})

@@ -5,12 +5,17 @@ based on the database type.
 
 import sqlite3
 import time
+from typing import TYPE_CHECKING
 
 from pydough.errors import PyDoughSessionException
 
 from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDialect
 
+if TYPE_CHECKING:
+    from bodosql import BodoSQLContext
+
 __all__ = [
+    "load_bodosql_context",
     "load_database_context",
     "load_mysql_connection",
     "load_postgres_connection",
@@ -33,7 +38,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         The database context object.
     """
     supported_databases = {"postgres", "mysql", "sqlite", "snowflake"}
-    connection: DatabaseConnection
+    connection: DatabaseConnection | BodoSQLContext
     dialect: DatabaseDialect
     match database_name.lower():
         case "sqlite":
@@ -48,10 +53,13 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "postgres":
             connection = load_postgres_connection(**kwargs)
             dialect = DatabaseDialect.POSTGRES
+        case "bodosql":
+            connection = load_bodosql_context(**kwargs)
+            dialect = DatabaseDialect.SNOWFLAKE
         case _:
             raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
-                "Any other database must be created manually by specifying the connection and dialect."
+                " Any other database must be created manually by specifying the connection and dialect."
             )
     return DatabaseContext(connection, dialect)
 
@@ -296,3 +304,35 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
             attempt += 1
 
     raise ValueError(f"Failed to connect to Postgres after {attempts} attempts")
+
+
+def load_bodosql_context(**kwargs) -> "BodoSQLContext":
+    """
+    Loads a BodoSQL context from the keyword arguments, which are expected to
+    be in the form `context=BodoSQLContext(...)`
+
+    Args:
+        **kwargs: The keyword arguments which are expected to include a context
+            object for BodoSQL.
+
+    Raises:
+        ImportError: If the BodoSQL connector is not installed.
+        ValueError: If required connection parameters are missing.
+
+    Returns:
+        A BodoSQLContext object for BodoSQL.
+    """
+    try:
+        from bodosql import BodoSQLContext
+    except ImportError:
+        raise ImportError(
+            "BodoSQL connector is not installed. Please install it with"
+            " `pip install bodosql`."
+        )
+
+    context = kwargs.pop("context", None)
+    if not context or not isinstance(context, BodoSQLContext):
+        raise ValueError(
+            "BodoSQL connection requires a context object provided as `context=BodoSQLContext(...)`."
+        )
+    return context

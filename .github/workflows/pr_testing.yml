@@ -60,6 +60,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-bodosql:
+        description: "Run BodoSQL Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -163,7 +168,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3 or bodosql)" -rs
 
   run-defog-daily-update:
     name: Run DEFOG Daily Update
@@ -263,6 +268,20 @@ jobs:
     uses: ./.github/workflows/s3_testing.yml
     secrets:
       READ_LLM_FIXTURES_ROLE: ${{ secrets.READ_LLM_FIXTURES_ROLE }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+
+  run-bodosql-tests:
+    name: BodoSQL Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run bodosql]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-bodosql))
+    uses: ./.github/workflows/bodosql_testing.yml
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

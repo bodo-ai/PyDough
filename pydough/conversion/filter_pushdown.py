@@ -32,6 +32,7 @@ from pydough.relational.rel_util import (
     contains_window,
     false_when_null_columns,
     get_conjunctions,
+    get_window_partition_columns,
     only_references_columns,
     partition_expressions,
 )
@@ -125,9 +126,13 @@ class FilterPushdownShuttle(RelationalShuttle):
         }
         remaining_filters.update(get_conjunctions(filter.condition))
         if contains_window(filter.condition):
-            remaining_filters, self.filters = remaining_filters, set()
+            partition_cols = get_window_partition_columns(filter.condition)
+            self.filters, remaining_filters = partition_expressions(
+                remaining_filters,
+                lambda expr: only_references_columns(expr, partition_cols),
+            )
         else:
-            remaining_filters, self.filters = set(), remaining_filters
+            self.filters, remaining_filters = remaining_filters, set()
 
         new_input = filter.input.accept_shuttle(self)
         return build_filter(new_input, remaining_filters, columns=filter.columns)

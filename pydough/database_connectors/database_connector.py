@@ -8,14 +8,15 @@ __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Union, cast
 
 import pandas as pd
 
 import pydough
 from pydough.errors import PyDoughSessionException
+from pydough.logger import get_logger
 
-from .db_types import DBConnection, DBCursor, SnowflakeCursor
+from .db_types import BodoSQLContext, DBConnection, DBCursor, SnowflakeCursor
 
 
 class DatabaseConnection:
@@ -134,5 +135,42 @@ class DatabaseContext:
     the required corresponding dialect.
     """
 
-    connection: DatabaseConnection
+    connection: Union[DatabaseConnection, "BodoSQLContext"]
     dialect: DatabaseDialect
+
+    def execute_query_df(self, sql: str) -> pd.DataFrame:
+        """Execute a SQL query using the database connection and return the
+        result as a Pandas DataFrame.
+
+        Args:
+            `sql`: The SQL query to execute.
+        Returns:
+            A Pandas DataFrame containing the result of the query.
+        """
+        if isinstance(self.connection, DatabaseConnection):
+            return self.connection.execute_query_df(sql)
+        else:
+            # Otherwise it is a BodoSQLContext
+            try:
+                from bodosql import BodoSQLContext as BCTX
+            except ImportError:
+                raise ImportError(
+                    "BodoSQL connector is not installed. Please install it with"
+                    " `pip install bodosql`."
+                )
+            assert isinstance(self.connection, BCTX), (
+                f"Expected connection to be either DatabaseConnection or BodoSQLContext, but got {type(self.connection).__name__}"
+            )
+            try:
+                pyd_logger = get_logger(__name__)
+                bodosql_plan: str = self.connection.generate_plan(sql, show_cost=True)
+                pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
+                print()
+                print(__name__)
+                print(bodosql_plan)
+                return self.connection.sql(sql)
+            except Exception as e:
+                print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
+                raise pydough.active_session.error_builder.sql_runtime_failure(
+                    sql, e, True
+                ) from e
