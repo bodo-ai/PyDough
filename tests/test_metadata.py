@@ -2,11 +2,11 @@
 Unit tests for the PyDough metadata module.
 """
 
+import json
 from collections.abc import Callable
 from typing import Any
 
 import pytest
-import json
 
 from pydough import parse_metadata_from_list
 from pydough.errors import PyDoughMetadataException
@@ -517,17 +517,16 @@ def test_parse_from_list(
     ],
 )
 def test_parse_from_list_inline(
-    graph_name: str,
-    json_str: str,
-    error_msg: str | None
+    graph_name: str, json_str: str, error_msg: str | None
 ) -> None:
     """
     Tests that parse_metadata_from_list successfully extracts a valid graph
-    from a properly formatted list of metadata dictionaries.
+    from a properly formatted inline list of metadata dictionaries.
 
     Verifies:
     - The function returns a GraphMetadata object
     - The returned graph has the correct name
+    - The input is a valid metadata object
     """
     graph: GraphMetadata
     metadata: Any = json.loads(json_str)
