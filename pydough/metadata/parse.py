@@ -59,6 +59,11 @@ def parse_metadata(metadata_info: Any, graph_name: str) -> GraphMetadata | None:
         itself is a list - that validation should be performed by the caller.
     """
     graph: GraphMetadata | None = None
+    if not isinstance(metadata_info, list):
+        raise PyDoughMetadataException(
+            "PyDough metadata is expected to be a JSON array containing JSON objects"
+            + f" representing metadata graphs, received: {metadata_info.__class__.__name__}."
+        )
     for graph_json in metadata_info:
         HasType(dict).verify(graph_json, "metadata for PyDough graph")
         HasPropertyWith("name", is_string).verify(
@@ -100,11 +105,6 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
     """
     with open(file_path) as f:
         as_json = json.load(f)
-    if not isinstance(as_json, list):
-        raise PyDoughMetadataException(
-            "PyDough metadata expected to be a JSON file containing a JSON "
-            + f"array of JSON objects representing metadata graphs, received: {as_json.__class__.__name__}."
-        )
     graph: GraphMetadata | None = parse_metadata(as_json, graph_name)
     if graph is None:
         # If we reach this point, then the graph was not found in the file
