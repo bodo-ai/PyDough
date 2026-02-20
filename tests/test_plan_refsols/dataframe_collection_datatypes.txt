@@ -1,0 +1,2 @@
+ROOT(columns=[('string_col', string_col), ('int_col', int_col), ('float_col', float_col), ('nullable_int_col', nullable_int_col), ('bool_col', bool_col), ('null_col', null_col), ('datetime_col', datetime_col)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='alldatatypes', shape=(3, 7), columns=['string_col', 'int_col', 'float_col', 'nullable_int_col', 'bool_col', 'null_col', 'datetime_col']))

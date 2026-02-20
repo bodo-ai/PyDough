@@ -4,7 +4,7 @@ WITH _s1 AS (
     YEAR(CAST(sbtxdatetime AS TIMESTAMP)) AS year_sbtxdatetime,
     sbtxcustid,
     COUNT(*) AS n_rows
-  FROM main.sbtransaction
+  FROM broker.sbtransaction
   GROUP BY
     1,
     2,
@@ -14,7 +14,7 @@ SELECT
   sbcustomer.sbcustid AS _id,
   sbcustomer.sbcustname AS name,
   COALESCE(_s1.n_rows, 0) AS num_transactions
-FROM main.sbcustomer AS sbcustomer
+FROM broker.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.month_sbtxdatetime = MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
   AND _s1.sbtxcustid = sbcustomer.sbcustid

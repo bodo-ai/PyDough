@@ -9,6 +9,7 @@ import typing as t
 
 from sqlglot import alias, exp
 from sqlglot.dialects.dialect import Dialect, DialectType
+from sqlglot.dialects.sqlite import SQLite
 from sqlglot.helper import csv_reader, name_sequence
 from sqlglot.optimizer.isolate_table_selects import isolate_table_selects
 from sqlglot.optimizer.normalize_identifiers import normalize_identifiers
@@ -279,7 +280,16 @@ def qualify_tables(
                     table_alias.set("this", exp.to_identifier(next_alias_name()))
                 if isinstance(udtf, exp.Values) and not table_alias.columns:
                     for i, e in enumerate(udtf.expressions[0].expressions):
-                        table_alias.append("columns", exp.to_identifier(f"_col_{i}"))
+                        # PyDough change: adjust the formula to match the
+                        # dialect's
+                        if isinstance(dialect, SQLite):
+                            table_alias.append(
+                                "columns", exp.to_identifier(f"column{i + 1}")
+                            )
+                        else:
+                            table_alias.append(
+                                "columns", exp.to_identifier(f"_col_{i}")
+                            )
             else:
                 for node in scope.walk():
                     if (

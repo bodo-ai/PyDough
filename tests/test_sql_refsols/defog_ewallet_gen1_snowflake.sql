@@ -1,7 +1,7 @@
 SELECT
   MEDIAN(wallet_merchant_balance_daily.balance) AS _expr0
-FROM main.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
-JOIN main.merchants AS merchants
+FROM ewallet.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
+JOIN ewallet.merchants AS merchants
   ON CONTAINS(LOWER(merchants.category), 'retail')
   AND merchants.mid = wallet_merchant_balance_daily.merchant_id
   AND merchants.status = 'active'

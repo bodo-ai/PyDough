@@ -6,7 +6,7 @@ WITH _t0 AS (
     ) AS start_month,
     COUNT(*) AS n_rows,
     COUNT(DISTINCT diag_id) AS ndistinct_diag_id
-  FROM main.treatments
+  FROM treatments
   WHERE
     DATE_SUB(
       STR_TO_DATE(

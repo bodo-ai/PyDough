@@ -4,7 +4,7 @@ SELECT
     '%Y %c %e'
   ) AS month,
   AVG(sbtxprice) AS avg_price
-FROM main.sbTransaction
+FROM broker.sbTransaction
 WHERE
   EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) IN (1, 2, 3)
   AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023

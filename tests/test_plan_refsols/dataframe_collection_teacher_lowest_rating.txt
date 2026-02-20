@@ -1,0 +1,7 @@
+ROOT(columns=[('first_name', first_name), ('last_name', last_name), ('rating', rating), ('class_name', class_name)], orderings=[])
+ JOIN(condition=t0.class_key == t1.key, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'class_name': t1.class_name, 'first_name': t0.first_name, 'last_name': t0.last_name, 'rating': t0.rating})
+  FILTER(condition=1:numeric == RANKING(args=[], partition=[tid], order=[(rating):desc_first], allow_ties=False), columns={'class_key': class_key, 'first_name': first_name, 'last_name': last_name, 'rating': rating})
+   JOIN(condition=t0.tid == t1.teacher_id, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'class_key': t1.class_key, 'first_name': t0.first_name, 'last_name': t0.last_name, 'rating': t1.rating, 'tid': t0.tid})
+    GENERATED_TABLE(DataframeCollection(name='teachers', shape=(12, 3), columns=['tid', 'first_name', 'last_name']))
+    GENERATED_TABLE(DataframeCollection(name='teaching', shape=(30, 4), columns=['class_key', 'teacher_id', 'semester', 'rating']))
+  GENERATED_TABLE(DataframeCollection(name='classes', shape=(5, 3), columns=['key', 'class_name', 'language']))

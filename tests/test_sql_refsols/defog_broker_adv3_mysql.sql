@@ -3,7 +3,7 @@ WITH _t1 AS (
     sbtxcustid AS sbTxCustId,
     COUNT(*) AS n_rows,
     SUM(sbtxstatus = 'success') AS sum_expr
-  FROM main.sbTransaction
+  FROM broker.sbTransaction
   GROUP BY
     1
 )
@@ -12,7 +12,7 @@ SELECT
   (
     100.0 * COALESCE(_t1.sum_expr, 0)
   ) / _t1.n_rows AS success_rate
-FROM main.sbCustomer AS sbCustomer
+FROM broker.sbCustomer AS sbCustomer
 JOIN _t1 AS _t1
   ON _t1.n_rows >= 5 AND _t1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY

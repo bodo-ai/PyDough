@@ -1,5 +1,5 @@
 SELECT
-  column1 AS N
+  t2.column1 AS N
 FROM (VALUES
   (10),
   (9),

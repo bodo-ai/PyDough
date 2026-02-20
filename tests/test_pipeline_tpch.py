@@ -41,6 +41,12 @@ def test_pipeline_until_sql_tpch(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
+    if (
+        tpch_pipeline_test_data.test_name == "dataframe_collection_inf"
+        and empty_context_database.dialect == DatabaseDialect.MYSQL
+    ):
+        pytest.skip("Skipping test as MySQL does not support Infinity values.")
+
     file_path: str = get_sql_test_filename(
         tpch_pipeline_test_data.test_name, empty_context_database.dialect
     )
@@ -59,6 +65,5 @@ def test_pipeline_e2e_tpch(
     Test executing the TPC-H queries from the original code generation.
     """
     tpch_pipeline_test_data.run_e2e_test(
-        get_sample_graph,
-        sqlite_tpch_db_context,
+        get_sample_graph, sqlite_tpch_db_context, coerce_types=True
     )
