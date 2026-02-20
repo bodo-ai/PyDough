@@ -279,7 +279,7 @@ def get_postgres_defog_graphs() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
-def get_postgres_oracle_graphs() -> graph_fetcher:
+def get_oracle_defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database in Oracle.
     """
