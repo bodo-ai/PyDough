@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import logging
 import re
 from collections.abc import Callable
 from datetime import date
@@ -6188,37 +6189,70 @@ def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
         (False, False, False),
         (False, False, True),
         (True, False, True),
-        # Sqlite cannot create persistent views that reference attached databases.
-        # like tpch.oreder Only temporary views are supported.
-        # For now, generated DDL will replace it to a temporary view.
-        # TODO: how to remove references to attached database
-        # in generated SQL for views?
         (True, False, False),
-        # Sqlite does not support replacing views or tables,
-        # so replace=True should cause an error.
-        # TODO: move to an error check test.
-        # (False, True, False),
-        # (False, True, True),
-        # (True, True, False),
-        # (True, True, True),
+        (False, True, False),
+        (False, True, True),
+        (True, True, False),
+        (True, True, True),
     ],
 )
-def test_pipeline_e2e_to_table(
+def test_pipeline_to_table_ddl(
     tpch_custom_to_table_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
     as_view: bool,
     replace: bool,
     temp: bool,
+    caplog: pytest.LogCaptureFixture,
 ):
     """
     Test that a simple to_table call can be materialized and executed on the
     database.
+    Args:
+    - tpch_custom_to_table_test_data: Test data for the to_table test, containing
+        the PyDough code to_run.
+    - get_sample_graph: Fixture to get the sample graph.
+    - sqlite_tpch_db_context: Fixture to get the database context
+        for the TPC-H database on SQLite.
+    - as_view: Whether to create the table as a view or a table.
+    - replace: Whether to replace the table/view if it already exists.
+    - temp: Whether to create a temporary materialized view/table.
+    - caplog: Fixture to capture logs for assertions. Used to verify that
+        the expected [DROP and ] CREATE statement(s) is logged when
+        running to_table.
     """
+
+    caplog.set_level(logging.INFO)
     tpch_custom_to_table_test_data.run_e2e_test_to_table(
         get_sample_graph,
         sqlite_tpch_db_context,
         as_view=as_view,
         replace=replace,
         temp=temp,
+    )
+    expected_create_statement = "CREATE"
+    # SQLite does not support creating persistent views
+    # that reference attached databases. Only temporary views are supported.
+    # So the view will be created as TEMPORARY.
+    if (
+        sqlite_tpch_db_context.dialect == DatabaseDialect.SQLITE
+        and as_view
+        and not temp
+    ):
+        expected_create_statement += " TEMPORARY"
+    elif temp:
+        expected_create_statement += " TEMPORARY"
+
+    table_or_view = " VIEW" if as_view else " TABLE"
+    expected_create_statement += table_or_view
+
+    # SQLite (+ PostgreSQL and MySQL) do not support REPLACE
+    # so table/view will be dropped first if replace is True.
+    # In the logs, look for DROP then CREATE statements.
+    if replace:
+        expected_create_statement = (
+            rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"
+        )
+    assert re.search(expected_create_statement, caplog.text, re.DOTALL), (
+        f"Expected to see '{expected_create_statement}' in the logs when running to_table"
     )

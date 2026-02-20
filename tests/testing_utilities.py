@@ -1473,6 +1473,7 @@ class PyDoughPandasTest:
             as_view=as_view,
             replace=replace,
             temp=temp,
+            display_sql=True,
             **call_kwargs,
         )
         # to_table returns an UnqualifiedGeneratedCollection wrapping a ViewGeneratedCollection

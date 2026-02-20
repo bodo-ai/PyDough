@@ -186,6 +186,8 @@ def to_table(
 
     """
 
+    display_sql: bool = bool(kwargs.pop("display_sql", False))
+
     # Load session and convert to relational tree (same as to_sql)
     session: PyDoughSession = _load_session_info(**kwargs)
     if session.database is None:
@@ -209,15 +211,16 @@ def to_table(
     ddl_statements, actual_temp = _generate_create_ddl(
         name, sql, as_view, replace, temp, session.database.dialect
     )
-    display_sql: bool = bool(kwargs.pop("display_sql", False))
+    pyd_logger = None
     if display_sql:
         pyd_logger = get_logger(__name__)
-        pyd_logger.info(f"SQL query:\n {sql}")
 
     # Execute the DDL statement(s) via the session's database connection
     # (may include DROP IF EXISTS before CREATE for some dialects)
-    for ddl in ddl_statements:
-        session.database.connection.execute_ddl(ddl)
+    for ddl_stmt in ddl_statements:
+        if pyd_logger is not None:
+            pyd_logger.info(f"SQL query:\n {ddl_stmt}")
+        session.database.connection.execute_ddl(ddl_stmt)
 
     # Step 4: Create ViewGeneratedCollection with the inferred schema
     # Use actual_temp which may differ from the input temp due to dialect limitations
