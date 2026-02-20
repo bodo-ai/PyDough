@@ -59,28 +59,29 @@ def parse_metadata(metadata_info: Any, graph_name: str) -> GraphMetadata | None:
         itself is a list - that validation should be performed by the caller.
     """
     graph: GraphMetadata | None = None
-    if not isinstance(metadata_info, list):
+    if isinstance(metadata_info, list):
+        for graph_json in metadata_info:
+            HasType(dict).verify(graph_json, "metadata for PyDough graph")
+            HasPropertyWith("name", is_string).verify(
+                graph_json, "metadata for PyDough graph"
+            )
+            name: str = extract_string(graph_json, "name", "metadata for PyDough graph")
+            if name == graph_name:
+                version: str = extract_string(
+                    graph_json, "version", "metadata for PyDough graph"
+                )
+                match version:
+                    case "V2":
+                        graph = parse_graph_v2(name, graph_json)
+                    case _:
+                        raise PyDoughMetadataException(
+                            f"Unrecognized PyDough metadata version: {version!r}"
+                        )
+    else:
         raise PyDoughMetadataException(
             "PyDough metadata is expected to be a JSON array containing JSON objects"
             + f" representing metadata graphs, received: {metadata_info.__class__.__name__}."
         )
-    for graph_json in metadata_info:
-        HasType(dict).verify(graph_json, "metadata for PyDough graph")
-        HasPropertyWith("name", is_string).verify(
-            graph_json, "metadata for PyDough graph"
-        )
-        name: str = extract_string(graph_json, "name", "metadata for PyDough graph")
-        if name == graph_name:
-            version: str = extract_string(
-                graph_json, "version", "metadata for PyDough graph"
-            )
-            match version:
-                case "V2":
-                    graph = parse_graph_v2(name, graph_json)
-                case _:
-                    raise PyDoughMetadataException(
-                        f"Unrecognized PyDough metadata version: {version!r}"
-                    )
     # If graph was not found in the list then graph will be None at this point
     return graph
 
