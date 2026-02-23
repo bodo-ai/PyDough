@@ -16,6 +16,7 @@ import pytest
 import pydough
 from pydough.database_connectors import DatabaseContext
 from pydough.database_connectors.database_connector import DatabaseDialect
+from pydough.errors import PyDoughException
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -6325,8 +6326,7 @@ def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
 )
 def test_pipeline_to_table_ddl(
     tpch_custom_to_table_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    sqlite_tpch_db_context: DatabaseContext,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
     as_view: bool,
     replace: bool,
     temp: bool,
@@ -6349,38 +6349,75 @@ def test_pipeline_to_table_ddl(
         running to_table.
     """
 
+    db_context, graph = all_dialects_tpch_db_context
+    # Skip Snowflake for to_table tests (no write access to shared DB)
+    if db_context.dialect == DatabaseDialect.SNOWFLAKE:
+        pytest.skip("Skipping Snowflake to_table tests - no write access")
+    # Temp view is not supported for Snowflake, MySQL, and Postgres.
+    # So run and catch PyDoghException that indicates temp view is not supported, and skip the rest of the test in that case.
+    # Use pytest raises to catch the exception and check the message.
+    if temp and db_context.dialect in {
+        DatabaseDialect.SNOWFLAKE,
+        DatabaseDialect.MYSQL,
+        DatabaseDialect.POSTGRES,
+    }:
+        with pytest.raises(
+            PyDoughException, match="TEMPORARY views are not supported for"
+        ):
+            tpch_custom_to_table_test_data.run_e2e_test_to_table(
+                lambda _: graph,
+                db_context,
+                as_view=as_view,
+                replace=replace,
+                temp=temp,
+            )
+        return
     caplog.set_level(logging.INFO)
     tpch_custom_to_table_test_data.run_e2e_test_to_table(
-        get_sample_graph,
-        sqlite_tpch_db_context,
+        lambda _: graph,
+        db_context,
         as_view=as_view,
         replace=replace,
         temp=temp,
     )
     expected_create_statement = "CREATE"
     # SQLite does not support creating persistent views
-    # that reference attached databases. Only temporary views are supported.
+    # that reference attached databases.
+    # SQLite the only one that supports temporary views.
     # So the view will be created as TEMPORARY.
-    if (
-        sqlite_tpch_db_context.dialect == DatabaseDialect.SQLITE
-        and as_view
-        and not temp
-    ):
+    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
         expected_create_statement += " TEMPORARY"
     elif temp:
         expected_create_statement += " TEMPORARY"
 
     table_or_view = " VIEW" if as_view else " TABLE"
+
+    # SQLite, PostgreSQL and MySQL) do not support REPLACE TABLE
+    # Also, SQLite does not support REPLACE VIEW too but other dialects too.
+    # So table/view will be dropped first if replace and the other conditions
+    # are met. In this case, look for DROP then CREATE statements in the logs.
+    if replace:
+        if (
+            table_or_view == " TABLE"
+            and db_context.dialect
+            in {
+                DatabaseDialect.SQLITE,
+                DatabaseDialect.POSTGRES,
+                DatabaseDialect.MYSQL,
+            }
+        ) or (
+            table_or_view == " VIEW"
+            and db_context.dialect
+            in {
+                DatabaseDialect.SQLITE,
+            }
+        ):
+            expected_create_statement = rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"
+        else:
+            expected_create_statement += " OR REPLACE"
+
     expected_create_statement += table_or_view
 
-    # SQLite (+ PostgreSQL and MySQL) do not support REPLACE
-    # so table will be dropped first if replace is True.
-    # NOTE: SQLite does not support REPLACE for views too but other dialects too.
-    # In the logs, look for DROP then CREATE statements.
-    if replace:
-        expected_create_statement = (
-            rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"
-        )
     assert re.search(expected_create_statement, caplog.text, re.DOTALL), (
         f"Expected to see '{expected_create_statement}' in the logs when running to_table"
     )

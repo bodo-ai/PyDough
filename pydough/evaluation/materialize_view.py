@@ -5,7 +5,7 @@ import pydough
 from pydough.configs import PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseDialect
-from pydough.errors import PyDoughSessionException
+from pydough.errors import PyDoughException, PyDoughSessionException
 from pydough.logger import get_logger
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -194,6 +194,16 @@ def to_table(
         raise PyDoughSessionException(
             "Cannot create view/table without a database connection.\n"
             "Please configure a database connection in the session."
+        )
+    # TEMP VIEW not supported for Snowflake, MySQL, and Postgres.
+    # Raise an error if user tries to create a temp view on those databases.
+    if temp and session.database.dialect in [
+        DatabaseDialect.SNOWFLAKE,
+        DatabaseDialect.MYSQL,
+        DatabaseDialect.POSTGRES,
+    ]:
+        raise PyDoughException(
+            f"TEMPORARY views are not supported for {session.database.dialect.name}"
         )
     # session.metadata = graph
     qualified: PyDoughQDAG = qualify_node(node, session)
