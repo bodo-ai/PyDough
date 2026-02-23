@@ -1393,9 +1393,6 @@ class PyDoughPandasTest:
                     result[col_name], refsol[col_name]
                 )
 
-        print()
-        print(result.to_string())
-        print(refsol.to_string())
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8

@@ -20,6 +20,7 @@ from pydough.logger import get_logger
 from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.database_connectors import DatabaseContext
+from pydough.configs import PyDoughConfigs, DivisionByZeroBehavior
 
 import os
 import pydough
@@ -2030,6 +2031,70 @@ result = (
                 "TODO: address Bodo/BodoSQL issues with Iceberg read on this specific test"
             ),
         ),
+        pytest.param(
+            # For each combination of category and color, what is the total
+            # qunatity of products of that combination that were purchased in
+            # the first week of April 2024? Only include combinations that have
+            # at least one such purchase in that window.
+            PyDoughPandasTest(
+                """
+result = (
+    sales
+    .WHERE((YEAR(sale_date) == 2024) & (MONTH(sale_date) == 4) & (DAY(sale_date) <= 7))
+    .items
+    .CALCULATE(quantity)
+    .product
+    .PARTITION(name='category_color', by=(category, color))
+    .CALCULATE(category, color, qty_purchased=SUM(product.quantity))
+    .ORDER_BY(category.ASC(), color.ASC())
+)
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame(
+                    {
+                        "category": ["Dresses"] * 5
+                        + ["Pants"] * 5
+                        + ["Shoes"] * 5
+                        + ["Sleepwear"] * 5
+                        + ["T-Shirts"] * 5,
+                        "color": ["Black", "Blue", "Green", "Red", "White"] * 5,
+                        "qty_purchased": [
+                            13,
+                            8,
+                            33,
+                            12,
+                            13,
+                            12,
+                            8,
+                            14,
+                            12,
+                            5,
+                            11,
+                            16,
+                            12,
+                            9,
+                            6,
+                            35,
+                            14,
+                            15,
+                            8,
+                            4,
+                            14,
+                            14,
+                            17,
+                            19,
+                            15,
+                        ],
+                    }
+                ),
+                "fashion_q04",
+                extra_test_data={"bodo_logger_messages": []},
+            ),
+            id="fashion_q04",
+            marks=pytest.mark.skip(
+                "TODO: address Bodo/BodoSQL issues with Iceberg read on this specific test"
+            ),
+        ),
     ],
 )
 def bodosql_e2e_tests(request) -> PyDoughPandasTest:
@@ -2088,6 +2153,7 @@ def test_pipeline_sql_bodosql(
 def test_pipeline_e2e_bodosql(
     bodosql_e2e_tests: PyDoughPandasTest,
     bodosql_graphs: graph_fetcher,
+    default_config: PyDoughConfigs,
     bodosql_sample_contexts: dict[str, DatabaseContext],
 ):
     """
@@ -2138,9 +2204,11 @@ def test_pipeline_e2e_bodosql(
         bodo.set_verbose_level(2)
         bodo.set_bodo_verbose_logger(bodo_logger)
 
+    default_config.division_by_zero = DivisionByZeroBehavior.NULL
     bodosql_e2e_tests.run_e2e_test(
         bodosql_graphs,
         ctx,
+        config=default_config,
         coerce_types=True,
     )
 

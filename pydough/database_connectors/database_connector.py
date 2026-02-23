@@ -165,9 +165,6 @@ class DatabaseContext:
                 pyd_logger = get_logger(__name__)
                 bodosql_plan: str = self.connection.generate_plan(sql, show_cost=True)
                 pyd_logger.debug(f"Generated BodoSQL plan for query:\n{bodosql_plan}")
-                print()
-                print(__name__)
-                print(bodosql_plan)
                 return self.connection.sql(sql)
             except Exception as e:
                 print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
