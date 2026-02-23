@@ -2,8 +2,8 @@ WITH _s3 AS (
   SELECT
     coupons.merchant_id,
     COUNT(*) AS n_rows
-  FROM main.coupons AS coupons
-  JOIN main.merchants AS merchants
+  FROM ewallet.coupons AS coupons
+  JOIN ewallet.merchants AS merchants
     ON (
       (
         YEAR(coupons.created_at) - YEAR(merchants.created_at)
@@ -19,7 +19,7 @@ SELECT
   merchants.mid AS merchant_id,
   merchants.name AS merchant_name,
   COALESCE(_s3.n_rows, 0) AS coupons_per_merchant
-FROM main.merchants AS merchants
+FROM ewallet.merchants AS merchants
 LEFT JOIN _s3 AS _s3
   ON _s3.merchant_id = merchants.mid
 ORDER BY

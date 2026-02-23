@@ -5,9 +5,11 @@ implementations of how to convert them to SQLGlot expressions
 
 __all__ = ["BaseTransformBindings"]
 
+import math
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.expressions import Concat
@@ -16,7 +18,14 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.errors import PyDoughSQLException
-from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.types import (
+    BooleanType,
+    DatetimeType,
+    NumericType,
+    PyDoughType,
+    StringType,
+)
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
@@ -25,10 +34,12 @@ from .sqlglot_transform_utils import (
     apply_parens,
     create_constant_table,
     current_ts_pattern,
+    generate_dataframe_rows,
     generate_range_rows,
     offset_pattern,
     pad_helper,
     positive_index,
+    rename_user_collection,
     trunc_pattern,
 )
 
@@ -46,6 +57,7 @@ class BaseTransformBindings:
     def __init__(self, configs: PyDoughConfigs, visitor: "SQLGlotRelationalVisitor"):
         self._configs = configs
         self._visitor = visitor
+        self._known_collections: list[str] = []
 
     @property
     def configs(self) -> PyDoughConfigs:
@@ -88,6 +100,49 @@ class BaseTransformBindings:
             "Friday": 5,
             "Saturday": 6,
         }
+
+    @property
+    def values_tuple(self) -> bool:
+        """
+        This property determine if the rows in VALUES for `GeneratedCollection` are
+        surrounded by a Tuple() or ROW().
+
+        If `True` the rows are build with Tuple (used with some dialects).
+        Example:
+        {rows} = [(column1, column2, ...), (...), ... ]
+
+        If `False` the rows are build with ROW (required for MySQL)
+        Example:
+        {rows} = [ROW(column1, column2, ...), ROW(...), ...]
+        """
+        return True
+
+    @property
+    def values_alias_column(self) -> bool:
+        """
+        Determine if the columns in VALUES can be renamed directly or not.
+
+        If `True` the columns should be renamed with an alias (needed for SQlite).
+        Example:
+        SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} )
+        AS {table_name}
+
+        If `False` the columns can be rename directly
+        Example:
+        SELECT {column_names} FROM ( VALUES {rows} )
+        AS table_name ({column_names})
+
+        Note: {column_names} is a list[str] with the names of the columns
+        respectively.
+        """
+        return True
+
+    @property
+    def known_collections(self) -> list[str]:
+        """
+        The list of known collection names that are user-generated.
+        """
+        return self._known_collections
 
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
@@ -2187,9 +2242,17 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the user-generated collection.
         """
 
+        # Rename the collection to ensure it is unique in the query,
+        # to avoid naming conflicts with other collections.
+        collection.name = rename_user_collection(
+            self.known_collections, collection.name
+        )
+
         match collection:
             case RangeGeneratedCollection():
                 return self.convert_user_generated_range(collection)
+            case DataframeGeneratedCollection():
+                return self.convert_user_generated_dataframe(collection)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
@@ -2202,16 +2265,111 @@ class BaseTransformBindings:
         Converts a user-generated range collection to its SQLGlot
         representation.
 
-        Arguments:
+        Args:
             `collection` : The user-generated range collection to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
         # Generate rows for the range, using Tuple.
-        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, True)
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, self)
 
         result: SQLGlotExpression = create_constant_table(
-            collection.name, [collection.column_name], range_rows
+            collection.name, [collection.column_name], range_rows, self
         )
 
         return result
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated dataframe collection to its SQLGlot
+        representation.
+
+        Args:
+            `collection` : The user-generated dataframe collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated dataframe as table.
+        """
+
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            self,
+        )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name,
+            collection.columns,
+            dataframe_rows,
+            self,
+        )
+
+        return result
+
+    def generate_dataframe_item_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for given item and pydough type.
+
+        Args:
+            `item` : The actual value stored in the dataframe.
+            `item_type` : The mapped PydDough type for this item.
+
+        Returns:
+            A SQLGlotExpression representing the item and its value.
+
+        Note: This covers the standard representations
+        (None, NaN, BooleanType, StringType) meaning that this representation
+        works through all current dialects.
+        """
+
+        if item is None or pd.isna(item):
+            return sqlglot_expressions.Null()
+
+        match item_type:
+            case BooleanType():
+                return sqlglot_expressions.Boolean(this=bool(item))
+
+            case StringType():
+                return sqlglot_expressions.Literal.string(item)
+
+            case _:  # Specific dialect expression
+                return self.generate_dataframe_item_dialect_expression(item, item_type)
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for given item and pydough type.
+
+        Args:
+            `item` : The actual value stored in the dataframe.
+            `item_type` : The mapped PydDough type for this item.
+
+        Returns:
+            A SQLGlotExpression representing the item and its value.
+
+        Note: This covers the NOT standard representations
+        (Datetime, NumericType, UnknownType) meaning that the expression
+        changes in different dialects.
+        """
+
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Literal.string("Infinity")
+                    else:
+                        return sqlglot_expressions.Literal.string("-Infinity")
+
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

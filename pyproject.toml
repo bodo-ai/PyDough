@@ -20,7 +20,7 @@ classifiers = [
 
 # Note: sqlite is included in the standard library, so it doesn't need to be listed here.
 # There is a bug in some unit tests when run with sqlglot>=26.8.0
-dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab"]
+dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab", "pyarrow==21.0.0"]
 
 [project.urls]
 # TODO: Add homepage + documentation when docs are live.

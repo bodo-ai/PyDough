@@ -3,7 +3,7 @@ WITH _t0 AS (
     DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) AS start_month,
     COUNT(*) AS n_rows,
     COUNT(DISTINCT diag_id) AS ndistinct_diag_id
-  FROM main.treatments
+  FROM dermtreatment.treatments
   WHERE
     DATEADD(
       MONTH,

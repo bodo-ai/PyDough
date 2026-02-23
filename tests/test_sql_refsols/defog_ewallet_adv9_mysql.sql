@@ -4,7 +4,7 @@ SELECT
     '%Y %c %e'
   ) AS `year_month`,
   COUNT(DISTINCT sender_id) AS active_users
-FROM main.wallet_transactions_daily
+FROM ewallet.wallet_transactions_daily
 WHERE
   created_at < STR_TO_DATE(
     CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),

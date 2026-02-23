@@ -1,0 +1,3 @@
+ROOT(columns=[('first_name', first_name), ('last_name', last_name)], orderings=[])
+ AGGREGATE(keys={'first_name': first_name, 'last_name': last_name}, aggregations={})
+  GENERATED_TABLE(DataframeCollection(name='teachers', shape=(12, 3), columns=['tid', 'first_name', 'last_name']))

@@ -8,15 +8,15 @@ WITH sizes AS (
   FROM TABLE(GENERATOR(ROWCOUNT => 12))
 ), _s3 AS (
   SELECT
-    sizes.part_size,
+    sizes_2.part_size,
     COUNT(*) AS n_rows
-  FROM sizes_2 AS sizes
+  FROM sizes_2 AS sizes_2
   JOIN tpch.part AS part
     ON CONTAINS(part.p_name, 'almond')
     AND part.p_size <= (
-      sizes.part_size + 4
+      sizes_2.part_size + 4
     )
-    AND part.p_size >= sizes.part_size
+    AND part.p_size >= sizes_2.part_size
   GROUP BY
     1
 )
