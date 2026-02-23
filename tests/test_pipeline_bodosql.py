@@ -1915,7 +1915,7 @@ result = (
                 "FASHIONSTORE",
                 lambda: pd.DataFrame(
                     {
-                        "product_name": ["Essential Silk Dress", " Vintage Silk Dress"],
+                        "product_name": ["Essential Silk Dress", "Vintage Silk Dress"],
                         "country": ["France", "France"],
                         "quantity": [39, 45],
                     }
