@@ -6234,42 +6234,55 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 
 
 @pytest.mark.execute
-def test_pipeline_e2e_tpch_to_table(
+def test_pipeline_tpch_e2e_to_table_all_dialects(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    sqlite_tpch_db_context: DatabaseContext,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+):
+    """
+    Test executing to_table e2e tests for all supported database dialects.
+    Uses the all_dialects_tpch_db_context fixture to run on sqlite, mysql,
+    postgres, and snowflake.
+    """
+    db_context, graph = all_dialects_tpch_db_context
+
+    # Skip Snowflake for to_table tests (no write access to shared DB)
+    if db_context.dialect == DatabaseDialect.SNOWFLAKE:
+        pytest.skip("Skipping Snowflake to_table tests - no write access")
+
+    tpch_custom_pipeline_to_table_test_data.run_e2e_test(
+        lambda _: graph,  # graph_fetcher that returns the graph directly
+        db_context,
+        coerce_types=True,
+    )
+
+
+@pytest.mark.execute
+def test_pipeline_tpch_sql_to_table_all_dialects(
+    tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
-    get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ):
     """
-    Test executing to_table e2e tests for the TPC-H database.
-    Plus, test/update expected SQL output for the to_table tests.
+    Test/update expected SQL output for to_table tests across all dialects.
+    Uses the all_dialects_tpch_db_context fixture to run on sqlite, mysql,
+    postgres, and snowflake.
     """
-    tpch_custom_pipeline_to_table_test_data.run_e2e_test(
-        get_sample_graph, sqlite_tpch_db_context, coerce_types=True
-    )
+    db_context, graph = all_dialects_tpch_db_context
 
-    # Relational output
-    # relational_file_path: str = get_plan_test_filename(tpch_custom_pipeline_to_table_test_data.test_name)
-    # tpch_custom_pipeline_to_table_test_data.run_relational_test(
-    #     get_sample_graph, relational_file_path, update_tests
-    # )
-
-    # SQL output
-
-    tpch_custom_pipeline_to_table_test_data = (
-        tpch_custom_test_data_dialect_replacements(
-            sqlite_tpch_db_context.dialect, tpch_custom_pipeline_to_table_test_data
-        )
-    )
+    # Skip Snowflake for to_table tests (no write access to shared DB)
+    if db_context.dialect == DatabaseDialect.SNOWFLAKE:
+        pytest.skip("Skipping Snowflake to_table tests - no write access")
 
     sql_file_path: str = get_sql_test_filename(
         tpch_custom_pipeline_to_table_test_data.test_name,
-        sqlite_tpch_db_context.dialect,
+        db_context.dialect,
     )
     tpch_custom_pipeline_to_table_test_data.run_sql_test(
-        get_sample_graph, sql_file_path, update_tests, sqlite_tpch_db_context
+        lambda _: graph,  # graph_fetcher that returns the graph directly
+        sql_file_path,
+        update_tests,
+        db_context,
     )
 
 

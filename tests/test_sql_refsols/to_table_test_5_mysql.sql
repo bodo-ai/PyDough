@@ -1,0 +1,6 @@
+SELECT
+  c_name COLLATE utf8mb4_bin AS name
+FROM tpch.CUSTOMER
+ORDER BY
+  1
+LIMIT 5
