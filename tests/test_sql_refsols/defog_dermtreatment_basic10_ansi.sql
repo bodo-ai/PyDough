@@ -1,6 +1,15 @@
+WITH _u_0 AS (
+  SELECT
+    drug_id AS _u_1
+  FROM main.treatments
+  GROUP BY
+    1
+)
 SELECT
   drugs.drug_id,
   drugs.drug_name
 FROM main.drugs AS drugs
-JOIN main.treatments AS treatments
-  ON drugs.drug_id = treatments.drug_id
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = drugs.drug_id
+WHERE
+  _u_0._u_1 IS NULL

@@ -19,6 +19,7 @@ from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
+from sqlglot.transforms import eliminate_semi_and_anti_joins
 
 from pydough.configs import PyDoughSession
 from pydough.database_connectors import DatabaseDialect
@@ -420,6 +421,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if join_type == "SEMI" and join.cardinality.singular:
             join_type == "INNER"
         query = query.join(subquery, on=cond_expr, join_type=join_type)
+        # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
+        # which is necessary later when optimizing
+        query = eliminate_semi_and_anti_joins(query)
         self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:

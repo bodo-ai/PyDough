@@ -1,6 +1,15 @@
+WITH "_u_0" AS (
+  SELECT
+    sbtxcustid AS "_u_1"
+  FROM MAIN.SBTRANSACTION
+  GROUP BY
+    sbtxcustid
+)
 SELECT
   SBCUSTOMER.sbcustid AS "_id",
   SBCUSTOMER.sbcustname AS name
 FROM MAIN.SBCUSTOMER SBCUSTOMER
-JOIN MAIN.SBTRANSACTION SBTRANSACTION
-  ON SBCUSTOMER.sbcustid = SBTRANSACTION.sbtxcustid
+LEFT JOIN "_u_0" "_u_0"
+  ON SBCUSTOMER.sbcustid = "_u_0"."_u_1"
+WHERE
+  "_u_0"."_u_1" IS NULL

@@ -7,12 +7,26 @@ WITH "_S0" AS (
   SELECT
     city_name AS CITY_NAME
   FROM MAIN.RESTAURANT
+), "_u_0" AS (
+  SELECT
+    CITY_NAME AS "_u_1"
+  FROM "_S1"
+  GROUP BY
+    CITY_NAME
 ), "_S6" AS (
   SELECT DISTINCT
     "_S0".REGION
   FROM "_S0" "_S0"
-  JOIN "_S1" "_S1"
-    ON "_S0".CITY_NAME = "_S1".CITY_NAME
+  LEFT JOIN "_u_0" "_u_0"
+    ON "_S0".CITY_NAME = "_u_0"."_u_1"
+  WHERE
+    NOT "_u_0"."_u_1" IS NULL
+), "_u_2" AS (
+  SELECT
+    CITY_NAME AS "_u_3"
+  FROM "_S1"
+  GROUP BY
+    CITY_NAME
 ), "_S5" AS (
   SELECT
     city_name AS CITY_NAME,
@@ -26,10 +40,12 @@ WITH "_S0" AS (
     SUM("_S5".SUM_RATING) / SUM("_S5".COUNT_RATING) AS AVG_RATING,
     "_S2".REGION
   FROM "_S0" "_S2"
-  JOIN "_S1" "_S3"
-    ON "_S2".CITY_NAME = "_S3".CITY_NAME
+  LEFT JOIN "_u_2" "_u_2"
+    ON "_S2".CITY_NAME = "_u_2"."_u_3"
   JOIN "_S5" "_S5"
     ON "_S2".CITY_NAME = "_S5".CITY_NAME
+  WHERE
+    NOT "_u_2"."_u_3" IS NULL
   GROUP BY
     "_S2".REGION
 )

@@ -24,20 +24,28 @@ WITH "_T5" AS (
     "_T5".L_LINENUMBER,
     "_T5".L_ORDERKEY,
     ORDERS.o_orderkey
-), "_S11" AS (
+), "_u_0" AS (
   SELECT
-    "_T3".ANYTHING_L_SUPPKEY
-  FROM "_T3" "_T3"
-  JOIN "_T5" "_T6"
-    ON "_T3".L_LINENUMBER = "_T6".L_LINENUMBER
-    AND "_T3".L_ORDERKEY = "_T6".L_ORDERKEY
-    AND "_T3".O_ORDERKEY = "_T6".L_ORDERKEY
+    "_T6".L_LINENUMBER AS "_u_1",
+    "_T6".L_ORDERKEY AS "_u_2"
+  FROM "_T5" "_T6"
   JOIN TPCH.LINEITEM LINEITEM
     ON LINEITEM.l_commitdate < LINEITEM.l_receiptdate
     AND LINEITEM.l_orderkey = "_T6".L_ORDERKEY
     AND LINEITEM.l_suppkey <> "_T6".L_SUPPKEY
+  GROUP BY
+    "_T6".L_LINENUMBER,
+    "_T6".L_ORDERKEY
+), "_S11" AS (
+  SELECT
+    "_T3".ANYTHING_L_SUPPKEY
+  FROM "_T3" "_T3"
+  LEFT JOIN "_u_0" "_u_0"
+    ON "_T3".L_LINENUMBER = "_u_0"."_u_1"
+    AND "_T3".L_ORDERKEY = "_u_0"."_u_2"
+    AND "_T3".O_ORDERKEY = "_u_0"."_u_2"
   WHERE
-    "_T3".ANYTHING_O_ORDERSTATUS = 'F'
+    "_T3".ANYTHING_O_ORDERSTATUS = 'F' AND "_u_0"."_u_1" IS NULL
 )
 SELECT
   ANY_VALUE(SUPPLIER.s_name) AS S_NAME,

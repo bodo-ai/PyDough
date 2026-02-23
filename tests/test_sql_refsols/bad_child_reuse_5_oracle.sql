@@ -21,13 +21,21 @@ WITH "_T2" AS (
     1 DESC NULLS LAST,
     2 DESC NULLS LAST
   FETCH FIRST 10 ROWS ONLY
+), "_u_0" AS (
+  SELECT
+    O_CUSTKEY AS "_u_1"
+  FROM "_T2"
+  GROUP BY
+    O_CUSTKEY
 )
 SELECT
   "_S2".C_CUSTKEY AS cust_key,
   COALESCE("_S2".N_ROWS, 0) AS n_orders
 FROM "_S2" "_S2"
-JOIN "_T2" "_S3"
-  ON "_S2".C_CUSTKEY = "_S3".O_CUSTKEY
+LEFT JOIN "_u_0" "_u_0"
+  ON "_S2".C_CUSTKEY = "_u_0"."_u_1"
+WHERE
+  "_u_0"."_u_1" IS NULL
 ORDER BY
   "_S2".C_ACCTBAL DESC NULLS LAST,
   1 DESC NULLS LAST
