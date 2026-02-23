@@ -6,6 +6,12 @@ __all__ = ["dataframe_collection", "range_collection"]
 
 import pandas as pd
 
+from pydough.errors.error_utils import (
+    NonEmptyListOf,
+    ValidSQLName,
+    is_string,
+    unique_properties_predicate,
+)
 from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -52,7 +58,7 @@ def dataframe_collection(
     name: str,
     dataframe: pd.DataFrame,
     unique_column_names: list[str | list[str]],
-    filter_columns: list[str] = [],
+    column_subset: list[str] = [],
 ) -> UnqualifiedGeneratedCollection:
     """
     Implementation of the `pydough.dataframe_collection` function, which provides
@@ -63,30 +69,46 @@ def dataframe_collection(
         `dataframe` : The dataframe of the collection
         `unique_column_names`: List of unique properties or unique combinations
         in the collection.
-        `filter_columns`: List of columns use to filter the original dataframe.
+        `column_subset`: List of columns use to filter the original dataframe.
         This are the columns that will be in the Dataframe collection. If empty
         the dataframe will use all columns.
 
     Returns:
         A collection with the given dataframe.
     """
+    # Validate name
     if not isinstance(name, str):
         raise TypeError(f"Expected 'name' to be a string, got {type(name).__name__}")
+
+    if not ValidSQLName().is_valid_sql_identifier(name):
+        raise ValueError(
+            f"Invalid collection name '{name}'. Must be a valid SQL identifier."
+        )
+
+    # Validate dataframe
     if not isinstance(dataframe, pd.DataFrame):
         raise TypeError(
             f"Expected 'dataframe' to be a Pandas DataFrame, got {type(dataframe).__name__}"
         )
-    if not DataframeGeneratedCollection.valid_unique_column_names(unique_column_names):
-        raise TypeError(
-            f"Expected 'unique_column_names' to be list[list | list[str]], got {type(unique_column_names).__name__}"
+
+    NonEmptyListOf(is_string).verify(list(dataframe.columns), "dataframe columns")
+
+    invalid_cols = [
+        col
+        for col in list(dataframe.columns)
+        if not ValidSQLName().is_valid_sql_identifier(col)
+    ]
+    if len(invalid_cols) > 0:
+        raise ValueError(
+            f"Invalid column name(s) in dataframe: {', '.join(invalid_cols)}. "
+            f"All column names must be valid SQL identifiers."
         )
 
-    if not isinstance(filter_columns, list) and all(
-        isinstance(col, str) for col in filter_columns
-    ):
-        raise TypeError(
-            f"Expected 'filter_columns' to a list of string, got {type(filter_columns).__name__}"
-        )
+    if len(dataframe) == 0:
+        raise ValueError("DataFrame has no rows. Must have at least one row.")
+
+    # Validate unique_column_names
+    unique_properties_predicate.verify(unique_column_names, "unique_column_names")
 
     unique_flatten_columns: list[str] = [
         col
@@ -103,22 +125,26 @@ def dataframe_collection(
             f"are missing in the dataframe: {missing}"
         )
 
-    # All unique_columns must be inside filter_columns
-    if len(filter_columns) > 0:
-        missing_columns = set(unique_flatten_columns) - set(filter_columns)
+    # All unique_columns must be inside column_subset
+
+    if len(column_subset) > 0:
+        # Validate column_subset
+        NonEmptyListOf(is_string).verify(column_subset, "column_subset")
+
+        missing_columns = set(unique_flatten_columns) - set(column_subset)
 
         if missing_columns:
             missing = ", ".join(sorted(missing_columns))
             raise ValueError(
                 f"The following column(s) from 'unique_column_names' "
-                f"are missing in `filter_columns`: {missing}"
+                f"are missing in `column_subset`: {missing}"
             )
 
     dataframe_collection = DataframeGeneratedCollection(
         name=name,
         dataframe=dataframe,
         unique_column_names=unique_column_names,
-        filter_columns=filter_columns,
+        column_subset=column_subset,
     )
 
     return UnqualifiedGeneratedCollection(dataframe_collection)

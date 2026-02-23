@@ -50,9 +50,9 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         name: str,
         dataframe: pd.DataFrame,
         unique_column_names: list[str | list[str]],
-        filter_columns: list[str] = [],
+        column_subset: list[str] = [],
     ) -> None:
-        dataframe = self.filter_dataframe(dataframe, filter_columns)
+        dataframe = self.filter_dataframe(dataframe, column_subset)
         super().__init__(
             name=name,
             columns=list(dataframe.columns),
@@ -111,7 +111,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
     @staticmethod
     def get_dataframe_types(dataframe: pd.DataFrame) -> list[PyDoughType]:
         """
-        Validate the given dataframe and collect the PyDough types matching each
+        Collect the PyDough types matching each
         column respectively.
 
         Validations:
@@ -125,13 +125,10 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         Returns:
             List of PyDough types matching each column
         """
-        if len(dataframe.columns) == 0:
-            raise ValueError(
-                "DataFrame is empty. Must have at least one non-empty column."
-            )
-
-        if len(dataframe) == 0:
-            raise ValueError("DataFrame has no rows. Must have at least one row.")
+        assert len(dataframe.columns) > 0, (
+            "DataFrame is empty. Must have at least one non-empty column."
+        )
+        assert len(dataframe) > 0, "DataFrame has no rows. Must have at least one row."
 
         pyd_types: list[PyDoughType] = []
 
@@ -227,65 +224,36 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             )
 
     @staticmethod
-    def valid_unique_column_names(unique_columns_name: list[str | list[str]]) -> bool:
-        """
-        Validate that the unique column names have the correct format.
-
-        A valid format is a list where each item is either:
-        - A string (single column name)
-        - A list of strings (composite unique constraint)
-
-        Args:
-            `unique_columns_name`: A list containing column name(s) or composite
-                column name(s) that form unique constraints.
-
-        Returns:
-            True if the input is a valid list with the correct format,
-            False otherwise.
-        """
-        if not isinstance(unique_columns_name, list):
-            return False
-
-        for item in unique_columns_name:
-            if isinstance(item, str):
-                continue
-            if isinstance(item, list) and all(isinstance(x, str) for x in item):
-                continue
-            return False
-
-        return True
-
-    @staticmethod
     def filter_dataframe(
-        dataframe: pd.DataFrame, filter_columns: list[str]
+        dataframe: pd.DataFrame, column_subset: list[str]
     ) -> pd.DataFrame:
         """
         Filter the dataframe to include only the specified columns.
 
         Args:
             `dataframe`: The Pandas DataFrame to be filtered.
-            `filter_columns`: List of column names to keep. If empty, the original
+            `column_subset`: List of column names to keep. If empty, the original
                 dataframe is returned unchanged.
 
         Returns:
             The filtered dataframe containing only the specified columns,
-            or the original dataframe if filter_columns is empty.
+            or the original dataframe if column_subset is empty.
 
         Raises:
-            ValueError: If one or more columns in filter_columns are not
+            ValueError: If one or more columns in column_subset are not
                 present in the dataframe.
         """
-        if not filter_columns:
-            # If there are not filter columns, return the dataframe as it is
+        if not column_subset:
+            # If there are not column_subset, return the dataframe as it is
             return dataframe
 
-        missing_columns = set(filter_columns) - set(dataframe.columns)
+        missing_columns = set(column_subset) - set(dataframe.columns)
 
         if missing_columns:
             missing = ", ".join(sorted(missing_columns))
             raise ValueError(
-                f"The following column(s) from 'filter_columns' "
+                f"The following column(s) from 'column_subset' "
                 f"are missing in the dataframe: {missing}"
             )
 
-        return dataframe[filter_columns]
+        return dataframe[column_subset]

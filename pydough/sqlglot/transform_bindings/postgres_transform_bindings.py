@@ -11,6 +11,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
@@ -651,11 +652,13 @@ class PostgresTransformBindings(BaseTransformBindings):
             A SQLGlotExpression representing the user-generated range as table.
         """
 
+        column_quoted, column_normalized = normalize_column_name(collection.column_name)
         column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this=collection.column_name, quoted=False
+            this=column_normalized, quoted=column_quoted
         )
+        table_quoted, table_normalized = normalize_column_name(collection.name)
         table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this=collection.name, quoted=False
+            this=table_normalized, quoted=table_quoted
         )
 
         start: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.start)

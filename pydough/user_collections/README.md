@@ -18,6 +18,7 @@ This module defines the user collections that can be created on the fly and used
   - `DataframeGeneratedCollection`: Class used to create a dataframe collection using the given dataframe and name.
     - `name`: The name of the dataframe collection.
     - `dataframe`: The Pandas dataframe containing all data (rows and columns).
+<<<<<<< HEAD
     - `unique_column_names`: List of string or list or string 
     `(list [str | list[ str ]])` representing the unique properties for the dataframe 
     collection. For example: ["column1", ["column2", "column3"]] indicates `column1`
@@ -27,6 +28,17 @@ This module defines the user collections that can be created on the fly and used
     final dataframe collection. 
 
     **Note**: All columns in `unique_column_names` must be included in `filter_columns`; otherwise, an error will be raised. 
+=======
+    - `unique_column_names`: List of strings or list of list of string 
+    `(list [str | list[ str ]])` representing the unique properties for the dataframe 
+    collection. For example: ["column1", ["column2", "column3"]] indicates `column1`
+    is a unique property and the combination of column2 and column3 is also unique.
+    - `column_subset`(optional): List of filter/selected columns from the dataframe.
+    If provided, indicates all columns from the original dataframe that will be in the
+    final dataframe collection. 
+
+    **Note**: All columns in `unique_column_names` must be included in `column_subset`; otherwise, an error will be raised. 
+>>>>>>> 4f698285b0298f4bfff371c29536be964c4f254a
 
 ### [user_collection_apis.py](user_collection_apis.py)
   - `range_collection`: Function to create a range collection with the specified parameters.
@@ -40,7 +52,7 @@ This module defines the user collections that can be created on the fly and used
     - `name`: The name of the dataframe collection.
     - `dataframe`: The Pandas dataframe.
     - `unique_column_names`: List of unique columns or unique combination of columns.
-    - `filter_columns`(optional): List of columns filtered from the given dataframe.
+    - `column_subset`(optional): List of columns filtered from the given dataframe.
     - Returns: An instance of `DataframeGeneratedCollection`.
 
 

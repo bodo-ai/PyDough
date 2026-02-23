@@ -198,6 +198,14 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_bad_7,
     dataframe_collection_bad_8,
     dataframe_collection_bad_9,
+    dataframe_collection_bad_10,
+    dataframe_collection_bad_11,
+    dataframe_collection_bad_12,
+    dataframe_collection_bad_13,
+    dataframe_collection_bad_14,
+    dataframe_collection_bad_15,
+    dataframe_collection_bad_16,
+    dataframe_collection_bad_17,
     dataframe_collection_best,
     dataframe_collection_correlation,
     dataframe_collection_cross,
@@ -219,11 +227,14 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_window_functions,
     simple_dataframe_collection_1,
     simple_dataframe_collection_2,
+    simple_dataframe_collection_3,
+    simple_dataframe_collection_4,
     simple_range_1,
     simple_range_2,
     simple_range_3,
     simple_range_4,
     simple_range_5,
+    simple_range_9,
     user_range_collection_1,
     user_range_collection_2,
     user_range_collection_3,
@@ -4161,6 +4172,17 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                simple_range_9,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {'"name space"': pd.Series(range(5), dtype="object")}
+                ),
+                "simple_range_9",
+            ),
+            id="simple_range_9",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 user_range_collection_1,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -4356,7 +4378,6 @@ from .testing_utilities import (
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "user_id": [1, 2, 3, 4],
                         "signup_date": pd.to_datetime(
                             [
                                 "2024-01-10",
@@ -4365,11 +4386,39 @@ from .testing_utilities import (
                                 "2024-02-01",
                             ]
                         ),
+                        "user_id": [1, 2, 3, 4],
                     }
                 ),
                 "simple_dataframe_collection_2",
             ),
             id="simple_dataframe_collection_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_dataframe_collection_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "user_id": [1, 2, 3, 4],
+                        '"`name""["': ["Alice", "Bob", "Charlie", "David"],
+                        '"space country"': ["US", "CR", "US", "MX"],
+                        '"CAST"': [25, 30, 22, 30],
+                    }
+                ),
+                "simple_dataframe_collection_3",
+            ),
+            id="simple_dataframe_collection_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_dataframe_collection_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"user_id": [1, 2, 3, 4], "country": ["US", "CR", "US", "MX"]}
+                ),
+                "simple_dataframe_collection_4",
+            ),
+            id="simple_dataframe_collection_4",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -5544,7 +5593,9 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             dataframe_collection_bad_4,
             None,
-            re.escape("DataFrame is empty. Must have at least one non-empty column."),
+            re.escape(
+                "dataframe columns must be a non-empty list where each element must be a string"
+            ),
             id="dataframe_collection_bad_4",
         ),
         pytest.param(
@@ -5575,7 +5626,7 @@ def test_pipeline_e2e_tpch_custom(
             dataframe_collection_bad_8,
             None,
             re.escape(
-                "The following column(s) from 'filter_columns' are missing in the dataframe: no_exists"
+                "column_subset must be a non-empty list where each element must be a string"
             ),
             id="dataframe_collection_bad_8",
         ),
@@ -5583,9 +5634,71 @@ def test_pipeline_e2e_tpch_custom(
             dataframe_collection_bad_9,
             None,
             re.escape(
-                "The following column(s) from 'unique_column_names' are missing in `filter_columns`: id"
+                "column_subset must be a non-empty list where each element must be a string"
             ),
             id="dataframe_collection_bad_9",
+        ),
+        pytest.param(
+            dataframe_collection_bad_10,
+            None,
+            re.escape(
+                "The following column(s) from 'column_subset' are missing in the dataframe: no_exists"
+            ),
+            id="dataframe_collection_bad_10",
+        ),
+        pytest.param(
+            dataframe_collection_bad_11,
+            None,
+            re.escape(
+                "The following column(s) from 'unique_column_names' are missing in `column_subset`: id"
+            ),
+            id="dataframe_collection_bad_11",
+        ),
+        pytest.param(
+            dataframe_collection_bad_12,
+            None,
+            re.escape(
+                "dataframe_collection() missing 1 required positional argument: 'unique_column_names'"
+            ),
+            id="dataframe_collection_bad_12",
+        ),
+        pytest.param(
+            dataframe_collection_bad_13,
+            None,
+            re.escape("Duplicate column names found: ['id', 'id']"),
+            id="dataframe_collection_bad_13",
+        ),
+        pytest.param(
+            dataframe_collection_bad_14,
+            None,
+            re.escape(
+                "Invalid column name(s) in dataframe: 1thcolumn, column-name, user@name. All column names must be valid SQL identifiers."
+            ),
+            id="dataframe_collection_bad_14",
+        ),
+        pytest.param(
+            dataframe_collection_bad_15,
+            None,
+            re.escape(
+                "unique_column_names must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string"
+            ),
+            id="dataframe_collection_bad_15",
+        ),
+        pytest.param(
+            dataframe_collection_bad_16,
+            None,
+            re.escape(
+                "unique_column_names must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string"
+            ),
+            id="dataframe_collection_bad_16",
+        ),
+        pytest.param(
+            dataframe_collection_bad_17,
+            None,
+            re.escape(
+                "dataframe columns must be a non-empty list where each element must be a string"
+            ),
+            id="dataframe_collection_bad_17",
         ),
     ],
 )

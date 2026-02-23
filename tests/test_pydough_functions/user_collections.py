@@ -54,6 +54,11 @@ def simple_range_5():
     return pydough.range_collection("T3", "x", -1)
 
 
+def simple_range_9():
+    # Generate a table with 1 column named `name space`
+    return pydough.range_collection('"quoted-name"', '"name space"', 5)
+
+
 def user_range_collection_1():
     # Creates a collection `sizes` with a single property `part_size` whose values are the
     # integers from 1 (inclusive) to 100 (exclusive), skipping by 5s, then for each size value,
@@ -177,7 +182,7 @@ def simple_dataframe_collection_1():
 
 
 def simple_dataframe_collection_2():
-    # Generates a simple dataframe collection with filtered columns
+    # Generates a simple dataframe collection with column_subset
     df = pd.DataFrame(
         {
             "user_id": [1, 2, 3, 4],
@@ -193,12 +198,51 @@ def simple_dataframe_collection_2():
             ),
         }
     )
+    return pydough.dataframe_collection(
+        name="users",
+        dataframe=df,
+        unique_column_names=["user_id"],
+        column_subset=["signup_date", "user_id"],
+    )
+
+
+def simple_dataframe_collection_3():
+    # Generates a simple dataframe collection with quoted names and reserved words,
+    # and only a subset of the columns
+    df = pd.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            '"`name""["': ["Alice", "Bob", "Charlie", "David"],
+            '"space country"': ["US", "CR", "US", "MX"],
+            '"CAST"': [25, 30, 22, 30],
+        }
+    )
 
     return pydough.dataframe_collection(
         name="users",
         dataframe=df,
         unique_column_names=["user_id"],
-        filter_columns=["user_id", "signup_date"],
+    )
+
+
+def simple_dataframe_collection_4():
+    # Dataframe collection with a dataframe with invalid datatypes but
+    # those are not selected to the final dataframe collection because of
+    # the column_subset parameter, so it should work without errors
+    df = pd.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            "country": ["US", "CR", "US", "MX"],
+            "user_list": [[12, 4], [23, 5], [56, 3], [23, 6, 7]],
+            "date": [{"a": 1}, {"b": 2}, {"c": 3}, {"d": 4}],
+        }
+    )
+
+    return pydough.dataframe_collection(
+        name="users",
+        dataframe=df,
+        unique_column_names=["user_id"],
+        column_subset=["user_id", "country"],
     )
 
 
@@ -864,7 +908,7 @@ def dataframe_collection_bad_3():
 def dataframe_collection_bad_4():
     # Empty dataframe
     df_empty = pd.DataFrame({})
-    return pydough.dataframe_collection("empty_df", df_empty, [])
+    return pydough.dataframe_collection("empty_df", df_empty, ["id"])
 
 
 def dataframe_collection_bad_5():
@@ -899,7 +943,33 @@ def dataframe_collection_bad_7():
 
 
 def dataframe_collection_bad_8():
-    # Wrong filter_columns (not in the dataframe)
+    # column_subset not a list
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df", df_unsupported, ["id"], "no_list"
+    )
+
+
+def dataframe_collection_bad_9():
+    # column_subset not a list of strings
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df", df_unsupported, ["id"], ["id", 2, "no_string"]
+    )
+
+
+def dataframe_collection_bad_10():
+    # Wrong column_subset (not in the dataframe)
     df_unsupported = pd.DataFrame(
         {
             "id": [1, 2, 3, 4, 5],
@@ -911,8 +981,8 @@ def dataframe_collection_bad_8():
     )
 
 
-def dataframe_collection_bad_9():
-    # Wrong unique_column_names (not in filter_columns)
+def dataframe_collection_bad_11():
+    # Wrong unique_column_names (not in column_subset)
     df_unsupported = pd.DataFrame(
         {
             "id": [1, 2, 3, 4, 5],
@@ -921,4 +991,90 @@ def dataframe_collection_bad_9():
     )
     return pydough.dataframe_collection(
         "unsupported_df", df_unsupported, ["id"], ["name"]
+    )
+
+
+def dataframe_collection_bad_12():
+    # Missing unique column names (not in column_subset)
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection("unsupported_df", df_unsupported)
+
+
+def dataframe_collection_bad_13():
+    # columns_subset include repeats
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df", df_unsupported, ["id"], ["id", "id"]
+    )
+
+
+def dataframe_collection_bad_14():
+    # Invalid dataframe column names
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "1thcolumn": ["John", "Jane", "Mike"],
+            "column-name": ["Lee", "Smith", "Thomas"],
+            "user@name": ["johnl2", "jasm10", "thomas01"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df",
+        df_unsupported,
+        ["id"],
+    )
+
+
+def dataframe_collection_bad_15():
+    # The unique columns is an empty list
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df",
+        df_unsupported,
+        [],
+    )
+
+
+def dataframe_collection_bad_16():
+    # The unique columns contains an empty list (e.g. [] or ["A", []])
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df",
+        df_unsupported,
+        ["id", []],
+    )
+
+
+def dataframe_collection_bad_17():
+    # Columns are not valid sql identifiers
+    df_unsupported = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            1: ["John", "Jane", "Mike", "David", "Tom"],
+        }
+    )
+    return pydough.dataframe_collection(
+        "unsupported_df",
+        df_unsupported,
+        ["id"],
     )
