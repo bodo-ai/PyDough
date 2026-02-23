@@ -608,7 +608,6 @@ def test_pipeline_e2e_mysql_custom_datasets(
 
 
 @pytest.mark.mysql
-@pytest.mark.execute
 def test_pipeline_e2e_mysql_tpch_to_table(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,

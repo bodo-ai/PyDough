@@ -602,7 +602,7 @@ def test_pipeline_e2e_postgres_custom_datasets(
     )
 
 
-@pytest.mark.execute
+@pytest.mark.postgres
 def test_pipeline_e2e_postgres_tpch_to_table(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,

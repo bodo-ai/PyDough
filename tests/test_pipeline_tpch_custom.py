@@ -5725,9 +5725,10 @@ def test_pipeline_e2e_errors(
 
 @pytest.fixture(
     params=[
-        # NOTE: all tests  have temporary and/or replace tables to ensure that we don't have
-        # to worry about cleanup after tests, and to allow testing
-        # works with multiple runs without interference from previous runs
+        # NOTE: all tests  have temporary and/or replace tables to ensure
+        # that we don't have to worry about cleanup after tests,
+        # and to make sure tests work with multiple runs without
+        # interference from previous runs.
         # Test 1: UnqualifiedWhere: Basic WHERE filter,
         # then CALCULATE on materialized view
         pytest.param(
@@ -6360,7 +6361,8 @@ def test_pipeline_to_table_ddl(
     expected_create_statement += table_or_view
 
     # SQLite (+ PostgreSQL and MySQL) do not support REPLACE
-    # so table/view will be dropped first if replace is True.
+    # so table will be dropped first if replace is True.
+    # NOTE: SQLite does not support REPLACE for views too but other dialects too.
     # In the logs, look for DROP then CREATE statements.
     if replace:
         expected_create_statement = (
