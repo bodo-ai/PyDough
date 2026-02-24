@@ -21,6 +21,8 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [CROSS](#cross)
 - [User Generated Collections](#user-generated-collections)
     * [range_collection](#range_collection)
+    * [dataframe_collection](#dataframe_collection)
+    * [View/Table Collections (via to_table)](#view_collection)
 - [Larger Examples](#larger-examples)
    * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
    * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
@@ -1678,6 +1680,72 @@ Output:
 2   AFRICA          877
 3   ASIA            988
 4   MIDDLE EAST     144
+```
+
+<!-- TOC --><a name="view_collection"></a>
+### View/Table Collections (via `pydough.to_table`)
+
+The `to_table` function materializes a PyDough query as a database view or table and returns a collection that can be used in subsequent PyDough queries. This is useful for breaking down complex queries into intermediate results, improving performance, or creating reusable database objects.
+
+See the [Usage Guide](usage.md#pydoughto_table) for the full API documentation of `pydough.to_table`.
+
+The returned collection has the following characteristics:
+- **Schema Inference**: Column names and types are automatically inferred from the query being materialized.
+- **Database Object**: The view/table is actually created in the database, making it available for the current session (temp) or persistently.
+- **Collection Operations**: The returned collection supports all standard PyDough operations: `.CALCULATE()`, `.WHERE()`, `.TOP_K()`, `.ORDER_BY()`, `PARTITION()`, etc.
+- **Cross-Database Access**: The collection can be joined with other collections using `CROSS()`.
+
+#### Example 1: Materializing and Querying
+
+```py
+%%pydough
+# Materialize a filtered subset of nations as a temporary table
+asian_nations = nations.WHERE(region.name == 'ASIA')
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', temp=True)
+
+# Query from the materialized table - direct method call works for simple queries
+result = asian_tmp.CALCULATE(name)
+```
+
+#### Example 2: Joining Multiple Materialized Collections
+
+When joining multiple collections, use `.CROSS()` to establish cross-join relationships:
+
+```py
+%%pydough
+# Create two materialized tables
+asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', replace=True, temp=True)
+
+asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)
+custs_tmp = pydough.to_table(asian_custs, name='asian_custs', temp=True)
+
+# Join the materialized collections: asian_tmp.CROSS(custs_tmp)
+result = (
+    asian_tmp
+    .CALCULATE(nation_key, nation_name)
+    .CROSS(custs_tmp)
+    .WHERE(nation_key == nkey)
+    .CALCULATE(nation_name, ckey)
+    .TOP_K(5, by=(nation_name, ckey))
+)
+```
+
+#### Example 3: Using with PARTITION
+
+```py
+%%pydough
+# Materialize nation data
+asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', replace=True)
+
+# Partition by nation_key and count records in each partition
+result = (
+    asian_tmp
+    .PARTITION(name='by_nation', by=nation_key)
+    .CALCULATE(nation_key, cnt=COUNT(asian_tmp))
+    .TOP_K(10, by=cnt.DESC())
+)
 ```
 
 <!-- TOC --><a name="larger-examples"></a>
