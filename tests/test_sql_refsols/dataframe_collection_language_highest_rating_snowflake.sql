@@ -1,8 +1,7 @@
 WITH _t0 AS (
   SELECT
     classes.language,
-    teaching.rating,
-    teaching.teacher_id
+    teaching.rating
   FROM (VALUES
     (15112, 'Programming Fundamentals', 'Python'),
     (15122, 'Imperative Programming', 'C'),
@@ -45,6 +44,51 @@ WITH _t0 AS (
     NOT classes.language IS NULL
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY classes.language ORDER BY teaching.rating DESC) = 1
+), _t3 AS (
+  SELECT
+    teaching_2.teacher_id
+  FROM (VALUES
+    (15112, 'Programming Fundamentals', 'Python'),
+    (15122, 'Imperative Programming', 'C'),
+    (15150, 'Functional Programming', 'SML'),
+    (15210, 'Parallel Algorithms', 'SML'),
+    (15251, 'Theoretical CS', NULL)) AS classes_2(key, class_name, language)
+  JOIN (VALUES
+    (15112, 1, '2020-09-01', 11.39),
+    (15122, 2, '2020-09-01', 9.22),
+    (15150, 9, '2020-09-01', 11.93),
+    (15210, 4, '2020-09-01', 0.32),
+    (15251, 5, '2020-09-01', 3.19),
+    (15112, 6, '2021-02-01', 1.35),
+    (15122, 1, '2021-02-01', 11.58),
+    (15150, 8, '2021-02-01', 2.69),
+    (15210, 9, '2021-02-01', 3.48),
+    (15251, 10, '2021-02-01', 6.75),
+    (15112, 5, '2021-09-01', 5.31),
+    (15122, 12, '2021-09-01', 3.94),
+    (15150, 1, '2021-09-01', 7.45),
+    (15210, 2, '2021-09-01', 8.64),
+    (15251, 9, '2021-09-01', 0.31),
+    (15112, 4, '2022-02-01', 11.27),
+    (15122, 5, '2022-02-01', 10.3),
+    (15150, 6, '2022-02-01', 2.21),
+    (15210, 1, '2022-02-01', 3.8),
+    (15251, 8, '2022-02-01', 7.87),
+    (15112, 9, '2022-09-01', 7.23),
+    (15122, 10, '2022-09-01', 6.66),
+    (15150, 5, '2022-09-01', 10.97),
+    (15210, 12, '2022-09-01', 0.96),
+    (15251, 1, '2022-09-01', 5.43),
+    (15112, 2, '2023-02-01', 5.19),
+    (15122, 9, '2023-02-01', 5.02),
+    (15150, 4, '2023-02-01', 9.73),
+    (15210, 5, '2023-02-01', 0.12),
+    (15251, 6, '2023-02-01', 4.99)) AS teaching_2(class_key, teacher_id, semester, rating)
+    ON classes_2.key = teaching_2.class_key
+  WHERE
+    NOT classes_2.language IS NULL
+  QUALIFY
+    ROW_NUMBER() OVER (PARTITION BY classes_2.language ORDER BY teaching_2.rating DESC) = 1
 )
 SELECT
   _t0.language,
@@ -52,7 +96,8 @@ SELECT
   teachers.first_name,
   teachers.last_name
 FROM _t0 AS _t0
-LEFT JOIN (VALUES
+CROSS JOIN _t3 AS _t3
+JOIN (VALUES
   (1, 'Anil', 'Lee'),
   (2, 'Mike', 'Lee'),
   (3, 'Ian', 'Lee'),
@@ -65,4 +110,4 @@ LEFT JOIN (VALUES
   (10, 'Mike', 'Thomas'),
   (11, 'Ian', 'Thomas'),
   (12, 'David', 'Thomas')) AS teachers(tid, first_name, last_name)
-  ON _t0.teacher_id = teachers.tid
+  ON _t3.teacher_id = teachers.tid
