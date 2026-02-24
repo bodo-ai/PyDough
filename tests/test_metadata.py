@@ -433,36 +433,36 @@ def test_semantic_info(get_sample_graph: graph_fetcher) -> None:
 
 
 @pytest.mark.parametrize(
-    "file_name, graph_name, valid",
+    "file_name, graph_name, error_msg",
     [
         pytest.param(
             "sample_graphs.json",
             "TPCH",
-            True,
+            None,
             id="sample-valid",
         ),
         pytest.param(
             "keywords_graph.json",
             "keywords",
-            True,
+            None,
             id="keywords-valid",
         ),
         pytest.param(
             "masked_graphs.json",
             "CRYPTBANK",
-            True,
+            None,
             id="masked-valid",
         ),
         pytest.param(
             "sf_masked_examples.json",
             "HEALTH",
-            True,
+            None,
             id="sf_masked-valid",
         ),
         pytest.param(
             "sf_masked_examples.json",
             "INVALID_GRAPH_NAME",
-            False,
+            "PyDough metadata graph 'INVALID_GRAPH_NAME' not found in list",
             id="sf_masked-invalid",
         ),
     ],
@@ -470,7 +470,7 @@ def test_semantic_info(get_sample_graph: graph_fetcher) -> None:
 def test_parse_from_list(
     file_name: str,
     graph_name: str,
-    valid: bool,
+    error_msg: str,
     get_custom_datasets_graph_list: Callable[[str], Any],
 ) -> None:
     """
@@ -481,16 +481,18 @@ def test_parse_from_list(
     - The function returns a GraphMetadata object
     - The returned graph has the correct name
     """
-    json_list = get_custom_datasets_graph_list(file_name)
-    if valid:
-        graph: GraphMetadata = parse_metadata_from_list(json_list, graph_name)
+    graph: GraphMetadata
+    metadata: Any = get_custom_datasets_graph_list(file_name)
+    if not error_msg:
+        graph = parse_metadata_from_list(metadata, graph_name)
         assert graph.name == graph_name
     else:
         with pytest.raises(
             PyDoughMetadataException,
-            match=f"PyDough metadata graph '{graph_name}' not found in list",
+            match=error_msg,
         ):
-            parse_metadata_from_list(json_list, graph_name)
+            graph = parse_metadata_from_list(metadata, graph_name)
+            assert graph.name == graph_name
 
 
 @pytest.mark.parametrize(
@@ -520,13 +522,12 @@ def test_parse_from_list_inline(
     graph_name: str, json_str: str, error_msg: str | None
 ) -> None:
     """
-    Tests that parse_metadata_from_list successfully extracts a valid graph
-    from a properly formatted inline list of metadata dictionaries.
+    Tests parse_metadata_from_list with various JSON inputs, covering both
+    valid and invalid cases.
 
-    Verifies:
-    - The function returns a GraphMetadata object
-    - The returned graph has the correct name
-    - The input is a valid metadata object
+    The test is parameterized to handle both success cases (error_msg=None)
+    and error cases (error_msg provided), asserting either successful
+    parsing or the expected exception with matching error message.
     """
     graph: GraphMetadata
     metadata: Any = json.loads(json_str)

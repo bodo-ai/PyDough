@@ -55,8 +55,7 @@ def parse_metadata(metadata_info: Any, graph_name: str) -> GraphMetadata | None:
     Raises:
         `PyDoughMetadataException`: if any graph object in the collection is malformed
         (e.g., missing required fields, incorrect types) or if the specified version
-        is not recognized. Note that this function does not validate that `metadata_info`
-        itself is a list - that validation should be performed by the caller.
+        is not recognized.
     """
     graph: GraphMetadata | None = None
     if isinstance(metadata_info, list):
