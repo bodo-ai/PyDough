@@ -5,5 +5,5 @@ FROM recent_orders_t10
 WHERE
   odate < '1995-06-01'
 ORDER BY
-  2
+  1
 LIMIT 5

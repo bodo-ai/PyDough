@@ -5872,7 +5872,7 @@ def test_pipeline_e2e_errors(
                 "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t7', replace=True, temp=True)\n"
                 "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
                 "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t7', temp=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=nation_name)",
+                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=(nation_name, ckey))",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5935,12 +5935,18 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "recent_orders = orders.WHERE(order_date > DATETIME('1995-01-01')).CALCULATE(okey=key, odate=order_date)\n"
                 "recent_tmp = pydough.to_table(recent_orders, name='recent_orders_t10', replace=True)\n"
-                "result = CROSS(recent_tmp).WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=odate)",
+                "result = CROSS(recent_tmp).WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=okey.ASC(na_pos='last'))",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "okey": [2277, 16262, 17058, 33476, 52640],
-                        "odate": [date(1995, 1, 2)] * 5,
+                        "okey": [65, 162, 197, 225, 327],
+                        "odate": [
+                            date(1995, 3, 18),
+                            date(1995, 5, 8),
+                            date(1995, 4, 7),
+                            date(1995, 5, 25),
+                            date(1995, 4, 17),
+                        ],
                     }
                 ),
                 "to_table_test_10",
@@ -5953,7 +5959,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "parts_summary = parts.WHERE(size > 10).CALCULATE(pkey=key, pname=name, psize=size)\n"
                 "parts_tmp = pydough.to_table(parts_summary, name='parts_summary_t11', replace=True, temp=True)\n"
-                "result = CROSS(parts_tmp).CALCULATE(pkey, pname, psize).TOP_K(5, by=psize.DESC())",
+                "result = CROSS(parts_tmp).CALCULATE(pkey, pname, psize).TOP_K(5, by=(psize.DESC(), pkey.ASC()))",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6234,6 +6240,10 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
+# Snowflake table name prefix for cross-database writes (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+SNOWFLAKE_TABLE_PREFIX = "DEFOG.PUBLIC."
+
+
 @pytest.mark.execute
 def test_pipeline_tpch_e2e_to_table_all_dialects(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
@@ -6246,14 +6256,18 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    # Skip Snowflake for to_table tests (no write access to shared DB)
-    if db_context.dialect == DatabaseDialect.SNOWFLAKE:
-        pytest.skip("Skipping Snowflake to_table tests - no write access")
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+    table_prefix = (
+        SNOWFLAKE_TABLE_PREFIX
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else ""
+    )
 
     tpch_custom_pipeline_to_table_test_data.run_e2e_test(
         lambda _: graph,  # graph_fetcher that returns the graph directly
         db_context,
         coerce_types=True,
+        table_name_prefix=table_prefix,
     )
 
 
@@ -6271,9 +6285,12 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    # Skip Snowflake for to_table tests (no write access to shared DB)
-    if db_context.dialect == DatabaseDialect.SNOWFLAKE:
-        pytest.skip("Skipping Snowflake to_table tests - no write access")
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+    table_prefix = (
+        SNOWFLAKE_TABLE_PREFIX
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else ""
+    )
 
     sql_file_path: str = get_sql_test_filename(
         tpch_custom_pipeline_to_table_test_data.test_name,
@@ -6284,6 +6301,7 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
         sql_file_path,
         update_tests,
         db_context,
+        table_name_prefix=table_prefix,
     )
 
 
@@ -6350,17 +6368,26 @@ def test_pipeline_to_table_ddl(
     """
 
     db_context, graph = all_dialects_tpch_db_context
-    # Skip Snowflake for to_table tests (no write access to shared DB)
-    if db_context.dialect == DatabaseDialect.SNOWFLAKE:
-        pytest.skip("Skipping Snowflake to_table tests - no write access")
-    # Temp view is not supported for Snowflake, MySQL, and Postgres.
-    # So run and catch PyDoghException that indicates temp view is not supported, and skip the rest of the test in that case.
-    # Use pytest raises to catch the exception and check the message.
-    if temp and db_context.dialect in {
-        DatabaseDialect.SNOWFLAKE,
-        DatabaseDialect.MYSQL,
-        DatabaseDialect.POSTGRES,
-    }:
+
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+    table_prefix = (
+        SNOWFLAKE_TABLE_PREFIX
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else ""
+    )
+
+    # TEMP VIEWS (not tables) are not supported for Snowflake, MySQL, and Postgres.
+    # So run and catch PyDoughException that indicates temp view is not supported, and skip the rest of the test in that case.
+    if (
+        temp
+        and as_view
+        and db_context.dialect
+        in {
+            DatabaseDialect.SNOWFLAKE,
+            DatabaseDialect.MYSQL,
+            DatabaseDialect.POSTGRES,
+        }
+    ):
         with pytest.raises(
             PyDoughException, match="TEMPORARY views are not supported for"
         ):
@@ -6370,6 +6397,7 @@ def test_pipeline_to_table_ddl(
                 as_view=as_view,
                 replace=replace,
                 temp=temp,
+                table_name_prefix=table_prefix,
             )
         return
     caplog.set_level(logging.INFO)
@@ -6379,19 +6407,11 @@ def test_pipeline_to_table_ddl(
         as_view=as_view,
         replace=replace,
         temp=temp,
+        table_name_prefix=table_prefix,
     )
     expected_create_statement = "CREATE"
-    # SQLite does not support creating persistent views
-    # that reference attached databases.
-    # SQLite the only one that supports temporary views.
-    # So the view will be created as TEMPORARY.
-    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
-        expected_create_statement += " TEMPORARY"
-    elif temp:
-        expected_create_statement += " TEMPORARY"
 
     table_or_view = " VIEW" if as_view else " TABLE"
-
     # SQLite, PostgreSQL and MySQL) do not support REPLACE TABLE
     # Also, SQLite does not support REPLACE VIEW too but other dialects too.
     # So table/view will be dropped first if replace and the other conditions
@@ -6415,6 +6435,15 @@ def test_pipeline_to_table_ddl(
             expected_create_statement = rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"
         else:
             expected_create_statement += " OR REPLACE"
+
+    # SQLite does not support creating persistent views
+    # that reference attached databases.
+    # SQLite the only one that supports temporary views.
+    # So the view will be created as TEMPORARY.
+    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
+        expected_create_statement += " TEMPORARY"
+    elif temp:
+        expected_create_statement += " TEMPORARY"
 
     expected_create_statement += table_or_view
 

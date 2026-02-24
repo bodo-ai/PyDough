@@ -197,11 +197,17 @@ def to_table(
         )
     # TEMP VIEW not supported for Snowflake, MySQL, and Postgres.
     # Raise an error if user tries to create a temp view on those databases.
-    if temp and session.database.dialect in [
-        DatabaseDialect.SNOWFLAKE,
-        DatabaseDialect.MYSQL,
-        DatabaseDialect.POSTGRES,
-    ]:
+    # Note: TEMP TABLES are supported, only TEMP VIEWS are not.
+    if (
+        temp
+        and as_view
+        and session.database.dialect
+        in [
+            DatabaseDialect.SNOWFLAKE,
+            DatabaseDialect.MYSQL,
+            DatabaseDialect.POSTGRES,
+        ]
+    ):
         raise PyDoughException(
             f"TEMPORARY views are not supported for {session.database.dialect.name}"
         )

@@ -2,7 +2,7 @@ SELECT
   pkey,
   pname,
   psize
-FROM parts_summary_t11
+FROM defog.public.parts_summary_t11
 ORDER BY
   3 DESC NULLS LAST,
   1 NULLS FIRST
