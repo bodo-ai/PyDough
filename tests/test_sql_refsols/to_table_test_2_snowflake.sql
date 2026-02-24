@@ -1,5 +1,5 @@
 SELECT
   name
-FROM defog.public.asian_nations_t2
+FROM e2e_tests_db.public.asian_nations_t2
 WHERE
   CONTAINS(name, 'I')

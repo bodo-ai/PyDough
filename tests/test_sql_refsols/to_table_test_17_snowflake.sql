@@ -1,4 +1,4 @@
 SELECT
   key,
   name
-FROM defog.public.first_nation_t17
+FROM e2e_tests_db.public.first_nation_t17

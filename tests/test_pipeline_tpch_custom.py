@@ -6241,7 +6241,7 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 
 
 # Snowflake table name prefix for cross-database writes (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
-SNOWFLAKE_TABLE_PREFIX = "DEFOG.PUBLIC."
+SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
 
 @pytest.mark.execute

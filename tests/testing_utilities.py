@@ -953,7 +953,7 @@ def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
 
     Args:
         pydough_code: The PyDough code string containing to_table calls.
-        prefix: The prefix to prepend to table names (e.g., "DEFOG.PUBLIC.").
+        prefix: The prefix to prepend to table names (e.g., "E2E_TESTS_DB.PUBLIC.").
 
     Returns:
         The modified PyDough code string with prefixed table names.
@@ -1310,7 +1310,7 @@ class PyDoughPandasTest:
             `mask_server`: The mask server to use for the test, if any.
             `max_rows`: The maximum number of rows to return from the query.
             `table_name_prefix`: Prefix to prepend to table names in to_table calls.
-                Used for Snowflake cross-database writes (e.g., "DEFOG.PUBLIC.").
+                Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
         # Skip if indicated.
         if self.skip_sql:
@@ -1396,7 +1396,7 @@ class PyDoughPandasTest:
             solution DataFrames to ensure compatibility.
             `max_rows`: The maximum number of rows to return from the query.
             `table_name_prefix`: Prefix to prepend to table names in to_table calls.
-                Used for Snowflake cross-database writes (e.g., "DEFOG.PUBLIC.").
+                Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
@@ -1489,7 +1489,7 @@ class PyDoughPandasTest:
             `database`: The database context to use for executing SQL.
             `config`: The PyDough configuration to use for the test, if any.
             `table_name_prefix`: Prefix to prepend to table names.
-                Used for Snowflake cross-database writes (e.g., "DEFOG.PUBLIC.").
+                Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
