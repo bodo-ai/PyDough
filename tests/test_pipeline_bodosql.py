@@ -274,8 +274,8 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
             (
                 dict_table.update_spec()
                 .add_field("WORD", "truncate[1]")
-                .add_field("POS", "identity")
-                .add_field("CCOUNT", "identity")
+                .add_field("POS", "identity", "pos_ident")
+                .add_field("CCOUNT", "identity", "ccount_ident")
                 .commit()
             )
 
@@ -288,10 +288,10 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
             # Evolve the table spec to partition on play, act, scene and player
             (
                 shake_table.update_spec()
-                .add_field("PLAY", "identity")
-                .add_field("ACT", "identity")
-                .add_field("SCENE", "identity")
-                .add_field("PLAYER", "identity")
+                .add_field("PLAY", "identity", "play_ident")
+                .add_field("ACT", "identity", "act_ident")
+                .add_field("SCENE", "identity", "scene_ident")
+                .add_field("PLAYER", "identity", "player_ident")
                 .commit()
             )
 
@@ -410,7 +410,7 @@ def bodosql_fashion_ctx(bodosql_setup) -> BodoSQLContext:
             # bucketing the product keys.
             (
                 prod_table.update_spec()
-                .add_field("category", "identity")
+                .add_field("category", "identity", "ctgory")
                 .add_field("product_id", "bucket[10]")
                 .commit()
             )
@@ -473,9 +473,42 @@ def bodosql_fashion_ctx(bodosql_setup) -> BodoSQLContext:
                 shutil.rmtree(warehouse_loc)
             raise e
 
-    # Create the catalog/context pointing to the location of the database.
+    # Create the catalog/context pointing to the location of the database, with
+    # dummy local tables for the two tables which will later be used to populate
+    # the Iceberg tables if regeneration is needed. These dummy tables contain
+    # the real data but are only used so that the BodoSQLContext can use them
+    # as a read source to write into the Iceberg tables.
     catalog = FileSystemCatalog(warehouse_loc)
-    bc: BodoSQLContext = BodoSQLContext(catalog=catalog)
+    temp_tables: dict[str, pd.DataFrame] = {}
+    if regenerate_iceberg:
+        temp_tables["TEMP_CUST"] = cust_pyarrow.to_pandas()
+        temp_tables["TEMP_PROD"] = prod_pyarrow.to_pandas()
+        temp_tables["TEMP_SALE"] = sale_pyarrow.to_pandas()
+        temp_tables["TEMP_ITEM"] = item_pyarrow.to_pandas()
+        temp_tables["TEMP_STOK"] = stok_pyarrow.to_pandas()
+    bc: BodoSQLContext = BodoSQLContext(temp_tables, catalog=catalog)
+
+    # If regenerating the database, use BodoSQL to populate each of the Iceberg
+    # tables from the corresponding temp table. This ensures that the partitions
+    # are properly maintained by the Iceberg write step using the same
+    # partitions that the Iceberg tables are already defined with, but also
+    # ensures that the metadata is updated to include the puffin files with
+    # theta sketches containing the approximate NDV statistics for various
+    # columns.
+    if regenerate_iceberg:
+        try:
+            # For each temp table, populate the real Iceberg version from it.
+            for table_name in ["CUST", "PROD", "SALE", "ITEM", "STOK"]:
+                bc.sql(
+                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM TEMP_{table_name}"
+                )
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(warehouse_loc):
+                shutil.rmtree(warehouse_loc)
+            raise e
+
     return bc
 
 
