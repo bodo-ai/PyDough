@@ -134,8 +134,8 @@ def _generate_create_ddl(
     # Check if we can use CREATE OR REPLACE
     can_replace = create_caps.replace_view if as_view else create_caps.replace_table
 
-    # For databases that don't support CREATE OR REPLACE TABLE,
-    # use DROP TABLE IF EXISTS + CREATE TABLE pattern
+    # For databases that don't support CREATE OR REPLACE TABLE/VIEW,
+    # use DROP TABLE/VIEW IF EXISTS + CREATE TABLE/VIEW pattern
     if replace and not can_replace:
         drop_stmt = f"DROP {object_type} IF EXISTS {name}"
         ddl_statements.append(drop_stmt)

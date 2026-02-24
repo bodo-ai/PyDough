@@ -6240,7 +6240,8 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
-# Snowflake table name prefix for cross-database writes (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+# Snowflake table name prefix for cross-database writes (read from
+# SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
 SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
 
@@ -6256,7 +6257,8 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
+    # write to E2E_TESTS_DB.PUBLIC)
     table_prefix = (
         SNOWFLAKE_TABLE_PREFIX
         if db_context.dialect == DatabaseDialect.SNOWFLAKE
@@ -6285,7 +6287,8 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
+    # write to E2E_TESTS_DB.PUBLIC)
     table_prefix = (
         SNOWFLAKE_TABLE_PREFIX
         if db_context.dialect == DatabaseDialect.SNOWFLAKE
@@ -6369,7 +6372,8 @@ def test_pipeline_to_table_ddl(
 
     db_context, graph = all_dialects_tpch_db_context
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA, write to DEFOG)
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
+    # write to E2E_TESTS_DB.PUBLIC)
     table_prefix = (
         SNOWFLAKE_TABLE_PREFIX
         if db_context.dialect == DatabaseDialect.SNOWFLAKE
