@@ -1,6 +1,17 @@
+WITH _u_0 AS (
+  SELECT
+    nation_key AS _u_1
+  FROM e2e_tests_db.public.asian_nations_t5
+  GROUP BY
+    1
+)
 SELECT
-  c_name AS name
-FROM snowflake_sample_data.tpch_sf1.customer
+  customer.c_name AS name
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = customer.c_nationkey
+WHERE
+  NOT _u_0._u_1 IS NULL
 ORDER BY
   1 NULLS FIRST
 LIMIT 5

@@ -1573,8 +1573,13 @@ class HybridTranslator:
                 # (which happens when using CROSS at the top level with a
                 # generated collection). In that case, unwrap it and process the
                 # inner child_access (typically a GlobalContext).
+                # Only do this when parent is None (top-level), otherwise let normal
+                # ChildOperatorChildAccess handling below process it.
                 ancestor_context = node.ancestor_context
-                if isinstance(ancestor_context, ChildOperatorChildAccess):
+                if (
+                    isinstance(ancestor_context, ChildOperatorChildAccess)
+                    and parent is None
+                ):
                     ancestor_context = ancestor_context.child_access
                 hybrid = self.make_hybrid_tree(ancestor_context, parent, is_aggregate)
                 hybrid.add_successor(successor_hybrid)
