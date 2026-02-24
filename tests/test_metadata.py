@@ -475,11 +475,16 @@ def test_parse_from_list(
 ) -> None:
     """
     Tests that parse_metadata_from_list successfully extracts a valid graph
-    from a properly formatted list of metadata dictionaries.
+    from a properly formatted list of metadata dictionaries, covering both
+    valid and invalid cases.
 
     Verifies:
     - The function returns a GraphMetadata object
     - The returned graph has the correct name
+
+    The test is parameterized to handle both success cases (error_msg=None)
+    and error cases (error_msg provided), asserting either successful
+    parsing or the expected exception with matching error message.
     """
     graph: GraphMetadata
     metadata: Any = get_custom_datasets_graph_list(file_name)
