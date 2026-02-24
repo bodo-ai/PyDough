@@ -85,6 +85,11 @@ class DatabaseConnection:
         self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
+            # Consume any results to avoid MySQL "Unread result found" error
+            try:
+                self.cursor.fetchall()
+            except Exception:
+                pass  # No results to fetch (expected for DDL statements)
             self._connection.commit()
         except Exception as e:
             print(f"ERROR WHILE EXECUTING DDL:\n{sql}")
@@ -107,6 +112,11 @@ class DatabaseConnection:
             # databases.
             self.cursor.execute(f"SELECT * FROM {table_name} LIMIT 0")
             column_names = [description[0] for description in self.cursor.description]
+            # Consume any results to avoid MySQL "Unread result found" error
+            try:
+                self.cursor.fetchall()
+            except Exception:
+                pass
             return column_names
         except Exception as e:
             print(f"ERROR WHILE GETTING COLUMN NAMES FOR TABLE {table_name}")

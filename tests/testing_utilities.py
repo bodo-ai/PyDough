@@ -1462,11 +1462,21 @@ class PyDoughPandasTest:
         root: UnqualifiedNode = transform_and_exec_pydough(
             self.pydough_function, graph, self.kwargs
         )
+        table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}"
+        # Drop the created table/view from transform_and_exec_pydough
+        # to be able to check to_table DDL generation logging.
+        table_or_view = "VIEW" if as_view else "TABLE"
+        cleanup_statement = f"DROP {table_or_view} IF EXISTS {table_name}"
+        cursor = database.connection.connection.cursor()
+        cursor.execute(cleanup_statement)
+        try:
+            cursor.fetchall()
+        except Exception:
+            pass  # No results to fetch (expected for DDL statements)
 
         call_kwargs: dict = {"metadata": graph, "database": database}
         if config is not None:
             call_kwargs["config"] = config
-        table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}"
         collection = to_table(
             root,
             name=table_name,
