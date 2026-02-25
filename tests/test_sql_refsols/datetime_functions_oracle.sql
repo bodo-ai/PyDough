@@ -28,7 +28,7 @@ SELECT
     (
       TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS') - CAST('1992-01-01' AS DATE) + (
         MOD((
-          TO_CHAR('1992-01-01', 'D') + -1
+          TO_CHAR(CAST('1992-01-01' AS DATE), 'D') + -1
         ), 7)
       ) - (
         MOD(

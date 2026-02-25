@@ -1,8 +1,8 @@
 SELECT
-  COLUMN1 AS user_id,
-  COLUMN2 AS "`name""[",
-  COLUMN3 AS "space country",
-  COLUMN4 AS "CAST"
+  USERS.USER_ID AS user_id,
+  USERS."`name""[",
+  USERS."space country",
+  USERS."CAST"
 FROM (VALUES
   (1, 'Alice', 'US', 25),
   (2, 'Bob', 'CR', 30),

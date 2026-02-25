@@ -1,7 +1,28 @@
-WITH "_S1" AS (
+WITH "_S3" AS (
   SELECT
-    COLUMN1 AS Y
+    A_2.X,
+    SUM(
+      CAST(B.Y AS VARCHAR2(4000)) LIKE (
+        CONCAT('%', CAST(A_2.X AS VARCHAR2(4000)))
+      )
+    ) AS SUM_EXPR,
+    SUM(
+      CAST(B.Y AS VARCHAR2(4000)) LIKE (
+        CONCAT(CAST(A_2.X AS VARCHAR2(4000)), '%')
+      )
+    ) AS SUM_EXPR_5
   FROM (VALUES
+    (0),
+    (1),
+    (2),
+    (3),
+    (4),
+    (5),
+    (6),
+    (7),
+    (8),
+    (9)) AS A_2(X)
+  JOIN (VALUES
     (0),
     (2),
     (4),
@@ -503,38 +524,13 @@ WITH "_S1" AS (
     (996),
     (998),
     (1000)) AS B(Y)
-), "_S3" AS (
-  SELECT
-    COLUMN1 AS X,
-    SUM(
-      CAST("_S1".Y AS VARCHAR2(4000)) LIKE (
-        CONCAT('%', CAST(COLUMN1 AS VARCHAR2(4000)))
-      )
-    ) AS SUM_EXPR,
-    SUM(
-      CAST("_S1".Y AS VARCHAR2(4000)) LIKE (
-        CONCAT(CAST(COLUMN1 AS VARCHAR2(4000)), '%')
-      )
-    ) AS SUM_EXPR_5
-  FROM (VALUES
-    (0),
-    (1),
-    (2),
-    (3),
-    (4),
-    (5),
-    (6),
-    (7),
-    (8),
-    (9)) AS A_2(X)
-  JOIN "_S1" "_S1"
-    ON CAST("_S1".Y AS VARCHAR2(4000)) LIKE CONCAT('%', CAST(COLUMN1 AS VARCHAR2(4000)))
-    OR CAST("_S1".Y AS VARCHAR2(4000)) LIKE CONCAT(CAST(COLUMN1 AS VARCHAR2(4000)), '%')
+    ON CAST(B.Y AS VARCHAR2(4000)) LIKE CONCAT('%', CAST(A_2.X AS VARCHAR2(4000)))
+    OR CAST(B.Y AS VARCHAR2(4000)) LIKE CONCAT(CAST(A_2.X AS VARCHAR2(4000)), '%')
   GROUP BY
-    COLUMN1
+    A_2.X
 )
 SELECT
-  COLUMN1 AS x,
+  A.X AS x,
   COALESCE("_S3".SUM_EXPR_5, 0) AS n_prefix,
   COALESCE("_S3".SUM_EXPR, 0) AS n_suffix
 FROM (VALUES
@@ -549,6 +545,6 @@ FROM (VALUES
   (8),
   (9)) AS A(X)
 LEFT JOIN "_S3" "_S3"
-  ON COLUMN1 = "_S3".X
+  ON A.X = "_S3".X
 ORDER BY
   1 NULLS FIRST

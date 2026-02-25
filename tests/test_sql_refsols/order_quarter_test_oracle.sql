@@ -1,7 +1,7 @@
 SELECT
   o_orderdate AS order_date,
   EXTRACT(QUARTER FROM CAST(o_orderdate AS DATE)) AS quarter,
-  TRUNC(CAST(o_orderdate AS DATE), 'QUARTER') AS quarter_start,
+  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'Q') AS quarter_start,
   CAST(o_orderdate AS DATE) + NUMTOYMINTERVAL(3, 'MONTH') AS next_quarter,
   CAST(o_orderdate AS DATE) - NUMTOYMINTERVAL(3, 'MONTH') AS prev_quarter,
   CAST(o_orderdate AS DATE) + NUMTOYMINTERVAL(6, 'MONTH') AS two_quarters_ahead,

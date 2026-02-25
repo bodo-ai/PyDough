@@ -1,5 +1,5 @@
 SELECT
-  COLUMN1 AS foo
+  T1.FOO AS foo
 FROM (VALUES
   (15),
   (16),

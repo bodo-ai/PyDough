@@ -1,13 +1,13 @@
 WITH "_S0" AS (
   SELECT
-    TRUNC(CAST(sale_date AS DATE), 'QUARTER') AS QUARTER,
+    TRUNC(CAST(CAST(sale_date AS DATE) AS DATE), 'Q') AS QUARTER,
     customer_id AS CUSTOMER_ID,
     SUM(sale_price) AS SUM_SALE_PRICE
   FROM MAIN.SALES
   WHERE
     EXTRACT(YEAR FROM CAST(sale_date AS DATE)) = 2023
   GROUP BY
-    TRUNC(CAST(sale_date AS DATE), 'QUARTER'),
+    TRUNC(CAST(CAST(sale_date AS DATE) AS DATE), 'Q'),
     customer_id
 ), "_T1" AS (
   SELECT

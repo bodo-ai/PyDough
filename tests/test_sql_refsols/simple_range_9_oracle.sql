@@ -1,5 +1,5 @@
 SELECT
-  COLUMN1 AS "name space"
+  "quoted-name"."name space"
 FROM (VALUES
   (0),
   (1),

@@ -1,9 +1,16 @@
-WITH "_S1" AS (
+WITH "_T" AS (
   SELECT
-    COLUMN1 AS CLASS_KEY,
-    COLUMN2 AS TEACHER_ID,
-    COLUMN3 AS SEMESTER
+    CLASSES.CLASS_NAME,
+    TEACHING.SEMESTER,
+    TEACHING.TEACHER_ID,
+    ROW_NUMBER() OVER (PARTITION BY CLASSES.KEY ORDER BY TEACHING.SEMESTER DESC) AS "_W"
   FROM (VALUES
+    (15112, 'Programming Fundamentals', 'Python'),
+    (15122, 'Imperative Programming', 'C'),
+    (15150, 'Functional Programming', 'SML'),
+    (15210, 'Parallel Algorithms', 'SML'),
+    (15251, 'Theoretical CS', NULL)) AS CLASSES(KEY, CLASS_NAME, LANGUAGE)
+  JOIN (VALUES
     (15112, 1, '2020-09-01', 11.39),
     (15122, 2, '2020-09-01', 9.22),
     (15150, 9, '2020-09-01', 11.93),
@@ -34,46 +41,27 @@ WITH "_S1" AS (
     (15150, 4, '2023-02-01', 9.73),
     (15210, 5, '2023-02-01', 0.12),
     (15251, 6, '2023-02-01', 4.99)) AS TEACHING(CLASS_KEY, TEACHER_ID, SEMESTER, RATING)
-), "_T" AS (
-  SELECT
-    COLUMN2 AS CLASS_NAME,
-    "_S1".SEMESTER,
-    "_S1".TEACHER_ID,
-    ROW_NUMBER() OVER (PARTITION BY COLUMN1 ORDER BY "_S1".SEMESTER DESC) AS "_W"
-  FROM (VALUES
-    (15112, 'Programming Fundamentals', 'Python'),
-    (15122, 'Imperative Programming', 'C'),
-    (15150, 'Functional Programming', 'SML'),
-    (15210, 'Parallel Algorithms', 'SML'),
-    (15251, 'Theoretical CS', NULL)) AS CLASSES(KEY, CLASS_NAME, LANGUAGE)
-  JOIN "_S1" "_S1"
-    ON COLUMN1 = "_S1".CLASS_KEY
-), "_S3" AS (
-  SELECT
-    COLUMN1 AS TID,
-    COLUMN2 AS FIRST_NAME,
-    COLUMN3 AS LAST_NAME
-  FROM (VALUES
-    (1, 'Anil', 'Lee'),
-    (2, 'Mike', 'Lee'),
-    (3, 'Ian', 'Lee'),
-    (4, 'David', 'Smith'),
-    (5, 'Anil', 'Smith'),
-    (6, 'Mike', 'Smith'),
-    (7, 'Ian', 'Taylor'),
-    (8, 'David', 'Taylor'),
-    (9, 'Anil', 'Taylor'),
-    (10, 'Mike', 'Thomas'),
-    (11, 'Ian', 'Thomas'),
-    (12, 'David', 'Thomas')) AS TEACHERS(TID, FIRST_NAME, LAST_NAME)
+    ON CLASSES.KEY = TEACHING.CLASS_KEY
 )
 SELECT
   "_T".CLASS_NAME AS class_name,
   "_T".SEMESTER AS last_semester,
-  "_S3".FIRST_NAME AS teacher_first_name,
-  "_S3".LAST_NAME AS teacher_last_name
+  TEACHERS.FIRST_NAME AS teacher_first_name,
+  TEACHERS.LAST_NAME AS teacher_last_name
 FROM "_T" "_T"
-LEFT JOIN "_S3" "_S3"
-  ON "_S3".TID = "_T".TEACHER_ID
+LEFT JOIN (VALUES
+  (1, 'Anil', 'Lee'),
+  (2, 'Mike', 'Lee'),
+  (3, 'Ian', 'Lee'),
+  (4, 'David', 'Smith'),
+  (5, 'Anil', 'Smith'),
+  (6, 'Mike', 'Smith'),
+  (7, 'Ian', 'Taylor'),
+  (8, 'David', 'Taylor'),
+  (9, 'Anil', 'Taylor'),
+  (10, 'Mike', 'Thomas'),
+  (11, 'Ian', 'Thomas'),
+  (12, 'David', 'Thomas')) AS TEACHERS(TID, FIRST_NAME, LAST_NAME)
+  ON TEACHERS.TID = "_T".TEACHER_ID
 WHERE
   "_T"."_W" = 1

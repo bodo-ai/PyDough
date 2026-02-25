@@ -1,7 +1,7 @@
 SELECT
-  COLUMN1 AS py_float,
-  COLUMN2 AS np_float64,
-  COLUMN3 AS np_float32
+  INFINTY.PY_FLOAT AS py_float,
+  INFINTY.NP_FLOAT64 AS np_float64,
+  INFINTY.NP_FLOAT32 AS np_float32
 FROM (VALUES
   (1.5, -2.25, 0.0),
   (NULL, NULL, NULL),

@@ -12,11 +12,11 @@ WITH "_T3" AS (
       (
         CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S0".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S0".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(ORDERS.o_orderdate, 'D') + -1
+            TO_CHAR(CAST(ORDERS.o_orderdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7
@@ -28,11 +28,11 @@ WITH "_T3" AS (
       (
         CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S0".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S0".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(ORDERS.o_orderdate, 'D') + -1
+            TO_CHAR(CAST(ORDERS.o_orderdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7
@@ -44,11 +44,11 @@ WITH "_T3" AS (
       (
         CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S0".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S0".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(ORDERS.o_orderdate, 'D') + -1
+            TO_CHAR(CAST(ORDERS.o_orderdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7
@@ -63,11 +63,11 @@ WITH "_T3" AS (
       (
         CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+            TO_CHAR(CAST(LINEITEM.l_receiptdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7
@@ -83,11 +83,11 @@ WITH "_T3" AS (
       (
         CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+            TO_CHAR(CAST(LINEITEM.l_receiptdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7
@@ -98,11 +98,11 @@ WITH "_T3" AS (
       (
         CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+            TO_CHAR(CAST(LINEITEM.l_receiptdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7
@@ -112,11 +112,11 @@ WITH "_T3" AS (
       (
         CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
           MOD((
-            TO_CHAR("_S3".MIN_O_ORDERDATE, 'D') + -1
+            TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
         ) - (
           MOD((
-            TO_CHAR(LINEITEM.l_receiptdate, 'D') + -1
+            TO_CHAR(CAST(LINEITEM.l_receiptdate AS DATE), 'D') + -1
           ), 7)
         )
       ) / 7

@@ -1,11 +1,11 @@
 SELECT
-  COLUMN1 AS string_col,
-  COLUMN2 AS int_col,
-  COLUMN3 AS float_col,
-  COLUMN4 AS nullable_int_col,
-  COLUMN5 AS bool_col,
-  COLUMN6 AS null_col,
-  COLUMN7 AS datetime_col
+  ALLDATATYPES.STRING_COL AS string_col,
+  ALLDATATYPES.INT_COL AS int_col,
+  ALLDATATYPES.FLOAT_COL AS float_col,
+  ALLDATATYPES.NULLABLE_INT_COL AS nullable_int_col,
+  ALLDATATYPES.BOOL_COL AS bool_col,
+  ALLDATATYPES.NULL_COL AS null_col,
+  ALLDATATYPES.DATETIME_COL AS datetime_col
 FROM (VALUES
   ('red', 0, 1.5, 1.0, 1, NULL, CAST('2024-01-01 00:00:00' AS TIMESTAMP)),
   ('orange', 1, 2.0, NULL, 0, NULL, CAST('2024-01-02 00:00:00' AS TIMESTAMP)),

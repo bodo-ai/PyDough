@@ -1,9 +1,9 @@
 SELECT
   (
-    COLUMN1 + COLUMN1
-  ) + COLUMN1 AS s,
+    D1.X + D2.Y
+  ) + D3.Z AS s,
   COUNT(*) AS n,
-  AVG(COLUMN1 * COLUMN1 * COLUMN1) AS a
+  AVG(D1.X * D2.Y * D3.Z) AS a
 FROM (VALUES
   (1),
   (2),
@@ -21,5 +21,5 @@ CROSS JOIN (VALUES
   (4)) AS D3(Z)
 GROUP BY
   (
-    COLUMN1 + COLUMN1
-  ) + COLUMN1
+    D1.X + D2.Y
+  ) + D3.Z

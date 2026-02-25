@@ -1,10 +1,10 @@
 SELECT
-  COLUMN1 AS pyd_numbers,
-  COLUMN2 AS py_float,
-  COLUMN3 AS np_float64,
-  COLUMN4 AS np_float32,
-  COLUMN5 AS null_vs_nan,
-  COLUMN6 AS decimal_val
+  NUMBERS.PYD_NUMBERS AS pyd_numbers,
+  NUMBERS.PY_FLOAT AS py_float,
+  NUMBERS.NP_FLOAT64 AS np_float64,
+  NUMBERS.NP_FLOAT32 AS np_float32,
+  NUMBERS.NULL_VS_NAN AS null_vs_nan,
+  NUMBERS.DECIMAL_VAL AS decimal_val
 FROM (VALUES
   (10.0, 1.5, 1.5, 1.5, NULL, 1.50),
   (-3.0, 0.0, 0.0, 3.33333, NULL, 0.00),

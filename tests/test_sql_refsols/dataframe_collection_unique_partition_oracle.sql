@@ -1,6 +1,6 @@
 SELECT DISTINCT
-  COLUMN2 AS first_name,
-  COLUMN3 AS last_name
+  TEACHERS.FIRST_NAME AS first_name,
+  TEACHERS.LAST_NAME AS last_name
 FROM (VALUES
   (1, 'Anil', 'Lee'),
   (2, 'Mike', 'Lee'),

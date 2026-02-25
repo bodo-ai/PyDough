@@ -1,6 +1,6 @@
 SELECT
-  COLUMN1 AS user_id,
-  COLUMN2 AS country
+  USERS.USER_ID AS user_id,
+  USERS.COUNTRY AS country
 FROM (VALUES
   (1, 'US'),
   (2, 'CR'),

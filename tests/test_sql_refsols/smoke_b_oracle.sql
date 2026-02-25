@@ -69,7 +69,7 @@ SELECT
     ':'
   ) AS b,
   TRUNC(CAST(o_orderdate AS DATE), 'YEAR') + NUMTOYMINTERVAL(6, 'month') - NUMTODSINTERVAL(13, 'day') AS c,
-  TRUNC(CAST(o_orderdate AS DATE), 'QUARTER') + NUMTOYMINTERVAL(1, 'year') + NUMTODSINTERVAL(25, 'hour') AS d,
+  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'Q') + NUMTOYMINTERVAL(1, 'year') + NUMTODSINTERVAL(25, 'hour') AS d,
   TO_DATE('2025-01-01 12:35:00', 'YYYY-MM-DD HH24:MI:SS') AS e,
   TO_DATE('2025-07-22 12:00:00', 'YYYY-MM-DD HH24:MI:SS') AS f,
   TO_DATE('2025-01-01', 'YYYY-MM-DD') AS g,
@@ -92,11 +92,11 @@ SELECT
     (
       CAST(o_orderdate AS DATE) - CAST('1993-05-25 12:45:36' AS DATE) + (
         MOD((
-          TO_CHAR('1993-05-25 12:45:36', 'D') + -1
+          TO_CHAR(CAST('1993-05-25 12:45:36' AS DATE), 'D') + -1
         ), 7)
       ) - (
         MOD((
-          TO_CHAR(o_orderdate, 'D') + -1
+          TO_CHAR(CAST(o_orderdate AS DATE), 'D') + -1
         ), 7)
       )
     ) / 7

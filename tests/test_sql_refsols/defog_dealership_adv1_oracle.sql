@@ -19,11 +19,11 @@ WHERE
     (
       CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(PAYMENTS_RECEIVED.payment_date AS DATE) + (
         MOD((
-          TO_CHAR(PAYMENTS_RECEIVED.payment_date, 'D') + 5
+          TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
         ), 7)
       ) - (
         MOD((
-          TO_CHAR('now', 'D') + 5
+          TO_CHAR(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE), 'D') + 5
         ), 7)
       )
     ) / 7
@@ -32,11 +32,11 @@ WHERE
     (
       CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(PAYMENTS_RECEIVED.payment_date AS DATE) + (
         MOD((
-          TO_CHAR(PAYMENTS_RECEIVED.payment_date, 'D') + 5
+          TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
         ), 7)
       ) - (
         MOD((
-          TO_CHAR('now', 'D') + 5
+          TO_CHAR(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE), 'D') + 5
         ), 7)
       )
     ) / 7

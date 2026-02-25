@@ -36,6 +36,10 @@ class OracleTransformBindings(BaseTransformBindings):
             "Saturday": 7,
         }
 
+    @property
+    def values_alias_column(self) -> bool:
+        return False
+
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.ABS: "ABS",
         pydop.LARGEST: "GREATEST",

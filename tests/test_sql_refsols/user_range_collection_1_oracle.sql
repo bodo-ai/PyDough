@@ -9,7 +9,7 @@ WITH "_S1" AS (
     p_size
 )
 SELECT
-  COLUMN1 AS part_size,
+  SIZES.PART_SIZE AS part_size,
   COALESCE("_S1".N_ROWS, 0) AS n_parts
 FROM (VALUES
   (1),
@@ -33,4 +33,4 @@ FROM (VALUES
   (91),
   (96)) AS SIZES(PART_SIZE)
 LEFT JOIN "_S1" "_S1"
-  ON COLUMN1 = "_S1".P_SIZE
+  ON SIZES.PART_SIZE = "_S1".P_SIZE
