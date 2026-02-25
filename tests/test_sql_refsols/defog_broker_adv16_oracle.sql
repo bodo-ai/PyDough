@@ -6,7 +6,7 @@ WITH "_S1" AS (
   FROM MAIN.SBTRANSACTION
   WHERE
     sbtxdatetime >= (
-      SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTOYMINTERVAL(1, 'month')
+      SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTOYMINTERVAL(1, 'month')
     )
     AND sbtxtype = 'sell'
   GROUP BY

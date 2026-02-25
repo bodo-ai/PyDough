@@ -6,7 +6,7 @@ WITH "_S1" AS (
   FROM MAIN.SALES
   WHERE
     sale_date >= (
-      SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTOYMINTERVAL(3, 'month')
+      SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTOYMINTERVAL(3, 'month')
     )
   GROUP BY
     salesperson_id

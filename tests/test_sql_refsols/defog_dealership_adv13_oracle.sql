@@ -1,10 +1,10 @@
 WITH "_S1" AS (
   SELECT
-    TRUNC(CAST(payment_date AS TIMESTAMP), 'MONTH') AS START_MONTH,
+    TRUNC(CAST(payment_date AS DATE), 'MONTH') AS START_MONTH,
     SUM(payment_amount) AS SUM_PAYMENT_AMOUNT
   FROM MAIN.PAYMENTS_RECEIVED
   GROUP BY
-    TRUNC(CAST(payment_date AS TIMESTAMP), 'MONTH')
+    TRUNC(CAST(payment_date AS DATE), 'MONTH')
 ), "_T0" AS (
   SELECT
     DATETIME("_S1".START_MONTH, COLUMN1 || ' months') AS DT,

@@ -1,5 +1,5 @@
 SELECT
-  TRUNC(CAST(sbtxdatetime AS TIMESTAMP), 'MONTH') AS month,
+  TRUNC(CAST(sbtxdatetime AS DATE), 'MONTH') AS month,
   AVG(sbtxprice) AS avg_price
 FROM MAIN.SBTRANSACTION
 WHERE
@@ -7,6 +7,6 @@ WHERE
   AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATE)) = 2023
   AND sbtxstatus = 'success'
 GROUP BY
-  TRUNC(CAST(sbtxdatetime AS TIMESTAMP), 'MONTH')
+  TRUNC(CAST(sbtxdatetime AS DATE), 'MONTH')
 ORDER BY
   1 NULLS FIRST

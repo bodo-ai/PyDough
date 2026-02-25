@@ -4,7 +4,7 @@ WITH "_u_0" AS (
   FROM MAIN.NOTIFICATIONS NOTIFICATIONS
   JOIN MAIN.USERS USERS
     ON NOTIFICATIONS.created_at <= (
-      CAST(USERS.created_at AS TIMESTAMP) + NUMTOYMINTERVAL(1, 'year')
+      CAST(USERS.created_at AS DATE) + NUMTOYMINTERVAL(1, 'year')
     )
     AND NOTIFICATIONS.created_at >= USERS.created_at
     AND NOTIFICATIONS.user_id = USERS.uid

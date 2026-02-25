@@ -1,10 +1,22 @@
 SELECT
   payment_date,
   payment_method,
-  NVL(SUM(payment_amount), 0) AS total_amount
+  COALESCE(SUM(payment_amount), 0) AS total_amount
 FROM MAIN.PAYMENTS_RECEIVED
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP, CAST(payment_date AS DATETIME), WEEK) = 1
+  FLOOR(
+    (
+      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(payment_date AS DATE) + (
+        MOD((
+          TO_CHAR(payment_date, 'D') + 5
+        ), 7)
+      ) - (
+        MOD((
+          TO_CHAR('now', 'D') + 5
+        ), 7)
+      )
+    ) / 7
+  ) = 1
 GROUP BY
   payment_date,
   payment_method

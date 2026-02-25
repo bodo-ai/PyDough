@@ -16,6 +16,7 @@ from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.dialects.mysql import MySQL
+from sqlglot.dialects.oracle import Oracle
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import (
     Alias,
@@ -549,6 +550,11 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             MySQL.Generator.VALUES_AS_TABLE = True
             # Keep the parenthesis around the values
             MySQL.Generator.WRAP_DERIVED_VALUES = True
+        case DatabaseDialect.ORACLE:
+            # This tells the Oracle generator to map DATETIME requests to DATE
+            Oracle.Generator.TYPE_MAPPING[
+                sqlglot_expressions.DataType.Type.DATETIME
+            ] = "DATE"
         case _:
             pass
 

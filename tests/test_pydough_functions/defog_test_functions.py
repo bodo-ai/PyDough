@@ -1312,7 +1312,7 @@ def impl_defog_ewallet_adv2():
         )
         .CALCULATE(
             week=DATETIME(created_at, "start of week"),
-            is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
+            is_weekend=IFF(ISIN(DAYOFWEEK(created_at), (5, 6)), 1, 0),
         )
         .PARTITION(name="weeks", by=week)
         .CALCULATE(
@@ -2693,7 +2693,7 @@ def impl_defog_academic_gen18():
     """
     return journals.CALCULATE(
         name, journal_id, num_publications=COUNT(archives)
-    ).ORDER_BY(num_publications.DESC())
+    ).ORDER_BY(num_publications.DESC(), name.ASC())
 
 
 def impl_defog_academic_gen19():

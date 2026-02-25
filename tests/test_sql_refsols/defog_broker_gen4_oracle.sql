@@ -4,7 +4,7 @@ WITH "_S1" AS (
     COUNT(*) AS N_ROWS
   FROM MAIN.SBTRANSACTION
   WHERE
-    TRUNC(CAST(sbtxdatetime AS TIMESTAMP), 'DAY') = TO_DATE('2023-04-01', 'YYYY-MM-DD')
+    TRUNC(CAST(sbtxdatetime AS DATE), 'DAY') = TO_DATE('2023-04-01', 'YYYY-MM-DD')
     AND sbtxtype = 'sell'
   GROUP BY
     sbtxcustid

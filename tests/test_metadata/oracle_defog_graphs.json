@@ -2955,7 +2955,7 @@
           {
             "name": "user_id",
             "type": "table column",
-            "column name": "user_id",
+            "column name": "\"USER_ID\"",
             "data type": "numeric",
             "description": "The id of the user who the session belongs to",
             "sample values": [1, 2, 3, 8, 10],

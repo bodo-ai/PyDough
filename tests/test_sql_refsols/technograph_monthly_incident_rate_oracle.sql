@@ -18,10 +18,10 @@ WITH "_T2" AS (
   FROM "_T2" "_T4"
   JOIN MAIN.CALENDAR CALENDAR
     ON CALENDAR.ca_dt >= (
-      CAST("_T4".CA_DT AS TIMESTAMP) + NUMTOYMINTERVAL(6, 'month')
+      CAST("_T4".CA_DT AS DATE) - NUMTOYMINTERVAL(6, 'month')
     )
   JOIN MAIN.DEVICES DEVICES
-    ON CALENDAR.ca_dt = TRUNC(CAST(DEVICES.de_purchase_ts AS TIMESTAMP), 'DAY')
+    ON CALENDAR.ca_dt = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
   JOIN "_T5" "_T5"
     ON DEVICES.de_production_country_id = "_T5".CO_ID
   GROUP BY
@@ -32,7 +32,7 @@ WITH "_T2" AS (
     COUNT(*) AS N_ROWS
   FROM "_T2" "_T7"
   JOIN MAIN.INCIDENTS INCIDENTS
-    ON "_T7".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS TIMESTAMP), 'DAY')
+    ON "_T7".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS DATE), 'DAY')
   JOIN MAIN.DEVICES DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN "_T5" "_T8"

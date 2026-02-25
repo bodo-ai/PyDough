@@ -535,34 +535,90 @@ class OracleTransformBindings(BaseTransformBindings):
             ],
         )
 
+    def coerce_to_timestamp(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        return sqlglot_expressions.Cast(
+            this=base, to=sqlglot_expressions.DataType.build("DATE")
+        )
+
+    def apply_datetime_truncation(
+        self, base: SQLGlotExpression, unit: DateTimeUnit
+    ) -> SQLGlotExpression:
+        match unit:
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+                return sqlglot_expressions.TimestampTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
+            case DateTimeUnit.WEEK:
+                result = sqlglot_expressions.DateTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this="IW"),
+                )
+                return result
+            case _:
+                return sqlglot_expressions.DateTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
+
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
     ) -> SQLGlotExpression:
         new_expr: SQLGlotExpression | None = None
 
+        original_amt: int = amt
         if amt < 0:
             amt *= -1
 
-        interval: SQLGlotExpression = (
-            sqlglot_expressions.Anonymous(
-                this="NUMTODSINTERVAL",
-                expressions=[
-                    sqlglot_expressions.convert(amt),
-                    sqlglot_expressions.Literal.string(unit.value),
-                ],
-            )
-            if unit not in [DateTimeUnit.YEAR, DateTimeUnit.MONTH]
-            else sqlglot_expressions.Anonymous(
-                this="NUMTOYMINTERVAL",
-                expressions=[
-                    sqlglot_expressions.convert(amt),
-                    sqlglot_expressions.Literal.string(unit.value),
-                ],
-            )
-        )
-        if amt > 0:
+        interval: SQLGlotExpression
+        match unit:
+            case (
+                DateTimeUnit.HOUR
+                | DateTimeUnit.MINUTE
+                | DateTimeUnit.SECOND
+                | DateTimeUnit.DAY
+            ):
+                interval = sqlglot_expressions.Anonymous(
+                    this="NUMTODSINTERVAL",
+                    expressions=[
+                        sqlglot_expressions.convert(amt),
+                        sqlglot_expressions.Literal.string(unit.value),
+                    ],
+                )
+            case DateTimeUnit.WEEK:
+                # Oracle doesn't support week intervals, so we convert weeks to
+                # days by multiplying the amount by 7 and using a day interval
+                interval = sqlglot_expressions.Anonymous(
+                    this="NUMTODSINTERVAL",
+                    expressions=[
+                        sqlglot_expressions.convert(amt * 7),
+                        sqlglot_expressions.Literal.string("DAY"),
+                    ],
+                )
+            case DateTimeUnit.QUARTER:
+                # Oracle doesn't support QUARTER in NUMTOYMINTERVAL.
+                # Convert quarters to months (1 quarter = 3 months).
+                interval = sqlglot_expressions.Anonymous(
+                    this="NUMTOYMINTERVAL",
+                    expressions=[
+                        sqlglot_expressions.convert(amt * 3),
+                        sqlglot_expressions.Literal.string("MONTH"),
+                    ],
+                )
+            case DateTimeUnit.MONTH | DateTimeUnit.YEAR:
+                interval = sqlglot_expressions.Anonymous(
+                    this="NUMTOYMINTERVAL",
+                    expressions=[
+                        sqlglot_expressions.convert(amt),
+                        sqlglot_expressions.Literal.string(unit.value),
+                    ],
+                )
+            case _:
+                raise ValueError(f"Unsupported unit '{unit}' for datetime offset.")
+
+        if original_amt > 0:
             new_expr = sqlglot_expressions.Add(this=base, expression=interval)
-        elif amt < 0:
+        elif original_amt < 0:
             new_expr = sqlglot_expressions.Sub(this=base, expression=interval)
         else:
             new_expr = base

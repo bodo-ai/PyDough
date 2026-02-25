@@ -1,6 +1,6 @@
 SELECT
   sbtxdatetime AS date_time,
-  TRUNC(CAST(sbtxdatetime AS TIMESTAMP), 'WEEK') AS sow,
+  TRUNC(CAST(CAST(sbtxdatetime AS DATE) AS DATE), 'IW') AS sow,
   CASE
     WHEN TO_CHAR(sbtxdatetime, 'D') = 1
     THEN 'Sunday'

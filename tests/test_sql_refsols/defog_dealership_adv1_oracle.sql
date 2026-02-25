@@ -1,5 +1,5 @@
 SELECT
-  TRUNC(CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP), 'WEEK') AS payment_week,
+  TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'IW') AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
     SUM(
@@ -42,4 +42,4 @@ WHERE
     ) / 7
   ) >= 1
 GROUP BY
-  TRUNC(CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP), 'WEEK')
+  TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'IW')

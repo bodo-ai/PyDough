@@ -8,7 +8,7 @@ WITH "_S2" AS (
     COUNT(*) AS N_ROWS
   FROM "_S2" "_S0"
   JOIN MAIN.DEVICES DEVICES
-    ON "_S0".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS TIMESTAMP), 'DAY')
+    ON "_S0".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
   GROUP BY
     "_S0".CA_DT
 ), "_S7" AS (
@@ -17,7 +17,7 @@ WITH "_S2" AS (
     COUNT(*) AS N_ROWS
   FROM "_S2" "_S4"
   JOIN MAIN.INCIDENTS INCIDENTS
-    ON "_S4".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS TIMESTAMP), 'DAY')
+    ON "_S4".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS DATE), 'DAY')
   GROUP BY
     "_S4".CA_DT
 ), "_T1" AS (
