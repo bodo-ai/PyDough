@@ -1497,10 +1497,14 @@ class PyDoughPandasTest:
         root: UnqualifiedNode = transform_and_exec_pydough(
             self.pydough_function, graph, self.kwargs
         )
-        # Include Python version to avoid conflicts when tests run in
-        # parallel across Python versions
-        py_version = f"py{sys.version_info.major}{sys.version_info.minor}"
-        base_table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}_{py_version}"
+        # Include view, replace, temp options and Python version as part
+        # of the table name to ensure uniqueness and avoid conflicts when
+        # running tests in parallel (problem more likely to arise in CI)
+        py_ver = f"py{sys.version_info.major}{sys.version_info.minor}"
+        v = 1 if as_view else 0
+        r = 1 if replace else 0
+        t = 1 if temp else 0
+        base_table_name = f"{self.test_name}_V{v}_R{r}_T{t}_{py_ver}"
         # Apply prefix for cross-database writes (e.g., Snowflake writing to DEFOG)
         table_name = f"{table_name_prefix}{base_table_name}"
         # Drop the created table/view from transform_and_exec_pydough
