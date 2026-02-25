@@ -3,6 +3,7 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+import sys
 from types import NoneType
 
 from dateutil import parser  # type: ignore[import-untyped]
@@ -1496,7 +1497,10 @@ class PyDoughPandasTest:
         root: UnqualifiedNode = transform_and_exec_pydough(
             self.pydough_function, graph, self.kwargs
         )
-        base_table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}"
+        # Include Python version to avoid conflicts when tests run in
+        # parallel across Python versions
+        py_version = f"py{sys.version_info.major}{sys.version_info.minor}"
+        base_table_name = f"{self.test_name}_V{1 if as_view else 0}_R{1 if replace else 0}_T{1 if temp else 0}_{py_version}"
         # Apply prefix for cross-database writes (e.g., Snowflake writing to DEFOG)
         table_name = f"{table_name_prefix}{base_table_name}"
         # Drop the created table/view from transform_and_exec_pydough
