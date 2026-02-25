@@ -8,11 +8,11 @@ WHERE
     (
       CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(payment_date AS DATE) + (
         MOD((
-          TO_CHAR(payment_date, 'D') + 5
+          TO_CHAR(CAST(payment_date AS DATE), 'D') + 5
         ), 7)
       ) - (
         MOD((
-          TO_CHAR('now', 'D') + 5
+          TO_CHAR(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE), 'D') + 5
         ), 7)
       )
     ) / 7

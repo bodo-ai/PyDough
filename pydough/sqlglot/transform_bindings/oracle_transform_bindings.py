@@ -432,8 +432,8 @@ class OracleTransformBindings(BaseTransformBindings):
                     this=date2, expression=date1
                 )
 
-                dow1: SQLGlotExpression = self.convert_dayofweek([args[1]], [types[1]])
-                dow2: SQLGlotExpression = self.convert_dayofweek([args[2]], [types[2]])
+                dow1: SQLGlotExpression = self.convert_dayofweek([date1], [types[1]])
+                dow2: SQLGlotExpression = self.convert_dayofweek([date2], [types[2]])
 
                 division: SQLGlotExpression = sqlglot_expressions.Div(
                     this=apply_parens(
@@ -544,17 +544,24 @@ class OracleTransformBindings(BaseTransformBindings):
         self, base: SQLGlotExpression, unit: DateTimeUnit
     ) -> SQLGlotExpression:
         match unit:
+            case DateTimeUnit.QUARTER:
+                return sqlglot_expressions.Anonymous(
+                    this="TRUNC",
+                    expressions=[
+                        self.make_datetime_arg(base),
+                        sqlglot_expressions.Literal.string("Q"),
+                    ],
+                )
             case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
                 return sqlglot_expressions.TimestampTrunc(
                     this=self.make_datetime_arg(base),
                     unit=sqlglot_expressions.Var(this=unit.value.lower()),
                 )
             case DateTimeUnit.WEEK:
-                result = sqlglot_expressions.DateTrunc(
+                return sqlglot_expressions.DateTrunc(
                     this=self.make_datetime_arg(base),
                     unit=sqlglot_expressions.Var(this="IW"),
                 )
-                return result
             case _:
                 return sqlglot_expressions.DateTrunc(
                     this=self.make_datetime_arg(base),
