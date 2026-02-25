@@ -120,3 +120,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
             and self._is_temp == other._is_temp
             and self._unique_columns == other._unique_columns
         )
+
+    def __eq__(self, other) -> bool:
+        """Check if this collection is equal to another collection."""
+        return self.equals(other)

@@ -1,3 +1,4 @@
+import re
 import warnings
 from dataclasses import dataclass
 
@@ -18,6 +19,26 @@ from pydough.user_collections.view_collection import ViewGeneratedCollection
 from .evaluate_unqualified import _load_session_info
 
 __all__ = ["to_table"]
+
+# Pattern for valid table/view names: must start with letter, then alphanumeric/underscores/dots
+_VALID_TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z][\w.]*$")
+
+
+def _validate_table_name(name: str) -> None:
+    """
+    Validate that the table/view name is safe for use in SQL.
+
+    Args:
+        name: The table/view name to validate (can include db.schema.name format)
+
+    Raises:
+        PyDoughException: If the name contains invalid characters
+    """
+    if not _VALID_TABLE_NAME_PATTERN.match(name):
+        raise PyDoughException(
+            f"Invalid table/view name '{name}'. "
+            "Name must start with a letter and contain only alphanumeric characters, underscores, and dots."
+        )
 
 
 def _infer_schema_from_relational(
@@ -185,6 +206,7 @@ def to_table(
         the created view/table.
 
     """
+    _validate_table_name(name)
 
     display_sql: bool = bool(kwargs.pop("display_sql", False))
 

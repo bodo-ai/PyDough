@@ -6209,26 +6209,6 @@ def test_pipeline_e2e_errors(
             ),
             id="to_table_test_22",
         ),
-        # Test 23: UnqualifiedCalculate + UnqualifiedPartition:
-        # WHERE + CALCULATE with relationship traversal,
-        # then PARTITION and COUNT on materialized view
-        pytest.param(
-            PyDoughPandasTest(
-                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
-                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
-                "result = CROSS(asian_tmp).PARTITION(name='by_nation', by=nation_key).CALCULATE(nation_key, cnt=COUNT(asian_tmp)).TOP_K(10, by=cnt.DESC())",
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "total_orders": [8, 8, 9, 9, 12, 12, 18, 18, 21, 21],
-                        "avg_price": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-                    }
-                ),
-                "to_table_test_23",
-            ),
-            id="to_table_test_23",
-            marks=pytest.mark.skip("FIXME: Problem is test fails with MySQL only"),
-        ),
     ],
 )
 def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
