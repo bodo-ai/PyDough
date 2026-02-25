@@ -13,6 +13,7 @@ __all__ = [
     "get_logger",
     "init_pydough_context",
     "parse_json_metadata_from_file",
+    "parse_metadata_from_list",
     "range_collection",
     "to_df",
     "to_sql",
@@ -23,7 +24,7 @@ from .configs import PyDoughSession
 from .evaluation import to_df, to_sql, to_table
 from .exploration import explain, explain_structure, explain_term
 from .logger import get_logger
-from .metadata import parse_json_metadata_from_file
+from .metadata import parse_json_metadata_from_file, parse_metadata_from_list
 from .unqualified import display_raw, from_string, init_pydough_context
 from .user_collections.user_collection_apis import (
     dataframe_collection,
