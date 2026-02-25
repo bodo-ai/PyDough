@@ -1639,18 +1639,21 @@ def harmonize_types(column_a, column_b):
             lambda x: pd.NA if pd.isna(x) else float(x)
         )
 
+    # String vs None. Convert to empty string.
     if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
         isinstance(elem, (str, NoneType)) for elem in column_b
     ):
         return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
             lambda x: "" if pd.isna(x) else str(x)
         )
+
     # float vs None. Convert to nullable floats
     if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
         isinstance(elem, (float, NoneType)) for elem in column_b
     ):
         return column_a.astype("Float64"), column_b.astype("Float64")
 
+    # Decimal vs int. Convert Decimal to int, coercing NaNs to pd.NA.
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, int) for elem in column_b
     ):
@@ -1659,6 +1662,8 @@ def harmonize_types(column_a, column_b):
         isinstance(elem, Decimal) for elem in column_b
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else int(x))
+
+    # Decimal vs float. Convert Decimal to float, coercing NaNs to pd.NA.
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, float) for elem in column_b
     ):
@@ -1667,12 +1672,21 @@ def harmonize_types(column_a, column_b):
         isinstance(elem, Decimal) for elem in column_b
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
+    # String vs datetime. Convert string to datetime, coercing NaNs to pd.NA.
     if any(isinstance(elem, pd.Timestamp) for elem in column_a) and any(
         isinstance(elem, str) for elem in column_b
     ):
         return column_a, column_b.apply(
             lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
         )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, pd.Timestamp) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        ), column_b
+
+    # String vs date. Convert string to date, coercing NaNs to pd.NA.
     if any(isinstance(elem, datetime.date) for elem in column_a) and any(
         isinstance(elem, str) for elem in column_b
     ):
@@ -1685,6 +1699,7 @@ def harmonize_types(column_a, column_b):
         return column_a.apply(lambda x: pd.NA if pd.isna(x) else x).apply(
             lambda x: parser.parse(x).date() if isinstance(x, str) else x
         ), column_b
+
     return column_a, column_b
 
 

@@ -4379,12 +4379,14 @@ from .testing_utilities import (
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "signup_date": [
-                            date(2024, 1, 10),
-                            date(2024, 1, 12),
-                            date(2024, 2, 1),
-                            date(2024, 2, 1),
-                        ],
+                        "signup_date": pd.to_datetime(
+                            [
+                                "2024-01-10",
+                                "2024-01-12",
+                                "2024-02-01",
+                                "2024-02-01",
+                            ]
+                        ),
                         "user_id": [1, 2, 3, 4],
                     }
                 ),
