@@ -95,6 +95,21 @@ from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
 
 
+@pytest.fixture(autouse=True)
+def reset_active_session():
+    """
+    Automatically reset the global active_session after each test to ensure
+    test isolation. This prevents state from leaking between tests.
+    """
+    yield
+    # Reset the active session to a fresh state after each test
+    pydough.active_session.metadata = None
+    pydough.active_session.config = PyDoughConfigs()
+    pydough.active_session.database = DatabaseContext(
+        empty_connection, DatabaseDialect.ANSI
+    )
+
+
 @pytest.fixture
 def default_config() -> PyDoughConfigs:
     """

@@ -5811,11 +5811,11 @@ def test_pipeline_e2e_errors(
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000001",
-                            "Customer#000000002",
-                            "Customer#000000003",
-                            "Customer#000000004",
-                            "Customer#000000005",
+                            "Customer#000000007",
+                            "Customer#000000009",
+                            "Customer#000000019",
+                            "Customer#000000021",
+                            "Customer#000000025",
                         ]
                     }
                 ),
