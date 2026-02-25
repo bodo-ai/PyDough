@@ -8,7 +8,7 @@ import os
 import sqlite3
 import subprocess
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from functools import cache
 
 import boto3
@@ -544,11 +544,22 @@ def sqlite_tpch_db(sqlite_tpch_db_path: str) -> sqlite3.Connection:
 
 
 @pytest.fixture
-def sqlite_tpch_db_context(sqlite_tpch_db) -> DatabaseContext:
+def sqlite_tpch_db_context(sqlite_tpch_db) -> Generator[DatabaseContext, None, None]:
     """
     Return a DatabaseContext for the SQLite TPCH database.
+    Cleans up temp tables after each test to ensure test isolation.
     """
-    return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
+    yield DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
+    # Clean up temp tables after each test
+    try:
+        cursor = sqlite_tpch_db.cursor()
+        cursor.execute("SELECT name FROM sqlite_temp_master WHERE type='table'")
+        temp_tables = cursor.fetchall()
+        for (table_name,) in temp_tables:
+            cursor.execute(f"DROP TABLE IF EXISTS temp.{table_name}")
+        sqlite_tpch_db.commit()
+    except Exception:
+        pass  # Ignore cleanup errors
 
 
 @pytest.fixture
