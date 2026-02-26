@@ -274,10 +274,11 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
             (
                 dict_table.update_spec()
                 .add_field("WORD", "truncate[1]")
-                .add_field("POS", "identity", "pos_ident")
-                .add_field("CCOUNT", "identity", "ccount_ident")
+                .add_field("POS", "identity")
+                .add_field("CCOUNT", "identity")
                 .commit()
             )
+            dict_table.append(dict_pyarrow)
 
             # Create the Iceberg table definition for the Shakespeare table.
             shake_table: IcebergTable = dircat.create_table(
@@ -288,12 +289,13 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
             # Evolve the table spec to partition on play, act, scene and player
             (
                 shake_table.update_spec()
-                .add_field("PLAY", "identity", "play_ident")
-                .add_field("ACT", "identity", "act_ident")
-                .add_field("SCENE", "identity", "scene_ident")
-                .add_field("PLAYER", "identity", "player_ident")
+                .add_field("PLAY", "identity")
+                .add_field("ACT", "identity")
+                .add_field("SCENE", "identity")
+                .add_field("PLAYER", "identity")
                 .commit()
             )
+            shake_table.append(shake_pyarrow)
 
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
@@ -309,9 +311,9 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
     # as a read source to write into the Iceberg tables.
     catalog = FileSystemCatalog(warehouse_loc)
     temp_tables: dict[str, pd.DataFrame] = {}
-    if regenerate_iceberg:
-        temp_tables["TEMP_DICT"] = dict_pyarrow.to_pandas()
-        temp_tables["TEMP_SHAKE"] = shake_pyarrow.to_pandas()
+    # if regenerate_iceberg:
+    #     temp_tables["TEMP_DICT"] = dict_pyarrow.to_pandas()
+    #     temp_tables["TEMP_SHAKE"] = shake_pyarrow.to_pandas()
     bc: BodoSQLContext = BodoSQLContext(temp_tables, catalog=catalog)
 
     # If regenerating the database, use BodoSQL to populate each of the Iceberg
@@ -326,7 +328,7 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
             # For each temp table, populate the real Iceberg version from it.
             for table_name in ["DICT", "SHAKE"]:
                 bc.sql(
-                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM TEMP_{table_name}"
+                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
                 )
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
@@ -480,12 +482,12 @@ def bodosql_fashion_ctx(bodosql_setup) -> BodoSQLContext:
     # as a read source to write into the Iceberg tables.
     catalog = FileSystemCatalog(warehouse_loc)
     temp_tables: dict[str, pd.DataFrame] = {}
-    if regenerate_iceberg:
-        temp_tables["TEMP_CUST"] = cust_pyarrow.to_pandas()
-        temp_tables["TEMP_PROD"] = prod_pyarrow.to_pandas()
-        temp_tables["TEMP_SALE"] = sale_pyarrow.to_pandas()
-        temp_tables["TEMP_ITEM"] = item_pyarrow.to_pandas()
-        temp_tables["TEMP_STOK"] = stok_pyarrow.to_pandas()
+    # if regenerate_iceberg:
+    #     temp_tables["TEMP_CUST"] = cust_pyarrow.to_pandas()
+    #     temp_tables["TEMP_PROD"] = prod_pyarrow.to_pandas()
+    #     temp_tables["TEMP_SALE"] = sale_pyarrow.to_pandas()
+    #     temp_tables["TEMP_ITEM"] = item_pyarrow.to_pandas()
+    #     temp_tables["TEMP_STOK"] = stok_pyarrow.to_pandas()
     bc: BodoSQLContext = BodoSQLContext(temp_tables, catalog=catalog)
 
     # If regenerating the database, use BodoSQL to populate each of the Iceberg
@@ -500,7 +502,7 @@ def bodosql_fashion_ctx(bodosql_setup) -> BodoSQLContext:
             # For each temp table, populate the real Iceberg version from it.
             for table_name in ["CUST", "PROD", "SALE", "ITEM", "STOK"]:
                 bc.sql(
-                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM TEMP_{table_name}"
+                    f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}"
                 )
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
@@ -1275,7 +1277,7 @@ result = (
                 "corpus_q03",
                 extra_test_data={
                     "bodo_logger_messages": [
-                        "Total number of files is 539. Reading 2 files",
+                        "Total number of files is 527. Reading 2 files",
                         "Iceberg Filter Pushed Down:\npie.And(pie.EqualTo('PLAY', literal(f0)), pie.EqualTo('ACT', literal(f1)))"
                         "",
                         "Columns ['PLAY'] using dictionary encoding to reduce memory usage.",
@@ -1403,9 +1405,9 @@ result = (
                 },
                 extra_test_data={
                     "bodo_logger_messages": [
-                        "Total number of files is 4419. Reading 41 files",
+                        "Total number of files is 3638. Reading 30 files",
                         "Iceberg Filter Pushed Down:\npie.And(pie.LessThan('WORD', literal(f0)), pie.EqualTo('POS', literal(f1)))",
-                        "Total number of files is 539. Reading 91 files",
+                        "Total number of files is 527. Reading 86 files",
                         "Iceberg Filter Pushed Down:\npie.And(pie.LessThan('LINEWORD', literal(f0)), pie.In('PLAY', literal(f1)))",
                         "Columns ['PLAY', 'PLAYER', 'LINEWORD'] using dictionary encoding to reduce memory usage.",
                     ]
@@ -1632,8 +1634,8 @@ result = (
                 "corpus_q10",
                 extra_test_data={
                     "bodo_logger_messages": [
-                        "Total number of files is 4419. Reading 334 files",
-                        "Total number of files is 4419. Reading 464 files",
+                        "Total number of files is 3638. Reading 259 files",
+                        "Total number of files is 3638. Reading 352 files",
                     ]
                 },
             ),
@@ -1682,7 +1684,7 @@ result = (
                 "corpus_q11",
                 extra_test_data={
                     "bodo_logger_messages": [
-                        "Total number of files is 539. Reading 8 files",
+                        "Total number of files is 527. Reading 8 files",
                         "BodoPhysicalWindow",
                     ]
                 },
@@ -1803,7 +1805,7 @@ result = (
                 "corpus_q14",
                 extra_test_data={
                     "bodo_logger_messages": [
-                        "Total number of files is 4419. Reading 0 files",
+                        "Total number of files is 3638. Reading 0 files",
                     ]
                 },
             ),
@@ -1850,7 +1852,7 @@ result = (
                 "corpus_q16",
                 extra_test_data={
                     "bodo_logger_messages": [
-                        "Total number of files is 4419. Reading 517 files",
+                        "Total number of files is 3638. Reading 392 files",
                     ]
                 },
             ),
@@ -1924,7 +1926,7 @@ result = CORPUS.CALCULATE(n=COUNT(selected_words))
                     "bodo_logger_messages": [
                         "Iceberg Filter Pushed Down:\npie.And(pie.EqualTo('POS', literal(f0)), pie.NotNull('CCOUNT'), pie.NotNull('WORD'))",
                         "Runtime join filter expression: ((ds.field('{CCOUNT}').isin([3, 4, 5])))",
-                        "Total number of files is 4419. Reading 104 files",
+                        "Total number of files is 3638. Reading 77 files",
                     ]
                 },
             ),
@@ -2066,7 +2068,7 @@ result = (
         ),
         pytest.param(
             # For each combination of category and color, what is the total
-            # qunatity of products of that combination that were purchased in
+            # quantity of products of that combination that were purchased in
             # the first week of April 2024? Only include combinations that have
             # at least one such purchase in that window.
             PyDoughPandasTest(
@@ -2127,6 +2129,88 @@ result = (
             marks=pytest.mark.skip(
                 "TODO: address Bodo/BodoSQL issues with Iceberg read on this specific test"
             ),
+        ),
+        pytest.param(
+            # What percentage of purchases made by customers in each country
+            # were discounted?
+            PyDoughPandasTest(
+                """
+result = (
+    sales.CALCULATE(countr=customer.country)
+    .PARTITION(name='countries', by=country)
+    .CALCULATE(country, pct_discounted=ROUND(100 * COUNT(sales.WHERE(discounted)) / COUNT(sales), 2))
+    .ORDER_BY(country.ASC())
+)
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame(
+                    {
+                        "country": [
+                            "France",
+                            "Germany",
+                            "Italy",
+                            "Netherlands",
+                            "Portugal",
+                            "Spain",
+                        ],
+                        "pct_discounted": [8.04, 10.38, 11.76, 8.4, 11.25, 9.73],
+                    }
+                ),
+                "fashion_q05",
+            ),
+            id="fashion_q05",
+        ),
+        pytest.param(
+            # What is the total quantity sold of white medium products?
+            PyDoughPandasTest(
+                """
+selected_items = (
+    items
+    .WHERE((product.color == 'White') & (product.size == 'M'))
+)
+result = FASHIONSTORE.CALCULATE(total_quatity=SUM(selected_items.quantity))
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame({"n": [138]}),
+                "fashion_q06",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 50. Reading 43 files",
+                        "Runtime join filter expression: ((ds.field('{product_id}').isin([194, 261, 264, 273, 338, 361, 380, 410, 450, 7, 87])))",
+                        "Total number of files is 150. Reading 105 files",
+                    ]
+                },
+            ),
+            id="fashion_q06",
+        ),
+        pytest.param(
+            # What is the total quantity of dresses sold at a discount on
+            # June 4th, 2025 through Email campaigns??
+            PyDoughPandasTest(
+                """
+selected_items = (
+    items
+    .WHERE(
+        (product.category == 'Dresses') &
+        discounted &
+        (sale_date == DATETIME("2025-06-04")) & 
+        (channel_campaigns == 'Email')
+    )
+)
+result = FASHIONSTORE.CALCULATE(total_quatity=SUM(selected_items.quantity))
+                """,
+                "FASHIONSTORE",
+                lambda: pd.DataFrame({"n": [4]}),
+                "fashion_q07",
+                extra_test_data={
+                    "bodo_logger_messages": [
+                        "Total number of files is 150. Reading 125 files",
+                        "Runtime join filter expression: ((ds.field('{product_id}').isin([14, 204, 217, 278, 433, 472, 477, 482])))",
+                        "Total number of files is 50. Reading 5 files",
+                    ]
+                },
+            ),
+            id="fashion_q07",
         ),
     ],
 )
@@ -2231,7 +2315,7 @@ def test_pipeline_e2e_bodosql(
         bodo_handler.setFormatter(
             logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
-        bodo_logger: logging.Logger = logging.getLogger("Bodo Default Logger")
+        bodo_logger: logging.Logger = logging.getLogger("PyDough BodoSQL Logger")
         bodo_logger.setLevel(logging.DEBUG)
         bodo_logger.addHandler(bodo_handler)
         bodo.set_verbose_level(2)

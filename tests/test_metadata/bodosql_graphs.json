@@ -703,6 +703,32 @@
             "sample values": [81.8, 81.79, 80.76, 78.52, 78.52]
           },
           {
+            "name": "discounted",
+            "type": "table column",
+            "column name": "discounted",
+            "data type": "bool",
+            "description": "Indicates whether the sale item was discounted",
+            "synonyms": ["is discounted", "discount applied"]
+          },
+          {
+            "name": "sale_date",
+            "type": "table column",
+            "column name": "sale_date",
+            "data type": "datetime",
+            "description": "The date of the sale the item belongs to",
+            "sample values": ["2025-05-21", "2025-04-21", "2025-06-16"],
+            "synonyms": ["date of transaction", "purchase date"]
+          },
+          {
+            "name": "channel_campaigns",
+            "type": "table column",
+            "column name": "channel_campaigns",
+            "data type": "string",
+            "description": "The type of campaign channel that the sale item was made through",
+            "sample values": ["Email", "Website Banner"],
+            "synonyms": ["advertising medium", "item channel campaign type"]
+          },
+          {
             "name": "discount_amount",
             "type": "table column",
             "column name": "discount_amount",
