@@ -96,6 +96,11 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
 
+# Module-level constant for resetting active_session to avoid creating
+# new DatabaseContext objects after every test (which can cause connection
+# accumulation issues on CI)
+_EMPTY_DATABASE_CONTEXT = DatabaseContext(empty_connection, DatabaseDialect.ANSI)
+
 
 @pytest.fixture(autouse=True)
 def reset_active_session():
@@ -107,9 +112,7 @@ def reset_active_session():
     # Reset the active session to a fresh state after each test
     pydough.active_session.metadata = None
     pydough.active_session.config = PyDoughConfigs()
-    pydough.active_session.database = DatabaseContext(
-        empty_connection, DatabaseDialect.ANSI
-    )
+    pydough.active_session.database = _EMPTY_DATABASE_CONTEXT
 
 
 @pytest.fixture
