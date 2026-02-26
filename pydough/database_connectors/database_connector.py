@@ -51,30 +51,31 @@ class DatabaseConnection:
         self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
+
+            # This is only for MyPy to pass and know about fetch_pandas_all()
+            # NOTE: Code does not run in type checking mode, so we need to
+            # check at run-time if the cursor has the method.
+            if TYPE_CHECKING:
+                _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
+            # At run-time check and run the fetch.
+            if hasattr(self.cursor, "fetch_pandas_all"):
+                return self.cursor.fetch_pandas_all()
+            else:
+                # Assume sqlite3
+                column_names: list[str] = [
+                    description[0] for description in self.cursor.description
+                ]
+                # TODO: (gh #174) Cache the cursor?
+                # TODO: (gh #175) enable typed DataFrames.
+                data = self.cursor.fetchall()
+                return pd.DataFrame(data, columns=column_names)
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, True
             ) from e
-
-        # This is only for MyPy to pass and know about fetch_pandas_all()
-        # NOTE: Code does not run in type checking mode, so we need to
-        # check at run-time if the cursor has the method.
-        if TYPE_CHECKING:
-            _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
-        # At run-time check and run the fetch.
-        if hasattr(self.cursor, "fetch_pandas_all"):
-            return self.cursor.fetch_pandas_all()
-        else:
-            # Assume sqlite3
-            column_names: list[str] = [
-                description[0] for description in self.cursor.description
-            ]
-            # No need to close the cursor, as its closed by del.
-            # TODO: (gh #174) Cache the cursor?
-            # TODO: (gh #175) enable typed DataFrames.
-            data = self.cursor.fetchall()
-            return pd.DataFrame(data, columns=column_names)
+        finally:
+            self.cursor.close()
 
     def execute_ddl(self, sql: str) -> None:
         """Create a cursor object using the connection and execute the DDL query.
@@ -96,6 +97,8 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, False
             ) from e
+        finally:
+            self.cursor.close()
 
     def get_table_columns(self, table_name: str) -> pd.DataFrame:
         """Get the columns of a table.
@@ -123,6 +126,8 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 f"Failed to get column names for table {table_name}", e, False
             ) from e
+        finally:
+            self.cursor.close()
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
