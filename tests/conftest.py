@@ -1032,8 +1032,13 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
         )
 
         if not is_ci():
-            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day
+            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day ('UTC')
             with connection.cursor() as cur:
+                # Sqlite's datetime functions operate in UTC,
+                # while Snowflake's default timezone is Pacific Time.
+                # Setting the session timezone to match SQLite's behavior
+                # to ensure the date comparison is accurate.
+                cur.execute("ALTER SESSION SET TIMEZONE = 'UTC'")
                 cur.execute("""
                     DECLARE last_mod DATE;
 
