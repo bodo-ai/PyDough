@@ -1378,6 +1378,10 @@ def postgres_conn_db_context(
         host=postgres_host,
         port=postgres_port,
     )
+    # Enable autocommit to avoid transaction conflicts with DDL operations
+    # like CREATE TEMPORARY TABLE. Without this, psycopg2 starts an implicit
+    # transaction that can hold locks and block DDL.
+    connection.autocommit = True
 
     return load_database_context(
         "postgres",
