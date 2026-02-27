@@ -410,7 +410,10 @@ def impl_defog_broker_adv15():
     n_active = SUM(customers.status == "active")
     n_custs = COUNT(customers)
     return (
-        customers.WHERE((join_date >= "2022-01-01") & (join_date <= "2022-12-31"))
+        customers.WHERE(
+            (join_date >= DATETIME("2022-01-01"))
+            & (join_date <= DATETIME("2022-12-31"))
+        )
         .PARTITION(name="countries", by=country)
         .CALCULATE(
             country,
@@ -876,7 +879,7 @@ def impl_defog_dealership_adv9():
     Sale Price in the first quarter of 2023.
     """
     selected_sales = sales.WHERE(
-        (sale_date >= "2023-01-01") & (sale_date <= "2023-03-31")
+        (sale_date >= DATETIME("2023-01-01")) & (sale_date <= DATETIME("2023-03-31"))
     )
     return Dealership.CALCULATE(ASP=AVG(selected_sales.sale_price))
 

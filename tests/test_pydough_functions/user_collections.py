@@ -212,7 +212,7 @@ def simple_dataframe_collection_3():
     df = pd.DataFrame(
         {
             "user_id": [1, 2, 3, 4],
-            '"`name""["': ["Alice", "Bob", "Charlie", "David"],
+            '"`name\'["': ["Alice", "Bob", "Charlie", "David"],
             '"space country"': ["US", "CR", "US", "MX"],
             '"CAST"': [25, 30, 22, 30],
         }

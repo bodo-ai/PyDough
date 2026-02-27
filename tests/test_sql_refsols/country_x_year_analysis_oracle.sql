@@ -23,9 +23,7 @@ WITH "_T1" AS (
   FROM "_T1" "_T6"
   CROSS JOIN "_T4" "_T7"
   JOIN "_S3" "_S7"
-    ON "_S7".CA_DT < (
-      CAST("_T7".PR_RELEASE AS DATE) + NUMTOYMINTERVAL(2, 'year')
-    )
+    ON "_S7".CA_DT < ADD_MONTHS(CAST("_T7".PR_RELEASE AS DATE), 24)
     AND "_S7".CA_DT >= "_T7".PR_RELEASE
   JOIN MAIN.DEVICES DEVICES
     ON "_S7".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
@@ -45,9 +43,7 @@ WITH "_T1" AS (
   FROM "_T1" "_T3"
   CROSS JOIN "_T4" "_T4"
   JOIN "_S3" "_S3"
-    ON "_S3".CA_DT < (
-      CAST("_T4".PR_RELEASE AS DATE) + NUMTOYMINTERVAL(2, 'year')
-    )
+    ON "_S3".CA_DT < ADD_MONTHS(CAST("_T4".PR_RELEASE AS DATE), 24)
     AND "_S3".CA_DT >= "_T4".PR_RELEASE
   LEFT JOIN "_S15" "_S15"
     ON "_S15".CA_DT = "_S3".CA_DT AND "_S15".CO_NAME = "_T3".CO_NAME

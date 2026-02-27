@@ -12,9 +12,7 @@ WITH "_T1" AS (
   JOIN MAIN.PRODUCTS PRODUCTS
     ON PRODUCTS.pr_name = 'AmethystCopper-I'
   JOIN MAIN.CALENDAR CALENDAR
-    ON CALENDAR.ca_dt < (
-      CAST(PRODUCTS.pr_release AS DATE) + NUMTOYMINTERVAL(2, 'year')
-    )
+    ON CALENDAR.ca_dt < ADD_MONTHS(CAST(PRODUCTS.pr_release AS DATE), 24)
     AND CALENDAR.ca_dt >= PRODUCTS.pr_release
 )
 SELECT

@@ -5,12 +5,18 @@ Definition of SQLGlot transformation bindings for the Oracle dialect.
 __all__ = ["OracleTransformBindings"]
 
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.errors.error_types import PyDoughSQLException
 from pydough.types import PyDoughType
+from pydough.types.boolean_type import BooleanType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -39,6 +45,24 @@ class OracleTransformBindings(BaseTransformBindings):
     @property
     def values_alias_column(self) -> bool:
         return False
+
+    @property
+    def oracle_strftime_mapping(self) -> dict[str, str]:
+        """
+        This mapping is used by `oracle_format` when converting a
+        format string supplied by the user (which typically uses Python
+        `strftime`-style specifiers) into a form that Oracle will
+        understand.  Only a small subset of directives is currently
+        supported; additional tokens may be added as needed.
+        """
+        return {
+            "%Y": "YYYY",
+            "%m": "MM",
+            "%d": "DD",
+            "%H": "HH24",
+            "%M": "MI",
+            "%S": "SS",
+        }
 
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.ABS: "ABS",
@@ -617,12 +641,11 @@ class OracleTransformBindings(BaseTransformBindings):
                     ],
                 )
             case DateTimeUnit.MONTH | DateTimeUnit.YEAR:
-                interval = sqlglot_expressions.Anonymous(
-                    this="NUMTOYMINTERVAL",
-                    expressions=[
-                        sqlglot_expressions.convert(amt),
-                        sqlglot_expressions.Literal.string(unit.value),
-                    ],
+                add_month = (
+                    original_amt if unit == DateTimeUnit.MONTH else original_amt * 12
+                )
+                return sqlglot_expressions.AddMonths(
+                    this=base, expression=sqlglot_expressions.convert(add_month)
                 )
             case _:
                 raise ValueError(f"Unsupported unit '{unit}' for datetime offset.")
@@ -691,6 +714,30 @@ class OracleTransformBindings(BaseTransformBindings):
             ),
         )
 
+    def oracle_format(self, fmt: str) -> str:
+        """
+        Translate a Python-style `strftime` format string to Oracle.
+
+        One-to-one conversion replacement of each key in the
+        mapping with its corresponding value.  Unknown directives are left
+        untouched.
+
+        Args:
+            - `fmt`: A format string containing Python `strftime` directives (e.g.
+            `"%Y-%m-%d %H:%M:%S"`).
+
+        Returns
+            The resulting Oracle-compatible format (e.g. ``"YYYY-MM-DD
+            HH24:MI:SS"``).
+
+        Example:
+        "%Y-%m-%d" becomes 'YYYY-MM-DD'
+        "%Y/%m/%d %H:%M" becomes 'YYYY/MM/DD HH24:MI'
+        """
+        for k, v in self.oracle_strftime_mapping.items():
+            fmt = fmt.replace(k, v)
+        return fmt
+
     def convert_string(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -718,4 +765,53 @@ class OracleTransformBindings(BaseTransformBindings):
                 raise PyDoughSQLException(
                     f"STRING(X,Y) requires the second argument to be a string date format literal, but received {args[1]}"
                 )
-            return sqlglot_expressions.ToChar(this=args[0], format=args[1])
+            return sqlglot_expressions.ToChar(
+                this=args[0],
+                format=sqlglot_expressions.Literal.string(
+                    self.oracle_format(args[1].this)
+                ),
+            )
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Anonymous(
+                    this="TO_TIMESTAMP",
+                    expressions=[
+                        sqlglot_expressions.Literal.string(item),
+                        sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
+                    ],
+                )
+            case NumericType():
+                if math.isinf(item):
+                    infinity_val: SQLGlotExpression = sqlglot_expressions.Identifier(
+                        this="BINARY_DOUBLE_INFINITY"
+                    )
+                    if item >= 0:
+                        return infinity_val
+                    else:
+                        return sqlglot_expressions.Neg(this=infinity_val)
+
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))
+
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        if isinstance(types[0], BooleanType):
+            # Oracle can't convert boolean to int, for this Case will be used
+            return sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=args[0],
+                        true=sqlglot_expressions.Literal.number(1),
+                    )
+                ],
+                default=sqlglot_expressions.Literal.number(0),
+            )
+        else:
+            return super().convert_integer(args, types)

@@ -5,9 +5,7 @@ WITH "_S1" AS (
     SUM(sbtxamount) AS SUM_SBTXAMOUNT
   FROM MAIN.SBTRANSACTION
   WHERE
-    sbtxdatetime >= (
-      SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTOYMINTERVAL(1, 'month')
-    )
+    sbtxdatetime >= ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -1)
     AND sbtxtype = 'sell'
   GROUP BY
     sbtxtickerid

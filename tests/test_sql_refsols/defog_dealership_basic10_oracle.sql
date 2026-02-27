@@ -5,9 +5,7 @@ WITH "_S1" AS (
     SUM(sale_price) AS SUM_SALE_PRICE
   FROM MAIN.SALES
   WHERE
-    sale_date >= (
-      SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTOYMINTERVAL(3, 'month')
-    )
+    sale_date >= ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -3)
   GROUP BY
     salesperson_id
 )

@@ -3,9 +3,7 @@ WITH "_u_0" AS (
     NOTIFICATIONS.user_id AS "_u_1"
   FROM MAIN.NOTIFICATIONS NOTIFICATIONS
   JOIN MAIN.USERS USERS
-    ON NOTIFICATIONS.created_at <= (
-      CAST(USERS.created_at AS DATE) + NUMTOYMINTERVAL(1, 'year')
-    )
+    ON NOTIFICATIONS.created_at <= ADD_MONTHS(CAST(USERS.created_at AS DATE), 12)
     AND NOTIFICATIONS.created_at >= USERS.created_at
     AND NOTIFICATIONS.user_id = USERS.uid
   GROUP BY

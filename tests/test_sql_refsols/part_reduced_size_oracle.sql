@@ -20,9 +20,9 @@ SELECT
     ''
   ) AS message,
   LINEITEM.l_discount AS discount,
-  TO_CHAR(LINEITEM.l_receiptdate, '%d-%m-%Y') AS date_dmy,
-  TO_CHAR(LINEITEM.l_receiptdate, '%m/%d') AS date_md,
-  TO_CHAR(LINEITEM.l_receiptdate, '%H:%M%p') AS am_pm
+  TO_CHAR(LINEITEM.l_receiptdate, 'DD-MM-YYYY') AS date_dmy,
+  TO_CHAR(LINEITEM.l_receiptdate, 'MM/DD') AS date_md,
+  TO_CHAR(LINEITEM.l_receiptdate, 'HH24:MI%p') AS am_pm
 FROM "_S0" "_S0"
 JOIN TPCH.LINEITEM LINEITEM
   ON LINEITEM.l_partkey = "_S0".P_PARTKEY

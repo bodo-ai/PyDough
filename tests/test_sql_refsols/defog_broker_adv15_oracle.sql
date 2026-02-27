@@ -5,6 +5,7 @@ SELECT
   ) AS ar
 FROM MAIN.SBCUSTOMER
 WHERE
-  sbcustjoindate <= '2022-12-31' AND sbcustjoindate >= '2022-01-01'
+  sbcustjoindate <= TO_DATE('2022-12-31', 'YYYY-MM-DD')
+  AND sbcustjoindate >= TO_DATE('2022-01-01', 'YYYY-MM-DD')
 GROUP BY
   sbcustcountry
