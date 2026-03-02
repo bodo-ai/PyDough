@@ -309,16 +309,46 @@ class OracleTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         """
         GETPART(str, delim, idx) ->
-        REGEXP_SUBSTR(
-            str,
-            '[^' || delim || ']+',
-            1,
-            CASE
-                WHEN idx = 0 THEN 1
-                WHEN idx > 0 THEN idx
-                ELSE (REGEXP_COUNT(str, delim) + 1) + idx + 1
-            END
-        )
+        CASE
+            WHEN delim IS NULL OR delim = '' THEN
+                CASE
+                    WHEN idx = 1 THEN str
+                    ELSE NULL
+                END
+            ELSE
+                REGEXP_SUBSTR(
+                    str,
+                    '(.*?)(' || REGEXP_REPLACE(delim, '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+                    1,
+                    CASE
+                        WHEN
+                        CASE
+                            WHEN idx = 0 THEN 1
+                            WHEN idx > 0 THEN idx
+                            ELSE
+                            (
+                                ((LENGTH(str) - LENGTH(REPLACE(str, delim))) / LENGTH(delim)) + 1
+                            ) + idx + 1
+                        END
+                        BETWEEN 1 AND
+                        (
+                            ((LENGTH(str) - LENGTH(REPLACE(str, delim))) / LENGTH(delim)) + 1
+                        )
+                        THEN
+                        CASE
+                            WHEN idx > 0
+                            THEN idx
+                            ELSE
+                            (
+                                ((LENGTH(str) - LENGTH(REPLACE(str, delim))) / LENGTH(delim)) + 1
+                            ) + idx + 1
+                        END
+                        ELSE NULL
+                    END,
+                    NULL,
+                    1
+                )
+        END
         """
 
         assert len(args) == 3
@@ -326,51 +356,136 @@ class OracleTransformBindings(BaseTransformBindings):
         string_expr, delimiter_expr, index_expr = args
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
         literal_1: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
-        regex_1: SQLGlotExpression = sqlglot_expressions.Literal.string("[^")
-        regex_2: SQLGlotExpression = sqlglot_expressions.Literal.string("]+")
 
-        case_expr: SQLGlotExpression = sqlglot_expressions.Case(
+        regexp_1: SQLGlotExpression = sqlglot_expressions.Literal.string("(.*?)(")
+        replace_chars: SQLGlotExpression = sqlglot_expressions.Literal.string(
+            "([][(){}.*+?^$|\\#-])"
+        )
+        regexp_2: SQLGlotExpression = sqlglot_expressions.Literal.string("|$)")
+
+        delim_regexp: SQLGlotExpression = sqlglot_expressions.DPipe(
+            this=regexp_1,
+            expression=sqlglot_expressions.DPipe(
+                this=sqlglot_expressions.RegexpReplace(
+                    this=delimiter_expr,
+                    expression=replace_chars,
+                    replacement=sqlglot_expressions.Literal.string("\\\\\\1"),
+                ),
+                expression=regexp_2,
+            ),
+        )
+
+        # ((LENGTH(str) - LENGTH(REPLACE(str, delim))) / LENGTH(delim)) + 1
+        parts: SQLGlotExpression = sqlglot_expressions.Add(
+            this=apply_parens(
+                sqlglot_expressions.Div(
+                    this=apply_parens(
+                        sqlglot_expressions.Sub(
+                            this=sqlglot_expressions.Length(this=string_expr),
+                            expression=sqlglot_expressions.Length(
+                                this=sqlglot_expressions.Anonymous(
+                                    this="REPLACE",
+                                    expressions=[string_expr, delimiter_expr],
+                                )
+                            ),
+                        )
+                    ),
+                    expression=sqlglot_expressions.Length(this=delimiter_expr),
+                )
+            ),
+            expression=literal_1,
+        )
+
+        # (parts) + idx + 1
+        occurrences: SQLGlotExpression = sqlglot_expressions.Add(
+            this=apply_parens(parts),
+            expression=sqlglot_expressions.Add(
+                this=apply_parens(index_expr), expression=literal_1
+            ),
+        )
+
+        # CASE
+        #     WHEN idx = 0 THEN 1
+        #     WHEN idx > 0 THEN idx
+        #     ELSE
+        #     (
+        #         ((LENGTH(str) - LENGTH(REPLACE(str, delim))) / LENGTH(delim)) + 1
+        #     ) + idx + 1
+        # END
+        case_neg_idx: SQLGlotExpression = sqlglot_expressions.Case(
             ifs=[
                 sqlglot_expressions.If(
                     this=sqlglot_expressions.EQ(this=index_expr, expression=literal_0),
                     true=literal_1,
                 ),
                 sqlglot_expressions.If(
-                    this=sqlglot_expressions.GT(this=index_expr, expression=literal_0),
+                    this=sqlglot_expressions.GT(
+                        this=apply_parens(index_expr), expression=literal_0
+                    ),
                     true=index_expr,
                 ),
             ],
-            default=sqlglot_expressions.Add(
-                this=sqlglot_expressions.Add(
-                    this=sqlglot_expressions.Paren(
-                        this=sqlglot_expressions.Add(
-                            this=sqlglot_expressions.Anonymous(
-                                this="REGEXP_COUNT",
-                                expressions=[string_expr, delimiter_expr],
-                            ),
-                            expression=literal_1,
-                        )
-                    ),
-                    expression=index_expr,
-                ),
-                expression=literal_1,
-            ),
+            default=occurrences,
         )
 
-        result: SQLGlotExpression = sqlglot_expressions.Anonymous(
+        case_occurrence: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.Between(
+                        this=case_neg_idx, low=literal_1, high=parts
+                    ),
+                    true=case_neg_idx,
+                )
+            ],
+            default=sqlglot_expressions.Null(),
+        )
+
+        regexp_substr: SQLGlotExpression = sqlglot_expressions.Anonymous(
             this="REGEXP_SUBSTR",
             expressions=[
                 string_expr,
-                sqlglot_expressions.DPipe(
-                    this=sqlglot_expressions.DPipe(
-                        this=regex_1, expression=delimiter_expr, safe=True
-                    ),
-                    expression=regex_2,
-                    safe=True,
-                ),
+                delim_regexp,
                 literal_1,
-                case_expr,
+                case_occurrence,
+                sqlglot_expressions.Null(),
+                literal_1,
             ],
+        )
+        # CASE
+        #     WHEN delim IS NULL OR delim = '' THEN
+        #         CASE
+        #             WHEN idx = 1 THEN str
+        #             ELSE NULL
+        #         END
+        #     ELSE
+        #         REGEXP_SUBSTR()
+        # END
+        result: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.Or(
+                        this=sqlglot_expressions.Is(
+                            this=delimiter_expr, expression=sqlglot_expressions.Null()
+                        ),
+                        expression=sqlglot_expressions.EQ(
+                            this=delimiter_expr,
+                            expression=sqlglot_expressions.Literal.string(""),
+                        ),
+                    ),
+                    true=sqlglot_expressions.Case(
+                        ifs=[
+                            sqlglot_expressions.If(
+                                this=sqlglot_expressions.EQ(
+                                    this=index_expr, expression=literal_1
+                                ),
+                                true=string_expr,
+                            )
+                        ],
+                        default=sqlglot_expressions.Null(),
+                    ),
+                )
+            ],
+            default=regexp_substr,
         )
         return result
 
