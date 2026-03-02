@@ -234,8 +234,10 @@ class FilterPushdownShuttle(RelationalShuttle):
                 # they are false if the input is null.
                 pushable_filters, remaining_filters = partition_expressions(
                     remaining_filters,
-                    lambda expr: only_references_columns(expr, input_cols[idx])
-                    and false_when_null_columns(expr, input_cols[idx]),
+                    lambda expr: (
+                        only_references_columns(expr, input_cols[idx])
+                        and false_when_null_columns(expr, input_cols[idx])
+                    ),
                 )
             else:
                 pushable_filters, remaining_filters = partition_expressions(
