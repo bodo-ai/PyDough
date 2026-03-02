@@ -115,6 +115,82 @@ class OracleTransformBindings(BaseTransformBindings):
         """
         return sqlglot_expressions.Coalesce(this=args[0], expressions=args[1:])
 
+    def convert_str_count(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        STRCOUNT(X, Y) =>
+        CASE
+            WHEN LENGTH(X) IS NULL OR LENGTH(Y) IS NULL THEN 0
+            ELSE
+            CAST((LENGTH(X) - NVL(LENGTH(REPLACE(X, Y, '')), 0)) / LENGTH(Y), AS INTEGER)
+        END
+        """
+        assert len(args) == 2
+
+        string: SQLGlotExpression = args[0]
+        substring_count: SQLGlotExpression = args[1]
+
+        # eliminate the substring of the string: REPLACE(X, Y, "")
+        string_replaced: SQLGlotExpression = self.convert_replace(
+            [string, substring_count], types
+        )
+
+        # The length of the first string given: LENGH(X)
+        len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
+
+        # The length of the replaced string: NVL(LENGH(REPLACE(X, Y, "")), 0)
+        # NVL(LENGTH(REPLACE('aaaa', 'aa', '')), 0)
+        len_string_replaced: SQLGlotExpression = sqlglot_expressions.Coalesce(
+            this=sqlglot_expressions.Length(this=string_replaced),
+            expressions=[sqlglot_expressions.Literal.number(0)],
+            is_nvl=True,
+        )
+
+        # The length of the Y string: LENGTH(Y)
+        len_substring_count: SQLGlotExpression = sqlglot_expressions.Length(
+            this=substring_count
+        )
+
+        # The length difference between string X and
+        # replaced string: REPLACE(X, Y, "")
+        difference: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=len_string, expression=len_string_replaced
+        )
+
+        # Take in count if LENGH(Y) > 1 dividing the difference by Y's length:
+        # LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
+        quotient: SQLGlotExpression = sqlglot_expressions.Div(
+            this=apply_parens(difference), expression=len_substring_count
+        )
+
+        # Cast to Interger:
+        # CAST((LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y), AS INTEGER)
+        casted: SQLGlotExpression = sqlglot_expressions.Cast(
+            this=quotient, to=sqlglot_expressions.DataType.build("BIGINT")
+        )
+
+        # CASE when LENGTH(X) IS NULL OR LENGTH(Y) IS NULL THEN 0 else casted
+        answer: SQLGlotExpression = (
+            sqlglot_expressions.Case()
+            .when(
+                sqlglot_expressions.Or(
+                    this=sqlglot_expressions.Is(
+                        this=len_string,
+                        expression=sqlglot_expressions.Null(),
+                    ),
+                    expression=sqlglot_expressions.Is(
+                        this=len_substring_count, expression=sqlglot_expressions.Null()
+                    ),
+                ),
+                sqlglot_expressions.Literal.number(0),
+            )
+            .else_(casted)
+        )
+        return answer
+
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
