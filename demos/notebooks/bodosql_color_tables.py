@@ -1,3 +1,10 @@
+"""
+Logic used to generate the dataframes used for the COLORSHOP database for the
+purposes of the BodoSQL demo jupyter notebook. The function
+`generate_color_tables` generates the four pandas DataFrames used in this
+database: colors, customers, suppliers, and shipments.
+"""
+
 import datetime
 
 import numpy as np

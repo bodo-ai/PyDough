@@ -7,6 +7,7 @@ Tests for the PyDough workflow integrated with BodoSQL
 # ruff & mypy should not try to typecheck or verify any of this
 
 from collections.abc import Callable
+import sqlite3
 import pandas as pd
 import pytest
 import datetime
@@ -25,16 +26,18 @@ from pydough.configs import PyDoughConfigs, DivisionByZeroBehavior
 import os
 import pydough
 from functools import cache
+import pyarrow as pa
 from pyarrow import Table as PyArrowTable
 import shutil
 from pyiceberg.schema import Schema as IcebergSchema
 from pyiceberg.partitioning import PartitionSpec, PartitionField
 
+from tests.conftest import sf_conn_db_context
 from tests.testing_utilities import graph_fetcher, temp_env_override
 import numpy as np
 import numpy.typing as npt
 
-from .testing_utilities import PyDoughPandasTest
+from .testing_utilities import PyDoughPandasTest, PyDoughSQLComparisonTest
 from bodosql import BodoSQLContext, FileSystemCatalog
 from bodo.io.iceberg.catalog.dir import DirCatalog
 
@@ -44,6 +47,12 @@ from pyiceberg.table import Table as IcebergTable
 from pydough.database_connectors import load_database_context
 
 from pyarrow.csv import read_csv as pyarrow_read_csv
+
+
+from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
+from .test_pipeline_sf import defog_sf_test_data  # noqa
+from .test_pipeline_defog import defog_pipeline_test_data  # noqa
+from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
 
 
 @pytest.fixture(scope="session")
@@ -304,25 +313,14 @@ def bodosql_corpus_ctx(bodosql_setup) -> BodoSQLContext:
                 shutil.rmtree(warehouse_loc)
             raise e
 
-    # Create the catalog/context pointing to the location of the database, with
-    # dummy local tables for the two tables which will later be used to populate
-    # the Iceberg tables if regeneration is needed. These dummy tables contain
-    # the real data but are only used so that the BodoSQLContext can use them
-    # as a read source to write into the Iceberg tables.
+    # Create the catalog/context pointing to the location of the database.
     catalog = FileSystemCatalog(warehouse_loc)
-    temp_tables: dict[str, pd.DataFrame] = {}
-    # if regenerate_iceberg:
-    #     temp_tables["TEMP_DICT"] = dict_pyarrow.to_pandas()
-    #     temp_tables["TEMP_SHAKE"] = shake_pyarrow.to_pandas()
-    bc: BodoSQLContext = BodoSQLContext(temp_tables, catalog=catalog)
+    bc: BodoSQLContext = BodoSQLContext(catalog=catalog)
 
-    # If regenerating the database, use BodoSQL to populate each of the Iceberg
-    # tables from the corresponding temp table. This ensures that the partitions
-    # are properly maintained by the Iceberg write step using the same
-    # partitions that the Iceberg tables are already defined with, but also
-    # ensures that the metadata is updated to include the puffin files with
-    # theta sketches containing the approximate NDV statistics for various
-    # columns.
+    # If regenerating the database, use BodoSQL to replace each table with
+    # itself. Since BodoSQL is doing the write, it will produce the puffin files
+    # containing the needed sketches, but since it is writing to the same
+    # location it will keep the partitions.
     if regenerate_iceberg:
         try:
             # For each temp table, populate the real Iceberg version from it.
@@ -475,28 +473,14 @@ def bodosql_fashion_ctx(bodosql_setup) -> BodoSQLContext:
                 shutil.rmtree(warehouse_loc)
             raise e
 
-    # Create the catalog/context pointing to the location of the database, with
-    # dummy local tables for the two tables which will later be used to populate
-    # the Iceberg tables if regeneration is needed. These dummy tables contain
-    # the real data but are only used so that the BodoSQLContext can use them
-    # as a read source to write into the Iceberg tables.
+    # Create the catalog/context pointing to the location of the database.
     catalog = FileSystemCatalog(warehouse_loc)
-    temp_tables: dict[str, pd.DataFrame] = {}
-    # if regenerate_iceberg:
-    #     temp_tables["TEMP_CUST"] = cust_pyarrow.to_pandas()
-    #     temp_tables["TEMP_PROD"] = prod_pyarrow.to_pandas()
-    #     temp_tables["TEMP_SALE"] = sale_pyarrow.to_pandas()
-    #     temp_tables["TEMP_ITEM"] = item_pyarrow.to_pandas()
-    #     temp_tables["TEMP_STOK"] = stok_pyarrow.to_pandas()
-    bc: BodoSQLContext = BodoSQLContext(temp_tables, catalog=catalog)
+    bc: BodoSQLContext = BodoSQLContext(catalog=catalog)
 
-    # If regenerating the database, use BodoSQL to populate each of the Iceberg
-    # tables from the corresponding temp table. This ensures that the partitions
-    # are properly maintained by the Iceberg write step using the same
-    # partitions that the Iceberg tables are already defined with, but also
-    # ensures that the metadata is updated to include the puffin files with
-    # theta sketches containing the approximate NDV statistics for various
-    # columns.
+    # If regenerating the database, use BodoSQL to replace each table with
+    # itself. Since BodoSQL is doing the write, it will produce the puffin files
+    # containing the needed sketches, but since it is writing to the same
+    # location it will keep the partitions.
     if regenerate_iceberg:
         try:
             # For each temp table, populate the real Iceberg version from it.
@@ -528,11 +512,285 @@ def bodosql_sample_contexts(
     * `CORPUS`
     * `FASHIONSTORE`
     """
+
     return {
         "COLORSHOP": bodosql_color_ctx,
         "CORPUS": bodosql_corpus_ctx,
         "FASHIONSTORE": bodosql_fashion_ctx,
     }
+
+
+@pytest.fixture(scope="session")
+def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
+    """
+    Creates and returns a BodoSQLContext containing all of the tables from the
+    defog databases as an Iceberg database with a local file system catalog.
+    The database is regenerated each time due to date/time sensitivity.
+    """
+
+    defog_databases: dict[
+        tuple[str, str], dict[tuple[str, str], list[tuple[str, str]]]
+    ] = {
+        ("Restaurants", "restaurants"): {
+            "geographic": [],
+            "location": [("city_name", "identity")],
+            "restaurant": [("food_type", "identity")],
+        },
+        ("DermTreatment", "dermtreatment"): {
+            "doctors": [("specialty", "identity")],
+            "patients": [("addr_state", "identity")],
+            "drugs": [("drug_type", "identity")],
+            "diagnoses": [],
+            "treatments": [("treatment_id", "bucket[5]")],
+            "outcomes": [("treatment_id", "bucket[5]")],
+            "concomitant_meds": [("treatment_id", "bucket[5]")],
+            "adverse_events": [("treatment_id", "bucket[5]")],
+        },
+        ("Academic", "academic"): {
+            "author": [],
+            "cite": [],
+            "conference": [],
+            "domain": [],
+            "domain_author": [],
+            "domain_conference": [],
+            "domain_journal": [],
+            "domain_keyword": [],
+            "domain_publication": [],
+            "journal": [],
+            "keyword": [],
+            "organization": [],
+            "publication": [],
+            "publication_keyword": [],
+            "writes": [],
+        },
+        ("Broker", "broker"): {
+            "sbCustomer": [("sbCustId", "bucket[5]")],
+            "sbTicker": [("sbTickerId", "bucket[5]")],
+            "sbDailyPrice": [("sbDpTickerId", "bucket[5]")],
+            "sbTransaction": [
+                ("sbTxCustId", "bucket[5]"),
+                ("sbTxTickerId", "bucket[5]"),
+            ],
+        },
+        ("Dealership", "dealership"): {
+            "cars": [("id", "bucket[5]")],
+            "salespersons": [("id", "bucket[5]")],
+            "customers": [("id", "bucket[5]")],
+            "payments_made": [("id", "bucket[5]")],
+            "payments_received": [("sale_id", "bucket[5]")],
+            "sales": [("id", "bucket[5]"), ("salesperson_id", "bucket[5]")],
+            "inventory_snapshots": [("car_id", "bucket[5]")],
+        },
+        ("Ewallet", "ewallet"): {
+            "users": [("uid", "bucket[5]")],
+            "merchants": [("mid", "bucket[5]")],
+            "coupons": [("cid", "bucket[5]")],
+            "wallet_transactions_daily": [
+                ("sender_id", "bucket[5]"),
+                ("receiver_id", "bucket[5]"),
+            ],
+            "wallet_user_balance_daily": [("user_id", "bucket[5]")],
+            "wallet_merchant_balance_daily": [("merchant_id", "bucket[5]")],
+            "notifications": [("user_id", "bucket[5]")],
+            "user_sessions": [("user_id", "bucket[5]")],
+            "user_setting_snapshot": [("user_id", "bucket[5]")],
+        },
+    }
+    """
+    TODO: ADD COMMENT
+    """
+
+    # TODO: add comment (defog always gets regenerated)
+    defog_warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/defog_iceberg"
+
+    missing_graphs: set[str] = {
+        graph_name
+        for (graph_name, schema_name) in defog_databases.keys()
+        if not os.path.exists(os.path.join(defog_warehouse_loc, schema_name))
+    }
+
+    gen_tables: list[tuple[str, str]] = []
+    defog_conn = sqlite3.connect(
+        os.path.join(os.path.dirname(__file__), "gen_data/defog.db")
+    )
+
+    dircat: DirCatalog = DirCatalog(
+        f"DEFOG_DB", **{WAREHOUSE_LOCATION: defog_warehouse_loc}
+    )
+    for (graph_name, schema_name), tables in defog_databases.items():
+        if graph_name not in missing_graphs:
+            continue
+        try:
+            for table_name, partitions in tables.items():
+                gen_tables.append((schema_name, table_name))
+                df: pd.DataFrame = pd.read_sql_query(
+                    f"SELECT * FROM main.{table_name}", defog_conn
+                )
+                arrow_table: PyArrowTable = pa.Table.from_pandas(df)
+                # Replace any NULL columns with string type for BodoSQL's
+                # clarity, and remove underscore prefixes to names.
+                renamings: dict[str, str] = {}
+                schema: pa.Schema = arrow_table.schema
+                for idx, field in enumerate(schema):
+                    if field.name.startswith("_"):
+                        renamings[field.name] = field.name[1:]
+                        field = field.with_name(field.name[1:])
+                    if field.type == pa.null():
+                        field = field.with_type(pa.string())
+                    schema = schema.set(idx, field)
+                arrow_table = arrow_table.rename_columns(renamings)
+
+                # Create the Iceberg table definition for the CUST table.
+                iceberg_table: IcebergTable = dircat.create_table(
+                    f"{schema_name}.{table_name}",
+                    schema=schema,
+                )
+
+                # Evolve the table spec to partition on the specified keys, if it
+                # has any.
+                if partitions:
+                    spec = iceberg_table.update_spec()
+                    for column_name, transform in partitions:
+                        spec.add_field(column_name, transform)
+                    spec.commit()
+
+                # Load the data into the Iceberg table.
+                iceberg_table.append(arrow_table)
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(defog_warehouse_loc):
+                shutil.rmtree(defog_warehouse_loc)
+            raise e
+
+    # Create the catalog/context pointing to the location of the database.
+    defog_bc: BodoSQLContext = BodoSQLContext(
+        catalog=FileSystemCatalog(defog_warehouse_loc)
+    )
+
+    # Use BodoSQL to replace each table with itself. Since BodoSQL is doing the
+    # write, it will produce the puffin files containing the needed sketches,
+    # but since it is writing to the same location it will keep the partitions.
+    try:
+        # For each temp table, populate the real Iceberg version from it.
+        for schema_name, table_name in gen_tables:
+            defog_bc.sql(
+                f"CREATE OR REPLACE TABLE {schema_name}.{table_name} AS SELECT * FROM {schema_name}.{table_name}"
+            )
+    except Exception as e:
+        # If any error occurs during the setup, clean up by deleting the
+        # warehouse directory if it was created.
+        if os.path.exists(defog_warehouse_loc):
+            shutil.rmtree(defog_warehouse_loc)
+        raise e
+
+    defog_conn.close()
+
+    return defog_bc
+
+
+@pytest.fixture(scope="session")
+def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
+    """
+    Creates and returns a BodoSQLContext containing all of the tables from the
+    TPC-H database as an Iceberg database with a local file system catalog.
+    """
+    tpch_tables: dict[str, list[tuple[str, str]]] = {
+        "region": [],
+        "nation": [],
+        "customer": [("C_NATIONKEY", "identity"), ("C_CUSTKEY", "bucket[10]")],
+        "supplier": [("S_NATIONKEY", "identity"), ("S_SUPPKEY", "bucket[10]")],
+        "orders": [("O_ORDERKEY", "truncate[50000]"), ("O_CUSTKEY", "bucket[10]")],
+        "lineitem": [
+            ("L_ORDERKEY", "truncate[50000]"),
+            ("L_SUPPKEY", "bucket[10]"),
+            ("L_PARTKEY", "bucket[10]"),
+        ],
+        "part": [("P_PARTKEY", "bucket[10]")],
+        "partsupp": [("PS_PARTKEY", "bucket[15]"), ("PS_SUPPKEY", "bucket[15]")],
+    }
+    """
+    TODO: ADD COMMENT
+    """
+
+    # TODO: add comment
+    tpch_warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/tpch_iceberg"
+
+    regenerate_iceberg_tpch: bool = not os.path.exists(tpch_warehouse_loc)
+    tpch_conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../tpch.db"))
+
+    if regenerate_iceberg_tpch:
+        dircat: DirCatalog = DirCatalog(
+            f"TPCH_DB", **{WAREHOUSE_LOCATION: tpch_warehouse_loc}
+        )
+        try:
+            for table_name, partitions in tpch_tables.items():
+                df: pd.DataFrame = pd.read_sql_query(
+                    f"SELECT * FROM main.{table_name}", tpch_conn
+                )
+                arrow_table: PyArrowTable = pa.Table.from_pandas(df)
+                # Replace any NULL columns with string type for BodoSQL's
+                # clarity, and remove underscore prefixes to names.
+                renamings: dict[str, str] = {}
+                schema: pa.Schema = arrow_table.schema
+                for idx, field in enumerate(schema):
+                    if field.name.startswith("_"):
+                        renamings[field.name] = field.name[1:]
+                        field = field.with_name(field.name[1:])
+                    if field.type == pa.null():
+                        field = field.with_type(pa.string())
+                    schema = schema.set(idx, field)
+                arrow_table = arrow_table.rename_columns(renamings)
+
+                # Create the Iceberg table definition for the CUST table.
+                iceberg_table: IcebergTable = dircat.create_table(
+                    f"TPCH_SF1.{table_name}",
+                    schema=schema,
+                )
+
+                # Evolve the table spec to partition on the specified keys, if it
+                # has any.
+                if partitions:
+                    spec = iceberg_table.update_spec()
+                    for column_name, transform in partitions:
+                        spec.add_field(column_name, transform)
+                    spec.commit()
+
+                # Load the data into the Iceberg table.
+                iceberg_table.append(arrow_table)
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(tpch_warehouse_loc):
+                shutil.rmtree(tpch_warehouse_loc)
+            raise e
+
+    # Create the catalog/context pointing to the location of the database.
+    tpch_bc: BodoSQLContext = BodoSQLContext(
+        catalog=FileSystemCatalog(tpch_warehouse_loc)
+    )
+
+    # If regenerating the database, use BodoSQL to replace each table with
+    # itself. Since BodoSQL is doing the write, it will produce the puffin files
+    # containing the needed sketches, but since it is writing to the same
+    # location it will keep the partitions.
+    if regenerate_iceberg_tpch:
+        try:
+            # For each temp table, populate the real Iceberg version from it.
+            for table_name in tpch_tables:
+                tpch_bc.sql(
+                    f"CREATE OR REPLACE TABLE TPCH_SF1.{table_name} AS SELECT * FROM TPCH_SF1.{table_name}"
+                )
+        except Exception as e:
+            # If any error occurs during the setup, clean up by deleting the
+            # warehouse directory if it was created.
+            if os.path.exists(tpch_warehouse_loc):
+                shutil.rmtree(tpch_warehouse_loc)
+            raise e
+
+    tpch_conn.close()
+
+    return tpch_bc
 
 
 @pytest.fixture(scope="session")
@@ -2243,7 +2501,7 @@ def test_pipeline_until_relational_bodosql(
 def test_pipeline_sql_bodosql(
     bodosql_e2e_tests: PyDoughPandasTest,
     bodosql_graphs: graph_fetcher,
-    bodosql_sample_contexts: dict[str, DatabaseContext],
+    bodosql_sample_contexts: dict[str, BodoSQLContext],
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):
@@ -2271,7 +2529,7 @@ def test_pipeline_e2e_bodosql(
     bodosql_e2e_tests: PyDoughPandasTest,
     bodosql_graphs: graph_fetcher,
     default_config: PyDoughConfigs,
-    bodosql_sample_contexts: dict[str, DatabaseContext],
+    bodosql_sample_contexts: dict[str, BodoSQLContext],
 ):
     """
     Test executing tests end-to-end with BodoSQL, comparing against expected
@@ -2357,3 +2615,106 @@ def test_pipeline_e2e_bodosql(
             )
         bodo.user_logging.restore_default_bodo_verbose_level()
         bodo.user_logging.restore_default_bodo_verbose_logger()
+
+
+@pytest.mark.bodosql
+@pytest.mark.execute
+def test_bodosql_e2e_tpch(
+    tpch_pipeline_test_data: PyDoughPandasTest,
+    get_sf_sample_graph: graph_fetcher,
+    bodosql_tpch_context: BodoSQLContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation,
+    with BodoSQL as the executing database.
+    """
+    # Skip any of these tests due to various errors/gaps.
+    tests_skipped: dict[str, str] = {
+        "tpch_q16": "BodoSQL Iceberg STARTSWITH read bug",
+    }
+    if tpch_pipeline_test_data.test_name in tests_skipped:
+        pytest.skip(tests_skipped[tpch_pipeline_test_data.test_name])
+
+    tpch_pipeline_test_data.run_e2e_test(
+        get_sf_sample_graph,
+        load_database_context("bodosql", context=bodosql_tpch_context),
+        coerce_types=True,
+    )
+
+
+@pytest.mark.bodosql
+@pytest.mark.execute
+def test_bodosql_e2e_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
+    get_sf_sample_graph: graph_fetcher,
+    bodosql_tpch_context: BodoSQLContext,
+):
+    """
+    Test executing the custom queries on the TPC-H dataset from the original
+    code generation, with BodoSQL as the executing database.
+    """
+    tpch_custom_pipeline_test_data.run_e2e_test(
+        get_sf_sample_graph,
+        load_database_context("bodosql", context=bodosql_tpch_context),
+        coerce_types=True,
+    )
+
+
+@pytest.mark.bodosql
+@pytest.mark.execute
+def test_bodosql_e2e_defog_custom(
+    defog_sf_test_data: PyDoughPandasTest,
+    get_sf_defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
+    bodosql_defog_context: BodoSQLContext,
+):
+    """
+    Test executing the defog analytical queries with the BodoSQL database.
+    """
+    # Skip any of these tests due to various errors/gaps.
+    tests_skipped: dict[str, str] = {
+        "multi_partition_access_3": "Unknown BodoSQL parsing error",
+    }
+    if defog_sf_test_data.test_name in tests_skipped:
+        pytest.skip(tests_skipped[defog_sf_test_data.test_name])
+
+    defog_sf_test_data.run_e2e_test(
+        get_sf_defog_graphs,
+        load_database_context("bodosql", context=bodosql_defog_context),
+        config=defog_config,
+        coerce_types=True,
+    )
+
+
+@pytest.mark.bodosql
+@pytest.mark.execute
+def test_bodosql_e2e_defog(
+    defog_pipeline_test_data: PyDoughSQLComparisonTest,
+    get_sf_defog_graphs: graph_fetcher,
+    bodosql_defog_context: BodoSQLContext,
+    defog_config: PyDoughConfigs,
+    sqlite_defog_connection: DatabaseContext,
+) -> None:
+    """
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector. Run on the defog.ai queries.
+    NOTE: passing SQLite connection as reference database so that refsol
+    is executed using SQLite.
+    This is needed because refsol uses SQLite SQL syntax to obtain
+    the correct results.
+    """
+
+    # Skip any of these tests due to various errors/gaps.
+    tests_skipped: dict[str, str] = {
+        "broker_basic4": "Unknown Bodo typing issue with join state involving dictionary vs string arrays as join keys",
+    }
+    if defog_pipeline_test_data.test_name in tests_skipped:
+        pytest.skip(tests_skipped[defog_pipeline_test_data.test_name])
+    defog_pipeline_test_data.run_e2e_test(
+        get_sf_defog_graphs,
+        load_database_context("bodosql", context=bodosql_defog_context),
+        defog_config,
+        reference_database=sqlite_defog_connection,
+        coerce_types=True,
+    )

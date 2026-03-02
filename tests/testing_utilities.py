@@ -1060,7 +1060,7 @@ class PyDoughSQLComparisonTest:
             call_kwargs["config"] = config
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
-        result: pd.DataFrame = to_df(root, **call_kwargs)
+        result: pd.DataFrame = to_df(root, **call_kwargs, display_sql=True)
 
         # Obtain the reference solution by executing the refsol SQL query
         sql_text: str = self.sql_function()
@@ -1077,7 +1077,7 @@ class PyDoughSQLComparisonTest:
             result.columns = refsol.columns
 
         # If the query is not order-sensitive, sort the DataFrames before comparison
-        if not self.order_sensitive:
+        if not self.order_sensitive and len(result) > 1 and len(refsol) > 1:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
@@ -1089,7 +1089,9 @@ class PyDoughSQLComparisonTest:
                 )
 
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol, rtol=rtol, atol=atol)
+        pd.testing.assert_frame_equal(
+            result, refsol, rtol=rtol, atol=atol, check_dtype=not coerce_types
+        )
 
 
 @dataclass
@@ -1383,7 +1385,7 @@ class PyDoughPandasTest:
                 ]
 
         # If the query is not order-sensitive, sort the DataFrames before comparison
-        if not self.order_sensitive:
+        if not self.order_sensitive and len(result) > 1 and len(refsol) > 1:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 

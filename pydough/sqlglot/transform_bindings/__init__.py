@@ -5,6 +5,7 @@ invocations of PyDough function operators into SQLGlot function calls.
 
 __all__ = [
     "BaseTransformBindings",
+    "BodoSQLTransformBindings",
     "MySQLTransformBindings",
     "PostgresTransformBindings",
     "SQLiteTransformBindings",
@@ -18,6 +19,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 
 from .base_transform_bindings import BaseTransformBindings
+from .bodosql_transform_bindings import BodoSQLTransformBindings
 from .mysql_transform_bindings import MySQLTransformBindings
 from .postgres_transform_bindings import PostgresTransformBindings
 from .sf_transform_bindings import SnowflakeTransformBindings
@@ -51,6 +53,8 @@ def bindings_from_dialect(
             return SQLiteTransformBindings(configs, visitor)
         case DatabaseDialect.SNOWFLAKE:
             return SnowflakeTransformBindings(configs, visitor)
+        case DatabaseDialect.BODOSQL:
+            return BodoSQLTransformBindings(configs, visitor)
         case DatabaseDialect.MYSQL:
             return MySQLTransformBindings(configs, visitor)
         case DatabaseDialect.POSTGRES:

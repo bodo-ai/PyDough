@@ -979,6 +979,7 @@ def impl_defog_dealership_adv13():
             total_payments=SUM(month.payment),
             MoM_change=SUM(month.payment) - PREV(SUM(month.payment), by=dt.ASC()),
         )
+        .ORDER_BY(dt)
     )
 
 

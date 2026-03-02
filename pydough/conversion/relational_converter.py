@@ -1863,6 +1863,7 @@ def convert_ast_to_relational(
 
     # Convert the QDAG node to a hybrid tree, including any necessary
     # transformations such as de-correlation.
+
     hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
 

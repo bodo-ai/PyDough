@@ -55,7 +55,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
             dialect = DatabaseDialect.POSTGRES
         case "bodosql":
             connection = load_bodosql_context(**kwargs)
-            dialect = DatabaseDialect.SNOWFLAKE
+            dialect = DatabaseDialect.BODOSQL
         case _:
             raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
