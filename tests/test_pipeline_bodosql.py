@@ -49,6 +49,7 @@ from pydough.database_connectors import load_database_context
 from pyarrow.csv import read_csv as pyarrow_read_csv
 
 
+from .conftest import tpch_custom_test_data_dialect_replacements
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
 from .test_pipeline_sf import defog_sf_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
@@ -521,22 +522,23 @@ def bodosql_sample_contexts(
 
 
 @pytest.fixture(scope="session")
-def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
+def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLContext:
     """
     Creates and returns a BodoSQLContext containing all of the tables from the
     defog databases as an Iceberg database with a local file system catalog.
-    The database is regenerated each time due to date/time sensitivity.
+    The database is regenerated each time due to date/time sensitivity in some
+    of the data.
     """
 
     defog_databases: dict[
         tuple[str, str], dict[tuple[str, str], list[tuple[str, str]]]
     ] = {
-        ("Restaurants", "restaurants"): {
+        "restaurants": {
             "geographic": [],
             "location": [("city_name", "identity")],
             "restaurant": [("food_type", "identity")],
         },
-        ("DermTreatment", "dermtreatment"): {
+        "dermtreatment": {
             "doctors": [("specialty", "identity")],
             "patients": [("addr_state", "identity")],
             "drugs": [("drug_type", "identity")],
@@ -546,7 +548,7 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
             "concomitant_meds": [("treatment_id", "bucket[5]")],
             "adverse_events": [("treatment_id", "bucket[5]")],
         },
-        ("Academic", "academic"): {
+        "academic": {
             "author": [],
             "cite": [],
             "conference": [],
@@ -563,7 +565,7 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
             "publication_keyword": [],
             "writes": [],
         },
-        ("Broker", "broker"): {
+        "broker": {
             "sbCustomer": [("sbCustId", "bucket[5]")],
             "sbTicker": [("sbTickerId", "bucket[5]")],
             "sbDailyPrice": [("sbDpTickerId", "bucket[5]")],
@@ -572,7 +574,7 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
                 ("sbTxTickerId", "bucket[5]"),
             ],
         },
-        ("Dealership", "dealership"): {
+        "dealership": {
             "cars": [("id", "bucket[5]")],
             "salespersons": [("id", "bucket[5]")],
             "customers": [("id", "bucket[5]")],
@@ -581,7 +583,7 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
             "sales": [("id", "bucket[5]"), ("salesperson_id", "bucket[5]")],
             "inventory_snapshots": [("car_id", "bucket[5]")],
         },
-        ("Ewallet", "ewallet"): {
+        "ewallet": {
             "users": [("uid", "bucket[5]")],
             "merchants": [("mid", "bucket[5]")],
             "coupons": [("cid", "bucket[5]")],
@@ -597,36 +599,46 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
         },
     }
     """
-    TODO: ADD COMMENT
+    The dictionary representing each database in the defog.ai dataset. The
+    keys are the names of each database which will be used as schema names in
+    the FileSystemCatalog via directory heirarchy. The values are dictionaries
+    where the keys are all the table names for the tables in that schema, and
+    the values are lists of information on how to partition that table. The
+    partition information is in the form of a list of tuples
+    `(column_name, partition_spec)` indicating the columns that should be used
+    for partitioning, and the string form of the transformation Iceberg should
+    use to create the partition key from the column.
     """
 
-    # TODO: add comment (defog always gets regenerated)
+    # The base directory will be a folder called `defog_iceberg` which will
+    # contain sub-directories for each schema. Also keep track of a list of
+    # tuples in the form `(schema_name, table_name)`` for later.
     defog_warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/defog_iceberg"
-
-    missing_graphs: set[str] = {
-        graph_name
-        for (graph_name, schema_name) in defog_databases.keys()
-        if not os.path.exists(os.path.join(defog_warehouse_loc, schema_name))
-    }
-
+    dircat: DirCatalog = DirCatalog(
+        f"DEFOG_DB", **{WAREHOUSE_LOCATION: defog_warehouse_loc}
+    )
     gen_tables: list[tuple[str, str]] = []
+
+    # Connect to the defog database file via sqlite so each table can be read.
     defog_conn = sqlite3.connect(
         os.path.join(os.path.dirname(__file__), "gen_data/defog.db")
     )
 
-    dircat: DirCatalog = DirCatalog(
-        f"DEFOG_DB", **{WAREHOUSE_LOCATION: defog_warehouse_loc}
-    )
-    for (graph_name, schema_name), tables in defog_databases.items():
-        if graph_name not in missing_graphs:
-            continue
-        try:
+    # Wrap the main step in a try-except so that if anything goes wrong, the
+    # defog database folder is deleted.
+    try:
+        # For each schema, run the procedure to create all the tables in that
+        # schema in the specified directory.
+        for schema_name, tables in defog_databases.items():
             for table_name, partitions in tables.items():
+                # Read the table from the sqlite version via pandas, then
+                # convert to a PyArrow table.
                 gen_tables.append((schema_name, table_name))
                 df: pd.DataFrame = pd.read_sql_query(
                     f"SELECT * FROM main.{table_name}", defog_conn
                 )
                 arrow_table: PyArrowTable = pa.Table.from_pandas(df)
+
                 # Replace any NULL columns with string type for BodoSQL's
                 # clarity, and remove underscore prefixes to names.
                 renamings: dict[str, str] = {}
@@ -640,14 +652,14 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
 
-                # Create the Iceberg table definition for the CUST table.
+                # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
                     f"{schema_name}.{table_name}",
                     schema=schema,
                 )
 
-                # Evolve the table spec to partition on the specified keys, if it
-                # has any.
+                # Evolve the table spec to partition on the specified keys, if
+                # it has any.
                 if partitions:
                     spec = iceberg_table.update_spec()
                     for column_name, transform in partitions:
@@ -656,27 +668,21 @@ def bodosql_defog_context(bodosql_setup) -> BodoSQLContext:
 
                 # Load the data into the Iceberg table.
                 iceberg_table.append(arrow_table)
-        except Exception as e:
-            # If any error occurs during the setup, clean up by deleting the
-            # warehouse directory if it was created.
-            if os.path.exists(defog_warehouse_loc):
-                shutil.rmtree(defog_warehouse_loc)
-            raise e
 
-    # Create the catalog/context pointing to the location of the database.
-    defog_bc: BodoSQLContext = BodoSQLContext(
-        catalog=FileSystemCatalog(defog_warehouse_loc)
-    )
+        # Create the catalog & context pointing to the location of the database.
+        defog_bc: BodoSQLContext = BodoSQLContext(
+            catalog=FileSystemCatalog(defog_warehouse_loc)
+        )
 
-    # Use BodoSQL to replace each table with itself. Since BodoSQL is doing the
-    # write, it will produce the puffin files containing the needed sketches,
-    # but since it is writing to the same location it will keep the partitions.
-    try:
-        # For each temp table, populate the real Iceberg version from it.
+        # Use BodoSQL to replace each table with itself. Since BodoSQL is doing
+        # the write, it will produce the puffin files containing the needed
+        # sketches for NDV estimates, but since it is writing to the same
+        # location it will keep the partitions.
         for schema_name, table_name in gen_tables:
             defog_bc.sql(
                 f"CREATE OR REPLACE TABLE {schema_name}.{table_name} AS SELECT * FROM {schema_name}.{table_name}"
             )
+
     except Exception as e:
         # If any error occurs during the setup, clean up by deleting the
         # warehouse directory if it was created.
@@ -710,25 +716,37 @@ def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
         "partsupp": [("PS_PARTKEY", "bucket[15]"), ("PS_SUPPKEY", "bucket[15]")],
     }
     """
-    TODO: ADD COMMENT
+    The dictioary representing each table in teh TPCH dataset and how it should
+    be partitioned when transformed into an Iceberg table. The keys are the
+    table names, and the values are a list of tuples
+    `(column_name, partition_spec)` indicating the columns that should be used
+    for partitioning, and the string form of the transformation Iceberg should
+    use to create the partition key from the column.
     """
 
-    # TODO: add comment
+    # Only run the regeneration steps if the TPCH database has not already been
+    # created as an Iceberg database in the local file system.
     tpch_warehouse_loc: str = f"{os.path.dirname(__file__)}/gen_data/tpch_iceberg"
-
     regenerate_iceberg_tpch: bool = not os.path.exists(tpch_warehouse_loc)
+    dircat: DirCatalog = DirCatalog(
+        f"TPCH_DB", **{WAREHOUSE_LOCATION: tpch_warehouse_loc}
+    )
+
+    # Connect to the TPCH database file via sqlite so each table can be read.
     tpch_conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../tpch.db"))
 
     if regenerate_iceberg_tpch:
-        dircat: DirCatalog = DirCatalog(
-            f"TPCH_DB", **{WAREHOUSE_LOCATION: tpch_warehouse_loc}
-        )
         try:
+            # For each table, run the procedure to write it into the specified
+            # directory as an Iceberg table.
             for table_name, partitions in tpch_tables.items():
+                # Read the table from the sqlite version via pandas, then
+                # convert to a PyArrow table.
                 df: pd.DataFrame = pd.read_sql_query(
                     f"SELECT * FROM main.{table_name}", tpch_conn
                 )
                 arrow_table: PyArrowTable = pa.Table.from_pandas(df)
+
                 # Replace any NULL columns with string type for BodoSQL's
                 # clarity, and remove underscore prefixes to names.
                 renamings: dict[str, str] = {}
@@ -742,14 +760,14 @@ def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
 
-                # Create the Iceberg table definition for the CUST table.
+                # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
                     f"TPCH_SF1.{table_name}",
                     schema=schema,
                 )
 
-                # Evolve the table spec to partition on the specified keys, if it
-                # has any.
+                # Evolve the table spec to partition on the specified keys, if
+                # it has any.
                 if partitions:
                     spec = iceberg_table.update_spec()
                     for column_name, transform in partitions:
@@ -758,6 +776,7 @@ def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
 
                 # Load the data into the Iceberg table.
                 iceberg_table.append(arrow_table)
+
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
             # warehouse directory if it was created.
@@ -765,7 +784,7 @@ def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
                 shutil.rmtree(tpch_warehouse_loc)
             raise e
 
-    # Create the catalog/context pointing to the location of the database.
+    # Create the catalog &context pointing to the location of the database.
     tpch_bc: BodoSQLContext = BodoSQLContext(
         catalog=FileSystemCatalog(tpch_warehouse_loc)
     )
@@ -2631,6 +2650,9 @@ def test_bodosql_e2e_tpch(
     # Skip any of these tests due to various errors/gaps.
     tests_skipped: dict[str, str] = {
         "tpch_q16": "BodoSQL Iceberg STARTSWITH read bug",
+        "tpch_q20": "BodoSQL Iceberg STARTSWITH read bug",
+        "smoke_b": "BodoSQL Iceberg STARTSWITH read bug",
+        "smoke_c": "Unknown Bodo/BodoSQL typing bug with array concatenation",
     }
     if tpch_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[tpch_pipeline_test_data.test_name])
@@ -2653,7 +2675,28 @@ def test_bodosql_e2e_tpch_custom(
     Test executing the custom queries on the TPC-H dataset from the original
     code generation, with BodoSQL as the executing database.
     """
-    tpch_custom_pipeline_test_data.run_e2e_test(
+    # Skip any of these tests due to various errors/gaps.
+    tests_skipped: dict[str, str] = {
+        "aggregation_analytics_1": "BodoSQL Iceberg STARTSWITH read bug",
+        "aggregation_analytics_2": "BodoSQL Iceberg STARTSWITH read bug",
+        "aggregation_analytics_3": "BodoSQL Iceberg STARTSWITH read bug",
+        "count_multiple_filters_w": "BodoSQL Iceberg STARTSWITH read bug",
+        "count_multiple_filters_x": "BodoSQL Iceberg STARTSWITH read bug",
+        "simple_cross_5": "BodoSQL Iceberg STARTSWITH read bug",
+        "window_filter_order_10": "BodoSQL bug with `AVG(CAST(NULL AS INT)) OVER ()`",
+        "supplier_pct_national_qty": "BodoSQL Iceberg STARTSWITH read bug",
+        "parts_quantity_increase_95_96": "BodoSQL Iceberg STARTSWITH read bug",
+        "triple_partition": "BodoSQL Iceberg STARTSWITH read bug",
+        "simple_range_5": "BodoSQL does not support `SELECT ... WHERE FALSE` without `FROM`",
+        "part_reduced_size": "BodoSQL does not support format strings for AM/PM",
+    }
+    if tpch_custom_pipeline_test_data.test_name in tests_skipped:
+        pytest.skip(tests_skipped[tpch_custom_pipeline_test_data.test_name])
+
+    test: PyDoughPandasTest = tpch_custom_test_data_dialect_replacements(
+        DatabaseDialect.BODOSQL, tpch_custom_pipeline_test_data
+    )
+    test.run_e2e_test(
         get_sf_sample_graph,
         load_database_context("bodosql", context=bodosql_tpch_context),
         coerce_types=True,

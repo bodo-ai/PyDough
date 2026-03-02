@@ -1384,7 +1384,8 @@ class PyDoughPandasTest:
                     "1992-10-19",
                 ]
 
-        # If the query is not order-sensitive, sort the DataFrames before comparison
+        # If the query is not order-sensitive, sort the DataFrames before
+        # comparison.
         if not self.order_sensitive and len(result) > 1 and len(refsol) > 1:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
