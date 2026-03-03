@@ -44,5 +44,8 @@ jobs:
       - name: Confirm BodoSQL and related dependencies are installed
         run: uv run python -c "import bodo; import bodosql; import pyarrow; import pyiceberg; print(bodo.__version__, bodosql.__version__, pyarrow.__version__, pyiceberg.__version__)"
 
+      - name: Download TPCH DB
+        run: ./demos/setup_tpch.sh ./tpch.db
+
       - name: Run BodoSQL Tests
         run: uv run pytest -m bodosql tests/ -rs
