@@ -845,20 +845,19 @@ def impl_defog_dealership_adv8():
         end=now - pd.DateOffset(months=1),
         freq="MS",  # Month Start
     )
-    date_range_df = pd.DataFrame({"month_start": months})
+    date_range_df = pd.DataFrame({"dt": months})
     date_range = pydough.dataframe_collection(
-        "months_range", date_range_df, ["month_start"]
-    ).CALCULATE(month_start)
+        "months_range", date_range_df, ["dt"]
+    ).CALCULATE(month_start=DATETIME(dt, "start of month"))
 
-    filtered_sales = sales.WHERE(
-        (YEAR(salesperson.hire_date) >= 2022)
-        & (YEAR(salesperson.hire_date) <= 2023)
-        & (STRING(sale_date, "%Y-%m") == STRING(month_start, "%Y-%m"))
+    filtered_sales = (
+        CROSS(sales.CALCULATE(sale_month=DATETIME(sale_date, "start of month")))
+        .WHERE(MONOTONIC(2022, YEAR(salesperson.hire_date), 2023))
+        .WHERE(sale_month == month_start)
     )
 
     return (
-        date_range.CROSS(sales)
-        .PARTITION(name="per_month", by=month_start)
+        date_range.CALCULATE(month_start)
         .CALCULATE(
             month=STRING(month_start, "%Y-%m-%d"),
             PMSPS=COUNT(filtered_sales),
@@ -866,6 +865,18 @@ def impl_defog_dealership_adv8():
         )
         .ORDER_BY(month_start.ASC())
     )
+
+    # months_ago = pydough.range_collection("months_ago", "n", 1, 7).CALCULATE(n)
+    # selected_sales = sales.WHERE(
+    #     MONOTONIC(2022, YEAR(salesperson.hire_date), 2023) &
+    #     (DATEDIFF("months", sale_date, "now") == months_ago)
+    # )
+    # return (
+    #     months_ago
+    #     .CALCULATE(
+
+    #     )
+    # )
 
 
 def impl_defog_dealership_adv9():

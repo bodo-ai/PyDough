@@ -696,7 +696,7 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
 
 
 @pytest.fixture(scope="session")
-def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
+def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLContext:
     """
     Creates and returns a BodoSQLContext containing all of the tables from the
     TPC-H database as an Iceberg database with a local file system catalog.
@@ -733,7 +733,7 @@ def bodosql_tpch_context(bodosql_setup) -> BodoSQLContext:
     )
 
     # Connect to the TPCH database file via sqlite so each table can be read.
-    tpch_conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../tpch.db"))
+    tpch_conn = sqlite3.connect(sqlite_tpch_db_path)
 
     if regenerate_iceberg_tpch:
         try:
