@@ -508,7 +508,7 @@ def sqlite_people_jobs_session(
     return session
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def sqlite_tpch_db_path() -> str:
     """
     Return the path to the TPCH database. We setup testing
