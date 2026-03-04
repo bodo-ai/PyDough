@@ -3,6 +3,7 @@ Definitions of various fixtures used in PyDough tests that are automatically
 available.
 """
 
+import json
 import logging
 import os
 import sqlite3
@@ -10,6 +11,7 @@ import subprocess
 import time
 from collections.abc import Callable
 from functools import cache
+from typing import Any
 
 import boto3
 import httpx
@@ -38,6 +40,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
     simple_int_float_string_cast,
+    string_format_specifiers_bodosql,
     string_format_specifiers_mysql,
     string_format_specifiers_oracle,
     string_format_specifiers_postgres,
@@ -540,7 +543,7 @@ def sqlite_people_jobs_session(
     return session
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def sqlite_tpch_db_path() -> str:
     """
     Return the path to the TPCH database. We setup testing
@@ -2017,7 +2020,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 " e=PERCENTILE(by=(account_balance.ASC(), key.ASC())),"
                 " f=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=12, per='nations'),"
                 " g=PREV(key, by=key.ASC()),"
-                " h=PREV(key, n=2, default=-1, by=key.ASC(), per='nations'),"
+                " h=PREV(key, n=2, default=42, by=key.ASC(), per='nations'),"
                 " i=NEXT(key, by=key.ASC()),"
                 " j=NEXT(key, n=6000, by=key.ASC(), per='nations'),"
                 " k=RELSUM(account_balance, per='nations'),"
@@ -2061,7 +2064,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                         "e": [97, 85, 91, 23, 74, 19, 55, 1, 67, 100],
                         "f": [12, 11, 11, 3, 9, 3, 7, 1, 9, 12],
                         "g": [None, 7, 9, 19, 21, 25, 28, 36, 37, 38],
-                        "h": [-1, -1, -1, -1, -1, 9, -1, 21, -1, -1],
+                        "h": [42, 42, 42, 42, 42, 9, 42, 21, 42, 42],
                         "i": [9, 19, 21, 25, 28, 36, 37, 38, 45, 51],
                         "j": [
                             149394,
@@ -2502,6 +2505,28 @@ def tpch_custom_test_data_dialect_replacements(
                     ),
                     "string_format_specifiers",
                 )
+            case DatabaseDialect.BODOSQL:
+                return PyDoughPandasTest(
+                    string_format_specifiers_bodosql,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # Mon
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # DD
+                            "d7": ["Sat"],  # DY
+                            "d9": ["14"],  # HH24
+                            "d10": ["02"],  # HH12
+                            "d11": ["30"],  # MI
+                            "d12": ["45"],  # SS
+                            "d13": ["PM"],  # AM / PM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
             case _:
                 pytest.skip("Skipping test: Unsupported dialect for test replacement")
 
@@ -2620,3 +2645,21 @@ def clean_pydough_logger():
     # After test (cleanup)
     reset_logger("pydough")
     reset_logger("pydough.mask_server")
+
+
+@pytest.fixture(scope="session")
+def get_custom_datasets_graph_list() -> Callable[[str], Any]:
+    """
+    Returns the json object for the given metadata file name.
+    """
+
+    @cache
+    def impl(file_name: str) -> Callable[[str], Any]:
+        file_path: str = os.path.join(
+            os.path.dirname(__file__), "test_metadata", file_name
+        )
+        with open(file_path) as f:
+            as_json: Any = json.load(f)
+        return as_json
+
+    return impl

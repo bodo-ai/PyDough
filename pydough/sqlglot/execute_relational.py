@@ -523,7 +523,9 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return SQLGlotDialect()
         case DatabaseDialect.SQLITE:
             return SQLiteDialect()
-        case DatabaseDialect.SNOWFLAKE:
+        case DatabaseDialect.SNOWFLAKE | DatabaseDialect.BODOSQL:
+            # The BodoSQL dialect is essentially a subset of the Snowflake SQL
+            # dialect without many of the extraneous features.
             return SnowflakeDialect()
         case DatabaseDialect.MYSQL:
             return MySQLDialect()
@@ -606,4 +608,4 @@ def execute_df(
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
-    return session._database.connection.execute_query_df(sql)
+    return session._database.execute_query_df(sql)

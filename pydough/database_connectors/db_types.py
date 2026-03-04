@@ -56,6 +56,10 @@ if TYPE_CHECKING:
         SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgresCursor | OracleCursor
     )  # type: ignore
 
+    import bodosql
+
+    BodoSQLContext: TypeAlias = bodosql.BodoSQLContext
+
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
@@ -69,10 +73,12 @@ else:
     PostgresCursor: TypeAlias = Any
     OracleConn: TypeAlias = Any
     OracleCursor: TypeAlias = Any
+    BodoSQLContext: TypeAlias = Any
 
 # This allows us to use these type aliases in the rest of the code
 # without worrying about whether the specific database modules are available.
 __all__ = [
+    "BodoSQLContext",
     "DBConnection",
     "DBCursor",
     "MySQLConn",

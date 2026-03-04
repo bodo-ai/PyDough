@@ -11,7 +11,7 @@ WITH _s6 AS (
   CROSS JOIN main.sales AS sales
 ), _s7 AS (
   SELECT
-    column1 AS month_start,
+    DATE_TRUNC('MONTH', CAST(sales.sale_date AS TIMESTAMP)) AS sale_month,
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
   FROM (VALUES
@@ -31,11 +31,17 @@ WITH _s6 AS (
     1
 )
 SELECT
-  TIME_TO_STR(_s6.month_start, '%Y-%m-%d') AS month,
-  COALESCE(_s7.n_rows, 0) AS PMSPS,
-  COALESCE(_s7.sum_sale_price, 0) AS PMSR
-FROM _s6 AS _s6
-LEFT JOIN _s7 AS _s7
-  ON _s6.month_start = _s7.month_start
+  TIME_TO_STR(DATE_TRUNC('MONTH', CAST(column1 AS TIMESTAMP)), '%Y-%m-%d') AS month,
+  COALESCE(_s3.n_rows, 0) AS PMSPS,
+  COALESCE(_s3.sum_sale_price, 0) AS PMSR
+FROM (VALUES
+  (CAST('2025-09-01 00:00:00' AS TIMESTAMP)),
+  (CAST('2025-10-01 00:00:00' AS TIMESTAMP)),
+  (CAST('2025-11-01 00:00:00' AS TIMESTAMP)),
+  (CAST('2025-12-01 00:00:00' AS TIMESTAMP)),
+  (CAST('2026-01-01 00:00:00' AS TIMESTAMP)),
+  (CAST('2026-02-01 00:00:00' AS TIMESTAMP))) AS months_range(dt)
+LEFT JOIN _s3 AS _s3
+  ON _s3.sale_month = DATE_TRUNC('MONTH', CAST(column1 AS TIMESTAMP))
 ORDER BY
-  _s6.month_start
+  DATE_TRUNC('MONTH', CAST(column1 AS TIMESTAMP))

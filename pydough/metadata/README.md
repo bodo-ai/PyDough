@@ -13,8 +13,20 @@ Various verification and error-handling utilities used by this module are define
 
 ## Ways to Create PyDough Metadata
 
-Currently, the only way to create metadata is to store it in a JSON file that is parsed by `parse_json_metadata_from_file`. This function takes in the path to the JSON file and a name of a graph. The JSON file should contain a JSON object whose keys are the names of metadata graphs store in the JSON file and whose values are the JSON objects describing those graphs. The graph name argument should be one of the keys in the JSON file corresponding to the chosen graph to load. The function will parse and verify the appropriate section of metadata from the JSON file corresponding to the requested graph.
+Currently, there are two ways to create metadata in PyDough:
 
-The logic for how `parse_json_metadata_from_file` is implemented can be found in [parse.py](abstract_metadata.py).
+### 1. From a JSON File
 
-To see the specification of the JSON file format for PyDough, [see here](../../documentation/metadata.md).
+The primary method is to store metadata in a JSON file that is parsed by `parse_json_metadata_from_file`. This function takes in the path to the JSON file and a name of a graph. The JSON file should contain a JSON array whose elements are JSON objects representing metadata graphs. The graph name argument should match the "name" field of one of the graph objects in the array. The function will parse and verify the appropriate section of metadata from the JSON file corresponding to the requested graph.
+
+### 2. From a JSON List
+
+For cases where metadata is already loaded into memory (e.g., from an API, database, or string), you can use `parse_metadata_from_list`. This function takes in a Python list of JSON objects (as dictionaries) and a graph name, performing the same validation and graph construction logic as the file-based approach. This is useful when you need to parse metadata from sources other than files, or when you want to cache and reuse metadata without repeatedly reading from disk.
+
+### Implementation Details
+
+Both parsing functions rely on a shared helper function `parse_metadata()` that contains the core logic for iterating through graph objects, validating their structure, and constructing the appropriate `GraphMetadata` instance. The file-based function handles reading and parsing the JSON file, while the list-based function works directly with in-memory data.
+
+The implementation of these functions can be found in [parse.py](abstract_metadata.py).
+
+For the complete specification of the JSON format for PyDough metadata graphs, [see here](../../documentation/metadata.md).
