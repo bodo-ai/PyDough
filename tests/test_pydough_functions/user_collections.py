@@ -269,7 +269,9 @@ def dataframe_collection_datatypes():
         }
     )
 
-    return pydough.dataframe_collection("alldatatypes", df, ["int_col"])
+    return pydough.dataframe_collection("alldatatypes", df, ["int_col"]).ORDER_BY(
+        int_col.ASC()
+    )
 
 
 def dataframe_collection_strings():

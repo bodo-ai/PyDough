@@ -3384,6 +3384,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "count_multiple_filters_x",
                 skip_sql=True,
             ),
+            id="count_multiple_filters_x",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -4432,6 +4433,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                     }
                 ),
                 "dataframe_collection_datatypes",
+                order_sensitive=True,
             ),
             id="dataframe_collection_datatypes",
         ),

@@ -39,6 +39,7 @@ from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
+    string_format_specifiers_bodosql,
     string_format_specifiers_mysql,
     string_format_specifiers_postgres,
     string_format_specifiers_snowflake,
@@ -507,7 +508,7 @@ def sqlite_people_jobs_session(
     return session
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def sqlite_tpch_db_path() -> str:
     """
     Return the path to the TPCH database. We setup testing
@@ -1830,7 +1831,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 " e=PERCENTILE(by=(account_balance.ASC(), key.ASC())),"
                 " f=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=12, per='nations'),"
                 " g=PREV(key, by=key.ASC()),"
-                " h=PREV(key, n=2, default=-1, by=key.ASC(), per='nations'),"
+                " h=PREV(key, n=2, default=42, by=key.ASC(), per='nations'),"
                 " i=NEXT(key, by=key.ASC()),"
                 " j=NEXT(key, n=6000, by=key.ASC(), per='nations'),"
                 " k=RELSUM(account_balance, per='nations'),"
@@ -1874,7 +1875,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                         "e": [97, 85, 91, 23, 74, 19, 55, 1, 67, 100],
                         "f": [12, 11, 11, 3, 9, 3, 7, 1, 9, 12],
                         "g": [None, 7, 9, 19, 21, 25, 28, 36, 37, 38],
-                        "h": [-1, -1, -1, -1, -1, 9, -1, 21, -1, -1],
+                        "h": [42, 42, 42, 42, 42, 9, 42, 21, 42, 42],
                         "i": [9, 19, 21, 25, 28, 36, 37, 38, 45, 51],
                         "j": [
                             149394,
@@ -2273,6 +2274,28 @@ def tpch_custom_test_data_dialect_replacements(
                         "d13": ["PM"],  # AM / PM
                         "d14": [".000000000"],  # .FF
                         "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                    }
+                ),
+                "string_format_specifiers",
+            )
+        elif dialect == DatabaseDialect.BODOSQL:
+            return PyDoughPandasTest(
+                string_format_specifiers_bodosql,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["2023"],  # YYYY
+                        "d2": ["23"],  # YY
+                        "d3": ["07"],  # MM
+                        "d4": ["Jul"],  # Mon
+                        "d5": ["July"],  # MMMM
+                        "d6": ["15"],  # DD
+                        "d7": ["Sat"],  # DY
+                        "d9": ["14"],  # HH24
+                        "d10": ["02"],  # HH12
+                        "d11": ["30"],  # MI
+                        "d12": ["45"],  # SS
+                        "d13": ["PM"],  # AM / PM
                     }
                 ),
                 "string_format_specifiers",
