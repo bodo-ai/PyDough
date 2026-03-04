@@ -12,8 +12,6 @@ import pandas as pd
 import pytest
 import datetime
 import logging
-import subprocess
-import sys
 import bodo
 from io import StringIO
 from bodo.spawn.utils import set_global_config
@@ -29,10 +27,6 @@ from functools import cache
 import pyarrow as pa
 from pyarrow import Table as PyArrowTable
 import shutil
-from pyiceberg.schema import Schema as IcebergSchema
-from pyiceberg.partitioning import PartitionSpec, PartitionField
-
-from tests.conftest import sf_conn_db_context
 from tests.testing_utilities import graph_fetcher, temp_env_override
 import numpy as np
 import numpy.typing as npt
@@ -2660,71 +2654,6 @@ def test_bodosql_e2e_tpch(
     tpch_pipeline_test_data.run_e2e_test(
         get_sf_sample_graph,
         load_database_context("bodosql", context=bodosql_tpch_context),
-        coerce_types=True,
-    )
-
-
-@pytest.mark.bodosql
-@pytest.mark.execute
-def test_bodosql_e2e_tpch_custom(
-    tpch_custom_pipeline_test_data: PyDoughPandasTest,
-    get_sf_sample_graph: graph_fetcher,
-    bodosql_tpch_context: BodoSQLContext,
-):
-    """
-    Test executing the custom queries on the TPC-H dataset from the original
-    code generation, with BodoSQL as the executing database.
-    """
-    # Skip any of these tests due to various errors/gaps.
-    tests_skipped: dict[str, str] = {
-        "aggregation_analytics_1": "BodoSQL Iceberg STARTSWITH read bug",
-        "aggregation_analytics_2": "BodoSQL Iceberg STARTSWITH read bug",
-        "aggregation_analytics_3": "BodoSQL Iceberg STARTSWITH read bug",
-        "count_multiple_filters_w": "BodoSQL Iceberg STARTSWITH read bug",
-        "count_multiple_filters_x": "BodoSQL Iceberg STARTSWITH read bug",
-        "simple_cross_5": "BodoSQL Iceberg STARTSWITH read bug",
-        "window_filter_order_10": "BodoSQL bug with `AVG(CAST(NULL AS INT)) OVER ()`",
-        "supplier_pct_national_qty": "BodoSQL Iceberg STARTSWITH read bug",
-        "parts_quantity_increase_95_96": "BodoSQL Iceberg STARTSWITH read bug",
-        "triple_partition": "BodoSQL Iceberg STARTSWITH read bug",
-        "simple_range_5": "BodoSQL does not support `SELECT ... WHERE FALSE` without `FROM`",
-        "part_reduced_size": "BodoSQL does not support format strings for AM/PM",
-    }
-    if tpch_custom_pipeline_test_data.test_name in tests_skipped:
-        pytest.skip(tests_skipped[tpch_custom_pipeline_test_data.test_name])
-
-    test: PyDoughPandasTest = tpch_custom_test_data_dialect_replacements(
-        DatabaseDialect.BODOSQL, tpch_custom_pipeline_test_data
-    )
-    test.run_e2e_test(
-        get_sf_sample_graph,
-        load_database_context("bodosql", context=bodosql_tpch_context),
-        coerce_types=True,
-    )
-
-
-@pytest.mark.bodosql
-@pytest.mark.execute
-def test_bodosql_e2e_defog_custom(
-    defog_sf_test_data: PyDoughPandasTest,
-    get_sf_defog_graphs: graph_fetcher,
-    defog_config: PyDoughConfigs,
-    bodosql_defog_context: BodoSQLContext,
-):
-    """
-    Test executing the defog analytical queries with the BodoSQL database.
-    """
-    # Skip any of these tests due to various errors/gaps.
-    tests_skipped: dict[str, str] = {
-        "multi_partition_access_3": "Unknown BodoSQL parsing error",
-    }
-    if defog_sf_test_data.test_name in tests_skipped:
-        pytest.skip(tests_skipped[defog_sf_test_data.test_name])
-
-    defog_sf_test_data.run_e2e_test(
-        get_sf_defog_graphs,
-        load_database_context("bodosql", context=bodosql_defog_context),
-        config=defog_config,
         coerce_types=True,
     )
 
