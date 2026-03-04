@@ -22,7 +22,7 @@ WITH _t1 AS (
   JOIN tpch.part AS part
     ON STARTS_WITH(part.p_container, 'LG') AND part.p_partkey = partsupp.ps_partkey
   JOIN tpch.lineitem AS lineitem
-    ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
+    ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
     AND lineitem.l_partkey = partsupp.ps_partkey
     AND lineitem.l_suppkey = partsupp.ps_suppkey
   GROUP BY

@@ -16,7 +16,7 @@ WITH _s6 AS (
   JOIN tpch.part AS part
     ON STARTS_WITH(part.p_container, 'MED') AND part.p_partkey = partsupp.ps_partkey
   JOIN tpch.lineitem AS lineitem
-    ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1994
+    ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1994
     AND lineitem.l_partkey = partsupp.ps_partkey
     AND lineitem.l_suppkey = partsupp.ps_suppkey
   GROUP BY

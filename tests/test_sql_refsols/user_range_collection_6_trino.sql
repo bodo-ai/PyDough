@@ -1,6 +1,6 @@
 WITH _s5 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
+    YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     COUNT(DISTINCT orders.o_custkey) AS ndistinct_o_custkey
   FROM tpch.orders AS orders
   JOIN tpch.customer AS customer

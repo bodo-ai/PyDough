@@ -15,7 +15,7 @@ WITH _s1 AS (
   LEFT JOIN _s1 AS _s1
     ON _s1.c_custkey = orders.o_custkey
   WHERE
-    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
+    YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
 )
 SELECT
   COUNT(*) AS n

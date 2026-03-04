@@ -26,8 +26,8 @@ WITH _t1 AS (
     SUM(lineitem.l_quantity) AS sum_l_quantity
   FROM _s0 AS _s0
   JOIN tpch.orders AS orders
-    ON EXTRACT(MONTH FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1
-    AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
+    ON MONTH(CAST(orders.o_orderdate AS TIMESTAMP)) = 1
+    AND YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_discount = 0
     AND lineitem.l_orderkey = orders.o_orderkey

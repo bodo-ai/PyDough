@@ -41,7 +41,7 @@ WITH _s14 AS (
     1
 ), _s15 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS TIMESTAMP)) AS year_ca_dt,
+    YEAR(CAST(_s6.ca_dt AS TIMESTAMP)) AS year_ca_dt,
     SUM(_s7.n_rows) AS sum_expr_4,
     SUM(_s13.n_rows) AS sum_n_rows
   FROM _s6 AS _s6
@@ -53,7 +53,7 @@ WITH _s14 AS (
     1
 )
 SELECT
-  _s15.year_ca_dt - EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS TIMESTAMP)) AS years_since_release,
+  _s15.year_ca_dt - YEAR(CAST(_s14.anything_pr_release AS TIMESTAMP)) AS years_since_release,
   ROUND(
     CAST(SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
@@ -78,6 +78,6 @@ SELECT
   COALESCE(_s15.sum_expr_4, 0) AS incidents
 FROM _s14 AS _s14
 JOIN _s15 AS _s15
-  ON _s15.year_ca_dt >= EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS TIMESTAMP))
+  ON _s15.year_ca_dt >= YEAR(CAST(_s14.anything_pr_release AS TIMESTAMP))
 ORDER BY
   1 NULLS FIRST

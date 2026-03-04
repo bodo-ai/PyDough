@@ -7,7 +7,7 @@ WITH _t AS (
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
     AND customer.c_custkey = orders.o_custkey
 ), _t_2 AS (
   SELECT
@@ -16,7 +16,7 @@ WITH _t AS (
     ROW_NUMBER() OVER (PARTITION BY _t.n_regionkey ORDER BY lineitem.l_quantity DESC NULLS FIRST, lineitem.l_linenumber) AS _w
   FROM _t AS _t
   JOIN tpch.lineitem AS lineitem
-    ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
+    ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
     AND _t.o_orderkey = lineitem.l_orderkey
   WHERE
     _t._w = 1

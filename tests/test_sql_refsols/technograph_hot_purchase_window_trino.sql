@@ -8,7 +8,7 @@ JOIN main.calendar AS calendar_2
 JOIN main.devices AS devices
   ON calendar_2.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
 WHERE
-  EXTRACT(YEAR FROM CAST(calendar.ca_dt AS TIMESTAMP)) = 2024
+  YEAR(CAST(calendar.ca_dt AS TIMESTAMP)) = 2024
 GROUP BY
   1
 ORDER BY

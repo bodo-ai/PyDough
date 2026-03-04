@@ -8,8 +8,8 @@ WITH _s0 AS (
     COUNT(DISTINCT search_user_id) AS ndistinct_search_user_id
   FROM searches
   WHERE
-    EXTRACT(YEAR FROM CAST(search_ts AS TIMESTAMP)) <= 2019
-    AND EXTRACT(YEAR FROM CAST(search_ts AS TIMESTAMP)) >= 2010
+    YEAR(CAST(search_ts AS TIMESTAMP)) <= 2019
+    AND YEAR(CAST(search_ts AS TIMESTAMP)) >= 2010
   GROUP BY
     1
 )

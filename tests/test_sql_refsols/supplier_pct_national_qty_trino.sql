@@ -8,8 +8,8 @@ WITH _s7 AS (
     AND lineitem.l_partkey = part.p_partkey
     AND part.p_name LIKE '%tomato%'
   WHERE
-    EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) < 7
-    AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995
+    MONTH(CAST(lineitem.l_shipdate AS TIMESTAMP)) < 7
+    AND YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995
     AND lineitem.l_shipmode = 'SHIP'
 ), _t0 AS (
   SELECT

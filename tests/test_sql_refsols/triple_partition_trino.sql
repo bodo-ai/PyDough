@@ -16,8 +16,8 @@ WITH _s3 AS (
     COUNT(*) AS n_rows
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
-    ON EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 6
-    AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
+    ON MONTH(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 6
+    AND YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
     AND lineitem.l_partkey = part.p_partkey
   JOIN tpch.supplier AS supplier
     ON lineitem.l_suppkey = supplier.s_suppkey
@@ -26,7 +26,7 @@ WITH _s3 AS (
   JOIN _s5 AS _s5
     ON _s3.n_regionkey = _s5.r_regionkey
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
     AND lineitem.l_orderkey = orders.o_orderkey
   WHERE
     STARTS_WITH(part.p_container, 'SM')

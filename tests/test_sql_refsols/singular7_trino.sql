@@ -4,7 +4,7 @@ WITH _s3 AS (
     l_suppkey
   FROM tpch.lineitem
   WHERE
-    EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994
+    YEAR(CAST(l_shipdate AS TIMESTAMP)) = 1994
 ), _t4 AS (
   SELECT
     partsupp.ps_suppkey,

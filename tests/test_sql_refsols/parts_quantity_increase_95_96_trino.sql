@@ -16,7 +16,7 @@ WITH _t4 AS (
   JOIN _t4 AS _t4
     ON _t4.l_partkey = part.p_partkey
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
     AND _t4.l_orderkey = orders.o_orderkey
   WHERE
     STARTS_WITH(part.p_container, 'SM')
@@ -31,7 +31,7 @@ FROM _s6 AS _s6
 JOIN _t4 AS _t6
   ON _s6.l_partkey = _t6.l_partkey
 JOIN tpch.orders AS orders
-  ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1996
+  ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1996
   AND _t6.l_orderkey = orders.o_orderkey
 GROUP BY
   _t6.l_partkey

@@ -6,7 +6,7 @@ WITH _t AS (
   JOIN tpch.customer AS customer
     ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'BUILDING'
   WHERE
-    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
+    YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
 )
 SELECT
   COUNT(*) AS n

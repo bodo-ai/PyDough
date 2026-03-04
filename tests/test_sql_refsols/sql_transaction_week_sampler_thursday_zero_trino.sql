@@ -52,5 +52,5 @@ SELECT
   ) % 7 AS dayofweek
 FROM main.sbtransaction
 WHERE
-  EXTRACT(DAY FROM CAST(sbtxdatetime AS TIMESTAMP)) > 1
-  AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS TIMESTAMP)) < 2025
+  DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
+  AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025

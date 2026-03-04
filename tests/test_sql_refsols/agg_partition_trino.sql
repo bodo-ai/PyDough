@@ -3,7 +3,7 @@ WITH _t0 AS (
     COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP))
+    YEAR(CAST(o_orderdate AS TIMESTAMP))
 )
 SELECT
   MAX(n_rows) AS best_year

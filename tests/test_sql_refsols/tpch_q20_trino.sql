@@ -4,7 +4,7 @@ WITH _s5 AS (
     SUM(lineitem.l_quantity) AS sum_l_quantity
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
-    ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1994
+    ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1994
     AND lineitem.l_partkey = part.p_partkey
   WHERE
     STARTS_WITH(part.p_name, 'forest')

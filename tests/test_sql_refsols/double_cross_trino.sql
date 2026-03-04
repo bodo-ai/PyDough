@@ -47,7 +47,7 @@ WITH _t3 AS (
       CAST(_s3.min_o_orderdate AS TIMESTAMP),
       CAST(lineitem.l_receiptdate AS TIMESTAMP)
     ) < 10
-    AND EXTRACT(YEAR FROM CAST(lineitem.l_receiptdate AS TIMESTAMP)) = 1992
+    AND YEAR(CAST(lineitem.l_receiptdate AS TIMESTAMP)) = 1992
     AND _s2.ord_wk = DATE_DIFF(
       'WEEK',
       CAST(_s3.min_o_orderdate AS TIMESTAMP),

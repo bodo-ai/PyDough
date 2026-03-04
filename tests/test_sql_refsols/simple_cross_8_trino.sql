@@ -33,8 +33,8 @@ JOIN tpch.customer AS customer
 JOIN tpch.orders AS orders
   ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000007'
 JOIN tpch.lineitem AS lineitem
-  ON EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 3
-  AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1998
+  ON MONTH(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 3
+  AND YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1998
   AND lineitem.l_orderkey = orders.o_orderkey
 JOIN _s15 AS _s15
   ON _s0.r_name = _s15.r_name AND _s15.s_suppkey = lineitem.l_suppkey

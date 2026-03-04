@@ -5,7 +5,7 @@ WITH _t2 AS (
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'GERMANY'
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
     AND customer.c_custkey = orders.o_custkey
   GROUP BY
     orders.o_custkey

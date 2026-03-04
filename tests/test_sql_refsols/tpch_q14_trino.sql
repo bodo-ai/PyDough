@@ -19,5 +19,5 @@ FROM tpch.lineitem AS lineitem
 JOIN tpch.part AS part
   ON lineitem.l_partkey = part.p_partkey
 WHERE
-  EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 9
-  AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995
+  MONTH(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 9
+  AND YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995

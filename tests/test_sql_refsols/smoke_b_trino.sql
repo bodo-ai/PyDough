@@ -2,10 +2,10 @@ SELECT
   o_orderkey AS key,
   CONCAT_WS(
     '_',
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)),
-    EXTRACT(QUARTER FROM CAST(o_orderdate AS TIMESTAMP)),
-    EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)),
-    EXTRACT(DAY FROM CAST(o_orderdate AS TIMESTAMP))
+    YEAR(CAST(o_orderdate AS TIMESTAMP)),
+    QUARTER(CAST(o_orderdate AS TIMESTAMP)),
+    MONTH(CAST(o_orderdate AS TIMESTAMP)),
+    DAY(CAST(o_orderdate AS TIMESTAMP))
   ) AS a,
   CONCAT_WS(
     ':',

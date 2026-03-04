@@ -12,7 +12,7 @@ WITH _s0 AS (
   FROM main.products
 ), _s6 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(_s1.pr_release AS TIMESTAMP)) AS year_pr_release,
+    YEAR(CAST(_s1.pr_release AS TIMESTAMP)) AS year_pr_release,
     SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
@@ -21,7 +21,7 @@ WITH _s0 AS (
     1
 ), _s7 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(_s3.pr_release AS TIMESTAMP)) AS year_pr_release,
+    YEAR(CAST(_s3.pr_release AS TIMESTAMP)) AS year_pr_release,
     COUNT(*) AS n_rows
   FROM main.devices AS devices
   JOIN _s1 AS _s3

@@ -7,7 +7,7 @@ WITH _t0 AS (
     END AS expr_1
   FROM tpch.orders
   WHERE
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
+    YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1998
 )
 SELECT
   MAX(expr_1) AS seventieth_order_price

@@ -1,6 +1,6 @@
 WITH _t3 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
+    YEAR(CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     o_orderpriority,
     COUNT(*) AS n_rows
   FROM tpch.orders

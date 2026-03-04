@@ -1,6 +1,6 @@
 SELECT
   o_orderdate AS order_date,
-  EXTRACT(QUARTER FROM CAST(o_orderdate AS TIMESTAMP)) AS quarter,
+  QUARTER(CAST(o_orderdate AS TIMESTAMP)) AS quarter,
   DATE_TRUNC('QUARTER', CAST(o_orderdate AS TIMESTAMP)) AS quarter_start,
   DATE_ADD('QUARTER', 1, CAST(o_orderdate AS TIMESTAMP)) AS next_quarter,
   DATE_ADD('QUARTER', -1, CAST(o_orderdate AS TIMESTAMP)) AS prev_quarter,
@@ -12,7 +12,7 @@ SELECT
   DATE_ADD('QUARTER', 4, CAST(o_orderdate AS TIMESTAMP)) AS same_quarter_next_year
 FROM tpch.orders
 WHERE
-  EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
+  YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1995
 ORDER BY
   1 NULLS FIRST
 LIMIT 1

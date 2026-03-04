@@ -8,7 +8,7 @@ WITH _t7 AS (
     o_orderpriority = '1-URGENT'
 ), _t5 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
+    YEAR(CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     SUM(o_totalprice) AS sum_o_totalprice
   FROM _t7
   GROUP BY
@@ -21,12 +21,12 @@ WITH _t7 AS (
   FROM _t5
 ), _t2 AS (
   SELECT
-    EXTRACT(MONTH FROM CAST(_t8.o_orderdate AS TIMESTAMP)) AS month_o_orderdate,
-    EXTRACT(YEAR FROM CAST(_t8.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
+    MONTH(CAST(_t8.o_orderdate AS TIMESTAMP)) AS month_o_orderdate,
+    YEAR(CAST(_t8.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     SUM(_t8.o_totalprice) AS sum_o_totalprice
   FROM _t4 AS _t4
   JOIN _t7 AS _t8
-    ON _t4.year_o_orderdate = EXTRACT(YEAR FROM CAST(_t8.o_orderdate AS TIMESTAMP))
+    ON _t4.year_o_orderdate = YEAR(CAST(_t8.o_orderdate AS TIMESTAMP))
   WHERE
     _t4.next_year_total_spent < COALESCE(_t4.sum_o_totalprice, 0)
   GROUP BY

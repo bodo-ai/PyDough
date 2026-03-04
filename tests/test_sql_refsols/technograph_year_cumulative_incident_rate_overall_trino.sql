@@ -22,7 +22,7 @@ WITH _s2 AS (
     1
 ), _t1 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(_s2.ca_dt AS TIMESTAMP)) AS year_ca_dt,
+    YEAR(CAST(_s2.ca_dt AS TIMESTAMP)) AS year_ca_dt,
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows
   FROM _s2 AS _s2

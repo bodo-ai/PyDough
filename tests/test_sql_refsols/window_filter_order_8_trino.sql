@@ -3,8 +3,8 @@ WITH _s3 AS (
     o_custkey
   FROM tpch.orders
   WHERE
-    EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 1
-    AND EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
+    MONTH(CAST(o_orderdate AS TIMESTAMP)) = 1
+    AND YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1998
 ), _t2 AS (
   SELECT
     ARBITRARY(customer.c_acctbal) AS anything_c_acctbal,

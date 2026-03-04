@@ -1,6 +1,6 @@
 SELECT
   nation.n_name AS NATION,
-  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
+  YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
   COALESCE(
     SUM(
       lineitem.l_extendedprice * (

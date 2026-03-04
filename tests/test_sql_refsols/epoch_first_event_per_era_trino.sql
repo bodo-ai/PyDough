@@ -6,8 +6,8 @@ WITH _t AS (
     ROW_NUMBER() OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt) AS _w
   FROM eras AS eras
   JOIN events AS events
-    ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))
-    AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))
+    ON eras.er_end_year > YEAR(CAST(events.ev_dt AS TIMESTAMP))
+    AND eras.er_start_year <= YEAR(CAST(events.ev_dt AS TIMESTAMP))
 )
 SELECT
   er_name AS era_name,

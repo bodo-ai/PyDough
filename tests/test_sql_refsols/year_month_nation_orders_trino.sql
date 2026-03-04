@@ -1,7 +1,7 @@
 SELECT
   nation.n_name AS nation_name,
-  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS order_year,
-  EXTRACT(MONTH FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS order_month,
+  YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS order_year,
+  MONTH(CAST(orders.o_orderdate AS TIMESTAMP)) AS order_month,
   COUNT(*) AS n_orders
 FROM tpch.region AS region
 JOIN tpch.nation AS nation

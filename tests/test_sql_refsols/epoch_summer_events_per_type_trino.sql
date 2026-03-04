@@ -4,9 +4,9 @@ SELECT
 FROM events AS events
 JOIN seasons AS seasons
   ON (
-    seasons.s_month1 = EXTRACT(MONTH FROM CAST(events.ev_dt AS TIMESTAMP))
-    OR seasons.s_month2 = EXTRACT(MONTH FROM CAST(events.ev_dt AS TIMESTAMP))
-    OR seasons.s_month3 = EXTRACT(MONTH FROM CAST(events.ev_dt AS TIMESTAMP))
+    seasons.s_month1 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
+    OR seasons.s_month2 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
+    OR seasons.s_month3 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
   )
   AND seasons.s_name = 'Summer'
 GROUP BY

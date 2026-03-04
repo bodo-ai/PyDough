@@ -9,7 +9,7 @@ WITH _t3 AS (
     ) AS DOUBLE) / SUM(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS value_percentage
   FROM tpch.customer AS customer
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
     AND customer.c_custkey = orders.o_custkey
 ), _t AS (
   SELECT

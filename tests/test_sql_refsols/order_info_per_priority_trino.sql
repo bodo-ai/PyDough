@@ -6,7 +6,7 @@ WITH _t AS (
     ROW_NUMBER() OVER (PARTITION BY o_orderpriority ORDER BY o_totalprice DESC NULLS FIRST) AS _w
   FROM tpch.orders
   WHERE
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1992
+    YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1992
 )
 SELECT
   o_orderpriority AS order_priority,

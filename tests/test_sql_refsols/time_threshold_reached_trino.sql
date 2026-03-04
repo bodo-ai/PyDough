@@ -6,7 +6,7 @@ WITH _t3 AS (
     ) AS DOUBLE) / SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))) AS pct_of_day
   FROM main.sbtransaction
   WHERE
-    EXTRACT(YEAR FROM CAST(sbtxdatetime AS TIMESTAMP)) = 2023
+    YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
 ), _t AS (
   SELECT
     sbtxdatetime,

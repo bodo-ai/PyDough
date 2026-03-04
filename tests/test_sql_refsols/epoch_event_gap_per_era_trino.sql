@@ -11,16 +11,16 @@ WITH _t2 AS (
     ) AS day_gap
   FROM eras AS eras
   JOIN events AS events
-    ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))
-    AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))
+    ON eras.er_end_year > YEAR(CAST(events.ev_dt AS TIMESTAMP))
+    AND eras.er_start_year <= YEAR(CAST(events.ev_dt AS TIMESTAMP))
 )
 SELECT
   er_name AS era_name,
   AVG(day_gap) AS avg_event_gap
 FROM _t2
 WHERE
-  er_end_year > EXTRACT(YEAR FROM CAST(ev_dt AS TIMESTAMP))
-  AND er_start_year <= EXTRACT(YEAR FROM CAST(ev_dt AS TIMESTAMP))
+  er_end_year > YEAR(CAST(ev_dt AS TIMESTAMP))
+  AND er_start_year <= YEAR(CAST(ev_dt AS TIMESTAMP))
 GROUP BY
   1
 ORDER BY

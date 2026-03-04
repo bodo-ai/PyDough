@@ -7,7 +7,7 @@ WITH _s0 AS (
     sbtxdatetime
   FROM main.sbtransaction
   WHERE
-    EXTRACT(YEAR FROM CAST(sbtxdatetime AS TIMESTAMP)) = 2023
+    YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
 ), _s1 AS (
   SELECT DISTINCT
     DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP)) AS month
@@ -24,7 +24,7 @@ WITH _s0 AS (
   FROM _s0 AS _s2
   CROSS JOIN _s3 AS _s3
   JOIN main.sbtransaction AS sbtransaction
-    ON EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 2023
+    ON YEAR(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 2023
     AND _s3.month = DATE_TRUNC('MONTH', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
   JOIN main.sbcustomer AS sbcustomer
     ON _s2.sbcuststate = sbcustomer.sbcuststate

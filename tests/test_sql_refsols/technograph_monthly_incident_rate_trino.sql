@@ -3,7 +3,7 @@ WITH _t2 AS (
     ca_dt
   FROM main.calendar
   WHERE
-    EXTRACT(YEAR FROM CAST(ca_dt AS TIMESTAMP)) IN (2020, 2021)
+    YEAR(CAST(ca_dt AS TIMESTAMP)) IN (2020, 2021)
 ), _t5 AS (
   SELECT
     co_id,
@@ -39,8 +39,8 @@ WITH _t2 AS (
     1
 ), _t0 AS (
   SELECT
-    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS TIMESTAMP)) AS month_ca_dt,
-    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS TIMESTAMP)) AS year_ca_dt,
+    MONTH(CAST(_t2.ca_dt AS TIMESTAMP)) AS month_ca_dt,
+    YEAR(CAST(_t2.ca_dt AS TIMESTAMP)) AS year_ca_dt,
     SUM(_s7.n_rows) AS sum_expr_3,
     SUM(_s15.n_rows) AS sum_n_rows
   FROM _t2 AS _t2

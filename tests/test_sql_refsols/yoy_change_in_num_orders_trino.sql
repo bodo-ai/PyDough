@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
+    YEAR(CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY

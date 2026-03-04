@@ -5,7 +5,7 @@ WITH _s1 AS (
     l_orderkey
   FROM tpch.lineitem
   WHERE
-    EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_shipmode = 'AIR'
+    YEAR(CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_shipmode = 'AIR'
 ), _t5 AS (
   SELECT
     ARBITRARY(orders.o_custkey) AS anything_o_custkey,
@@ -17,7 +17,7 @@ WITH _s1 AS (
   LEFT JOIN _s1 AS _s1
     ON _s1.l_orderkey = orders.o_orderkey
   WHERE
-    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1994
+    YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1994
   GROUP BY
     orders.o_orderkey
 ), _t AS (

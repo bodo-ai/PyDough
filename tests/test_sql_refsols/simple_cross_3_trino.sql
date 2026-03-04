@@ -19,8 +19,8 @@ JOIN _s1 AS _s5
 JOIN tpch.customer AS customer
   ON _s5.n_nationkey = customer.c_nationkey AND customer.c_acctbal < 0
 JOIN tpch.orders AS orders
-  ON EXTRACT(MONTH FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 4
-  AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
+  ON MONTH(CAST(orders.o_orderdate AS TIMESTAMP)) = 4
+  AND YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
   AND customer.c_custkey = orders.o_custkey
 JOIN tpch.lineitem AS lineitem
   ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_shipmode = 'SHIP'

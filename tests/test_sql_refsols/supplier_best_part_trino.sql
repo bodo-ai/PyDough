@@ -6,7 +6,7 @@ WITH _s2 AS (
     SUM(l_quantity) AS sum_l_quantity
   FROM tpch.lineitem
   WHERE
-    EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_tax = 0
+    YEAR(CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_tax = 0
   GROUP BY
     1,
     2

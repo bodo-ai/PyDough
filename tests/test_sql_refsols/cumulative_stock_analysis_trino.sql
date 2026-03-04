@@ -25,8 +25,8 @@ FROM main.sbtransaction AS sbtransaction
 JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
 WHERE
-  EXTRACT(MONTH FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 4
-  AND EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 2023
+  MONTH(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 4
+  AND YEAR(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 2023
   AND sbtransaction.sbtxstatus = 'success'
 ORDER BY
   1 NULLS FIRST

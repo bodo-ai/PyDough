@@ -8,8 +8,8 @@ WITH _s3 AS (
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
   WHERE
-    EXTRACT(MONTH FROM CAST(orders.o_orderdate AS TIMESTAMP)) IN (10, 11, 12)
-    AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1993
+    MONTH(CAST(orders.o_orderdate AS TIMESTAMP)) IN (10, 11, 12)
+    AND YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1993
   GROUP BY
     1
 )

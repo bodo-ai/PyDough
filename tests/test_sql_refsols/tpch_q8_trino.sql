@@ -1,5 +1,5 @@
 SELECT
-  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
+  YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
   CAST(COALESCE(
     SUM(
       IF(
@@ -18,7 +18,7 @@ FROM tpch.lineitem AS lineitem
 JOIN tpch.part AS part
   ON lineitem.l_partkey = part.p_partkey AND part.p_type = 'ECONOMY ANODIZED STEEL'
 JOIN tpch.orders AS orders
-  ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) IN (1995, 1996)
+  ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) IN (1995, 1996)
   AND lineitem.l_orderkey = orders.o_orderkey
 JOIN tpch.customer AS customer
   ON customer.c_custkey = orders.o_custkey

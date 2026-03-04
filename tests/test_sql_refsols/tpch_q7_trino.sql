@@ -14,7 +14,7 @@ WITH _s9 AS (
 SELECT
   nation.n_name AS SUPP_NATION,
   _s9.n_name AS CUST_NATION,
-  EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) AS L_YEAR,
+  YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) AS L_YEAR,
   COALESCE(SUM(lineitem.l_extendedprice * (
     1 - lineitem.l_discount
   )), 0) AS REVENUE
@@ -35,7 +35,7 @@ JOIN _s9 AS _s9
     nation.n_name = 'FRANCE' OR nation.n_name = 'GERMANY'
   )
 WHERE
-  EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
+  YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
 GROUP BY
   1,
   2,
