@@ -563,9 +563,9 @@ The `to_table` API materializes a PyDough query as a database view or table, and
 
 The first argument it takes in is the PyDough node for the collection being materialized. The second argument is the name of the view/table to create. It can optionally take in the following keyword arguments:
 
-- `as_view`: If `True`, create a VIEW. If `False` (default), create a TABLE.
-- `replace`: If `True`, drop table/view if exists and then create the table/view. For Snowflake, use `CREATE OR REPLACE` to allow replacing an existing view/table. Default is `False`.
-- `temp`: If `True`, create a TEMPORARY view/table that will be deleted when the database session closes. Default is `False`.
+- `as_view`: If `True`, creates a VIEW. If `False` creates a TABLE. Default is `False` (i.e. creates a TABLE).
+- `replace`: If `True`, drops table/view if exists and then creates the table/view. For Snowflake, use `CREATE OR REPLACE` to allow replacing an existing view/table. If `False` and the view/table already exists, an error will be raised. Default is `False`.
+- `temp`: If `True`, creates a TEMPORARY view/table that will be deleted when the database session closes. If `False`, creates a permanent view/table. Default is `False`.
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion and execution (if omitted, `pydough.active_session.database` is used instead). A database connection is required for `to_table`.

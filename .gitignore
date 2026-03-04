@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Ignore tpch.db file
-tpch.db
-
 # C extensions
 *.so
 

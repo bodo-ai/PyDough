@@ -28,6 +28,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
         columns: list[str],
         types: list[PyDoughType],
         is_view: bool = True,
+        is_replace: bool = False,
         is_temp: bool = False,
         unique_columns: list[str | list[str]] | None = None,
     ) -> None:
@@ -45,6 +46,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
         """
         super().__init__(name=name, columns=columns, types=types)
         self._is_view = is_view
+        self._is_replace = is_replace
         self._is_temp = is_temp
         # Default to all columns as the unique key if not specified
         self._unique_columns = (
@@ -60,6 +62,11 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
     def is_view(self) -> bool:
         """Return True if this is a view, False if it's a table."""
         return self._is_view
+
+    @property
+    def is_replace(self) -> bool:
+        """Return True if this view/table was created with replace=True."""
+        return self._is_replace
 
     @property
     def is_temp(self) -> bool:
@@ -120,7 +127,3 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
             and self._is_temp == other._is_temp
             and self._unique_columns == other._unique_columns
         )
-
-    def __eq__(self, other) -> bool:
-        """Check if this collection is equal to another collection."""
-        return self.equals(other)

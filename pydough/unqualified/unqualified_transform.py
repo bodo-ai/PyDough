@@ -12,7 +12,7 @@ import types
 from typing import Any
 
 from pydough.configs import PyDoughSession
-from pydough.errors import PyDoughUnqualifiedException
+from pydough.errors import PyDoughSessionException, PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
 
 from .unqualified_node import UnqualifiedNode
@@ -445,13 +445,23 @@ def from_string(
         session will be temporarily bound to `pydough.active_session` during
         code execution, allowing functions like `pydough.to_table` to access
         the database connection. If not provided, only metadata is temporarily
-        set on the active session.
+        set on the active session. Cannot be combined with `metadata` — if a
+        session is provided, use `session.metadata` to control the graph.
 
     Returns:
         A PyDough UnualifiedNode object representing the result of the
         transformed PyDough code.
+
+    Raises:
+        `PyDoughSessionException` if both `session` and `metadata` are provided.
     """
     import pydough
+
+    if session is not None and metadata is not None:
+        raise PyDoughSessionException(
+            "Cannot provide both 'session' and 'metadata' to from_string. "
+            "Pass the graph via session.metadata instead."
+        )
 
     # If session is provided, use its metadata if metadata is not explicitly provided
     if metadata is None:

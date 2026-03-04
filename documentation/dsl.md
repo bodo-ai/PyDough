@@ -1707,6 +1707,16 @@ asian_tmp = pydough.to_table(asian_nations, name='asian_nations', temp=True)
 result = asian_tmp.CALCULATE(name)
 ```
 
+Result:
+```
+        NAME
+0      INDIA
+1  INDONESIA
+2      JAPAN
+3      CHINA
+4    VIETNAM
+```
+
 #### Example 2: Joining Multiple Materialized Collections
 
 When joining multiple collections, use `.CROSS()` to establish cross-join relationships:
@@ -1731,6 +1741,16 @@ result = (
 )
 ```
 
+Result:
+```
+  NATION_NAME  CKEY
+0       CHINA     7
+1       CHINA    19
+2       CHINA    75
+3       CHINA    82
+4       CHINA   118
+```
+
 #### Example 3: Using with PARTITION
 
 ```py
@@ -1744,9 +1764,17 @@ result = (
     asian_tmp
     .PARTITION(name='by_nation', by=nation_key)
     .CALCULATE(nation_key, cnt=COUNT(asian_tmp))
-    .TOP_K(10, by=cnt.DESC())
+    .TOP_K(3, by=cnt.DESC())
 )
 ```
+
+Result:
+```
+   NATION_KEY  CNT
+0           8    1
+1           9    1
+2          12    1
+``` 
 
 <!-- TOC --><a name="larger-examples"></a>
 ## Larger Examples

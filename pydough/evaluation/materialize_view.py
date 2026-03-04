@@ -1,4 +1,3 @@
-import re
 import warnings
 from dataclasses import dataclass
 
@@ -7,10 +6,12 @@ from pydough.configs import PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseDialect
 from pydough.errors import PyDoughException, PyDoughSessionException
+from pydough.errors.error_utils import is_valid_sql_name
 from pydough.logger import get_logger
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import convert_relation_to_sql
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.unqualified import UnqualifiedNode, qualify_node
 from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
@@ -19,26 +20,6 @@ from pydough.user_collections.view_collection import ViewGeneratedCollection
 from .evaluate_unqualified import _load_session_info
 
 __all__ = ["to_table"]
-
-# Pattern for valid table/view names: must start with letter, then alphanumeric/underscores/dots
-_VALID_TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z][\w.]*$")
-
-
-def _validate_table_name(name: str) -> None:
-    """
-    Validate that the table/view name is safe for use in SQL.
-
-    Args:
-        name: The table/view name to validate (can include db.schema.name format)
-
-    Raises:
-        PyDoughException: If the name contains invalid characters
-    """
-    if not _VALID_TABLE_NAME_PATTERN.match(name):
-        raise PyDoughException(
-            f"Invalid table/view name '{name}'. "
-            "Name must start with a letter and contain only alphanumeric characters, underscores, and dots."
-        )
 
 
 def _infer_schema_from_relational(
@@ -131,7 +112,7 @@ def _generate_create_ddl(
         - actual_temp is the final temp value (may differ from input due to dialect limitations)
     """
     # Handle differences in CREATE syntax for different databases.
-    create_caps = CREATE_CAPABILITIES[db_dialect]
+    create_caps: CreateCapabilities = CREATE_CAPABILITIES[db_dialect]
     object_type = "VIEW" if as_view else "TABLE"
     ddl_statements: list[str] = []
 
@@ -153,7 +134,9 @@ def _generate_create_ddl(
         )
 
     # Check if we can use CREATE OR REPLACE
-    can_replace = create_caps.replace_view if as_view else create_caps.replace_table
+    can_replace: bool = (
+        create_caps.replace_view if as_view else create_caps.replace_table
+    )
 
     # For databases that don't support CREATE OR REPLACE TABLE/VIEW,
     # use DROP TABLE/VIEW IF EXISTS + CREATE TABLE/VIEW pattern
@@ -206,7 +189,7 @@ def to_table(
         the created view/table.
 
     """
-    _validate_table_name(name)
+    is_valid_sql_name.verify(name, "table/view name")
 
     display_sql: bool = bool(kwargs.pop("display_sql", False))
 
@@ -233,7 +216,6 @@ def to_table(
         raise PyDoughException(
             f"TEMPORARY views are not supported for {session.database.dialect.name}"
         )
-    # session.metadata = graph
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise pydough.active_session.error_builder.expected_collection(qualified)
@@ -242,8 +224,9 @@ def to_table(
     # Step 1: Generate SQL for the query
     sql: str = convert_relation_to_sql(relational, session)
 
-    # Step 2: Infer schema from relational tree
+    # Step 2: Infer schema from relational tree and normalize column names.
     column_names, column_types = _infer_schema_from_relational(relational)
+    column_names = [normalize_column_name(col)[1] for col in column_names]
 
     # Step 3: Generate and execute DDL to create view/table
     ddl_statements, actual_temp = _generate_create_ddl(
@@ -267,6 +250,7 @@ def to_table(
         columns=column_names,
         types=column_types,
         is_view=as_view,
+        is_replace=replace,
         is_temp=actual_temp,
     )
 
