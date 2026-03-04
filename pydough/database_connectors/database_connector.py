@@ -107,6 +107,7 @@ class DatabaseDialect(Enum):
     ANSI = "ansi"
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
+    TRINO = "trino"
     MYSQL = "mysql"
     POSTGRES = "postgres"
 

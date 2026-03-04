@@ -34,6 +34,7 @@ dev-dependencies = [
     "pytest-repeat",
     "boto3",
     "pydough[snowflake]",
+    "pydough[trino]",
     "pydough[mysql]",
     "pydough[postgres]",
     "pydough[server]",
@@ -41,6 +42,7 @@ dev-dependencies = [
 
 [project.optional-dependencies]
 snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
+trino = ["trino"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
