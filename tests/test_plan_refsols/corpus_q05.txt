@@ -1,0 +1,5 @@
+ROOT(columns=[('part_of_speech', POS), ('n_uses', n_rows)], orderings=[(n_rows):desc_last], limit=5:numeric)
+ AGGREGATE(keys={'POS': POS}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.Word == t1.LINEWORD, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'POS': t0.POS})
+   SCAN(table=DICT, columns={'POS': POS, 'Word': Word})
+   SCAN(table=SHAKE, columns={'LINEWORD': LINEWORD})

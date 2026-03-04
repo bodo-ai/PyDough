@@ -1,0 +1,4 @@
+ROOT(columns=[('first_letter', first_letter), ('median_length', median_Ccount)], orderings=[])
+ AGGREGATE(keys={'first_letter': SLICE(Word, None:unknown, 1:numeric, None:unknown)}, aggregations={'median_Ccount': MEDIAN(Ccount)})
+  FILTER(condition=(POS == 'n.':string) & ISIN(SLICE(Word, None:unknown, 1:numeric, None:unknown), ['a', 'e', 'i', 'o', 'u', 'y']:array[unknown]), columns={'Ccount': Ccount, 'Word': Word})
+   SCAN(table=DICT, columns={'Ccount': Ccount, 'POS': POS, 'Word': Word})

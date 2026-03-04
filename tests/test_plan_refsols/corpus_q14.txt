@@ -1,0 +1,3 @@
+ROOT(columns=[('word', Word), ('part_of_speech', POS), ('length', Ccount), ('definition', Definition)], orderings=[])
+ FILTER(condition=Ccount > 25:numeric, columns={'Ccount': Ccount, 'Definition': Definition, 'POS': POS, 'Word': Word})
+  SCAN(table=DICT, columns={'Ccount': Ccount, 'Definition': Definition, 'POS': POS, 'Word': Word})

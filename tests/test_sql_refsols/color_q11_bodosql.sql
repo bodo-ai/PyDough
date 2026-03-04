@@ -1,0 +1,5 @@
+SELECT
+  COUNT(DISTINCT colid) AS n
+FROM shpmnts
+WHERE
+  dos = CAST('2024-07-04' AS DATE)

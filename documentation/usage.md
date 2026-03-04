@@ -347,13 +347,17 @@ Below is a list of all supported values for the database name:
 
 - `postgres` or `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
 
+- `bodosql`: uses a BodoSQL context. [See here](https://docs.bodo.ai/latest/api_docs/sql/bodosqlcontext/) for details on the BodoSQL context and [here](https://docs.bodo.ai/latest/api_docs/sql/database_catalogs/) for details on the various kinds of catalogs that can be connected to a BodoSQL context.
+
+
 > Note: If you installed PyDough via pip, you can install optional connectors using pip extras:
 >
 > ```bash
 > pip install pydough[mysql]         # Install MySQL connector
 > pip install pydough[snowflake]    # Install Snowflake connector
 > pip install pydough[postgres]    # Install Postgres connector
-> pip install "pydough[mysql,snowflake,postgres]"  # Install all of them at once
+> pip install pydough[bodosql]    # Install BodoSQL dependencies
+> pip install "pydough[mysql,snowflake,postgres,bodosql]"  # Install all of them at once
 > ```
 
 Here’s a quick reference table showing which connector is needed for each dialect:
@@ -364,6 +368,7 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `mysql`     | `mysql-connector-python`               |
 | `snowflake` | `snowflake-connector-python[pandas]`  |
 | `postgres` | `psycopg2-binary`  |
+| `bodosql`    | Depends on the catalog being used |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 

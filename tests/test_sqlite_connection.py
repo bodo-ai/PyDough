@@ -46,7 +46,7 @@ def test_sqlite_context(database_name: str) -> None:
     Test that we can execute SQL against load_database_context.
     """
     context: DatabaseContext = load_database_context(database_name, database=":memory:")
-    result: pd.DataFrame = context.connection.execute_query_df("Select 1 as A")
+    result: pd.DataFrame = context.execute_query_df("Select 1 as A")
     pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
     assert context.dialect == DatabaseDialect.SQLITE
 

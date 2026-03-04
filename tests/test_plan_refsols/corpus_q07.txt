@@ -1,0 +1,7 @@
+ROOT(columns=[('word', LINEWORD), ('definition', Definition)], orderings=[(LENGTH(LINEWORD)):desc_last, (LINEWORD):asc_first])
+ JOIN(condition=t0.LINEWORD == t1.Word, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'Definition': t1.Definition, 'LINEWORD': t0.LINEWORD})
+  LIMIT(limit=20:numeric, columns={'LINEWORD': LINEWORD}, orderings=[(LENGTH(LINEWORD)):desc_last, (LINEWORD):asc_first])
+   FILTER(condition=(ACT == 1:numeric) & (SCENE == 1:numeric), columns={'LINEWORD': LINEWORD})
+    SCAN(table=SHAKE, columns={'ACT': ACT, 'LINEWORD': LINEWORD, 'SCENE': SCENE})
+  FILTER(condition=1:numeric == RANKING(args=[], partition=[Word], order=[(POS):asc_last], allow_ties=False), columns={'Definition': Definition, 'Word': Word})
+   SCAN(table=DICT, columns={'Definition': Definition, 'POS': POS, 'Word': Word})

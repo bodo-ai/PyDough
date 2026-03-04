@@ -1,0 +1,4 @@
+ROOT(columns=[('n_avocado', n_avocado), ('n_blue_bell', n_blue_bell), ('n_carmine', n_carmine), ('n_deep_fuchsia', n_deep_fuchsia), ('n_mode_beige', n_mode_beige)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_avocado': SUM((colid == 'avocado':string)), 'n_blue_bell': SUM((colid == 'blue_bell':string)), 'n_carmine': SUM((colid == 'carmine':string)), 'n_deep_fuchsia': SUM((colid == 'deep_fuchsia':string)), 'n_mode_beige': SUM((colid == 'mode_beige':string))})
+  FILTER(condition=(colid == 'avocado':string) | (colid == 'blue_bell':string) | (colid == 'carmine':string) | (colid == 'deep_fuchsia':string) | (colid == 'mode_beige':string), columns={'colid': colid})
+   SCAN(table=SHPMNTS, columns={'colid': colid})
