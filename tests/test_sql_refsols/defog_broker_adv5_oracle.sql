@@ -1,28 +1,14 @@
 WITH "_S0" AS (
   SELECT
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     ) AS MONTH,
     sbdptickerid AS SBDPTICKERID,
     COUNT(sbdpclose) AS COUNT_SBDPCLOSE,
@@ -31,29 +17,15 @@ WITH "_S0" AS (
     SUM(sbdpclose) AS SUM_SBDPCLOSE
   FROM MAIN.SBDAILYPRICE
   GROUP BY
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     ),
     sbdptickerid
 ), "_T0" AS (

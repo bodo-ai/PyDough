@@ -4,7 +4,7 @@ WITH "_S1" AS (
     COUNT(*) AS N_ROWS
   FROM MAIN.SBTRANSACTION
   WHERE
-    sbtxdatetime >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTODSINTERVAL(10, 'day'), 'DAY')
+    sbtxdatetime >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTODSINTERVAL(10, 'day'), 'DD')
     AND sbtxtype = 'buy'
   GROUP BY
     sbtxtickerid

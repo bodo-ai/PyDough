@@ -1,6 +1,11 @@
 SELECT
   sbtxdatetime AS date_time,
-  TRUNC(CAST(CAST(sbtxdatetime AS DATE) AS DATE), 'IW') AS sow,
+  TRUNC(
+    CAST(CAST(sbtxdatetime AS DATE) - MOD((
+      TO_CHAR(CAST(sbtxdatetime AS DATE), 'D') + 4
+    ), 7) AS DATE),
+    'DD'
+  ) AS sow,
   CASE
     WHEN TO_CHAR(sbtxdatetime, 'D') = 1
     THEN 'Sunday'

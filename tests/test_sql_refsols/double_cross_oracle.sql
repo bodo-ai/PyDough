@@ -10,7 +10,7 @@ WITH "_T3" AS (
   SELECT
     FLOOR(
       (
-        CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(ORDERS.o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S0".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S0".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
@@ -26,7 +26,7 @@ WITH "_T3" AS (
   JOIN TPCH.ORDERS ORDERS
     ON FLOOR(
       (
-        CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(ORDERS.o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S0".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S0".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
@@ -42,7 +42,7 @@ WITH "_T3" AS (
   GROUP BY
     FLOOR(
       (
-        CAST(ORDERS.o_orderdate AS DATE) - CAST("_S0".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(ORDERS.o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S0".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S0".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
@@ -61,7 +61,7 @@ WITH "_T3" AS (
   SELECT
     FLOOR(
       (
-        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(LINEITEM.l_receiptdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S3".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
@@ -81,7 +81,7 @@ WITH "_T3" AS (
     ON EXTRACT(YEAR FROM CAST(LINEITEM.l_receiptdate AS DATE)) = 1992
     AND FLOOR(
       (
-        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(LINEITEM.l_receiptdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S3".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
@@ -96,7 +96,7 @@ WITH "_T3" AS (
     AND LINEITEM.l_shipmode = 'RAIL'
     AND "_S2".ORD_WK = FLOOR(
       (
-        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(LINEITEM.l_receiptdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S3".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)
@@ -110,7 +110,7 @@ WITH "_T3" AS (
   GROUP BY
     FLOOR(
       (
-        CAST(LINEITEM.l_receiptdate AS DATE) - CAST("_S3".MIN_O_ORDERDATE AS DATE) + (
+        TRUNC(CAST(CAST(LINEITEM.l_receiptdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST("_S3".MIN_O_ORDERDATE AS DATE) AS DATE), 'DD') + (
           MOD((
             TO_CHAR(CAST("_S3".MIN_O_ORDERDATE AS DATE), 'D') + -1
           ), 7)

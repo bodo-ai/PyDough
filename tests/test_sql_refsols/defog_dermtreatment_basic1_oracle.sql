@@ -5,7 +5,7 @@ WITH "_S1" AS (
     SUM(tot_drug_amt) AS SUM_TOT_DRUG_AMT
   FROM MAIN.TREATMENTS
   WHERE
-    start_dt >= TRUNC(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -6), 'DAY')
+    start_dt >= TRUNC(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -6), 'DD')
   GROUP BY
     doc_id
 ), "_T1" AS (

@@ -1,5 +1,10 @@
 SELECT
-  TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'IW') AS payment_week,
+  TRUNC(
+    CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) - MOD((
+      TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
+    ), 7) AS DATE),
+    'DD'
+  ) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
     SUM(
@@ -17,7 +22,7 @@ JOIN MAIN.SALES SALES
 WHERE
   FLOOR(
     (
-      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(PAYMENTS_RECEIVED.payment_date AS DATE) + (
+      TRUNC(CAST(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'DD') + (
         MOD((
           TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
         ), 7)
@@ -30,7 +35,7 @@ WHERE
   ) <= 8
   AND FLOOR(
     (
-      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(PAYMENTS_RECEIVED.payment_date AS DATE) + (
+      TRUNC(CAST(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'DD') + (
         MOD((
           TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
         ), 7)
@@ -42,4 +47,9 @@ WHERE
     ) / 7
   ) >= 1
 GROUP BY
-  TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'IW')
+  TRUNC(
+    CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) - MOD((
+      TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
+    ), 7) AS DATE),
+    'DD'
+  )

@@ -15,6 +15,7 @@ from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.dialects.dialect import rename_func
 from sqlglot.dialects.mysql import MySQL
 from sqlglot.dialects.oracle import Oracle
 from sqlglot.errors import SqlglotError
@@ -555,6 +556,12 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             Oracle.Generator.TYPE_MAPPING[
                 sqlglot_expressions.DataType.Type.DATETIME
             ] = "DATE"
+
+            # Fixes VAR_POP call. Without it sqlglot uses VARIANCE_POP which
+            # doesn't exist in Oracle
+            Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop] = rename_func(
+                "VAR_POP"
+            )
         case _:
             pass
 
@@ -568,6 +575,8 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
         case DatabaseDialect.MYSQL:
             MySQL.Generator.VALUES_AS_TABLE = False
             MySQL.Generator.WRAP_DERIVED_VALUES = False
+        case DatabaseDialect.ORACLE:
+            del Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop]
         case _:
             pass
 

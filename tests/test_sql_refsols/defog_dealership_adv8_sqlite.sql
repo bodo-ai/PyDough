@@ -2,12 +2,12 @@ WITH _s6 AS (
   SELECT DISTINCT
     months_range.column1 AS month_start
   FROM (VALUES
-    ('2025-08-01 00:00:00'),
     ('2025-09-01 00:00:00'),
     ('2025-10-01 00:00:00'),
     ('2025-11-01 00:00:00'),
     ('2025-12-01 00:00:00'),
-    ('2026-01-01 00:00:00')) AS months_range
+    ('2026-01-01 00:00:00'),
+    ('2026-02-01 00:00:00')) AS months_range
   CROSS JOIN main.sales AS sales
 ), _s7 AS (
   SELECT
@@ -15,12 +15,12 @@ WITH _s6 AS (
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
   FROM (VALUES
-    ('2025-08-01 00:00:00'),
     ('2025-09-01 00:00:00'),
     ('2025-10-01 00:00:00'),
     ('2025-11-01 00:00:00'),
     ('2025-12-01 00:00:00'),
-    ('2026-01-01 00:00:00')) AS months_range_2
+    ('2026-01-01 00:00:00'),
+    ('2026-02-01 00:00:00')) AS months_range_2
   JOIN main.sales AS sales
     ON STRFTIME('%Y-%m', months_range_2.column1) = STRFTIME('%Y-%m', sales.sale_date)
   JOIN main.salespersons AS salespersons

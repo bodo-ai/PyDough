@@ -19,7 +19,7 @@ WITH "_T2" AS (
   JOIN MAIN.CALENDAR CALENDAR
     ON CALENDAR.ca_dt >= ADD_MONTHS(CAST("_T4".CA_DT AS DATE), -6)
   JOIN MAIN.DEVICES DEVICES
-    ON CALENDAR.ca_dt = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
+    ON CALENDAR.ca_dt = TRUNC(CAST(CAST(DEVICES.de_purchase_ts AS DATE) AS DATE), 'DD')
   JOIN "_T5" "_T5"
     ON DEVICES.de_production_country_id = "_T5".CO_ID
   GROUP BY
@@ -30,7 +30,7 @@ WITH "_T2" AS (
     COUNT(*) AS N_ROWS
   FROM "_T2" "_T7"
   JOIN MAIN.INCIDENTS INCIDENTS
-    ON "_T7".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS DATE), 'DAY')
+    ON "_T7".CA_DT = TRUNC(CAST(CAST(INCIDENTS.in_error_report_ts AS DATE) AS DATE), 'DD')
   JOIN MAIN.DEVICES DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN "_T5" "_T8"
@@ -53,21 +53,13 @@ WITH "_T2" AS (
     EXTRACT(YEAR FROM CAST("_T2".CA_DT AS DATE))
 )
 SELECT
-  LTRIM(
-    NVL2(YEAR_CA_DT, '-' || YEAR_CA_DT, NULL) || NVL2(
-      CASE
-        WHEN LENGTH(MONTH_CA_DT) >= 2
-        THEN SUBSTR(MONTH_CA_DT, 1, 2)
-        ELSE SUBSTR(CONCAT('00', MONTH_CA_DT), -2)
-      END,
-      '-' || CASE
-        WHEN LENGTH(MONTH_CA_DT) >= 2
-        THEN SUBSTR(MONTH_CA_DT, 1, 2)
-        ELSE SUBSTR(CONCAT('00', MONTH_CA_DT), -2)
-      END,
-      NULL
-    ),
-    '-'
+  NVL(YEAR_CA_DT, '') || '-' || NVL(
+    CASE
+      WHEN LENGTH(MONTH_CA_DT) >= 2
+      THEN SUBSTR(MONTH_CA_DT, 1, 2)
+      ELSE SUBSTR(CONCAT('00', MONTH_CA_DT), -2)
+    END,
+    ''
   ) AS month,
   ROUND((
     1000000.0 * COALESCE(SUM_N_ROWS, 0)

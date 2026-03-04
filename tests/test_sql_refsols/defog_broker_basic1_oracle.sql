@@ -5,7 +5,7 @@ WITH "_S1" AS (
     SUM(sbtxamount) AS SUM_SBTXAMOUNT
   FROM MAIN.SBTRANSACTION
   WHERE
-    sbtxdatetime >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTODSINTERVAL(30, 'day'), 'DAY')
+    sbtxdatetime >= TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP) - NUMTODSINTERVAL(30, 'day'), 'DD')
   GROUP BY
     sbtxcustid
 )

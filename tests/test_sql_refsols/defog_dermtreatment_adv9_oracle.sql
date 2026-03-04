@@ -1,28 +1,14 @@
 WITH "_S2" AS (
   SELECT
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(start_dt AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(start_dt AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(start_dt AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(start_dt AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     ) AS TREATMENT_MONTH,
     COUNT(DISTINCT patient_id) AS NDISTINCT_PATIENT_ID
   FROM MAIN.TREATMENTS
@@ -30,55 +16,27 @@ WITH "_S2" AS (
     start_dt < TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH')
     AND start_dt >= ADD_MONTHS(TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH'), -3)
   GROUP BY
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(start_dt AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(start_dt AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(start_dt AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(start_dt AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     )
 ), "_S3" AS (
   SELECT
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(TREATMENTS.start_dt AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(TREATMENTS.start_dt AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(TREATMENTS.start_dt AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     ) AS TREATMENT_MONTH,
     COUNT(DISTINCT TREATMENTS.patient_id) AS NDISTINCT_PATIENT_ID
   FROM MAIN.TREATMENTS TREATMENTS
@@ -88,29 +46,15 @@ WITH "_S2" AS (
     TREATMENTS.start_dt < TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH')
     AND TREATMENTS.start_dt >= ADD_MONTHS(TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH'), -3)
   GROUP BY
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(TREATMENTS.start_dt AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(TREATMENTS.start_dt AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(TREATMENTS.start_dt AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(TREATMENTS.start_dt AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     )
 )
 SELECT

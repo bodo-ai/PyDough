@@ -37,6 +37,7 @@ from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
+    simple_int_float_string_cast,
     string_format_specifiers_mysql,
     string_format_specifiers_oracle,
     string_format_specifiers_postgres,
@@ -1884,14 +1885,14 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 " f=DATETIME('2025-01-01 12:35:13', 'start of hour', '+2 quarters', '+3 weeks'),"
                 " g=DATETIME('2025-01-01 12:35:13', 'start of day'),"
                 " h=JOIN_STRINGS(';', HOUR('2025-01-01 12:35:13'), MINUTE(DATETIME('2025-01-01 12:35:13', '+45 minutes')), SECOND(DATETIME('2025-01-01 12:35:13', '-7 seconds'))),"
-                " i=DATEDIFF('years', '1993-05-25 12:45:36', order_date),"
-                " j=DATEDIFF('quarters', '1993-05-25 12:45:36', order_date),"
-                " k=DATEDIFF('months', '1993-05-25 12:45:36', order_date),"
-                " l=DATEDIFF('weeks', '1993-05-25 12:45:36', order_date),"
-                " m=DATEDIFF('days', '1993-05-25 12:45:36', order_date),"
-                " n=DATEDIFF('hours', '1993-05-25 12:45:36', order_date),"
-                " o=DATEDIFF('minutes', '1993-05-25 12:45:36', order_date),"
-                " p=DATEDIFF('seconds', '1993-05-25 12:45:36', order_date),"
+                " i=DATEDIFF('years', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " j=DATEDIFF('quarters', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " k=DATEDIFF('months', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " l=DATEDIFF('weeks', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " m=DATEDIFF('days', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " n=DATEDIFF('hours', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " o=DATEDIFF('minutes', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " p=DATEDIFF('seconds', DATETIME('1993-05-25 12:45:36'), order_date),"
                 " q=DATETIME(order_date, 'start of week'),"
                 ").TOP_K(5, by=key.ASC())",
                 "TPCH",
@@ -2472,27 +2473,72 @@ def tpch_custom_test_data_dialect_replacements(
                     "TPCH",
                     lambda: pd.DataFrame(
                         {
+                            # ===== YEAR =====
                             "d1": ["2023"],  # YYYY
                             "d2": ["23"],  # YY
-                            "d3": ["07"],  # MM
-                            "d4": ["Jul"],  # Mon
-                            "d5": ["July"],  # MMMM
-                            "d6": ["15"],  # DD
-                            "d7": ["Sat"],  # DY
-                            "d8": ["Saturday"],  # DYDY
-                            "d9": ["14"],  # HH24
-                            "d10": ["02"],  # HH12
-                            "d11": ["30"],  # MI
-                            "d12": ["45"],  # SS
-                            "d13": ["PM"],  # AM / PM
-                            "d14": [".000000000"],  # .FF
-                            "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                            "d3": ["23"],  # RR  (2023 → 23)
+                            # ===== MONTH =====
+                            "d4": ["07"],  # MM
+                            "d5": ["JUL"],  # MON
+                            "d6": ["JULY     "],  # MONTH (space-padded)
+                            "d7": ["3"],  # Q (July → Q3)
+                            # ===== DAY =====
+                            "d8": ["15"],  # DD
+                            "d9": ["196"],  # DDD (day of year)
+                            "d10": ["7"],  # D (Saturday, NLS_TERRITORY dependent)
+                            "d11": ["SAT"],  # DY
+                            "d12": ["SATURDAY "],  # DAY (space-padded)
+                            # ===== WEEK =====
+                            "d13": ["3"],  # W  (week of month)
+                            "d14": ["28"],  # WW (week of year)
+                            "d15": ["28"],  # IW (ISO week)
+                            # ===== TIME =====
+                            "d16": ["14"],  # HH24
+                            "d17": ["02"],  # HH12
+                            "d18": ["30"],  # MI
+                            "d19": ["45"],  # SS
+                            "d20": ["P.M."],  # AM
                         }
                     ),
                     "string_format_specifiers",
                 )
             case _:
                 pytest.skip("Skipping test: Unsupported dialect for test replacement")
+
+    if test.test_name == "simple_int_float_string_cast":
+        if dialect == DatabaseDialect.ORACLE:
+            # Oracle needs different answer
+            return PyDoughPandasTest(
+                simple_int_float_string_cast,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "i1": [1],
+                        "i2": [2],
+                        "i3": [3],
+                        "i4": [4],
+                        "i5": [-5],
+                        "i6": [-6],
+                        "f1": [1.0],
+                        "f2": [2.2],
+                        "f3": [3.0],
+                        "f4": [4.3],
+                        "f5": [-5.888],
+                        "f6": [-6.0],
+                        "f7": [0.0],
+                        "s1": ["1"],
+                        "s2": ["2.2"],
+                        "s3": ["3"],
+                        "s4": ["4.3"],
+                        "s5": ["-5.888"],
+                        "s6": ["-6.1"],
+                        "s7": [".1"],
+                        "s8": ["0.0"],
+                        "s9": ["abc def"],
+                    }
+                ),
+                "simple_int_float_string_cast",
+            )
 
     return test
 

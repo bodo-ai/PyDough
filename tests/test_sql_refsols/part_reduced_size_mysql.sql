@@ -11,7 +11,7 @@ WITH _s0 AS (
 SELECT
   CAST(_s0.p_size / 2.5 AS DOUBLE) AS reduced_size,
   TRUNCATE(CAST(_s0.p_retailprice AS FLOAT), 0) AS retail_price_int,
-  CONCAT_WS('', 'old size: ', CAST(_s0.p_size AS CHAR)) AS message,
+  CONCAT_WS(' ', 'old size:', CAST(_s0.p_size AS CHAR)) AS message,
   LINEITEM.l_discount AS discount,
   DATE_FORMAT(LINEITEM.l_receiptdate, '%d-%m-%Y') COLLATE utf8mb4_bin AS date_dmy,
   DATE_FORMAT(LINEITEM.l_receiptdate, '%m/%d') AS date_md,

@@ -10,7 +10,7 @@ SELECT
     TO_DATE('2024-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'),
     TO_DATE('2023-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
   ) AS s7,
-  LEAST('', 'alphabet soup', 'Hello World') AS s8,
+  LEAST(NVL(NULL, CHR(0)), 'alphabet soup', 'Hello World') AS s8,
   NULL AS s9,
   GREATEST(20, 10) AS l1,
   GREATEST(20, 20) AS l2,
@@ -23,7 +23,7 @@ SELECT
     TO_DATE('2024-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'),
     TO_DATE('2023-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
   ) AS l7,
-  GREATEST('', 'alphabet soup', 'Hello World') AS l8,
+  GREATEST(NVL(NULL, CHR(0)), 'alphabet soup', 'Hello World') AS l8,
   NULL AS l9
 FROM (VALUES
   (NULL)) AS "_Q_0"("_COL_0")

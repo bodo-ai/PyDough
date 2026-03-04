@@ -1,5 +1,10 @@
 SELECT
-  TRUNC(CAST(CAST(SBTRANSACTION.sbtxdatetime AS DATE) AS DATE), 'IW') AS week,
+  TRUNC(
+    CAST(CAST(SBTRANSACTION.sbtxdatetime AS DATE) - MOD((
+      TO_CHAR(CAST(SBTRANSACTION.sbtxdatetime AS DATE), 'D') + 5
+    ), 7) AS DATE),
+    'DD'
+  ) AS week,
   COUNT(*) AS num_transactions,
   COALESCE(
     SUM((
@@ -14,9 +19,24 @@ JOIN MAIN.SBTICKER SBTICKER
   ON SBTICKER.sbtickerid = SBTRANSACTION.sbtxtickerid
   AND SBTICKER.sbtickertype = 'stock'
 WHERE
-  SBTRANSACTION.sbtxdatetime < TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'IW')
+  SBTRANSACTION.sbtxdatetime < TRUNC(
+    SYS_EXTRACT_UTC(SYSTIMESTAMP) - MOD((
+      TO_CHAR(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'D') + 5
+    ), 7),
+    'DD'
+  )
   AND SBTRANSACTION.sbtxdatetime >= (
-    TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'IW') - NUMTODSINTERVAL(56, 'DAY')
+    TRUNC(
+      SYS_EXTRACT_UTC(SYSTIMESTAMP) - MOD((
+        TO_CHAR(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'D') + 5
+      ), 7),
+      'DD'
+    ) - NUMTODSINTERVAL(56, 'DAY')
   )
 GROUP BY
-  TRUNC(CAST(CAST(SBTRANSACTION.sbtxdatetime AS DATE) AS DATE), 'IW')
+  TRUNC(
+    CAST(CAST(SBTRANSACTION.sbtxdatetime AS DATE) - MOD((
+      TO_CHAR(CAST(SBTRANSACTION.sbtxdatetime AS DATE), 'D') + 5
+    ), 7) AS DATE),
+    'DD'
+  )

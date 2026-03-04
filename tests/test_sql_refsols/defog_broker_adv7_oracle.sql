@@ -1,28 +1,14 @@
 WITH "_S2" AS (
   SELECT
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     ) AS MONTH,
     COUNT(*) AS N_ROWS
   FROM MAIN.SBCUSTOMER
@@ -30,61 +16,30 @@ WITH "_S2" AS (
     sbcustjoindate < TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH')
     AND sbcustjoindate >= TRUNC(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -6), 'MONTH')
   GROUP BY
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))), (
-            2 * -1
-          ))
-        END,
-        NULL
-      ),
-      '-'
+    NVL(EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE)), 1, 2)
+        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATE))), (
+          2 * -1
+        ))
+      END,
+      ''
     )
 ), "_S3" AS (
   SELECT
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(
-            CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))),
-            (
-              2 * -1
-            )
+    NVL(EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), 1, 2)
+        ELSE SUBSTR(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))),
+          (
+            2 * -1
           )
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(
-            CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))),
-            (
-              2 * -1
-            )
-          )
-        END,
-        NULL
-      ),
-      '-'
+        )
+      END,
+      ''
     ) AS MONTH,
     AVG(SBTRANSACTION.sbtxamount) AS AVG_SBTXAMOUNT
   FROM MAIN.SBCUSTOMER SBCUSTOMER
@@ -96,35 +51,18 @@ WITH "_S2" AS (
     SBCUSTOMER.sbcustjoindate < TRUNC(SYS_EXTRACT_UTC(SYSTIMESTAMP), 'MONTH')
     AND SBCUSTOMER.sbcustjoindate >= TRUNC(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -6), 'MONTH')
   GROUP BY
-    LTRIM(
-      NVL2(
-        EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)),
-        '-' || EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)),
-        NULL
-      ) || NVL2(
-        CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(
-            CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))),
-            (
-              2 * -1
-            )
+    NVL(EXTRACT(YEAR FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), '') || '-' || NVL(
+      CASE
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))) >= 2
+        THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), 1, 2)
+        ELSE SUBSTR(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))),
+          (
+            2 * -1
           )
-        END,
-        '-' || CASE
-          WHEN LENGTH(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))) >= 2
-          THEN SUBSTR(EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE)), 1, 2)
-          ELSE SUBSTR(
-            CONCAT('00', EXTRACT(MONTH FROM CAST(SBCUSTOMER.sbcustjoindate AS DATE))),
-            (
-              2 * -1
-            )
-          )
-        END,
-        NULL
-      ),
-      '-'
+        )
+      END,
+      ''
     )
 )
 SELECT

@@ -1,10 +1,18 @@
 SELECT
   ANY_VALUE(NATION.n_name) AS name,
-  VARIANCE_POP(SUPPLIER.s_acctbal) AS var,
+  VAR_POP(SUPPLIER.s_acctbal) AS var,
   STDDEV_POP(SUPPLIER.s_acctbal) AS std,
-  VARIANCE(SUPPLIER.s_acctbal) AS sample_var,
-  STDDEV(SUPPLIER.s_acctbal) AS sample_std,
-  VARIANCE_POP(SUPPLIER.s_acctbal) AS pop_var,
+  CASE
+    WHEN COUNT(SUPPLIER.s_acctbal) < 2
+    THEN NULL
+    ELSE VARIANCE(SUPPLIER.s_acctbal)
+  END AS sample_var,
+  CASE
+    WHEN COUNT(SUPPLIER.s_acctbal) < 2
+    THEN NULL
+    ELSE STDDEV(SUPPLIER.s_acctbal)
+  END AS sample_std,
+  VAR_POP(SUPPLIER.s_acctbal) AS pop_var,
   STDDEV_POP(SUPPLIER.s_acctbal) AS pop_std
 FROM TPCH.NATION NATION
 JOIN TPCH.SUPPLIER SUPPLIER

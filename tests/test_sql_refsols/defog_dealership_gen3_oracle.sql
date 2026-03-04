@@ -6,7 +6,7 @@ FROM MAIN.PAYMENTS_RECEIVED
 WHERE
   FLOOR(
     (
-      CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) - CAST(payment_date AS DATE) + (
+      TRUNC(CAST(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(payment_date AS DATE) AS DATE), 'DD') + (
         MOD((
           TO_CHAR(CAST(payment_date AS DATE), 'D') + 5
         ), 7)

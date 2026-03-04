@@ -17,6 +17,7 @@ from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
+from pydough.types.string_type import StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -59,17 +60,15 @@ class OracleTransformBindings(BaseTransformBindings):
             "%Y": "YYYY",
             "%m": "MM",
             "%d": "DD",
-            "%H": "HH24",
+            "%H": "HH24",  # 24-hour clock
+            "%I": "HH12",  # 12-hour clock (IMPORTANT for AM/PM)
             "%M": "MI",
             "%S": "SS",
+            "%p": "AM",  # AM / PM marker
         }
 
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.ABS: "ABS",
-        pydop.LARGEST: "GREATEST",
-        pydop.SMALLEST: "LEAST",
-        pydop.STRIP: "TRIM",
-        pydop.FIND: "INSTR",
         pydop.PERCENTILE: "PERCENTILE_CONT",
     }
 
@@ -114,6 +113,27 @@ class OracleTransformBindings(BaseTransformBindings):
             COALESCE expression with its arguments correctly handled
         """
         return sqlglot_expressions.Coalesce(this=args[0], expressions=args[1:])
+
+    def convert_strip(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        assert 1 <= len(args) <= 2
+        to_strip: SQLGlotExpression = args[0]
+        strip_char_glot: SQLGlotExpression
+        if len(args) == 1:
+            strip_char_glot = sqlglot_expressions.Literal.string("\n\t ")
+        else:
+            strip_char_glot = args[1]
+
+        return sqlglot_expressions.Trim(
+            this=sqlglot_expressions.Trim(
+                this=to_strip, expression=strip_char_glot, position="LEADING"
+            ),
+            expression=strip_char_glot,
+            position="TRAILING",
+        )
 
     def convert_str_count(
         self,
@@ -380,6 +400,68 @@ class OracleTransformBindings(BaseTransformBindings):
         )
         return result
 
+    def convert_smallest_or_largest(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
+    ) -> SQLGlotExpression:
+        assert len(args) > 1
+
+        func_name: str = "GREATEST" if largest else "LEAST"
+
+        if isinstance(types[0], StringType):
+            args = [
+                sqlglot_expressions.Coalesce(
+                    this=arg if arg.this != "" else sqlglot_expressions.Null(),
+                    expressions=[
+                        sqlglot_expressions.Chr(
+                            expressions=[sqlglot_expressions.Literal.number(0)]
+                        )
+                    ],
+                    is_nvl=True,
+                )
+                for arg in args
+            ]
+
+        return sqlglot_expressions.Anonymous(this=func_name, expressions=args)
+
+    def convert_variance(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+    ) -> SQLGlotExpression:
+        arg = args[0]
+        if type == "population":
+            return sqlglot_expressions.VariancePop(this=arg)
+        elif type == "sample":
+            return sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=sqlglot_expressions.LT(
+                            this=sqlglot_expressions.Count(this=arg),
+                            expression=sqlglot_expressions.Literal.number(2),
+                        ),
+                        true=sqlglot_expressions.Null(),
+                    )
+                ],
+                default=sqlglot_expressions.Variance(this=arg),
+            )
+
+    def convert_std(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+    ) -> SQLGlotExpression:
+        if type == "population":
+            return sqlglot_expressions.StddevPop(this=args[0])
+        elif type == "sample":
+            return sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=sqlglot_expressions.LT(
+                            this=sqlglot_expressions.Count(this=args[0]),
+                            expression=sqlglot_expressions.Literal.number(2),
+                        ),
+                        true=sqlglot_expressions.Null(),
+                    )
+                ],
+                default=sqlglot_expressions.Stddev(this=args[0]),
+            )
+
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -605,13 +687,36 @@ class OracleTransformBindings(BaseTransformBindings):
                 return year_diff
             case DateTimeUnit.QUARTER:
                 # (EXTRACT(YEAR FROM date2) - EXTRACT(YEAR FROM date1)) * 4 +
-                # (EXTRACT(QUATER FROM date2) - EXTRACT(QUARTER FROM date1))
+                # (FLOOR((EXTRACT(MONTH FROM date2) - 1) / 3) -
+                # FLOOR((EXTRACT(MONTH FROM date1) - 1) / 3))
                 quarter_diff: SQLGlotExpression = sqlglot_expressions.Sub(
-                    this=sqlglot_expressions.Extract(
-                        this=sqlglot_expressions.Var(this="QUARTER"), expression=date2
+                    this=sqlglot_expressions.Floor(
+                        this=sqlglot_expressions.Div(
+                            this=apply_parens(
+                                sqlglot_expressions.Sub(
+                                    this=sqlglot_expressions.Extract(
+                                        this=sqlglot_expressions.Var(this="MONTH"),
+                                        expression=date2,
+                                    ),
+                                    expression=sqlglot_expressions.Literal.number(1),
+                                )
+                            ),
+                            expression=sqlglot_expressions.Literal.number(3),
+                        )
                     ),
-                    expression=sqlglot_expressions.Extract(
-                        this=sqlglot_expressions.Var(this="QUARTER"), expression=date1
+                    expression=sqlglot_expressions.Floor(
+                        this=sqlglot_expressions.Div(
+                            this=apply_parens(
+                                sqlglot_expressions.Sub(
+                                    this=sqlglot_expressions.Extract(
+                                        this=sqlglot_expressions.Var(this="MONTH"),
+                                        expression=date1,
+                                    ),
+                                    expression=sqlglot_expressions.Literal.number(1),
+                                )
+                            ),
+                            expression=sqlglot_expressions.Literal.number(3),
+                        )
                     ),
                 )
 
@@ -648,7 +753,12 @@ class OracleTransformBindings(BaseTransformBindings):
                 # dow2 = DAYOFWEEK(date2)
                 # result = FLOOR((raw_delta + dow1 - dow2) / 7)
                 raw_delta: SQLGlotExpression = sqlglot_expressions.Sub(
-                    this=date2, expression=date1
+                    this=sqlglot_expressions.DateTrunc(
+                        this=date2, unit=sqlglot_expressions.Literal.string("DD")
+                    ),
+                    expression=sqlglot_expressions.DateTrunc(
+                        this=date1, unit=sqlglot_expressions.Literal.string("DD")
+                    ),
                 )
 
                 dow1: SQLGlotExpression = self.convert_dayofweek([date1], [types[1]])
@@ -671,8 +781,15 @@ class OracleTransformBindings(BaseTransformBindings):
                 )
 
             case DateTimeUnit.DAY:
-                # date2 - date1
-                return sqlglot_expressions.Sub(this=date2, expression=date1)
+                # TRUNC(date2, 'HH24') - TRUNC(date1, 'HH24')
+                return sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.DateTrunc(
+                        this=date2, unit=sqlglot_expressions.Literal.string("DD")
+                    ),
+                    expression=sqlglot_expressions.DateTrunc(
+                        this=date1, unit=sqlglot_expressions.Literal.string("DD")
+                    ),
+                )
 
             case DateTimeUnit.HOUR:
                 # (TRUNC(date2, 'HH24') - TRUNC(date1, 'HH24')) * 24
@@ -764,11 +881,12 @@ class OracleTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         match unit:
             case DateTimeUnit.QUARTER:
+                # TRUNC(o_orderdate, 'Q')
                 return sqlglot_expressions.Anonymous(
                     this="TRUNC",
                     expressions=[
                         self.make_datetime_arg(base),
-                        sqlglot_expressions.Literal.string("Q"),
+                        sqlglot_expressions.Var(this="Q"),
                     ],
                 )
             case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
@@ -777,9 +895,19 @@ class OracleTransformBindings(BaseTransformBindings):
                     unit=sqlglot_expressions.Var(this=unit.value.lower()),
                 )
             case DateTimeUnit.WEEK:
+                # DOW = DAYOFWEEK(X)
+                # Y = subtract DOW days from X
+                # RESULT = DATETIME(Y, "start of day")
+                dow = self.days_from_start_of_week(base)
+                minus_dow: SQLGlotExpression = sqlglot_expressions.Sub(
+                    this=base,
+                    expression=dow,
+                )
+                return self.apply_datetime_truncation(minus_dow, DateTimeUnit.DAY)
+            case DateTimeUnit.DAY:
                 return sqlglot_expressions.DateTrunc(
                     this=self.make_datetime_arg(base),
-                    unit=sqlglot_expressions.Var(this="IW"),
+                    unit=sqlglot_expressions.Literal.string("DD"),
                 )
             case _:
                 return sqlglot_expressions.DateTrunc(
@@ -852,35 +980,34 @@ class OracleTransformBindings(BaseTransformBindings):
     def convert_join_strings(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        # args[0] is the delimiter, args[1:] are the strings to join
-        delim: SQLGlotExpression = args[0]
-        string_args: list[SQLGlotExpression] = args[1:]
+        if len(args) == 1:
+            return sqlglot_expressions.Literal.string("")
+        elif len(args) == 2:
+            # Return the first string
+            return args[1]
 
-        # Build a chain of NVL2(arg, delim || arg, NULL) expressions
-        concatenated: SQLGlotExpression | None = None
-        for arg in string_args:
-            # Create: NVL2(arg, delim || arg, NULL)
-            delim_and_arg = sqlglot_expressions.DPipe(
-                this=delim,
-                expression=arg,
-                safe=True,
-            )
-            nvl2_expr = sqlglot_expressions.Anonymous(
-                this="NVL2",
-                expressions=[arg, delim_and_arg, sqlglot_expressions.Null()],
-            )
+        delim_expr = args[0]
 
-            if concatenated is None:
-                concatenated = nvl2_expr
-            else:
-                concatenated = sqlglot_expressions.DPipe(
-                    this=concatenated, expression=nvl2_expr, safe=True
-                )
-
-        # Wrap in LTRIM to remove the very first separator
-        result: SQLGlotExpression = sqlglot_expressions.Anonymous(
-            this="LTRIM", expressions=[concatenated, delim]
+        # Start with first argument
+        result: SQLGlotExpression = sqlglot_expressions.Coalesce(
+            this=args[1],
+            expressions=[sqlglot_expressions.Literal.string("")],
+            is_nvl=True,
         )
+
+        for arg in args[2:]:
+            result = sqlglot_expressions.DPipe(
+                this=result,
+                expression=sqlglot_expressions.DPipe(
+                    this=delim_expr,
+                    expression=sqlglot_expressions.Coalesce(
+                        this=arg,
+                        expressions=[sqlglot_expressions.Literal.string("")],
+                        is_nvl=True,
+                    ),
+                ),
+            )
+
         return result
 
     def convert_extract_datetime(
@@ -897,13 +1024,34 @@ class OracleTransformBindings(BaseTransformBindings):
             else "TIMESTAMP"
         )
 
-        return sqlglot_expressions.Extract(
-            this=sqlglot_expressions.Var(this=unit.value.upper()),
-            expression=sqlglot_expressions.Cast(
-                this=self.make_datetime_arg(args[0]),
-                to=sqlglot_expressions.DataType(this=cast_type),
-            ),
-        )
+        match unit:
+            case DateTimeUnit.QUARTER:
+                # TRUNC((EXTRACT(MONTH FROM o_orderdate) - 1) / 3) + 1
+                return sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Floor(
+                        this=sqlglot_expressions.Div(
+                            this=apply_parens(
+                                sqlglot_expressions.Sub(
+                                    this=sqlglot_expressions.Extract(
+                                        this=sqlglot_expressions.Var(this="MONTH"),
+                                        expression=self.make_datetime_arg(args[0]),
+                                    ),
+                                    expression=sqlglot_expressions.Literal.number(1),
+                                )
+                            ),
+                            expression=sqlglot_expressions.Literal.number(3),
+                        )
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                )
+            case _:
+                return sqlglot_expressions.Extract(
+                    this=sqlglot_expressions.Var(this=unit.value.upper()),
+                    expression=sqlglot_expressions.Cast(
+                        this=self.make_datetime_arg(args[0]),
+                        to=sqlglot_expressions.DataType(this=cast_type),
+                    ),
+                )
 
     def oracle_format(self, fmt: str) -> str:
         """
@@ -1005,4 +1153,13 @@ class OracleTransformBindings(BaseTransformBindings):
                 default=sqlglot_expressions.Literal.number(0),
             )
         else:
-            return super().convert_integer(args, types)
+            return sqlglot_expressions.Anonymous(
+                this="TRUNC",
+                expressions=[
+                    sqlglot_expressions.Cast(
+                        this=args[0],
+                        to=sqlglot_expressions.DataType.build("DOUBLE PRECISION"),
+                    ),
+                    sqlglot_expressions.Literal.number(0),
+                ],
+            )

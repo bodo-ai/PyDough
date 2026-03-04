@@ -21,7 +21,7 @@ WITH "_S14" AS (
     COUNT(*) AS N_ROWS
   FROM "_S6" "_S0"
   JOIN MAIN.INCIDENTS INCIDENTS
-    ON "_S0".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS DATE), 'DAY')
+    ON "_S0".CA_DT = TRUNC(CAST(CAST(INCIDENTS.in_error_report_ts AS DATE) AS DATE), 'DD')
   JOIN MAIN.DEVICES DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN "_T5" "_T5"
@@ -34,7 +34,7 @@ WITH "_S14" AS (
     COUNT(*) AS N_ROWS
   FROM "_S6" "_S8"
   JOIN MAIN.DEVICES DEVICES
-    ON "_S8".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
+    ON "_S8".CA_DT = TRUNC(CAST(CAST(DEVICES.de_purchase_ts AS DATE) AS DATE), 'DD')
   JOIN "_T5" "_T7"
     ON DEVICES.de_product_id = "_T7".PR_ID
   GROUP BY

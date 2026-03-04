@@ -2,12 +2,12 @@ WITH _s6 AS (
   SELECT DISTINCT
     months_range.month_start
   FROM (VALUES
-    (CAST('2025-08-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-09-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-10-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-11-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-12-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2026-01-01 00:00:00' AS TIMESTAMP))) AS months_range(month_start)
+    (CAST('2026-01-01 00:00:00' AS TIMESTAMP)),
+    (CAST('2026-02-01 00:00:00' AS TIMESTAMP))) AS months_range(month_start)
   CROSS JOIN dealership.sales AS sales
 ), _s7 AS (
   SELECT
@@ -15,12 +15,12 @@ WITH _s6 AS (
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
   FROM (VALUES
-    (CAST('2025-08-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-09-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-10-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-11-01 00:00:00' AS TIMESTAMP)),
     (CAST('2025-12-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2026-01-01 00:00:00' AS TIMESTAMP))) AS months_range_2(month_start)
+    (CAST('2026-01-01 00:00:00' AS TIMESTAMP)),
+    (CAST('2026-02-01 00:00:00' AS TIMESTAMP))) AS months_range_2(month_start)
   JOIN dealership.sales AS sales
     ON TO_CHAR(CAST(sales.sale_date AS TIMESTAMP), 'yyyy-mm') = TO_CHAR(months_range_2.month_start, 'yyyy-mm')
   JOIN dealership.salespersons AS salespersons

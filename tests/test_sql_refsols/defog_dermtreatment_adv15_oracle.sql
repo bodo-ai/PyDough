@@ -12,9 +12,9 @@ WITH "_u_0" AS (
     AVG(
       tot_drug_amt / CASE
         WHEN (
-          CAST(end_dt AS DATE) - CAST(start_dt AS DATE)
+          TRUNC(CAST(CAST(end_dt AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(start_dt AS DATE) AS DATE), 'DD')
         ) <> 0
-        THEN CAST(end_dt AS DATE) - CAST(start_dt AS DATE)
+        THEN TRUNC(CAST(CAST(end_dt AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(start_dt AS DATE) AS DATE), 'DD')
         ELSE NULL
       END
     ) AS AVG_DDD

@@ -19,7 +19,7 @@ WITH "_T2" AS (
     AND "_S3".CA_DT >= "_T4".PR_RELEASE
   JOIN MAIN.DEVICES DEVICES
     ON DEVICES.de_product_id = 800544
-    AND "_S3".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
+    AND "_S3".CA_DT = TRUNC(CAST(CAST(DEVICES.de_purchase_ts AS DATE) AS DATE), 'DD')
   GROUP BY
     "_S3".CA_DT
 ), "_S22" AS (
@@ -60,7 +60,7 @@ WITH "_T2" AS (
     ON "_S13".QUARTER = TRUNC(CAST(CAST("_S17".CA_DT AS DATE) AS DATE), 'Q')
   JOIN MAIN.INCIDENTS INCIDENTS
     ON COUNTRIES.co_id = INCIDENTS.in_repair_country_id
-    AND "_S17".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS DATE), 'DAY')
+    AND "_S17".CA_DT = TRUNC(CAST(CAST(INCIDENTS.in_error_report_ts AS DATE) AS DATE), 'DD')
   JOIN MAIN.DEVICES DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id AND DEVICES.de_product_id = 800544
   WHERE

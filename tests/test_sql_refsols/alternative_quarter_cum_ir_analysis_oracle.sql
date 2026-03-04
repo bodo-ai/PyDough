@@ -39,7 +39,7 @@ WITH "_S0" AS (
     ON "_S2".CA_DT < TRUNC(ADD_MONTHS(CAST("_T4".PR_RELEASE AS DATE), 24), 'Q')
     AND "_S2".CA_DT >= "_T4".PR_RELEASE
   JOIN MAIN.INCIDENTS INCIDENTS
-    ON "_S2".CA_DT = TRUNC(CAST(INCIDENTS.in_error_report_ts AS DATE), 'DAY')
+    ON "_S2".CA_DT = TRUNC(CAST(CAST(INCIDENTS.in_error_report_ts AS DATE) AS DATE), 'DD')
   JOIN "_S9" "_S9"
     ON INCIDENTS.in_repair_country_id = "_S9".CO_ID
   JOIN MAIN.DEVICES DEVICES
@@ -55,7 +55,7 @@ WITH "_S0" AS (
     ON "_S14".CA_DT < TRUNC(ADD_MONTHS(CAST("_T8".PR_RELEASE AS DATE), 24), 'Q')
     AND "_S14".CA_DT >= "_T8".PR_RELEASE
   JOIN MAIN.DEVICES DEVICES
-    ON "_S14".CA_DT = TRUNC(CAST(DEVICES.de_purchase_ts AS DATE), 'DAY')
+    ON "_S14".CA_DT = TRUNC(CAST(CAST(DEVICES.de_purchase_ts AS DATE) AS DATE), 'DD')
   JOIN "_T5" "_T9"
     ON DEVICES.de_product_id = "_T9".PR_ID
   GROUP BY

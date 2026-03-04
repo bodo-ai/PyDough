@@ -1,99 +1,63 @@
 SELECT
   o_orderkey AS key,
-  LTRIM(
-    NVL2(
-      EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)),
-      '_' || EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)),
-      NULL
-    ) || NVL2(
-      EXTRACT(QUARTER FROM CAST(o_orderdate AS DATE)),
-      '_' || EXTRACT(QUARTER FROM CAST(o_orderdate AS DATE)),
-      NULL
-    ) || NVL2(
-      EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)),
-      '_' || EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)),
-      NULL
-    ) || NVL2(
-      EXTRACT(DAY FROM CAST(o_orderdate AS DATE)),
-      '_' || EXTRACT(DAY FROM CAST(o_orderdate AS DATE)),
-      NULL
-    ),
-    '_'
-  ) AS a,
-  LTRIM(
-    NVL2(
-      CASE
-        WHEN TO_CHAR(o_orderdate, 'D') = 1
-        THEN 'Sunday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 2
-        THEN 'Monday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 3
-        THEN 'Tuesday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 4
-        THEN 'Wednesday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 5
-        THEN 'Thursday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 6
-        THEN 'Friday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 7
-        THEN 'Saturday'
-      END,
-      ':' || CASE
-        WHEN TO_CHAR(o_orderdate, 'D') = 1
-        THEN 'Sunday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 2
-        THEN 'Monday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 3
-        THEN 'Tuesday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 4
-        THEN 'Wednesday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 5
-        THEN 'Thursday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 6
-        THEN 'Friday'
-        WHEN TO_CHAR(o_orderdate, 'D') = 7
-        THEN 'Saturday'
-      END,
-      NULL
-    ) || NVL2(
-      (
-        MOD((
-          TO_CHAR(o_orderdate, 'D') + -1
-        ), 7)
-      ),
-      ':' || MOD((
-        TO_CHAR(o_orderdate, 'D') + -1
-      ), 7),
-      NULL
-    ),
-    ':'
-  ) AS b,
+  NVL(EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)), '') || '_' || NVL(FLOOR((
+    EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - 1
+  ) / 3) + 1, '') || '_' || NVL(EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)), '') || '_' || NVL(EXTRACT(DAY FROM CAST(o_orderdate AS DATE)), '') AS a,
+  NVL(
+    CASE
+      WHEN TO_CHAR(o_orderdate, 'D') = 1
+      THEN 'Sunday'
+      WHEN TO_CHAR(o_orderdate, 'D') = 2
+      THEN 'Monday'
+      WHEN TO_CHAR(o_orderdate, 'D') = 3
+      THEN 'Tuesday'
+      WHEN TO_CHAR(o_orderdate, 'D') = 4
+      THEN 'Wednesday'
+      WHEN TO_CHAR(o_orderdate, 'D') = 5
+      THEN 'Thursday'
+      WHEN TO_CHAR(o_orderdate, 'D') = 6
+      THEN 'Friday'
+      WHEN TO_CHAR(o_orderdate, 'D') = 7
+      THEN 'Saturday'
+    END,
+    ''
+  ) || ':' || NVL((
+    MOD((
+      TO_CHAR(o_orderdate, 'D') + -1
+    ), 7)
+  ), '') AS b,
   ADD_MONTHS(TRUNC(CAST(o_orderdate AS DATE), 'YEAR'), 6) - NUMTODSINTERVAL(13, 'day') AS c,
   ADD_MONTHS(TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'Q'), 12) + NUMTODSINTERVAL(25, 'hour') AS d,
   TO_DATE('2025-01-01 12:35:00', 'YYYY-MM-DD HH24:MI:SS') AS e,
   TO_DATE('2025-07-22 12:00:00', 'YYYY-MM-DD HH24:MI:SS') AS f,
   TO_DATE('2025-01-01', 'YYYY-MM-DD') AS g,
-  LTRIM(
-    NVL2(12, ';' || 12, NULL) || NVL2(20, ';' || 20, NULL) || NVL2(6, ';' || 6, NULL),
-    ';'
-  ) AS h,
-  EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM CAST('1993-05-25 12:45:36' AS DATE)) AS i,
+  12 || ';' || 20 || ';' || 6 AS h,
+  EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS')) AS i,
   (
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM CAST('1993-05-25 12:45:36' AS DATE))
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS'))
   ) * 4 + (
-    EXTRACT(QUARTER FROM CAST(o_orderdate AS DATE)) - EXTRACT(QUARTER FROM CAST('1993-05-25 12:45:36' AS DATE))
+    FLOOR((
+      EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - 1
+    ) / 3) - FLOOR(
+      (
+        EXTRACT(MONTH FROM TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS')) - 1
+      ) / 3
+    )
   ) AS j,
   (
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM CAST('1993-05-25 12:45:36' AS DATE))
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS'))
   ) * 12 + (
-    EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - EXTRACT(MONTH FROM CAST('1993-05-25 12:45:36' AS DATE))
+    EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - EXTRACT(MONTH FROM TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS'))
   ) AS k,
   FLOOR(
     (
-      CAST(o_orderdate AS DATE) - CAST('1993-05-25 12:45:36' AS DATE) + (
-        MOD((
-          TO_CHAR(CAST('1993-05-25 12:45:36' AS DATE), 'D') + -1
-        ), 7)
+      TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'DD') + (
+        MOD(
+          (
+            TO_CHAR(TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS'), 'D') + -1
+          ),
+          7
+        )
       ) - (
         MOD((
           TO_CHAR(CAST(o_orderdate AS DATE), 'D') + -1
@@ -101,17 +65,22 @@ SELECT
       )
     ) / 7
   ) AS l,
-  CAST(o_orderdate AS DATE) - CAST('1993-05-25 12:45:36' AS DATE) AS m,
+  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'DD') AS m,
   (
-    TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'HH24') - TRUNC(CAST(CAST('1993-05-25 12:45:36' AS DATE) AS DATE), 'HH24')
+    TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'HH24') - TRUNC(CAST(TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'HH24')
   ) * 24 AS n,
   (
-    TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'MI') - TRUNC(CAST(CAST('1993-05-25 12:45:36' AS DATE) AS DATE), 'MI')
+    TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'MI') - TRUNC(CAST(TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'MI')
   ) * 1440 AS o,
   (
-    CAST(o_orderdate AS DATE) - CAST('1993-05-25 12:45:36' AS DATE)
+    CAST(o_orderdate AS DATE) - TO_DATE('1993-05-25 12:45:36', 'YYYY-MM-DD HH24:MI:SS')
   ) * 86400 AS p,
-  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'IW') AS q
+  TRUNC(
+    CAST(CAST(o_orderdate AS DATE) - MOD((
+      TO_CHAR(CAST(o_orderdate AS DATE), 'D') + -1
+    ), 7) AS DATE),
+    'DD'
+  ) AS q
 FROM TPCH.ORDERS
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

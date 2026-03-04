@@ -8,7 +8,7 @@ SELECT
   ) * 12 + (
     EXTRACT(MONTH FROM TO_DATE('2025-05-02 11:00:00', 'YYYY-MM-DD HH24:MI:SS')) - EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATE))
   ) AS months_diff,
-  TO_DATE('2025-05-02 11:00:00', 'YYYY-MM-DD HH24:MI:SS') - CAST(sbtxdatetime AS DATE) AS days_diff,
+  TRUNC(CAST(TO_DATE('2025-05-02 11:00:00', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'DD') - TRUNC(CAST(CAST(sbtxdatetime AS DATE) AS DATE), 'DD') AS days_diff,
   (
     TRUNC(CAST(TO_DATE('2025-05-02 11:00:00', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'HH24') - TRUNC(CAST(CAST(sbtxdatetime AS DATE) AS DATE), 'HH24')
   ) * 24 AS hours_diff,
