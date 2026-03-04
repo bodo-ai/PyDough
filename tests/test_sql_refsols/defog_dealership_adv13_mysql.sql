@@ -43,3 +43,5 @@ SELECT
   sum_payment AS total_payments,
   sum_payment - LAG(sum_payment, 1) OVER (ORDER BY CASE WHEN dt IS NULL THEN 1 ELSE 0 END, dt) AS MoM_change
 FROM _t0
+ORDER BY
+  1

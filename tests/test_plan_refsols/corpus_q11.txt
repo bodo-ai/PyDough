@@ -1,0 +1,4 @@
+ROOT(columns=[('act', ACT), ('scene', SCENE), ('n_lines', ndistinct_DATALINE), ('pct_lines', ROUND(((100:numeric * ndistinct_DATALINE) / RELSUM(args=[ndistinct_DATALINE], partition=[ACT], order=[])), 2:numeric))], orderings=[(ACT):asc_first, (SCENE):asc_first])
+ AGGREGATE(keys={'ACT': ACT, 'SCENE': SCENE}, aggregations={'ndistinct_DATALINE': NDISTINCT(DATALINE)})
+  FILTER(condition=PLAY == 'othello':string, columns={'ACT': ACT, 'DATALINE': DATALINE, 'SCENE': SCENE})
+   SCAN(table=SHAKE, columns={'ACT': ACT, 'DATALINE': DATALINE, 'PLAY': PLAY, 'SCENE': SCENE})

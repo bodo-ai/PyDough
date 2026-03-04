@@ -1,0 +1,6 @@
+ROOT(columns=[('total_quatity', DEFAULT_TO(sum_quantity, 0:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_quantity': SUM(quantity)})
+  JOIN(condition=t0.product_id == t1.product_id, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'quantity': t0.quantity})
+   SCAN(table=ITEM, columns={'product_id': product_id, 'quantity': quantity})
+   FILTER(condition=(color == 'White':string) & (size == 'M':string), columns={'product_id': product_id})
+    SCAN(table=PROD, columns={'color': color, 'product_id': product_id, 'size': size})

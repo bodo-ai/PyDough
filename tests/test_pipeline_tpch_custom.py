@@ -3391,6 +3391,7 @@ from .testing_utilities import (
                 "count_multiple_filters_x",
                 skip_sql=True,
             ),
+            id="count_multiple_filters_x",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -4439,6 +4440,7 @@ from .testing_utilities import (
                     }
                 ),
                 "dataframe_collection_datatypes",
+                order_sensitive=True,
             ),
             id="dataframe_collection_datatypes",
         ),
