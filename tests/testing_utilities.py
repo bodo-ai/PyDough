@@ -952,6 +952,10 @@ def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
     Apply a table name prefix to all to_table calls in a PyDough code string.
     This is used for cross-database writes (e.g., Snowflake writing to DEFOG database).
 
+    Also updates per='...' references in BEST/RANKING window functions when
+    the per= value matches a to_table table name, so that per= continues to
+    resolve correctly after the table name is prefixed.
+
     Args:
         pydough_code: The PyDough code string containing to_table calls.
         prefix: The prefix to prepend to table names (e.g., "E2E_TESTS_DB.PUBLIC.").
@@ -959,18 +963,33 @@ def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
     Returns:
         The modified PyDough code string with prefixed table names.
     """
-    # Pattern matches: name='table_name' or name="table_name"
-    # and replaces with: name='prefix.table_name' or name="prefix.table_name"
     import re
 
+    # Collect all table names used in to_table name='...' calls before
+    # replacing, so we know which per= references should also be updated.
+    name_pattern = r"name=(['\"])([^'\"]+)\1"
+    to_table_names = {m.group(2) for m in re.finditer(name_pattern, pydough_code)}
+
     def replace_name(match: re.Match) -> str:
-        quote = match.group(1)  # ' or "
+        quote = match.group(1)
         table_name = match.group(2)
         return f"name={quote}{prefix}{table_name}{quote}"
 
-    # Match name='...' or name="..." in to_table calls
-    pattern = r"name=(['\"])([^'\"]+)\1"
-    return re.sub(pattern, replace_name, pydough_code)
+    result = re.sub(name_pattern, replace_name, pydough_code)
+
+    # Also update per='...' references that match a to_table name so that
+    # BEST/RANKING with per= pointing to a materialized collection resolves
+    # correctly after the table name is prefixed.
+    per_pattern = r"per=(['\"])([^'\"]+)\1"
+
+    def replace_per(match: re.Match) -> str:
+        quote = match.group(1)
+        per_name = match.group(2)
+        if per_name in to_table_names:
+            return f"per={quote}{prefix}{per_name}{quote}"
+        return match.group(0)
+
+    return re.sub(per_pattern, replace_per, result)
 
 
 def transform_and_exec_pydough(
@@ -1003,9 +1022,12 @@ def transform_and_exec_pydough(
         if session is None:
             session = kwargs.get("session", None)
         # If the pydough_impl is a string, parse it with pydough.from_string.
-        return pydough.from_string(
-            pydough_impl, metadata=graph, environment=kwargs, session=session
-        )
+        # Pass either session or metadata, not both (session carries its own metadata).
+        if session is not None:
+            return pydough.from_string(
+                pydough_impl, environment=kwargs, session=session
+            )
+        return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
     else:
         # Otherwise, transform the function with the decorator and call it.
         return init_pydough_context(graph)(pydough_impl)(**kwargs)

@@ -6211,6 +6211,128 @@ def test_pipeline_e2e_errors(
             ),
             id="to_table_test_22",
         ),
+        # Test 23: CROSS TPCH view with range_collection view
+        # Verifies that a to_table of a TPCH query can be crossed with
+        # a to_table of a range_collection.
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')"
+                ".CALCULATE(nkey=key, nname=name)\n"
+                "nations_tmp = pydough.to_table(asian_nations, name='asia_nations_t23', replace=True)\n"
+                "multipliers = pydough.range_collection('mults', 'mult', 1, 3, 1)\n"
+                "mult_tmp = pydough.to_table(multipliers, name='mults_t23', replace=True)\n"
+                "result = (\n"
+                "    nations_tmp\n"
+                "    .CALCULATE(nkey, nname)\n"
+                "    .CROSS(mult_tmp)\n"
+                "    .CALCULATE(nkey, nname, mult)\n"
+                "    .ORDER_BY(nkey.ASC(), mult.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nkey": [8, 8, 9, 9, 12, 12, 18, 18, 21, 21],
+                        "nname": [
+                            "INDIA",
+                            "INDIA",
+                            "INDONESIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "JAPAN",
+                            "CHINA",
+                            "CHINA",
+                            "VIETNAM",
+                            "VIETNAM",
+                        ],
+                        "mult": [1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+                    }
+                ),
+                "to_table_test_23",
+            ),
+            id="to_table_test_23",
+        ),
+        # Test 24: CROSS TPCH view with dataframe_collection view
+        # Verifies that a to_table of a TPCH query can be crossed with
+        # a to_table of a dataframe_collection.
+        pytest.param(
+            PyDoughPandasTest(
+                "euro_region = regions.WHERE(name == 'EUROPE').CALCULATE(rkey=key, rname=name)\n"
+                "regions_tmp = pydough.to_table(euro_region, name='euro_regions_t24', replace=True)\n"
+                "tiers = pydough.dataframe_collection('tiers', tiers_df, ['tier_id'])\n"
+                "tiers_tmp = pydough.to_table(tiers, name='tiers_t24', replace=True)\n"
+                "result = (\n"
+                "    regions_tmp\n"
+                "    .CALCULATE(rkey, rname)\n"
+                "    .CROSS(tiers_tmp)\n"
+                "    .CALCULATE(rkey, rname, tier_id, tier_label)\n"
+                "    .ORDER_BY(tier_id.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [3, 3, 3],
+                        "rname": ["EUROPE", "EUROPE", "EUROPE"],
+                        "tier_id": [1, 2, 3],
+                        "tier_label": ["Gold", "Silver", "Bronze"],
+                    }
+                ),
+                "to_table_test_24",
+                kwargs={
+                    "tiers_df": pd.DataFrame(
+                        {
+                            "tier_id": [1, 2, 3],
+                            "tier_label": ["Gold", "Silver", "Bronze"],
+                        }
+                    )
+                },
+            ),
+            id="to_table_test_24",
+        ),
+        # Test 25: BEST where per= ancestor is the to_table collection.
+        # Verifies that uniqueness columns from ViewGeneratedCollection are
+        # used correctly in the BEST window function's PARTITION BY clause.
+        # regions_tmp default unique_columns = [['rkey', 'rname']] (all cols),
+        # so PARTITION BY (rkey, rname) is used to find the best nation per region.
+        pytest.param(
+            PyDoughPandasTest(
+                "regions_tmp = pydough.to_table(\n"
+                "    regions.CALCULATE(rkey=key, rname=name),\n"
+                "    name='regions_t25', replace=True\n"
+                ")\n"
+                "result = (\n"
+                "    regions_tmp\n"
+                "    .CALCULATE(rkey, rname)\n"
+                "    .CROSS(nations)\n"
+                "    .WHERE(region_key == rkey)\n"
+                "    .BEST(by=key.ASC(), per='regions_t25')\n"
+                "    .CALCULATE(rkey, rname, nkey=key, nname=name)\n"
+                "    .ORDER_BY(rkey.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                        "rname": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nkey": [0, 1, 8, 6, 4],
+                        "nname": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "INDIA",
+                            "FRANCE",
+                            "EGYPT",
+                        ],
+                    }
+                ),
+                "to_table_test_25",
+            ),
+            id="to_table_test_25",
+        ),
     ],
 )
 def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
