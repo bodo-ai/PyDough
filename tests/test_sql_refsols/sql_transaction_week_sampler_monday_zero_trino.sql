@@ -1,13 +1,20 @@
 SELECT
   sbtxdatetime AS date_time,
-  DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP)) AS sow,
-  CASE
-    WHEN (
+  DATE_TRUNC(
+    'DAY',
+    DATE_ADD(
+      'DAY',
       (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 0
-    THEN 'Sunday'
+        (
+          (
+            DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) % 7
+          ) + 0
+        ) % 7
+      ) * -1,
+      CAST(sbtxdatetime AS TIMESTAMP)
+    )
+  ) AS sow,
+  CASE
     WHEN (
       (
         DAY_OF_WEEK(sbtxdatetime) % 7
@@ -44,11 +51,17 @@ SELECT
       ) + 1
     ) = 6
     THEN 'Saturday'
+    WHEN (
+      (
+        DAY_OF_WEEK(sbtxdatetime) % 7
+      ) + 1
+    ) = 7
+    THEN 'Sunday'
   END AS dayname,
   (
     (
       DAY_OF_WEEK(sbtxdatetime) % 7
-    ) + 7
+    ) + 0
   ) % 7 AS dayofweek
 FROM main.sbtransaction
 WHERE

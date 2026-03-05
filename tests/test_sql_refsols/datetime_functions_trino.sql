@@ -38,12 +38,6 @@ SELECT
       (
         DAY_OF_WEEK(o_orderdate) % 7
       ) + 1
-    ) = 0
-    THEN 'Sunday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
     ) = 1
     THEN 'Monday'
     WHEN (
@@ -76,6 +70,12 @@ SELECT
       ) + 1
     ) = 6
     THEN 'Saturday'
+    WHEN (
+      (
+        DAY_OF_WEEK(o_orderdate) % 7
+      ) + 1
+    ) = 7
+    THEN 'Sunday'
   END AS dayname_col,
   'Monday' AS dayname_str1,
   'Tuesday' AS dayname_str2,

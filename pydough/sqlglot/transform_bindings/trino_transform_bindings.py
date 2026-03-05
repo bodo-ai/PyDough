@@ -9,10 +9,11 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.configs import DayOfWeek
 from pydough.types import PyDoughType
 
 from .base_transform_bindings import BaseTransformBindings
-from .sqlglot_transform_utils import DateTimeUnit
+from .sqlglot_transform_utils import DateTimeUnit, apply_parens
 
 
 class TrinoTransformBindings(BaseTransformBindings):
@@ -37,6 +38,26 @@ class TrinoTransformBindings(BaseTransformBindings):
     Mapping of PyDough operators to equivalent Trino SQL function names
     These are used to generate anonymous function calls in SQLGlot
     """
+
+    @property
+    def dialect_start_of_week(self) -> DayOfWeek:
+        """
+        Which day of the week is considered the start of the week within the
+        SQL dialect. Individual dialects may override this.
+        """
+        return DayOfWeek.MONDAY
+
+    @property
+    def dialect_dow_mapping(self) -> dict[str, int]:
+        return {
+            "Monday": 1,
+            "Tuesday": 2,
+            "Wednesday": 3,
+            "Thursday": 4,
+            "Friday": 5,
+            "Saturday": 6,
+            "Sunday": 7,
+        }
 
     def convert_call_to_sqlglot(
         self,
@@ -95,3 +116,19 @@ class TrinoTransformBindings(BaseTransformBindings):
         else:
             # For other units, use the standard SQLGlot truncation
             return super().apply_datetime_truncation(base, unit)
+
+    def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        offset: int = (-self.start_of_week_offset) % 7
+        dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
+        if offset == 1:
+            return dow_expr
+        breakpoint()
+        return sqlglot_expressions.Mod(
+            this=apply_parens(
+                sqlglot_expressions.Add(
+                    this=dow_expr,
+                    expression=sqlglot_expressions.Literal.number(offset - 1),
+                )
+            ),
+            expression=sqlglot_expressions.Literal.number(7),
+        )

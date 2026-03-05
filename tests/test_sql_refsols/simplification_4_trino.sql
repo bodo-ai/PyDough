@@ -9,7 +9,24 @@ WITH _t AS (
 )
 SELECT
   sbtxdatetime AS date_time,
-  DATE_ADD('WEEK', -8, DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP))) AS s00,
+  DATE_ADD(
+    'WEEK',
+    -8,
+    DATE_TRUNC(
+      'DAY',
+      DATE_ADD(
+        'DAY',
+        (
+          (
+            (
+              DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) % 7
+            ) + 0
+          ) % 7
+        ) * -1,
+        CAST(sbtxdatetime AS TIMESTAMP)
+      )
+    )
+  ) AS s00,
   FALSE AS s01,
   MONTH(CAST(sbtxdatetime AS TIMESTAMP)) IN (1, 2, 3) AS s02,
   MONTH(CAST(sbtxdatetime AS TIMESTAMP)) IN (4, 5, 6) AS s03,

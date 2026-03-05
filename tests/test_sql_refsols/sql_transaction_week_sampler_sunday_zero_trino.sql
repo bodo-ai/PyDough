@@ -1,13 +1,18 @@
 SELECT
   sbtxdatetime AS date_time,
-  DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP)) AS sow,
+  DATE_TRUNC(
+    'DAY',
+    DATE_ADD(
+      'DAY',
+      CAST((
+        (
+          DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) % 7
+        ) + 1
+      ) AS BIGINT) * -1,
+      CAST(sbtxdatetime AS TIMESTAMP)
+    )
+  ) AS sow,
   CASE
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 0
-    THEN 'Sunday'
     WHEN (
       (
         DAY_OF_WEEK(sbtxdatetime) % 7
@@ -44,6 +49,12 @@ SELECT
       ) + 1
     ) = 6
     THEN 'Saturday'
+    WHEN (
+      (
+        DAY_OF_WEEK(sbtxdatetime) % 7
+      ) + 1
+    ) = 7
+    THEN 'Sunday'
   END AS dayname,
   (
     DAY_OF_WEEK(sbtxdatetime) % 7

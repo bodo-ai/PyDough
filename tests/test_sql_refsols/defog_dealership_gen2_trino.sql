@@ -6,7 +6,7 @@ WHERE
     (
       (
         DAY_OF_WEEK(payment_date) % 7
-      ) + 7
+      ) + 0
     ) % 7
   ) IN (5, 6)
   AND vendor_name = 'Utility Company'

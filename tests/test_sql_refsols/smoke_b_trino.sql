@@ -14,12 +14,6 @@ SELECT
         (
           DAY_OF_WEEK(o_orderdate) % 7
         ) + 1
-      ) = 0
-      THEN 'Sunday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
       ) = 1
       THEN 'Monday'
       WHEN (
@@ -52,6 +46,12 @@ SELECT
         ) + 1
       ) = 6
       THEN 'Saturday'
+      WHEN (
+        (
+          DAY_OF_WEEK(o_orderdate) % 7
+        ) + 1
+      ) = 7
+      THEN 'Sunday'
     END,
     (
       (
@@ -77,7 +77,18 @@ SELECT
   DATE_DIFF('HOUR', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS n,
   DATE_DIFF('MINUTE', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS o,
   DATE_DIFF('SECOND', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS p,
-  DATE_TRUNC('WEEK', CAST(o_orderdate AS TIMESTAMP)) AS q
+  DATE_TRUNC(
+    'DAY',
+    DATE_ADD(
+      'DAY',
+      CAST((
+        (
+          DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) % 7
+        ) + 1
+      ) AS BIGINT) * -1,
+      CAST(o_orderdate AS TIMESTAMP)
+    )
+  ) AS q
 FROM tpch.orders
 WHERE
   STARTS_WITH(o_orderpriority, '3') AND o_clerk LIKE '%5' AND o_comment LIKE '%fo%'

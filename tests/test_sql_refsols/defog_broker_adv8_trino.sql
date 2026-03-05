@@ -6,5 +6,35 @@ JOIN main.sbcustomer AS sbcustomer
   ON LOWER(sbcustomer.sbcustcountry) = 'usa'
   AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
 WHERE
-  sbtransaction.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP)
-  AND sbtransaction.sbtxdatetime >= DATE_ADD('WEEK', -1, DATE_TRUNC('WEEK', CURRENT_TIMESTAMP))
+  sbtransaction.sbtxdatetime < DATE_TRUNC(
+    'DAY',
+    DATE_ADD(
+      'DAY',
+      (
+        (
+          (
+            DAY_OF_WEEK(CURRENT_TIMESTAMP) % 7
+          ) + 0
+        ) % 7
+      ) * -1,
+      CURRENT_TIMESTAMP
+    )
+  )
+  AND sbtransaction.sbtxdatetime >= DATE_ADD(
+    'WEEK',
+    -1,
+    DATE_TRUNC(
+      'DAY',
+      DATE_ADD(
+        'DAY',
+        (
+          (
+            (
+              DAY_OF_WEEK(CURRENT_TIMESTAMP) % 7
+            ) + 0
+          ) % 7
+        ) * -1,
+        CURRENT_TIMESTAMP
+      )
+    )
+  )
