@@ -1,0 +1,61 @@
+name: Run Oracle Tests
+
+on:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: "JSON string of Python versions"
+        type: string
+        required: true
+    secrets:
+      ORACLE_PASSWORD:
+        required: true
+
+jobs:
+  oracle-tests:
+    name: Oracle Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions) }}
+
+    # Define services here to run Docker containers alongside your job
+    services:
+      oracle:
+        image: bodoai1/pydough-oracle-tpch:latest
+        env:
+          # Set environment variables for MySQL container
+          ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+        ports:
+          - 1521:1521
+    env:
+      ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+      ORACLE_SERVICE: FREEPDB1
+      ORACLE_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[oracle]" 
+
+      - name: Confirm Oracle connector is installed
+        run: uv run python -c "import oracledb; print('Oracle connector installed')"
+
+      - name: Run Oracle Tests
+
+        run: uv run pytest -m oracle tests/ -rs

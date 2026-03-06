@@ -370,11 +370,8 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `mysql`     | `mysql-connector-python`               |
 | `snowflake` | `snowflake-connector-python[pandas]`  |
 | `postgres` | `psycopg2-binary`  |
-<<<<<<< HEAD
 | `oracle` | `python-oracledb`  |
-=======
 | `bodosql`    | Depends on the catalog being used |
->>>>>>> main
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
