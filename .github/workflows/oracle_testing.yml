@@ -60,8 +60,8 @@ jobs:
           sudo apt-get install -y libaio1t64 wget unzip
           wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
           wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-sqlplus-linuxx64.zip
-          unzip instantclient-basiclite-linuxx64.zip
-          unzip instantclient-sqlplus-linuxx64.zip
+          unzip -o instantclient-basiclite-linuxx64.zip
+          unzip -o instantclient-sqlplus-linuxx64.zip
           sudo mv instantclient_* /opt/oracle
           echo "/opt/oracle" | sudo tee /etc/ld.so.conf.d/oracle-instantclient.conf
           sudo ldconfig
