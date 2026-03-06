@@ -1,11 +1,10 @@
 import warnings
-from dataclasses import dataclass
 
 import pydough
 from pydough.configs import PyDoughSession
 from pydough.conversion import convert_ast_to_relational
-from pydough.database_connectors import DatabaseDialect
-from pydough.errors import PyDoughException, PyDoughSessionException
+from pydough.database_connectors import CreateCapabilities, DatabaseDialect
+from pydough.errors import PyDoughSessionException
 from pydough.errors.error_utils import is_valid_sql_name
 from pydough.logger import get_logger
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
@@ -49,46 +48,6 @@ def _infer_schema_from_relational(
     return column_names, column_types
 
 
-@dataclass(frozen=True)
-class CreateCapabilities:
-    """
-    Class to define the capabilities of the different database dialects
-    for CREATE statements.
-    This is used to determine which syntax options are available
-    for creating views/tables in different databases.
-    """
-
-    replace_table: bool = True
-    temp_table: bool = True
-    replace_view: bool = True
-    temp_view: bool = True
-
-
-CREATE_CAPABILITIES: dict[DatabaseDialect, CreateCapabilities] = {
-    DatabaseDialect.SNOWFLAKE: CreateCapabilities(
-        temp_view=False,
-    ),
-    DatabaseDialect.POSTGRES: CreateCapabilities(
-        replace_table=False,
-        temp_view=False,
-    ),
-    DatabaseDialect.MYSQL: CreateCapabilities(
-        replace_table=False,
-        temp_view=False,
-    ),
-    DatabaseDialect.SQLITE: CreateCapabilities(
-        replace_table=False,
-        replace_view=False,
-    ),
-    DatabaseDialect.ANSI: CreateCapabilities(),
-}
-"""
-Mapping of database dialects to their CREATE statement capabilities.
-This is used to determine which options are available when generating 
-the DDL for creating views/tables in different databases.
-"""
-
-
 def _generate_create_ddl(
     name: str,
     sql: str,
@@ -114,7 +73,7 @@ def _generate_create_ddl(
         - actual_temp is the final temp value (may differ from input due to dialect limitations)
     """
     # Handle differences in CREATE syntax for different databases.
-    create_caps: CreateCapabilities = CREATE_CAPABILITIES[db_dialect]
+    create_caps: CreateCapabilities = db_dialect.create_capabilities
     object_type = "VIEW" if as_view else "TABLE"
     ddl_statements: list[str] = []
 
@@ -283,22 +242,6 @@ def to_table(
         raise PyDoughSessionException(
             "Cannot create view/table without a database connection.\n"
             "Please configure a database connection in the session."
-        )
-    # TEMP VIEW not supported for Snowflake, MySQL, and Postgres.
-    # Raise an error if user tries to create a temp view on those databases.
-    # Note: TEMP TABLES are supported, only TEMP VIEWS are not.
-    if (
-        temp
-        and as_view
-        and session.database.dialect
-        in [
-            DatabaseDialect.SNOWFLAKE,
-            DatabaseDialect.MYSQL,
-            DatabaseDialect.POSTGRES,
-        ]
-    ):
-        raise PyDoughException(
-            f"TEMPORARY views are not supported for {session.database.dialect.name}"
         )
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):

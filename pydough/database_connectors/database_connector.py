@@ -4,7 +4,12 @@ by leveraging PEP 249 (Python Database API Specification v2.0).
 https://peps.python.org/pep-0249/
 """
 
-__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
+__all__ = [
+    "CreateCapabilities",
+    "DatabaseConnection",
+    "DatabaseContext",
+    "DatabaseDialect",
+]
 
 from dataclasses import dataclass
 from enum import Enum
@@ -154,6 +159,20 @@ class DatabaseConnection:
         return self._cursor
 
 
+@dataclass(frozen=True)
+class CreateCapabilities:
+    """
+    Defines the DDL capabilities of a database dialect for CREATE statements.
+    Used to determine which syntax options are available when creating
+    views/tables in different databases.
+    """
+
+    replace_table: bool = True
+    temp_table: bool = True
+    replace_view: bool = True
+    temp_view: bool = True
+
+
 class DatabaseDialect(Enum):
     """Enum for the supported database dialects.
     In general the dialects should"""
@@ -164,6 +183,24 @@ class DatabaseDialect(Enum):
     MYSQL = "mysql"
     POSTGRES = "postgres"
     BODOSQL = "bodosql"
+
+    @property
+    def create_capabilities(self) -> CreateCapabilities:
+        """
+        Returns the DDL CREATE capabilities for this dialect.
+        """
+        match self:
+            case DatabaseDialect.SNOWFLAKE:
+                return CreateCapabilities(temp_view=False)
+            case DatabaseDialect.POSTGRES:
+                return CreateCapabilities(replace_table=False, temp_view=False)
+            case DatabaseDialect.MYSQL:
+                return CreateCapabilities(replace_table=False, temp_view=False)
+            case DatabaseDialect.SQLITE:
+                return CreateCapabilities(replace_table=False, replace_view=False)
+            case _:
+                # ANSI
+                return CreateCapabilities()
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":
