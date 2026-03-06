@@ -1495,10 +1495,10 @@ def oracle_docker_setup() -> None:
     except ImportError as e:
         raise RuntimeError("python-oracledb is not installed") from e
 
-    # Wait for Oracle to be ready for 5 minutes max
+    # Wait for Oracle to be ready for 10 minutes max
     # Check for keywords (last created schema)
     conn: oracledb.Connection | None = None
-    for _ in range(300):
+    for _ in range(600):
         try:
             if not conn:
                 conn = oracledb.connect(
@@ -1518,12 +1518,12 @@ def oracle_docker_setup() -> None:
                 conn.close()
                 break
             else:
-                print(f"Waiting {_ + 1}/180 seconds for data to be load...")
+                print(f"Waiting {_ + 1}/600 seconds for data to be load...")
                 time.sleep(1)
 
         except oracledb.Error as e:
             print("Error occurred while connecting to Oracle:", e)
-            print(f"Waiting {_ + 1}/180 seconds for Oracle to be ready...")
+            print(f"Waiting {_ + 1}/600 seconds for Oracle to be ready...")
             time.sleep(1)
     else:
         subprocess.run(["docker", "rm", "-f", ORACLE_DOCKER_CONTAINER])
