@@ -54,39 +54,24 @@ jobs:
       - name: Install dependencies
         run: uv pip install -e ".[oracle]" 
 
-      - name: Install Oracle SQL*Plus
+      - name: Wait for TPCH data to load
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libaio1t64 wget unzip
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
-          wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
-          wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-sqlplus-linuxx64.zip
-          unzip -o instantclient-basiclite-linuxx64.zip
-          unzip -o instantclient-sqlplus-linuxx64.zip
-          sudo mv instantclient_* /opt/oracle
-          echo "/opt/oracle" | sudo tee /etc/ld.so.conf.d/oracle-instantclient.conf
-          sudo ldconfig
-          echo "/opt/oracle" >> $GITHUB_PATH
-
-      - name: Wait for Oracle to be ready
-        run: |
-          for i in $(seq 1 180); do
-            COUNT=$(echo "SET HEADING OFF FEEDBACK OFF;
-            SELECT COUNT(*) FROM lineitem;
-            EXIT;" | sqlplus -s tpch/$ORACLE_PASSWORD@$ORACLE_HOST:1521/$ORACLE_SERVICE)
-
-            COUNT=$(echo $COUNT | xargs)
+          for i in {1..600}; do
+            COUNT=$(docker exec ${{ job.services.oracle.id }} bash -c \
+              "echo 'SET HEADING OFF FEEDBACK OFF; SELECT COUNT(*) FROM tpch.lineitem; EXIT;' | sqlplus -s tpch/$ORACLE_PASSWORD@localhost:1521/FREEPDB1" \
+              2>/dev/null | tr -dc '0-9')
 
             if [ "$COUNT" = "6001215" ]; then
-              echo "Oracle is ready and data loaded"
+              echo "TPCH data loaded"
               exit 0
             fi
 
-            echo "Waiting for Oracle data to load... ($i/180)"
+            echo "Waiting for TPCH load... ($i/600)"
             sleep 1
           done
 
-          echo "Oracle did not become ready in time"
+          echo "TPCH did not finish loading"
+          docker logs ${{ job.services.oracle.id }}
           exit 1
 
       - name: Confirm Oracle connector is installed
