@@ -33,6 +33,7 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_cross_9,
     bad_cross_10,
     bad_cross_11,
+    bad_cross_12,
     bad_name_1,
     bad_name_2,
     bad_name_3,
@@ -5526,6 +5527,16 @@ def test_pipeline_e2e_tpch_custom(
             id="bad_cross_11",
         ),
         pytest.param(
+            bad_cross_12,
+            None,
+            re.escape(
+                "Invalid use of CROSS: `CROSS(nums)` cannot be used without a "
+                "left-hand side collection. Use `nums.CALCULATE(...)` or "
+                "`some_collection.CROSS(nums)` instead."
+            ),
+            id="bad_cross_12",
+        ),
+        pytest.param(
             bad_quantile_1,
             None,
             re.escape(
@@ -5761,13 +5772,12 @@ def test_pipeline_e2e_errors(
             ),
             id="to_table_test_2",
         ),
-        # Test 3: UnqualifiedWhere: Using CROSS to access
-        # materialized view columns
+        # Test 3: UnqualifiedWhere: Accessing materialized view columns directly
         pytest.param(
             PyDoughPandasTest(
                 "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
                 "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t3', replace=True, temp=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(key, name)",
+                "result = asian_tmp.CALCULATE(key, name)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5780,13 +5790,13 @@ def test_pipeline_e2e_errors(
             id="to_table_test_3",
         ),
         # Test 4: UnqualifiedCalculate: WHERE + CALCULATE,
-        # then access materialized view using CROSS and select columns.
+        # then access materialized view and select columns.
         # Get 5 Asian nations ordered by nation_key
         pytest.param(
             PyDoughPandasTest(
                 "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
                 "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).ORDER_BY(nation_key.ASC())",
+                "result = asian_tmp.CALCULATE(nation_key, nation_name).ORDER_BY(nation_key.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5810,7 +5820,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key)\n"
                 "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t5', temp=True, replace=True)\n"
-                "result = customers.CALCULATE(name, cust_nation_key=nation.key).WHERE(HAS(CROSS(asian_tmp).WHERE(nation_key == cust_nation_key))).CALCULATE(name).TOP_K(5, by=name)",
+                "result = customers.CALCULATE(name, cust_nation_key=nation.key).WHERE(HAS(asian_tmp.WHERE(nation_key == cust_nation_key))).CALCULATE(name).TOP_K(5, by=name)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5833,7 +5843,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "expensive_orders = orders.CALCULATE(okey=key, total=total_price)\n"
                 "orders_tmp = pydough.to_table(expensive_orders, name='expensive_orders_t6', replace=True)\n"
-                "result = CROSS(orders_tmp).TOP_K(10, by=total.DESC())",
+                "result = orders_tmp.TOP_K(10, by=total.DESC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5874,7 +5884,7 @@ def test_pipeline_e2e_errors(
                 "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t7', replace=True, temp=True)\n"
                 "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
                 "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t7', temp=True, replace=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=(nation_name, ckey))",
+                "result = asian_tmp.CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=(nation_name, ckey))",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5894,7 +5904,7 @@ def test_pipeline_e2e_errors(
                 "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t8', replace=True, temp=True)\n"
                 "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
                 "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t8', replace=True)\n"
-                "result = CROSS(asian_tmp).CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=ckey)",
+                "result = asian_tmp.CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=ckey)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5912,7 +5922,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "order_summary = orders.CALCULATE(okey=key, total=total_price, ckey=customer.key)\n"
                 "summary_tmp = pydough.to_table(order_summary, name='order_summary_t9', temp=True, replace=True)\n"
-                "result = CROSS(summary_tmp).CALCULATE(okey, total, rank=RANKING(by=total.DESC())).TOP_K(5, by=total.DESC())",
+                "result = summary_tmp.CALCULATE(okey, total, rank=RANKING(by=total.DESC())).TOP_K(5, by=total.DESC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5937,7 +5947,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "recent_orders = orders.WHERE(order_date > DATETIME('1995-01-01')).CALCULATE(okey=key, odate=order_date)\n"
                 "recent_tmp = pydough.to_table(recent_orders, name='recent_orders_t10', replace=True)\n"
-                "result = CROSS(recent_tmp).WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=okey.ASC(na_pos='last'))",
+                "result = recent_tmp.WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=okey.ASC(na_pos='last'))",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5961,7 +5971,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "parts_summary = parts.WHERE(size > 10).CALCULATE(pkey=key, pname=name, psize=size)\n"
                 "parts_tmp = pydough.to_table(parts_summary, name='parts_summary_t11', replace=True, temp=True)\n"
-                "result = CROSS(parts_tmp).CALCULATE(pkey, pname, psize).TOP_K(5, by=(psize.DESC(), pkey.ASC()))",
+                "result = parts_tmp.CALCULATE(pkey, pname, psize).TOP_K(5, by=(psize.DESC(), pkey.ASC()))",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -5986,7 +5996,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "order_summary = orders.CALCULATE(okey=key, total=total_price)\n"
                 "summary_tmp = pydough.to_table(order_summary, name='order_summary_t12', temp=True, replace=True)\n"
-                "result = CROSS(summary_tmp).WHERE(total > 1000).CALCULATE(okey, total).TOP_K(5, by=total.DESC())",
+                "result = summary_tmp.WHERE(total > 1000).CALCULATE(okey, total).TOP_K(5, by=total.DESC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6008,7 +6018,7 @@ def test_pipeline_e2e_errors(
         pytest.param(
             PyDoughPandasTest(
                 "nations_copy = pydough.to_table(nations, name='nations_t13', replace=True)\n"
-                "result = CROSS(nations_copy).CALCULATE(key, name).TOP_K(5, by=key.ASC())",
+                "result = nations_copy.CALCULATE(key, name).TOP_K(5, by=key.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6032,7 +6042,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "sorted_nations = nations.ORDER_BY(name.DESC())\n"
                 "sorted_tmp = pydough.to_table(sorted_nations, name='sorted_nations_t14', temp=True, replace=True)\n"
-                "result = CROSS(sorted_tmp).CALCULATE(key, name).TOP_K(5, by=name.DESC())",
+                "result = sorted_tmp.CALCULATE(key, name).TOP_K(5, by=name.DESC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6055,7 +6065,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "top_nations = nations.TOP_K(3, by=key.ASC())\n"
                 "top_tmp = pydough.to_table(top_nations, name='top_nations_t15', temp=True, replace=True)\n"
-                "result = CROSS(top_tmp).CALCULATE(key, name)",
+                "result = top_tmp.CALCULATE(key, name)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6073,7 +6083,7 @@ def test_pipeline_e2e_errors(
                 "nation_regions = nations.CALCULATE(nkey=key, rkey=region.key)"
                 ".PARTITION(name='by_region', by=rkey)\n"
                 "counts_tmp = pydough.to_table(nation_regions, name='region_counts_t16', replace=True)\n"
-                "result = CROSS(counts_tmp).CALCULATE(rkey).ORDER_BY(rkey.ASC())",
+                "result = counts_tmp.CALCULATE(rkey).ORDER_BY(rkey.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6089,7 +6099,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "first_nation = nations.TOP_K(1, by=key.ASC()).SINGULAR()\n"
                 "first_tmp = pydough.to_table(first_nation, name='first_nation_t17', temp=True, replace=True)\n"
-                "result = CROSS(first_tmp).CALCULATE(key, name)",
+                "result = first_tmp.CALCULATE(key, name)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6107,7 +6117,7 @@ def test_pipeline_e2e_errors(
                 "best_nation_per_region = regions.nations"
                 ".BEST(by=key.ASC(), per='regions')\n"
                 "best_tmp = pydough.to_table(best_nation_per_region, name='best_nation_t18', temp=True, replace=True)\n"
-                "result = CROSS(best_tmp).CALCULATE(key, name).ORDER_BY(key.ASC())",
+                "result = best_tmp.CALCULATE(key, name).ORDER_BY(key.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6126,7 +6136,7 @@ def test_pipeline_e2e_errors(
                 "step1_tmp = pydough.to_table(step1, name='step1_t19', temp=True, replace=True)\n"
                 "step2 = step1_tmp.WHERE(nkey < 15)\n"
                 "step2_tmp = pydough.to_table(step2, name='step2_t19', temp=True, replace=True)\n"
-                "result = CROSS(step2_tmp).CALCULATE(nkey, nname).ORDER_BY(nkey.ASC())",
+                "result = step2_tmp.CALCULATE(nkey, nname).ORDER_BY(nkey.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6143,7 +6153,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "numbers = pydough.range_collection('nums', 'num', 1, 6, 1)\n"
                 "nums_tmp = pydough.to_table(numbers, name='nums_t20', replace=True)\n"
-                "result = CROSS(nums_tmp).CALCULATE(num).WHERE(num > 2)",
+                "result = nums_tmp.CALCULATE(num).WHERE(num > 2)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6159,7 +6169,7 @@ def test_pipeline_e2e_errors(
             PyDoughPandasTest(
                 "users = pydough.dataframe_collection('users', users_df, ['user_id'])\n"
                 "users_tmp = pydough.to_table(users, name='users_t21', temp=True, replace=True)\n"
-                "result = CROSS(users_tmp).CALCULATE(user_id, user_name).ORDER_BY(user_id.ASC())",
+                "result = users_tmp.CALCULATE(user_id, user_name).ORDER_BY(user_id.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -6184,7 +6194,7 @@ def test_pipeline_e2e_errors(
                 "mult_tmp = pydough.to_table(multipliers, name='mult_t22', replace=True)\n"
                 "products = pydough.dataframe_collection('products', products_df, ['pid'])\n"
                 "prod_tmp = pydough.to_table(products, name='prod_t22', replace=True)\n"
-                "result = CROSS(mult_tmp).CALCULATE(mult).CROSS(prod_tmp)"
+                "result = mult_tmp.CALCULATE(mult).CROSS(prod_tmp)"
                 ".CALCULATE(mult, pid, pname=product_name)"
                 ".ORDER_BY(mult.ASC(), pid.ASC())",
                 "TPCH",
