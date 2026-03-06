@@ -24,7 +24,7 @@ jobs:
       oracle:
         image: bodoai1/pydough-oracle-tpch:latest
         env:
-          # Set environment variables for MySQL container
+          # Set environment variables for Oracle container
           ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
         ports:
           - 1521:1521
