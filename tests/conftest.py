@@ -1527,7 +1527,9 @@ def oracle_docker_setup() -> None:
             time.sleep(1)
     else:
         subprocess.run(["docker", "rm", "-f", ORACLE_DOCKER_CONTAINER])
-        pytest.fail("Oracle container did not become ready in time.")
+        pytest.fail(
+            f"Oracle container did not become ready in time. Waited {_}/600 seconds"
+        )
 
 
 @pytest.fixture(scope="session")
