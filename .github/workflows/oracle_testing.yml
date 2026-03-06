@@ -58,8 +58,8 @@ jobs:
         run: |
           for i in {1..600}; do
             COUNT=$(docker exec ${{ job.services.oracle.id }} bash -c \
-              "echo 'SET HEADING OFF FEEDBACK OFF; SELECT COUNT(*) FROM tpch.lineitem; EXIT;' | sqlplus -s tpch/$ORACLE_PASSWORD@localhost:1521/FREEPDB1" \
-              2>/dev/null | tr -dc '0-9')
+            "echo 'SET HEADING OFF FEEDBACK OFF VERIFY OFF PAGESIZE 0; SELECT COUNT(*) FROM tpch.lineitem; EXIT;' | sqlplus -s tpch/$ORACLE_PASSWORD@localhost:1521/FREEPDB1" \
+            2>/dev/null | awk 'NF {print $1; exit}')
 
             if [ "$COUNT" = "6001215" ]; then
               echo "TPCH data loaded"
