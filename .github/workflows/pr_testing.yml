@@ -293,17 +293,17 @@ jobs:
                       || '["3.10", "3.11", "3.12", "3.13"]' }}
 
     run-oracle-tests:
-    name: Oracle Tests
-    needs: [get-msg, get-py-ver-matrix]
-    if: |
-      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
-      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
-      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run oracle]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-oracle))
-    uses: ./.github/workflows/oracle_testing.yml
-    secrets:
-      ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
-    with:
-      python-versions: ${{ github.event_name == 'workflow_dispatch'
-                      && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+      name: Oracle Tests
+      needs: [get-msg, get-py-ver-matrix]
+      if: |
+        (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+        (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+        (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run oracle]')) ||
+        (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-oracle))
+      uses: ./.github/workflows/oracle_testing.yml
+      secrets:
+        ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+      with:
+        python-versions: ${{ github.event_name == 'workflow_dispatch'
+                        && needs.get-py-ver-matrix.outputs.matrix
+                        || '["3.10", "3.11", "3.12", "3.13"]' }}
