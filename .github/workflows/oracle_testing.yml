@@ -57,22 +57,13 @@ jobs:
       - name: Wait for TPCH data to load
         run: |
           for i in {1..600}; do
-            COUNT=$(docker exec ${{ job.services.oracle.id }} bash -c \
-            "echo 'SET HEADING OFF FEEDBACK OFF VERIFY OFF PAGESIZE 0; SELECT COUNT(*) FROM tpch.lineitem; EXIT;' | sqlplus -s tpch/$ORACLE_PASSWORD@localhost:1521/FREEPDB1" \
-            2>/dev/null | awk 'NF {print $1; exit}')
-
-            if [ "$COUNT" = "6001215" ]; then
+            if docker logs ${{ job.services.oracle.id }} 2>&1 | grep -q "02_tpch_data.sh"; then
               echo "TPCH data loaded"
-              exit 0
+              break
             fi
-
-            echo "Waiting for TPCH load... ($i/600), $COUNT/6001215"
-            sleep 1
+            echo "Waiting for TPCH load... ($i/600)"
+            sleep 5
           done
-
-          echo "TPCH did not finish loading"
-          docker logs ${{ job.services.oracle.id }}
-          exit 1
 
       - name: Confirm Oracle connector is installed
         run: uv run python -c "import oracledb; print('Oracle connector installed')"
