@@ -243,6 +243,8 @@ def to_table(
             "Cannot create view/table without a database connection.\n"
             "Please configure a database connection in the session."
         )
+    if session.database.dialect == DatabaseDialect.BODOSQL:
+        raise PyDoughSessionException("to_table() is not yet implemented for BodoSQL.")
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise pydough.active_session.error_builder.expected_collection(qualified)

@@ -6371,6 +6371,9 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("to_table() is not yet implemented for BodoSQL")
+
     # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
     # write to E2E_TESTS_DB.PUBLIC)
     table_prefix = (
@@ -6400,6 +6403,9 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     postgres, and snowflake.
     """
     db_context, graph = all_dialects_tpch_db_context
+
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("to_table() is not yet implemented for BodoSQL")
 
     # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
     # write to E2E_TESTS_DB.PUBLIC)
@@ -6484,6 +6490,9 @@ def test_pipeline_to_table_ddl(
     """
 
     db_context, graph = all_dialects_tpch_db_context
+
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("to_table() is not yet implemented for BodoSQL")
 
     # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
     # write to E2E_TESTS_DB.PUBLIC)
