@@ -54,6 +54,40 @@ jobs:
       - name: Install dependencies
         run: uv pip install -e ".[oracle]" 
 
+      - name: Install Oracle SQL*Plus
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libaio1 wget unzip
+          wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
+          wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-sqlplus-linuxx64.zip
+          unzip instantclient-basiclite-linuxx64.zip
+          unzip instantclient-sqlplus-linuxx64.zip
+          sudo mv instantclient_* /opt/oracle
+          echo "/opt/oracle" | sudo tee /etc/ld.so.conf.d/oracle-instantclient.conf
+          sudo ldconfig
+          echo "/opt/oracle" >> $GITHUB_PATH
+
+      - name: Wait for Oracle to be ready
+        run: |
+          for i in $(seq 1 180); do
+            COUNT=$(echo "SET HEADING OFF FEEDBACK OFF;
+            SELECT COUNT(*) FROM lineitem;
+            EXIT;" | sqlplus -s tpch/$ORACLE_PASSWORD@$ORACLE_HOST:1521/$ORACLE_SERVICE)
+
+            COUNT=$(echo $COUNT | xargs)
+
+            if [ "$COUNT" = "6001215" ]; then
+              echo "Oracle is ready and data loaded"
+              exit 0
+            fi
+
+            echo "Waiting for Oracle data to load... ($i/180)"
+            sleep 1
+          done
+
+          echo "Oracle did not become ready in time"
+          exit 1
+
       - name: Confirm Oracle connector is installed
         run: uv run python -c "import oracledb; print('Oracle connector installed')"
 
