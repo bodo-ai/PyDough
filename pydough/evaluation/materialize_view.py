@@ -9,6 +9,8 @@ from pydough.errors import PyDoughException, PyDoughSessionException
 from pydough.errors.error_utils import is_valid_sql_name
 from pydough.logger import get_logger
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
+from pydough.qdag.collections.calculate import Calculate
+from pydough.qdag.expressions.reference import Reference
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import convert_relation_to_sql
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
@@ -159,6 +161,88 @@ def _generate_create_ddl(
     return ddl_statements, temp
 
 
+def _compute_unique_columns(
+    qualified: PyDoughCollectionQDAG,
+    output_columns: list[str],
+) -> list[str | list[str]]:
+    """
+    Compute unique column combinations for a ViewGeneratedCollection by
+    traversing the QDAG ancestor hierarchy.
+
+    The algorithm:
+    1. Build a rename mapping from the final Calculate's term values
+       (e.g., if the user wrote `rkey=key`, maps 'key' -> 'rkey').
+    2. Traverse ancestor_context upward, collecting unique_terms from each
+       level, skipping levels where that level is singular w.r.t. the child
+       (meaning the child's uniqueness already implies the parent's).
+    3. Concatenate all collected unique_terms and map each term to its
+       output column name via the rename mapping.
+    4. Fall back to all output columns if any term cannot be mapped.
+
+    Args:
+        qualified: The qualified QDAG collection node.
+        output_columns: The normalized output column names.
+
+    Returns:
+        A list where each element is a unique key combination (a list of
+        column names).
+    """
+    # Step 1: Build rename mapping: original_name -> output_name
+    # by walking the preceding_context chain to find the final Calculate.
+    rename_map: dict[str, str] = {}
+    node: PyDoughCollectionQDAG | None = qualified
+    while node is not None:
+        if isinstance(node, Calculate):
+            for output_name, expr in node.calc_term_values.items():
+                if isinstance(expr, Reference):
+                    rename_map[expr.term_name] = output_name
+            break
+        node = getattr(node, "preceding_context", None)
+
+    # Step 2: Traverse ancestor_context upward, collecting unique_terms
+    # from non-skipped levels.
+    output_set = set(output_columns)
+    unique_term_groups: list[list[str]] = []
+    child: PyDoughCollectionQDAG | None = None
+    current: PyDoughCollectionQDAG | None = qualified
+
+    while current is not None:
+        terms = current.unique_terms
+        # Skip this level if it is singular w.r.t. the child —
+        # meaning each child record maps back to at most 1 parent record,
+        # so the parent's uniqueness is already implied by the child's.
+        should_skip = child is not None and current.is_singular(child)
+        if not should_skip and terms:
+            unique_term_groups.append(list(terms))
+        child = current
+        current = current.ancestor_context
+
+    if not unique_term_groups:
+        return [output_columns]
+
+    # Step 3: Concatenate all collected unique_terms (dedup, preserve order).
+    seen: set[str] = set()
+    all_unique_terms: list[str] = []
+    for group in unique_term_groups:
+        for term in group:
+            if term not in seen:
+                seen.add(term)
+                all_unique_terms.append(term)
+
+    # Step 4: Map each unique term to an output column name.
+    mapped_terms: list[str] = []
+    for term in all_unique_terms:
+        if term in output_set:
+            mapped_terms.append(term)
+        elif term in rename_map and rename_map[term] in output_set:
+            mapped_terms.append(rename_map[term])
+        else:
+            # Cannot map this term — fall back to all output columns.
+            return [output_columns]
+
+    return [mapped_terms]
+
+
 def to_table(
     node: UnqualifiedNode,
     name: str,
@@ -228,6 +312,11 @@ def to_table(
     column_names, column_types = _infer_schema_from_relational(relational)
     column_names = [normalize_column_name(col)[1] for col in column_names]
 
+    # Step 2b: Compute unique columns.
+    unique_columns: list[str | list[str]] = _compute_unique_columns(
+        qualified, column_names
+    )
+
     # Step 3: Generate and execute DDL to create view/table
     ddl_statements, actual_temp = _generate_create_ddl(
         name, sql, as_view, replace, temp, session.database.dialect
@@ -252,6 +341,7 @@ def to_table(
         is_view=as_view,
         is_replace=replace,
         is_temp=actual_temp,
+        unique_columns=unique_columns,
     )
 
     # Step 5: Wrap in UnqualifiedGeneratedCollection so it can be used in

@@ -6291,8 +6291,8 @@ def test_pipeline_e2e_errors(
         # Test 25: BEST where per= ancestor is the to_table collection.
         # Verifies that uniqueness columns from ViewGeneratedCollection are
         # used correctly in the BEST window function's PARTITION BY clause.
-        # regions_tmp default unique_columns = [['rkey', 'rname']] (all cols),
-        # so PARTITION BY (rkey, rname) is used to find the best nation per region.
+        # regions_tmp unique_columns = [['rkey']] (computed from regions metadata key),
+        # so PARTITION BY (rkey) is used to find the best nation per region.
         pytest.param(
             PyDoughPandasTest(
                 "regions_tmp = pydough.to_table(\n"
@@ -6434,7 +6434,6 @@ def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
-# TODO: test other dialects
 @pytest.mark.execute
 @pytest.mark.parametrize(
     "as_view, replace, temp",

@@ -4,7 +4,7 @@ WITH _t AS (
     nation.n_nationkey,
     regions_t25.rkey,
     regions_t25.rname,
-    ROW_NUMBER() OVER (PARTITION BY regions_t25.rkey, regions_t25.rname ORDER BY nation.n_nationkey) AS _w
+    ROW_NUMBER() OVER (PARTITION BY regions_t25.rkey ORDER BY nation.n_nationkey) AS _w
   FROM regions_t25 AS regions_t25
   JOIN tpch.nation AS nation
     ON nation.n_regionkey = regions_t25.rkey

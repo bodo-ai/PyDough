@@ -8,7 +8,7 @@ WITH _t0 AS (
   JOIN snowflake_sample_data.tpch_sf1.nation AS nation
     ON nation.n_regionkey = regions_t25.rkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY regions_t25.rkey, regions_t25.rname ORDER BY nation.n_nationkey) = 1
+    ROW_NUMBER() OVER (PARTITION BY regions_t25.rkey ORDER BY nation.n_nationkey) = 1
 )
 SELECT
   rkey,

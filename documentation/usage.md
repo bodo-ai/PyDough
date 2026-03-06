@@ -604,6 +604,35 @@ result = asian_tmp.CALCULATE(name)
 pydough.to_df(result)
 ```
 
+**Step 1 — DDL SQL** (executed by `to_table`, creates the table):
+```sql
+CREATE TEMPORARY TABLE asian_nations AS
+SELECT
+  nation.n_nationkey AS key,
+  nation.n_regionkey AS region_key,
+  nation.n_name AS name,
+  nation.n_comment AS comment
+FROM nation AS nation
+JOIN region AS region
+  ON nation.n_regionkey = region.r_regionkey
+  AND region.r_name = 'ASIA'
+```
+
+**Step 2 — Query SQL** (executed by `to_df(result)`):
+```sql
+SELECT name
+FROM asian_nations
+```
+
+**Step 3 — Result** (the output of the query):
+```name
+0   INDIA
+1   INDONESIA
+2   JAPAN
+3   CHINA
+4   VIETNAM
+```
+
 #### Example 2: Multiple Materialized Tables with Join
 
 When joining multiple materialized collections, use `.CROSS()` to establish the cross-join relationship:
