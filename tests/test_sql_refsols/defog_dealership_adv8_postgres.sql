@@ -1,28 +1,9 @@
-WITH _s6 AS (
-  SELECT DISTINCT
-    months_range.month_start
-  FROM (VALUES
-    (CAST('2025-09-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2025-10-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2025-11-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2025-12-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2026-01-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2026-02-01 00:00:00' AS TIMESTAMP))) AS months_range(month_start)
-  CROSS JOIN main.sales AS sales
-), _s7 AS (
+WITH _s3 AS (
   SELECT
     DATE_TRUNC('MONTH', CAST(sales.sale_date AS TIMESTAMP)) AS sale_month,
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
-  FROM (VALUES
-    (CAST('2025-09-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2025-10-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2025-11-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2025-12-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2026-01-01 00:00:00' AS TIMESTAMP)),
-    (CAST('2026-02-01 00:00:00' AS TIMESTAMP))) AS months_range_2(month_start)
-  JOIN main.sales AS sales
-    ON TO_CHAR(months_range_2.month_start, 'YYYY-MM') = TO_CHAR(sales.sale_date, 'YYYY-MM')
+  FROM main.sales AS sales
   JOIN main.salespersons AS salespersons
     ON EXTRACT(YEAR FROM CAST(salespersons.hire_date AS TIMESTAMP)) <= 2023
     AND EXTRACT(YEAR FROM CAST(salespersons.hire_date AS TIMESTAMP)) >= 2022

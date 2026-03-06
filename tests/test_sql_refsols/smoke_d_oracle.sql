@@ -7,7 +7,7 @@ SELECT
   NTILE(100) OVER (ORDER BY CUSTOMER.c_acctbal, CUSTOMER.c_custkey) AS e,
   NTILE(12) OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal, CUSTOMER.c_custkey) AS f,
   LAG(CUSTOMER.c_custkey, 1) OVER (ORDER BY CUSTOMER.c_custkey) AS g,
-  LAG(CUSTOMER.c_custkey, 2, -1) OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_custkey) AS h,
+  LAG(CUSTOMER.c_custkey, 2, 42) OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_custkey) AS h,
   LEAD(CUSTOMER.c_custkey, 1) OVER (ORDER BY CUSTOMER.c_custkey) AS i,
   LEAD(CUSTOMER.c_custkey, 6000) OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_custkey) AS j,
   SUM(CUSTOMER.c_acctbal) OVER (PARTITION BY CUSTOMER.c_nationkey) AS k,
