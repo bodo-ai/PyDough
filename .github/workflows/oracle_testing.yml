@@ -30,9 +30,6 @@ jobs:
           - 1521:1521
     env:
       ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
-      ORACLE_SERVICE: FREEPDB1
-      ORACLE_HOST: 127.0.0.1
-      ORACLE_PORT: 1521
 
     steps:
       - uses: actions/checkout@v4
