@@ -286,17 +286,19 @@ def explain_unqualified(
         if root is not None:
             qualified_node = qualify_node(node, session)
         else:
-            # No root in the tree (e.g. UnqualifiedGeneratedCollection). Try
-            # to qualify anyway; the qualifier uses session's graph as context.
+            # No root in the tree (e.g. UnqualifiedGeneratedCollection, or a
+            # bare expression like LOWER(first_name + last_name)). Try to
+            # qualify anyway for generated collections; on any failure show the
+            # generic "Cannot call explain" message so contextless expressions
+            # get a consistent response instead of "Unrecognized term".
             try:
                 qualified_node = qualify_node(node, session)
-            except PyDoughQDAGException:
-                raise
             except Exception:
                 lines.append(
                     f"Cannot call pydough.explain on {display_raw(node)}.\n"
                     "Did you mean to use pydough.explain_term?"
                 )
+                return "\n".join(lines)
     except PyDoughQDAGException as e:
         # If the qualification failed, dump an appropriate message indicating
         # why pydough_explain did not work on it.
