@@ -288,9 +288,8 @@ def explain_unqualified(
         else:
             # No root in the tree (e.g. UnqualifiedGeneratedCollection, or a
             # bare expression like LOWER(first_name + last_name)). Try to
-            # qualify anyway for generated collections; on any failure show the
-            # generic "Cannot call explain" message so contextless expressions
-            # get a consistent response instead of "Unrecognized term".
+            # qualify anyway for generated collections. If it still fails,
+            # raise an exception.
             try:
                 qualified_node = qualify_node(node, session)
             except Exception:
