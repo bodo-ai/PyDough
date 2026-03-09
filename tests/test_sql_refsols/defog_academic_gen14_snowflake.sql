@@ -6,3 +6,5 @@ SELECT
 FROM academic.publication
 GROUP BY
   1
+ORDER BY
+  1
