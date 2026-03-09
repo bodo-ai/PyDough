@@ -34,6 +34,10 @@ from pydough.unqualified import (
     qualify_node,
     qualify_term,
 )
+from pydough.unqualified.unqualified_node import (
+    UnqualifiedCross,
+    UnqualifiedSingular,
+)
 
 
 def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
@@ -57,6 +61,8 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
             | UnqualifiedOrderBy()
             | UnqualifiedTopK()
             | UnqualifiedPartition()
+            | UnqualifiedCross()
+            | UnqualifiedSingular()
         ):
             predecessor: UnqualifiedNode = node._parcel[0]
             return find_unqualified_root(predecessor)

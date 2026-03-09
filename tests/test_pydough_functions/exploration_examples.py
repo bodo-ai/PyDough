@@ -8,6 +8,7 @@ __all__ = [
     "contextless_expr_impl",
     "contextless_func_impl",
     "customers_without_orders_impl",
+    "dataframe_collection_exploration_impl",
     "filter_impl",
     "global_agg_calc_impl",
     "global_calc_impl",
@@ -23,10 +24,12 @@ __all__ = [
     "parts_avg_price_child_impl",
     "parts_avg_price_impl",
     "parts_with_german_supplier",
+    "range_collection_exploration_impl",
     "region_n_suppliers_in_red_impl",
     "region_nations_back_name",
     "region_nations_suppliers_impl",
     "region_nations_suppliers_name_impl",
+    "singular_impl",
     "subcollection_calc_backref_impl",
     "suppliers_iff_balance_impl",
     "table_calc_impl",
@@ -34,6 +37,8 @@ __all__ = [
 ]
 
 from collections.abc import Callable
+
+import pandas as pd
 
 import pydough
 from pydough.metadata import GraphMetadata
@@ -110,6 +115,19 @@ def partition_child_impl() -> UnqualifiedNode:
         .WHERE(avg_price >= 27.5)
         .parts
     )
+
+
+def singular_impl() -> UnqualifiedNode:
+    return nations.CROSS(regions)
+
+
+def range_collection_exploration_impl() -> UnqualifiedNode:
+    return pydough.range_collection("rng", "i", 1, 5)
+
+
+def dataframe_collection_exploration_impl() -> UnqualifiedNode:
+    df = pd.DataFrame({"id": [1]})
+    return pydough.dataframe_collection("df_coll", df, ["id"])
 
 
 def nation_expr_impl() -> UnqualifiedNode:

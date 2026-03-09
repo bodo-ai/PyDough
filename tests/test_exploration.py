@@ -17,6 +17,7 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_expr_impl,
     contextless_func_impl,
     customers_without_orders_impl,
+    dataframe_collection_exploration_impl,
     filter_impl,
     global_agg_calc_impl,
     global_calc_impl,
@@ -34,10 +35,12 @@ from tests.test_pydough_functions.exploration_examples import (
     parts_avg_price_child_impl,
     parts_avg_price_impl,
     parts_with_german_supplier,
+    range_collection_exploration_impl,
     region_n_suppliers_in_red_impl,
     region_nations_back_name,
     region_nations_suppliers_impl,
     region_nations_suppliers_name_impl,
+    singular_impl,
     subcollection_calc_backref_impl,
     suppliers_iff_balance_impl,
     table_calc_impl,
@@ -1198,6 +1201,126 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """,
             ),
             id="partition_child",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                singular_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+
+This node, specifically, accesses the collection regions.
+Call pydough.explain(graph['regions']) to learn more about this collection.
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node, specifically, accesses the collection regions.
+Call pydough.explain(graph['regions']) to learn more about this collection.
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="singular",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                range_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── RangeCollection('rng', i=range(1, 5))
+
+This node accesses user-generated collection 'rng'.
+Columns: i
+Unique columns: i
+
+The following terms will be included in the result if this collection is executed:
+  i
+
+The collection has access to the following expressions:
+  i
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'rng'.
+Columns: i
+Unique columns: i
+
+The collection has access to the following expressions:
+  i
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="range_collection",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                dataframe_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── DataframeCollection(name='df_coll', shape=(1, 1), columns=['id'])
+
+This node accesses user-generated collection 'df_coll'.
+Columns: id
+Unique columns: id
+
+The following terms will be included in the result if this collection is executed:
+  id
+
+The collection has access to the following expressions:
+  id
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'df_coll'.
+Columns: id
+Unique columns: id
+
+The collection has access to the following expressions:
+  id
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="dataframe_collection",
         ),
         pytest.param(
             (

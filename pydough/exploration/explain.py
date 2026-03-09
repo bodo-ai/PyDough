@@ -35,10 +35,14 @@ from pydough.qdag import (
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Reference,
+    Singular,
     SubCollection,
     TableCollection,
     TopK,
     Where,
+)
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -282,12 +286,17 @@ def explain_unqualified(
         if root is not None:
             qualified_node = qualify_node(node, session)
         else:
-            # If the root is None, it means that the node was an expression
-            # without information about its context.
-            lines.append(
-                f"Cannot call pydough.explain on {display_raw(node)}.\n"
-                "Did you mean to use pydough.explain_term?"
-            )
+            # No root in the tree (e.g. UnqualifiedGeneratedCollection). Try
+            # to qualify anyway; the qualifier uses session's graph as context.
+            try:
+                qualified_node = qualify_node(node, session)
+            except PyDoughQDAGException:
+                raise
+            except Exception:
+                lines.append(
+                    f"Cannot call pydough.explain on {display_raw(node)}.\n"
+                    "Did you mean to use pydough.explain_term?"
+                )
     except PyDoughQDAGException as e:
         # If the qualification failed, dump an appropriate message indicating
         # why pydough_explain did not work on it.
@@ -346,6 +355,24 @@ def explain_unqualified(
             case PartitionChild():
                 lines.append(
                     f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."
+                )
+            case Singular():
+                lines.append(
+                    "This node makes the preceding collection singular via a CROSS product.\n"
+                    "Each record from the parent context is paired with all records from the child."
+                )
+                lines.append(
+                    f"Child collection: {qualified_node.preceding_context.to_string()}"
+                )
+            case PyDoughUserGeneratedCollectionQDag():
+                collection_name = qualified_node.name
+                columns = sorted(qualified_node.calc_terms)
+                lines.append(
+                    f"This node accesses user-generated collection '{collection_name}'.\n"
+                    f"Columns: {', '.join(columns)}"
+                )
+                lines.append(
+                    f"Unique columns: {', '.join(qualified_node.unique_terms)}"
                 )
             case ChildOperator():
                 if len(qualified_node.children):
