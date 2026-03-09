@@ -54,45 +54,6 @@ jobs:
       - name: Install dependencies
         run: uv pip install -e ".[oracle]"
 
-      - name: Debug Oracle container (DELETE LATER)
-        run: |
-          echo "=== docker ps ==="
-          docker ps -a
-
-          echo "=== oracle logs (last 300 lines) ==="
-          docker logs --tail 300 ${{ job.services.oracle.id }}
-
-      - name: Check Oracle network (DELETE LATER)
-        run: |
-          echo "Checking Oracle TCP port on localhost"
-
-          for i in {1..10}; do
-            if nc -z 127.0.0.1 1521; then
-              echo "Oracle port is open on localhost"
-              exit 0
-            fi
-
-            echo "Waiting for Oracle port on localhost... ($i/10)"
-            sleep 5
-          done
-
-          echo "Oracle port never opened on localhost"
-          docker ps -a
-          docker logs ${{ job.services.oracle.id }}
-          exit 1
-
-      - name: Test Oracle inside container (DELETE LATER)
-        run: |
-          docker exec ${{ job.services.oracle.id }} bash -c "
-            echo 'SELECT name, open_mode FROM v\$pdbs;' |
-            sqlplus -s system/$ORACLE_PASSWORD@localhost:1521/FREEPDB1
-          "
-
-      - name: Check TPCH loader (DELETE LATER)
-        run: |
-          docker exec ${{ job.services.oracle.id }} ls -l /opt/oracle/scripts/startup || true
-          docker logs ${{ job.services.oracle.id }} | grep -i tpch || true
-
       - name: Wait for TPCH data to load
         run: |
           for i in {1..600}; do
