@@ -25,13 +25,13 @@ jobs:
         image: bodoai1/pydough-oracle-tpch:latest
         env:
           # Set environment variables for Oracle container
-          ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+          ORACLE_PWD: ${{ secrets.ORACLE_PASSWORD }}
         ports:
           - 1521:1521
     env:
       ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
       ORACLE_SERVICE: FREEPDB1
-      ORACLE_HOST: oracle
+      ORACLE_HOST: 127.0.0.1
       ORACLE_PORT: 1521
 
     steps:
@@ -84,7 +84,7 @@ jobs:
             sqlplus -s system/$ORACLE_PASSWORD@localhost:1521/FREEPDB1
           "
 
-      - name: Check TPCH loader
+      - name: Check TPCH loader (DELETE LATER)
         run: |
           docker exec ${{ job.services.oracle.id }} ls -l /opt/oracle/scripts/startup || true
           docker logs ${{ job.services.oracle.id }} | grep -i tpch || true
