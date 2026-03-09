@@ -6,6 +6,8 @@ import datetime
 import math
 import datetime
 
+import pydough
+
 
 def bad_bool_1():
     # Using `or`
@@ -542,6 +544,13 @@ def bad_cross_11():
     # Reason it is bad: `customers` is a sub-collection of `nations`,
     # not `regions`
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
+
+
+def bad_cross_12():
+    # Reason it is bad: CROSS with a user-generated collection without
+    # a left-hand side collection
+    nums = pydough.range_collection("nums", "num", 5)
+    return CROSS(nums)
 
 
 # Tests for the GETPART function

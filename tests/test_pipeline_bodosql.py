@@ -710,7 +710,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
         "partsupp": [("PS_PARTKEY", "bucket[15]"), ("PS_SUPPKEY", "bucket[15]")],
     }
     """
-    The dictioary representing each table in teh TPCH dataset and how it should
+    The dictioary representing each table in the TPCH dataset and how it should
     be partitioned when transformed into an Iceberg table. The keys are the
     table names, and the values are a list of tuples
     `(column_name, partition_spec)` indicating the columns that should be used
@@ -756,7 +756,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
 
                 # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
-                    f"TPCH_SF1.{table_name}",
+                    f"SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name}",
                     schema=schema,
                 )
 
@@ -792,7 +792,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
             # For each temp table, populate the real Iceberg version from it.
             for table_name in tpch_tables:
                 tpch_bc.sql(
-                    f"CREATE OR REPLACE TABLE TPCH_SF1.{table_name} AS SELECT * FROM TPCH_SF1.{table_name}"
+                    f"CREATE OR REPLACE TABLE SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name} AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name}"
                 )
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
