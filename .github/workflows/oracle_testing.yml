@@ -64,17 +64,21 @@ jobs:
 
       - name: Check Oracle network (DELETE LATER)
         run: |
-          echo "DNS:"
-          getent hosts oracle || true
+          echo "Checking Oracle TCP port on localhost"
 
-          echo "TCP:"
           for i in {1..10}; do
-            nc -z oracle 1521 && echo "Port open" && exit 0
-            echo "Waiting for port... ($i/10)"
+            if nc -z 127.0.0.1 1521; then
+              echo "Oracle port is open on localhost"
+              exit 0
+            fi
+
+            echo "Waiting for Oracle port on localhost... ($i/10)"
             sleep 5
           done
 
-          echo "Oracle port never opened"
+          echo "Oracle port never opened on localhost"
+          docker ps -a
+          docker logs ${{ job.services.oracle.id }}
           exit 1
 
       - name: Test Oracle inside container (DELETE LATER)
