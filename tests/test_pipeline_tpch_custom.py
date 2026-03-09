@@ -6515,7 +6515,7 @@ def test_pipeline_to_table_ddl(
         }
     ):
         with pytest.raises(
-            PyDoughException, match="TEMPORARY views are not supported for"
+            PyDoughException, match="TEMPORARY VIEW is not supported for"
         ):
             tpch_custom_to_table_test_data.run_e2e_test_to_table(
                 lambda _: graph,

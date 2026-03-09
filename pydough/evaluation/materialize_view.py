@@ -81,7 +81,7 @@ def _generate_create_ddl(
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
         if not allowed:
             raise PyDoughSessionException(
-                f"TEMP {object_type} not supported for {db_dialect.name}"
+                f"TEMPORARY {object_type} is not supported for {db_dialect.name}"
             )
 
     if as_view and not temp and db_dialect == DatabaseDialect.SQLITE:
