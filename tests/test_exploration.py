@@ -1384,11 +1384,15 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_aggfunc_impl,
                 """
-Cannot call pydough.explain on COUNT(customers).
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ COUNT(customers)
 Did you mean to use pydough.explain_term?
 """,
                 """
-Cannot call pydough.explain on COUNT(customers).
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ COUNT(customers)
 Did you mean to use pydough.explain_term?
 """,
             ),
