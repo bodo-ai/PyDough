@@ -2638,11 +2638,15 @@ def impl_defog_academic_gen14():
     """
     n_pubs = COUNT(publications)
     n_jours = NDISTINCT(publications.journal_id)
-    return publications.PARTITION(name="years", by=year).CALCULATE(
-        year,
-        num_publications=n_pubs,
-        num_journals=n_jours,
-        ratio=n_pubs / n_jours,
+    return (
+        publications.PARTITION(name="years", by=year)
+        .CALCULATE(
+            year,
+            num_publications=n_pubs,
+            num_journals=n_jours,
+            ratio=n_pubs / n_jours,
+        )
+        .ORDER_BY(year.ASC(na_pos="last"))
     )
 
 
