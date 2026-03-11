@@ -7,7 +7,12 @@ from collections.abc import Callable
 import pytest
 
 import pydough
-from pydough.configs import PyDoughSession
+from pydough.configs import PyDoughConfigs, PyDoughSession
+from pydough.database_connectors import (
+    DatabaseContext,
+    DatabaseDialect,
+    empty_connection,
+)
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
 from tests.test_pydough_functions.exploration_examples import (
@@ -16,6 +21,7 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_collections_impl,
     contextless_expr_impl,
     contextless_func_impl,
+    cross_subcollection_impl,
     customers_without_orders_impl,
     dataframe_collection_exploration_impl,
     filter_impl,
@@ -1248,6 +1254,53 @@ Call pydough.explain(collection, verbose=True) for more details.
         ),
         pytest.param(
             (
+                "TechnoGraph",
+                cross_subcollection_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TechnoGraph
+    └─┬─ TableCollection[countries]
+      └─── SubCollection[other_countries]
+
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left (parent): countries
+Right (child): countries
+Metadata: countries.other_countries -> countries. Call pydough.explain(graph['countries']['other_countries']) to learn more.
+
+The following terms will be included in the result if this collection is executed:
+  _id, name
+
+The collection has access to the following expressions:
+  _id, name
+
+The collection has access to the following collections:
+  devices_made, devices_sold, other_countries, users
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left (parent): countries
+Right (child): countries
+Metadata: countries.other_countries -> countries. Call pydough.explain(graph['countries']['other_countries']) to learn more.
+
+The collection has access to the following expressions:
+  _id, name
+
+The collection has access to the following collections:
+  devices_made, devices_sold, other_countries, users
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="cross_subcollection",
+        ),
+        pytest.param(
+            (
                 "TPCH",
                 range_collection_exploration_impl,
                 """
@@ -1432,6 +1485,25 @@ def unqualified_exploration_test_data(
     return graph_name, test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
 
 
+@pytest.fixture
+def exploration_session(
+    unqualified_exploration_test_data: tuple[
+        str, Callable[..., UnqualifiedNode], str, str
+    ],
+    sample_graph_path: str,
+    default_config: PyDoughConfigs,
+) -> PyDoughSession:
+    """
+    Session with metadata for the graph used by the current exploration test.
+    """
+    graph_name: str = unqualified_exploration_test_data[0]
+    session: PyDoughSession = PyDoughSession()
+    session.load_metadata_graph(sample_graph_path, graph_name)
+    session.config = default_config
+    session.database = DatabaseContext(empty_connection, DatabaseDialect.SQLITE)
+    return session
+
+
 @pytest.mark.parametrize(
     "verbose",
     [
@@ -1445,7 +1517,7 @@ def test_unqualified_node_exploration(
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,
-    empty_sqlite_tpch_session: PyDoughSession,
+    exploration_session: PyDoughSession,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
@@ -1456,9 +1528,7 @@ def test_unqualified_node_exploration(
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
     node: UnqualifiedNode = pydough.init_pydough_context(graph)(test_impl)()
-    answer: str = pydough.explain(
-        node, verbose=verbose, session=empty_sqlite_tpch_session
-    )
+    answer: str = pydough.explain(node, verbose=verbose, session=exploration_session)
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert answer == expected_answer, (
         "Mismatch between produced string and expected answer"

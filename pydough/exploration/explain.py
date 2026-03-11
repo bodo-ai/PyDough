@@ -350,9 +350,35 @@ def explain_unqualified(
             case SubCollection():
                 collection_name = qualified_node.subcollection_property.collection.name
                 property_name = qualified_node.subcollection_property.name
-                lines.append(
-                    f"This node, specifically, accesses the subcollection {collection_name}.{property_name}. Call pydough.explain(graph['{collection_name}']['{property_name}']) to learn more about this subcollection property."
-                )
+                prop = qualified_node.subcollection_property
+                if isinstance(prop, CartesianProductMetadata):
+                    parent_name = prop.collection.name
+                    child_name = prop.child_collection.name
+                    left_desc = (
+                        qualified_node.preceding_context.to_string()
+                        if qualified_node.preceding_context is not None
+                        else parent_name
+                    )
+                    lines.append(
+                        "This node is a CROSS join: every row of the left "
+                        "collection is paired with every row of the right "
+                        "collection."
+                    )
+                    lines.append(f"Left (parent): {left_desc}")
+                    lines.append(f"Right (child): {child_name}")
+                    lines.append(
+                        f"Metadata: {parent_name}.{property_name} -> {child_name}. "
+                        f"Call pydough.explain(graph['{parent_name}']['{property_name}']) "
+                        "to learn more."
+                    )
+                else:
+                    lines.append(
+                        f"This node, specifically, accesses the subcollection "
+                        f"{collection_name}.{property_name}. Call "
+                        f"pydough.explain(graph['{collection_name}']"
+                        f"['{property_name}']) to learn more about this "
+                        "subcollection property."
+                    )
             case PartitionChild():
                 lines.append(
                     f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."

@@ -7,6 +7,7 @@ __all__ = [
     "contextless_collections_impl",
     "contextless_expr_impl",
     "contextless_func_impl",
+    "cross_subcollection_impl",
     "customers_without_orders_impl",
     "dataframe_collection_exploration_impl",
     "filter_impl",
@@ -119,6 +120,11 @@ def partition_child_impl() -> UnqualifiedNode:
 
 def singular_impl() -> UnqualifiedNode:
     return nations.CROSS(regions)
+
+
+def cross_subcollection_impl() -> UnqualifiedNode:
+    """Returns countries.other_countries"""
+    return countries.other_countries
 
 
 def range_collection_exploration_impl() -> UnqualifiedNode:
