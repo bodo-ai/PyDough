@@ -346,23 +346,6 @@ def defog_custom_oracle_test_data(
 
 @pytest.mark.oracle
 @pytest.mark.execute
-def test_pipeline_e2e_oracle_tpch(
-    tpch_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    oracle_conn_db_context: Callable[[str], DatabaseContext],
-):
-    """
-    Test executing the TPC-H queries from the original code generation on Oracle.
-    """
-    tpch_pipeline_test_data.run_e2e_test(
-        get_sample_graph,
-        oracle_conn_db_context("tpch"),
-        coerce_types=True,
-    )
-
-
-@pytest.mark.oracle
-@pytest.mark.execute
 def test_pipeline_e2e_oracle_tpch_16_params(
     tpch_oracle_params_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,

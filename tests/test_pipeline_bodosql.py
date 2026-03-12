@@ -2632,34 +2632,6 @@ def test_pipeline_e2e_bodosql(
 
 @pytest.mark.bodosql
 @pytest.mark.execute
-def test_bodosql_e2e_tpch(
-    tpch_pipeline_test_data: PyDoughPandasTest,
-    get_sf_sample_graph: graph_fetcher,
-    bodosql_tpch_context: BodoSQLContext,
-):
-    """
-    Test executing the TPC-H queries from the original code generation,
-    with BodoSQL as the executing database.
-    """
-    # Skip any of these tests due to various errors/gaps.
-    tests_skipped: dict[str, str] = {
-        "tpch_q16": "BodoSQL Iceberg STARTSWITH read bug",
-        "tpch_q20": "BodoSQL Iceberg STARTSWITH read bug",
-        "smoke_b": "BodoSQL Iceberg STARTSWITH read bug",
-        "smoke_c": "Unknown Bodo/BodoSQL typing bug with array concatenation",
-    }
-    if tpch_pipeline_test_data.test_name in tests_skipped:
-        pytest.skip(tests_skipped[tpch_pipeline_test_data.test_name])
-
-    tpch_pipeline_test_data.run_e2e_test(
-        get_sf_sample_graph,
-        load_database_context("bodosql", context=bodosql_tpch_context),
-        coerce_types=True,
-    )
-
-
-@pytest.mark.bodosql
-@pytest.mark.execute
 def test_bodosql_e2e_defog(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,
     get_sf_defog_graphs: graph_fetcher,

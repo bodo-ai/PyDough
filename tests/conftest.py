@@ -643,6 +643,14 @@ def all_dialects_tpch_db_context(
         case "oracle":
             db_context = request.getfixturevalue("oracle_conn_db_context")
             return db_context("tpch"), get_sample_graph("TPCH")
+        case "bodosql":
+            bodosql_context = request.getfixturevalue("bodosql_tpch_context")
+            db_context = load_database_context("bodosql", context=bodosql_context)
+            return (
+                db_context,
+                get_sf_sample_graph("TPCH"),
+            )
+
     # Default fallback
     db_context = request.getfixturevalue("sqlite_tpch_db_context")
     return db_context, get_sample_graph("TPCH")
