@@ -24,28 +24,25 @@ WITH _t5 AS (
     1,
     2,
     3
-), _u_0 AS (
-  SELECT
-    _t6.l_linenumber AS _u_1,
-    _t6.l_orderkey AS _u_2
-  FROM _t5 AS _t6
-  JOIN tpch.lineitem AS lineitem
-    ON _t6.l_orderkey = lineitem.l_orderkey
-    AND _t6.l_suppkey <> lineitem.l_suppkey
-    AND lineitem.l_commitdate < lineitem.l_receiptdate
-  GROUP BY
-    1,
-    2
 ), _s11 AS (
   SELECT
-    _t3.anything_l_suppkey
-  FROM _t3 AS _t3
-  LEFT JOIN _u_0 AS _u_0
-    ON _t3.l_linenumber = _u_0._u_1
-    AND _t3.l_orderkey = _u_0._u_2
-    AND _t3.o_orderkey = _u_0._u_2
+    anything_l_suppkey
+  FROM _t3
   WHERE
-    _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+    NOT EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _t5 AS _t6
+      JOIN tpch.lineitem AS lineitem
+        ON _t6.l_orderkey = lineitem.l_orderkey
+        AND _t6.l_suppkey <> lineitem.l_suppkey
+        AND lineitem.l_commitdate < lineitem.l_receiptdate
+      WHERE
+        _t3.l_linenumber = _t6.l_linenumber
+        AND _t3.l_orderkey = _t6.l_orderkey
+        AND _t3.o_orderkey = _t6.l_orderkey
+    )
+    AND anything_o_orderstatus = 'F'
 )
 SELECT
   ANY_VALUE(supplier.s_name) AS S_NAME,

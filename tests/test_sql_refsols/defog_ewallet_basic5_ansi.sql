@@ -1,15 +1,12 @@
-WITH _u_0 AS (
-  SELECT
-    user_id AS _u_1
-  FROM main.notifications
-  GROUP BY
-    1
-)
 SELECT
-  users.uid,
-  users.username
-FROM main.users AS users
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = users.uid
+  uid,
+  username
+FROM main.users
 WHERE
-  _u_0._u_1 IS NULL
+  NOT EXISTS(
+    SELECT
+      1 AS "1"
+    FROM main.notifications
+    WHERE
+      user_id = users.uid
+  )

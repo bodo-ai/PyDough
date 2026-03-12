@@ -47,28 +47,25 @@ class OracleTransformBindings(BaseTransformBindings):
     def values_alias_column(self) -> bool:
         return False
 
-    @property
-    def oracle_strftime_mapping(self) -> dict[str, str]:
-        """
-        This mapping is used by `oracle_format` when converting a
-        format string supplied by the user (which typically uses Python
-        `strftime`-style specifiers) into a form that Oracle will
-        understand.  Only a small subset of directives is currently
-        supported; additional tokens may be added as needed.
-        """
-        return {
-            "%Y": "YYYY",
-            "%m": "MM",
-            "%d": "DD",
-            "%H": "HH24",  # 24-hour clock
-            "%I": "HH12",  # 12-hour clock (IMPORTANT for AM/PM)
-            "%M": "MI",
-            "%S": "SS",
-            "%p": "AM",  # AM / PM marker
-        }
+    ORACLE_STRFTIME_MAPPING: dict[str, str] = {
+        "%Y": "YYYY",
+        "%m": "MM",
+        "%d": "DD",
+        "%H": "HH24",  # 24-hour clock
+        "%I": "HH12",  # 12-hour clock (IMPORTANT for AM/PM)
+        "%M": "MI",
+        "%S": "SS",
+        "%p": "AM",  # AM / PM marker
+    }
+    """
+    This mapping is used by `oracle_format` when converting a
+    format string supplied by the user (which typically uses Python
+    `strftime`-style specifiers) into a form that Oracle will
+    understand.  Only a small subset of directives is currently
+    supported; additional tokens may be added as needed.
+    """
 
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
-        pydop.ABS: "ABS",
         pydop.PERCENTILE: "PERCENTILE_CONT",
     }
 
@@ -89,7 +86,7 @@ class OracleTransformBindings(BaseTransformBindings):
             )
         match operator:
             case pydop.DEFAULT_TO:
-                # sqlglot convert COALESCE in NVL for Oracle, which is fine for
+                # sqlglot convert COALESCE to NVL for Oracle, which is fine for
                 # 2 args but with more sqlglot doesn't handle it correctly.
                 return self.convert_default_to(args, types)
 
@@ -119,6 +116,13 @@ class OracleTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
+        """
+        STRIP(X, Y) -> LTRIM(RTRIM(X, Y), Y)
+        TRIM function in oracle allows to strip just one character. LTRIM and
+        RTRIM allow to strip more than one character at the time.
+        This implementation will return the expected result for multiple
+        characters.
+        """
         assert 1 <= len(args) <= 2
         to_strip: SQLGlotExpression = args[0]
         strip_char_glot: SQLGlotExpression
@@ -162,6 +166,8 @@ class OracleTransformBindings(BaseTransformBindings):
         len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
 
         # The length of the replaced string: NVL(LENGH(REPLACE(X, Y, "")), 0)
+        # Oracle treats '' as NULL, LENGTH('') = NULL and not 0 to avoid this
+        # NVL is neccessary.
         # NVL(LENGTH(REPLACE('aaaa', 'aa', '')), 0)
         len_string_replaced: SQLGlotExpression = sqlglot_expressions.Coalesce(
             this=sqlglot_expressions.Length(this=string_replaced),
@@ -254,11 +260,11 @@ class OracleTransformBindings(BaseTransformBindings):
                     start_idx = int(start.this)
                 except ValueError:
                     raise ValueError(
-                        "SLICE function currently only supports the start index being integer literal or absent."
+                        "SLICE function currently only supports the start index being integer literal or absent, got non-integer literal."
                     )
             else:
                 raise ValueError(
-                    "SLICE function currently only supports the start index being integer literal or absent."
+                    "SLICE function currently only supports the start index being integer literal or absent, got non-integer literal."
                 )
 
         stop_idx: int | None = None
@@ -268,11 +274,11 @@ class OracleTransformBindings(BaseTransformBindings):
                     stop_idx = int(stop.this)
                 except ValueError:
                     raise ValueError(
-                        "SLICE function currently only supports the stop index being integer literal or absent."
+                        "SLICE function currently only supports the stop index being integer literal or absent, got non-integer literal."
                     )
             else:
                 raise ValueError(
-                    "SLICE function currently only supports the stop index being integer literal or absent."
+                    "SLICE function currently only supports the stop index being integer literal or absent, got non-integer literal."
                 )
 
         step_idx: int | None = None
@@ -282,15 +288,15 @@ class OracleTransformBindings(BaseTransformBindings):
                     step_idx = int(step.this)
                     if step_idx != 1:
                         raise ValueError(
-                            "SLICE function currently only supports the step being integer literal 1 or absent."
+                            "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
                         )
                 except ValueError:
                     raise ValueError(
-                        "SLICE function currently only supports the step being integer literal 1 or absent."
+                        "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
                     )
             else:
                 raise ValueError(
-                    "SLICE function currently only supports the step being integer literal 1 or absent."
+                    "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
                 )
 
         # SQLGlot expressions for 0 and 1 and empty string
@@ -403,6 +409,11 @@ class OracleTransformBindings(BaseTransformBindings):
     def convert_smallest_or_largest(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
     ) -> SQLGlotExpression:
+        """
+        Oracle provides native GREATEST / LEAST functions. For string arguments,
+        NULL and empty-string semantics differ, so values are normalized using
+        NVL and CHAR(0) to ensure correct ordering behavior.
+        """
         assert len(args) > 1
 
         func_name: str = "GREATEST" if largest else "LEAST"
@@ -426,6 +437,11 @@ class OracleTransformBindings(BaseTransformBindings):
     def convert_variance(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
     ) -> SQLGlotExpression:
+        """
+        Oracle returns a non-null result for sample variance when fewer than two
+        rows are present. To match expected semantics, this implementation returns
+        NULL when COUNT(arg) < 2 for sample variance.
+        """
         arg = args[0]
         if type == "population":
             return sqlglot_expressions.VariancePop(this=arg)
@@ -442,10 +458,19 @@ class OracleTransformBindings(BaseTransformBindings):
                 ],
                 default=sqlglot_expressions.Variance(this=arg),
             )
+        else:
+            raise ValueError(
+                f"Invalid variance type: {type}. Currently supported 'sample' and 'population'"
+            )
 
     def convert_std(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
     ) -> SQLGlotExpression:
+        """
+        Oracle returns a non-null result for sample standard deviation when fewer
+        than two rows are present. This implementation returns NULL when COUNT(arg)
+        < 2 to align with expected sample statistics semantics.
+        """
         if type == "population":
             return sqlglot_expressions.StddevPop(this=args[0])
         elif type == "sample":
@@ -460,6 +485,10 @@ class OracleTransformBindings(BaseTransformBindings):
                     )
                 ],
                 default=sqlglot_expressions.Stddev(this=args[0]),
+            )
+        else:
+            raise ValueError(
+                f"Invalid std type: {type}. Currently supported 'sample' and 'population'"
             )
 
     def convert_get_part(
@@ -652,6 +681,11 @@ class OracleTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
+        """
+        Oracle does not provide a native DATEDIFF function. Differences between
+        dates must be derived using date arithmetic and EXTRACT-based calculations,
+        with custom logic for units such as WEEK, QUARTER, and MONTH.
+        """
         assert len(args) == 3
         # Check if unit is a string.
         if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
@@ -670,7 +704,7 @@ class OracleTransformBindings(BaseTransformBindings):
 
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
         if unit is None:
-            raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+            raise ValueError(f"Unsupported argument '{args[0].this}' for DATEDIFF.")
 
         year_diff: SQLGlotExpression = sqlglot_expressions.Sub(
             this=sqlglot_expressions.Extract(
@@ -836,12 +870,24 @@ class OracleTransformBindings(BaseTransformBindings):
                 raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
     def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Oracle does not provide a DAYOFWEEK function. Instead, TO_CHAR(date, 'D')
+        is used to obtain the weekday number according to Oracle's NLS-dependent
+        calendar semantics.
+        """
         return sqlglot_expressions.ToChar(
             this=base,
             format=sqlglot_expressions.Literal.string("D"),
         )
 
     def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        The base implementation assumes POSIX-style 0-based weekday numbering
+        (Sunday=0). Oracle uses 1-based, NLS-dependent weekday values
+        (typically Sunday=1), which breaks the base modulo-7 calculation.
+        This implementation adjusts the offset to normalize Oracle's weekday
+        semantics and avoid off-by-one errors at week boundaries.
+        """
         offset: int = (-self.start_of_week_offset) % 7 - 1
         dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
 
@@ -860,7 +906,7 @@ class OracleTransformBindings(BaseTransformBindings):
         Create a SQLGlot expression to obtain the current timestamp removing the
         timezone for Oracle.
         SQL:
-            CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE)
+            SYS_EXTRACT_UTC(SYSTIMESTAMP)
         """
         return sqlglot_expressions.Anonymous(
             this="SYS_EXTRACT_UTC",
@@ -872,6 +918,11 @@ class OracleTransformBindings(BaseTransformBindings):
         )
 
     def coerce_to_timestamp(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Oracle's DATE type already includes time information (unlike many
+        other databases), so casting to DATE is sufficient to represent a
+        timestamp value.
+        """
         return sqlglot_expressions.Cast(
             this=base, to=sqlglot_expressions.DataType.build("DATE")
         )
@@ -879,6 +930,12 @@ class OracleTransformBindings(BaseTransformBindings):
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
     ) -> SQLGlotExpression:
+        """
+        QUARTER requires explicit 'Q' handling, DAY uses 'DD', and WEEK
+        truncation must be emulated manually using day-of-week arithmetic.
+        This override aligns truncation behavior with Oracle's date functions
+        and syntax.
+        """
         match unit:
             case DateTimeUnit.QUARTER:
                 # TRUNC(o_orderdate, 'Q')
@@ -918,6 +975,11 @@ class OracleTransformBindings(BaseTransformBindings):
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
     ) -> SQLGlotExpression:
+        """
+        Oracle does not support generic DATEADD / DATESUB semantics. Datetime
+        offsets must be expressed using NUMTODSINTERVAL, NUMTOYMINTERVAL, or
+        ADD_MONTHS, and some units (WEEK, QUARTER) require manual conversion.
+        """
         new_expr: SQLGlotExpression | None = None
 
         original_amt: int = amt
@@ -980,11 +1042,12 @@ class OracleTransformBindings(BaseTransformBindings):
     def convert_join_strings(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        if len(args) == 1:
-            return sqlglot_expressions.Literal.string("")
-        elif len(args) == 2:
-            # Return the first string
-            return args[1]
+        """
+        String joining must be implemented manually using the `||` operator with
+        explicit NULL handling via NVL to match CONCAT_WS semantics
+        for Oracle.
+        """
+        assert len(args) > 2
 
         delim_expr = args[0]
 
@@ -1016,6 +1079,12 @@ class OracleTransformBindings(BaseTransformBindings):
         types: list[PyDoughType],
         unit: DateTimeUnit,
     ) -> SQLGlotExpression:
+        """
+        Oracle requires explicit casting for certain EXTRACT units and does not
+        provide native QUARTER extraction. QUARTER is derived manually from the
+        month value, and DATE vs TIMESTAMP casting is adjusted to match Oracle's
+        datetime semantics.
+        """
         assert len(args) == 1
 
         cast_type: SQLGlotExpression = (
@@ -1073,13 +1142,18 @@ class OracleTransformBindings(BaseTransformBindings):
         "%Y-%m-%d" becomes 'YYYY-MM-DD'
         "%Y/%m/%d %H:%M" becomes 'YYYY/MM/DD HH24:MI'
         """
-        for k, v in self.oracle_strftime_mapping.items():
+        for k, v in self.ORACLE_STRFTIME_MAPPING.items():
             fmt = fmt.replace(k, v)
         return fmt
 
     def convert_string(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
+        """
+        Oracle does not support a generic TEXT type or TimeToStr. STRING(X)
+        is implemented via CAST to VARCHAR2(4000), and STRING(X, format)
+        uses TO_CHAR with Oracle-specific date format semantics.
+        """
         if len(args) == 1:
             # Length defaults to 4000 which is the max length of a VARCHAR2 in
             # Oracle
@@ -1111,36 +1185,15 @@ class OracleTransformBindings(BaseTransformBindings):
                 ),
             )
 
-    def generate_dataframe_item_dialect_expression(
-        self, item: Any, item_type: PyDoughType
-    ) -> SQLGlotExpression:
-        match item_type:
-            case DatetimeType():
-                return sqlglot_expressions.Anonymous(
-                    this="TO_TIMESTAMP",
-                    expressions=[
-                        sqlglot_expressions.Literal.string(item),
-                        sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
-                    ],
-                )
-            case NumericType():
-                if math.isinf(item):
-                    infinity_val: SQLGlotExpression = sqlglot_expressions.Identifier(
-                        this="BINARY_DOUBLE_INFINITY"
-                    )
-                    if item >= 0:
-                        return infinity_val
-                    else:
-                        return sqlglot_expressions.Neg(this=infinity_val)
-
-                return sqlglot_expressions.Literal.number(item)
-
-            case _:  # UnknownType
-                return sqlglot_expressions.Literal.string(str(item))
-
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
+        """
+        Oracle does not support direct BOOLEAN-to-integer casting and lacks a
+        native BIGINT type. Booleans are mapped via CASE expressions, and
+        numeric values are coerced to integers using TRUNC after casting to
+        DOUBLE PRECISION.
+        """
         if isinstance(types[0], BooleanType):
             # Oracle can't convert boolean to int, for this Case will be used
             return sqlglot_expressions.Case(
@@ -1163,3 +1216,30 @@ class OracleTransformBindings(BaseTransformBindings):
                     sqlglot_expressions.Literal.number(0),
                 ],
             )
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Anonymous(
+                    this="TO_DATE",
+                    expressions=[
+                        sqlglot_expressions.Literal.string(item),
+                        sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
+                    ],
+                )
+            case NumericType():
+                if math.isinf(item):
+                    infinity_val: SQLGlotExpression = sqlglot_expressions.Identifier(
+                        this="BINARY_DOUBLE_INFINITY"
+                    )
+                    if item >= 0:
+                        return infinity_val
+                    else:
+                        return sqlglot_expressions.Neg(this=infinity_val)
+
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

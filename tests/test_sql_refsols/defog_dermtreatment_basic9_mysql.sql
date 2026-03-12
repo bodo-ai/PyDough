@@ -1,16 +1,13 @@
-WITH _u_0 AS (
-  SELECT
-    patient_id AS _u_1
-  FROM treatments
-  GROUP BY
-    1
-)
 SELECT
-  patients.patient_id,
-  patients.first_name,
-  patients.last_name
-FROM patients AS patients
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = patients.patient_id
+  patient_id,
+  first_name,
+  last_name
+FROM patients
 WHERE
-  _u_0._u_1 IS NULL
+  NOT EXISTS(
+    SELECT
+      1 AS `1`
+    FROM treatments
+    WHERE
+      patients.patient_id = patient_id
+  )

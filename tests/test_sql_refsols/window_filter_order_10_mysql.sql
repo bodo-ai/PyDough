@@ -1,20 +1,17 @@
-WITH _u_0 AS (
+WITH _t AS (
   SELECT
-    c_custkey AS _u_1
-  FROM tpch.CUSTOMER
-  WHERE
-    c_mktsegment = 'BUILDING'
-  GROUP BY
-    1
-), _t AS (
-  SELECT
-    ORDERS.o_totalprice,
+    o_totalprice,
     AVG(CAST(NULL AS SIGNED)) OVER () AS _w
-  FROM tpch.ORDERS AS ORDERS
-  LEFT JOIN _u_0 AS _u_0
-    ON ORDERS.o_custkey = _u_0._u_1
+  FROM tpch.ORDERS
   WHERE
-    ORDERS.o_clerk = 'Clerk#000000001' AND _u_0._u_1 IS NULL
+    NOT EXISTS(
+      SELECT
+        1 AS `1`
+      FROM tpch.CUSTOMER
+      WHERE
+        c_custkey = ORDERS.o_custkey AND c_mktsegment = 'BUILDING'
+    )
+    AND o_clerk = 'Clerk#000000001'
 )
 SELECT
   COUNT(*) AS n

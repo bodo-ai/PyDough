@@ -325,7 +325,7 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
             - `host`: Oracle server host (default: "127.0.0.1"/"localhost").
             - `port`: Oracle server port (default: 1521).
             - `tcp_connect_timeout`: Timeout for the connection (default: 3 seconds).
-            - `attempts` (not an Oracle connector parameter): Number of connection attempts (default: 3)
+            - `attempts` (not an Oracle connector parameter): Number of connection attempts (default: 1)
             - `delay` (not an Oracle connector parameter): Delay between connection attempts (default: 2 seconds).
             If a connection object is provided, it will be used directly.
             All arguments must be accepted by the Oracle connector connect API.

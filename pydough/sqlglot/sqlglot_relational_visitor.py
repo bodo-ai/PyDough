@@ -419,7 +419,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
         join_type: str = join.join_type.value
         if join_type == "SEMI" and join.cardinality.singular:
-            join_type == "INNER"
+            join_type = "INNER"
         query = query.join(subquery, on=cond_expr, join_type=join_type)
         # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
         # which is necessary later when optimizing

@@ -350,12 +350,6 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         date: datetime.date
         dt: datetime.datetime
         if self._dialect == DatabaseDialect.ANSI:
-            if isinstance(literal_expression.value, datetime.date):
-                date = literal_expression.value
-                literal = sqlglot_expressions.Cast(
-                    this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
-                    to=sqlglot_expressions.DataType.build("DATE"),
-                )
             if isinstance(literal_expression.value, datetime.datetime):
                 dt = literal_expression.value
                 if dt.tzinfo is not None:
@@ -366,16 +360,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                     this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
                     to=sqlglot_expressions.DataType.build("TIMESTAMP"),
                 )
-        elif self._dialect == DatabaseDialect.ORACLE:
-            if isinstance(literal_expression.value, datetime.date):
+            elif isinstance(literal_expression.value, datetime.date):
                 date = literal_expression.value
-                literal = sqlglot_expressions.Anonymous(
-                    this="TO_DATE",
-                    expressions=[
-                        sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
-                        sqlglot_expressions.Literal.string("YYYY-MM-DD"),
-                    ],
+                literal = sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                    to=sqlglot_expressions.DataType.build("DATE"),
                 )
+
+        elif self._dialect == DatabaseDialect.ORACLE:
             if isinstance(literal_expression.value, datetime.datetime):
                 dt = literal_expression.value
                 if dt.tzinfo is not None:
@@ -389,6 +381,15 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                             literal_expression.value.strftime("%Y-%m-%d %H:%M:%S")
                         ),
                         sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
+                    ],
+                )
+            elif isinstance(literal_expression.value, datetime.date):
+                date = literal_expression.value
+                literal = sqlglot_expressions.Anonymous(
+                    this="TO_DATE",
+                    expressions=[
+                        sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                        sqlglot_expressions.Literal.string("YYYY-MM-DD"),
                     ],
                 )
         self._stack.append(literal)

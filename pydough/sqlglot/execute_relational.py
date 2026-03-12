@@ -167,7 +167,7 @@ def apply_sqlglot_optimizer(
     # PyDough skips this step if there are any recursive CTEs in the query, due
     # to flaws in how SQLGlot handles such subqueries.
     if not any(e.args.get("recursive") for e in glot_expr.find_all(With)):
-        glot_expr = unnest_subqueries(glot_expr)
+        glot_expr = unnest_subqueries(glot_expr, dialect)
 
     # limit clauses, which is not correct.
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
@@ -304,7 +304,9 @@ def replace_keys_with_indices(
         # Replace GROUP BY keys that are in the select clause with indices.
         # Oracle does not support indices in the GROUP BY, for this dialect this
         # step is skipped
-        if expression.args.get("group") is not None and dialect != OracleDialect:
+        if expression.args.get("group") is not None and not isinstance(
+            dialect, OracleDialect
+        ):
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
                 # Only replace with the index if the key expression appears in
@@ -492,10 +494,11 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
     Returns:
         None (The AST is modified in place.)
     """
-    if dialect != OracleDialect:
+    # This runs just for Oracle dialect
+    if not isinstance(dialect, OracleDialect):
         return
 
-    if isinstance(expr, (sqlglot_expressions.Identifier)):
+    if isinstance(expr, sqlglot_expressions.Identifier):
         # Identifiers starting with _ are required to be quoted for Oracle
         if expr.this.startswith("_"):
             new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
@@ -503,8 +506,7 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
 
     # Recursively visit the subexpressions.
     for arg in expr.iter_expressions():
-        if isinstance(arg, SQLGlotExpression):
-            quote_oracle_identifiers(arg, dialect)
+        quote_oracle_identifiers(arg, dialect)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
@@ -578,6 +580,9 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             MySQL.Generator.VALUES_AS_TABLE = False
             MySQL.Generator.WRAP_DERIVED_VALUES = False
         case DatabaseDialect.ORACLE:
+            del Oracle.Generator.TYPE_MAPPING[
+                sqlglot_expressions.DataType.Type.DATETIME
+            ]
             del Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop]
         case _:
             pass

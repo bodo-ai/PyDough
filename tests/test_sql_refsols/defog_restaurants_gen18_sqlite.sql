@@ -7,26 +7,18 @@ WITH _s0 AS (
   SELECT
     city_name
   FROM main.restaurant
-), _u_0 AS (
-  SELECT
-    city_name AS _u_1
-  FROM _s1
-  GROUP BY
-    1
 ), _s6 AS (
   SELECT DISTINCT
-    _s0.region
-  FROM _s0 AS _s0
-  LEFT JOIN _u_0 AS _u_0
-    ON _s0.city_name = _u_0._u_1
+    region
+  FROM _s0
   WHERE
-    NOT _u_0._u_1 IS NULL
-), _u_2 AS (
-  SELECT
-    city_name AS _u_3
-  FROM _s1
-  GROUP BY
-    1
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _s1
+      WHERE
+        _s0.city_name = city_name
+    )
 ), _s5 AS (
   SELECT
     city_name,
@@ -40,12 +32,16 @@ WITH _s0 AS (
     CAST(SUM(_s5.sum_rating) AS REAL) / SUM(_s5.count_rating) AS avg_rating,
     _s2.region
   FROM _s0 AS _s2
-  LEFT JOIN _u_2 AS _u_2
-    ON _s2.city_name = _u_2._u_3
   JOIN _s5 AS _s5
     ON _s2.city_name = _s5.city_name
   WHERE
-    NOT _u_2._u_3 IS NULL
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _s1
+      WHERE
+        _s2.city_name = city_name
+    )
   GROUP BY
     2
 )

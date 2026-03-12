@@ -1,15 +1,12 @@
-WITH _u_0 AS (
-  SELECT
-    merchant_id AS _u_1
-  FROM main.coupons
-  GROUP BY
-    1
-)
 SELECT
-  merchants.mid AS merchant_id,
-  merchants.name AS merchant_name
-FROM main.merchants AS merchants
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = merchants.mid
+  mid AS merchant_id,
+  name AS merchant_name
+FROM main.merchants
 WHERE
-  _u_0._u_1 IS NULL
+  NOT EXISTS(
+    SELECT
+      1 AS "1"
+    FROM main.coupons
+    WHERE
+      merchant_id = merchants.mid
+  )

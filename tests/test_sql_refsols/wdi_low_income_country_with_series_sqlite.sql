@@ -1,16 +1,12 @@
-WITH _u_0 AS (
-  SELECT
-    countrycode AS _u_1
-  FROM main.countrynotes
-  WHERE
-    seriescode = 'DT.DOD.DECT.CD'
-  GROUP BY
-    1
-)
 SELECT
-  country.countrycode AS country_code
-FROM main.country AS country
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = country.countrycode
+  countrycode AS country_code
+FROM main.country
 WHERE
-  NOT _u_0._u_1 IS NULL AND country.incomegroup = 'Low income'
+  EXISTS(
+    SELECT
+      1 AS "1"
+    FROM main.countrynotes
+    WHERE
+      country.countrycode = countrycode AND seriescode = 'DT.DOD.DECT.CD'
+  )
+  AND incomegroup = 'Low income'

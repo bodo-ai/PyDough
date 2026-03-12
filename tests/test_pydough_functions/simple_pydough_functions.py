@@ -3035,8 +3035,8 @@ def part_reduced_size():
             reduced_size=FLOAT(size / 2.5),
             retail_price_int=INTEGER(retail_price),
             message=JOIN_STRINGS(
-                " ",
-                "old size:",
+                "",
+                "old size: ",
                 STRING(size),
             ),
         )
