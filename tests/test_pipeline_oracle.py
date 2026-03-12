@@ -349,7 +349,7 @@ def defog_custom_oracle_test_data(
 def test_pipeline_e2e_oracle_tpch(
     tpch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    oracle_conn_db_context: Callable[[str], DatabaseContext],  # Fix this
+    oracle_conn_db_context: Callable[[str], DatabaseContext],
 ):
     """
     Test executing the TPC-H queries from the original code generation on Oracle.

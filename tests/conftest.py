@@ -604,6 +604,11 @@ def sqlite_tpch_session(
             id="postgres",
             marks=[pytest.mark.postgres],
         ),
+        pytest.param(
+            "oracle",
+            id="oracle",
+            marks=[pytest.mark.oracle],
+        ),
     ],
 )
 def all_dialects_tpch_db_context(
