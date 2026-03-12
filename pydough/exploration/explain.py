@@ -45,6 +45,7 @@ from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.unqualified import (
+    UnqualifiedCross,
     UnqualifiedNode,
     UnqualifiedRoot,
     display_raw,
@@ -277,7 +278,6 @@ def explain_unqualified(
         An explanation of `node`.
     """
     lines: list[str] = []
-    qualified_node: PyDoughQDAG | None = None
     session = pydough.active_session if session is None else session
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified
@@ -308,6 +308,7 @@ def explain_unqualified(
                 "that you need to place your PyDough code into a context for it to make sense.\n"
                 "Did you mean to use pydough.explain_term?"
             )
+            return "\n".join(lines)
         else:
             raise e
 
@@ -323,11 +324,8 @@ def explain_unqualified(
         if verbose:
             # Dump the structure of the collection
             lines.append("PyDough collection representing the following logic:")
-            if verbose:
-                for line in qualified_node.to_tree_string().splitlines():
-                    lines.append(f"  {line}")
-            else:
-                lines.append(f"  {qualified_node.to_string()}")
+            for line in qualified_node.to_tree_string().splitlines():
+                lines.append(f"  {line}")
             lines.append("")
 
         # Explain what the specific node does
@@ -342,22 +340,32 @@ def explain_unqualified(
                     "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed."
                 )
             case TableCollection():
-                collection_name = qualified_node.collection.name
-                lines.append(
-                    f"This node, specifically, accesses the collection {collection_name}.\n"
-                    f"Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
-                )
+                if isinstance(node, UnqualifiedCross):
+                    left_desc = display_raw(node._parcel[0])
+                    right_desc = display_raw(node._parcel[1])
+                    lines.append(
+                        "This node is a CROSS join: every row of the left "
+                        "collection is paired with every row of the right "
+                        "collection."
+                    )
+                    lines.append(f"Left: {left_desc}")
+                    lines.append(f"Right: {right_desc}")
+                else:
+                    collection_name = qualified_node.collection.name
+                    lines.append(
+                        f"This node, specifically, accesses the collection {collection_name}.\n"
+                        f"Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
+                    )
             case SubCollection():
                 collection_name = qualified_node.subcollection_property.collection.name
                 property_name = qualified_node.subcollection_property.name
                 prop = qualified_node.subcollection_property
                 if isinstance(prop, CartesianProductMetadata):
-                    parent_name = prop.collection.name
                     child_name = prop.child_collection.name
                     left_desc = (
                         qualified_node.preceding_context.to_string()
                         if qualified_node.preceding_context is not None
-                        else parent_name
+                        else collection_name
                     )
                     lines.append(
                         "This node is a CROSS join: every row of the left "
@@ -367,8 +375,8 @@ def explain_unqualified(
                     lines.append(f"Left (parent): {left_desc}")
                     lines.append(f"Right (child): {child_name}")
                     lines.append(
-                        f"Metadata: {parent_name}.{property_name} -> {child_name}. "
-                        f"Call pydough.explain(graph['{parent_name}']['{property_name}']) "
+                        f"Metadata: {collection_name}.{property_name} -> {child_name}. "
+                        f"Call pydough.explain(graph['{collection_name}']['{property_name}']) "
                         "to learn more."
                     )
                 else:
@@ -385,11 +393,12 @@ def explain_unqualified(
                 )
             case Singular():
                 lines.append(
-                    "This node makes the preceding collection singular via a CROSS product.\n"
-                    "Each record from the parent context is paired with all records from the child."
+                    "This node applies the SINGULAR operator, asserting that the "
+                    "preceding collection is singular (1-to-1) with respect to the "
+                    "parent context."
                 )
                 lines.append(
-                    f"Child collection: {qualified_node.preceding_context.to_string()}"
+                    f"Collection made singular: {qualified_node.preceding_context.to_string()}"
                 )
             case PyDoughUserGeneratedCollectionQDag():
                 collection_name = qualified_node.name

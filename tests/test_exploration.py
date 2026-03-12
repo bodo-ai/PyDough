@@ -7,12 +7,7 @@ from collections.abc import Callable
 import pytest
 
 import pydough
-from pydough.configs import PyDoughConfigs, PyDoughSession
-from pydough.database_connectors import (
-    DatabaseContext,
-    DatabaseDialect,
-    empty_connection,
-)
+from pydough.configs import PyDoughSession
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
 from tests.test_pydough_functions.exploration_examples import (
@@ -21,6 +16,7 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_collections_impl,
     contextless_expr_impl,
     contextless_func_impl,
+    cross_impl,
     cross_subcollection_impl,
     customers_without_orders_impl,
     dataframe_collection_exploration_impl,
@@ -1216,11 +1212,11 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   ──┬─ TPCH
     └─┬─ TableCollection[nations]
-      └─┬─ TPCH
-        └─── TableCollection[regions]
+      ├─── SubCollection[region]
+      └─── Singular
 
-This node, specifically, accesses the collection regions.
-Call pydough.explain(graph['regions']) to learn more about this collection.
+This node applies the SINGULAR operator, asserting that the preceding collection is singular (1-to-1) with respect to the parent context.
+Collection made singular: TPCH.nations.region
 
 The following terms will be included in the result if this collection is executed:
   comment, key, name
@@ -1235,8 +1231,8 @@ Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
                 """,
                 """
-This node, specifically, accesses the collection regions.
-Call pydough.explain(graph['regions']) to learn more about this collection.
+This node applies the SINGULAR operator, asserting that the preceding collection is singular (1-to-1) with respect to the parent context.
+Collection made singular: TPCH.nations.region
 
 The collection has access to the following expressions:
   comment, key, name
@@ -1251,6 +1247,52 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """,
             ),
             id="singular",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                cross_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left: nations
+Right: regions
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left: nations
+Right: regions
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="cross",
         ),
         pytest.param(
             (
@@ -1490,18 +1532,17 @@ def exploration_session(
     unqualified_exploration_test_data: tuple[
         str, Callable[..., UnqualifiedNode], str, str
     ],
+    empty_sqlite_tpch_session: PyDoughSession,
     sample_graph_path: str,
-    default_config: PyDoughConfigs,
 ) -> PyDoughSession:
     """
     Session with metadata for the graph used by the current exploration test.
+    Reuses the database and config from empty_sqlite_tpch_session, just
+    loading the appropriate graph for the test.
     """
     graph_name: str = unqualified_exploration_test_data[0]
-    session: PyDoughSession = PyDoughSession()
-    session.load_metadata_graph(sample_graph_path, graph_name)
-    session.config = default_config
-    session.database = DatabaseContext(empty_connection, DatabaseDialect.SQLITE)
-    return session
+    empty_sqlite_tpch_session.load_metadata_graph(sample_graph_path, graph_name)
+    return empty_sqlite_tpch_session
 
 
 @pytest.mark.parametrize(
