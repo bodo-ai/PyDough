@@ -6,19 +6,16 @@ SELECT
     ) % 7 || ' days' AS INTERVAL)
   ) AS week,
   COUNT(*) AS num_notifs,
-  COALESCE(
-    SUM(
-      CASE
-        WHEN (
-          (
-            EXTRACT(DOW FROM CAST(notifications.created_at AS TIMESTAMP)) + 6
-          ) % 7
-        ) IN (5, 6)
-        THEN 1
-        ELSE 0
-      END
-    ),
-    0
+  SUM(
+    CASE
+      WHEN (
+        (
+          EXTRACT(DOW FROM CAST(notifications.created_at AS TIMESTAMP)) + 6
+        ) % 7
+      ) IN (5, 6)
+      THEN 1
+      ELSE 0
+    END
   ) AS weekend_notifs
 FROM main.notifications AS notifications
 JOIN main.users AS users

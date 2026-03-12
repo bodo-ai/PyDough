@@ -4,15 +4,17 @@ Overridden version of the unnest_subqueries.py file from sqlglot.
 
 from sqlglot import exp
 from sqlglot.helper import name_sequence
-from sqlglot.optimizer.scope import ScopeType, traverse_scope
+from sqlglot.optimizer.scope import Scope, ScopeType, traverse_scope
 from sqlglot.optimizer.unnest_subqueries import unnest, _replace, _other_operand
+from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects import Oracle as OracleDialect
 
 # ruff: noqa
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
 
-def unnest_subqueries(expression):
+def unnest_subqueries(expression, dialect):
     """
     Rewrite sqlglot AST to convert some predicates with subqueries into joins.
 
@@ -35,10 +37,13 @@ def unnest_subqueries(expression):
     for scope in traverse_scope(expression):
         select = scope.expression
         parent = select.parent_select
+        # PYDOUGH CHANGE: use the overridden version of external_columns that
+        # correctly handles set operations
+        external_columns = get_scope_external_columns(scope, dialect)
         if not parent:
             continue
-        if scope.external_columns:
-            decorrelate(select, parent, scope.external_columns, next_alias_name)
+        if external_columns:
+            decorrelate(select, parent, external_columns, next_alias_name)
         elif scope.scope_type == ScopeType.SUBQUERY:
             unnest(select, parent, next_alias_name)
 
@@ -220,3 +225,35 @@ def decorrelate(select, parent_select, external_columns, next_alias_name):
         join_alias=table_alias,
         copy=False,
     )
+
+
+def get_scope_external_columns(
+    scope: Scope, dialect: SQLGlotDialect
+) -> list[exp.Column]:
+    """
+    Overridden version of the external_columns property for Scope objects.
+    Columns that appear to reference sources in outer scopes.
+
+    Returns:
+        list[exp.Column]: Column instances that don't reference
+            sources in the current scope.
+    """
+    if scope._external_columns is None:
+        if isinstance(scope.expression, exp.SetOperation):
+            left, right = scope.union_scopes
+            scope._external_columns = left.external_columns + right.external_columns
+        else:
+            scope._external_columns = [
+                c
+                for c in scope.columns
+                # PYDOUGH CHANGE: ignore SYSTIMESTAMP for Oracle since it is a
+                # special case of a column that should not be considered external
+                if isinstance(c.this, exp.Identifier)
+                and not (
+                    isinstance(dialect, OracleDialect) and c.this.this == "SYSTIMESTAMP"
+                )
+                and c.table not in scope.selected_sources
+                and c.table not in scope.semi_or_anti_join_tables
+            ]
+
+    return scope._external_columns

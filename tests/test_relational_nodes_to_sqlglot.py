@@ -15,11 +15,13 @@ from sqlglot.expressions import (
     Add,
     Binary,
     Column,
+    Exists,
     Expression,
     From,
     Length,
     Literal,
     Lower,
+    Not,
     Order,
     RowNumber,
     Select,
@@ -1002,33 +1004,35 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                     alias="_s0",
                 ),
-                join=GlotJoin(
-                    right_query=GlotFrom(
-                        mkglot(
-                            expressions=[
-                                Ident(this="a", quoted=False),
-                                Ident(this="b", quoted=False),
-                            ],
-                            _from=GlotFrom(
-                                Table(this=Ident(this="table", quoted=False))
+                where=Exists(
+                    this=mkglot(
+                        expressions=[mk_literal(1, False)],
+                        _from=GlotFrom(
+                            mkglot(
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             ),
+                            alias="_s1",
                         ),
-                        alias=TableAlias(this="_s1"),
-                    ),
-                    on=mkglot_func(
-                        EQ,
-                        [
-                            Column(
-                                this=Ident(this="a", quoted=False),
-                                table=Ident(this="_s0", quoted=False),
-                            ),
-                            Column(
-                                this=Ident(this="a", quoted=False),
-                                table=Ident(this="_s1", quoted=False),
-                            ),
-                        ],
-                    ),
-                    join_type="semi",
+                        where=mkglot_func(
+                            EQ,
+                            [
+                                Column(
+                                    this=Ident(this="a", quoted=False),
+                                    table=Ident(this="_s0", quoted=False),
+                                ),
+                                Column(
+                                    this=Ident(this="a", quoted=False),
+                                    table=Ident(this="_s1", quoted=False),
+                                ),
+                            ],
+                        ),
+                    )
                 ),
             ),
             id="simple_semi_join",
@@ -1065,37 +1069,41 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                             Ident(this="a", quoted=False),
                             Ident(this="b", quoted=False),
                         ],
-                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                        _from=GlotFrom(
+                            Table(this=Ident(this="table", quoted=False)), alias=None
+                        ),
                     ),
                     alias="_s0",
                 ),
-                join=GlotJoin(
-                    right_query=GlotFrom(
-                        mkglot(
-                            expressions=[
-                                Ident(this="a", quoted=False),
-                                Ident(this="b", quoted=False),
-                            ],
+                where=Not(
+                    this=Exists(
+                        this=mkglot(
+                            expressions=[mk_literal(1, False)],
                             _from=GlotFrom(
-                                Table(this=Ident(this="table", quoted=False))
+                                mkglot(
+                                    expressions=[
+                                        Ident(this="a", quoted=False),
+                                        Ident(this="b", quoted=False),
+                                    ],
+                                    _from=GlotFrom(
+                                        Table(this=Ident(this="table", quoted=False)),
+                                        alias=None,
+                                    ),
+                                ),
+                                alias="_s1",
                             ),
-                        ),
-                        alias=TableAlias(this="_s1"),
-                    ),
-                    on=mkglot_func(
-                        EQ,
-                        [
-                            Column(
-                                this=Ident(this="a", quoted=False),
-                                table=Ident(this="_s0", quoted=False),
+                            where=EQ(
+                                this=Column(
+                                    this=Ident(this="a", quoted=False),
+                                    table=Ident(this="_s0", quoted=False),
+                                ),
+                                expression=Column(
+                                    this=Ident(this="a", quoted=False),
+                                    table=Ident(this="_s1", quoted=False),
+                                ),
                             ),
-                            Column(
-                                this=Ident(this="a", quoted=False),
-                                table=Ident(this="_s1", quoted=False),
-                            ),
-                        ],
-                    ),
-                    join_type="anti",
+                        )
+                    )
                 ),
             ),
             id="simple_anti_join",

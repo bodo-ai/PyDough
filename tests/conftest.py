@@ -39,8 +39,10 @@ from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
+    simple_int_float_string_cast,
     string_format_specifiers_bodosql,
     string_format_specifiers_mysql,
+    string_format_specifiers_oracle,
     string_format_specifiers_postgres,
     string_format_specifiers_snowflake,
 )
@@ -228,7 +230,23 @@ def get_custom_datasets_graph() -> graph_fetcher:
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/custom_datasets_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_oracle_custom_datasets_graph() -> graph_fetcher:
+    """
+    Returns the graph for the given custom dataset name for oracle.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/oracle_custom_datasets_graphs.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
@@ -258,6 +276,22 @@ def get_postgres_defog_graphs() -> graph_fetcher:
     def impl(name: str) -> GraphMetadata:
         path: str = (
             f"{os.path.dirname(__file__)}/test_metadata/postgres_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_oracle_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Oracle.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/oracle_defog_graphs.json"
         )
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
@@ -433,6 +467,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
+        pytest.param(DatabaseDialect.ORACLE, id="oracle"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -569,6 +604,11 @@ def sqlite_tpch_session(
             id="postgres",
             marks=[pytest.mark.postgres],
         ),
+        pytest.param(
+            "oracle",
+            id="oracle",
+            marks=[pytest.mark.oracle],
+        ),
     ],
 )
 def all_dialects_tpch_db_context(
@@ -600,6 +640,17 @@ def all_dialects_tpch_db_context(
         case "postgres":
             db_context = request.getfixturevalue("postgres_conn_db_context")
             return db_context, get_sample_graph("TPCH")
+        case "oracle":
+            db_context = request.getfixturevalue("oracle_conn_db_context")
+            return db_context("tpch"), get_sample_graph("TPCH")
+        case "bodosql":
+            bodosql_context = request.getfixturevalue("bodosql_tpch_context")
+            db_context = load_database_context("bodosql", context=bodosql_context)
+            return (
+                db_context,
+                get_sf_sample_graph("TPCH"),
+            )
+
     # Default fallback
     db_context = request.getfixturevalue("sqlite_tpch_db_context")
     return db_context, get_sample_graph("TPCH")
@@ -1400,6 +1451,162 @@ def postgres_params_tpch_db_context(
     )
 
 
+ORACLE_ENVS = ["ORACLE_PASSWORD"]
+"""
+    Oracle environment variables required for connection.
+    `ORACLE_PASSWORD`: The password for Oracle.
+"""
+
+
+@pytest.fixture(scope="session")
+def require_oracle_env() -> None:
+    """
+    Check if the Oracle environment variables are set. Allowing empty strings.
+    Returns:
+        bool: True if all required Oracle environment variables are set, False otherwise.
+    """
+    if not all(os.getenv(var) is not None for var in ORACLE_ENVS):
+        pytest.skip("Skipping Oracle tests: environment variables not set.")
+
+
+ORACLE_DOCKER_CONTAINER = "oracle_tpch_test"
+ORACLE_DOCKER_IMAGE = "bodoai1/pydough-oracle-tpch:latest"
+ORACLE_HOST = "127.0.0.1"
+ORACLE_PORT = 1521
+"""
+    CONSTANTS for the Oracle Docker container setup.
+    - ORACLE_DOCKER_CONTAINER: The name of the Docker container.
+    - ORACLE_DOCKER_IMAGE: The Docker image to use for the Oracle container.
+    - ORACLE_HOST: The host address for Oracle.
+    - ORACLE_PORT: The port on which Oracle is exposed.
+"""
+
+
+@pytest.fixture(scope="session")
+def oracle_docker_setup() -> None:
+    """Set up the Oracle Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(ORACLE_DOCKER_CONTAINER):
+                if not container_is_running(ORACLE_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", ORACLE_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        ORACLE_DOCKER_CONTAINER,
+                        "--platform",
+                        "linux/amd64",
+                        "-p",
+                        f"{ORACLE_PORT}:{ORACLE_PORT}",
+                        "-e",
+                        f"ORACLE_PWD={os.getenv('ORACLE_PASSWORD')}",
+                        ORACLE_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Oracle Docker container: {e}")
+
+    # Check import is successful
+    try:
+        import oracledb
+    except ImportError as e:
+        raise RuntimeError("python-oracledb is not installed") from e
+
+    # Wait for Oracle to be ready for 10 minutes max
+    # Check for keywords (last created schema)
+    conn: oracledb.Connection | None = None
+    for _ in range(600):
+        try:
+            if not conn:
+                conn = oracledb.connect(
+                    user="tpch",
+                    password=os.getenv("ORACLE_PASSWORD"),
+                    host=ORACLE_HOST,
+                    port=ORACLE_PORT,
+                    service_name="FREEPDB1",
+                )
+
+            # Checking the last last table of keywords was loaded correctly
+            # before running the test
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM lineitem")
+            row = cur.fetchone()
+            if row and row[0] == 6001215:
+                conn.close()
+                break
+            else:
+                print(f"Waiting {_ + 1}/600 seconds for data to be load...")
+                time.sleep(1)
+
+        except oracledb.Error as e:
+            print("Error occurred while connecting to Oracle:", e)
+            print(f"Waiting {_ + 1}/600 seconds for Oracle to be ready...")
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", ORACLE_DOCKER_CONTAINER])
+        pytest.fail(
+            f"Oracle container did not become ready in time. Waited {_}/600 seconds"
+        )
+
+
+@pytest.fixture(scope="session")
+def oracle_conn_db_context(
+    require_oracle_env, oracle_docker_setup
+) -> Callable[[str], DatabaseContext]:
+    """
+    This fixture is used to connect to the Oracle TPCH/Defog database using
+    a connection object.
+    Returns a DatabaseContext for the Oracle TPCH/Defog database.
+    """
+    import oracledb
+
+    @cache
+    def _impl(oracle_user: str) -> DatabaseContext:
+        oracle_password = os.getenv("ORACLE_PASSWORD")
+
+        connection: oracledb.Connection = oracledb.connect(
+            user=oracle_user,
+            password=oracle_password,
+            host=ORACLE_HOST,
+            port=ORACLE_PORT,
+            service_name="FREEPDB1",
+        )
+        return load_database_context(
+            "oracle",
+            connection=connection,
+        )
+
+    return _impl
+
+
+@pytest.fixture
+def oracle_params_tpch_db_context(
+    require_oracle_env, oracle_docker_setup
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the oracle TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the oracle TPCH database.
+    """
+    oracle_password: str | None = os.getenv("ORACLE_PASSWORD")
+
+    return load_database_context(
+        "oracle",
+        user="tpch",
+        password=oracle_password,
+        host=ORACLE_HOST,
+        port=ORACLE_PORT,
+        service_name="FREEPDB1",
+    )
+
+
 @pytest.fixture(scope="session")
 def get_pagerank_graph() -> graph_fetcher:
     """
@@ -1707,14 +1914,14 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 " f=DATETIME('2025-01-01 12:35:13', 'start of hour', '+2 quarters', '+3 weeks'),"
                 " g=DATETIME('2025-01-01 12:35:13', 'start of day'),"
                 " h=JOIN_STRINGS(';', HOUR('2025-01-01 12:35:13'), MINUTE(DATETIME('2025-01-01 12:35:13', '+45 minutes')), SECOND(DATETIME('2025-01-01 12:35:13', '-7 seconds'))),"
-                " i=DATEDIFF('years', '1993-05-25 12:45:36', order_date),"
-                " j=DATEDIFF('quarters', '1993-05-25 12:45:36', order_date),"
-                " k=DATEDIFF('months', '1993-05-25 12:45:36', order_date),"
-                " l=DATEDIFF('weeks', '1993-05-25 12:45:36', order_date),"
-                " m=DATEDIFF('days', '1993-05-25 12:45:36', order_date),"
-                " n=DATEDIFF('hours', '1993-05-25 12:45:36', order_date),"
-                " o=DATEDIFF('minutes', '1993-05-25 12:45:36', order_date),"
-                " p=DATEDIFF('seconds', '1993-05-25 12:45:36', order_date),"
+                " i=DATEDIFF('years', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " j=DATEDIFF('quarters', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " k=DATEDIFF('months', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " l=DATEDIFF('weeks', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " m=DATEDIFF('days', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " n=DATEDIFF('hours', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " o=DATEDIFF('minutes', DATETIME('1993-05-25 12:45:36'), order_date),"
+                " p=DATEDIFF('seconds', DATETIME('1993-05-25 12:45:36'), order_date),"
                 " q=DATETIME(order_date, 'start of week'),"
                 ").TOP_K(5, by=key.ASC())",
                 "TPCH",
@@ -2138,176 +2345,252 @@ def tpch_custom_test_data_dialect_replacements(
     Replace specific TPC-H custom test data with dialect-specific versions.
     """
     if test.test_name == "string_format_specifiers":
-        if dialect == DatabaseDialect.MYSQL:
+        match dialect:
+            case DatabaseDialect.MYSQL:
+                return PyDoughPandasTest(
+                    string_format_specifiers_mysql,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["Sat"],
+                            "d2": ["Jul"],
+                            "d3": ["7"],
+                            "d4": ["15th"],
+                            "d5": ["15"],
+                            "d6": ["15"],
+                            "d7": ["000000"],
+                            "d8": ["14"],
+                            "d9": ["02"],
+                            "d10": ["02"],
+                            "d11": ["30"],
+                            "d12": ["196"],
+                            "d13": ["14"],
+                            "d14": ["2"],
+                            "d15": ["30"],
+                            "d16": ["07"],
+                            "d17": ["PM"],
+                            "d18": ["02:30:45 PM"],
+                            "d19": ["45"],
+                            "d20": ["45"],
+                            "d21": ["14:30:45"],
+                            "d22": ["28"],
+                            "d23": ["28"],
+                            "d24": ["28"],
+                            "d25": ["28"],
+                            "d26": ["28"],
+                            "d27": ["6"],
+                            "d28": ["2023"],
+                            "d29": ["2023"],
+                            "d30": ["2023"],
+                            "d31": ["23"],
+                            "d32": ["2023-07-15"],
+                            "d33": ["14:30"],
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+
+            case DatabaseDialect.POSTGRES:
+                return PyDoughPandasTest(
+                    string_format_specifiers_postgres,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            # HOURS / MINUTES / SECONDS
+                            "h1": ["02"],  # HH
+                            "h2": ["02"],  # HH12
+                            "h3": ["14"],  # HH24
+                            "m1": ["30"],  # MI
+                            "s1": ["45"],  # SS
+                            "ms1": ["000"],  # MS
+                            "us1": ["000000"],  # US
+                            "ff1": ["0"],  # FF1
+                            "ff2": ["00"],  # FF2
+                            "ff3": ["000"],  # FF3
+                            "ff4": ["0000"],  # FF4
+                            "ff5": ["00000"],  # FF5
+                            "ff6": ["000000"],  # FF6
+                            "ssss1": ["52245"],  # SSSS
+                            "ssss2": ["52245"],  # SSSSS
+                            # MERIDIEM
+                            "am1": ["PM"],  # AM
+                            "am2": ["pm"],  # am
+                            "am3": ["P.M."],  # A.M.
+                            "am4": ["p.m."],  # a.m.
+                            # YEAR FORMATS
+                            "y1": ["2,023"],  # Y,YYY
+                            "y2": ["2023"],  # YYYY
+                            "y3": ["023"],  # YYY
+                            "y4": ["23"],  # YY
+                            "y5": ["3"],  # Y
+                            "iy1": ["2023"],  # IYYY
+                            "iy2": ["023"],  # IYY
+                            "iy3": ["23"],  # IY
+                            "iy4": ["3"],  # I
+                            # ERA
+                            "era1": ["AD"],  # AD
+                            "era2": ["A.D."],  # A.D.
+                            # MONTH NAMES
+                            "mon1": ["JULY     "],  # MONTH (blank-padded)
+                            "mon2": ["July     "],  # Month
+                            "mon3": ["july     "],  # month
+                            "mon4": ["JUL"],  # MON
+                            "mon5": ["Jul"],  # Mon
+                            "mon6": ["jul"],  # mon
+                            "mon7": ["07"],  # MM
+                            # DAY NAMES
+                            "day1": ["SATURDAY "],  # DAY (blank-padded)
+                            "day2": ["Saturday "],  # Day
+                            "day3": ["saturday "],  # day
+                            "day4": ["SAT"],  # DY
+                            "day5": ["Sat"],  # Dy
+                            "day6": ["sat"],  # dy
+                            # DAY / WEEK / YEAR METRICS
+                            "doy1": ["196"],  # DDD
+                            "doy2": ["195"],  # IDDD
+                            "dom1": ["15"],  # DD
+                            "dow1": ["7"],  # D (Sunday=1)
+                            "dow2": ["6"],  # ID (Monday=1)
+                            "wom1": ["3"],  # W
+                            "woy1": ["28"],  # WW
+                            "woy2": ["28"],  # IW
+                            # OTHER DATE COMPONENTS
+                            "c1": ["21"],  # CC
+                            "j1": ["2460141"],  # J (Julian day number)
+                            "q1": ["3"],  # Q
+                            "rm1": ["VII "],  # RM
+                            "rm2": ["vii "],  # rm
+                            # TIME ZONE (timestamp without time zone → empty)
+                            "tz1": [""],  # TZ
+                            "tz2": [""],  # tz
+                            "tz3": ["+00"],  # TZH
+                            "tz4": ["00"],  # TZM
+                            "tz5": ["+00"],  # OF
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+
+            case DatabaseDialect.SNOWFLAKE:
+                return PyDoughPandasTest(
+                    string_format_specifiers_snowflake,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # Mon
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # DD
+                            "d7": ["Sat"],  # DY
+                            "d8": ["Saturday"],  # DYDY
+                            "d9": ["14"],  # HH24
+                            "d10": ["02"],  # HH12
+                            "d11": ["30"],  # MI
+                            "d12": ["45"],  # SS
+                            "d13": ["PM"],  # AM / PM
+                            "d14": [".000000000"],  # .FF
+                            "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.ORACLE:
+                return PyDoughPandasTest(
+                    string_format_specifiers_oracle,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            # ===== YEAR =====
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["23"],  # RR  (2023 → 23)
+                            # ===== MONTH =====
+                            "d4": ["07"],  # MM
+                            "d5": ["JUL"],  # MON
+                            "d6": ["JULY     "],  # MONTH (space-padded)
+                            "d7": ["3"],  # Q (July → Q3)
+                            # ===== DAY =====
+                            "d8": ["15"],  # DD
+                            "d9": ["196"],  # DDD (day of year)
+                            "d10": ["7"],  # D (Saturday, NLS_TERRITORY dependent)
+                            "d11": ["SAT"],  # DY
+                            "d12": ["SATURDAY "],  # DAY (space-padded)
+                            # ===== WEEK =====
+                            "d13": ["3"],  # W  (week of month)
+                            "d14": ["28"],  # WW (week of year)
+                            "d15": ["28"],  # IW (ISO week)
+                            # ===== TIME =====
+                            "d16": ["14"],  # HH24
+                            "d17": ["02"],  # HH12
+                            "d18": ["30"],  # MI
+                            "d19": ["45"],  # SS
+                            "d20": ["P.M."],  # AM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.BODOSQL:
+                return PyDoughPandasTest(
+                    string_format_specifiers_bodosql,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # Mon
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # DD
+                            "d7": ["Sat"],  # DY
+                            "d9": ["14"],  # HH24
+                            "d10": ["02"],  # HH12
+                            "d11": ["30"],  # MI
+                            "d12": ["45"],  # SS
+                            "d13": ["PM"],  # AM / PM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case _:
+                pytest.skip("Skipping test: Unsupported dialect for test replacement")
+
+    if test.test_name == "simple_int_float_string_cast":
+        if dialect == DatabaseDialect.ORACLE:
+            # Oracle needs different answer
             return PyDoughPandasTest(
-                string_format_specifiers_mysql,
+                simple_int_float_string_cast,
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "d1": ["Sat"],
-                        "d2": ["Jul"],
-                        "d3": ["7"],
-                        "d4": ["15th"],
-                        "d5": ["15"],
-                        "d6": ["15"],
-                        "d7": ["000000"],
-                        "d8": ["14"],
-                        "d9": ["02"],
-                        "d10": ["02"],
-                        "d11": ["30"],
-                        "d12": ["196"],
-                        "d13": ["14"],
-                        "d14": ["2"],
-                        "d15": ["30"],
-                        "d16": ["07"],
-                        "d17": ["PM"],
-                        "d18": ["02:30:45 PM"],
-                        "d19": ["45"],
-                        "d20": ["45"],
-                        "d21": ["14:30:45"],
-                        "d22": ["28"],
-                        "d23": ["28"],
-                        "d24": ["28"],
-                        "d25": ["28"],
-                        "d26": ["28"],
-                        "d27": ["6"],
-                        "d28": ["2023"],
-                        "d29": ["2023"],
-                        "d30": ["2023"],
-                        "d31": ["23"],
-                        "d32": ["2023-07-15"],
-                        "d33": ["14:30"],
+                        "i1": [1],
+                        "i2": [2],
+                        "i3": [3],
+                        "i4": [4],
+                        "i5": [-5],
+                        "i6": [-6],
+                        "f1": [1.0],
+                        "f2": [2.2],
+                        "f3": [3.0],
+                        "f4": [4.3],
+                        "f5": [-5.888],
+                        "f6": [-6.0],
+                        "f7": [0.0],
+                        "s1": ["1"],
+                        "s2": ["2.2"],
+                        "s3": ["3"],
+                        "s4": ["4.3"],
+                        "s5": ["-5.888"],
+                        "s6": ["-6.1"],
+                        "s7": [".1"],
+                        "s8": ["0.0"],
+                        "s9": ["abc def"],
                     }
                 ),
-                "string_format_specifiers",
+                "simple_int_float_string_cast",
             )
-        elif dialect == DatabaseDialect.POSTGRES:
-            return PyDoughPandasTest(
-                string_format_specifiers_postgres,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        # HOURS / MINUTES / SECONDS
-                        "h1": ["02"],  # HH
-                        "h2": ["02"],  # HH12
-                        "h3": ["14"],  # HH24
-                        "m1": ["30"],  # MI
-                        "s1": ["45"],  # SS
-                        "ms1": ["000"],  # MS
-                        "us1": ["000000"],  # US
-                        "ff1": ["0"],  # FF1
-                        "ff2": ["00"],  # FF2
-                        "ff3": ["000"],  # FF3
-                        "ff4": ["0000"],  # FF4
-                        "ff5": ["00000"],  # FF5
-                        "ff6": ["000000"],  # FF6
-                        "ssss1": ["52245"],  # SSSS
-                        "ssss2": ["52245"],  # SSSSS
-                        # MERIDIEM
-                        "am1": ["PM"],  # AM
-                        "am2": ["pm"],  # am
-                        "am3": ["P.M."],  # A.M.
-                        "am4": ["p.m."],  # a.m.
-                        # YEAR FORMATS
-                        "y1": ["2,023"],  # Y,YYY
-                        "y2": ["2023"],  # YYYY
-                        "y3": ["023"],  # YYY
-                        "y4": ["23"],  # YY
-                        "y5": ["3"],  # Y
-                        "iy1": ["2023"],  # IYYY
-                        "iy2": ["023"],  # IYY
-                        "iy3": ["23"],  # IY
-                        "iy4": ["3"],  # I
-                        # ERA
-                        "era1": ["AD"],  # AD
-                        "era2": ["A.D."],  # A.D.
-                        # MONTH NAMES
-                        "mon1": ["JULY     "],  # MONTH (blank-padded)
-                        "mon2": ["July     "],  # Month
-                        "mon3": ["july     "],  # month
-                        "mon4": ["JUL"],  # MON
-                        "mon5": ["Jul"],  # Mon
-                        "mon6": ["jul"],  # mon
-                        "mon7": ["07"],  # MM
-                        # DAY NAMES
-                        "day1": ["SATURDAY "],  # DAY (blank-padded)
-                        "day2": ["Saturday "],  # Day
-                        "day3": ["saturday "],  # day
-                        "day4": ["SAT"],  # DY
-                        "day5": ["Sat"],  # Dy
-                        "day6": ["sat"],  # dy
-                        # DAY / WEEK / YEAR METRICS
-                        "doy1": ["196"],  # DDD
-                        "doy2": ["195"],  # IDDD
-                        "dom1": ["15"],  # DD
-                        "dow1": ["7"],  # D (Sunday=1)
-                        "dow2": ["6"],  # ID (Monday=1)
-                        "wom1": ["3"],  # W
-                        "woy1": ["28"],  # WW
-                        "woy2": ["28"],  # IW
-                        # OTHER DATE COMPONENTS
-                        "c1": ["21"],  # CC
-                        "j1": ["2460141"],  # J (Julian day number)
-                        "q1": ["3"],  # Q
-                        "rm1": ["VII "],  # RM
-                        "rm2": ["vii "],  # rm
-                        # TIME ZONE (timestamp without time zone → empty)
-                        "tz1": [""],  # TZ
-                        "tz2": [""],  # tz
-                        "tz3": ["+00"],  # TZH
-                        "tz4": ["00"],  # TZM
-                        "tz5": ["+00"],  # OF
-                    }
-                ),
-                "string_format_specifiers",
-            )
-        elif dialect == DatabaseDialect.SNOWFLAKE:
-            return PyDoughPandasTest(
-                string_format_specifiers_snowflake,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "d1": ["2023"],  # YYYY
-                        "d2": ["23"],  # YY
-                        "d3": ["07"],  # MM
-                        "d4": ["Jul"],  # Mon
-                        "d5": ["July"],  # MMMM
-                        "d6": ["15"],  # DD
-                        "d7": ["Sat"],  # DY
-                        "d8": ["Saturday"],  # DYDY
-                        "d9": ["14"],  # HH24
-                        "d10": ["02"],  # HH12
-                        "d11": ["30"],  # MI
-                        "d12": ["45"],  # SS
-                        "d13": ["PM"],  # AM / PM
-                        "d14": [".000000000"],  # .FF
-                        "d15": ["Z"],  # TZH:TZM (NTZ → empty)
-                    }
-                ),
-                "string_format_specifiers",
-            )
-        elif dialect == DatabaseDialect.BODOSQL:
-            return PyDoughPandasTest(
-                string_format_specifiers_bodosql,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "d1": ["2023"],  # YYYY
-                        "d2": ["23"],  # YY
-                        "d3": ["07"],  # MM
-                        "d4": ["Jul"],  # Mon
-                        "d5": ["July"],  # MMMM
-                        "d6": ["15"],  # DD
-                        "d7": ["Sat"],  # DY
-                        "d9": ["14"],  # HH24
-                        "d10": ["02"],  # HH12
-                        "d11": ["30"],  # MI
-                        "d12": ["45"],  # SS
-                        "d13": ["PM"],  # AM / PM
-                    }
-                ),
-                "string_format_specifiers",
-            )
+
     return test
 
 

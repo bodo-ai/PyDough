@@ -442,7 +442,7 @@ def test_semantic_info(get_sample_graph: graph_fetcher) -> None:
             id="sample-valid",
         ),
         pytest.param(
-            "keywords_graph.json",
+            "custom_datasets_graphs.json",
             "keywords",
             None,
             id="keywords-valid",

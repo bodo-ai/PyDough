@@ -1,11 +1,19 @@
-WITH _t1 AS (
+WITH _u_0 AS (
   SELECT
-    MIN(EXTRACT(YEAR FROM CAST(treatments_2.start_dt AS DATETIME))) AS min_year_start_dt
+    patient_id AS _u_1
+  FROM main.treatments
+  GROUP BY
+    1
+), _t1 AS (
+  SELECT
+    MIN(EXTRACT(YEAR FROM CAST(treatments.start_dt AS DATETIME))) AS min_year_start_dt
   FROM main.patients AS patients
-  JOIN main.treatments AS treatments
+  LEFT JOIN _u_0 AS _u_0
+    ON _u_0._u_1 = patients.patient_id
+  LEFT JOIN main.treatments AS treatments
     ON patients.patient_id = treatments.patient_id
-  LEFT JOIN main.treatments AS treatments_2
-    ON patients.patient_id = treatments_2.patient_id
+  WHERE
+    NOT _u_0._u_1 IS NULL
   GROUP BY
     patients.patient_id
 ), _t0 AS (

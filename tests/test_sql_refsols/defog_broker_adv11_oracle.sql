@@ -1,0 +1,17 @@
+WITH "_u_0" AS (
+  SELECT
+    SBTRANSACTION.sbtxcustid AS "_u_1"
+  FROM MAIN.SBTRANSACTION SBTRANSACTION
+  JOIN MAIN.SBTICKER SBTICKER
+    ON SBTICKER.sbtickerid = SBTRANSACTION.sbtxtickerid
+    AND SBTICKER.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+  GROUP BY
+    SBTRANSACTION.sbtxcustid
+)
+SELECT
+  COUNT(*) AS n_customers
+FROM MAIN.SBCUSTOMER SBCUSTOMER
+LEFT JOIN "_u_0" "_u_0"
+  ON SBCUSTOMER.sbcustid = "_u_0"."_u_1"
+WHERE
+  NOT "_u_0"."_u_1" IS NULL AND SBCUSTOMER.sbcustemail LIKE '%.com'
