@@ -246,11 +246,11 @@ def get_scope_external_columns(
             scope._external_columns = [
                 c
                 for c in scope.columns
-                # PYDOUGH CHANGE: ignore SYSTIMESTAMP since it is a special case
-                # of a column that should not be considered external
+                # PYDOUGH CHANGE: ignore SYSTIMESTAMP for Oracle since it is a
+                # special case of a column that should not be considered external
                 if isinstance(c.this, exp.Identifier)
-                and (
-                    c.this.this != "SYSTIMESTAMP" and isinstance(dialect, OracleDialect)
+                and not (
+                    isinstance(dialect, OracleDialect) and c.this.this == "SYSTIMESTAMP"
                 )
                 and c.table not in scope.selected_sources
                 and c.table not in scope.semi_or_anti_join_tables

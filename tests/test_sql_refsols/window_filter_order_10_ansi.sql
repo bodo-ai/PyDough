@@ -1,18 +1,21 @@
-WITH _t1 AS (
+WITH _u_0 AS (
+  SELECT
+    c_custkey AS _u_1
+  FROM tpch.customer
+  WHERE
+    c_mktsegment = 'BUILDING'
+  GROUP BY
+    1
+), _t1 AS (
   SELECT
     1 AS "_"
-  FROM tpch.orders
+  FROM tpch.orders AS orders
+  LEFT JOIN _u_0 AS _u_0
+    ON _u_0._u_1 = orders.o_custkey
   WHERE
-    NOT EXISTS(
-      SELECT
-        1 AS "1"
-      FROM tpch.customer
-      WHERE
-        c_custkey = orders.o_custkey AND c_mktsegment = 'BUILDING'
-    )
-    AND o_clerk = 'Clerk#000000001'
+    _u_0._u_1 IS NULL AND orders.o_clerk = 'Clerk#000000001'
   QUALIFY
-    o_totalprice < (
+    orders.o_totalprice < (
       0.05 * AVG(CAST(NULL AS INT)) OVER ()
     )
 )

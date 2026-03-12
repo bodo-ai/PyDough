@@ -1,13 +1,16 @@
+WITH _u_0 AS (
+  SELECT
+    salesperson_id AS _u_1
+  FROM dealership.sales
+  GROUP BY
+    1
+)
 SELECT
-  _id,
-  first_name,
-  last_name
-FROM dealership.salespersons
+  salespersons._id,
+  salespersons.first_name,
+  salespersons.last_name
+FROM dealership.salespersons AS salespersons
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = salespersons._id
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS `1`
-    FROM dealership.sales
-    WHERE
-      salesperson_id = salespersons._id
-  )
+  _u_0._u_1 IS NULL

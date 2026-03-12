@@ -1,12 +1,15 @@
+WITH _u_0 AS (
+  SELECT
+    user_id AS _u_1
+  FROM ewallet.notifications
+  GROUP BY
+    1
+)
 SELECT
-  uid,
-  username
-FROM ewallet.users
+  users.uid,
+  users.username
+FROM ewallet.users AS users
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = users.uid
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS `1`
-    FROM ewallet.notifications
-    WHERE
-      user_id = users.uid
-  )
+  _u_0._u_1 IS NULL

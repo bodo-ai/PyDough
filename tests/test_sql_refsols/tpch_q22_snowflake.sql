@@ -5,6 +5,12 @@ WITH _s0 AS (
   WHERE
     SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
     AND c_acctbal > 0.0
+), _u_0 AS (
+  SELECT
+    o_custkey AS _u_1
+  FROM tpch.orders
+  GROUP BY
+    1
 )
 SELECT
   SUBSTRING(customer.c_phone, 1, 2) AS CNTRY_CODE,
@@ -14,14 +20,10 @@ FROM _s0 AS _s0
 JOIN tpch.customer AS customer
   ON SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
   AND _s0.avg_c_acctbal < customer.c_acctbal
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = customer.c_custkey
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM tpch.orders
-    WHERE
-      customer.c_custkey = o_custkey
-  )
+  _u_0._u_1 IS NULL
 GROUP BY
   1
 ORDER BY

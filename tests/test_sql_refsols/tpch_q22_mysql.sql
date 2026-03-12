@@ -5,6 +5,12 @@ WITH _s0 AS (
   WHERE
     c_acctbal > 0.0
     AND SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+), _u_0 AS (
+  SELECT
+    o_custkey AS _u_1
+  FROM tpch.ORDERS
+  GROUP BY
+    1
 )
 SELECT
   SUBSTRING(CUSTOMER.c_phone, 1, 2) COLLATE utf8mb4_bin AS CNTRY_CODE,
@@ -14,14 +20,10 @@ FROM _s0 AS _s0
 JOIN tpch.CUSTOMER AS CUSTOMER
   ON CUSTOMER.c_acctbal > _s0.avg_c_acctbal
   AND SUBSTRING(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+LEFT JOIN _u_0 AS _u_0
+  ON CUSTOMER.c_custkey = _u_0._u_1
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS `1`
-    FROM tpch.ORDERS
-    WHERE
-      CUSTOMER.c_custkey = o_custkey
-  )
+  _u_0._u_1 IS NULL
 GROUP BY
   1
 ORDER BY

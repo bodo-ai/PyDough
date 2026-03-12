@@ -1,11 +1,14 @@
+WITH _u_0 AS (
+  SELECT
+    customer_id AS _u_1
+  FROM dealership.sales
+  GROUP BY
+    1
+)
 SELECT
-  _id
-FROM dealership.customers
+  customers._id
+FROM dealership.customers AS customers
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = customers._id
 WHERE
-  EXISTS(
-    SELECT
-      1 AS `1`
-    FROM dealership.sales
-    WHERE
-      customers._id = customer_id
-  )
+  NOT _u_0._u_1 IS NULL

@@ -1,12 +1,15 @@
+WITH _u_0 AS (
+  SELECT
+    sbtxcustid AS _u_1
+  FROM broker.sbTransaction
+  GROUP BY
+    1
+)
 SELECT
-  sbcustid AS _id,
-  sbcustname AS name
-FROM broker.sbCustomer
+  sbCustomer.sbcustid AS _id,
+  sbCustomer.sbcustname AS name
+FROM broker.sbCustomer AS sbCustomer
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbCustomer.sbcustid
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS `1`
-    FROM broker.sbTransaction
-    WHERE
-      sbCustomer.sbcustid = sbtxcustid
-  )
+  _u_0._u_1 IS NULL

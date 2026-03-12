@@ -1,4 +1,12 @@
-WITH _s3 AS (
+WITH _u_0 AS (
+  SELECT
+    drug_id AS _u_1
+  FROM dermtreatment.treatments
+  WHERE
+    NOT end_dt IS NULL
+  GROUP BY
+    1
+), _s3 AS (
   SELECT
     drug_id,
     AVG(
@@ -14,13 +22,9 @@ SELECT
   drugs.drug_name,
   _s3.avg_ddd
 FROM dermtreatment.drugs AS drugs
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = drugs.drug_id
 LEFT JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id
 WHERE
-  EXISTS(
-    SELECT
-      1 AS "1"
-    FROM dermtreatment.treatments
-    WHERE
-      NOT end_dt IS NULL AND drugs.drug_id = drug_id
-  )
+  NOT _u_0._u_1 IS NULL

@@ -1,15 +1,17 @@
+WITH _u_0 AS (
+  SELECT
+    sbTransaction.sbtxcustid AS _u_1
+  FROM broker.sbTransaction AS sbTransaction
+  JOIN broker.sbTicker AS sbTicker
+    ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
+    AND sbTicker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+  GROUP BY
+    1
+)
 SELECT
   COUNT(*) AS n_customers
-FROM broker.sbCustomer
+FROM broker.sbCustomer AS sbCustomer
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbCustomer.sbcustid
 WHERE
-  EXISTS(
-    SELECT
-      1 AS `1`
-    FROM broker.sbTransaction AS sbTransaction
-    JOIN broker.sbTicker AS sbTicker
-      ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
-      AND sbTicker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
-    WHERE
-      sbCustomer.sbcustid = sbTransaction.sbtxcustid
-  )
-  AND sbcustemail LIKE '%.com'
+  NOT _u_0._u_1 IS NULL AND sbCustomer.sbcustemail LIKE '%.com'

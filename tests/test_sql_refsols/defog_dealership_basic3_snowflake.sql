@@ -1,14 +1,17 @@
+WITH _u_0 AS (
+  SELECT
+    sales.salesperson_id AS _u_1
+  FROM dealership.sales AS sales
+  JOIN dealership.payments_received AS payments_received
+    ON payments_received.payment_method = 'cash'
+    AND payments_received.sale_id = sales.id
+  GROUP BY
+    1
+)
 SELECT
-  id AS salesperson_id
-FROM dealership.salespersons
+  salespersons.id AS salesperson_id
+FROM dealership.salespersons AS salespersons
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = salespersons.id
 WHERE
-  EXISTS(
-    SELECT
-      1 AS "1"
-    FROM dealership.sales AS sales
-    JOIN dealership.payments_received AS payments_received
-      ON payments_received.payment_method = 'cash'
-      AND payments_received.sale_id = sales.id
-    WHERE
-      sales.salesperson_id = salespersons.id
-  )
+  NOT _u_0._u_1 IS NULL

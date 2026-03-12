@@ -1,12 +1,15 @@
+WITH _u_0 AS (
+  SELECT
+    sbdptickerid AS _u_1
+  FROM main.sbdailyprice
+  GROUP BY
+    1
+)
 SELECT
-  sbtickerid AS _id,
-  sbtickersymbol AS symbol
-FROM main.sbticker
+  sbticker.sbtickerid AS _id,
+  sbticker.sbtickersymbol AS symbol
+FROM main.sbticker AS sbticker
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbticker.sbtickerid
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM main.sbdailyprice
-    WHERE
-      sbdptickerid = sbticker.sbtickerid
-  )
+  _u_0._u_1 IS NULL

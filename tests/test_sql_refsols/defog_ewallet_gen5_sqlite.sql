@@ -1,17 +1,20 @@
+WITH _u_0 AS (
+  SELECT
+    notifications.user_id AS _u_1
+  FROM main.notifications AS notifications
+  JOIN main.users AS users
+    ON notifications.created_at <= DATETIME(users.created_at, '1 year')
+    AND notifications.created_at >= users.created_at
+    AND notifications.user_id = users.uid
+  GROUP BY
+    1
+)
 SELECT
-  username,
-  email,
-  created_at
-FROM main.users
+  users.username,
+  users.email,
+  users.created_at
+FROM main.users AS users
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = users.uid
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM main.notifications AS notifications
-    JOIN main.users AS users
-      ON notifications.created_at <= DATETIME(users.created_at, '1 year')
-      AND notifications.created_at >= users.created_at
-      AND notifications.user_id = users.uid
-    WHERE
-      notifications.user_id = users.uid
-  )
+  _u_0._u_1 IS NULL
