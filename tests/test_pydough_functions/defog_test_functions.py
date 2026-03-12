@@ -2650,7 +2650,7 @@ def impl_defog_academic_gen14():
             num_journals=n_jours,
             ratio=n_pubs / n_jours,
         )
-        .ORDER_BY(year.ASC())
+        .ORDER_BY(year.ASC(na_pos="last"))
     )
 
 

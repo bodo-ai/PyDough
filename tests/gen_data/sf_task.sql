@@ -8,7 +8,7 @@ LANGUAGE SQL
 AS
 $$
 BEGIN
-
+  ALTER SESSION SET TIMEZONE = 'UTC';
   DELETE FROM DEFOG.EWALLET.USERS;
   INSERT INTO DEFOG.EWALLET.USERS(uid, username, email, phone_number, created_at, user_type, status, country, address_billing, address_delivery, kyc_status) 
 VALUES 
@@ -604,8 +604,8 @@ $$;
 -- 2. Create a task that calls the procedure everyday at midnight ET  --  
 ------------------------------------------------------------------------
 CREATE OR REPLACE TASK DEFOG.BROKER.UPDATE_DATA_TASK_MIDNIGHT
-  WAREHOUSE = "DEMO_WH"                
-  SCHEDULE = 'USING CRON 0 5 * * * UTC'
+  WAREHOUSE = "DEMO_WH"
+  SCHEDULE = 'USING CRON 0 0 * * * UTC'
 AS
   CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
 
