@@ -364,9 +364,9 @@ def qualify_columns_func(
             # In Snowflake / Oracle queries that have a CONNECT BY clause, one can use the LEVEL
             # pseudocolumn, which doesn't belong to a table, so we change it into an identifier
             scope_expression.transform(
-                lambda n: n.this
-                if isinstance(n, exp.Column) and n.name == "LEVEL"
-                else n,
+                lambda n: (
+                    n.this if isinstance(n, exp.Column) and n.name == "LEVEL" else n
+                ),
                 copy=False,
             )
             scope.clear_cache()
