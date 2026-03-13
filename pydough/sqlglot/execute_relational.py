@@ -14,6 +14,7 @@ from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.dialects import Trino as TrinoDialect
 from sqlglot.dialects.mysql import MySQL
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import (
@@ -486,6 +487,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             # The BodoSQL dialect is essentially a subset of the Snowflake SQL
             # dialect without many of the extraneous features.
             return SnowflakeDialect()
+        case DatabaseDialect.TRINO:
+            return TrinoDialect()
         case DatabaseDialect.MYSQL:
             return MySQLDialect()
         case DatabaseDialect.POSTGRES:

@@ -17,6 +17,7 @@ import boto3
 import httpx
 import pandas as pd
 import pytest
+import trino
 from botocore.exceptions import ClientError
 
 import pydough
@@ -178,6 +179,14 @@ def sf_sample_graph_path() -> str:
     Tuple of the path to the JSON file containing the Snowflake sample graphs.
     """
     return f"{os.path.dirname(__file__)}/test_metadata/snowflake_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
+def trino_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the Trino sample graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/trino_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -431,6 +440,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
         pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
+        pytest.param(DatabaseDialect.TRINO, id="trino"),
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
     ]
@@ -560,6 +570,11 @@ def sqlite_tpch_session(
             marks=[pytest.mark.snowflake],
         ),
         pytest.param(
+            "trino",
+            id="trino",
+            marks=[pytest.mark.trino],
+        ),
+        pytest.param(
             "mysql",
             id="mysql",
             marks=[pytest.mark.mysql],
@@ -575,6 +590,7 @@ def all_dialects_tpch_db_context(
     request,
     get_sample_graph: graph_fetcher,
     get_sf_sample_graph: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     General fixture providing TPCH database context and graph metadata
@@ -594,6 +610,9 @@ def all_dialects_tpch_db_context(
                 sf_conn("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
                 get_sf_sample_graph("TPCH"),
             )
+        case "trino":
+            trino_conn = request.getfixturevalue("trino_conn_db_context")
+            return trino_conn, get_trino_graphs("TPCH")
         case "mysql":
             mysql_conn = request.getfixturevalue("mysql_conn_db_context")
             return mysql_conn("tpch"), get_sample_graph("TPCH")
@@ -622,10 +641,11 @@ def defog_graphs() -> graph_fetcher:
 
 @pytest.fixture(scope="session")
 def get_dialect_defog_graphs(
-    defog_graphs,
-    get_mysql_defog_graphs,
-    get_sf_defog_graphs,
-    get_postgres_defog_graphs,
+    defog_graphs: graph_fetcher,
+    get_mysql_defog_graphs: graph_fetcher,
+    get_sf_defog_graphs: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
+    get_postgres_defog_graphs: graph_fetcher,
 ) -> Callable[[DatabaseDialect, str], GraphMetadata]:
     """
     Returns the graphs for the defog database based on the dialect
@@ -638,6 +658,8 @@ def get_dialect_defog_graphs(
                 return get_mysql_defog_graphs(name)
             case DatabaseDialect.SNOWFLAKE:
                 return get_sf_defog_graphs(name)
+            case DatabaseDialect.TRINO:
+                return get_trino_graphs(name)
             case DatabaseDialect.POSTGRES:
                 return get_postgres_defog_graphs(name)
             case _:
@@ -1104,6 +1126,86 @@ def container_is_running(name: str) -> bool:
         ["docker", "ps", "--format", "{{.Names}}"], stdout=subprocess.PIPE, text=True
     )
     return name in result.stdout.splitlines()
+
+
+@pytest.fixture(scope="session")
+def get_trino_graphs(trino_graph_path: str) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported Trino graph
+    names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=trino_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_trino_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Trino.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/trino_defog_graphs.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+def is_trino_env_set() -> bool:
+    """
+    Check if the Trino environment variables are set.
+
+    Returns:
+        bool: True if all required Trino environment variables are set, False
+        otherwise.
+    """
+    # TODO: add environment variables for Trino connection
+    required_envs: list[str] = []
+    return all(os.getenv(env) for env in required_envs)
+
+
+@pytest.fixture
+def trino_conn_db_context() -> Callable[[str, str], DatabaseContext]:
+    """
+    This fixture is used to connect to the Trino TPCH database using
+    a connection object.
+    Return a DatabaseContext for the Trino TPCH database.
+    """
+
+    def _impl(database_name: str, schema_name: str) -> DatabaseContext:
+        if not is_trino_env_set():
+            pytest.skip("Skipping Trino tests: environment variables not set.")
+
+        connection: trino.dbapi.Connection = trino.dbapi.connect(
+            # TODO: use the keyword arguments fetched from environment variables
+        )
+
+        return load_database_context("trino", connection=connection)
+
+    return _impl
+
+
+@pytest.fixture
+def trino_params_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the Trino TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Trino TPCH database.
+    """
+    if not is_trino_env_set():
+        pytest.skip("Skipping Trino tests: environment variables not set.")
+    # TODO: add keyword arguments fetched from environment variables
+    return load_database_context(
+        "trino",
+        # TODO: use the keyword arguments
+    )
 
 
 MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
