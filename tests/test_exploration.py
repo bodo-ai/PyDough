@@ -16,7 +16,10 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_collections_impl,
     contextless_expr_impl,
     contextless_func_impl,
+    cross_impl,
+    cross_nations_impl,
     customers_without_orders_impl,
+    dataframe_collection_exploration_impl,
     filter_impl,
     global_agg_calc_impl,
     global_calc_impl,
@@ -34,10 +37,13 @@ from tests.test_pydough_functions.exploration_examples import (
     parts_avg_price_child_impl,
     parts_avg_price_impl,
     parts_with_german_supplier,
+    range_collection_exploration_impl,
     region_n_suppliers_in_red_impl,
     region_nations_back_name,
     region_nations_suppliers_impl,
     region_nations_suppliers_name_impl,
+    region_richest_customer_term_impl,
+    singular_impl,
     subcollection_calc_backref_impl,
     suppliers_iff_balance_impl,
     table_calc_impl,
@@ -1202,6 +1208,175 @@ Call pydough.explain(collection, verbose=True) for more details.
         pytest.param(
             (
                 "TPCH",
+                singular_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      ├─── SubCollection[region]
+      └─── Singular
+
+This node applies the SINGULAR operator, asserting that the preceding collection is singular (1-to-1) with respect to the parent context.
+Collection made singular: TPCH.nations.region
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node applies the SINGULAR operator, asserting that the preceding collection is singular (1-to-1) with respect to the parent context.
+Collection made singular: TPCH.nations.region
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="singular",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                cross_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left: nations
+Right: regions
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left: nations
+Right: regions
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="cross",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                range_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── RangeCollection('rng', i=range(1, 5))
+
+This node accesses user-generated collection 'rng'.
+Columns: i
+Unique columns: i
+
+The following terms will be included in the result if this collection is executed:
+  i
+
+The collection has access to the following expressions:
+  i
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'rng'.
+Columns: i
+Unique columns: i
+
+The collection has access to the following expressions:
+  i
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="range_collection",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                dataframe_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── DataframeCollection(name='df_coll', shape=(1, 1), columns=['id'])
+
+This node accesses user-generated collection 'df_coll'.
+Columns: id
+Unique columns: id
+DataFrame contents:
+     id
+  0   1
+
+The following terms will be included in the result if this collection is executed:
+  id
+
+The collection has access to the following expressions:
+  id
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'df_coll'.
+Columns: id
+Unique columns: id
+
+The collection has access to the following expressions:
+  id
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="dataframe_collection",
+        ),
+        pytest.param(
+            (
+                "TPCH",
                 nation_expr_impl,
                 """
 If pydough.explain is called on an unqualified PyDough code, it is expected to
@@ -1261,11 +1436,15 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_aggfunc_impl,
                 """
-Cannot call pydough.explain on COUNT(customers).
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ COUNT(customers)
 Did you mean to use pydough.explain_term?
 """,
                 """
-Cannot call pydough.explain on COUNT(customers).
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ COUNT(customers)
 Did you mean to use pydough.explain_term?
 """,
             ),
@@ -1340,6 +1519,41 @@ def test_unqualified_node_exploration(
 
 @pytest.fixture(
     params=[
+        pytest.param(
+            (
+                "TPCH",
+                cross_nations_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+Note: This collection is a CROSS product of 'nations' and 'regions'.
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─── SubCollection[nations]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.nations.TPCH.regions.CALCULATE(COUNT(nations.comment))
+  TPCH.nations.TPCH.regions.WHERE(HAS(nations))
+  TPCH.nations.TPCH.regions.ORDER_BY(COUNT(nations).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.nations.TPCH.regions.nations
+""",
+                """
+Collection: TPCH.nations.TPCH.regions
+Note: This collection is a CROSS product of 'nations' and 'regions'.
+
+The term is the following child of the collection:
+  nations
+""",
+            ),
+            id="cross-nations",
+        ),
         pytest.param(
             (
                 "TPCH",
@@ -1838,6 +2052,49 @@ Call pydough.explain_term with this collection and any of the arguments to learn
         """,
             ),
             id="customers-with_german_supplier",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                region_richest_customer_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[regions]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      ├─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
+      └─── Singular
+
+This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      └─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.regions.CALCULATE(COUNT(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR.account_balance))
+  TPCH.regions.WHERE(HAS(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR))
+  TPCH.regions.ORDER_BY(COUNT(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.regions.nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
+                """,
+                """
+Collection: TPCH.regions
+
+The term is the following child of the collection:
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
+
+This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1)
+                """,
+            ),
+            id="region-richest_customer_singular",
         ),
     ]
 )

@@ -20,14 +20,18 @@ from pydough.qdag import (
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Reference,
+    Singular,
 )
 from pydough.unqualified import (
     UnqualifiedAccess,
     UnqualifiedCalculate,
+    UnqualifiedCross,
+    UnqualifiedGeneratedCollection,
     UnqualifiedNode,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
     UnqualifiedRoot,
+    UnqualifiedSingular,
     UnqualifiedTopK,
     UnqualifiedWhere,
     display_raw,
@@ -36,7 +40,7 @@ from pydough.unqualified import (
 )
 
 
-def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
+def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedNode | None:
     """
     Recursively searches for the ancestor unqualified root of an unqualified
     node.
@@ -46,9 +50,12 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
 
     Returns:
         The underlying root node if one can be found, otherwise None.
+        For UnqualifiedRoot and UnqualifiedGeneratedCollection, returns the
+        node itself. For chained nodes, walks the predecessor chain. Returns
+        None for bare expressions or other rootless nodes.
     """
     match node:
-        case UnqualifiedRoot():
+        case UnqualifiedRoot() | UnqualifiedGeneratedCollection():
             return node
         case (
             UnqualifiedAccess()
@@ -57,6 +64,8 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
             | UnqualifiedOrderBy()
             | UnqualifiedTopK()
             | UnqualifiedPartition()
+            | UnqualifiedCross()
+            | UnqualifiedSingular()
         ):
             predecessor: UnqualifiedNode = node._parcel[0]
             return find_unqualified_root(predecessor)
@@ -128,7 +137,7 @@ def explain_term(
     """
 
     lines: list[str] = []
-    root: UnqualifiedRoot | None = find_unqualified_root(node)
+    root: UnqualifiedNode | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
     if session is None:
         session = pydough.active_session
@@ -165,6 +174,12 @@ def explain_term(
                 lines.append(f"  {line}")
         else:
             lines.append(f"Collection: {qualified_node.to_string()}")
+        if isinstance(node, UnqualifiedCross):
+            lines.append(
+                f"Note: This collection is a CROSS product of"
+                f" '{display_raw(node._parcel[0])}'"
+                f" and '{display_raw(node._parcel[1])}'."
+            )
         lines.append("")
         if len(new_children) > 0:
             lines.append(
@@ -302,6 +317,20 @@ def explain_term(
                     lines.append(f"  {line}")
             else:
                 lines.append(f"  {qualified_term.to_string()}")
+            if isinstance(qualified_term, Singular):
+                lines.append("")
+                lines.append(
+                    "This child uses the SINGULAR operator, declaring the"
+                    " following sub-collection as singular with respect to"
+                    " the collection:"
+                )
+                if verbose:
+                    for (
+                        line
+                    ) in qualified_term.preceding_context.to_tree_string().splitlines():
+                        lines.append(f"  {line}")
+                else:
+                    lines.append(f"  {qualified_term.preceding_context.to_string()}")
             if verbose:
                 lines.append("")
                 assert len(qualified_term.calc_terms) > 0, (
