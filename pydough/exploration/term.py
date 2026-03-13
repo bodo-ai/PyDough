@@ -25,6 +25,7 @@ from pydough.unqualified import (
     UnqualifiedAccess,
     UnqualifiedCalculate,
     UnqualifiedCross,
+    UnqualifiedGeneratedCollection,
     UnqualifiedNode,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
@@ -38,7 +39,7 @@ from pydough.unqualified import (
 )
 
 
-def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
+def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedNode | None:
     """
     Recursively searches for the ancestor unqualified root of an unqualified
     node.
@@ -48,9 +49,12 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
 
     Returns:
         The underlying root node if one can be found, otherwise None.
+        For UnqualifiedRoot and UnqualifiedGeneratedCollection, returns the
+        node itself. For chained nodes, walks the predecessor chain. Returns
+        None for bare expressions or other rootless nodes.
     """
     match node:
-        case UnqualifiedRoot():
+        case UnqualifiedRoot() | UnqualifiedGeneratedCollection():
             return node
         case (
             UnqualifiedAccess()
@@ -132,7 +136,7 @@ def explain_term(
     """
 
     lines: list[str] = []
-    root: UnqualifiedRoot | None = find_unqualified_root(node)
+    root: UnqualifiedNode | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
     if session is None:
         session = pydough.active_session

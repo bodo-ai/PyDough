@@ -8,7 +8,6 @@ __all__ = [
     "contextless_expr_impl",
     "contextless_func_impl",
     "cross_impl",
-    "cross_subcollection_impl",
     "customers_without_orders_impl",
     "dataframe_collection_exploration_impl",
     "filter_impl",
@@ -125,15 +124,6 @@ def singular_impl() -> UnqualifiedNode:
 
 def cross_impl() -> UnqualifiedNode:
     return nations.CROSS(regions)
-
-
-def cross_subcollection_impl() -> UnqualifiedNode:
-    """
-    Returns countries.other_countries, which is a CartesianProductMetadata
-    subcollection in TechnoGraph. Tests the schema-defined CROSS join branch
-    inside SubCollection handling.
-    """
-    return countries.other_countries
 
 
 def range_collection_exploration_impl() -> UnqualifiedNode:

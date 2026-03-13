@@ -47,7 +47,6 @@ from pydough.qdag.collections.user_collection_qdag import (
 from pydough.unqualified import (
     UnqualifiedCross,
     UnqualifiedNode,
-    UnqualifiedRoot,
     display_raw,
     qualify_node,
 )
@@ -280,37 +279,28 @@ def explain_unqualified(
     lines: list[str] = []
     session = pydough.active_session if session is None else session
     # Attempt to qualify the node, dumping an appropriate message if it could
-    # not be qualified
+    # not be qualified.
+    root: UnqualifiedNode | None = find_unqualified_root(node)
     try:
-        root: UnqualifiedRoot | None = find_unqualified_root(node)
-        if root is not None:
-            qualified_node = qualify_node(node, session)
-        else:
-            # No root in the tree (e.g. UnqualifiedGeneratedCollection, or a
-            # bare expression like LOWER(first_name + last_name)). Try to
-            # qualify anyway for generated collections. If it still fails,
-            # raise an exception.
-            try:
-                qualified_node = qualify_node(node, session)
-            except Exception:
-                lines.append(
-                    f"Cannot call pydough.explain on {display_raw(node)}.\n"
-                    "Did you mean to use pydough.explain_term?"
-                )
-                return "\n".join(lines)
+        qualified_node = qualify_node(node, session)
     except PyDoughQDAGException as e:
-        # If the qualification failed, dump an appropriate message indicating
-        # why pydough_explain did not work on it.
-        if "Unrecognized term" in str(e):
+        if root is None:
+            # Rootless node that failed to qualify (e.g. bare expression
+            # LOWER(first_name) with no context).
+            lines.append(
+                f"Cannot call pydough.explain on {display_raw(node)}.\n"
+                "Did you mean to use pydough.explain_term?"
+            )
+        elif "Unrecognized term" in str(e):
             lines.append(
                 f"{str(e)}\n"
                 "This could mean you accessed a property using a name that does not exist, or\n"
                 "that you need to place your PyDough code into a context for it to make sense.\n"
                 "Did you mean to use pydough.explain_term?"
             )
-            return "\n".join(lines)
         else:
             raise e
+        return "\n".join(lines)
 
     # If the qualification succeeded, dump info about the qualified node.
     if isinstance(qualified_node, PyDoughExpressionQDAG):
@@ -362,32 +352,13 @@ def explain_unqualified(
             case SubCollection():
                 collection_name = qualified_node.subcollection_property.collection.name
                 property_name = qualified_node.subcollection_property.name
-                prop = qualified_node.subcollection_property
-                if isinstance(prop, CartesianProductMetadata):
-                    child_name = prop.child_collection.name
-                    # SubCollection.preceding_context is always None; the
-                    # parent context is identified by collection_name.
-                    left_desc = collection_name
-                    lines.append(
-                        "This node is a CROSS join: every row of the left "
-                        "collection is paired with every row of the right "
-                        "collection."
-                    )
-                    lines.append(f"Left (parent): {left_desc}")
-                    lines.append(f"Right (child): {child_name}")
-                    lines.append(
-                        f"Metadata: {collection_name}.{property_name} -> {child_name}. "
-                        f"Call pydough.explain(graph['{collection_name}']['{property_name}']) "
-                        "to learn more."
-                    )
-                else:
-                    lines.append(
-                        f"This node, specifically, accesses the subcollection "
-                        f"{collection_name}.{property_name}. Call "
-                        f"pydough.explain(graph['{collection_name}']"
-                        f"['{property_name}']) to learn more about this "
-                        "subcollection property."
-                    )
+                lines.append(
+                    f"This node, specifically, accesses the subcollection "
+                    f"{collection_name}.{property_name}. Call "
+                    f"pydough.explain(graph['{collection_name}']"
+                    f"['{property_name}']) to learn more about this "
+                    "subcollection property."
+                )
             case PartitionChild():
                 lines.append(
                     f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."
