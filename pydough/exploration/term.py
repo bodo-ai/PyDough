@@ -174,6 +174,12 @@ def explain_term(
                 lines.append(f"  {line}")
         else:
             lines.append(f"Collection: {qualified_node.to_string()}")
+        if isinstance(node, UnqualifiedCross):
+            lines.append(
+                f"Note: This collection is a CROSS product of"
+                f" '{display_raw(node._parcel[0])}'"
+                f" and '{display_raw(node._parcel[1])}'."
+            )
         lines.append("")
         if len(new_children) > 0:
             lines.append(

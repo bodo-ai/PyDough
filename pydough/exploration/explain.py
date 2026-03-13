@@ -50,6 +50,9 @@ from pydough.unqualified import (
     display_raw,
     qualify_node,
 )
+from pydough.user_collections.dataframe_collection import (
+    DataframeGeneratedCollection,
+)
 
 from .term import find_unqualified_root
 
@@ -382,6 +385,14 @@ def explain_unqualified(
                 lines.append(
                     f"Unique columns: {', '.join(sorted(qualified_node.unique_terms))}"
                 )
+                if verbose and isinstance(
+                    qualified_node.collection, DataframeGeneratedCollection
+                ):
+                    lines.append("DataFrame contents:")
+                    for (
+                        line
+                    ) in qualified_node.collection.dataframe.to_string().splitlines():
+                        lines.append(f"  {line}")
             case ChildOperator():
                 if len(qualified_node.children):
                     lines.append(

@@ -17,6 +17,7 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_expr_impl,
     contextless_func_impl,
     cross_impl,
+    cross_nations_impl,
     customers_without_orders_impl,
     dataframe_collection_exploration_impl,
     filter_impl,
@@ -1344,6 +1345,9 @@ PyDough collection representing the following logic:
 This node accesses user-generated collection 'df_coll'.
 Columns: id
 Unique columns: id
+DataFrame contents:
+     id
+  0   1
 
 The following terms will be included in the result if this collection is executed:
   id
@@ -1515,6 +1519,41 @@ def test_unqualified_node_exploration(
 
 @pytest.fixture(
     params=[
+        pytest.param(
+            (
+                "TPCH",
+                cross_nations_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+Note: This collection is a CROSS product of 'nations' and 'regions'.
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─── SubCollection[nations]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.nations.TPCH.regions.CALCULATE(COUNT(nations.comment))
+  TPCH.nations.TPCH.regions.WHERE(HAS(nations))
+  TPCH.nations.TPCH.regions.ORDER_BY(COUNT(nations).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.nations.TPCH.regions.nations
+""",
+                """
+Collection: TPCH.nations.TPCH.regions
+Note: This collection is a CROSS product of 'nations' and 'regions'.
+
+The term is the following child of the collection:
+  nations
+""",
+            ),
+            id="cross-nations",
+        ),
         pytest.param(
             (
                 "TPCH",
