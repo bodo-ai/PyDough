@@ -24,19 +24,17 @@ from pydough.qdag import (
 from pydough.unqualified import (
     UnqualifiedAccess,
     UnqualifiedCalculate,
+    UnqualifiedCross,
     UnqualifiedNode,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
     UnqualifiedRoot,
+    UnqualifiedSingular,
     UnqualifiedTopK,
     UnqualifiedWhere,
     display_raw,
     qualify_node,
     qualify_term,
-)
-from pydough.unqualified.unqualified_node import (
-    UnqualifiedCross,
-    UnqualifiedSingular,
 )
 
 

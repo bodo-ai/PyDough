@@ -340,6 +340,9 @@ def explain_unqualified(
                     "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed."
                 )
             case TableCollection():
+                # UnqualifiedCross qualifies to TableCollection (identity is
+                # lost after qualification), so detect it via the original
+                # unqualified node.
                 if isinstance(node, UnqualifiedCross):
                     left_desc = display_raw(node._parcel[0])
                     right_desc = display_raw(node._parcel[1])
@@ -362,11 +365,9 @@ def explain_unqualified(
                 prop = qualified_node.subcollection_property
                 if isinstance(prop, CartesianProductMetadata):
                     child_name = prop.child_collection.name
-                    left_desc = (
-                        qualified_node.preceding_context.to_string()
-                        if qualified_node.preceding_context is not None
-                        else collection_name
-                    )
+                    # SubCollection.preceding_context is always None; the
+                    # parent context is identified by collection_name.
+                    left_desc = collection_name
                     lines.append(
                         "This node is a CROSS join: every row of the left "
                         "collection is paired with every row of the right "
@@ -408,7 +409,7 @@ def explain_unqualified(
                     f"Columns: {', '.join(columns)}"
                 )
                 lines.append(
-                    f"Unique columns: {', '.join(qualified_node.unique_terms)}"
+                    f"Unique columns: {', '.join(sorted(qualified_node.unique_terms))}"
                 )
             case ChildOperator():
                 if len(qualified_node.children):

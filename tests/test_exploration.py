@@ -1539,6 +1539,9 @@ def exploration_session(
     Session with metadata for the graph used by the current exploration test.
     Reuses the database and config from empty_sqlite_tpch_session, just
     loading the appropriate graph for the test.
+
+    NOTE: This fixture mutates empty_sqlite_tpch_session in-place. It requires
+    function scope (the default) to avoid cross-test pollution.
     """
     graph_name: str = unqualified_exploration_test_data[0]
     empty_sqlite_tpch_session.load_metadata_graph(sample_graph_path, graph_name)
