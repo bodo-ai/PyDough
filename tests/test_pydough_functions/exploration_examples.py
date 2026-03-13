@@ -30,6 +30,7 @@ __all__ = [
     "region_nations_back_name",
     "region_nations_suppliers_impl",
     "region_nations_suppliers_name_impl",
+    "region_richest_customer_term_impl",
     "singular_impl",
     "subcollection_calc_backref_impl",
     "suppliers_iff_balance_impl",
@@ -120,6 +121,13 @@ def partition_child_impl() -> UnqualifiedNode:
 
 def singular_impl() -> UnqualifiedNode:
     return nations.region.SINGULAR()
+
+
+def region_richest_customer_term_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    richest_customer = nations.customers.WHERE(
+        RANKING(by=account_balance.DESC(), per="nations") == 1
+    ).SINGULAR()
+    return regions, richest_customer
 
 
 def cross_impl() -> UnqualifiedNode:

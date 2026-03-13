@@ -20,6 +20,7 @@ from pydough.qdag import (
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Reference,
+    Singular,
 )
 from pydough.unqualified import (
     UnqualifiedAccess,
@@ -310,6 +311,20 @@ def explain_term(
                     lines.append(f"  {line}")
             else:
                 lines.append(f"  {qualified_term.to_string()}")
+            if isinstance(qualified_term, Singular):
+                lines.append("")
+                lines.append(
+                    "This child uses the SINGULAR operator, declaring the"
+                    " following sub-collection as singular with respect to"
+                    " the collection:"
+                )
+                if verbose:
+                    for (
+                        line
+                    ) in qualified_term.preceding_context.to_tree_string().splitlines():
+                        lines.append(f"  {line}")
+                else:
+                    lines.append(f"  {qualified_term.preceding_context.to_string()}")
             if verbose:
                 lines.append("")
                 assert len(qualified_term.calc_terms) > 0, (

@@ -41,6 +41,7 @@ from tests.test_pydough_functions.exploration_examples import (
     region_nations_back_name,
     region_nations_suppliers_impl,
     region_nations_suppliers_name_impl,
+    region_richest_customer_term_impl,
     singular_impl,
     subcollection_calc_backref_impl,
     suppliers_iff_balance_impl,
@@ -2012,6 +2013,49 @@ Call pydough.explain_term with this collection and any of the arguments to learn
         """,
             ),
             id="customers-with_german_supplier",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                region_richest_customer_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[regions]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      ├─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
+      └─── Singular
+
+This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      └─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.regions.CALCULATE(COUNT(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR.account_balance))
+  TPCH.regions.WHERE(HAS(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR))
+  TPCH.regions.ORDER_BY(COUNT(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.regions.nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
+                """,
+                """
+Collection: TPCH.regions
+
+The term is the following child of the collection:
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
+
+This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1)
+                """,
+            ),
+            id="region-richest_customer_singular",
         ),
     ]
 )
