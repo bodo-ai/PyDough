@@ -128,7 +128,11 @@ def cross_impl() -> UnqualifiedNode:
 
 
 def cross_subcollection_impl() -> UnqualifiedNode:
-    """Returns countries.other_countries"""
+    """
+    Returns countries.other_countries, which is a CartesianProductMetadata
+    subcollection in TechnoGraph. Tests the schema-defined CROSS join branch
+    inside SubCollection handling.
+    """
     return countries.other_countries
 
 
