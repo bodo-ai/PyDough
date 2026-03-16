@@ -128,7 +128,7 @@ class OracleTransformBindings(BaseTransformBindings):
         to_strip: SQLGlotExpression = args[0]
         strip_char_glot: SQLGlotExpression
         if len(args) == 1:
-            strip_char_glot = sqlglot_expressions.Literal.string("\n\t\r ")
+            strip_char_glot = sqlglot_expressions.Literal.string("\\n\\t\\r ")
         else:
             strip_char_glot = args[1]
 
