@@ -146,6 +146,21 @@ def empty_sqlite_tpch_session(
     return session
 
 
+@pytest.fixture
+def empty_sqlite_udf_session(
+    udf_graph_path: str, default_config: PyDoughConfigs
+) -> PyDoughSession:
+    """
+    A PyDough session with an empty SQLite database connection and the
+    TPCH_SQLITE_UDFS graph loaded.
+    """
+    session: PyDoughSession = PyDoughSession()
+    session.load_metadata_graph(udf_graph_path, "TPCH_SQLITE_UDFS")
+    session.config = default_config
+    session.database = DatabaseContext(empty_connection, DatabaseDialect.SQLITE)
+    return session
+
+
 @pytest.fixture(
     params=[
         pytest.param((sow, swaz), id=f"{sow.name.lower()}-{'zero' if swaz else 'one'}")

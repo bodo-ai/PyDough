@@ -38,6 +38,14 @@ __all__ = [
     "suppliers_iff_balance_impl",
     "table_calc_impl",
     "top_k_impl",
+    "udf_combine_strings_impl",
+    "udf_cumulative_distribution_impl",
+    "udf_format_datetime_impl",
+    "udf_nval_impl",
+    "udf_percentage_impl",
+    "udf_positive_impl",
+    "udf_ranking_impl",
+    "udf_relmin_impl",
 ]
 
 from collections.abc import Callable
@@ -121,34 +129,6 @@ def partition_child_impl() -> UnqualifiedNode:
     )
 
 
-def singular_impl() -> UnqualifiedNode:
-    return nations.region.SINGULAR()
-
-
-def region_richest_customer_term_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    richest_customer = nations.customers.WHERE(
-        RANKING(by=account_balance.DESC(), per="nations") == 1
-    ).SINGULAR()
-    return regions, richest_customer
-
-
-def cross_impl() -> UnqualifiedNode:
-    return nations.CROSS(regions)
-
-
-def cross_nations_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return nations.CROSS(regions), nations
-
-
-def range_collection_exploration_impl() -> UnqualifiedNode:
-    return pydough.range_collection("rng", "i", 1, 5)
-
-
-def dataframe_collection_exploration_impl() -> UnqualifiedNode:
-    df = pd.DataFrame({"id": [1]})
-    return pydough.dataframe_collection("df_coll", df, ["id"])
-
-
 def nation_expr_impl() -> UnqualifiedNode:
     return nations.name
 
@@ -225,3 +205,63 @@ def customers_without_orders_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
 
 def parts_with_german_supplier() -> tuple[UnqualifiedNode, UnqualifiedNode]:
     return parts, HAS(supply_records.supplier.WHERE(nation.name == "GERMANY"))
+
+
+def singular_impl() -> UnqualifiedNode:
+    return nations.region.SINGULAR()
+
+
+def region_richest_customer_term_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    richest_customer = nations.customers.WHERE(
+        RANKING(by=account_balance.DESC(), per="nations") == 1
+    ).SINGULAR()
+    return regions, richest_customer
+
+
+def cross_impl() -> UnqualifiedNode:
+    return nations.CROSS(regions)
+
+
+def cross_nations_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations.CROSS(regions), nations
+
+
+def range_collection_exploration_impl() -> UnqualifiedNode:
+    return pydough.range_collection("rng", "i", 1, 5)
+
+
+def dataframe_collection_exploration_impl() -> UnqualifiedNode:
+    df = pd.DataFrame({"id": [1]})
+    return pydough.dataframe_collection("df_coll", df, ["id"])
+
+
+def udf_format_datetime_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return orders, FORMAT_DATETIME("%Y", order_date)
+
+
+def udf_percentage_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return regions, PERCENTAGE(POSITIVE(nations.customers.account_balance))
+
+
+def udf_nval_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations, NVAL(name, 1, by=name)
+
+
+def udf_combine_strings_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return regions, COMBINE_STRINGS(nations.name, ",")
+
+
+def udf_positive_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations, POSITIVE(key)
+
+
+def udf_ranking_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations, RANKING(by=name.ASC())
+
+
+def udf_relmin_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations, RELMIN(key, by=name.ASC(), cumulative=True)
+
+
+def udf_cumulative_distribution_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations, CUMULATIVE_DISTRIBUTION(by=name.ASC())

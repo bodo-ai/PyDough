@@ -11,6 +11,11 @@ import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughQDAGException
+from pydough.pydough_operators.expression_operators import (
+    SqlAliasExpressionFunctionOperator,
+    SqlMacroExpressionFunctionOperator,
+    SqlWindowAliasExpressionFunctionOperator,
+)
 from pydough.qdag import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -21,6 +26,7 @@ from pydough.qdag import (
     PyDoughQDAG,
     Reference,
     Singular,
+    WindowCall,
 )
 from pydough.unqualified import (
     UnqualifiedAccess,
@@ -242,9 +248,79 @@ def explain_term(
                         )
                         break
                     case ExpressionFunctionCall():
-                        if isinstance(expr.operator, pydop.BinaryOperator):
+                        if isinstance(
+                            expr.operator,
+                            SqlAliasExpressionFunctionOperator,
+                        ):
+                            suffix = (
+                                ", aggregating them into a single value for each record of the collection"
+                                if expr.operator.is_aggregation
+                                else ""
+                            )
+                            lines.append(
+                                f"This expression calls the user-defined function '{expr.operator.function_name}' on the following arguments{suffix}:"
+                            )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            if expr.operator.description is not None:
+                                lines.append(
+                                    f"Description: {expr.operator.description}"
+                                )
+                            lines.append(
+                                f"This function is an alias for the SQL function '{expr.operator.sql_function_alias}'."
+                            )
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
+                        elif isinstance(
+                            expr.operator,
+                            SqlMacroExpressionFunctionOperator,
+                        ):
+                            suffix = (
+                                ", aggregating them into a single value for each record of the collection"
+                                if expr.operator.is_aggregation
+                                else ""
+                            )
+                            lines.append(
+                                f"This expression calls the user-defined function '{expr.operator.function_name}' on the following arguments{suffix}:"
+                            )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            if expr.operator.description is not None:
+                                lines.append(
+                                    f"Description: {expr.operator.description}"
+                                )
+                            lines.append(
+                                f"This function is defined by the SQL macro: '{expr.operator.macro_text}'."
+                            )
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
+                        elif isinstance(expr.operator, pydop.BinaryOperator):
                             lines.append(
                                 f"This expression combines the following arguments with the '{expr.operator.function_name}' operator:"
+                            )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
                             )
                         elif (
                             expr.operator in (pydop.COUNT, pydop.NDISTINCT)
@@ -259,6 +335,16 @@ def explain_term(
                             lines.append(
                                 f"This expression counts how many {metric} of the following subcollection exist for each record of the collection:"
                             )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
                         elif (
                             expr.operator in (pydop.HAS, pydop.HASNOT)
                             and len(expr.args) == 1
@@ -270,6 +356,16 @@ def explain_term(
                             lines.append(
                                 f"This expression returns whether the collection {predicate} any records of the following subcollection:"
                             )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
                         else:
                             suffix = (
                                 ", aggregating them into a single value for each record of the collection"
@@ -279,11 +375,54 @@ def explain_term(
                             lines.append(
                                 f"This expression calls the function '{expr.operator.function_name}' on the following arguments{suffix}:"
                             )
-                        for arg in expr.args:
-                            assert isinstance(
-                                arg, (PyDoughCollectionQDAG, PyDoughExpressionQDAG)
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
                             )
-                            lines.append(f"  {arg.to_string()}")
+                        break
+                    case WindowCall():
+                        if isinstance(
+                            expr.window_operator,
+                            SqlWindowAliasExpressionFunctionOperator,
+                        ):
+                            lines.append(
+                                f"This expression calls the user-defined window function '{expr.window_operator.function_name}' with the following arguments:"
+                            )
+                            for arg in expr.args:
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            if expr.window_operator.description is not None:
+                                lines.append(
+                                    f"Description: {expr.window_operator.description}"
+                                )
+                            lines.append(
+                                f"This function is an alias for the SQL window function '{expr.window_operator.sql_function_alias}'."
+                            )
+                            order_str = (
+                                "requires"
+                                if expr.window_operator.requires_order
+                                else "does not require"
+                            )
+                            frame_str = (
+                                "supports"
+                                if expr.window_operator.allows_frame
+                                else "does not support"
+                            )
+                            lines.append(
+                                f"This window function {order_str} ordering and {frame_str} frame specifications."
+                            )
+                        else:
+                            lines.append(
+                                f"This expression calls the window function '{expr.window_operator.function_name}' with the following arguments:"
+                            )
+                            for arg in expr.args:
+                                lines.append(f"  {arg.to_string()}")
                         lines.append("")
                         lines.append(
                             "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
