@@ -15,14 +15,14 @@ SELECT
   DATE_ADD(CAST(o_orderdate AS DATETIME), INTERVAL '2' QUARTER) AS two_quarters_ahead,
   DATE_SUB(CAST(o_orderdate AS DATETIME), INTERVAL '2' QUARTER) AS two_quarters_behind,
   (
-    YEAR(o_orderdate) - YEAR(CAST('1995-01-01' AS DATE))
+    YEAR(o_orderdate) - YEAR(CAST('1995-01-01' AS DATETIME))
   ) * 4 + (
-    QUARTER(o_orderdate) - QUARTER(CAST('1995-01-01' AS DATE))
+    QUARTER(o_orderdate) - QUARTER(CAST('1995-01-01' AS DATETIME))
   ) AS quarters_since_1995,
   (
-    YEAR(CAST('2000-01-01' AS DATE)) - YEAR(o_orderdate)
+    YEAR(CAST('2000-01-01' AS DATETIME)) - YEAR(o_orderdate)
   ) * 4 + (
-    QUARTER(CAST('2000-01-01' AS DATE)) - QUARTER(o_orderdate)
+    QUARTER(CAST('2000-01-01' AS DATETIME)) - QUARTER(o_orderdate)
   ) AS quarters_until_2000,
   DATE_SUB(CAST(o_orderdate AS DATETIME), INTERVAL '4' QUARTER) AS same_quarter_prev_year,
   DATE_ADD(CAST(o_orderdate AS DATETIME), INTERVAL '4' QUARTER) AS same_quarter_next_year

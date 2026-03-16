@@ -71,12 +71,8 @@ SELECT
     )
   ) AS b,
   RTRIM(LTRIM(SUBSTR(p_name, 1, 2), 'o'), 'o') AS c,
-  CASE
-    WHEN LENGTH(CAST(p_size AS VARCHAR2(4000))) >= 3
-    THEN SUBSTR(CAST(p_size AS VARCHAR2(4000)), 1, 3)
-    ELSE SUBSTR(CONCAT('000', CAST(p_size AS VARCHAR2(4000))), -3)
-  END AS d,
-  SUBSTR(CONCAT(CAST(p_size AS VARCHAR2(4000)), '000'), 1, 3) AS e,
+  LPAD(CAST(p_size AS VARCHAR2(4000)), 3, '0') AS d,
+  RPAD(CAST(p_size AS VARCHAR2(4000)), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CASE

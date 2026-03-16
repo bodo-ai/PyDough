@@ -10,7 +10,7 @@ SELECT
   LPAD(CAST(customer.c_name AS TEXT), 20, '*') AS lpad_name,
   RPAD(CAST(customer.c_name AS TEXT), 20, '-') AS rpad_name,
   TRIM('
-	 ' FROM customer.c_name) AS stripped,
+	 ' FROM customer.c_name) AS stripped,
   TRIM('aeiou' FROM customer.c_name) AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,

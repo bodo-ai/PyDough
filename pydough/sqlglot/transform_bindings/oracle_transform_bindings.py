@@ -66,7 +66,8 @@ class OracleTransformBindings(BaseTransformBindings):
     """
 
     PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
-        pydop.PERCENTILE: "PERCENTILE_CONT",
+        pydop.LPAD: "LPAD",
+        pydop.RPAD: "RPAD",
     }
 
     """
@@ -127,7 +128,7 @@ class OracleTransformBindings(BaseTransformBindings):
         to_strip: SQLGlotExpression = args[0]
         strip_char_glot: SQLGlotExpression
         if len(args) == 1:
-            strip_char_glot = sqlglot_expressions.Literal.string("\n\t ")
+            strip_char_glot = sqlglot_expressions.Literal.string("\n\t\r ")
         else:
             strip_char_glot = args[1]
 
@@ -923,6 +924,18 @@ class OracleTransformBindings(BaseTransformBindings):
         other databases), so casting to DATE is sufficient to represent a
         timestamp value.
         """
+        if isinstance(base, sqlglot_expressions.Literal) and base.is_string:
+            if " " not in base.this:
+                return sqlglot_expressions.DateStrToDate(this=base)
+            else:
+                return sqlglot_expressions.Anonymous(
+                    this="TO_DATE",
+                    expressions=[
+                        base,
+                        sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
+                    ],
+                )
+
         return sqlglot_expressions.Cast(
             this=base, to=sqlglot_expressions.DataType.build("DATE")
         )

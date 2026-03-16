@@ -53,14 +53,7 @@ WITH "_T2" AS (
     EXTRACT(YEAR FROM CAST("_T2".CA_DT AS DATE))
 )
 SELECT
-  NVL(YEAR_CA_DT, '') || '-' || NVL(
-    CASE
-      WHEN LENGTH(MONTH_CA_DT) >= 2
-      THEN SUBSTR(MONTH_CA_DT, 1, 2)
-      ELSE SUBSTR(CONCAT('00', MONTH_CA_DT), -2)
-    END,
-    ''
-  ) AS month,
+  NVL(YEAR_CA_DT, '') || '-' || NVL(LPAD(MONTH_CA_DT, 2, '0'), '') AS month,
   ROUND((
     1000000.0 * COALESCE(SUM_N_ROWS, 0)
   ) / COALESCE(SUM_EXPR_3, 0), 2) AS ir

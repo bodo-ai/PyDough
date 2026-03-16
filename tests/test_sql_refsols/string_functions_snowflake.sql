@@ -9,7 +9,7 @@ SELECT
   CONCAT_WS('::', customer.c_name, nation.n_name) AS joined_string,
   LPAD(customer.c_name, 20, '*') AS lpad_name,
   RPAD(customer.c_name, 20, '-') AS rpad_name,
-  TRIM(customer.c_name, '\n\t ') AS stripped,
+  TRIM(customer.c_name, '\n\t\r ') AS stripped,
   TRIM(customer.c_name, 'aeiou') AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,

@@ -16,8 +16,8 @@ SELECT
   23 AS hour_str,
   59 AS minute_str,
   59 AS second_ts,
-  TRUNC(CAST(CAST('1992-01-01' AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') AS dd_col_str,
-  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST('1992-01-01' AS DATE) AS DATE), 'DD') AS dd_str_col,
+  TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') - TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') AS dd_col_str,
+  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') AS dd_str_col,
   (
     EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
   ) * 12 + (
@@ -26,9 +26,9 @@ SELECT
   EXTRACT(YEAR FROM TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS')) - EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) AS dd_col_dt,
   FLOOR(
     (
-      TRUNC(CAST(TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'DD') - TRUNC(CAST(CAST('1992-01-01' AS DATE) AS DATE), 'DD') + (
+      TRUNC(CAST(TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') + (
         MOD((
-          TO_CHAR(CAST('1992-01-01' AS DATE), 'D') + -1
+          TO_CHAR(TO_DATE('1992-01-01', 'YYYY-MM-DD'), 'D') + -1
         ), 7)
       ) - (
         MOD(

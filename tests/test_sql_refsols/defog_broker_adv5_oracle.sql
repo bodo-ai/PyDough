@@ -1,15 +1,6 @@
 WITH "_S0" AS (
   SELECT
-    NVL(EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)), '') || '-' || NVL(
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
-        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
-        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
-          2 * -1
-        ))
-      END,
-      ''
-    ) AS MONTH,
+    NVL(EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)), '') || '-' || NVL(LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 2, '0'), '') AS MONTH,
     sbdptickerid AS SBDPTICKERID,
     COUNT(sbdpclose) AS COUNT_SBDPCLOSE,
     MAX(sbdphigh) AS MAX_SBDPHIGH,
@@ -17,16 +8,7 @@ WITH "_S0" AS (
     SUM(sbdpclose) AS SUM_SBDPCLOSE
   FROM MAIN.SBDAILYPRICE
   GROUP BY
-    NVL(EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)), '') || '-' || NVL(
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))) >= 2
-        THEN SUBSTR(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 1, 2)
-        ELSE SUBSTR(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATE))), (
-          2 * -1
-        ))
-      END,
-      ''
-    ),
+    NVL(EXTRACT(YEAR FROM CAST(sbdpdate AS DATE)), '') || '-' || NVL(LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS DATE)), 2, '0'), ''),
     sbdptickerid
 ), "_T0" AS (
   SELECT

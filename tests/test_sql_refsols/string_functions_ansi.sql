@@ -14,7 +14,7 @@ SELECT
   END AS lpad_name,
   SUBSTRING(CONCAT(customer.c_name, '--------------------'), 1, 20) AS rpad_name,
   TRIM(customer.c_name, '
-	 ') AS stripped,
+	 ') AS stripped,
   TRIM(customer.c_name, 'aeiou') AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,

@@ -38,7 +38,14 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Returns:
         The database context object.
     """
-    supported_databases = {"postgres", "mysql", "sqlite", "snowflake", "oracle"}
+    supported_databases = {
+        "postgres",
+        "mysql",
+        "sqlite",
+        "snowflake",
+        "oracle",
+        "bodosql",
+    }
     connection: DatabaseConnection | BodoSQLContext
     dialect: DatabaseDialect
     match database_name.lower():
@@ -346,10 +353,10 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
         )
 
     # Oracle python connector
-    connection: oracledb.connection
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
+        assert isinstance(connection, oracledb.Connection)
         return DatabaseConnection(connection)
 
     # Oracle connection requires specific parameters:
