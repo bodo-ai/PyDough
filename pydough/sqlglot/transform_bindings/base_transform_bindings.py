@@ -423,7 +423,22 @@ class BaseTransformBindings:
         to_strip: SQLGlotExpression = args[0]
         strip_char_glot: SQLGlotExpression
         if len(args) == 1:
-            strip_char_glot = sqlglot_expressions.Literal.string(" \t\r\n")
+            strip_char_glot = sqlglot_expressions.Concat(
+                expressions=[
+                    sqlglot_expressions.Anonymous(
+                        this="CHAR",
+                        expressions=[sqlglot_expressions.Literal.number(10)],
+                    ),  # newline
+                    sqlglot_expressions.Anonymous(
+                        this="CHAR", expressions=[sqlglot_expressions.Literal.number(9)]
+                    ),  # tab
+                    sqlglot_expressions.Anonymous(
+                        this="CHAR",
+                        expressions=[sqlglot_expressions.Literal.number(13)],
+                    ),  # carriage return
+                    sqlglot_expressions.Literal.string(" "),
+                ]
+            )
         else:
             strip_char_glot = args[1]
         return sqlglot_expressions.Trim(

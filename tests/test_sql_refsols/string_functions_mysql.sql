@@ -10,15 +10,15 @@ SELECT
   LPAD(CUSTOMER.c_name, 20, '*') AS lpad_name,
   RPAD(CUSTOMER.c_name, 20, '-') AS rpad_name,
   CASE
-    WHEN CUSTOMER.c_name = '\\s'
+    WHEN CUSTOMER.c_name = '\\s\\t\\r\\n'
     THEN ''
     ELSE REGEXP_REPLACE(
       CAST(CUSTOMER.c_name AS CHAR) COLLATE utf8mb4_bin,
       CONCAT(
         '^[',
-        REGEXP_REPLACE('\\s', '([]\\[\\^\\-])', '\\\\\\1'),
+        REGEXP_REPLACE('\\s\\t\\r\\n', '([]\\[\\^\\-])', '\\\\\\1'),
         ']+|[',
-        REGEXP_REPLACE('\\s', '([]\\[\\^\\-])', '\\\\\\1'),
+        REGEXP_REPLACE('\\s\\t\\r\\n', '([]\\[\\^\\-])', '\\\\\\1'),
         ']+$'
       ),
       ''
