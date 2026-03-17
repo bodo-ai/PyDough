@@ -13,7 +13,8 @@ SELECT
     ELSE SUBSTRING('********************' || customer.c_name, -20)
   END AS lpad_name,
   SUBSTRING(customer.c_name || '--------------------', 1, 20) AS rpad_name,
-  TRIM(customer.c_name, '\n\t\r ') AS stripped,
+  TRIM(customer.c_name, '\
+\	\ ') AS stripped,
   TRIM(customer.c_name, 'aeiou') AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,
