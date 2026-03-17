@@ -9,9 +9,9 @@ SELECT
   NVL(CUSTOMER.c_name, '') || '::' || NVL(NATION.n_name, '') AS joined_string,
   LPAD(CUSTOMER.c_name, 20, '*') AS lpad_name,
   RPAD(CUSTOMER.c_name, 20, '-') AS rpad_name,
-  RTRIM(LTRIM(CUSTOMER.c_name, '\
-\	\ '), '\
-\	\ ') AS stripped,
+  RTRIM(LTRIM(CUSTOMER.c_name, ' 	
+'), ' 	
+') AS stripped,
   RTRIM(LTRIM(CUSTOMER.c_name, 'aeiou'), 'aeiou') AS stripped_vowels,
   REPLACE(CUSTOMER.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
