@@ -1154,6 +1154,7 @@ TRINO_DOCKER_IMAGE = "bodoai1/pydough-trino:latest"
 TRINO_HOST = "127.0.0.1"
 TRINO_PORT = "8080"
 TRINO_USER = "root"
+DOCKER_HOST = "host.docker.internal"
 """
     CONSTANTS for the Trino Docker container setup.
     - DOCKER_CONTAINER: The name of the Docker container.
@@ -1161,6 +1162,8 @@ TRINO_USER = "root"
     - TRINO_HOST: The host address for Trino.
     - TRINO_PORT: The port on which Trino is exposed.
     - TRINO_USER: The username for accessing the Trino container.
+    - DOCKER_HOST: The host address to use when connecting to other containers
+      from within the Trino container.
 """
 
 
@@ -1187,23 +1190,23 @@ def trino_docker_setup(mysql_docker_setup, postgres_docker_setup) -> None:
                         "--name",
                         TRINO_DOCKER_CONTAINER,
                         "-e",
-                        f"MYSQL_HOST={MYSQL_HOST}",
+                        f"MYSQL_HOST={DOCKER_HOST}",
                         "-e",
                         f"MYSQL_PORT={MYSQL_PORT}",
                         "-e",
                         f"MYSQL_USER={os.getenv('MYSQL_USERNAME')}",
                         "-e",
                         f"MYSQL_PASSWORD={os.getenv('MYSQL_PASSWORD')}",
-                        # "-e",
-                        # f"POSTGRES_HOST={POSTGRES_HOST}",
-                        # "-e",
-                        # f"POSTGRES_PORT={POSTGRES_PORT}",
-                        # "-e",
-                        # f"POSTGRES_USER={os.getenv('POSTGRES_USER')}",
-                        # "-e",
-                        # f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
-                        # "-e",
-                        # f"POSTGRES_DB={POSTGRES_DB}",
+                        "-e",
+                        f"POSTGRES_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"POSTGRES_PORT={POSTGRES_PORT}",
+                        "-e",
+                        f"POSTGRES_USER={os.getenv('POSTGRES_USER')}",
+                        "-e",
+                        f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
+                        "-e",
+                        f"POSTGRES_DB={POSTGRES_DB}",
                         "-p",
                         f"{TRINO_PORT}:8080",
                         TRINO_DOCKER_IMAGE,
@@ -1213,24 +1216,29 @@ def trino_docker_setup(mysql_docker_setup, postgres_docker_setup) -> None:
     except subprocess.CalledProcessError as e:
         pytest.fail(f"Failed to set up Trino Docker container: {e}")
 
+    # Check import is successful
+    try:
+        import trino
+    except ImportError as e:
+        raise RuntimeError("trino is not installed") from e
+
     # Wait for Trino to be ready for 3 minutes max
-    for _ in range(180):
+    for i in range(180):
         try:
-            pass
-        #     conn = psycopg2.connect(
-        #         host=POSTGRES_HOST,
-        #         port=POSTGRES_PORT,
-        #         user=os.getenv("POSTGRES_USER"),
-        #         password=os.getenv("POSTGRES_PASSWORD"),
-        #         database=POSTGRES_DB,
-        #     )
-        #     conn.close()
-        #     break
+            conn = trino.dbapi.connect(
+                host="127.0.0.1",
+                port=TRINO_PORT,
+                user=TRINO_USER,
+            )
+            cur = conn.cursor()
+            cur.execute("SHOW CATALOGS")
+            cur.fetchone()
+            conn.close()
+            break
         except Exception as e:
             print("Error occurred while connecting to Trino:", e)
-            print(f"Waiting {_ + 1}/180 seconds for Trino to be ready...")
+            print(f"Waiting {i + 1}/180 seconds for Trino to be ready...")
             time.sleep(1)
-        pass
     else:
         subprocess.run(["docker", "rm", "-f", POSTGRES_DOCKER_CONTAINER])
         pytest.fail("Postgres container did not become ready in time.")
@@ -1248,7 +1256,7 @@ def trino_conn_db_context(trino_docker_setup) -> DatabaseContext:
     connection: trino.dbapi.Connection = trino.dbapi.connect(
         host=TRINO_HOST,
         port=TRINO_PORT,
-        user=os.getenv("TRINO_USER"),
+        user=TRINO_USER,
     )
 
     return load_database_context("trino", connection=connection)
@@ -1265,7 +1273,7 @@ def trino_params_tpch_db_context(trino_docker_setup) -> DatabaseContext:
         "trino",
         host=TRINO_HOST,
         port=TRINO_PORT,
-        user=os.getenv("TRINO_USER"),
+        user=TRINO_USER,
     )
 
 
