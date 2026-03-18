@@ -1,11 +1,11 @@
 WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.publication
+  FROM postgres.publication
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.author
+  FROM postgres.author
 )
 SELECT
   CAST(_s0.n_rows AS DOUBLE) / NULLIF(_s1.n_rows, 0) AS publication_to_author_ratio

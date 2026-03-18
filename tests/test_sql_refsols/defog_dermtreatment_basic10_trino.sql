@@ -1,14 +1,14 @@
 WITH _u_0 AS (
   SELECT
     drug_id AS _u_1
-  FROM main.treatments
+  FROM postgres.treatments
   GROUP BY
     1
 )
 SELECT
   drugs.drug_id,
   drugs.drug_name
-FROM main.drugs AS drugs
+FROM postgres.drugs AS drugs
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = drugs.drug_id
 WHERE

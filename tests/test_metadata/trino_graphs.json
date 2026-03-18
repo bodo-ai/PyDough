@@ -1380,7 +1380,7 @@
       {
         "name": "cars",
         "type": "simple table",
-        "table path": "???.cars",
+        "table path": "postgres.cars",
         "unique properties": ["_id", "vin_number"],
         "properties": [
           {
@@ -1487,7 +1487,7 @@
       {
         "name": "salespeople",
         "type": "simple table",
-        "table path": "???.salespersons",
+        "table path": "postgres.salespersons",
         "unique properties": ["_id", "email", "phone", ["first_name", "last_name"]],
         "properties": [
           {
@@ -1565,7 +1565,7 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "???.customers",
+        "table path": "postgres.customers",
         "unique properties": ["_id", "email", "phone", "address", ["first_name", "last_name"]],
         "properties": [
           {
@@ -1661,7 +1661,7 @@
       {
         "name": "payments_made",
         "type": "simple table",
-        "table path": "???.payments_made",
+        "table path": "postgres.payments_made",
         "unique properties": ["_id", "invoice_number"],
         "properties": [
           {
@@ -1747,7 +1747,7 @@
       {
         "name": "payments_received",
         "type": "simple table",
-        "table path": "???.payments_received",
+        "table path": "postgres.payments_received",
         "unique properties": ["_id"],
         "properties": [
           {
@@ -1809,7 +1809,7 @@
       {
         "name": "sales",
         "type": "simple table",
-        "table path": "???.sales",
+        "table path": "postgres.sales",
         "unique properties": ["_id"],
         "properties": [
           {
@@ -1880,7 +1880,7 @@
       {
         "name": "inventory_snapshots",
         "type": "simple table",
-        "table path": "???.inventory_snapshots",
+        "table path": "postgres.inventory_snapshots",
         "unique properties": ["_id", ["car_id", "snapshot_date"]],
         "properties": [
           {
@@ -2078,7 +2078,7 @@
       {
         "name": "doctors",
         "type": "simple table",
-        "table path": "???.doctors",
+        "table path": "postgres.doctors",
         "unique properties": ["doc_id", "first_name", "last_name", "board_certification_number"],
         "properties": [
           {
@@ -2177,7 +2177,7 @@
       {
         "name": "patients",
         "type": "simple table",
-        "table path": "???.patients",
+        "table path": "postgres.patients",
         "unique properties": ["patient_id", "email", "phone", "first_name"],
         "properties": [
           {
@@ -2328,7 +2328,7 @@
       {
         "name": "drugs",
         "type": "simple table",
-        "table path": "???.drugs",
+        "table path": "postgres.drugs",
         "unique properties": ["drug_id", "national_drug_code", "drug_name"],
         "properties": [
           {
@@ -2436,7 +2436,7 @@
       {
         "name": "diagnoses",
         "type": "simple table",
-        "table path": "???.diagnoses",
+        "table path": "postgres.diagnoses",
         "unique properties": ["_id", "code", "name", "description"],
         "properties": [
           {
@@ -2482,7 +2482,7 @@
       {
         "name": "treatments",
         "type": "simple table",
-        "table path": "???.treatments",
+        "table path": "postgres.treatments",
         "unique properties": ["treatment_id"],
         "properties": [
           {
@@ -2579,7 +2579,7 @@
       {
         "name": "outcomes",
         "type": "simple table",
-        "table path": "???.outcomes",
+        "table path": "postgres.outcomes",
         "unique properties": ["outcome_id", ["treatment_id", "assessment_date"]],
         "properties": [
           {
@@ -2750,7 +2750,7 @@
       {
         "name": "concomitant_meds",
         "type": "simple table",
-        "table path": "???.concomitant_meds",
+        "table path": "postgres.concomitant_meds",
         "unique properties": ["_id", ["treatment_id", "medicine_name"]],
         "properties": [
           {
@@ -2830,7 +2830,7 @@
       {
         "name": "adverse_events",
         "type": "simple table",
-        "table path": "???.adverse_events",
+        "table path": "postgres.adverse_events",
         "unique properties": ["_id", "treatment_id"],
         "properties": [
           {
@@ -3061,7 +3061,7 @@
       {
         "name": "users",
         "type": "simple table",
-        "table path": "???.users",
+        "table path": "postgres.users",
         "unique properties": ["uid", "username"],
         "properties": [
           {
@@ -3185,7 +3185,7 @@
       {
         "name": "merchants",
         "type": "simple table",
-        "table path": "???.merchants",
+        "table path": "postgres.merchants",
         "unique properties": ["mid", "name"],
         "properties": [
           {
@@ -3355,7 +3355,7 @@
       {
         "name": "coupons",
         "type": "simple table",
-        "table path": "???.coupons",
+        "table path": "postgres.coupons",
         "unique properties": ["cid"],
         "properties": [
           {
@@ -3487,7 +3487,7 @@
       {
         "name": "transactions",
         "type": "simple table",
-        "table path": "???.wallet_transactions_daily",
+        "table path": "postgres.wallet_transactions_daily",
         "unique properties": ["txid", "transaction_ref"],
         "properties": [
           {
@@ -3657,7 +3657,7 @@
       {
         "name": "user_balances",
         "type": "simple table",
-        "table path": "???.wallet_user_balance_daily",
+        "table path": "postgres.wallet_user_balance_daily",
         "unique properties": [["user_id", "updated_at"]],
         "properties": [
           {
@@ -3693,7 +3693,7 @@
       {
         "name": "merchant_balances",
         "type": "simple table",
-        "table path": "???.wallet_merchant_balance_daily",
+        "table path": "postgres.wallet_merchant_balance_daily",
         "unique properties": [["merchant_id", "updated_at"]],
         "properties": [
           {
@@ -3729,7 +3729,7 @@
       {
         "name": "notifications",
         "type": "simple table",
-        "table path": "???.notifications",
+        "table path": "postgres.notifications",
         "unique properties": ["notif_id"],
         "properties": [
           {
@@ -3827,7 +3827,7 @@
       {
         "name": "user_sessions",
         "type": "simple table",
-        "table path": "???.user_sessions",
+        "table path": "postgres.user_sessions",
         "unique properties": [["user_id", "session_start"], ["user_id", "session_end"]],
         "properties": [
           {
@@ -3880,7 +3880,7 @@
       {
         "name": "user_setting_snapshots",
         "type": "simple table",
-        "table path": "???.user_setting_snapshot",
+        "table path": "postgres.user_setting_snapshot",
         "unique properties": [["user_id", "snapshot_date"]],
         "properties": [
           {
@@ -4278,7 +4278,7 @@
       {
         "name": "authors",
         "type": "simple table",
-        "table path": "???.author",
+        "table path": "postgres.author",
         "unique properties": [
           "author_id"
         ],
@@ -4326,7 +4326,7 @@
       {
         "name": "citations",
         "type": "simple table",
-        "table path": "???.cite",
+        "table path": "postgres.cite",
         "unique properties": [
           ["cited",
           "citing"]
@@ -4357,7 +4357,7 @@
       {
         "name": "conferences",
         "type": "simple table",
-        "table path": "???.conference",
+        "table path": "postgres.conference",
         "unique properties": [
           "conference_id"
         ],
@@ -4396,7 +4396,7 @@
       {
         "name": "domains",
         "type": "simple table",
-        "table path": "???.domain",
+        "table path": "postgres.domain",
         "unique properties": [
           "domain_id"
         ],
@@ -4426,7 +4426,7 @@
       {
         "name": "domains_authors",
         "type": "simple table",
-        "table path": "???.domain_author",
+        "table path": "postgres.domain_author",
         "unique properties": [
           ["author_id",
           "domain_id"]
@@ -4457,7 +4457,7 @@
       {
         "name": "domains_conferences",
         "type": "simple table",
-        "table path": "???.domain_conference",
+        "table path": "postgres.domain_conference",
         "unique properties": [
           ["conference_id",
           "domain_id"]
@@ -4488,7 +4488,7 @@
       {
         "name": "domains_journals",
         "type": "simple table",
-        "table path": "???.domain_journal",
+        "table path": "postgres.domain_journal",
         "unique properties": [
           ["domain_id",
           "journal_id"]
@@ -4519,7 +4519,7 @@
       {
         "name": "domains_keywords",
         "type": "simple table",
-        "table path": "???.domain_keyword",
+        "table path": "postgres.domain_keyword",
         "unique properties": [
           ["domain_id",
           "keyword_id"]
@@ -4550,7 +4550,7 @@
       {
         "name": "domains_publications",
         "type": "simple table",
-        "table path": "???.domain_publication",
+        "table path": "postgres.domain_publication",
         "unique properties": [["domain_id", "publication_id"]],
         "properties": [
           {
@@ -4578,7 +4578,7 @@
       {
         "name": "journals",
         "type": "simple table",
-        "table path": "???.journal",
+        "table path": "postgres.journal",
         "unique properties": [
           "journal_id"
         ],
@@ -4617,7 +4617,7 @@
       {
         "name": "keywords",
         "type": "simple table",
-        "table path": "???.keyword",
+        "table path": "postgres.keyword",
         "unique properties": [
           "keyword_id"
         ],
@@ -4647,7 +4647,7 @@
       {
         "name": "organizations",
         "type": "simple table",
-        "table path": "???.organization",
+        "table path": "postgres.organization",
         "unique properties": [
           "organization_id"
         ],
@@ -4695,7 +4695,7 @@
       {
         "name": "publications",
         "type": "simple table",
-        "table path": "???.publication",
+        "table path": "postgres.publication",
         "unique properties": [
           "publication_id"
         ],
@@ -4779,7 +4779,7 @@
       {
         "name": "publications_keywords",
         "type": "simple table",
-        "table path": "???.publication_keyword",
+        "table path": "postgres.publication_keyword",
         "unique properties": [["publication_id", "keyword_id"]],
         "properties": [
           {
@@ -4807,7 +4807,7 @@
       {
         "name": "writes",
         "type": "simple table",
-        "table path": "???.writes",
+        "table path": "postgres.writes",
         "unique properties": [["author_id", "publication_id"]],
         "properties": [
           {
@@ -5318,7 +5318,7 @@
       {
         "name": "cities",
         "type": "simple table",
-        "table path": "???.geographic",
+        "table path": "postgres.geographic",
         "unique properties": [
           "city_name"
         ],
@@ -5357,7 +5357,7 @@
       {
         "name": "locations",
         "type": "simple table",
-        "table path": "???.location",
+        "table path": "postgres.location",
         "unique properties": [
           ["restaurant_id", "house_number", "street_name","city_name"]
         ],
@@ -5405,7 +5405,7 @@
       {
         "name": "restaurants",
         "type": "simple table",
-        "table path": "???.restaurant",
+        "table path": "postgres.restaurant",
         "unique properties": [
           "id_"
         ],

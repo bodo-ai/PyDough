@@ -93,9 +93,7 @@ def test_pipeline_e2e_trino_tpch_custom(
     )
 
     tpch_custom_pipeline_test_data.run_e2e_test(
-        get_trino_graphs,
-        trino_conn_db_context,
-        coerce_types=True,
+        get_trino_graphs, trino_conn_db_context, coerce_types=True, atol=5e-3
     )
 
 

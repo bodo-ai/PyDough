@@ -1,16 +1,16 @@
 WITH _s0 AS (
   SELECT
     CONCAT_WS(
-      '-',
-      YEAR(CAST(sbdpdate AS TIMESTAMP)),
-      LPAD(MONTH(CAST(sbdpdate AS TIMESTAMP)), 2, '0')
+      '-'[0],
+      CAST(YEAR(CAST(sbdpdate AS TIMESTAMP))[0] AS VARCHAR),
+      CAST(LPAD(MONTH(CAST(sbdpdate AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
     ) AS month,
     sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,
     MAX(sbdphigh) AS max_sbdphigh,
     MIN(sbdplow) AS min_sbdplow,
     SUM(sbdpclose) AS sum_sbdpclose
-  FROM main.sbdailyprice
+  FROM postgres.main.sbdailyprice
   GROUP BY
     1,
     2
@@ -23,7 +23,7 @@ WITH _s0 AS (
     SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
     SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose
   FROM _s0 AS _s0
-  JOIN main.sbticker AS sbticker
+  JOIN mysql.broker.sbticker AS sbticker
     ON _s0.sbdptickerid = sbticker.sbtickerid
   GROUP BY
     1,

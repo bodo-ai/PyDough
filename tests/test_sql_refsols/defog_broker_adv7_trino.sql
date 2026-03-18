@@ -1,12 +1,12 @@
 WITH _s2 AS (
   SELECT
     CONCAT_WS(
-      '-',
-      YEAR(CAST(sbcustjoindate AS TIMESTAMP)),
-      LPAD(MONTH(CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
+      '-'[0],
+      CAST(YEAR(CAST(sbcustjoindate AS TIMESTAMP))[0] AS VARCHAR),
+      CAST(LPAD(MONTH(CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
     ) AS month,
     COUNT(*) AS n_rows
-  FROM main.sbcustomer
+  FROM postgres.main.sbcustomer
   WHERE
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)
     AND sbcustjoindate >= DATE_TRUNC('MONTH', DATE_ADD('MONTH', -6, CURRENT_TIMESTAMP))
@@ -15,13 +15,13 @@ WITH _s2 AS (
 ), _s3 AS (
   SELECT
     CONCAT_WS(
-      '-',
-      YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
-      LPAD(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')
+      '-'[0],
+      CAST(YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))[0] AS VARCHAR),
+      CAST(LPAD(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
     ) AS month,
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
-  FROM main.sbcustomer AS sbcustomer
-  JOIN main.sbtransaction AS sbtransaction
+  FROM postgres.main.sbcustomer AS sbcustomer
+  JOIN mysql.broker.sbtransaction AS sbtransaction
     ON MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) = MONTH(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
     AND YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) = YEAR(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
     AND sbcustomer.sbcustid = sbtransaction.sbtxcustid

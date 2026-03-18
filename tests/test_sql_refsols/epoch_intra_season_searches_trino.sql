@@ -46,7 +46,7 @@ WITH _s0 AS (
   SELECT
     s_name,
     COUNT(*) AS n_rows,
-    SUM((
+    COUNT_IF((
       NOT NULLIF(count_search_id, 0) IS NULL AND NULLIF(count_search_id, 0) > 0
     )) AS sum_is_intra_season
   FROM _t1
@@ -56,7 +56,7 @@ WITH _s0 AS (
   SELECT
     _s10.s_name,
     COUNT(*) AS n_rows,
-    SUM(_s15.s_name = _s10.s_name) AS sum_is_intra_season
+    COUNT_IF(_s15.s_name = _s10.s_name) AS sum_is_intra_season
   FROM _s0 AS _s10
   JOIN _s5 AS _s11
     ON _s10.s_month1 = MONTH(CAST(_s11.ev_dt AS TIMESTAMP))

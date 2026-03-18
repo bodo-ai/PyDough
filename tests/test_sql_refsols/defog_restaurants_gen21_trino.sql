@@ -1,6 +1,6 @@
 SELECT
   city_name
-FROM main.restaurant
+FROM postgres.restaurant
 ORDER BY
   rating DESC
 LIMIT 1

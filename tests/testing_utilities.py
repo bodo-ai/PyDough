@@ -1327,6 +1327,8 @@ class PyDoughPandasTest:
         coerce_types: bool = False,
         mask_server: MaskServerInfo | None = None,
         max_rows: int | None = None,
+        rtol: float = 1.0e-5,
+        atol: float = 1.0e-5,
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -1342,6 +1344,8 @@ class PyDoughPandasTest:
             `coerce_types`: If True, coerces the types of the result and reference
             solution DataFrames to ensure compatibility.
             `max_rows`: The maximum number of rows to return from the query.
+            `rtol`: The relative tolerance for numerical comparisons.
+            `atol`: The absolute tolerance for numerical comparisons.
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
@@ -1398,7 +1402,12 @@ class PyDoughPandasTest:
 
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(
-            result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
+            result,
+            refsol,
+            check_dtype=(not coerce_types),
+            check_exact=False,
+            rtol=rtol,
+            atol=atol,
         )
 
 

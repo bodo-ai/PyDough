@@ -1,5 +1,5 @@
 SELECT
   COUNT(*) AS TSC
-FROM main.sales
+FROM postgres.sales
 WHERE
   DATE_DIFF('DAY', CAST(sale_date AS TIMESTAMP), CURRENT_TIMESTAMP) <= 7

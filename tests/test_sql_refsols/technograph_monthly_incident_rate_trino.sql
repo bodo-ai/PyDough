@@ -53,7 +53,11 @@ WITH _t2 AS (
     2
 )
 SELECT
-  CONCAT_WS('-', year_ca_dt, LPAD(month_ca_dt, 2, '0')) AS month,
+  CONCAT_WS(
+    '-'[0],
+    CAST(year_ca_dt[0] AS VARCHAR),
+    CAST(LPAD(month_ca_dt, 2, '0')[1] AS VARCHAR)
+  ) AS month,
   ROUND((
     1000000.0 * COALESCE(sum_n_rows, 0)
   ) / COALESCE(sum_expr_3, 0), 2) AS ir

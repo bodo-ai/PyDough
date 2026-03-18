@@ -1,5 +1,5 @@
 SELECT
   title
-FROM main.publication
+FROM postgres.publication
 ORDER BY
   1 NULLS FIRST

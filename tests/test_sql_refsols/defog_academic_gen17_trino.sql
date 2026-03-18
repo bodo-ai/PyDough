@@ -1,8 +1,8 @@
 SELECT
   ARBITRARY(conference.name) AS name,
   COUNT(publication.cid) AS count_publications
-FROM main.conference AS conference
-LEFT JOIN main.publication AS publication
+FROM postgres.conference AS conference
+LEFT JOIN postgres.publication AS publication
   ON conference.cid = publication.cid
 GROUP BY
   conference.cid

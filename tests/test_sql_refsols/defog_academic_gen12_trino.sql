@@ -1,3 +1,3 @@
 SELECT
-  CAST(SUM(NOT cid IS NULL) AS DOUBLE) / NULLIF(SUM(NOT jid IS NULL), 0) AS ratio
-FROM main.publication
+  CAST(COUNT_IF(NOT cid IS NULL) AS DOUBLE) / NULLIF(COUNT_IF(NOT jid IS NULL), 0) AS ratio
+FROM postgres.publication

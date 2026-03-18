@@ -10,7 +10,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek
-from pydough.types import PyDoughType
+from pydough.types import BooleanType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit, apply_parens
@@ -32,7 +32,6 @@ class TrinoTransformBindings(BaseTransformBindings):
         pydop.SIGN: "SIGN",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
-        pydop.GETPART: "SPLIT_PART",
     }
     """
     Mapping of PyDough operators to equivalent Trino SQL function names
@@ -71,6 +70,25 @@ class TrinoTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
+
+    def convert_sum(
+        self, arg: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a SUM function call to its SQLGlot equivalent.
+        This method checks the type of the argument to determine whether to use
+        COUNT_IF (for BooleanType) or SUM (for other types).
+        Arguments:
+            `arg` : The argument to the SUM function.
+            `types` : The types of the arguments.
+        """
+        match types[0]:
+            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
+            case BooleanType():
+                return sqlglot_expressions.CountIf(this=arg[0])
+            case _:
+                # For other types, use SUM directly
+                return sqlglot_expressions.Sum(this=arg[0])
 
     def convert_extract_datetime(
         self,
@@ -122,7 +140,8 @@ class TrinoTransformBindings(BaseTransformBindings):
         dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
         if offset == 1:
             return dow_expr
-        breakpoint()
+        # TODO: FIX THE MOD PART
+        # breakpoint()
         return sqlglot_expressions.Mod(
             this=apply_parens(
                 sqlglot_expressions.Add(
@@ -131,4 +150,93 @@ class TrinoTransformBindings(BaseTransformBindings):
                 )
             ),
             expression=sqlglot_expressions.Literal.number(7),
+        )
+
+    def convert_join_strings(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Need to manually ensure that all of the types are strings before
+        # proceeding, since CONCAT_WS in Trino does not support implicit type
+        # conversion.
+        new_args: list[SQLGlotExpression] = []
+        new_types: list[PyDoughType] = []
+        for arg, typ in zip(args, types):
+            if not isinstance(typ, StringType):
+                new_args.append(sqlglot_expressions.Cast(this=arg[0], to="VARCHAR"))
+                new_types.append(StringType())
+            else:
+                new_args.append(arg[0])
+                new_types.append(typ)
+        return super().convert_join_strings(new_args, new_types)
+
+    def convert_get_part(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # SPLIT_PART(string, delimiter, index)
+        regular_split: SQLGlotExpression = sqlglot_expressions.Anonymous(
+            this="SPLIT_PART", expressions=args
+        )
+
+        # SPLIT_PART(string, delimiter, 1)
+        first_split: SQLGlotExpression = sqlglot_expressions.Anonymous(
+            this="SPLIT_PART",
+            expressions=[
+                args[0],
+                args[1],
+                sqlglot_expressions.Literal.number(1),
+            ],
+        )
+
+        # Count how many times the delimiter appears in the string ("n")
+        n_delim: SQLGlotExpression = self.convert_str_count(
+            [args[0], args[1]], [StringType(), StringType()]
+        )
+
+        # SPLIT_PART(string, delimiter, n + 1 - index)
+        reverse_split: SQLGlotExpression = sqlglot_expressions.Anonymous(
+            this="SPLIT_PART",
+            expressions=[
+                args[0],
+                args[1],
+                sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Sub(
+                        this=n_delim,
+                        expression=args[2],
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                ),
+            ],
+        )
+
+        # CASE WHEN index = 0 then <first_split>
+        #      WHEN index < -n then NULL
+        #      WHEN index > n then NULL
+        #      WHEN index < 0 then <reverse_split>
+        #      ELSE <regular_split>
+        # END
+        return (
+            sqlglot_expressions.Case()
+            .when(
+                sqlglot_expressions.EQ(
+                    this=args[2], expression=sqlglot_expressions.Literal.number(0)
+                ),
+                first_split,
+            )
+            .when(
+                sqlglot_expressions.LT(
+                    this=args[2], expression=sqlglot_expressions.Neg(this=n_delim)
+                ),
+                sqlglot_expressions.Null(),
+            )
+            .when(
+                sqlglot_expressions.GT(this=args[2], expression=n_delim),
+                sqlglot_expressions.Null(),
+            )
+            .when(
+                sqlglot_expressions.LT(
+                    this=args[2], expression=sqlglot_expressions.Literal.number(0)
+                ),
+                reverse_split,
+            )
+            .else_(regular_split)
         )

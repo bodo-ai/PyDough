@@ -1,7 +1,7 @@
 SELECT
   city_name,
   AVG(rating) AS avg_rating
-FROM main.restaurant
+FROM postgres.restaurant
 WHERE
   LOWER(food_type) = 'mexican'
 GROUP BY

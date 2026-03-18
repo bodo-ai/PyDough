@@ -1,9 +1,9 @@
 SELECT
   sbcustcountry AS country,
   100 * (
-    CAST(COALESCE(SUM(sbcuststatus = 'active'), 0) AS DOUBLE) / COUNT(*)
+    CAST(COUNT_IF(sbcuststatus = 'active') AS DOUBLE) / COUNT(*)
   ) AS ar
-FROM main.sbcustomer
+FROM postgres.main.sbcustomer
 WHERE
   sbcustjoindate <= '2022-12-31' AND sbcustjoindate >= '2022-01-01'
 GROUP BY

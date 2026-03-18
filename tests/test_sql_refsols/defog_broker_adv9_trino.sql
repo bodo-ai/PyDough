@@ -16,20 +16,17 @@ SELECT
     )
   ) AS week,
   COUNT(*) AS num_transactions,
-  COALESCE(
-    SUM(
+  COUNT_IF(
+    (
       (
         (
-          (
-            DAY_OF_WEEK(sbtransaction.sbtxdatetime) % 7
-          ) + 0
-        ) % 7
-      ) IN (5, 6)
-    ),
-    0
+          DAY_OF_WEEK(sbtransaction.sbtxdatetime) % 7
+        ) + 0
+      ) % 7
+    ) IN (5, 6)
   ) AS weekend_transactions
-FROM main.sbtransaction AS sbtransaction
-JOIN main.sbticker AS sbticker
+FROM mysql.broker.sbtransaction AS sbtransaction
+JOIN mysql.broker.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
   AND sbticker.sbtickertype = 'stock'
 WHERE

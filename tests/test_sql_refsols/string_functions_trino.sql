@@ -6,7 +6,7 @@ SELECT
   customer.c_name LIKE '%z' AS ends_with_z,
   customer.c_name LIKE '%sub%' AS contains_sub,
   customer.c_name LIKE '%test%' AS matches_like,
-  CONCAT_WS('::', customer.c_name, nation.n_name) AS joined_string,
+  CONCAT_WS('::'[0], customer.c_name[1], nation.n_name[1]) AS joined_string,
   LPAD(customer.c_name, 20, '*') AS lpad_name,
   RPAD(customer.c_name, 20, '-') AS rpad_name,
   TRIM('

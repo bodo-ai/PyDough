@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     DATE_TRUNC('MONTH', CAST(payment_date AS TIMESTAMP)) AS start_month,
     SUM(payment_amount) AS sum_payment_amount
-  FROM main.payments_received
+  FROM postgres.payments_received
   GROUP BY
     1
 ), _t0 AS (

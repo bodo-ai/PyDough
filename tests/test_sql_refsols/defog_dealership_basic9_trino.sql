@@ -1,7 +1,7 @@
 SELECT
   state,
   COUNT(*) AS total_signups
-FROM main.customers
+FROM postgres.customers
 GROUP BY
   1
 ORDER BY

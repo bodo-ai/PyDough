@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS transaction_count
-FROM main.sbtransaction AS sbtransaction
-JOIN main.sbcustomer AS sbcustomer
+FROM mysql.broker.sbtransaction AS sbtransaction
+JOIN postgres.main.sbcustomer AS sbcustomer
   ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
   AND sbcustomer.sbcustjoindate >= DATE_TRUNC('DAY', DATE_ADD('DAY', -70, CURRENT_TIMESTAMP))

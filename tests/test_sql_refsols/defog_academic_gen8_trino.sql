@@ -1,6 +1,6 @@
 SELECT
   title
-FROM main.publication
+FROM postgres.publication
 ORDER BY
   reference_num DESC
 LIMIT 3
