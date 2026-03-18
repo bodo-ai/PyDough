@@ -6,7 +6,6 @@ Integration tests for the PyDough workflow on various queries using Trino.
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
-import trino
 import pytest
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext

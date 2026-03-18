@@ -17,7 +17,6 @@ import boto3
 import httpx
 import pandas as pd
 import pytest
-import trino
 from botocore.exceptions import ClientError
 
 import pydough
@@ -1150,53 +1149,123 @@ def get_trino_defog_graphs() -> graph_fetcher:
     return impl
 
 
-def is_trino_env_set() -> bool:
+TRINO_DOCKER_CONTAINER = "trino_tpch_test"
+TRINO_DOCKER_IMAGE = "bodoai1/pydough-trino:latest"
+TRINO_HOST = "127.0.0.1"
+TRINO_PORT = "8080"
+TRINO_USER = "root"
+"""
+    CONSTANTS for the Trino Docker container setup.
+    - DOCKER_CONTAINER: The name of the Docker container.
+    - DOCKER_IMAGE: The Docker image to use for the Trino container.
+    - TRINO_HOST: The host address for Trino.
+    - TRINO_PORT: The port on which Trino is exposed.
+    - TRINO_USER: The username for accessing the Trino container.
+"""
+
+
+@pytest.fixture(scope="session")
+def trino_docker_setup(mysql_docker_setup, postgres_docker_setup) -> None:
     """
-    Check if the Trino environment variables are set.
-
-    Returns:
-        bool: True if all required Trino environment variables are set, False
-        otherwise.
+    Set up the Trino Docker container for testing. The Trino container
+    depends on several other containers to be set up first, since it connects
+    to them as data sources.
     """
-    # TODO: add environment variables for Trino connection
-    required_envs: list[str] = []
-    return all(os.getenv(env) for env in required_envs)
+    try:
+        if not is_ci():
+            if container_exists(TRINO_DOCKER_CONTAINER):
+                if not container_is_running(TRINO_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", TRINO_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        TRINO_DOCKER_CONTAINER,
+                        "-e",
+                        f"MYSQL_HOST={MYSQL_HOST}",
+                        "-e",
+                        f"MYSQL_PORT={MYSQL_PORT}",
+                        "-e",
+                        f"MYSQL_USER={os.getenv('MYSQL_USERNAME')}",
+                        "-e",
+                        f"MYSQL_PASSWORD={os.getenv('MYSQL_PASSWORD')}",
+                        # "-e",
+                        # f"POSTGRES_HOST={POSTGRES_HOST}",
+                        # "-e",
+                        # f"POSTGRES_PORT={POSTGRES_PORT}",
+                        # "-e",
+                        # f"POSTGRES_USER={os.getenv('POSTGRES_USER')}",
+                        # "-e",
+                        # f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
+                        # "-e",
+                        # f"POSTGRES_DB={POSTGRES_DB}",
+                        "-p",
+                        f"{TRINO_PORT}:8080",
+                        TRINO_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Trino Docker container: {e}")
+
+    # Wait for Trino to be ready for 3 minutes max
+    for _ in range(180):
+        try:
+            pass
+        #     conn = psycopg2.connect(
+        #         host=POSTGRES_HOST,
+        #         port=POSTGRES_PORT,
+        #         user=os.getenv("POSTGRES_USER"),
+        #         password=os.getenv("POSTGRES_PASSWORD"),
+        #         database=POSTGRES_DB,
+        #     )
+        #     conn.close()
+        #     break
+        except Exception as e:
+            print("Error occurred while connecting to Trino:", e)
+            print(f"Waiting {_ + 1}/180 seconds for Trino to be ready...")
+            time.sleep(1)
+        pass
+    else:
+        subprocess.run(["docker", "rm", "-f", POSTGRES_DOCKER_CONTAINER])
+        pytest.fail("Postgres container did not become ready in time.")
 
 
-@pytest.fixture
-def trino_conn_db_context() -> Callable[[str, str], DatabaseContext]:
+@pytest.fixture(scope="session")
+def trino_conn_db_context(trino_docker_setup) -> DatabaseContext:
     """
     This fixture is used to connect to the Trino TPCH database using
     a connection object.
-    Return a DatabaseContext for the Trino TPCH database.
+    Returns a DatabaseContext for the Trino TPCH database.
     """
+    import trino
 
-    def _impl(database_name: str, schema_name: str) -> DatabaseContext:
-        if not is_trino_env_set():
-            pytest.skip("Skipping Trino tests: environment variables not set.")
+    connection: trino.dbapi.Connection = trino.dbapi.connect(
+        host=TRINO_HOST,
+        port=TRINO_PORT,
+        user=os.getenv("TRINO_USER"),
+    )
 
-        connection: trino.dbapi.Connection = trino.dbapi.connect(
-            # TODO: use the keyword arguments fetched from environment variables
-        )
-
-        return load_database_context("trino", connection=connection)
-
-    return _impl
+    return load_database_context("trino", connection=connection)
 
 
-@pytest.fixture
-def trino_params_tpch_db_context() -> DatabaseContext:
+@pytest.fixture(scope="session")
+def trino_params_tpch_db_context(trino_docker_setup) -> DatabaseContext:
     """
     This fixture is used to connect to the Trino TPCH database using
     parameters instead of a connection object.
     Return a DatabaseContext for the Trino TPCH database.
     """
-    if not is_trino_env_set():
-        pytest.skip("Skipping Trino tests: environment variables not set.")
-    # TODO: add keyword arguments fetched from environment variables
     return load_database_context(
         "trino",
-        # TODO: use the keyword arguments
+        host=TRINO_HOST,
+        port=TRINO_PORT,
+        user=os.getenv("TRINO_USER"),
     )
 
 
