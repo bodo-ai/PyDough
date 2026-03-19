@@ -141,7 +141,7 @@ class OracleTransformBindings(BaseTransformBindings):
                         this="CHAR",
                         expressions=[sqlglot_expressions.Literal.number(13)],
                     ),  # carriage return
-                    sqlglot_expressions.Literal.string(" "),
+                    sqlglot_expressions.Literal.string(" "),  # space
                 ]
             )
         else:
@@ -302,13 +302,13 @@ class OracleTransformBindings(BaseTransformBindings):
             if isinstance(step, sqlglot_expressions.Literal):
                 try:
                     step_idx = int(step.this)
-                    if step_idx != 1:
-                        raise ValueError(
-                            "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
-                        )
                 except ValueError:
                     raise ValueError(
                         "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
+                    )
+                if step_idx != 1:
+                    raise ValueError(
+                        "SLICE function currently only supports the step being integer literal 1 or absent, got value different than 1."
                     )
             else:
                 raise ValueError(
@@ -437,7 +437,11 @@ class OracleTransformBindings(BaseTransformBindings):
         if isinstance(types[0], StringType):
             args = [
                 sqlglot_expressions.Coalesce(
-                    this=arg if arg.this != "" else sqlglot_expressions.Null(),
+                    this=arg
+                    if not (
+                        isinstance(arg, sqlglot_expressions.Literal) and arg.this == ""
+                    )
+                    else sqlglot_expressions.Null(),
                     expressions=[
                         sqlglot_expressions.Chr(
                             expressions=[sqlglot_expressions.Literal.number(0)]
@@ -1178,25 +1182,12 @@ class OracleTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        Oracle does not support a generic TEXT type or TimeToStr. STRING(X)
-        is implemented via CAST to VARCHAR2(4000), and STRING(X, format)
-        uses TO_CHAR with Oracle-specific date format semantics.
+        Oracle does not support a generic TEXT type or TimeToStr. STRING(X) and
+        STRING(X, format) is implemented via TO_CHAR(X)/TO_CHAR(X, format)
+        with Oracle-specific date format semantics.
         """
         if len(args) == 1:
-            # Length defaults to 4000 which is the max length of a VARCHAR2 in
-            # Oracle
-            return sqlglot_expressions.Cast(
-                this=args[0],
-                to=sqlglot_expressions.DataType(
-                    this=sqlglot_expressions.Var(this="VARCHAR"),
-                    expressions=[
-                        sqlglot_expressions.DataTypeParam(
-                            this=sqlglot_expressions.Literal.number(4000)
-                        )
-                    ],
-                    nested=False,
-                ),
-            )
+            return sqlglot_expressions.ToChar(this=args[0])
         else:
             assert len(args) == 2
             if (

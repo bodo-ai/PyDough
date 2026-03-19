@@ -71,8 +71,8 @@ SELECT
     )
   ) AS b,
   RTRIM(LTRIM(SUBSTR(p_name, 1, 2), 'o'), 'o') AS c,
-  LPAD(CAST(p_size AS VARCHAR2(4000)), 3, '0') AS d,
-  RPAD(CAST(p_size AS VARCHAR2(4000)), 3, '0') AS e,
+  LPAD(TO_CHAR(p_size), 3, '0') AS d,
+  RPAD(TO_CHAR(p_size), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CASE

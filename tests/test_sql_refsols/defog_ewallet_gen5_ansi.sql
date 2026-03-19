@@ -1,20 +1,11 @@
-WITH _u_0 AS (
-  SELECT
-    notifications.user_id AS _u_1
-  FROM main.notifications AS notifications
-  JOIN main.users AS users
-    ON notifications.created_at <= DATE_ADD(CAST(users.created_at AS TIMESTAMP), 1, 'YEAR')
-    AND notifications.created_at >= users.created_at
-    AND notifications.user_id = users.uid
-  GROUP BY
-    1
-)
 SELECT
   users.username,
   users.email,
   users.created_at
 FROM main.users AS users
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = users.uid
-WHERE
-  _u_0._u_1 IS NULL
+JOIN main.notifications AS notifications
+  ON notifications.user_id = users.uid
+JOIN main.users AS users_2
+  ON notifications.created_at <= DATE_ADD(CAST(users_2.created_at AS TIMESTAMP), 1, 'YEAR')
+  AND notifications.created_at >= users_2.created_at
+  AND notifications.user_id = users_2.uid

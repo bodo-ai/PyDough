@@ -8,7 +8,7 @@ from typing import Any
 
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot import parse_one
+from sqlglot import parse_one, transforms
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Oracle as OracleDialect
@@ -503,6 +503,8 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
         if expr.this.startswith("_"):
             new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
             expr.replace(new_identifier)
+            # Identifiers are leaf nodes, so no recursion is needed
+            return
 
     # Recursively visit the subexpressions.
     for arg in expr.iter_expressions():
@@ -566,6 +568,19 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop] = rename_func(
                 "VAR_POP"
             )
+
+            # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
+            # which is necessary later when optimizing.
+            Oracle.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.eliminate_qualify,
+                        transforms.eliminate_semi_and_anti_joins,
+                    ]
+                )
+            )
+
         case _:
             pass
 
@@ -584,6 +599,15 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                 sqlglot_expressions.DataType.Type.DATETIME
             ]
             del Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop]
+
+            Oracle.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.eliminate_qualify,
+                    ]
+                )
+            )
         case _:
             pass
 

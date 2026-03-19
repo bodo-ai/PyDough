@@ -94,6 +94,9 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_dataframe_collection_3_oracle,
+)
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
@@ -608,6 +611,11 @@ def sqlite_tpch_session(
             "oracle",
             id="oracle",
             marks=[pytest.mark.oracle],
+        ),
+        pytest.param(
+            "bodosql",
+            id="bodosql",
+            marks=[pytest.mark.bodosql],
         ),
     ],
 )
@@ -2591,6 +2599,23 @@ def tpch_custom_test_data_dialect_replacements(
                 "simple_int_float_string_cast",
             )
 
+    if (
+        test.test_name == "simple_dataframe_collection_3"
+        and dialect == DatabaseDialect.ORACLE
+    ):
+        return PyDoughPandasTest(
+            simple_dataframe_collection_3_oracle,
+            "TPCH",
+            lambda: pd.DataFrame(
+                {
+                    "user_id": [1, 2, 3, 4],
+                    '"`name\'["': ["Alice", "Bob", "Charlie", "David"],
+                    '"space country"': ["US", "CR", "US", "MX"],
+                    '"CAST"': [25, 30, 22, 30],
+                }
+            ),
+            "simple_dataframe_collection_3",
+        )
     return test
 
 

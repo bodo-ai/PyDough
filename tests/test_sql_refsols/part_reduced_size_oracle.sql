@@ -11,7 +11,7 @@ WITH "_S0" AS (
 SELECT
   CAST("_S0".P_SIZE / 2.5 AS DOUBLE PRECISION) AS reduced_size,
   TRUNC(CAST("_S0".P_RETAILPRICE AS DOUBLE PRECISION), '0') AS retail_price_int,
-  'old size: ' || NVL(CAST("_S0".P_SIZE AS VARCHAR2(4000)), '') AS message,
+  'old size: ' || NVL(TO_CHAR("_S0".P_SIZE), '') AS message,
   LINEITEM.l_discount AS discount,
   TO_CHAR(LINEITEM.l_receiptdate, 'DD-MM-YYYY') AS date_dmy,
   TO_CHAR(LINEITEM.l_receiptdate, 'MM/DD') AS date_md,

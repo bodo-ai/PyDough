@@ -368,6 +368,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 )
 
         elif self._dialect == DatabaseDialect.ORACLE:
+            # NOTE (Oracle):
+            # We intentionally use TO_DATE instead of TO_TIMESTAMP for datetime
+            # literals.
+            #
+            # Rationale:
+            # - Oracle DATE has second-level precision only.
+            # - Using TO_DATE ensures consistent behavior across DATE expressions
+            #   and avoids implicit casts in many common queries.
+            #
+            # Important limitation:
+            # - Sub-second precision (microseconds) is silently truncated.
+            # - Comparisons against TIMESTAMP columns will also drop sub-second
+            #   precision due to implicit conversion.
             if isinstance(literal_expression.value, datetime.datetime):
                 dt = literal_expression.value
                 if dt.tzinfo is not None:

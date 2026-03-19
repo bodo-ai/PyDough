@@ -7,6 +7,7 @@ SELECT
   customer.c_name LIKE '%sub%' AS contains_sub,
   customer.c_name LIKE '%test%' AS matches_like,
   CONCAT_WS('::', customer.c_name, nation.n_name) AS joined_string,
+  NULL AS join_nulls,
   CASE
     WHEN LENGTH(customer.c_name) >= 20
     THEN SUBSTRING(customer.c_name, 1, 20)

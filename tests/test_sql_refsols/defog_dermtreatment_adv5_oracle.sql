@@ -25,7 +25,7 @@ WITH "_u_0" AS (
     MIN_YEAR_START_DT
 )
 SELECT
-  CAST(MIN_YEAR_START_DT AS VARCHAR2(4000)) AS year,
+  TO_CHAR(MIN_YEAR_START_DT) AS year,
   N_ROWS AS number_of_new_patients,
   CASE
     WHEN (

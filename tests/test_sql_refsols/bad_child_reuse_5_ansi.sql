@@ -21,21 +21,13 @@ WITH _t2 AS (
     1 DESC,
     2 DESC
   LIMIT 10
-), _u_0 AS (
-  SELECT
-    o_custkey AS _u_1
-  FROM _t2
-  GROUP BY
-    1
 )
 SELECT
   _s2.c_custkey AS cust_key,
   COALESCE(_s2.n_rows, 0) AS n_orders
 FROM _s2 AS _s2
-LEFT JOIN _u_0 AS _u_0
-  ON _s2.c_custkey = _u_0._u_1
-WHERE
-  _u_0._u_1 IS NULL
+JOIN _t2 AS _s3
+  ON _s2.c_custkey = _s3.o_custkey
 ORDER BY
   _s2.c_acctbal DESC,
   1 DESC

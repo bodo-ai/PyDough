@@ -12,14 +12,14 @@ SELECT
   CAST('-5.888' AS DOUBLE PRECISION) AS f5,
   -6.0 AS f6,
   0.0 AS f7,
-  CAST(1 AS VARCHAR2(4000)) AS s1,
-  CAST(2.2 AS VARCHAR2(4000)) AS s2,
-  '3' AS s3,
-  '4.3' AS s4,
-  '-5.888' AS s5,
-  CAST(-6.1 AS VARCHAR2(4000)) AS s6,
-  CAST(0.1 AS VARCHAR2(4000)) AS s7,
-  '0.0' AS s8,
-  'abc def' AS s9
+  TO_CHAR(1) AS s1,
+  TO_CHAR(2.2) AS s2,
+  TO_CHAR('3') AS s3,
+  TO_CHAR('4.3') AS s4,
+  TO_CHAR('-5.888') AS s5,
+  TO_CHAR(-6.1) AS s6,
+  TO_CHAR(0.1) AS s7,
+  TO_CHAR('0.0') AS s8,
+  TO_CHAR('abc def') AS s9
 FROM (VALUES
   (NULL)) AS "_Q_0"("_COL_0")

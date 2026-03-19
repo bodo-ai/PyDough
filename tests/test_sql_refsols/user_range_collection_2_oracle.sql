@@ -1,16 +1,12 @@
 WITH "_S3" AS (
   SELECT
     A_2.X,
-    SUM(
-      CAST(B.Y AS VARCHAR2(4000)) LIKE (
-        CONCAT('%', CAST(A_2.X AS VARCHAR2(4000)))
-      )
-    ) AS SUM_EXPR,
-    SUM(
-      CAST(B.Y AS VARCHAR2(4000)) LIKE (
-        CONCAT(CAST(A_2.X AS VARCHAR2(4000)), '%')
-      )
-    ) AS SUM_EXPR_5
+    SUM(TO_CHAR(B.Y) LIKE (
+      CONCAT('%', TO_CHAR(A_2.X))
+    )) AS SUM_EXPR,
+    SUM(TO_CHAR(B.Y) LIKE (
+      CONCAT(TO_CHAR(A_2.X), '%')
+    )) AS SUM_EXPR_5
   FROM (VALUES
     (0),
     (1),
@@ -524,8 +520,8 @@ WITH "_S3" AS (
     (996),
     (998),
     (1000)) AS B(Y)
-    ON CAST(B.Y AS VARCHAR2(4000)) LIKE CONCAT('%', CAST(A_2.X AS VARCHAR2(4000)))
-    OR CAST(B.Y AS VARCHAR2(4000)) LIKE CONCAT(CAST(A_2.X AS VARCHAR2(4000)), '%')
+    ON TO_CHAR(B.Y) LIKE CONCAT('%', TO_CHAR(A_2.X))
+    OR TO_CHAR(B.Y) LIKE CONCAT(TO_CHAR(A_2.X), '%')
   GROUP BY
     A_2.X
 )
