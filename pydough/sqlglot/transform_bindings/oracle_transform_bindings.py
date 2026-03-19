@@ -5,6 +5,7 @@ Definition of SQLGlot transformation bindings for the Oracle dialect.
 __all__ = ["OracleTransformBindings"]
 
 
+import datetime
 import math
 from typing import Any
 
@@ -13,6 +14,9 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.errors.error_types import PyDoughSQLException
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
@@ -695,6 +699,56 @@ class OracleTransformBindings(BaseTransformBindings):
             default=regexp_substr,
         )
         return result
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        """
+        We intentionally use TO_DATE instead of TO_TIMESTAMP for datetime
+        literals.
+
+        Rationale:
+            - Oracle DATE has second-level precision only.
+            - Using TO_DATE ensures consistent behavior across DATE expressions
+                and avoids implicit casts in many common queries.
+
+        Important limitation:
+            - Sub-second precision (microseconds) is silently truncated.
+            - Comparisons against TIMESTAMP columns will also drop sub-second
+                precision due to implicit conversion.
+        """
+
+        if isinstance(arg.value, datetime.datetime):
+            date_time: datetime.datetime = arg.value
+            if date_time.tzinfo is not None:
+                raise PyDoughSQLException(
+                    "PyDough does not yet support datetime values with a timezone"
+                )
+
+            return sqlglot_expressions.Anonymous(
+                this="TO_DATE",
+                expressions=[
+                    sqlglot_expressions.convert(
+                        date_time.strftime("%Y-%m-%d %H:%M:%S")
+                    ),
+                    sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
+                ],
+            )
+
+        elif isinstance(arg.value, datetime.date):
+            date: datetime.date = arg.value
+
+            return sqlglot_expressions.Anonymous(
+                this="TO_DATE",
+                expressions=[
+                    sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                    sqlglot_expressions.Literal.string("YYYY-MM-DD"),
+                ],
+            )
+
+        else:
+            return sqlglot_expressions.convert(arg.value)
 
     def convert_datediff(
         self,

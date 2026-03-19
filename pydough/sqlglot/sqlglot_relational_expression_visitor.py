@@ -5,7 +5,6 @@ the relation Tree to a single SQLGlot query component.
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
-import datetime
 import warnings
 from typing import TYPE_CHECKING
 
@@ -338,73 +337,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 elements.append(element_expr)
             literal = sqlglot_expressions.Array(expressions=elements)
         else:
-            literal = sqlglot_expressions.convert(literal_expression.value)
+            literal = self._bindings.convert_literal_expression(literal_expression)
 
-        # Special handling: insert cast calls for ansi casting of date/time
-        # instead of relying on SQLGlot conversion functions. This is because
-        # the default handling in SQLGlot without a dialect is to produce a
-        # nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
-        # specific dialect is responsible for translating into its own logic.
-        # Rather than have that logic show up in the ANSI sql text, we will
-        # instead create the CAST calls ourselves.
-        date: datetime.date
-        dt: datetime.datetime
-        if self._dialect == DatabaseDialect.ANSI:
-            if isinstance(literal_expression.value, datetime.datetime):
-                dt = literal_expression.value
-                if dt.tzinfo is not None:
-                    raise PyDoughSQLException(
-                        "PyDough does not yet support datetime values with a timezone"
-                    )
-                literal = sqlglot_expressions.Cast(
-                    this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
-                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
-                )
-            elif isinstance(literal_expression.value, datetime.date):
-                date = literal_expression.value
-                literal = sqlglot_expressions.Cast(
-                    this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
-                    to=sqlglot_expressions.DataType.build("DATE"),
-                )
-
-        elif self._dialect == DatabaseDialect.ORACLE:
-            # NOTE (Oracle):
-            # We intentionally use TO_DATE instead of TO_TIMESTAMP for datetime
-            # literals.
-            #
-            # Rationale:
-            # - Oracle DATE has second-level precision only.
-            # - Using TO_DATE ensures consistent behavior across DATE expressions
-            #   and avoids implicit casts in many common queries.
-            #
-            # Important limitation:
-            # - Sub-second precision (microseconds) is silently truncated.
-            # - Comparisons against TIMESTAMP columns will also drop sub-second
-            #   precision due to implicit conversion.
-            if isinstance(literal_expression.value, datetime.datetime):
-                dt = literal_expression.value
-                if dt.tzinfo is not None:
-                    raise PyDoughSQLException(
-                        "PyDough does not yet support datetime values with a timezone"
-                    )
-                literal = sqlglot_expressions.Anonymous(
-                    this="TO_DATE",
-                    expressions=[
-                        sqlglot_expressions.convert(
-                            literal_expression.value.strftime("%Y-%m-%d %H:%M:%S")
-                        ),
-                        sqlglot_expressions.Literal.string("YYYY-MM-DD HH24:MI:SS"),
-                    ],
-                )
-            elif isinstance(literal_expression.value, datetime.date):
-                date = literal_expression.value
-                literal = sqlglot_expressions.Anonymous(
-                    this="TO_DATE",
-                    expressions=[
-                        sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
-                        sqlglot_expressions.Literal.string("YYYY-MM-DD"),
-                    ],
-                )
         self._stack.append(literal)
 
     def visit_correlated_reference(

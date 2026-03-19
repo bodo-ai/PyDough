@@ -5,6 +5,7 @@ implementations of how to convert them to SQLGlot expressions
 
 __all__ = ["BaseTransformBindings"]
 
+import datetime
 import math
 import re
 from typing import TYPE_CHECKING, Any
@@ -18,6 +19,9 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.errors import PyDoughSQLException
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.types import (
     BooleanType,
     DatetimeType,
@@ -1378,6 +1382,44 @@ class BaseTransformBindings:
         """
         assert len(args) == 1
         return sqlglot_expressions.Floor(this=args[0], expressions=args)
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        """
+        Special handling: insert cast calls for ansi casting of date/time
+        instead of relying on SQLGlot conversion functions. This is because
+        the default handling in SQLGlot without a dialect is to produce a
+        nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
+        specific dialect is responsible for translating into its own logic.
+        Rather than have that logic show up in the ANSI sql text, we will
+        instead create the CAST calls ourselves.
+        """
+
+        if isinstance(arg.value, datetime.datetime):
+            date_time: datetime.datetime = arg.value
+
+            if date_time.tzinfo is not None:
+                raise PyDoughSQLException(
+                    "PyDough does not yet support datetime values with a timezone"
+                )
+
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.convert(date_time.isoformat(sep=" ")),
+                to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+            )
+
+        elif isinstance(arg.value, datetime.date):
+            date: datetime.date = arg.value
+
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                to=sqlglot_expressions.DataType.build("DATE"),
+            )
+
+        else:
+            return sqlglot_expressions.convert(arg.value)
 
     def convert_datediff(
         self,
