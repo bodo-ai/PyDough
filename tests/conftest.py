@@ -101,6 +101,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
+from .test_pipeline_bodosql import bodosql_tpch_context  # noqa
 
 
 @pytest.fixture
