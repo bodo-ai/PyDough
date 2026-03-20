@@ -475,6 +475,9 @@ You can find a full example of using Postgres database with PyDough in [this usa
   ```
 You can find a full example of using an Oracle database with PyDough in [this usage guide](./../demos/notebooks/Oracle_TPCH.ipynb).
 
+**Note**: Oracle doesn't support "" (doubles quotes) inside identifiers. This means that even though PyDough support
+double quotes inside column/table names executing SQL with such characters will raise an error when using Oracle.
+
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 

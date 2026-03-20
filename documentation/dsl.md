@@ -21,6 +21,7 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [CROSS](#cross)
 - [User Generated Collections](#user-generated-collections)
     * [range_collection](#range_collection)
+    * [dataframe_collection](#dataframe_collection)
 - [Larger Examples](#larger-examples)
    * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
    * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
