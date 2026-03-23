@@ -1,12 +1,12 @@
 WITH _s2 AS (
   SELECT
     CONCAT_WS(
-      '-'[0],
-      CAST(YEAR(CAST(start_dt AS TIMESTAMP))[0] AS VARCHAR),
-      CAST(LPAD(MONTH(CAST(start_dt AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
+      '-',
+      CAST(YEAR(CAST(start_dt AS TIMESTAMP)) AS VARCHAR),
+      CAST(LPAD(CAST(MONTH(CAST(start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS treatment_month,
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
-  FROM postgres.treatments
+  FROM postgres.main.treatments
   WHERE
     start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)
     AND start_dt >= DATE_ADD('MONTH', -3, DATE_TRUNC('MONTH', CURRENT_TIMESTAMP))
@@ -15,13 +15,13 @@ WITH _s2 AS (
 ), _s3 AS (
   SELECT
     CONCAT_WS(
-      '-'[0],
-      CAST(YEAR(CAST(treatments.start_dt AS TIMESTAMP))[0] AS VARCHAR),
-      CAST(LPAD(MONTH(CAST(treatments.start_dt AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
+      '-',
+      CAST(YEAR(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR),
+      CAST(LPAD(CAST(MONTH(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS treatment_month,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
-  FROM postgres.treatments AS treatments
-  JOIN postgres.drugs AS drugs
+  FROM postgres.main.treatments AS treatments
+  JOIN postgres.main.drugs AS drugs
     ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'biologic'
   WHERE
     treatments.start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)

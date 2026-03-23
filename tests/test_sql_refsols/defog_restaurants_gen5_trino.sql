@@ -1,7 +1,7 @@
 SELECT
   city_name,
   COUNT(*) AS num_restaurants
-FROM postgres.location
+FROM postgres.main.location
 GROUP BY
   1
 ORDER BY

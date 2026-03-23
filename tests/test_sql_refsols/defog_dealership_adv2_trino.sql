@@ -2,9 +2,13 @@ WITH _s1 AS (
   SELECT
     salesperson_id,
     COUNT(*) AS n_rows
-  FROM postgres.sales
+  FROM postgres.main.sales
   WHERE
-    DATE_DIFF('DAY', CAST(sale_date AS TIMESTAMP), CURRENT_TIMESTAMP) <= 30
+    DATE_DIFF(
+      'DAY',
+      CAST(DATE_TRUNC('DAY', sale_date) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
+    ) <= 30
   GROUP BY
     1
 )
@@ -13,7 +17,7 @@ SELECT
   salespersons.first_name,
   salespersons.last_name,
   _s1.n_rows AS num_sales
-FROM postgres.salespersons AS salespersons
+FROM postgres.main.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY

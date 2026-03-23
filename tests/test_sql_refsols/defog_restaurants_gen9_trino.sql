@@ -1,6 +1,6 @@
 SELECT
   name
-FROM postgres.restaurant
+FROM postgres.main.restaurant
 ORDER BY
   rating DESC,
   1 DESC

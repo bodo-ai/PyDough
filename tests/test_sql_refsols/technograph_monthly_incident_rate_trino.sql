@@ -54,9 +54,9 @@ WITH _t2 AS (
 )
 SELECT
   CONCAT_WS(
-    '-'[0],
-    CAST(year_ca_dt[0] AS VARCHAR),
-    CAST(LPAD(month_ca_dt, 2, '0')[1] AS VARCHAR)
+    '-',
+    CAST(year_ca_dt AS VARCHAR),
+    CAST(LPAD(CAST(month_ca_dt AS VARCHAR), 2, '0') AS VARCHAR)
   ) AS month,
   ROUND((
     1000000.0 * COALESCE(sum_n_rows, 0)

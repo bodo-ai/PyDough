@@ -3,8 +3,8 @@ WITH _t1 AS (
     ARBITRARY(cars.make) AS anything_make,
     ARBITRARY(cars.model) AS anything_model,
     COUNT(sales.car_id) AS count_car_id
-  FROM postgres.cars AS cars
-  LEFT JOIN postgres.sales AS sales
+  FROM postgres.main.cars AS cars
+  LEFT JOIN postgres.main.sales AS sales
     ON cars._id = sales.car_id
   WHERE
     LOWER(cars.vin_number) LIKE '%m5%'

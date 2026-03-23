@@ -1,6 +1,6 @@
 SELECT
   street_name
-FROM postgres.location
+FROM postgres.main.location
 GROUP BY
   1
 ORDER BY

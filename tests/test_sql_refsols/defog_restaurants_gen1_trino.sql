@@ -1,6 +1,6 @@
 SELECT
   food_type,
   COUNT(*) AS restaurants
-FROM postgres.restaurant
+FROM postgres.main.restaurant
 GROUP BY
   1

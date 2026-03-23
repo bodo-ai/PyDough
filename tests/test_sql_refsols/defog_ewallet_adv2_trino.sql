@@ -25,8 +25,8 @@ SELECT
       ) % 7
     ) IN (5, 6)
   ) AS weekend_notifs
-FROM postgres.notifications AS notifications
-JOIN postgres.users AS users
+FROM postgres.main.notifications AS notifications
+JOIN postgres.main.users AS users
   ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')
 WHERE
   notifications.created_at < DATE_TRUNC(

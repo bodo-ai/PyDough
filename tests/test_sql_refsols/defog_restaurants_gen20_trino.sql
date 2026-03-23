@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     city_name,
     COUNT(*) AS n_rows
-  FROM postgres.restaurant
+  FROM postgres.main.restaurant
   GROUP BY
     1
 )
@@ -10,7 +10,7 @@ SELECT
   geographic.region AS rest_region,
   SUM(_s0.n_rows) AS n_restaurants
 FROM _s0 AS _s0
-JOIN postgres.geographic AS geographic
+JOIN postgres.main.geographic AS geographic
   ON _s0.city_name = geographic.city_name
 GROUP BY
   1

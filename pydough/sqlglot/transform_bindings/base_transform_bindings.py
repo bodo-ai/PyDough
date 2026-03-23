@@ -354,6 +354,28 @@ class BaseTransformBindings:
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
                 )
 
+    def ensure_string(
+        self, expr: SQLGlotExpression, typ: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Ensure that the given expression is of string type, by converting it if
+        necessary. This is used for operators that require string arguments but
+        may be given non-string arguments.
+
+        Args:
+            `expr`: The SQLGlot expression to ensure is a string.
+            `typ`: The PyDough type of the expression, used to determine if
+            conversion is necessary.
+
+        Return:
+            A SQLGlot expression that is guaranteed to be of string type, either
+            by being the original expression (if it was already a string) or a
+            cast of the original expression to string.
+        """
+        if not isinstance(typ, StringType):
+            return sqlglot_expressions.Cast(this=expr, to="VARCHAR")
+        return expr
+
     def make_datetime_arg(self, expr: SQLGlotExpression) -> SQLGlotExpression:
         """
         Converts a SQLGlot expression to a datetime argument, if needed, including:

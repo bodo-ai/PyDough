@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS weekend_payments
-FROM postgres.payments_made
+FROM postgres.main.payments_made
 WHERE
   (
     (

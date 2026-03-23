@@ -1,7 +1,7 @@
 SELECT
   p_partkey AS key,
   CAST(CONCAT_WS(
-    ''[0],
+    '',
     SUBSTRING(
       p_brand,
       CASE WHEN (
@@ -9,8 +9,8 @@ SELECT
       ) < 1 THEN 1 ELSE (
         LENGTH(p_brand) + -1
       ) END
-    )[0],
-    SUBSTRING(p_brand, 8)[0],
+    ),
+    SUBSTRING(p_brand, 8),
     SUBSTRING(
       p_brand,
       CASE WHEN (
@@ -31,7 +31,7 @@ SELECT
           LENGTH(p_brand) + -1
         ) END
       END
-    )[0]
+    )
   ) AS BIGINT) AS a,
   UPPER(
     LEAST(

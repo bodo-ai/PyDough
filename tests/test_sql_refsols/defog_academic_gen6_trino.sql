@@ -1,6 +1,6 @@
 SELECT
   title
-FROM postgres.publication
+FROM postgres.main.publication
 ORDER BY
   citation_num DESC
 LIMIT 1

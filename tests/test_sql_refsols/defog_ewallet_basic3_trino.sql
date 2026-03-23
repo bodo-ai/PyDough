@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     receiver_id AS _u_1
-  FROM postgres.wallet_transactions_daily
+  FROM postgres.main.wallet_transactions_daily
   WHERE
     receiver_type = 1
   GROUP BY
@@ -9,7 +9,7 @@ WITH _u_0 AS (
 )
 SELECT
   merchants.mid AS merchant
-FROM postgres.merchants AS merchants
+FROM postgres.main.merchants AS merchants
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = merchants.mid
 WHERE

@@ -1,5 +1,5 @@
 SELECT
   AVG(weight_kg) AS CAW_male
-FROM postgres.patients
+FROM postgres.main.patients
 WHERE
   gender = 'Male'

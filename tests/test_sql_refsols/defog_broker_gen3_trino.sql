@@ -10,8 +10,8 @@ SELECT
   sbcustomer.sbcustid AS cust_id,
   CAST(DATE_DIFF(
     'SECOND',
-    CAST(sbcustomer.sbcustjoindate AS TIMESTAMP),
-    CAST(_s1.min_sbtxdatetime AS TIMESTAMP)
+    CAST(DATE_TRUNC('SECOND', sbcustomer.sbcustjoindate) AS TIMESTAMP),
+    CAST(DATE_TRUNC('SECOND', _s1.min_sbtxdatetime) AS TIMESTAMP)
   ) AS DOUBLE) / 86400.0 AS DaysFromJoinToFirstTransaction
 FROM postgres.main.sbcustomer AS sbcustomer
 JOIN _s1 AS _s1

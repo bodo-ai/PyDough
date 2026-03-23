@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     MIN(snapshot_date) AS min_snapshot_date
-  FROM postgres.user_setting_snapshot
+  FROM postgres.main.user_setting_snapshot
   WHERE
     YEAR(CAST(snapshot_date AS TIMESTAMP)) = 2023
 ), _s1 AS (
@@ -9,7 +9,7 @@ WITH _s0 AS (
     snapshot_date,
     AVG(tx_limit_daily) AS avg_tx_limit_daily,
     AVG(tx_limit_monthly) AS avg_tx_limit_monthly
-  FROM postgres.user_setting_snapshot
+  FROM postgres.main.user_setting_snapshot
   WHERE
     YEAR(CAST(snapshot_date AS TIMESTAMP)) = 2023
   GROUP BY

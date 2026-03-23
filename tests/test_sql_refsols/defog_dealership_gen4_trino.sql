@@ -3,7 +3,7 @@ WITH _s0 AS (
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)) AS quarter,
     customer_id,
     SUM(sale_price) AS sum_sale_price
-  FROM postgres.sales
+  FROM postgres.main.sales
   WHERE
     YEAR(CAST(sale_date AS TIMESTAMP)) = 2023
   GROUP BY
@@ -15,7 +15,7 @@ WITH _s0 AS (
     customers.state,
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price
   FROM _s0 AS _s0
-  JOIN postgres.customers AS customers
+  JOIN postgres.main.customers AS customers
     ON _s0.customer_id = customers._id
   GROUP BY
     1,

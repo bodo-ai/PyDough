@@ -1,5 +1,5 @@
 SELECT
-  CONCAT_WS('-'[0], region.r_name[1], nation.n_name[1], SUBSTRING(customer.c_name, 17)[0]) AS a,
+  CONCAT_WS('-', region.r_name, nation.n_name, SUBSTRING(customer.c_name, 17)) AS a,
   ROUND(customer.c_acctbal, 1) AS b,
   CASE WHEN SUBSTRING(customer.c_phone, 1, 1) = '3' THEN customer.c_name ELSE NULL END AS c,
   NOT CASE WHEN SUBSTRING(customer.c_phone, 2, 1) = '1' THEN customer.c_name ELSE NULL END IS NULL AS d,

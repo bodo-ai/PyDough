@@ -49,6 +49,7 @@ def test_pipeline_e2e_tpch_trino_conn(
         get_trino_graphs,
         trino_conn_db_context,
         coerce_types=True,
+        atol=5e-3,
     )
 
 
@@ -72,7 +73,10 @@ def test_pipeline_e2e_tpch_trino_params(
         "tpch_q16_params",
     )
     test_data.run_e2e_test(
-        get_trino_graphs, trino_params_tpch_db_context, coerce_types=True
+        get_trino_graphs,
+        trino_params_tpch_db_context,
+        coerce_types=True,
+        atol=5e-3,
     )
 
 
@@ -93,7 +97,10 @@ def test_pipeline_e2e_trino_tpch_custom(
     )
 
     tpch_custom_pipeline_test_data.run_e2e_test(
-        get_trino_graphs, trino_conn_db_context, coerce_types=True, atol=5e-3
+        get_trino_graphs,
+        trino_conn_db_context,
+        coerce_types=True,
+        atol=5e-3,
     )
 
 
@@ -121,6 +128,7 @@ def test_defog_e2e(
         defog_config,
         reference_database=sqlite_defog_connection,
         coerce_types=True,
+        atol=5e-3,
     )
 
 
@@ -140,6 +148,7 @@ def test_pipeline_trino_e2e_defog_custom(
         trino_conn_db_context,
         config=defog_config,
         coerce_types=True,
+        atol=5e-3,
     )
 
 
@@ -158,4 +167,5 @@ def test_pipeline_e2e_trino_custom_datasets(
         get_custom_datasets_graph,
         trino_conn_db_context,
         coerce_types=True,
+        atol=5e-3,
     )

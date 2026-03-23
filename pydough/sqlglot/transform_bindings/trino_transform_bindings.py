@@ -27,8 +27,6 @@ class TrinoTransformBindings(BaseTransformBindings):
 
     PYDOP_TO_TRINO_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.STARTSWITH: "STARTS_WITH",
-        pydop.LPAD: "LPAD",
-        pydop.RPAD: "RPAD",
         pydop.SIGN: "SIGN",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
@@ -114,6 +112,41 @@ class TrinoTransformBindings(BaseTransformBindings):
                 )
         return func_expr
 
+    def convert_datediff(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        # Ensure the arguments are truncated before performing the date
+        # difference calculation.
+        assert len(args) == 3
+        # Check if unit is a string.
+        if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
+            raise ValueError(
+                f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
+            )
+
+        # Extract the underlying unit
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
+        if unit is None:
+            raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+
+        # Truncate the arguments
+        truncated_date1: SQLGlotExpression = self.apply_datetime_truncation(
+            args[1], unit
+        )
+        truncated_date2: SQLGlotExpression = self.apply_datetime_truncation(
+            args[2], unit
+        )
+
+        # Perform the diff computation on the arguments
+        answer = sqlglot_expressions.DateDiff(
+            unit=sqlglot_expressions.Var(this=unit.value),
+            this=truncated_date2,
+            expression=truncated_date1,
+        )
+        return answer
+
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
     ) -> SQLGlotExpression:
@@ -121,6 +154,7 @@ class TrinoTransformBindings(BaseTransformBindings):
             # 1. Get shifted_weekday (# of days since the start of week)
             # 2. Subtract shifted_weekday DAYS from the datetime
             # 3. Truncate the result to the nearest day
+            base = self.make_datetime_arg(base)
             shifted_weekday: SQLGlotExpression = self.days_from_start_of_week(base)
             date_sub: SQLGlotExpression = sqlglot_expressions.DateSub(
                 this=base,
@@ -161,13 +195,29 @@ class TrinoTransformBindings(BaseTransformBindings):
         new_args: list[SQLGlotExpression] = []
         new_types: list[PyDoughType] = []
         for arg, typ in zip(args, types):
-            if not isinstance(typ, StringType):
-                new_args.append(sqlglot_expressions.Cast(this=arg[0], to="VARCHAR"))
-                new_types.append(StringType())
-            else:
-                new_args.append(arg[0])
-                new_types.append(typ)
+            new_args.append(self.ensure_string(arg, typ))
+            new_types.append(StringType())
         return super().convert_join_strings(new_args, new_types)
+
+    def convert_lpad(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Need to manually ensure that the first argument is a string, since
+        # LPAD in Trino does not support implicit type conversion.
+        new_arg = self.ensure_string(args[0], types[0])
+        return sqlglot_expressions.Anonymous(
+            this="LPAD", expressions=[new_arg, args[1], args[2]]
+        )
+
+    def convert_rpad(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Need to manually ensure that the first argument is a string, since
+        # RPAD in Trino does not support implicit type conversion.
+        new_arg = self.ensure_string(args[0], types[0])
+        return sqlglot_expressions.Anonymous(
+            this="RPAD", expressions=[new_arg, args[1], args[2]]
+        )
 
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

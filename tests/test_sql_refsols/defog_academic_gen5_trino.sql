@@ -1,6 +1,6 @@
 SELECT
   year,
   AVG(citation_num) AS average_citations
-FROM postgres.publication
+FROM postgres.main.publication
 GROUP BY
   1

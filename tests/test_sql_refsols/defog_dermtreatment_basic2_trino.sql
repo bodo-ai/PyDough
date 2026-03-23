@@ -3,14 +3,14 @@ WITH _t2 AS (
     end_dt,
     patient_id,
     treatment_id
-  FROM postgres.treatments
+  FROM postgres.main.treatments
   WHERE
     YEAR(CAST(end_dt AS TIMESTAMP)) = 2022
 ), _t3 AS (
   SELECT
     day100_pasi_score,
     treatment_id
-  FROM postgres.outcomes
+  FROM postgres.main.outcomes
   WHERE
     NOT day100_pasi_score IS NULL
 ), _u_0 AS (
@@ -23,7 +23,7 @@ WITH _t2 AS (
   SELECT
     ins_type,
     patient_id
-  FROM postgres.patients
+  FROM postgres.main.patients
 ), _s10 AS (
   SELECT
     _s3.ins_type,
@@ -48,7 +48,7 @@ WITH _t2 AS (
     treatment_id,
     COUNT(day100_pasi_score) AS count_day100_pasi_score,
     SUM(day100_pasi_score) AS sum_day100_pasi_score
-  FROM postgres.outcomes
+  FROM postgres.main.outcomes
   GROUP BY
     1
 ), _s11 AS (

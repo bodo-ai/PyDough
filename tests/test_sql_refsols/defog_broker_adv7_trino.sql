@@ -1,9 +1,9 @@
 WITH _s2 AS (
   SELECT
     CONCAT_WS(
-      '-'[0],
-      CAST(YEAR(CAST(sbcustjoindate AS TIMESTAMP))[0] AS VARCHAR),
-      CAST(LPAD(MONTH(CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
+      '-',
+      CAST(YEAR(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR),
+      CAST(LPAD(CAST(MONTH(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS month,
     COUNT(*) AS n_rows
   FROM postgres.main.sbcustomer
@@ -15,9 +15,9 @@ WITH _s2 AS (
 ), _s3 AS (
   SELECT
     CONCAT_WS(
-      '-'[0],
-      CAST(YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))[0] AS VARCHAR),
-      CAST(LPAD(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
+      '-',
+      CAST(YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR),
+      CAST(LPAD(CAST(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS month,
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
   FROM postgres.main.sbcustomer AS sbcustomer

@@ -1,7 +1,7 @@
 SELECT
   COUNT(*) AS num_treatments
-FROM postgres.treatments AS treatments
-JOIN postgres.patients AS patients
+FROM postgres.main.treatments AS treatments
+JOIN postgres.main.patients AS patients
   ON LOWER(patients.first_name) = 'alice'
   AND patients.patient_id = treatments.patient_id
 WHERE

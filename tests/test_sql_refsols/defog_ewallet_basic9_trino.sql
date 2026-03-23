@@ -2,8 +2,8 @@ SELECT
   users.country,
   COUNT(DISTINCT wallet_transactions_daily.sender_id) AS user_count,
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_amount
-FROM postgres.wallet_transactions_daily AS wallet_transactions_daily
-LEFT JOIN postgres.users AS users
+FROM postgres.main.wallet_transactions_daily AS wallet_transactions_daily
+LEFT JOIN postgres.main.users AS users
   ON users.uid = wallet_transactions_daily.sender_id
 WHERE
   wallet_transactions_daily.sender_type = 0

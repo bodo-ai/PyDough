@@ -16,11 +16,53 @@ SELECT
   23 AS hour_str,
   59 AS minute_str,
   59 AS second_ts,
-  DATE_DIFF('DAY', CAST(o_orderdate AS TIMESTAMP), CAST('1992-01-01' AS TIMESTAMP)) AS dd_col_str,
-  DATE_DIFF('DAY', CAST('1992-01-01' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS dd_str_col,
-  DATE_DIFF('MONTH', CAST('1995-10-10 00:00:00' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS dd_pd_col,
-  DATE_DIFF('YEAR', CAST(o_orderdate AS TIMESTAMP), CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS dd_col_dt,
-  DATE_DIFF('WEEK', CAST('1992-01-01' AS TIMESTAMP), CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS dd_dt_str,
+  DATE_DIFF(
+    'DAY',
+    CAST(DATE_TRUNC('DAY', o_orderdate) AS TIMESTAMP),
+    CAST(DATE_TRUNC('DAY', CAST('1992-01-01' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS dd_col_str,
+  DATE_DIFF(
+    'DAY',
+    CAST(DATE_TRUNC('DAY', CAST('1992-01-01' AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('DAY', o_orderdate) AS TIMESTAMP)
+  ) AS dd_str_col,
+  DATE_DIFF(
+    'MONTH',
+    CAST(DATE_TRUNC('MONTH', CAST('1995-10-10 00:00:00' AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('MONTH', o_orderdate) AS TIMESTAMP)
+  ) AS dd_pd_col,
+  DATE_DIFF(
+    'YEAR',
+    CAST(DATE_TRUNC('YEAR', o_orderdate) AS TIMESTAMP),
+    CAST(DATE_TRUNC('YEAR', CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS dd_col_dt,
+  DATE_DIFF(
+    'WEEK',
+    CAST(DATE_TRUNC(
+      'DAY',
+      DATE_ADD(
+        'DAY',
+        CAST((
+          (
+            DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) % 7
+          ) + 1
+        ) AS BIGINT) * -1,
+        CAST('1992-01-01' AS TIMESTAMP)
+      )
+    ) AS TIMESTAMP),
+    CAST(DATE_TRUNC(
+      'DAY',
+      DATE_ADD(
+        'DAY',
+        CAST((
+          (
+            DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) % 7
+          ) + 1
+        ) AS BIGINT) * -1,
+        CAST('1992-01-01 12:30:45' AS TIMESTAMP)
+      )
+    ) AS TIMESTAMP)
+  ) AS dd_dt_str,
   (
     DAY_OF_WEEK(o_orderdate) % 7
   ) + 1 AS dow_col,

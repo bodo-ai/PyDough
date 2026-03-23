@@ -10,16 +10,60 @@ WITH _t3 AS (
   SELECT
     DATE_DIFF(
       'WEEK',
-      CAST(_s0.min_o_orderdate AS TIMESTAMP),
-      CAST(orders.o_orderdate AS TIMESTAMP)
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(_s0.min_o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          _s0.min_o_orderdate
+        )
+      ) AS TIMESTAMP),
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(orders.o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          orders.o_orderdate
+        )
+      ) AS TIMESTAMP)
     ) AS ord_wk,
     COUNT(*) AS n_rows
   FROM _s0 AS _s0
   JOIN tpch.orders AS orders
     ON DATE_DIFF(
       'WEEK',
-      CAST(_s0.min_o_orderdate AS TIMESTAMP),
-      CAST(orders.o_orderdate AS TIMESTAMP)
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(_s0.min_o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          _s0.min_o_orderdate
+        )
+      ) AS TIMESTAMP),
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(orders.o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          orders.o_orderdate
+        )
+      ) AS TIMESTAMP)
     ) < 10
     AND orders.o_orderpriority = '1-URGENT'
     AND orders.o_orderstatus = 'F'
@@ -33,8 +77,30 @@ WITH _t3 AS (
   SELECT
     DATE_DIFF(
       'WEEK',
-      CAST(_s3.min_o_orderdate AS TIMESTAMP),
-      CAST(lineitem.l_receiptdate AS TIMESTAMP)
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(_s3.min_o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          _s3.min_o_orderdate
+        )
+      ) AS TIMESTAMP),
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(lineitem.l_receiptdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          lineitem.l_receiptdate
+        )
+      ) AS TIMESTAMP)
     ) AS line_wk,
     _s2.ord_wk,
     ARBITRARY(_s2.n_rows) AS anything_n_rows,
@@ -44,14 +110,58 @@ WITH _t3 AS (
   JOIN tpch.lineitem AS lineitem
     ON DATE_DIFF(
       'WEEK',
-      CAST(_s3.min_o_orderdate AS TIMESTAMP),
-      CAST(lineitem.l_receiptdate AS TIMESTAMP)
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(_s3.min_o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          _s3.min_o_orderdate
+        )
+      ) AS TIMESTAMP),
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(lineitem.l_receiptdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          lineitem.l_receiptdate
+        )
+      ) AS TIMESTAMP)
     ) < 10
     AND YEAR(CAST(lineitem.l_receiptdate AS TIMESTAMP)) = 1992
     AND _s2.ord_wk = DATE_DIFF(
       'WEEK',
-      CAST(_s3.min_o_orderdate AS TIMESTAMP),
-      CAST(lineitem.l_receiptdate AS TIMESTAMP)
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(_s3.min_o_orderdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          _s3.min_o_orderdate
+        )
+      ) AS TIMESTAMP),
+      CAST(DATE_TRUNC(
+        'DAY',
+        DATE_ADD(
+          'DAY',
+          CAST((
+            (
+              DAY_OF_WEEK(lineitem.l_receiptdate) % 7
+            ) + 1
+          ) AS BIGINT) * -1,
+          lineitem.l_receiptdate
+        )
+      ) AS TIMESTAMP)
     )
     AND lineitem.l_returnflag = 'R'
     AND lineitem.l_shipmode = 'RAIL'

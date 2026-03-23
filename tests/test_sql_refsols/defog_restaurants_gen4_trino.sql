@@ -1,7 +1,7 @@
 SELECT
   city_name,
   COUNT(*) AS num_restaurants
-FROM postgres.restaurant
+FROM postgres.main.restaurant
 WHERE
   LOWER(food_type) = 'italian'
 GROUP BY

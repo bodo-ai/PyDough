@@ -2,10 +2,10 @@ WITH _t0 AS (
   SELECT
     writes.aid,
     COUNT(DISTINCT domain_publication.did) AS ndistinct_did
-  FROM postgres.writes AS writes
-  JOIN postgres.domain_publication AS domain_publication
+  FROM postgres.main.writes AS writes
+  JOIN postgres.main.domain_publication AS domain_publication
     ON domain_publication.pid = writes.pid
-  JOIN postgres.domain AS domain
+  JOIN postgres.main.domain AS domain
     ON domain.did = domain_publication.did
     AND domain.name IN ('Data Science', 'Machine Learning')
   GROUP BY
@@ -13,6 +13,6 @@ WITH _t0 AS (
 )
 SELECT
   author.name
-FROM postgres.author AS author
+FROM postgres.main.author AS author
 JOIN _t0 AS _t0
   ON _t0.aid = author.aid AND _t0.ndistinct_did = 2

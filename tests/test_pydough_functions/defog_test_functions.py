@@ -410,7 +410,10 @@ def impl_defog_broker_adv15():
     n_active = SUM(customers.status == "active")
     n_custs = COUNT(customers)
     return (
-        customers.WHERE((join_date >= "2022-01-01") & (join_date <= "2022-12-31"))
+        customers.WHERE(
+            (join_date >= DATETIME("2022-01-01"))
+            & (join_date <= DATETIME("2022-12-31"))
+        )
         .PARTITION(name="countries", by=country)
         .CALCULATE(
             country,
@@ -866,18 +869,6 @@ def impl_defog_dealership_adv8():
         .ORDER_BY(month_start.ASC())
     )
 
-    # months_ago = pydough.range_collection("months_ago", "n", 1, 7).CALCULATE(n)
-    # selected_sales = sales.WHERE(
-    #     MONOTONIC(2022, YEAR(salesperson.hire_date), 2023) &
-    #     (DATEDIFF("months", sale_date, "now") == months_ago)
-    # )
-    # return (
-    #     months_ago
-    #     .CALCULATE(
-
-    #     )
-    # )
-
 
 def impl_defog_dealership_adv9():
     """
@@ -887,7 +878,7 @@ def impl_defog_dealership_adv9():
     Sale Price in the first quarter of 2023.
     """
     selected_sales = sales.WHERE(
-        (sale_date >= "2023-01-01") & (sale_date <= "2023-03-31")
+        (sale_date >= DATETIME("2023-01-01")) & (sale_date <= DATETIME("2023-03-31"))
     )
     return Dealership.CALCULATE(ASP=AVG(selected_sales.sale_price))
 
@@ -1482,7 +1473,8 @@ def impl_defog_ewallet_adv11():
     duration first.
     """
     selected_sessions = sessions.WHERE(
-        (session_start >= "2023-06-01") & (session_end < "2023-06-08")
+        (session_start >= DATETIME("2023-06-01"))
+        & (session_end < DATETIME("2023-06-08"))
     ).CALCULATE(duration=DATEDIFF("seconds", session_start, session_end))
     return (
         users.WHERE(HAS(selected_sessions))
@@ -2359,9 +2351,10 @@ def impl_defog_dermtreatment_adv16():
     # Calculate the overall D7D100PIR
     return DermTreatment.CALCULATE(
         d7d100pir=(
-            AVG(valid_outcomes.day100_pasi_score) - AVG(valid_outcomes.day7_pasi_score)
+            AVG(FLOAT(valid_outcomes.day100_pasi_score))
+            - AVG(FLOAT(valid_outcomes.day7_pasi_score))
         )
-        / AVG(valid_outcomes.day7_pasi_score)
+        / AVG(FLOAT(valid_outcomes.day7_pasi_score))
         * 100
     )
 

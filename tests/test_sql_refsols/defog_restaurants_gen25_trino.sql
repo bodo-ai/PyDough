@@ -1,5 +1,5 @@
 SELECT
   name
-FROM postgres.restaurant
+FROM postgres.main.restaurant
 WHERE
   LOWER(city_name) = 'los angeles' AND rating > 4

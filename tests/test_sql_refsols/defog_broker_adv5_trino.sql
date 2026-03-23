@@ -1,9 +1,9 @@
 WITH _s0 AS (
   SELECT
     CONCAT_WS(
-      '-'[0],
-      CAST(YEAR(CAST(sbdpdate AS TIMESTAMP))[0] AS VARCHAR),
-      CAST(LPAD(MONTH(CAST(sbdpdate AS TIMESTAMP)), 2, '0')[1] AS VARCHAR)
+      '-',
+      CAST(YEAR(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR),
+      CAST(LPAD(CAST(MONTH(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS month,
     sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,

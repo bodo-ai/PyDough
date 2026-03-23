@@ -2,9 +2,39 @@ SELECT
   payment_date,
   payment_method,
   COALESCE(SUM(payment_amount), 0) AS total_amount
-FROM postgres.payments_received
+FROM postgres.main.payments_received
 WHERE
-  DATE_DIFF('WEEK', CAST(payment_date AS TIMESTAMP), CURRENT_TIMESTAMP) = 1
+  DATE_DIFF(
+    'WEEK',
+    CAST(DATE_TRUNC(
+      'DAY',
+      DATE_ADD(
+        'DAY',
+        (
+          (
+            (
+              DAY_OF_WEEK(payment_date) % 7
+            ) + 0
+          ) % 7
+        ) * -1,
+        payment_date
+      )
+    ) AS TIMESTAMP),
+    CAST(DATE_TRUNC(
+      'DAY',
+      DATE_ADD(
+        'DAY',
+        (
+          (
+            (
+              DAY_OF_WEEK(CURRENT_TIMESTAMP) % 7
+            ) + 0
+          ) % 7
+        ) * -1,
+        CURRENT_TIMESTAMP
+      )
+    ) AS TIMESTAMP)
+  ) = 1
 GROUP BY
   1,
   2

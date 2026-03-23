@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     drug_id AS _u_1
-  FROM postgres.treatments
+  FROM postgres.main.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY
@@ -10,9 +10,16 @@ WITH _u_0 AS (
   SELECT
     drug_id,
     AVG(
-      CAST(tot_drug_amt AS DOUBLE) / NULLIF(DATE_DIFF('DAY', CAST(start_dt AS TIMESTAMP), CAST(end_dt AS TIMESTAMP)), 0)
+      CAST(tot_drug_amt AS DOUBLE) / NULLIF(
+        DATE_DIFF(
+          'DAY',
+          CAST(DATE_TRUNC('DAY', start_dt) AS TIMESTAMP),
+          CAST(DATE_TRUNC('DAY', end_dt) AS TIMESTAMP)
+        ),
+        0
+      )
     ) AS avg_ddd
-  FROM postgres.treatments
+  FROM postgres.main.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY
@@ -21,7 +28,7 @@ WITH _u_0 AS (
 SELECT
   drugs.drug_name,
   _s3.avg_ddd
-FROM postgres.drugs AS drugs
+FROM postgres.main.drugs AS drugs
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = drugs.drug_id
 LEFT JOIN _s3 AS _s3

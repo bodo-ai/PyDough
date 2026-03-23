@@ -1,7 +1,7 @@
 SELECT
   status,
   COUNT(*) AS count
-FROM postgres.wallet_transactions_daily
+FROM postgres.main.wallet_transactions_daily
 GROUP BY
   1
 ORDER BY

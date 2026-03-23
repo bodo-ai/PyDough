@@ -1,7 +1,7 @@
 SELECT
   device_type,
   COUNT(*) AS count
-FROM postgres.user_sessions
+FROM postgres.main.user_sessions
 GROUP BY
   1
 ORDER BY

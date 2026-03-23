@@ -1,7 +1,7 @@
 SELECT
   specialty,
   COUNT(*) AS num_doctors
-FROM postgres.doctors
+FROM postgres.main.doctors
 GROUP BY
   1
 ORDER BY

@@ -6,8 +6,11 @@ WITH _t2 AS (
     events.ev_dt,
     DATE_DIFF(
       'DAY',
-      CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt) AS TIMESTAMP),
-      CAST(events.ev_dt AS TIMESTAMP)
+      CAST(DATE_TRUNC(
+        'DAY',
+        LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt)
+      ) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', events.ev_dt) AS TIMESTAMP)
     ) AS day_gap
   FROM eras AS eras
   JOIN events AS events

@@ -2,8 +2,8 @@ WITH _s3 AS (
   SELECT
     domain_publication.did,
     AVG(publication.reference_num) AS avg_reference_num
-  FROM postgres.domain_publication AS domain_publication
-  JOIN postgres.publication AS publication
+  FROM postgres.main.domain_publication AS domain_publication
+  JOIN postgres.main.publication AS publication
     ON domain_publication.pid = publication.pid
   GROUP BY
     1
@@ -11,6 +11,6 @@ WITH _s3 AS (
 SELECT
   domain.name,
   _s3.avg_reference_num AS average_references
-FROM postgres.domain AS domain
+FROM postgres.main.domain AS domain
 LEFT JOIN _s3 AS _s3
   ON _s3.did = domain.did

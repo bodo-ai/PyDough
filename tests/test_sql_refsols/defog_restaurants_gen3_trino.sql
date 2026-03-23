@@ -1,7 +1,7 @@
 SELECT
   food_type,
   AVG(rating) AS avg_rating
-FROM postgres.restaurant
+FROM postgres.main.restaurant
 GROUP BY
   1
 ORDER BY

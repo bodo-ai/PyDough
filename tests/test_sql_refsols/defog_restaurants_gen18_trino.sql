@@ -2,11 +2,11 @@ WITH _s0 AS (
   SELECT
     city_name,
     region
-  FROM postgres.geographic
+  FROM postgres.main.geographic
 ), _s1 AS (
   SELECT
     city_name
-  FROM postgres.restaurant
+  FROM postgres.main.restaurant
 ), _u_0 AS (
   SELECT
     city_name AS _u_1
@@ -32,7 +32,7 @@ WITH _s0 AS (
     city_name,
     COUNT(rating) AS count_rating,
     SUM(rating) AS sum_rating
-  FROM postgres.restaurant
+  FROM postgres.main.restaurant
   GROUP BY
     1
 ), _s7 AS (

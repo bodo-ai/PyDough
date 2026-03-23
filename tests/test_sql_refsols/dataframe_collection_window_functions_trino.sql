@@ -34,8 +34,8 @@ WITH _t AS (
     o_custkey,
     DATE_DIFF(
       'MONTH',
-      CAST(LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS TIMESTAMP),
-      CAST(o_orderdate AS TIMESTAMP)
+      CAST(DATE_TRUNC('MONTH', LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('MONTH', o_orderdate) AS TIMESTAMP)
     ) AS month_diff
   FROM tpch.orders
 ), _s7 AS (

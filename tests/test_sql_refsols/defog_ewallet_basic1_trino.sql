@@ -1,8 +1,8 @@
 SELECT
   DATE_TRUNC('MONTH', CAST(wallet_transactions_daily.created_at AS TIMESTAMP)) AS month,
   COUNT(DISTINCT wallet_transactions_daily.sender_id) AS active_users
-FROM postgres.wallet_transactions_daily AS wallet_transactions_daily
-JOIN postgres.users AS users
+FROM postgres.main.wallet_transactions_daily AS wallet_transactions_daily
+JOIN postgres.main.users AS users
   ON users.status = 'active' AND users.uid = wallet_transactions_daily.sender_id
 WHERE
   YEAR(CAST(wallet_transactions_daily.created_at AS TIMESTAMP)) = 2023

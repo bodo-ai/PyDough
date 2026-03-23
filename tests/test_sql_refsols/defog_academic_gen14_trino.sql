@@ -3,6 +3,6 @@ SELECT
   COUNT(*) AS num_publications,
   COUNT(DISTINCT jid) AS num_journals,
   CAST(COUNT(*) AS DOUBLE) / NULLIF(COUNT(DISTINCT jid), 0) AS ratio
-FROM postgres.publication
+FROM postgres.main.publication
 GROUP BY
   1

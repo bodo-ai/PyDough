@@ -5,7 +5,11 @@ WITH _s1 AS (
     SUM(sbdpclose) AS sum_sbdpclose
   FROM postgres.main.sbdailyprice
   WHERE
-    DATE_DIFF('DAY', CAST(sbdpdate AS TIMESTAMP), CURRENT_TIMESTAMP) <= 7
+    DATE_DIFF(
+      'DAY',
+      CAST(DATE_TRUNC('DAY', sbdpdate) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
+    ) <= 7
   GROUP BY
     1
 )
