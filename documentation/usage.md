@@ -478,6 +478,9 @@ You can find a full example of using an Oracle database with PyDough in [this us
 **Note**: Oracle doesn't support "" (doubles quotes) inside identifiers. This means that even though PyDough support
 double quotes inside column/table names executing SQL with such characters will raise an error when using Oracle.
 
+**Note**: PyDough intentionally uses `TO_DATE` instead of `TO_TIMESTAMP` for datetime
+literals. This ensures consistent behavior across DATE expressions. But sub-second precision (microseconds) is silently truncated.
+
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 

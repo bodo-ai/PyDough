@@ -1395,6 +1395,12 @@ class BaseTransformBindings:
         specific dialect is responsible for translating into its own logic.
         Rather than have that logic show up in the ANSI sql text, we will
         instead create the CAST calls ourselves.
+
+        Args:
+            `arg`: literal expression being converted
+
+        Returns:
+            The SQLGlot expression for the given literal expression
         """
 
         if isinstance(arg.value, datetime.datetime):
