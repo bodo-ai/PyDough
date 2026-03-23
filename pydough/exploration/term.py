@@ -221,9 +221,9 @@ def explain_term(
                             case 1:
                                 back_idx_str = f"{expr.back_levels}st"
                             case 2:
-                                back_idx_str = f"{expr.back_levels}2nd"
+                                back_idx_str = f"{expr.back_levels}nd"
                             case 3:
-                                back_idx_str = f"{expr.back_levels}3rd"
+                                back_idx_str = f"{expr.back_levels}rd"
                             case _:
                                 back_idx_str = f"{expr.back_levels}th"
                         lines.append(
@@ -303,6 +303,19 @@ def explain_term(
                                 )
                             lines.append(
                                 f"This function is defined by the SQL macro: '{expr.operator.macro_text}'."
+                            )
+                            dummies = [
+                                f"?{chr(ord('a') + i)}" for i in range(len(expr.args))
+                            ]
+                            dummy_list = ", ".join(f"'{d}'" for d in dummies)
+                            expanded = expr.operator.macro_text.format(*dummies)
+                            lines.append(
+                                f"Suppose this function were called on arguments"
+                                f" that are translated to the following in SQL: {dummy_list}"
+                            )
+                            lines.append(
+                                f"Then the final SQL text for this function call"
+                                f" would be: '{expanded}'"
                             )
                             lines.append("")
                             lines.append(
@@ -387,43 +400,63 @@ def explain_term(
                             )
                         break
                     case WindowCall():
-                        if isinstance(
-                            expr.window_operator,
-                            SqlWindowAliasExpressionFunctionOperator,
-                        ):
+                        udf_window_op = (
+                            expr.window_operator
+                            if isinstance(
+                                expr.window_operator,
+                                SqlWindowAliasExpressionFunctionOperator,
+                            )
+                            else None
+                        )
+                        is_udf_window = udf_window_op is not None
+                        kind = "user-defined window" if is_udf_window else "window"
+                        func_name = expr.window_operator.function_name
+                        if expr.args:
                             lines.append(
-                                f"This expression calls the user-defined window function '{expr.window_operator.function_name}' with the following arguments:"
+                                f"This expression calls the {kind} function {func_name!r} with the following arguments:"
                             )
                             for arg in expr.args:
                                 lines.append(f"  {arg.to_string()}")
+                        else:
+                            lines.append(
+                                f"This expression calls the {kind} function {func_name!r}."
+                            )
+                        lines.append("")
+                        if expr.collation_args:
+                            lines.append("Ordering (by):")
+                            for arg in expr.collation_args:
+                                lines.append(f"  {arg.to_string()}")
                             lines.append("")
-                            if expr.window_operator.description is not None:
+                        if expr.levels is not None:
+                            lines.append(f"Partition levels (per): {expr.levels}")
+                            lines.append("")
+                        if expr.kwargs:
+                            lines.append("Additional options:")
+                            for k, v in expr.kwargs.items():
+                                lines.append(f"  {k}: {v!r}")
+                            lines.append("")
+                        if udf_window_op is not None:
+                            if udf_window_op.description is not None:
                                 lines.append(
-                                    f"Description: {expr.window_operator.description}"
+                                    f"Description: {udf_window_op.description}"
                                 )
                             lines.append(
-                                f"This function is an alias for the SQL window function '{expr.window_operator.sql_function_alias}'."
+                                f"This function is an alias for the SQL window function '{udf_window_op.sql_function_alias}'."
                             )
                             order_str = (
                                 "requires"
-                                if expr.window_operator.requires_order
+                                if udf_window_op.requires_order
                                 else "does not require"
                             )
                             frame_str = (
                                 "supports"
-                                if expr.window_operator.allows_frame
+                                if udf_window_op.allows_frame
                                 else "does not support"
                             )
                             lines.append(
                                 f"This window function {order_str} ordering and {frame_str} frame specifications."
                             )
-                        else:
-                            lines.append(
-                                f"This expression calls the window function '{expr.window_operator.function_name}' with the following arguments:"
-                            )
-                            for arg in expr.args:
-                                lines.append(f"  {arg.to_string()}")
-                        lines.append("")
+                            lines.append("")
                         lines.append(
                             "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
                         )
@@ -476,9 +509,7 @@ def explain_term(
                     "Child collection has no expression terms"
                 )
                 chosen_term_name: str = min(qualified_term.calc_terms)
-                if qualified_term.starting_predecessor.is_singular(
-                    qualified_node.starting_predecessor
-                ):
+                if qualified_term.is_singular(qualified_node.starting_predecessor):
                     lines.append(
                         "This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression."
                     )
@@ -491,6 +522,11 @@ def explain_term(
                         "This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated."
                     )
                     lines.append("For example, the following are valid:")
+                    # TODO: when the collection is a CROSS, qualified_node.to_string()
+                    # renders as e.g. "TPCH.nations.TPCH.regions" instead of the
+                    # friendlier "TPCH.nations.CROSS(TPCH.regions)". Fixing this
+                    # properly requires propagating CROSS identity through the QDAG
+                    # and is deferred as a larger refactor.
                     lines.append(
                         f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
                     )

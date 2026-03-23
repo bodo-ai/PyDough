@@ -101,6 +101,18 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             f")"
         )
 
+    def to_explanation(self, verbose: bool) -> list[str]:
+        """
+        Return explanation lines for the DataFrame collection.
+        When verbose, includes the full DataFrame contents.
+        """
+        lines = super().to_explanation(verbose)
+        if verbose:
+            lines.append("DataFrame contents:")
+            for line in self.dataframe.to_string().splitlines():
+                lines.append(f"  {line}")
+        return lines
+
     def equals(self, other) -> bool:
         return (
             isinstance(other, DataframeGeneratedCollection)

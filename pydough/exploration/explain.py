@@ -50,9 +50,6 @@ from pydough.unqualified import (
     display_raw,
     qualify_node,
 )
-from pydough.user_collections.dataframe_collection import (
-    DataframeGeneratedCollection,
-)
 
 from .term import find_unqualified_root
 
@@ -376,23 +373,7 @@ def explain_unqualified(
                     f"Collection made singular: {qualified_node.preceding_context.to_string()}"
                 )
             case PyDoughUserGeneratedCollectionQDag():
-                collection_name = qualified_node.name
-                columns = sorted(qualified_node.calc_terms)
-                lines.append(
-                    f"This node accesses user-generated collection '{collection_name}'.\n"
-                    f"Columns: {', '.join(columns)}"
-                )
-                lines.append(
-                    f"Unique columns: {', '.join(sorted(qualified_node.unique_terms))}"
-                )
-                if verbose and isinstance(
-                    qualified_node.collection, DataframeGeneratedCollection
-                ):
-                    lines.append("DataFrame contents:")
-                    for (
-                        line
-                    ) in qualified_node.collection.dataframe.to_string().splitlines():
-                        lines.append(f"  {line}")
+                lines.extend(qualified_node.collection.to_explanation(verbose))
             case ChildOperator():
                 if len(qualified_node.children):
                     lines.append(

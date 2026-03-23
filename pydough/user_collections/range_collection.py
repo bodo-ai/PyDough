@@ -83,6 +83,16 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         """Return a string representation of the range collection."""
         return f"RangeCollection({self.name!r}, {self.columns[0]}={self.range})"
 
+    def to_explanation(self, verbose: bool) -> list[str]:
+        """
+        Return explanation lines for the range collection.
+        When verbose, includes start, end, and step values.
+        """
+        lines = super().to_explanation(verbose)
+        if verbose:
+            lines.append(f"Range: start={self.start}, end={self.end}, step={self.step}")
+        return lines
+
     def equals(self, other) -> bool:
         return (
             isinstance(other, RangeGeneratedCollection)

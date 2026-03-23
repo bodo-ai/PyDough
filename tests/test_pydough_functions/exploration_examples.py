@@ -10,6 +10,8 @@ __all__ = [
     "cross_impl",
     "cross_name_impl",
     "cross_nations_impl",
+    "cross_term_impl",
+    "customers_ancestry_term_impl",
     "customers_without_orders_impl",
     "dataframe_collection_exploration_impl",
     "filter_impl",
@@ -40,6 +42,7 @@ __all__ = [
     "top_k_impl",
     "udf_combine_strings_impl",
     "udf_cumulative_distribution_impl",
+    "udf_epsilon_impl",
     "udf_format_datetime_impl",
     "udf_nval_impl",
     "udf_percentage_impl",
@@ -226,6 +229,19 @@ def cross_nations_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
     return nations.CROSS(regions), nations
 
 
+def cross_term_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return (
+        customers.WHERE(market_segment == "BUILDING"),
+        CROSS(nations.WHERE(region.name == "ASIA")),
+    )
+
+
+def customers_ancestry_term_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return customers.CALCULATE(cust_nation_key=nation_key).CROSS(
+        nations
+    ), cust_nation_key
+
+
 def range_collection_exploration_impl() -> UnqualifiedNode:
     return pydough.range_collection("rng", "i", 1, 5)
 
@@ -249,6 +265,10 @@ def udf_nval_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
 
 def udf_combine_strings_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
     return regions, COMBINE_STRINGS(nations.name, ",")
+
+
+def udf_epsilon_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
+    return nations, EPSILON(key, region_key, 0.5)
 
 
 def udf_positive_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:

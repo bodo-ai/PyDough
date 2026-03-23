@@ -18,6 +18,8 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_func_impl,
     cross_impl,
     cross_nations_impl,
+    cross_term_impl,
+    customers_ancestry_term_impl,
     customers_without_orders_impl,
     dataframe_collection_exploration_impl,
     filter_impl,
@@ -50,6 +52,7 @@ from tests.test_pydough_functions.exploration_examples import (
     top_k_impl,
     udf_combine_strings_impl,
     udf_cumulative_distribution_impl,
+    udf_epsilon_impl,
     udf_format_datetime_impl,
     udf_nval_impl,
     udf_percentage_impl,
@@ -1315,6 +1318,7 @@ PyDough collection representing the following logic:
 This node accesses user-generated collection 'rng'.
 Columns: i
 Unique columns: i
+Range: start=1, end=5, step=1
 
 The following terms will be included in the result if this collection is executed:
   i
@@ -1561,6 +1565,78 @@ The term is the following child of the collection:
 """,
             ),
             id="cross-nations",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                cross_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[customers]
+    └─── Where[market_segment == 'BUILDING']
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─┬─ TPCH
+      ├─── TableCollection[nations]
+      └─┬─ Where[$1.name == 'ASIA']
+        └─┬─ AccessChild
+          └─── SubCollection[region]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.customers.WHERE(market_segment == 'BUILDING').CALCULATE(COUNT(TPCH.nations.WHERE(region.name == 'ASIA').comment))
+  TPCH.customers.WHERE(market_segment == 'BUILDING').WHERE(HAS(TPCH.nations.WHERE(region.name == 'ASIA')))
+  TPCH.customers.WHERE(market_segment == 'BUILDING').ORDER_BY(COUNT(TPCH.nations.WHERE(region.name == 'ASIA')).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.customers.WHERE(market_segment == 'BUILDING').TPCH.nations.WHERE(region.name == 'ASIA')
+""",
+                """
+Collection: TPCH.customers.WHERE(market_segment == 'BUILDING')
+
+The term is the following child of the collection:
+  TPCH.nations.WHERE(region.name == 'ASIA')
+""",
+            ),
+            id="cross-term",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                customers_ancestry_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[customers]
+    └─┬─ Calculate[cust_nation_key=nation_key]
+      └─┬─ TPCH
+        └─── TableCollection[nations]
+Note: This collection is a CROSS product of 'customers.CALCULATE(cust_nation_key=nation_key)' and 'nations'.
+
+The term is the following expression: cust_nation_key
+
+This is a reference to expression 'cust_nation_key' of the 2nd ancestor of the collection, which is the following:
+  ──┬─ TPCH
+    ├─── TableCollection[customers]
+    └─── Calculate[cust_nation_key=nation_key]
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH.customers.CALCULATE(cust_nation_key=nation_key).TPCH.nations.CALCULATE(cust_nation_key)
+""",
+                """
+Collection: TPCH.customers.CALCULATE(cust_nation_key=nation_key).TPCH.nations
+Note: This collection is a CROSS product of 'customers.CALCULATE(cust_nation_key=nation_key)' and 'nations'.
+
+The term is the following expression: cust_nation_key
+
+This is a reference to expression 'cust_nation_key' of the 2nd ancestor of the collection, which is the following:
+  TPCH.customers.CALCULATE(cust_nation_key=nation_key)
+""",
+            ),
+            id="customers-ancestry-term",
         ),
         pytest.param(
             (
@@ -2083,11 +2159,9 @@ This child uses the SINGULAR operator, declaring the following sub-collection as
       ├─── SubCollection[customers]
       └─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
 
-This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
-For example, the following are valid:
-  TPCH.regions.CALCULATE(COUNT(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR.account_balance))
-  TPCH.regions.WHERE(HAS(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR))
-  TPCH.regions.ORDER_BY(COUNT(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR).DESC())
+This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
+For example, the following is valid:
+  TPCH.regions.CALCULATE(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR.account_balance)
 
 To learn more about this child, you can try calling pydough.explain on the following:
   TPCH.regions.nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
@@ -2115,7 +2189,10 @@ Collection:
 
 The term is the following expression: RANKING(by=(name.ASC(na_pos='first')))
 
-This expression calls the window function 'RANKING' with the following arguments:
+This expression calls the window function 'RANKING'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
@@ -2128,7 +2205,10 @@ Collection: TPCH.nations
 
 The term is the following expression: RANKING(by=(name.ASC(na_pos='first')))
 
-This expression calls the window function 'RANKING' with the following arguments:
+This expression calls the window function 'RANKING'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 """,
@@ -2257,6 +2337,8 @@ This expression calls the user-defined function 'PERCENTAGE' on the following ar
 
 Description: Returns the percentage of rows where the argument is True.
 This function is defined by the SQL macro: '(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a'
+Then the final SQL text for this function call would be: '(100.0 * SUM(CASE WHEN ?a THEN 1 END)) / COUNT(*)'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
@@ -2277,11 +2359,59 @@ This expression calls the user-defined function 'PERCENTAGE' on the following ar
 
 Description: Returns the percentage of rows where the argument is True.
 This function is defined by the SQL macro: '(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a'
+Then the final SQL text for this function call would be: '(100.0 * SUM(CASE WHEN ?a THEN 1 END)) / COUNT(*)'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
                 """,
             ),
             id="udf-sql_macro-percentage",
+        ),
+        pytest.param(
+            (
+                udf_epsilon_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[nations]
+
+The term is the following expression: EPSILON(key, region_key, 0.5)
+
+This expression calls the user-defined function 'EPSILON' on the following arguments:
+  key
+  region_key
+  0.5
+
+Description: Returns true if the gap between the first and second argument is at most the third argument.
+This function is defined by the SQL macro: 'ABS({1} - {0}) <= {2}'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a', '?b', '?c'
+Then the final SQL text for this function call would be: 'ABS(?b - ?a) <= ?c'
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.nations.CALCULATE(EPSILON(key, region_key, 0.5))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.nations
+
+The term is the following expression: EPSILON(key, region_key, 0.5)
+
+This expression calls the user-defined function 'EPSILON' on the following arguments:
+  key
+  region_key
+  0.5
+
+Description: Returns true if the gap between the first and second argument is at most the third argument.
+This function is defined by the SQL macro: 'ABS({1} - {0}) <= {2}'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a', '?b', '?c'
+Then the final SQL text for this function call would be: 'ABS(?b - ?a) <= ?c'
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-sql_macro-epsilon",
         ),
         pytest.param(
             (
@@ -2296,6 +2426,9 @@ The term is the following expression: NVAL(name, 1, by=(name.ASC(na_pos='first')
 This expression calls the user-defined window function 'NVAL' with the following arguments:
   name
   1
+
+Ordering (by):
+  name.ASC(na_pos='first')
 
 Description: Returns the value of the first argument at the Nth row in the window, where N is the second argument. If N is greater than the number of rows in the window, returns NULL.
 This function is an alias for the SQL window function 'NTH_VALUE'.
@@ -2315,6 +2448,9 @@ The term is the following expression: NVAL(name, 1, by=(name.ASC(na_pos='first')
 This expression calls the user-defined window function 'NVAL' with the following arguments:
   name
   1
+
+Ordering (by):
+  name.ASC(na_pos='first')
 
 Description: Returns the value of the first argument at the Nth row in the window, where N is the second argument. If N is greater than the number of rows in the window, returns NULL.
 This function is an alias for the SQL window function 'NTH_VALUE'.
@@ -2387,6 +2523,8 @@ This expression calls the user-defined function 'POSITIVE' on the following argu
 
 Description: Returns true if the argument is greater than zero.
 This function is defined by the SQL macro: '{0} > 0'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a'
+Then the final SQL text for this function call would be: '?a > 0'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
@@ -2404,6 +2542,8 @@ This expression calls the user-defined function 'POSITIVE' on the following argu
 
 Description: Returns true if the argument is greater than zero.
 This function is defined by the SQL macro: '{0} > 0'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a'
+Then the final SQL text for this function call would be: '?a > 0'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
                 """,
@@ -2423,6 +2563,12 @@ The term is the following expression: RELMIN(key, by=(name.ASC(na_pos='first')),
 This expression calls the user-defined window function 'RELMIN' with the following arguments:
   key
 
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Additional options:
+  cumulative: True
+
 Description: Obtains the smallest value in the window.
 This function is an alias for the SQL window function 'MIN'.
 This window function does not require ordering and supports frame specifications.
@@ -2440,6 +2586,12 @@ The term is the following expression: RELMIN(key, by=(name.ASC(na_pos='first')),
 
 This expression calls the user-defined window function 'RELMIN' with the following arguments:
   key
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Additional options:
+  cumulative: True
 
 Description: Obtains the smallest value in the window.
 This function is an alias for the SQL window function 'MIN'.
@@ -2460,7 +2612,10 @@ Collection:
 
 The term is the following expression: CUMULATIVE_DISTRIBUTION(by=(name.ASC(na_pos='first')))
 
-This expression calls the user-defined window function 'CUMULATIVE_DISTRIBUTION' with the following arguments:
+This expression calls the user-defined window function 'CUMULATIVE_DISTRIBUTION'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
 
 Description: Returns the ratio of rows that are less than or equal to the current row versus the total number of rows in the window.
 This function is an alias for the SQL window function 'CUME_DIST'.
@@ -2477,7 +2632,10 @@ Collection: TPCH_SQLITE_UDFS.nations
 
 The term is the following expression: CUMULATIVE_DISTRIBUTION(by=(name.ASC(na_pos='first')))
 
-This expression calls the user-defined window function 'CUMULATIVE_DISTRIBUTION' with the following arguments:
+This expression calls the user-defined window function 'CUMULATIVE_DISTRIBUTION'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
 
 Description: Returns the ratio of rows that are less than or equal to the current row versus the total number of rows in the window.
 This function is an alias for the SQL window function 'CUME_DIST'.
