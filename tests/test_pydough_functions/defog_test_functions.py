@@ -410,7 +410,10 @@ def impl_defog_broker_adv15():
     n_active = SUM(customers.status == "active")
     n_custs = COUNT(customers)
     return (
-        customers.WHERE((join_date >= "2022-01-01") & (join_date <= "2022-12-31"))
+        customers.WHERE(
+            (join_date >= DATETIME("2022-01-01"))
+            & (join_date <= DATETIME("2022-12-31"))
+        )
         .PARTITION(name="countries", by=country)
         .CALCULATE(
             country,
@@ -887,7 +890,7 @@ def impl_defog_dealership_adv9():
     Sale Price in the first quarter of 2023.
     """
     selected_sales = sales.WHERE(
-        (sale_date >= "2023-01-01") & (sale_date <= "2023-03-31")
+        (sale_date >= DATETIME("2023-01-01")) & (sale_date <= DATETIME("2023-03-31"))
     )
     return Dealership.CALCULATE(ASP=AVG(selected_sales.sale_price))
 
@@ -1324,7 +1327,7 @@ def impl_defog_ewallet_adv2():
         )
         .CALCULATE(
             week=DATETIME(created_at, "start of week"),
-            is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
+            is_weekend=IFF(ISIN(DAYOFWEEK(created_at), (5, 6)), 1, 0),
         )
         .PARTITION(name="weeks", by=week)
         .CALCULATE(
@@ -1482,7 +1485,8 @@ def impl_defog_ewallet_adv11():
     duration first.
     """
     selected_sessions = sessions.WHERE(
-        (session_start >= "2023-06-01") & (session_end < "2023-06-08")
+        (session_start >= DATETIME("2023-06-01"))
+        & (session_end < DATETIME("2023-06-08"))
     ).CALCULATE(duration=DATEDIFF("seconds", session_start, session_end))
     return (
         users.WHERE(HAS(selected_sessions))
@@ -2708,7 +2712,7 @@ def impl_defog_academic_gen18():
     """
     return journals.CALCULATE(
         name, journal_id, num_publications=COUNT(archives)
-    ).ORDER_BY(num_publications.DESC())
+    ).ORDER_BY(num_publications.DESC(), name.ASC())
 
 
 def impl_defog_academic_gen19():

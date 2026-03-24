@@ -84,6 +84,7 @@ def string_functions():
         contains_sub=CONTAINS(name, "sub"),
         matches_like=LIKE(name, "%test%"),
         joined_string=JOIN_STRINGS("::", name, nation.name),
+        join_nulls=JOIN_STRINGS(",", "a", None, "b"),
         lpad_name=LPAD(name, 20, "*"),
         rpad_name=RPAD(name, 20, "-"),
         stripped=STRIP(name),

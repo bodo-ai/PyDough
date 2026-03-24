@@ -345,7 +345,9 @@ Below is a list of all supported values for the database name:
 
 - `snowflake`: uses a Snowflake database. [See here](https://docs.snowflake.com/en/user-guide/python-connector.html#connecting-to-snowflake) for details on the connection API and what keyword arguments can be passed in.
 
-- `postgres` or `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
+- `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
+
+- `oracle`: uses an Oracle database. [See here](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) for details on the connection API and what keyword arguments can be passed in.
 
 - `bodosql`: uses a BodoSQL context. [See here](https://docs.bodo.ai/latest/api_docs/sql/bodosqlcontext/) for details on the BodoSQL context and [here](https://docs.bodo.ai/latest/api_docs/sql/database_catalogs/) for details on the various kinds of catalogs that can be connected to a BodoSQL context.
 
@@ -368,6 +370,7 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `mysql`     | `mysql-connector-python`               |
 | `snowflake` | `snowflake-connector-python[pandas]`  |
 | `postgres` | `psycopg2-binary`  |
+| `oracle` | `python-oracledb`  |
 | `bodosql`    | Depends on the catalog being used |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
@@ -443,6 +446,40 @@ You can find a full example of using MySQL database with PyDough in [this usage 
     pydough.active_session.connect_database("postgres", connection=postgres_conn)
   ```
 You can find a full example of using Postgres database with PyDough in [this usage guide](./../demos/notebooks/PG_TPCH.ipynb).
+
+- Oracle: You can connect to an Oracle database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("oracle", 
+          user=oracle_user,
+          password=oracle_password,
+          host=oracle_host,
+          port=oracle_port
+          service_name=oracle_service_name,
+    )
+  ```
+  Also you can use `dsn` instead of `host`, `port` and `service_name`.
+
+  Example with a connection object
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    oracle_conn: oracledb.connection =  oracledb.connect(
+        dbname=oracle_db,
+        user=oracle_user,
+        password=oracle_password,
+        host=oracle_host,
+        port=oracle_port,
+        service_name=oracle_service_name,
+    )
+    pydough.active_session.connect_database("oracle", connection=oracle_conn)
+  ```
+You can find a full example of using an Oracle database with PyDough in [this usage guide](./../demos/notebooks/Oracle_TPCH.ipynb).
+
+**Note**: Oracle doesn't support "" (doubles quotes) inside identifiers. This means that even though PyDough support
+double quotes inside column/table names executing SQL with such characters will raise an error when using Oracle.
+
+**Note**: PyDough intentionally uses `TO_DATE` instead of `TO_TIMESTAMP` for datetime
+literals. This ensures consistent behavior across DATE expressions. But sub-second precision (microseconds) is silently truncated.
 
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs

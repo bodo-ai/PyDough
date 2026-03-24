@@ -12,6 +12,9 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.errors.error_types import PyDoughSQLException
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.types import PyDoughType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
@@ -428,6 +431,12 @@ class MySQLTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
     ) -> SQLGlotExpression:
         return expand_std(args=args, types=types, type=type)
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def convert_datediff(
         self,

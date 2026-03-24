@@ -225,6 +225,26 @@ def simple_dataframe_collection_3():
     )
 
 
+def simple_dataframe_collection_3_oracle():
+    # Oracle version of `simple_dataframe_collection_3` test with quoted names
+    # and reserved words. This version doesn't use " (double quotes) in column's
+    # name due this is not possible in Oracle
+    df = pd.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            '"`name\'["': ["Alice", "Bob", "Charlie", "David"],
+            '"space country"': ["US", "CR", "US", "MX"],
+            '"CAST"': [25, 30, 22, 30],
+        }
+    )
+
+    return pydough.dataframe_collection(
+        name="users",
+        dataframe=df,
+        unique_column_names=["user_id"],
+    )
+
+
 def simple_dataframe_collection_4():
     # Dataframe collection with a dataframe with invalid datatypes but
     # those are not selected to the final dataframe collection because of

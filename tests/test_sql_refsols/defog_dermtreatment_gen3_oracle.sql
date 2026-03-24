@@ -1,0 +1,7 @@
+SELECT
+  AVG(
+    EXTRACT(YEAR FROM CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE)) - EXTRACT(YEAR FROM CAST(date_of_birth AS DATE))
+  ) AS average_age
+FROM MAIN.PATIENTS
+WHERE
+  gender = 'Male' AND ins_type = 'private'

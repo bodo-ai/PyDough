@@ -12,6 +12,9 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
@@ -142,6 +145,12 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                     this=unit.value.upper(), expressions=[dt_expr]
                 )
         return func_expr
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit

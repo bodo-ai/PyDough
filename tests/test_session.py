@@ -416,10 +416,18 @@ def test_division_by_zero_e2e(
         division_e2e_test_func
     )()
 
-    # DATABASE mode: Snowflake/Postgres throw errors, SQLite/MySQL return NULL
+    # DATABASE mode: Snowflake/Postgres/Oracle/BodoSQL throw errors, SQLite/MySQL return NULL
     if division_by_zero_config == DivisionByZeroBehavior.DATABASE:
-        if db_context.dialect in (DatabaseDialect.SNOWFLAKE, DatabaseDialect.POSTGRES):
-            with pytest.raises(PyDoughSQLException, match="[Dd]ivision by zero"):
+        if db_context.dialect in (
+            DatabaseDialect.SNOWFLAKE,
+            DatabaseDialect.POSTGRES,
+            DatabaseDialect.ORACLE,
+            DatabaseDialect.BODOSQL,
+        ):
+            with pytest.raises(
+                PyDoughSQLException,
+                match=r"([Dd]ivision by zero|[Dd]ivisor is equal to zero)",
+            ):
                 pydough.to_df(
                     root,
                     metadata=graph,
@@ -435,10 +443,10 @@ def test_division_by_zero_e2e(
         config=new_configs,
     )
 
-    # Snowflake returns uppercase column names
+    # Snowflake/Oracle returns uppercase column names
     col_name: str = (
         "COMPUTED_VALUE"
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        if db_context.dialect in (DatabaseDialect.SNOWFLAKE, DatabaseDialect.ORACLE)
         else "computed_value"
     )
 
