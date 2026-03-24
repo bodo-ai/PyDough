@@ -38,11 +38,11 @@ WHERE
         (
           (
             (
-              DAY_OF_WEEK(payments_received.payment_date) % 7
+              DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) % 7
             ) + 0
           ) % 7
         ) * -1,
-        payments_received.payment_date
+        CAST(payments_received.payment_date AS TIMESTAMP)
       )
     ) AS TIMESTAMP),
     CAST(DATE_TRUNC(
@@ -69,11 +69,11 @@ WHERE
         (
           (
             (
-              DAY_OF_WEEK(payments_received.payment_date) % 7
+              DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) % 7
             ) + 0
           ) % 7
         ) * -1,
-        payments_received.payment_date
+        CAST(payments_received.payment_date AS TIMESTAMP)
       )
     ) AS TIMESTAMP),
     CAST(DATE_TRUNC(

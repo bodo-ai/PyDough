@@ -2,8 +2,8 @@ SELECT
   AVG(
     DATE_DIFF(
       'DAY',
-      CAST(DATE_TRUNC('DAY', orders.o_orderdate) AS TIMESTAMP),
-      CAST(DATE_TRUNC('DAY', LEAST(lineitem.l_commitdate, lineitem.l_receiptdate)) AS TIMESTAMP)
+      CAST(DATE_TRUNC('DAY', CAST(orders.o_orderdate AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CAST(LEAST(lineitem.l_commitdate, lineitem.l_receiptdate) AS TIMESTAMP)) AS TIMESTAMP)
     )
   ) AS avg_gap
 FROM tpch.lineitem AS lineitem

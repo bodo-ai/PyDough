@@ -11,8 +11,8 @@ SELECT
     AVG(
       DATE_DIFF(
         'DAY',
-        CAST(DATE_TRUNC('DAY', sales.sale_date) AS TIMESTAMP),
-        CAST(DATE_TRUNC('DAY', _s1.max_payment_date) AS TIMESTAMP)
+        CAST(DATE_TRUNC('DAY', CAST(sales.sale_date AS TIMESTAMP)) AS TIMESTAMP),
+        CAST(DATE_TRUNC('DAY', CAST(_s1.max_payment_date AS TIMESTAMP)) AS TIMESTAMP)
       )
     ),
     2

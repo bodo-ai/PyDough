@@ -588,6 +588,7 @@ def test_pipeline_e2e_mysql_defog(
     )
 
 
+@pytest.mark.custom_datasets
 @pytest.mark.mysql
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_custom_datasets(

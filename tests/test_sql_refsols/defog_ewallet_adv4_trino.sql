@@ -11,6 +11,6 @@ JOIN postgres.main.users AS users
 WHERE
   DATE_DIFF(
     'DAY',
-    CAST(DATE_TRUNC('DAY', wallet_transactions_daily.created_at) AS TIMESTAMP),
+    CAST(DATE_TRUNC('DAY', CAST(wallet_transactions_daily.created_at AS TIMESTAMP)) AS TIMESTAMP),
     CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
   ) <= 7

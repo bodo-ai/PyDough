@@ -13,8 +13,8 @@ WITH _u_0 AS (
       CAST(tot_drug_amt AS DOUBLE) / NULLIF(
         DATE_DIFF(
           'DAY',
-          CAST(DATE_TRUNC('DAY', start_dt) AS TIMESTAMP),
-          CAST(DATE_TRUNC('DAY', end_dt) AS TIMESTAMP)
+          CAST(DATE_TRUNC('DAY', CAST(start_dt AS TIMESTAMP)) AS TIMESTAMP),
+          CAST(DATE_TRUNC('DAY', CAST(end_dt AS TIMESTAMP)) AS TIMESTAMP)
         ),
         0
       )

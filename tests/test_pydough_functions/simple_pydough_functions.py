@@ -2615,11 +2615,11 @@ def string_format_specifiers_sqlite():
         # day of month: 01-31
         d1=STRING(static_date, "%d"),
         # day of month without leading zero: 1-31
-        d2=STRING("2023-07-15 14:30:45", "%e"),
+        d2=STRING(DATETIME("2023-07-15 14:30:45"), "%e"),
         # fractional seconds: SS.SSS
-        d3=STRING("2023-07-15 14:30:45", "%f"),
+        d3=STRING(DATETIME("2023-07-15 14:30:45"), "%f"),
         # ISO 8601 date: YYYY-MM-DD
-        d4=STRING("2023-07-15 14:30:45", "%F"),
+        d4=STRING(DATETIME("2023-07-15 14:30:45"), "%F"),
         # hour: 00-24
         d5=STRING(static_date, "%H"),
         # hour for 12-hour clock: 01-12

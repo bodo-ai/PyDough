@@ -5,12 +5,20 @@ Definition of SQLGlot transformation bindings for the Trino dialect.
 __all__ = ["TrinoTransformBindings"]
 
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek
-from pydough.types import BooleanType, PyDoughType, StringType
+from pydough.types import (
+    BooleanType,
+    NumericType,
+    PyDoughType,
+    StringType,
+)
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit, apply_parens
@@ -107,8 +115,14 @@ class TrinoTransformBindings(BaseTransformBindings):
             case DateTimeUnit.DAY:
                 func_expr = sqlglot_expressions.Day(this=dt_expr)
             case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+                # Ensure the argument is a TIMESTAMP (as opposed to a DATE)
+                # since Trino's datetime extraction functions require
+                #  TIMESTAMP argument for hour/minute/second.
+                ts_expr: SQLGlotExpression = sqlglot_expressions.Cast(
+                    this=dt_expr, to=sqlglot_expressions.DataType(this="TIMESTAMP")
+                )
                 func_expr = sqlglot_expressions.Anonymous(
-                    this=unit.value.upper(), expressions=[dt_expr]
+                    this=unit.value.upper(), expressions=[ts_expr]
                 )
         return func_expr
 
@@ -166,8 +180,17 @@ class TrinoTransformBindings(BaseTransformBindings):
                 unit=sqlglot_expressions.Var(this="DAY"),
             )
         else:
-            # For other units, use the standard SQLGlot truncation
+            # For other units, use the standard SQLGlot truncation. If the
+            # unit is Hour/Minute/Second, first cast to TIMESTAMP.
+            if unit in (DateTimeUnit.HOUR, DateTimeUnit.MINUTE, DateTimeUnit.SECOND):
+                base = sqlglot_expressions.Cast(
+                    this=base, to=sqlglot_expressions.DataType(this="TIMESTAMP")
+                )
             return super().apply_datetime_truncation(base, unit)
+
+    def make_datetime_arg(self, arg: SQLGlotExpression) -> SQLGlotExpression:
+        # Always ensure coercion occurs
+        return self.handle_datetime_base_arg(arg)
 
     def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         offset: int = (-self.start_of_week_offset) % 7
@@ -242,18 +265,19 @@ class TrinoTransformBindings(BaseTransformBindings):
             [args[0], args[1]], [StringType(), StringType()]
         )
 
-        # SPLIT_PART(string, delimiter, n + 1 - index)
+        # SPLIT_PART(string, delimiter, n + 2 + index), for when the index
+        # is negative.
         reverse_split: SQLGlotExpression = sqlglot_expressions.Anonymous(
             this="SPLIT_PART",
             expressions=[
                 args[0],
                 args[1],
                 sqlglot_expressions.Add(
-                    this=sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Add(
                         this=n_delim,
                         expression=args[2],
                     ),
-                    expression=sqlglot_expressions.Literal.number(1),
+                    expression=sqlglot_expressions.Literal.number(2),
                 ),
             ],
         )
@@ -290,3 +314,65 @@ class TrinoTransformBindings(BaseTransformBindings):
             )
             .else_(regular_split)
         )
+
+    def convert_replace(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        assert 2 <= len(args) <= 3
+        delim_arg: SQLGlotExpression = args[1]
+        if (
+            isinstance(delim_arg, sqlglot_expressions.Literal)
+            and delim_arg.is_string
+            and delim_arg.this == ""
+        ):
+            # Ensure that REPLACE(x, "", z) -> x
+            return args[0]
+        # Wrap the result in a case statement to ensure the result is the
+        # input if the delimiter is an empty string, unless it is also a
+        # literal that is not an empty string.
+        result: SQLGlotExpression = super().convert_replace(args, types)
+        if (
+            not isinstance(delim_arg, sqlglot_expressions.Literal)
+            and delim_arg.is_string
+        ):
+            result = (
+                sqlglot_expressions.Case()
+                .when(
+                    sqlglot_expressions.EQ(
+                        this=delim_arg,
+                        expression=sqlglot_expressions.Literal.string(""),
+                    ),
+                    args[0],
+                )
+                .else_(result)
+            )
+        return result
+
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # First cast to a DOUBLE, then to an INTEGER, for safety.
+        return sqlglot_expressions.Cast(
+            this=sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType(this="DOUBLE")
+            ),
+            to=sqlglot_expressions.DataType(this="BIGINT"),
+        )
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        if isinstance(item_type, NumericType) and math.isinf(item):
+            if item >= 0:
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string("Infinity"),
+                    to=sqlglot_expressions.DataType.build("DOUBLE"),
+                )
+            else:
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string("-Infinity"),
+                    to=sqlglot_expressions.DataType.build("DOUBLE"),
+                )
+        return super().generate_dataframe_item_dialect_expression(item, item_type)

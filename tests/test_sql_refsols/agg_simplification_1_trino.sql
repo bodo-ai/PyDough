@@ -183,7 +183,7 @@ SELECT
   1 AS nd5,
   1 AS nd6,
   0 AS nd7,
-  CAST(NOT aug_exchange IS NULL AS BIGINT) AS nd8,
+  CAST(CAST(NOT aug_exchange IS NULL AS DOUBLE) AS BIGINT) AS nd8,
   1 AS av1,
   2 AS av2,
   -1 AS av3,

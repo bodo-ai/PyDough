@@ -1490,7 +1490,7 @@ def impl_defog_ewallet_adv12():
     What is the total transaction amount for each coupon offered by merchant
     with ID 1? Return the coupon ID and total amount transacted with it.
     """
-    return coupons.WHERE(merchant_id == "1").CALCULATE(
+    return coupons.WHERE(merchant_id == 1).CALCULATE(
         coupon_id=cid, total_discount=SUM(transaction_used_in.amount)
     )
 

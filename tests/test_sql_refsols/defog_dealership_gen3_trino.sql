@@ -13,11 +13,11 @@ WHERE
         (
           (
             (
-              DAY_OF_WEEK(payment_date) % 7
+              DAY_OF_WEEK(CAST(payment_date AS TIMESTAMP)) % 7
             ) + 0
           ) % 7
         ) * -1,
-        payment_date
+        CAST(payment_date AS TIMESTAMP)
       )
     ) AS TIMESTAMP),
     CAST(DATE_TRUNC(

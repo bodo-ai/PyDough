@@ -1,6 +1,6 @@
 SELECT
   p_partkey AS key,
-  CAST(CONCAT_WS(
+  CAST(CAST(CONCAT_WS(
     '',
     SUBSTRING(
       p_brand,
@@ -32,7 +32,7 @@ SELECT
         ) END
       END
     )
-  ) AS BIGINT) AS a,
+  ) AS DOUBLE) AS BIGINT) AS a,
   UPPER(
     LEAST(
       CASE
@@ -51,7 +51,7 @@ SELECT
         ' ',
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) - -1 + 1
+        ) AS DOUBLE) AS BIGINT) + 0
       )
     )
   ) AS b,

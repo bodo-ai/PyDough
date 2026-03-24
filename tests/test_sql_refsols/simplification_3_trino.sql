@@ -1,15 +1,19 @@
 WITH _t2 AS (
   SELECT
-    ABS(CAST(sbcustpostalcode AS BIGINT)) AS expr_13,
+    ABS(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT)) AS expr_13,
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
-    AVG(CAST(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0)) AS DOUBLE)) OVER () AS ravg1,
+    AVG(
+      CAST(ABS(COALESCE(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT), 0)) AS DOUBLE)
+    ) OVER () AS ravg1,
     COALESCE(
-      AVG(CAST(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0)) AS DOUBLE)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(
+        CAST(ABS(COALESCE(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT), 0)) AS DOUBLE)
+      ) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
-    COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER () AS rcnt1,
+    COUNT(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT)) OVER () AS rcnt1,
     COALESCE(
-      COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      COUNT(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rcnt2,
     COUNT(*) OVER () AS rsiz1,
@@ -17,9 +21,9 @@ WITH _t2 AS (
       COUNT(*) OVER (ORDER BY sbcustname ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
       0.1
     ) AS rsiz2,
-    SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS rsum1,
+    SUM(ABS(COALESCE(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT), 0))) OVER () AS rsum1,
     COALESCE(
-      SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      SUM(ABS(COALESCE(CAST(CAST(sbcustpostalcode AS DOUBLE) AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rsum2
   FROM main.sbcustomer

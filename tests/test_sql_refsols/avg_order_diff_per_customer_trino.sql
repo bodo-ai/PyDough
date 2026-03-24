@@ -6,9 +6,9 @@ WITH _t1 AS (
       'DAY',
       CAST(DATE_TRUNC(
         'DAY',
-        LAG(orders.o_orderdate, 1) OVER (PARTITION BY orders.o_custkey ORDER BY orders.o_orderdate)
+        CAST(LAG(orders.o_orderdate, 1) OVER (PARTITION BY orders.o_custkey ORDER BY orders.o_orderdate) AS TIMESTAMP)
       ) AS TIMESTAMP),
-      CAST(DATE_TRUNC('DAY', orders.o_orderdate) AS TIMESTAMP)
+      CAST(DATE_TRUNC('DAY', CAST(orders.o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
     ) AS day_diff
   FROM tpch.customer AS customer
   JOIN tpch.nation AS nation

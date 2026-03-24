@@ -1257,6 +1257,7 @@ def trino_conn_db_context(trino_docker_setup) -> DatabaseContext:
         host=TRINO_HOST,
         port=TRINO_PORT,
         user=TRINO_USER,
+        timezone="UTC",
     )
 
     return load_database_context("trino", connection=connection)
@@ -1274,6 +1275,7 @@ def trino_params_tpch_db_context(trino_docker_setup) -> DatabaseContext:
         host=TRINO_HOST,
         port=TRINO_PORT,
         user=TRINO_USER,
+        timezone="UTC",
     )
 
 

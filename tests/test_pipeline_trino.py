@@ -152,6 +152,7 @@ def test_pipeline_trino_e2e_defog_custom(
     )
 
 
+@pytest.mark.custom_datasets
 @pytest.mark.trino
 @pytest.mark.execute
 def test_pipeline_e2e_trino_custom_datasets(

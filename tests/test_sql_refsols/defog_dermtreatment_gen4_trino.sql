@@ -10,8 +10,8 @@ JOIN postgres.main.concomitant_meds AS concomitant_meds
 JOIN postgres.main.treatments AS treatments_2
   ON DATE_DIFF(
     'DAY',
-    CAST(DATE_TRUNC('DAY', treatments_2.start_dt) AS TIMESTAMP),
-    CAST(DATE_TRUNC('DAY', concomitant_meds.start_dt) AS TIMESTAMP)
+    CAST(DATE_TRUNC('DAY', CAST(treatments_2.start_dt AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('DAY', CAST(concomitant_meds.start_dt AS TIMESTAMP)) AS TIMESTAMP)
   ) <= 14
   AND concomitant_meds.treatment_id = treatments_2.treatment_id
   AND treatments_2.is_placebo

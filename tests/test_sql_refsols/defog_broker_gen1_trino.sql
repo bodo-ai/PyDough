@@ -7,6 +7,6 @@ JOIN mysql.broker.sbticker AS sbticker
 WHERE
   DATE_DIFF(
     'DAY',
-    CAST(DATE_TRUNC('DAY', sbdailyprice.sbdpdate) AS TIMESTAMP),
+    CAST(DATE_TRUNC('DAY', CAST(sbdailyprice.sbdpdate AS TIMESTAMP)) AS TIMESTAMP),
     CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
   ) <= 7

@@ -6,8 +6,8 @@ WITH _s3 AS (
   JOIN postgres.main.merchants AS merchants
     ON DATE_DIFF(
       'MONTH',
-      CAST(DATE_TRUNC('MONTH', merchants.created_at) AS TIMESTAMP),
-      CAST(DATE_TRUNC('MONTH', coupons.created_at) AS TIMESTAMP)
+      CAST(DATE_TRUNC('MONTH', CAST(merchants.created_at AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('MONTH', CAST(coupons.created_at AS TIMESTAMP)) AS TIMESTAMP)
     ) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY

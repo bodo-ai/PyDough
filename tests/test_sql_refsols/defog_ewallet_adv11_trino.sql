@@ -3,8 +3,8 @@ SELECT
   SUM(
     DATE_DIFF(
       'SECOND',
-      CAST(DATE_TRUNC('SECOND', user_sessions.session_start_ts) AS TIMESTAMP),
-      CAST(DATE_TRUNC('SECOND', user_sessions.session_end_ts) AS TIMESTAMP)
+      CAST(DATE_TRUNC('SECOND', CAST(user_sessions.session_start_ts AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('SECOND', CAST(user_sessions.session_end_ts AS TIMESTAMP)) AS TIMESTAMP)
     )
   ) AS total_duration
 FROM postgres.main.users AS users
