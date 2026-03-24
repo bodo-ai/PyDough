@@ -130,6 +130,7 @@ def simplify(
         node = rewrite_coalesce_nullif(node)
         node = rewrite_sum_nullif(node)
         node = rewrite_coalesce_count(node)
+        node = rewrite_length_literal(node)
 
         if constant_propagation:
             node = propagate_constants(node, root)
@@ -385,3 +386,23 @@ def rewrite_nullif_coalesce(expr: exp.Expression) -> exp.Expression:
         return exp.Nullif(this=lhs.args.get("this"), expression=rhs, copy=False)
     else:
         return expr
+
+
+def rewrite_length_literal(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite `LENGTH('literal')` to the length of the literal.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Length):
+        return expr
+
+    arg = expr.this
+    if isinstance(arg, exp.Literal) and arg.is_string:
+        return exp.Literal.number(len(arg.this))
+
+    return expr

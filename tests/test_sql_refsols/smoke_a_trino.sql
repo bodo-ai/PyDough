@@ -36,34 +36,22 @@ SELECT
   UPPER(
     LEAST(
       CASE
-        WHEN -CASE
-          WHEN LENGTH(' ') = 0
-          THEN 0
-          ELSE CAST(CAST((
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-          ) AS DOUBLE) / LENGTH(' ') AS BIGINT)
-        END > 2
+        WHEN -CAST(CAST((
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+        ) AS DOUBLE) / 1 AS BIGINT) > 2
         THEN NULL
-        WHEN CASE
-          WHEN LENGTH(' ') = 0
-          THEN 0
-          ELSE CAST(CAST((
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-          ) AS DOUBLE) / LENGTH(' ') AS BIGINT)
-        END < 2
+        WHEN CAST(CAST((
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+        ) AS DOUBLE) / 1 AS BIGINT) < 2
         THEN NULL
         ELSE SPLIT_PART(p_name, ' ', 2)
       END,
       SPLIT_PART(
         p_name,
         ' ',
-        CASE
-          WHEN LENGTH(' ') = 0
-          THEN 0
-          ELSE CAST(CAST((
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-          ) AS DOUBLE) / LENGTH(' ') AS BIGINT)
-        END - -1 + 1
+        CAST(CAST((
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+        ) AS DOUBLE) / 1 AS BIGINT) - -1 + 1
       )
     )
   ) AS b,
@@ -72,13 +60,9 @@ SELECT
   RPAD(CAST(p_size AS VARCHAR), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
-  CASE
-    WHEN LENGTH('o') = 0
-    THEN 0
-    ELSE CAST(CAST((
-      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-    ) AS DOUBLE) / LENGTH('o') AS BIGINT)
-  END + (
+  CAST(CAST((
+    LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+  ) AS DOUBLE) / 1 AS BIGINT) + (
     CAST((
       STRPOS(p_name, 'o') - 1
     ) AS DOUBLE) / 100.0

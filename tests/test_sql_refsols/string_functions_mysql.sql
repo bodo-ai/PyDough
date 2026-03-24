@@ -41,13 +41,9 @@ SELECT
   END AS stripped_vowels,
   REPLACE(CUSTOMER.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
-  CASE
-    WHEN CHAR_LENGTH('e') = 0
-    THEN 0
-    ELSE CAST((
-      CHAR_LENGTH(CUSTOMER.c_name) - CHAR_LENGTH(REPLACE(CUSTOMER.c_name, 'e', ''))
-    ) / CHAR_LENGTH('e') AS SIGNED)
-  END AS count_e,
+  CAST((
+    CHAR_LENGTH(CUSTOMER.c_name) - CHAR_LENGTH(REPLACE(CUSTOMER.c_name, 'e', ''))
+  ) / 1 AS SIGNED) AS count_e,
   LOCATE('Alex', CUSTOMER.c_name) - 1 AS idx_Alex
 FROM tpch.CUSTOMER AS CUSTOMER
 JOIN tpch.NATION AS NATION

@@ -193,13 +193,9 @@ SELECT
   SUBSTRING(CONCAT(CAST(p_size AS TEXT), '000'), 1, 3) AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
-  CASE
-    WHEN LENGTH('o') = 0
-    THEN 0
-    ELSE CAST((
-      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-    ) / LENGTH('o') AS BIGINT)
-  END + (
+  CAST((
+    LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+  ) / 1 AS BIGINT) + (
     (
       STR_POSITION(p_name, 'o') - 1
     ) / 100.0
