@@ -107,6 +107,7 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         When verbose, includes the full DataFrame contents.
         """
         lines = super().to_explanation(verbose)
+        lines.insert(1, "This collection is a Pandas DataFrame.")
         if verbose:
             lines.append("DataFrame contents:")
             for line in self.dataframe.to_string().splitlines():

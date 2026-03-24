@@ -1317,6 +1317,7 @@ PyDough collection representing the following logic:
 
 This node accesses user-generated collection 'rng'.
 Columns: i
+This collection is a Python range.
 Unique columns: i
 Range: start=1, end=5, step=1
 
@@ -1332,7 +1333,7 @@ expressions or collections that the collection has access to.
                 """
 This node accesses user-generated collection 'rng'.
 Columns: i
-Unique columns: i
+This collection is a Python range.
 
 The collection has access to the following expressions:
   i
@@ -1356,6 +1357,7 @@ PyDough collection representing the following logic:
 
 This node accesses user-generated collection 'df_coll'.
 Columns: id
+This collection is a Pandas DataFrame.
 Unique columns: id
 DataFrame contents:
      id
@@ -1373,7 +1375,7 @@ expressions or collections that the collection has access to.
                 """
 This node accesses user-generated collection 'df_coll'.
 Columns: id
-Unique columns: id
+This collection is a Pandas DataFrame.
 
 The collection has access to the following expressions:
   id
@@ -2161,16 +2163,16 @@ This child uses the SINGULAR operator, declaring the following sub-collection as
 
 This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
 For example, the following is valid:
-  TPCH.regions.CALCULATE(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR.account_balance)
+  TPCH.regions.CALCULATE(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR().account_balance)
 
 To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.regions.nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
+  TPCH.regions.nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR()
                 """,
                 """
 Collection: TPCH.regions
 
 The term is the following child of the collection:
-  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR()
 
 This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
   nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1)
@@ -2359,8 +2361,6 @@ This expression calls the user-defined function 'PERCENTAGE' on the following ar
 
 Description: Returns the percentage of rows where the argument is True.
 This function is defined by the SQL macro: '(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)'.
-Suppose this function were called on arguments that are translated to the following in SQL: '?a'
-Then the final SQL text for this function call would be: '(100.0 * SUM(CASE WHEN ?a THEN 1 END)) / COUNT(*)'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
                 """,
@@ -2405,8 +2405,6 @@ This expression calls the user-defined function 'EPSILON' on the following argum
 
 Description: Returns true if the gap between the first and second argument is at most the third argument.
 This function is defined by the SQL macro: 'ABS({1} - {0}) <= {2}'.
-Suppose this function were called on arguments that are translated to the following in SQL: '?a', '?b', '?c'
-Then the final SQL text for this function call would be: 'ABS(?b - ?a) <= ?c'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
                 """,
@@ -2542,8 +2540,6 @@ This expression calls the user-defined function 'POSITIVE' on the following argu
 
 Description: Returns true if the argument is greater than zero.
 This function is defined by the SQL macro: '{0} > 0'.
-Suppose this function were called on arguments that are translated to the following in SQL: '?a'
-Then the final SQL text for this function call would be: '?a > 0'
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
                 """,
@@ -2567,7 +2563,7 @@ Ordering (by):
   name.ASC(na_pos='first')
 
 Additional options:
-  cumulative: True
+  cumulative=True: The window frame spans from the start of the partition to the current row.
 
 Description: Obtains the smallest value in the window.
 This function is an alias for the SQL window function 'MIN'.
@@ -2591,7 +2587,7 @@ Ordering (by):
   name.ASC(na_pos='first')
 
 Additional options:
-  cumulative: True
+  cumulative=True: The window frame spans from the start of the partition to the current row.
 
 Description: Obtains the smallest value in the window.
 This function is an alias for the SQL window function 'MIN'.

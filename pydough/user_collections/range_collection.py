@@ -89,6 +89,7 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         When verbose, includes start, end, and step values.
         """
         lines = super().to_explanation(verbose)
+        lines.insert(1, "This collection is a Python range.")
         if verbose:
             lines.append(f"Range: start={self.start}, end={self.end}, step={self.step}")
         return lines

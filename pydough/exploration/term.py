@@ -304,19 +304,21 @@ def explain_term(
                             lines.append(
                                 f"This function is defined by the SQL macro: '{expr.operator.macro_text}'."
                             )
-                            dummies = [
-                                f"?{chr(ord('a') + i)}" for i in range(len(expr.args))
-                            ]
-                            dummy_list = ", ".join(f"'{d}'" for d in dummies)
-                            expanded = expr.operator.macro_text.format(*dummies)
-                            lines.append(
-                                f"Suppose this function were called on arguments"
-                                f" that are translated to the following in SQL: {dummy_list}"
-                            )
-                            lines.append(
-                                f"Then the final SQL text for this function call"
-                                f" would be: '{expanded}'"
-                            )
+                            if verbose:
+                                dummies = [
+                                    f"?{chr(ord('a') + i)}"
+                                    for i in range(len(expr.args))
+                                ]
+                                dummy_list = ", ".join(f"'{d}'" for d in dummies)
+                                expanded = expr.operator.macro_text.format(*dummies)
+                                lines.append(
+                                    f"Suppose this function were called on arguments"
+                                    f" that are translated to the following in SQL: {dummy_list}"
+                                )
+                                lines.append(
+                                    f"Then the final SQL text for this function call"
+                                    f" would be: '{expanded}'"
+                                )
                             lines.append("")
                             lines.append(
                                 "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
@@ -433,7 +435,73 @@ def explain_term(
                         if expr.kwargs:
                             lines.append("Additional options:")
                             for k, v in expr.kwargs.items():
-                                lines.append(f"  {k}: {v!r}")
+                                match k:
+                                    case "cumulative":
+                                        desc = (
+                                            "The window frame spans from "
+                                            "the start of the partition to "
+                                            "the current row."
+                                            if v
+                                            else "No cumulative window frame is applied."
+                                        )
+                                        lines.append(f"  cumulative={v!r}: {desc}")
+                                    case "frame":
+                                        assert isinstance(v, tuple) and len(v) == 2
+                                        lower: int | None = v[0]
+                                        upper: int | None = v[1]
+
+                                        def _frame_bound(
+                                            b: int | None, start: bool
+                                        ) -> str:
+                                            if b is None:
+                                                return (
+                                                    "the start of the partition"
+                                                    if start
+                                                    else "the end of the partition"
+                                                )
+                                            if b == 0:
+                                                return "the current row"
+                                            direction = "before" if b < 0 else "after"
+                                            return f"{abs(b)} rows {direction} the current row"
+
+                                        lines.append(
+                                            f"  frame={v!r}: The window "
+                                            f"frame spans from "
+                                            f"{_frame_bound(lower, True)} "
+                                            f"to {_frame_bound(upper, False)}."
+                                        )
+                                    case "default":
+                                        lines.append(
+                                            f"  default={v!r}: Returns "
+                                            f"{v!r} when there are "
+                                            f"insufficient rows in the "
+                                            f"specified direction."
+                                        )
+                                    case "n_buckets":
+                                        lines.append(
+                                            f"  n_buckets={v!r}: The data "
+                                            f"is divided into {v} "
+                                            f"equal-sized buckets."
+                                        )
+                                    case "allow_ties":
+                                        desc = (
+                                            "Rows with equal ordering values "
+                                            "receive the same rank."
+                                            if v
+                                            else "Each row receives a unique rank."
+                                        )
+                                        lines.append(f"  allow_ties={v!r}: {desc}")
+                                    case "dense":
+                                        desc = (
+                                            "No gaps in ranking between tied "
+                                            "groups (uses DENSE_RANK semantics)."
+                                            if v
+                                            else "Gaps are left in ranking after "
+                                            "tied groups (uses RANK semantics)."
+                                        )
+                                        lines.append(f"  dense={v!r}: {desc}")
+                                    case _:
+                                        lines.append(f"  {k}: {v!r}")
                             lines.append("")
                         if udf_window_op is not None:
                             if udf_window_op.description is not None:
@@ -527,6 +595,8 @@ def explain_term(
                     # friendlier "TPCH.nations.CROSS(TPCH.regions)". Fixing this
                     # properly requires propagating CROSS identity through the QDAG
                     # and is deferred as a larger refactor.
+                    # Or finding a way to render the unqualified node that
+                    # looks nicer, like how QDAG looks
                     lines.append(
                         f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
                     )

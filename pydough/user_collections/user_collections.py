@@ -97,13 +97,15 @@ class PyDoughUserGeneratedCollection(ABC):
         Returns:
             A list of human-readable explanation strings.
         """
-        unique = self.unique_column_names[0]
-        unique_terms = [unique] if isinstance(unique, str) else unique
-        return [
+        lines = [
             f"This node accesses user-generated collection {self.name!r}.\n"
             f"Columns: {', '.join(sorted(self.columns))}",
-            f"Unique columns: {', '.join(sorted(unique_terms))}",
         ]
+        if verbose:
+            unique = self.unique_column_names[0]
+            unique_terms = [unique] if isinstance(unique, str) else unique
+            lines.append(f"Unique columns: {', '.join(sorted(unique_terms))}")
+        return lines
 
     def get_expression_position(self, expr_name: str) -> int:
         """
