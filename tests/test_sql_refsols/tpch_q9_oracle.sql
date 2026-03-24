@@ -1,0 +1,30 @@
+SELECT
+  NATION.n_name AS NATION,
+  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) AS O_YEAR,
+  COALESCE(
+    SUM(
+      LINEITEM.l_extendedprice * (
+        1 - LINEITEM.l_discount
+      ) - PARTSUPP.ps_supplycost * LINEITEM.l_quantity
+    ),
+    0
+  ) AS AMOUNT
+FROM TPCH.LINEITEM LINEITEM
+JOIN TPCH.PART PART
+  ON LINEITEM.l_partkey = PART.p_partkey AND PART.p_name LIKE '%green%'
+JOIN TPCH.SUPPLIER SUPPLIER
+  ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
+JOIN TPCH.NATION NATION
+  ON NATION.n_nationkey = SUPPLIER.s_nationkey
+JOIN TPCH.ORDERS ORDERS
+  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
+JOIN TPCH.PARTSUPP PARTSUPP
+  ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
+  AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
+GROUP BY
+  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)),
+  NATION.n_name
+ORDER BY
+  1 NULLS FIRST,
+  2 DESC NULLS LAST
+FETCH FIRST 10 ROWS ONLY

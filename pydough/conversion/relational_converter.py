@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DivisionByZeroBehavior, PyDoughSession
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
 from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
@@ -304,12 +305,31 @@ class RelTranslation:
                 # If b == 0, return 0
                 # Replace with IFF(b == 0, 0, a / b)
                 # The IFF guards against zero, so no KEEP_IF needed on divisor
+                div_expr: CallExpression
+                if self.session.database.dialect != DatabaseDialect.BODOSQL:
+                    div_expr = CallExpression(pydop.DIV, typ, [dividend, divisor])
+                else:
+                    # Implementation for BodoSQL
+                    # IFF(b == 0, 0, a / KEEP_IF(b, b != 0))
+                    #  b != 0
+                    not_zero_expr = CallExpression(
+                        pydop.NEQ,
+                        BooleanType(),
+                        [divisor, LiteralExpression(0, divisor.data_type)],
+                    )
+                    # KEEP_IF(b, b != 0)
+                    keep_not_zero = CallExpression(
+                        pydop.KEEP_IF, typ, [divisor, not_zero_expr]
+                    )
+                    # a / KEEP_IF(b, b != 0)
+                    div_expr = CallExpression(pydop.DIV, typ, [dividend, keep_not_zero])
+
                 is_zero_expr = CallExpression(
                     pydop.EQU,
                     BooleanType(),
                     [divisor, LiteralExpression(0, divisor.data_type)],
                 )
-                div_expr = CallExpression(pydop.DIV, typ, [dividend, divisor])
+
                 return CallExpression(
                     pydop.IFF,
                     typ,

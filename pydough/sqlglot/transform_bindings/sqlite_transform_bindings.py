@@ -13,6 +13,9 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughSQLException
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.types import DatetimeType, NumericType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
@@ -67,6 +70,12 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 new_args.append(args[0])
             new_args.append(args[i])
         return sqlglot_expressions.Concat(expressions=new_args)
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def convert_extract_datetime(
         self,

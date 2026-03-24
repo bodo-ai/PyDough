@@ -5,8 +5,12 @@ Definition of SQLGlot transformation bindings for the BodoSQL dialect.
 __all__ = ["BodoSQLTransformBindings"]
 
 
+import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .sf_transform_bindings import SnowflakeTransformBindings
@@ -20,6 +24,12 @@ class BodoSQLTransformBindings(SnowflakeTransformBindings):
     """
     Subclass of SnowflakeTransformBindings for the BodoSQL dialect.
     """
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def convert_user_generated_range(
         self, collection: RangeGeneratedCollection

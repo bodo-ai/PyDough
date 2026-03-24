@@ -11,6 +11,9 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
@@ -110,6 +113,12 @@ class PostgresTransformBindings(BaseTransformBindings):
             ),
         )
         return result
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         extract_expr: SQLGlotExpression = sqlglot_expressions.Extract(
