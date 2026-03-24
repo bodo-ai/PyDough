@@ -195,7 +195,7 @@ SELECT
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST((
     LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-  ) / 1 AS BIGINT) + (
+  ) AS BIGINT) + (
     (
       STR_POSITION(p_name, 'o') - 1
     ) / 100.0

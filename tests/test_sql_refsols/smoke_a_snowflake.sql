@@ -41,7 +41,7 @@ SELECT
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST((
     LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-  ) / 1 AS BIGINT) + (
+  ) AS BIGINT) + (
     (
       CHARINDEX('o', p_name) - 1
     ) / 100.0

@@ -4,7 +4,7 @@ SELECT
     THEN NULL
     WHEN (
       CHAR_LENGTH(sbcustname) - CHAR_LENGTH(REPLACE(sbcustname, ' ', ''))
-    ) / 1 + 1 >= ABS(-1)
+    ) + 1 >= ABS(-1)
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', -1), ' ', 1)
     ELSE NULL
   END AS last_name

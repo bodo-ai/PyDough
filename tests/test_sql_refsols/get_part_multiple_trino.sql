@@ -5,11 +5,11 @@ SELECT
     THEN SPLIT_PART(sbcustname, ' ', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -17,7 +17,7 @@ SELECT
       ' ',
       CAST(CAST((
         LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustname, ' ', CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p1,
@@ -26,11 +26,11 @@ SELECT
     THEN SPLIT_PART(sbcustname, ' ', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) > CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-    ) AS DOUBLE) / 1 AS BIGINT)
+    ) AS DOUBLE) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -38,7 +38,7 @@ SELECT
       ' ',
       CAST(CAST((
         LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustname, ' ', 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p2,
@@ -47,11 +47,11 @@ SELECT
     THEN SPLIT_PART(sbcustemail, '.', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -59,7 +59,7 @@ SELECT
       '.',
       CAST(CAST((
         LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustemail, '.', CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p3,
@@ -68,11 +68,11 @@ SELECT
     THEN SPLIT_PART(sbcustemail, '.', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) > CAST(CAST((
       LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.', ''))
-    ) AS DOUBLE) / 1 AS BIGINT)
+    ) AS DOUBLE) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -80,7 +80,7 @@ SELECT
       '.',
       CAST(CAST((
         LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustemail, '.', 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p4,
@@ -89,11 +89,11 @@ SELECT
     THEN SPLIT_PART(sbcustphone, '-', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -101,7 +101,7 @@ SELECT
       '-',
       CAST(CAST((
         LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustphone, '-', CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p5,
@@ -110,11 +110,11 @@ SELECT
     THEN SPLIT_PART(sbcustphone, '-', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) > CAST(CAST((
       LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-    ) AS DOUBLE) / 1 AS BIGINT)
+    ) AS DOUBLE) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -122,7 +122,7 @@ SELECT
       '-',
       CAST(CAST((
         LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustphone, '-', 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p6,
@@ -173,11 +173,11 @@ SELECT
     THEN SPLIT_PART(sbcustname, '!', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -185,7 +185,7 @@ SELECT
       '!',
       CAST(CAST((
         LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustname, '!', CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p9,
@@ -194,11 +194,11 @@ SELECT
     THEN SPLIT_PART(sbcustname, '@', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) > CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@', ''))
-    ) AS DOUBLE) / 1 AS BIGINT)
+    ) AS DOUBLE) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -206,7 +206,7 @@ SELECT
       '@',
       CAST(CAST((
         LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustname, '@', 0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p10,
@@ -268,11 +268,11 @@ SELECT
     THEN SPLIT_PART('', ' ', 1)
     WHEN -CAST(CAST((
       0 - LENGTH(REPLACE('', ' ', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       0 - LENGTH(REPLACE('', ' ', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -280,7 +280,7 @@ SELECT
       ' ',
       CAST(CAST((
         0 - LENGTH(REPLACE('', ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART('', ' ', CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p14,
@@ -324,11 +324,11 @@ SELECT
       CASE
         WHEN -CAST(CAST((
           LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) > 1
+        ) AS DOUBLE) AS BIGINT) > 1
         THEN NULL
         WHEN CAST(CAST((
           LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) < 1
+        ) AS DOUBLE) AS BIGINT) < 1
         THEN NULL
         ELSE SPLIT_PART(sbcustphone, '-', 1)
       END,
@@ -340,11 +340,11 @@ SELECT
         CASE
           WHEN -CAST(CAST((
             LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-          ) AS DOUBLE) / 1 AS BIGINT) > 1
+          ) AS DOUBLE) AS BIGINT) > 1
           THEN NULL
           WHEN CAST(CAST((
             LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-          ) AS DOUBLE) / 1 AS BIGINT) < 1
+          ) AS DOUBLE) AS BIGINT) < 1
           THEN NULL
           ELSE SPLIT_PART(sbcustphone, '-', 1)
         END
@@ -353,11 +353,11 @@ SELECT
           CASE
             WHEN -CAST(CAST((
               LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-            ) AS DOUBLE) / 1 AS BIGINT) > 1
+            ) AS DOUBLE) AS BIGINT) > 1
             THEN NULL
             WHEN CAST(CAST((
               LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-            ) AS DOUBLE) / 1 AS BIGINT) < 1
+            ) AS DOUBLE) AS BIGINT) < 1
             THEN NULL
             ELSE SPLIT_PART(sbcustphone, '-', 1)
           END,
@@ -365,18 +365,18 @@ SELECT
           ''
         )
       )
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       LENGTH(
         CASE
           WHEN -CAST(CAST((
             LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-          ) AS DOUBLE) / 1 AS BIGINT) > 1
+          ) AS DOUBLE) AS BIGINT) > 1
           THEN NULL
           WHEN CAST(CAST((
             LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-          ) AS DOUBLE) / 1 AS BIGINT) < 1
+          ) AS DOUBLE) AS BIGINT) < 1
           THEN NULL
           ELSE SPLIT_PART(sbcustphone, '-', 1)
         END
@@ -385,11 +385,11 @@ SELECT
           CASE
             WHEN -CAST(CAST((
               LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-            ) AS DOUBLE) / 1 AS BIGINT) > 1
+            ) AS DOUBLE) AS BIGINT) > 1
             THEN NULL
             WHEN CAST(CAST((
               LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-            ) AS DOUBLE) / 1 AS BIGINT) < 1
+            ) AS DOUBLE) AS BIGINT) < 1
             THEN NULL
             ELSE SPLIT_PART(sbcustphone, '-', 1)
           END,
@@ -397,18 +397,18 @@ SELECT
           ''
         )
       )
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
       CASE
         WHEN -CAST(CAST((
           LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) > 1
+        ) AS DOUBLE) AS BIGINT) > 1
         THEN NULL
         WHEN CAST(CAST((
           LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) < 1
+        ) AS DOUBLE) AS BIGINT) < 1
         THEN NULL
         ELSE SPLIT_PART(sbcustphone, '-', 1)
       END,
@@ -418,11 +418,11 @@ SELECT
           CASE
             WHEN -CAST(CAST((
               LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-            ) AS DOUBLE) / 1 AS BIGINT) > 1
+            ) AS DOUBLE) AS BIGINT) > 1
             THEN NULL
             WHEN CAST(CAST((
               LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-            ) AS DOUBLE) / 1 AS BIGINT) < 1
+            ) AS DOUBLE) AS BIGINT) < 1
             THEN NULL
             ELSE SPLIT_PART(sbcustphone, '-', 1)
           END
@@ -431,11 +431,11 @@ SELECT
             CASE
               WHEN -CAST(CAST((
                 LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-              ) AS DOUBLE) / 1 AS BIGINT) > 1
+              ) AS DOUBLE) AS BIGINT) > 1
               THEN NULL
               WHEN CAST(CAST((
                 LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-              ) AS DOUBLE) / 1 AS BIGINT) < 1
+              ) AS DOUBLE) AS BIGINT) < 1
               THEN NULL
               ELSE SPLIT_PART(sbcustphone, '-', 1)
             END,
@@ -443,17 +443,17 @@ SELECT
             ''
           )
         )
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(
       CASE
         WHEN -CAST(CAST((
           LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) > 1
+        ) AS DOUBLE) AS BIGINT) > 1
         THEN NULL
         WHEN CAST(CAST((
           LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) < 1
+        ) AS DOUBLE) AS BIGINT) < 1
         THEN NULL
         ELSE SPLIT_PART(sbcustphone, '-', 1)
       END,
@@ -466,11 +466,11 @@ SELECT
     THEN SPLIT_PART(sbcustpostalcode, '0', 1)
     WHEN -CAST(CAST((
       LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) > CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(CAST((
       LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0', ''))
-    ) AS DOUBLE) / 1 AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+    ) AS DOUBLE) AS BIGINT) < CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
     THEN NULL
     WHEN CAST(SUBSTRING(sbcustid, 2) AS BIGINT) < 0
     THEN SPLIT_PART(
@@ -478,7 +478,7 @@ SELECT
       '0',
       CAST(CAST((
         LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
+      ) AS DOUBLE) AS BIGINT) - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) + 1
     )
     ELSE SPLIT_PART(sbcustpostalcode, '0', CAST(SUBSTRING(sbcustid, 2) AS BIGINT))
   END AS p18

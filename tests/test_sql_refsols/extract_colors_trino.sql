@@ -4,11 +4,11 @@ SELECT
     CASE
       WHEN -CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) > 1
+      ) AS DOUBLE) AS BIGINT) > 1
       THEN NULL
       WHEN CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) < 1
+      ) AS DOUBLE) AS BIGINT) < 1
       THEN NULL
       ELSE SPLIT_PART(p_name, ' ', 1)
     END
@@ -17,11 +17,11 @@ SELECT
     CASE
       WHEN -CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) > 2
+      ) AS DOUBLE) AS BIGINT) > 2
       THEN NULL
       WHEN CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) < 2
+      ) AS DOUBLE) AS BIGINT) < 2
       THEN NULL
       ELSE SPLIT_PART(p_name, ' ', 2)
     END
@@ -30,11 +30,11 @@ SELECT
     CASE
       WHEN -CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) > 3
+      ) AS DOUBLE) AS BIGINT) > 3
       THEN NULL
       WHEN CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) < 3
+      ) AS DOUBLE) AS BIGINT) < 3
       THEN NULL
       ELSE SPLIT_PART(p_name, ' ', 3)
     END
@@ -43,11 +43,11 @@ SELECT
     CASE
       WHEN -CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) > 4
+      ) AS DOUBLE) AS BIGINT) > 4
       THEN NULL
       WHEN CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) < 4
+      ) AS DOUBLE) AS BIGINT) < 4
       THEN NULL
       ELSE SPLIT_PART(p_name, ' ', 4)
     END
@@ -56,11 +56,11 @@ SELECT
     CASE
       WHEN -CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) > 5
+      ) AS DOUBLE) AS BIGINT) > 5
       THEN NULL
       WHEN CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) < 5
+      ) AS DOUBLE) AS BIGINT) < 5
       THEN NULL
       ELSE SPLIT_PART(p_name, ' ', 5)
     END
@@ -69,11 +69,11 @@ SELECT
     CASE
       WHEN -CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) > 6
+      ) AS DOUBLE) AS BIGINT) > 6
       THEN NULL
       WHEN CAST(CAST((
         LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) / 1 AS BIGINT) < 6
+      ) AS DOUBLE) AS BIGINT) < 6
       THEN NULL
       ELSE SPLIT_PART(p_name, ' ', 6)
     END

@@ -14,7 +14,7 @@ SELECT
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST(CAST((
     LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-  ) AS DOUBLE PRECISION) / 1 AS BIGINT) + (
+  ) AS DOUBLE PRECISION) AS BIGINT) + (
     CAST((
       POSITION('o' IN p_name) - 1
     ) AS DOUBLE PRECISION) / 100.0

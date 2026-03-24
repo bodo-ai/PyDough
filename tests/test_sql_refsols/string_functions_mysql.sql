@@ -43,7 +43,7 @@ SELECT
   REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
   CAST((
     CHAR_LENGTH(CUSTOMER.c_name) - CHAR_LENGTH(REPLACE(CUSTOMER.c_name, 'e', ''))
-  ) / 1 AS SIGNED) AS count_e,
+  ) AS SIGNED) AS count_e,
   LOCATE('Alex', CUSTOMER.c_name) - 1 AS idx_Alex
 FROM tpch.CUSTOMER AS CUSTOMER
 JOIN tpch.NATION AS NATION

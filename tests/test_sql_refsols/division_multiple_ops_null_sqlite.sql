@@ -4,5 +4,6 @@ SELECT
   ) + l_tax AS computed_value
 FROM tpch.lineitem
 ORDER BY
-  1
+  l_discount,
+  l_tax
 LIMIT 1

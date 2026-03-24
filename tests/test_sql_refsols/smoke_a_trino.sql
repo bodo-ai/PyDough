@@ -38,11 +38,11 @@ SELECT
       CASE
         WHEN -CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) > 2
+        ) AS DOUBLE) AS BIGINT) > 2
         THEN NULL
         WHEN CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) < 2
+        ) AS DOUBLE) AS BIGINT) < 2
         THEN NULL
         ELSE SPLIT_PART(p_name, ' ', 2)
       END,
@@ -51,7 +51,7 @@ SELECT
         ' ',
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) / 1 AS BIGINT) - -1 + 1
+        ) AS DOUBLE) AS BIGINT) - -1 + 1
       )
     )
   ) AS b,
@@ -62,7 +62,7 @@ SELECT
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST(CAST((
     LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-  ) AS DOUBLE) / 1 AS BIGINT) + (
+  ) AS DOUBLE) AS BIGINT) + (
     CAST((
       STRPOS(p_name, 'o') - 1
     ) AS DOUBLE) / 100.0

@@ -6,7 +6,7 @@ SELECT
       THEN NULL
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-      ) / 1 >= 0
+      ) >= 0
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 1), ' ', -1)
       ELSE NULL
     END
@@ -17,7 +17,7 @@ SELECT
       THEN NULL
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-      ) / 1 >= 1
+      ) >= 1
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 2), ' ', -1)
       ELSE NULL
     END
@@ -28,7 +28,7 @@ SELECT
       THEN NULL
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-      ) / 1 >= 2
+      ) >= 2
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 3), ' ', -1)
       ELSE NULL
     END
@@ -39,7 +39,7 @@ SELECT
       THEN NULL
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-      ) / 1 >= 3
+      ) >= 3
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 4), ' ', -1)
       ELSE NULL
     END
@@ -50,7 +50,7 @@ SELECT
       THEN NULL
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-      ) / 1 >= 4
+      ) >= 4
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 5), ' ', -1)
       ELSE NULL
     END
@@ -61,7 +61,7 @@ SELECT
       THEN NULL
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-      ) / 1 >= 5
+      ) >= 5
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 6), ' ', -1)
       ELSE NULL
     END

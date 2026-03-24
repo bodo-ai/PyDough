@@ -20,7 +20,7 @@ SELECT
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,
   CAST((
     LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
-  ) / 1 AS BIGINT) AS count_e,
+  ) AS BIGINT) AS count_e,
   STR_POSITION(customer.c_name, 'Alex') - 1 AS idx_Alex
 FROM tpch.customer AS customer
 JOIN tpch.nation AS nation

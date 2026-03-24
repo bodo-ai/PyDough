@@ -20,7 +20,7 @@ SELECT
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,
   CAST(CAST((
     LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
-  ) AS REAL) / 1 AS INTEGER) AS count_e,
+  ) AS REAL) AS INTEGER) AS count_e,
   INSTR(customer.c_name, 'Alex') - 1 AS idx_Alex
 FROM tpch.customer AS customer
 JOIN tpch.nation AS nation

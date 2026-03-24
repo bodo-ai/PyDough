@@ -24,7 +24,7 @@ SELECT
         THEN NULL
         WHEN (
           CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-        ) / 1 >= 1
+        ) >= 1
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 2), ' ', -1)
         ELSE NULL
       END,
@@ -33,7 +33,7 @@ SELECT
         THEN NULL
         WHEN (
           CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-        ) / 1 + 1 >= ABS(-1)
+        ) + 1 >= ABS(-1)
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', -1), ' ', 1)
         ELSE NULL
       END COLLATE utf8mb4_bin
@@ -60,7 +60,7 @@ SELECT
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST((
     CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, 'o', ''))
-  ) / 1 AS SIGNED) + (
+  ) AS SIGNED) + (
     (
       LOCATE('o', p_name) - 1
     ) / 100.0

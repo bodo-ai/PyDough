@@ -137,7 +137,7 @@ SELECT
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST(CAST((
     LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-  ) AS REAL) / 1 AS INTEGER) + (
+  ) AS REAL) AS INTEGER) + (
     CAST((
       INSTR(p_name, 'o') - 1
     ) AS REAL) / 100.0
