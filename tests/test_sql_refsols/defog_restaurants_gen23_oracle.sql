@@ -1,0 +1,9 @@
+SELECT
+  RESTAURANT.name,
+  RESTAURANT.food_type
+FROM MAIN.LOCATION LOCATION
+JOIN MAIN.RESTAURANT RESTAURANT
+  ON LOCATION.restaurant_id = RESTAURANT.id
+WHERE
+  LOWER(LOCATION.city_name) = 'san francisco'
+  AND LOWER(LOCATION.street_name) = 'market st'

@@ -111,6 +111,7 @@ class DatabaseDialect(Enum):
     TRINO = "trino"
     MYSQL = "mysql"
     POSTGRES = "postgres"
+    ORACLE = "oracle"
     BODOSQL = "bodosql"
 
     @staticmethod

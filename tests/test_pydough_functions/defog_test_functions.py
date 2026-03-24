@@ -1315,7 +1315,7 @@ def impl_defog_ewallet_adv2():
         )
         .CALCULATE(
             week=DATETIME(created_at, "start of week"),
-            is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
+            is_weekend=IFF(ISIN(DAYOFWEEK(created_at), (5, 6)), 1, 0),
         )
         .PARTITION(name="weeks", by=week)
         .CALCULATE(
@@ -2631,11 +2631,15 @@ def impl_defog_academic_gen14():
     """
     n_pubs = COUNT(publications)
     n_jours = NDISTINCT(publications.journal_id)
-    return publications.PARTITION(name="years", by=year).CALCULATE(
-        year,
-        num_publications=n_pubs,
-        num_journals=n_jours,
-        ratio=n_pubs / n_jours,
+    return (
+        publications.PARTITION(name="years", by=year)
+        .CALCULATE(
+            year,
+            num_publications=n_pubs,
+            num_journals=n_jours,
+            ratio=n_pubs / n_jours,
+        )
+        .ORDER_BY(year.ASC(na_pos="last"))
     )
 
 
@@ -2697,7 +2701,7 @@ def impl_defog_academic_gen18():
     """
     return journals.CALCULATE(
         name, journal_id, num_publications=COUNT(archives)
-    ).ORDER_BY(num_publications.DESC())
+    ).ORDER_BY(num_publications.DESC(), name.ASC())
 
 
 def impl_defog_academic_gen19():

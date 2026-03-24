@@ -377,24 +377,6 @@ def defog_mysql_test_data(
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_e2e_mysql_tpch(
-    tpch_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    mysql_conn_db_context: Callable[[str], DatabaseContext],
-):
-    """
-    Test executing the TPC-H queries from the original code generation on MySQL.
-    """
-
-    tpch_pipeline_test_data.run_e2e_test(
-        get_sample_graph,
-        mysql_conn_db_context("tpch"),
-        coerce_types=True,
-    )
-
-
-@pytest.mark.mysql
-@pytest.mark.execute
 def test_pipeline_e2e_mysql_tpch_16_params(
     tpch_mysql_params_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,

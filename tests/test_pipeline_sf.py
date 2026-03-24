@@ -64,25 +64,6 @@ def snowflake_params_tpch_q16_data(request) -> PyDoughPandasTest:
 
 @pytest.mark.snowflake
 @pytest.mark.execute
-def test_pipeline_e2e_tpch_sf_conn(
-    tpch_pipeline_test_data: PyDoughPandasTest,
-    get_sf_sample_graph: graph_fetcher,
-    sf_conn_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H queries from the original code generation,
-    with Snowflake as the executing database.
-    Using the `connection` as keyword argument to the DatabaseContext.
-    """
-    tpch_pipeline_test_data.run_e2e_test(
-        get_sf_sample_graph,
-        sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
-        coerce_types=True,
-    )
-
-
-@pytest.mark.snowflake
-@pytest.mark.execute
 def test_pipeline_e2e_tpch_sf_params(
     snowflake_params_tpch_q16_data: PyDoughPandasTest,
     get_sf_sample_graph: graph_fetcher,

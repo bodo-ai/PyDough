@@ -238,7 +238,7 @@ def rank_nations_by_region():
 def rank_nations_per_region_by_customers():
     return regions.nations.CALCULATE(
         nation_name=name,
-        rank=RANKING(by=(COUNT(customers).DESC(), region.name), per="regions"),
+        rank=RANKING(by=(COUNT(customers).DESC(), name), per="regions"),
     ).TOP_K(5, by=rank.ASC())
 
 
@@ -2216,6 +2216,7 @@ def strip():
             alt_name4="""
     Alex Rodriguez
         """,  # equivalent to "\n\tAlex Rodriguez\n"
+            alt_name5="\r  Alex Rodriguez  \r\n",
         )
         .CALCULATE(
             stripped_name=STRIP(name, "Alex Rodriguez"),
@@ -2225,6 +2226,7 @@ def strip():
             stripped_alt_name2=STRIP(alt_name2, "aeiou"),
             stripped_alt_name3=STRIP(alt_name3, ";"),
             stripped_alt_name4=STRIP(alt_name4),
+            stripped_alt_name5=STRIP(alt_name5),
         )
     )
 
@@ -2552,7 +2554,6 @@ def quarter_function_test():
         # Testing with partial quarters (should still count as crossing a quarter boundary)
         q_diff11=DATEDIFF("quarter", "2023-03-31", "2023-04-01"),  # 1 quarter
         q_diff12=DATEDIFF("quarter", "2023-12-31", "2024-01-01"),  # 1 quarter
-        # QUARTER(order_date),
     )
 
 
@@ -2905,6 +2906,40 @@ def string_format_specifiers_snowflake():
         d14=STRING(static_date, ".FF"),
         # timezone hour and minute
         d15=STRING(static_date, "TZH:TZM"),
+    )
+
+
+def string_format_specifiers_oracle():
+    # String format specifiers for date/time with a static datetime
+    # Works for Oracle TO_CHAR
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # ===== YEAR =====
+        d1=STRING(static_date, "YYYY"),  # four-digit year
+        d2=STRING(static_date, "YY"),  # last two digits of year
+        d3=STRING(static_date, "RR"),  # 2-digit year with century logic
+        # ===== MONTH =====
+        d4=STRING(static_date, "MM"),  # month number (01–12)
+        d5=STRING(static_date, "MON"),  # abbreviated month name
+        d6=STRING(static_date, "MONTH"),  # full month name (space-padded)
+        d7=STRING(static_date, "Q"),  # quarter (1–4)
+        # ===== DAY =====
+        d8=STRING(static_date, "DD"),  # day of month (01–31)
+        d9=STRING(static_date, "DDD"),  # day of year (001–366)
+        d10=STRING(static_date, "D"),  # day of week (1–7, NLS dependent)
+        d11=STRING(static_date, "DY"),  # abbreviated day name
+        d12=STRING(static_date, "DAY"),  # full day name (space-padded)
+        # ===== WEEK =====
+        d13=STRING(static_date, "W"),  # week of month (1–5)
+        d14=STRING(static_date, "WW"),  # week of year (1–53)
+        d15=STRING(static_date, "IW"),  # ISO week number (01–53)
+        # ===== TIME =====
+        d16=STRING(static_date, "HH24"),  # hour (00–23)
+        d17=STRING(static_date, "HH12"),  # hour (01–12)
+        d18=STRING(static_date, "MI"),  # minute (00–59)
+        d19=STRING(static_date, "SS"),  # second (00–59)
+        d20=STRING(static_date, "AM"),  # meridian indicator (AM/PM)
     )
 
 
