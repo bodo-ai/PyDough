@@ -8,13 +8,16 @@ from typing import Any
 
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot import parse_one
+from sqlglot import parse_one, transforms
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.dialects.dialect import rename_func
 from sqlglot.dialects.mysql import MySQL
+from sqlglot.dialects.oracle import Oracle
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import (
     Alias,
@@ -164,7 +167,7 @@ def apply_sqlglot_optimizer(
     # PyDough skips this step if there are any recursive CTEs in the query, due
     # to flaws in how SQLGlot handles such subqueries.
     if not any(e.args.get("recursive") for e in glot_expr.find_all(With)):
-        glot_expr = unnest_subqueries(glot_expr)
+        glot_expr = unnest_subqueries(glot_expr, dialect)
 
     # limit clauses, which is not correct.
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
@@ -204,7 +207,7 @@ def apply_sqlglot_optimizer(
 
     # Replaces any grouping or ordering keys that point to a clause in the
     # SELECT with an index (e.g. ORDER BY 1, GROUP BY 1, 2)
-    replace_keys_with_indices(glot_expr)
+    replace_keys_with_indices(glot_expr, dialect)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
@@ -214,10 +217,16 @@ def apply_sqlglot_optimizer(
     # SQL.
     remove_tuple_row_values(glot_expr)
 
+    # Quote identifiers when required
+    # For Oracle add quotes to all alias starting with _
+    quote_oracle_identifiers(glot_expr, dialect)
+
     return glot_expr
 
 
-def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
+def replace_keys_with_indices(
+    glot_expr: SQLGlotExpression, dialect: SQLGlotDialect
+) -> None:
     """
     Runs a transformation postprocessing pass on the SQLGlot AST to make the
     following changes:
@@ -293,7 +302,11 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
                         expression.expressions[expr_idx] = collate
 
         # Replace GROUP BY keys that are in the select clause with indices.
-        if expression.args.get("group") is not None:
+        # Oracle does not support indices in the GROUP BY, for this dialect this
+        # step is skipped
+        if expression.args.get("group") is not None and not isinstance(
+            dialect, OracleDialect
+        ):
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
                 # Only replace with the index if the key expression appears in
@@ -350,9 +363,11 @@ def fix_column_case(
             # Handle expressions with aliases
             if isinstance(expr, Alias):
                 identifier = expr.args.get("alias")
+                quoted = quoted or identifier.args.get("quoted", False)
                 identifier.set("this", col_name)
                 identifier.set("quoted", quoted)
             elif isinstance(expr, Column):
+                quoted = quoted or expr.this.this.args.get("quoted", False)
                 expr.this.this.set("this", col_name)
                 expr.this.this.set("quoted", quoted)
 
@@ -466,6 +481,36 @@ def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
             remove_tuple_row_values(arg)
 
 
+def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -> None:
+    """
+    Add quotes to all Identifiers that start with '_'. Identifiers that start with
+    '_' are invalid for Oracle unless they are quoted.
+
+    Note: This only is required for the Oracle dialect.
+
+    Args:
+        expr: The SQLGlot expression to visit.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    # This runs just for Oracle dialect
+    if not isinstance(dialect, OracleDialect):
+        return
+
+    if isinstance(expr, sqlglot_expressions.Identifier):
+        # Identifiers starting with _ are required to be quoted for Oracle
+        if expr.this.startswith("_"):
+            new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
+            expr.replace(new_identifier)
+            # Identifiers are leaf nodes, so no recursion is needed
+            return
+
+    # Recursively visit the subexpressions.
+    for arg in expr.iter_expressions():
+        quote_oracle_identifiers(arg, dialect)
+
+
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     """
     Convert the given DatabaseDialect to the corresponding SQLGlotDialect.
@@ -490,6 +535,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return MySQLDialect()
         case DatabaseDialect.POSTGRES:
             return PostgresDialect()
+        case DatabaseDialect.ORACLE:
+            return OracleDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
@@ -510,6 +557,30 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             MySQL.Generator.VALUES_AS_TABLE = True
             # Keep the parenthesis around the values
             MySQL.Generator.WRAP_DERIVED_VALUES = True
+        case DatabaseDialect.ORACLE:
+            # This tells the Oracle generator to map DATETIME requests to DATE
+            Oracle.Generator.TYPE_MAPPING[
+                sqlglot_expressions.DataType.Type.DATETIME
+            ] = "DATE"
+
+            # Fixes VAR_POP call. Without it sqlglot uses VARIANCE_POP which
+            # doesn't exist in Oracle
+            Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop] = rename_func(
+                "VAR_POP"
+            )
+
+            # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
+            # which is necessary later when optimizing.
+            Oracle.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.eliminate_qualify,
+                        transforms.eliminate_semi_and_anti_joins,
+                    ]
+                )
+            )
+
         case _:
             pass
 
@@ -523,6 +594,20 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
         case DatabaseDialect.MYSQL:
             MySQL.Generator.VALUES_AS_TABLE = False
             MySQL.Generator.WRAP_DERIVED_VALUES = False
+        case DatabaseDialect.ORACLE:
+            del Oracle.Generator.TYPE_MAPPING[
+                sqlglot_expressions.DataType.Type.DATETIME
+            ]
+            del Oracle.Generator.TRANSFORMS[sqlglot_expressions.VariancePop]
+
+            Oracle.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.eliminate_qualify,
+                    ]
+                )
+            )
         case _:
             pass
 

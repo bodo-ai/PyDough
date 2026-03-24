@@ -1,0 +1,18 @@
+WITH "_T" AS (
+  SELECT
+    LINEITEM.l_extendedprice AS L_EXTENDEDPRICE,
+    LINEITEM.l_quantity AS L_QUANTITY,
+    AVG(CAST(LINEITEM.l_quantity AS DOUBLE PRECISION)) OVER (PARTITION BY LINEITEM.l_partkey) AS "_W"
+  FROM TPCH.PART PART
+  JOIN TPCH.LINEITEM LINEITEM
+    ON LINEITEM.l_partkey = PART.p_partkey
+  WHERE
+    PART.p_brand = 'Brand#23' AND PART.p_container = 'MED BOX'
+)
+SELECT
+  COALESCE(SUM(L_EXTENDEDPRICE), 0) / 7.0 AS AVG_YEARLY
+FROM "_T"
+WHERE
+  L_QUANTITY < (
+    0.2 * "_W"
+  )

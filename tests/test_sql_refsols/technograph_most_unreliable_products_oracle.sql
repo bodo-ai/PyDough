@@ -1,0 +1,29 @@
+WITH "_S1" AS (
+  SELECT
+    in_device_id AS IN_DEVICE_ID,
+    COUNT(*) AS N_ROWS
+  FROM MAIN.INCIDENTS
+  GROUP BY
+    in_device_id
+), "_S3" AS (
+  SELECT
+    DEVICES.de_product_id AS DE_PRODUCT_ID,
+    COUNT(*) AS N_ROWS,
+    SUM("_S1".N_ROWS) AS SUM_N_ROWS
+  FROM MAIN.DEVICES DEVICES
+  LEFT JOIN "_S1" "_S1"
+    ON DEVICES.de_id = "_S1".IN_DEVICE_ID
+  GROUP BY
+    DEVICES.de_product_id
+)
+SELECT
+  PRODUCTS.pr_name AS product,
+  PRODUCTS.pr_brand AS product_brand,
+  PRODUCTS.pr_type AS product_type,
+  ROUND(COALESCE("_S3".SUM_N_ROWS, 0) / "_S3".N_ROWS, 2) AS ir
+FROM MAIN.PRODUCTS PRODUCTS
+JOIN "_S3" "_S3"
+  ON PRODUCTS.pr_id = "_S3".DE_PRODUCT_ID
+ORDER BY
+  4 DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY

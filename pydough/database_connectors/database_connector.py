@@ -110,6 +110,7 @@ class DatabaseDialect(Enum):
     SNOWFLAKE = "snowflake"
     MYSQL = "mysql"
     POSTGRES = "postgres"
+    ORACLE = "oracle"
     BODOSQL = "bodosql"
 
     @staticmethod

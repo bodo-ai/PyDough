@@ -43,11 +43,8 @@ from pydough.database_connectors import load_database_context
 from pyarrow.csv import read_csv as pyarrow_read_csv
 
 
-from .conftest import tpch_custom_test_data_dialect_replacements
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
-from .test_pipeline_sf import defog_sf_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
-from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
 
 
 @pytest.fixture(scope="session")
