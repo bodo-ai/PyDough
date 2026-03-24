@@ -16,7 +16,12 @@ from tests.test_pydough_functions.exploration_examples import (
     contextless_collections_impl,
     contextless_expr_impl,
     contextless_func_impl,
+    cross_impl,
+    cross_nations_impl,
+    cross_term_impl,
+    customers_ancestry_term_impl,
     customers_without_orders_impl,
+    dataframe_collection_exploration_impl,
     filter_impl,
     global_agg_calc_impl,
     global_calc_impl,
@@ -34,14 +39,26 @@ from tests.test_pydough_functions.exploration_examples import (
     parts_avg_price_child_impl,
     parts_avg_price_impl,
     parts_with_german_supplier,
+    range_collection_exploration_impl,
     region_n_suppliers_in_red_impl,
     region_nations_back_name,
     region_nations_suppliers_impl,
     region_nations_suppliers_name_impl,
+    region_richest_customer_term_impl,
+    singular_impl,
     subcollection_calc_backref_impl,
     suppliers_iff_balance_impl,
     table_calc_impl,
     top_k_impl,
+    udf_combine_strings_impl,
+    udf_cumulative_distribution_impl,
+    udf_epsilon_impl,
+    udf_format_datetime_impl,
+    udf_nval_impl,
+    udf_percentage_impl,
+    udf_positive_impl,
+    udf_ranking_impl,
+    udf_relmin_impl,
 )
 from tests.testing_utilities import graph_fetcher
 
@@ -1202,6 +1219,178 @@ Call pydough.explain(collection, verbose=True) for more details.
         pytest.param(
             (
                 "TPCH",
+                singular_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      ├─── SubCollection[region]
+      └─── Singular
+
+This node applies the SINGULAR operator, asserting that the preceding collection is singular (1-to-1) with respect to the parent context.
+Collection made singular: TPCH.nations.region
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node applies the SINGULAR operator, asserting that the preceding collection is singular (1-to-1) with respect to the parent context.
+Collection made singular: TPCH.nations.region
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="singular",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                cross_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left: nations
+Right: regions
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node is a CROSS join: every row of the left collection is paired with every row of the right collection.
+Left: nations
+Right: regions
+
+The collection has access to the following expressions:
+  comment, key, name
+
+The collection has access to the following collections:
+  nations
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="cross",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                range_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── RangeCollection('rng', i=range(1, 5))
+
+This node accesses user-generated collection 'rng'.
+Columns: i
+This collection is a Python range.
+Unique columns: i
+Range: start=1, end=5, step=1
+
+The following terms will be included in the result if this collection is executed:
+  i
+
+The collection has access to the following expressions:
+  i
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'rng'.
+Columns: i
+This collection is a Python range.
+
+The collection has access to the following expressions:
+  i
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="range_collection",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                dataframe_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── DataframeCollection(name='df_coll', shape=(1, 1), columns=['id'])
+
+This node accesses user-generated collection 'df_coll'.
+Columns: id
+This collection is a Pandas DataFrame.
+Unique columns: id
+DataFrame contents:
+     id
+  0   1
+
+The following terms will be included in the result if this collection is executed:
+  id
+
+The collection has access to the following expressions:
+  id
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'df_coll'.
+Columns: id
+This collection is a Pandas DataFrame.
+
+The collection has access to the following expressions:
+  id
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="dataframe_collection",
+        ),
+        pytest.param(
+            (
+                "TPCH",
                 nation_expr_impl,
                 """
 If pydough.explain is called on an unqualified PyDough code, it is expected to
@@ -1261,11 +1450,15 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_aggfunc_impl,
                 """
-Cannot call pydough.explain on COUNT(customers).
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ COUNT(customers)
 Did you mean to use pydough.explain_term?
 """,
                 """
-Cannot call pydough.explain on COUNT(customers).
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ COUNT(customers)
 Did you mean to use pydough.explain_term?
 """,
             ),
@@ -1340,6 +1533,113 @@ def test_unqualified_node_exploration(
 
 @pytest.fixture(
     params=[
+        pytest.param(
+            (
+                "TPCH",
+                cross_nations_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─┬─ TableCollection[nations]
+      └─┬─ TPCH
+        └─── TableCollection[regions]
+Note: This collection is a CROSS product of 'nations' and 'regions'.
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─── SubCollection[nations]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.nations.TPCH.regions.CALCULATE(COUNT(nations.comment))
+  TPCH.nations.TPCH.regions.WHERE(HAS(nations))
+  TPCH.nations.TPCH.regions.ORDER_BY(COUNT(nations).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.nations.TPCH.regions.nations
+""",
+                """
+Collection: TPCH.nations.TPCH.regions
+Note: This collection is a CROSS product of 'nations' and 'regions'.
+
+The term is the following child of the collection:
+  nations
+""",
+            ),
+            id="cross-nations",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                cross_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[customers]
+    └─── Where[market_segment == 'BUILDING']
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─┬─ TPCH
+      ├─── TableCollection[nations]
+      └─┬─ Where[$1.name == 'ASIA']
+        └─┬─ AccessChild
+          └─── SubCollection[region]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.customers.WHERE(market_segment == 'BUILDING').CALCULATE(COUNT(TPCH.nations.WHERE(region.name == 'ASIA').comment))
+  TPCH.customers.WHERE(market_segment == 'BUILDING').WHERE(HAS(TPCH.nations.WHERE(region.name == 'ASIA')))
+  TPCH.customers.WHERE(market_segment == 'BUILDING').ORDER_BY(COUNT(TPCH.nations.WHERE(region.name == 'ASIA')).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.customers.WHERE(market_segment == 'BUILDING').TPCH.nations.WHERE(region.name == 'ASIA')
+""",
+                """
+Collection: TPCH.customers.WHERE(market_segment == 'BUILDING')
+
+The term is the following child of the collection:
+  TPCH.nations.WHERE(region.name == 'ASIA')
+""",
+            ),
+            id="cross-term",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                customers_ancestry_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[customers]
+    └─┬─ Calculate[cust_nation_key=nation_key]
+      └─┬─ TPCH
+        └─── TableCollection[nations]
+Note: This collection is a CROSS product of 'customers.CALCULATE(cust_nation_key=nation_key)' and 'nations'.
+
+The term is the following expression: cust_nation_key
+
+This is a reference to expression 'cust_nation_key' of the 2nd ancestor of the collection, which is the following:
+  ──┬─ TPCH
+    ├─── TableCollection[customers]
+    └─── Calculate[cust_nation_key=nation_key]
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH.customers.CALCULATE(cust_nation_key=nation_key).TPCH.nations.CALCULATE(cust_nation_key)
+""",
+                """
+Collection: TPCH.customers.CALCULATE(cust_nation_key=nation_key).TPCH.nations
+Note: This collection is a CROSS product of 'customers.CALCULATE(cust_nation_key=nation_key)' and 'nations'.
+
+The term is the following expression: cust_nation_key
+
+This is a reference to expression 'cust_nation_key' of the 2nd ancestor of the collection, which is the following:
+  TPCH.customers.CALCULATE(cust_nation_key=nation_key)
+""",
+            ),
+            id="customers-ancestry-term",
+        ),
         pytest.param(
             (
                 "TPCH",
@@ -1839,6 +2139,84 @@ Call pydough.explain_term with this collection and any of the arguments to learn
             ),
             id="customers-with_german_supplier",
         ),
+        pytest.param(
+            (
+                "TPCH",
+                region_richest_customer_term_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[regions]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      ├─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
+      └─── Singular
+
+This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      └─── Where[RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1]
+
+This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
+For example, the following is valid:
+  TPCH.regions.CALCULATE(nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR().account_balance)
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.regions.nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR()
+                """,
+                """
+Collection: TPCH.regions
+
+The term is the following child of the collection:
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1).SINGULAR()
+
+This child uses the SINGULAR operator, declaring the following sub-collection as singular with respect to the collection:
+  nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1) == 1)
+                """,
+            ),
+            id="region-richest_customer_singular",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                udf_ranking_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[nations]
+
+The term is the following expression: RANKING(by=(name.ASC(na_pos='first')))
+
+This expression calls the window function 'RANKING'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH.nations.CALCULATE(RANKING(by=(name.ASC(na_pos='first'))))
+""",
+                """
+Collection: TPCH.nations
+
+The term is the following expression: RANKING(by=(name.ASC(na_pos='first')))
+
+This expression calls the window function 'RANKING'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+""",
+            ),
+            id="nations-ranking",
+        ),
     ]
 )
 def unqualified_term_exploration_test_data(
@@ -1892,6 +2270,428 @@ def test_unqualified_term_exploration(
     node, term = pydough.init_pydough_context(graph)(test_impl)()
     answer: str = pydough.explain_term(
         node, term, verbose=verbose, session=empty_sqlite_tpch_session
+    )
+    expected_answer: str = verbose_answer if verbose else non_verbose_answer
+    assert answer == expected_answer, (
+        "Mismatch between produced string and expected answer"
+    )
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                udf_format_datetime_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[orders]
+
+The term is the following expression: FORMAT_DATETIME('%Y', order_date)
+
+This expression calls the user-defined function 'FORMAT_DATETIME' on the following arguments:
+  '%Y'
+  order_date
+
+Description: Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.
+This function is an alias for the SQL function 'STRFTIME'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.orders.CALCULATE(FORMAT_DATETIME('%Y', order_date))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.orders
+
+The term is the following expression: FORMAT_DATETIME('%Y', order_date)
+
+This expression calls the user-defined function 'FORMAT_DATETIME' on the following arguments:
+  '%Y'
+  order_date
+
+Description: Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.
+This function is an alias for the SQL function 'STRFTIME'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-sql_alias-format_datetime",
+        ),
+        pytest.param(
+            (
+                udf_percentage_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[regions]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─┬─ SubCollection[nations]
+      └─── SubCollection[customers]
+
+The term is the following expression: PERCENTAGE(POSITIVE($1.account_balance))
+
+This expression calls the user-defined function 'PERCENTAGE' on the following arguments, aggregating them into a single value for each record of the collection:
+  POSITIVE(nations.customers.account_balance)
+
+Description: Returns the percentage of rows where the argument is True.
+This function is defined by the SQL macro: '(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a'
+Then the final SQL text for this function call would be: '(100.0 * SUM(CASE WHEN ?a THEN 1 END)) / COUNT(*)'
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.regions.CALCULATE(PERCENTAGE(POSITIVE(nations.customers.account_balance)))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.regions
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: nations.customers
+
+The term is the following expression: PERCENTAGE(POSITIVE($1.account_balance))
+
+This expression calls the user-defined function 'PERCENTAGE' on the following arguments, aggregating them into a single value for each record of the collection:
+  POSITIVE(nations.customers.account_balance)
+
+Description: Returns the percentage of rows where the argument is True.
+This function is defined by the SQL macro: '(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-sql_macro-percentage",
+        ),
+        pytest.param(
+            (
+                udf_epsilon_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[nations]
+
+The term is the following expression: EPSILON(key, region_key, 0.5)
+
+This expression calls the user-defined function 'EPSILON' on the following arguments:
+  key
+  region_key
+  0.5
+
+Description: Returns true if the gap between the first and second argument is at most the third argument.
+This function is defined by the SQL macro: 'ABS({1} - {0}) <= {2}'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a', '?b', '?c'
+Then the final SQL text for this function call would be: 'ABS(?b - ?a) <= ?c'
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.nations.CALCULATE(EPSILON(key, region_key, 0.5))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.nations
+
+The term is the following expression: EPSILON(key, region_key, 0.5)
+
+This expression calls the user-defined function 'EPSILON' on the following arguments:
+  key
+  region_key
+  0.5
+
+Description: Returns true if the gap between the first and second argument is at most the third argument.
+This function is defined by the SQL macro: 'ABS({1} - {0}) <= {2}'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-sql_macro-epsilon",
+        ),
+        pytest.param(
+            (
+                udf_nval_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[nations]
+
+The term is the following expression: NVAL(name, 1, by=(name.ASC(na_pos='first')))
+
+This expression calls the user-defined window function 'NVAL' with the following arguments:
+  name
+  1
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Description: Returns the value of the first argument at the Nth row in the window, where N is the second argument. If N is greater than the number of rows in the window, returns NULL.
+This function is an alias for the SQL window function 'NTH_VALUE'.
+This window function requires ordering and supports frame specifications.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.nations.CALCULATE(NVAL(name, 1, by=(name.ASC(na_pos='first'))))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.nations
+
+The term is the following expression: NVAL(name, 1, by=(name.ASC(na_pos='first')))
+
+This expression calls the user-defined window function 'NVAL' with the following arguments:
+  name
+  1
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Description: Returns the value of the first argument at the Nth row in the window, where N is the second argument. If N is greater than the number of rows in the window, returns NULL.
+This function is an alias for the SQL window function 'NTH_VALUE'.
+This window function requires ordering and supports frame specifications.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-window_alias-nval",
+        ),
+        pytest.param(
+            (
+                udf_combine_strings_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[regions]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─── SubCollection[nations]
+
+The term is the following expression: COMBINE_STRINGS($1.name, ',')
+
+This expression calls the user-defined function 'COMBINE_STRINGS' on the following arguments, aggregating them into a single value for each record of the collection:
+  nations.name
+  ','
+
+Description: Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).
+This function is an alias for the SQL function 'GROUP_CONCAT'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.regions.CALCULATE(COMBINE_STRINGS(nations.name, ','))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.regions
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: nations
+
+The term is the following expression: COMBINE_STRINGS($1.name, ',')
+
+This expression calls the user-defined function 'COMBINE_STRINGS' on the following arguments, aggregating them into a single value for each record of the collection:
+  nations.name
+  ','
+
+Description: Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).
+This function is an alias for the SQL function 'GROUP_CONCAT'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-sql_alias_agg-combine_strings",
+        ),
+        pytest.param(
+            (
+                udf_positive_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[nations]
+
+The term is the following expression: POSITIVE(key)
+
+This expression calls the user-defined function 'POSITIVE' on the following arguments:
+  key
+
+Description: Returns true if the argument is greater than zero.
+This function is defined by the SQL macro: '{0} > 0'.
+Suppose this function were called on arguments that are translated to the following in SQL: '?a'
+Then the final SQL text for this function call would be: '?a > 0'
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.nations.CALCULATE(POSITIVE(key))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.nations
+
+The term is the following expression: POSITIVE(key)
+
+This expression calls the user-defined function 'POSITIVE' on the following arguments:
+  key
+
+Description: Returns true if the argument is greater than zero.
+This function is defined by the SQL macro: '{0} > 0'.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-sql_macro_nonagg-positive",
+        ),
+        pytest.param(
+            (
+                udf_relmin_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[nations]
+
+The term is the following expression: RELMIN(key, by=(name.ASC(na_pos='first')), cumulative=True)
+
+This expression calls the user-defined window function 'RELMIN' with the following arguments:
+  key
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Additional options:
+  cumulative=True: The window frame spans from the start of the partition to the current row.
+
+Description: Obtains the smallest value in the window.
+This function is an alias for the SQL window function 'MIN'.
+This window function does not require ordering and supports frame specifications.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.nations.CALCULATE(RELMIN(key, by=(name.ASC(na_pos='first')), cumulative=True))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.nations
+
+The term is the following expression: RELMIN(key, by=(name.ASC(na_pos='first')), cumulative=True)
+
+This expression calls the user-defined window function 'RELMIN' with the following arguments:
+  key
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Additional options:
+  cumulative=True: The window frame spans from the start of the partition to the current row.
+
+Description: Obtains the smallest value in the window.
+This function is an alias for the SQL window function 'MIN'.
+This window function does not require ordering and supports frame specifications.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-window_alias_no_order-relmin",
+        ),
+        pytest.param(
+            (
+                udf_cumulative_distribution_impl,
+                """
+Collection:
+  ──┬─ TPCH_SQLITE_UDFS
+    └─── TableCollection[nations]
+
+The term is the following expression: CUMULATIVE_DISTRIBUTION(by=(name.ASC(na_pos='first')))
+
+This expression calls the user-defined window function 'CUMULATIVE_DISTRIBUTION'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Description: Returns the ratio of rows that are less than or equal to the current row versus the total number of rows in the window.
+This function is an alias for the SQL window function 'CUME_DIST'.
+This window function requires ordering and does not support frame specifications.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
+For example, the following is valid:
+  TPCH_SQLITE_UDFS.nations.CALCULATE(CUMULATIVE_DISTRIBUTION(by=(name.ASC(na_pos='first'))))
+                """,
+                """
+Collection: TPCH_SQLITE_UDFS.nations
+
+The term is the following expression: CUMULATIVE_DISTRIBUTION(by=(name.ASC(na_pos='first')))
+
+This expression calls the user-defined window function 'CUMULATIVE_DISTRIBUTION'.
+
+Ordering (by):
+  name.ASC(na_pos='first')
+
+Description: Returns the ratio of rows that are less than or equal to the current row versus the total number of rows in the window.
+This function is an alias for the SQL window function 'CUME_DIST'.
+This window function requires ordering and does not support frame specifications.
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+                """,
+            ),
+            id="udf-window_alias_no_frame-cumulative_distribution",
+        ),
+    ]
+)
+def unqualified_term_udf_exploration_test_data(
+    request,
+) -> tuple[
+    Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]],
+    str,
+    str,
+]:
+    """
+    Testing data used for test_unqualified_term_udf_exploration. Returns a
+    tuple of a function that, when decorated by pydough returns a tuple of the
+    unqualified node for a collection and a UDF term within it, and the
+    expected explanation strings for when pydough.explain_term is called on the
+    unqualified node, both with and without verbose mode.
+    """
+    test_impl: Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]] = request.param[0]
+    verbose_refsol: str = request.param[1]
+    non_verbose_refsol: str = request.param[2]
+    return test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
+
+
+@pytest.mark.parametrize(
+    "verbose",
+    [
+        pytest.param(True, id="verbose"),
+        pytest.param(False, id="non_verbose"),
+    ],
+)
+def test_unqualified_term_udf_exploration(
+    unqualified_term_udf_exploration_test_data: tuple[
+        Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]],
+        str,
+        str,
+    ],
+    verbose: bool,
+    get_udf_graph: graph_fetcher,
+    empty_sqlite_udf_session: PyDoughSession,
+) -> None:
+    """
+    Verifies that `pydough.explain_term` called on unqualified nodes with UDF
+    expressions produces the expected strings.
+    """
+    test_impl, verbose_answer, non_verbose_answer = (
+        unqualified_term_udf_exploration_test_data
+    )
+    graph: GraphMetadata = get_udf_graph("TPCH_SQLITE_UDFS")
+    node, term = pydough.init_pydough_context(graph)(test_impl)()
+    answer: str = pydough.explain_term(
+        node, term, verbose=verbose, session=empty_sqlite_udf_session
     )
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert answer == expected_answer, (
