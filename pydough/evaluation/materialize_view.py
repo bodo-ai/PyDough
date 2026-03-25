@@ -77,6 +77,15 @@ def _generate_create_ddl(
     object_type = "VIEW" if as_view else "TABLE"
     ddl_statements: list[str] = []
 
+    # Oracle uses GLOBAL TEMPORARY TABLE (Oracle 23c+), not standard TEMPORARY TABLE.
+    if temp and not as_view and db_dialect == DatabaseDialect.ORACLE:
+        if replace:
+            ddl_statements.append(f"DROP TABLE IF EXISTS {name}")
+        ddl_statements.append(
+            f"CREATE GLOBAL TEMPORARY TABLE {name} ON COMMIT PRESERVE ROWS AS {sql}"
+        )
+        return ddl_statements, temp
+
     if temp:
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
         if not allowed:

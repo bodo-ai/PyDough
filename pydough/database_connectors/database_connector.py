@@ -199,6 +199,13 @@ class DatabaseDialect(Enum):
                 return CreateCapabilities(replace_table=False, temp_view=False)
             case DatabaseDialect.SQLITE:
                 return CreateCapabilities(replace_table=False, replace_view=False)
+            case DatabaseDialect.ORACLE:
+                return CreateCapabilities(
+                    replace_table=False,
+                    temp_table=True,
+                    replace_view=True,
+                    temp_view=False,
+                )
             case _:
                 # ANSI
                 return CreateCapabilities()

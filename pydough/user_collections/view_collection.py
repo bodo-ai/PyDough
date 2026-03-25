@@ -116,6 +116,16 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
             f")"
         )
 
+    def to_explanation(self, verbose: bool) -> list[str]:
+        """Return explanation lines for the view/table collection."""
+        kind = "view" if self._is_view else "table"
+        temp_prefix = "temporary " if self._is_temp else ""
+        lines = super().to_explanation(verbose)
+        lines.insert(1, f"This collection is a materialized {temp_prefix}{kind}.")
+        if verbose:
+            lines.append(f"Created with replace={self._is_replace}")
+        return lines
+
     def equals(self, other) -> bool:
         """Check if this collection is equal to another collection."""
         return (

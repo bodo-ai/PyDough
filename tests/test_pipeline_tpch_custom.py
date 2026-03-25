@@ -6502,7 +6502,7 @@ def test_pipeline_to_table_ddl(
         else ""
     )
 
-    # TEMP VIEWS (not tables) are not supported for Snowflake, MySQL, and Postgres.
+    # TEMP VIEWS (not tables) are not supported for Snowflake, MySQL, Postgres, and Oracle.
     # So run and catch PyDoughException that indicates temp view is not supported, and skip the rest of the test in that case.
     if (
         temp
@@ -6512,6 +6512,7 @@ def test_pipeline_to_table_ddl(
             DatabaseDialect.SNOWFLAKE,
             DatabaseDialect.MYSQL,
             DatabaseDialect.POSTGRES,
+            DatabaseDialect.ORACLE,
         }
     ):
         with pytest.raises(
@@ -6538,7 +6539,7 @@ def test_pipeline_to_table_ddl(
     expected_create_statement = "CREATE"
 
     table_or_view = " VIEW" if as_view else " TABLE"
-    # SQLite, PostgreSQL and MySQL) do not support REPLACE TABLE
+    # SQLite, PostgreSQL, MySQL, and Oracle do not support REPLACE TABLE
     # Also, SQLite does not support REPLACE VIEW too but other dialects too.
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
@@ -6550,6 +6551,7 @@ def test_pipeline_to_table_ddl(
                 DatabaseDialect.SQLITE,
                 DatabaseDialect.POSTGRES,
                 DatabaseDialect.MYSQL,
+                DatabaseDialect.ORACLE,
             }
         ) or (
             table_or_view == " VIEW"
@@ -6566,8 +6568,11 @@ def test_pipeline_to_table_ddl(
     # that reference attached databases.
     # SQLite the only one that supports temporary views.
     # So the view will be created as TEMPORARY.
+    # Oracle uses GLOBAL TEMPORARY TABLE instead of TEMPORARY TABLE.
     if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
         expected_create_statement += " TEMPORARY"
+    elif temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
+        expected_create_statement += " GLOBAL TEMPORARY"
     elif temp:
         expected_create_statement += " TEMPORARY"
 
