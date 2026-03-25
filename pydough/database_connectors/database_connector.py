@@ -116,10 +116,11 @@ class DatabaseConnection:
         """
         self._cursor = self._connection.cursor()
         try:
-            # This is a generic query that should work on most databases to get
-            # the schema of a table. It may need to be customized for specific
-            # databases.
-            self.cursor.execute(f"SELECT * FROM {table_name} LIMIT 0")
+            # WHERE 1=0 returns no rows but populates cursor.description
+            # with column metadata on all supported dialects.
+            # Used instead of LIMIT 0 which is not supported in all dialects
+            # (e.g. Oracle).
+            self.cursor.execute(f"SELECT * FROM {table_name} WHERE 1=0")
             column_names = [description[0] for description in self.cursor.description]
             # Consume any results to avoid MySQL "Unread result found" error
             try:

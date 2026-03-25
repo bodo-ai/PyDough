@@ -86,7 +86,7 @@ def _generate_create_ddl(
             # Use a PL/SQL block to drop the table only if it already exists.
             ddl_statements.append(
                 f"BEGIN EXECUTE IMMEDIATE 'DROP TABLE {name}';"
-                " EXCEPTION WHEN OTHERS THEN NULL; END"
+                " EXCEPTION WHEN OTHERS THEN NULL; END;"
             )
         ddl_statements.append(
             f"CREATE PRIVATE TEMPORARY TABLE {name} ON COMMIT PRESERVE DEFINITION AS {sql}"

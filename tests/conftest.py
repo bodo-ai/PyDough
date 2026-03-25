@@ -1538,6 +1538,8 @@ def oracle_docker_setup() -> None:
                         f"{ORACLE_PORT}:{ORACLE_PORT}",
                         "-e",
                         f"ORACLE_PWD={os.getenv('ORACLE_PASSWORD')}",
+                        "-e",
+                        "ORACLE_DISABLE_MEM_PROTECT=TRUE",
                         ORACLE_DOCKER_IMAGE,
                     ],
                     check=True,
