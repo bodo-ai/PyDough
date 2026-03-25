@@ -5118,15 +5118,20 @@ def test_pipeline_until_sql_tpch_custom(
 @pytest.mark.execute
 def test_pipeline_e2e_tpch_custom(
     tpch_custom_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    sqlite_tpch_db_context: DatabaseContext,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
 ):
     """
     Test executing the the custom queries with TPC-H data from the original
     code generation.
     """
+    db_context, graph = all_dialects_tpch_db_context
+
+    # Skip BodoSQL as custom tests were not checked with it.
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("Skipping tpch customer test for BodoSQL.")
+
     tpch_custom_pipeline_test_data.run_e2e_test(
-        get_sample_graph, sqlite_tpch_db_context, coerce_types=True
+        lambda _: graph, db_context, coerce_types=True
     )
 
 
@@ -6568,11 +6573,11 @@ def test_pipeline_to_table_ddl(
     # that reference attached databases.
     # SQLite the only one that supports temporary views.
     # So the view will be created as TEMPORARY.
-    # Oracle uses GLOBAL TEMPORARY TABLE instead of TEMPORARY TABLE.
+    # Oracle uses PRIVATE TEMPORARY TABLE (ORA$PTT_ prefix) instead of TEMPORARY TABLE.
     if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
         expected_create_statement += " TEMPORARY"
     elif temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
-        expected_create_statement += " GLOBAL TEMPORARY"
+        expected_create_statement += " PRIVATE TEMPORARY"
     elif temp:
         expected_create_statement += " TEMPORARY"
 
