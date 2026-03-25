@@ -6559,7 +6559,12 @@ def test_pipeline_to_table_ddl(
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
     if replace:
-        if (
+        if temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
+            # Oracle PTTs use a PL/SQL EXECUTE IMMEDIATE block instead of DROP IF EXISTS.
+            expected_create_statement = (
+                rf"BEGIN EXECUTE IMMEDIATE.*{re.escape(expected_create_statement)}"
+            )
+        elif (
             table_or_view == " TABLE"
             and db_context.dialect
             in {

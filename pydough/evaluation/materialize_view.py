@@ -82,7 +82,12 @@ def _generate_create_ddl(
     # ON COMMIT PRESERVE DEFINITION keeps the table structure for the session.
     if temp and not as_view and db_dialect == DatabaseDialect.ORACLE:
         if replace:
-            ddl_statements.append(f"DROP TABLE IF EXISTS {name}")
+            # Oracle does not support DROP TABLE IF EXISTS for private temporary tables.
+            # Use a PL/SQL block to drop the table only if it already exists.
+            ddl_statements.append(
+                f"BEGIN EXECUTE IMMEDIATE 'DROP TABLE {name}';"
+                " EXCEPTION WHEN OTHERS THEN NULL; END"
+            )
         ddl_statements.append(
             f"CREATE PRIVATE TEMPORARY TABLE {name} ON COMMIT PRESERVE DEFINITION AS {sql}"
         )
