@@ -77,22 +77,6 @@ def _generate_create_ddl(
     object_type = "VIEW" if as_view else "TABLE"
     ddl_statements: list[str] = []
 
-    # Oracle uses PRIVATE TEMPORARY TABLE (Oracle 18c+), not standard TEMPORARY TABLE.
-    # The ORA$PTT_ prefix is required by Oracle for private temporary tables.
-    # ON COMMIT PRESERVE DEFINITION keeps the table structure for the session.
-    if temp and not as_view and db_dialect == DatabaseDialect.ORACLE:
-        if replace:
-            # Oracle does not support DROP TABLE IF EXISTS for private temporary tables.
-            # Use a PL/SQL block to drop the table only if it already exists.
-            ddl_statements.append(
-                f"BEGIN EXECUTE IMMEDIATE 'DROP TABLE {name}';"
-                " EXCEPTION WHEN OTHERS THEN NULL; END;"
-            )
-        ddl_statements.append(
-            f"CREATE PRIVATE TEMPORARY TABLE {name} ON COMMIT PRESERVE DEFINITION AS {sql}"
-        )
-        return ddl_statements, temp
-
     if temp:
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
         if not allowed:
@@ -279,15 +263,8 @@ def to_table(
     )
 
     # Step 3: Generate and execute DDL to create view/table.
-    # Oracle private temporary tables require the ORA$PTT_ prefix on the table name.
-    # Only the last segment of a dotted name (schema.table or db.schema.table) is prefixed.
-    if temp and not as_view and session.database.dialect == DatabaseDialect.ORACLE:
-        prefix, _, base = name.rpartition(".")
-        table_name = f"{prefix}.ORA$PTT_{base}" if prefix else f"ORA$PTT_{base}"
-    else:
-        table_name = name
     ddl_statements, actual_temp = _generate_create_ddl(
-        table_name, sql, as_view, replace, temp, session.database.dialect
+        name, sql, as_view, replace, temp, session.database.dialect
     )
     pyd_logger = None
     if display_sql:
@@ -303,7 +280,7 @@ def to_table(
     # Step 4: Create ViewGeneratedCollection with the inferred schema
     # Use actual_temp which may differ from the input temp due to dialect limitations
     view_collection = ViewGeneratedCollection(
-        name=table_name,
+        name=name,
         columns=column_names,
         types=column_types,
         is_view=as_view,

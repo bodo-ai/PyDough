@@ -6542,6 +6542,20 @@ def test_pipeline_to_table_ddl(
                 table_name_prefix=table_prefix,
             )
         return
+    # TEMP TABLES are not supported for Oracle.
+    if temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
+        with pytest.raises(
+            PyDoughException, match="TEMPORARY TABLE is not supported for"
+        ):
+            tpch_custom_to_table_test_data.run_e2e_test_to_table(
+                lambda _: graph,
+                db_context,
+                as_view=as_view,
+                replace=replace,
+                temp=temp,
+                table_name_prefix=table_prefix,
+            )
+        return
     caplog.set_level(logging.INFO)
     tpch_custom_to_table_test_data.run_e2e_test_to_table(
         lambda _: graph,
@@ -6559,12 +6573,7 @@ def test_pipeline_to_table_ddl(
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
     if replace:
-        if temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
-            # Oracle PTTs use a PL/SQL EXECUTE IMMEDIATE block instead of DROP IF EXISTS.
-            expected_create_statement = (
-                rf"BEGIN EXECUTE IMMEDIATE.*{re.escape(expected_create_statement)}"
-            )
-        elif (
+        if (
             table_or_view == " TABLE"
             and db_context.dialect
             in {
@@ -6588,11 +6597,8 @@ def test_pipeline_to_table_ddl(
     # that reference attached databases.
     # SQLite the only one that supports temporary views.
     # So the view will be created as TEMPORARY.
-    # Oracle uses PRIVATE TEMPORARY TABLE (ORA$PTT_ prefix) instead of TEMPORARY TABLE.
     if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
         expected_create_statement += " TEMPORARY"
-    elif temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
-        expected_create_statement += " PRIVATE TEMPORARY"
     elif temp:
         expected_create_statement += " TEMPORARY"
 

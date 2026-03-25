@@ -203,7 +203,7 @@ class DatabaseDialect(Enum):
             case DatabaseDialect.ORACLE:
                 return CreateCapabilities(
                     replace_table=False,
-                    temp_table=True,
+                    temp_table=False,
                     replace_view=True,
                     temp_view=False,
                 )
