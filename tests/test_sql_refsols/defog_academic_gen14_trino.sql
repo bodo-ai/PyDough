@@ -6,3 +6,5 @@ SELECT
 FROM postgres.main.publication
 GROUP BY
   1
+ORDER BY
+  1

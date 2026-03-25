@@ -14,4 +14,5 @@ FROM postgres.main.journal AS journal
 LEFT JOIN _s1 AS _s1
   ON _s1.jid = journal.jid
 ORDER BY
-  3 DESC
+  3 DESC,
+  1 NULLS FIRST

@@ -4,7 +4,7 @@ SELECT
     ' ',
     CAST(CAST((
       LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' ', ''))
-    ) AS DOUBLE) AS BIGINT) + 0
+    ) AS DOUBLE) AS BIGINT) + 1
   ) AS last_name
 FROM main.sbcustomer
 WHERE

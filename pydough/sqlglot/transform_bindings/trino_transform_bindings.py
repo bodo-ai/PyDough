@@ -274,8 +274,8 @@ class TrinoTransformBindings(BaseTransformBindings):
                 args[1],
                 sqlglot_expressions.Add(
                     this=sqlglot_expressions.Add(
-                        this=n_delim,
-                        expression=args[2],
+                        this=apply_parens(n_delim),
+                        expression=apply_parens(args[2]),
                     ),
                     expression=sqlglot_expressions.Literal.number(2),
                 ),
@@ -292,23 +292,28 @@ class TrinoTransformBindings(BaseTransformBindings):
             sqlglot_expressions.Case()
             .when(
                 sqlglot_expressions.EQ(
-                    this=args[2], expression=sqlglot_expressions.Literal.number(0)
+                    this=apply_parens(args[2]),
+                    expression=sqlglot_expressions.Literal.number(0),
                 ),
                 first_split,
             )
             .when(
                 sqlglot_expressions.LT(
-                    this=args[2], expression=sqlglot_expressions.Neg(this=n_delim)
+                    this=apply_parens(args[2]),
+                    expression=sqlglot_expressions.Neg(this=apply_parens(n_delim)),
                 ),
                 sqlglot_expressions.Null(),
             )
             .when(
-                sqlglot_expressions.GT(this=args[2], expression=n_delim),
+                sqlglot_expressions.GT(
+                    this=apply_parens(args[2]), expression=apply_parens(n_delim)
+                ),
                 sqlglot_expressions.Null(),
             )
             .when(
                 sqlglot_expressions.LT(
-                    this=args[2], expression=sqlglot_expressions.Literal.number(0)
+                    this=apply_parens(apply_parens(args[2])),
+                    expression=sqlglot_expressions.Literal.number(0),
                 ),
                 reverse_split,
             )

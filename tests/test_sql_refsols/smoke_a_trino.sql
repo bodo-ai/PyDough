@@ -51,7 +51,7 @@ SELECT
         ' ',
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + 0
+        ) AS DOUBLE) AS BIGINT) + 1
       )
     )
   ) AS b,
