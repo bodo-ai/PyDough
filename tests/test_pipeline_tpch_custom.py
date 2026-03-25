@@ -5130,6 +5130,16 @@ def test_pipeline_e2e_tpch_custom(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("Skipping tpch customer test for BodoSQL.")
 
+    if (
+        db_context.dialect == DatabaseDialect.MYSQL
+        and tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
+    ):
+        pytest.skip("Skipping test as MySQL does not support Infinity values.")
+
+    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
+        db_context.dialect, tpch_custom_pipeline_test_data
+    )
+
     tpch_custom_pipeline_test_data.run_e2e_test(
         lambda _: graph, db_context, coerce_types=True
     )
