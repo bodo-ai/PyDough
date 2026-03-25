@@ -82,7 +82,7 @@ def _generate_create_ddl(
         if replace:
             ddl_statements.append(f"DROP TABLE IF EXISTS {name}")
         ddl_statements.append(
-            f"CREATE GLOBAL TEMPORARY TABLE {name} ON COMMIT PRESERVE ROWS AS {sql}"
+            f"CREATE GLOBAL TEMPORARY TABLE {name} AS {sql} ON COMMIT PRESERVE ROWS"
         )
         return ddl_statements, temp
 
