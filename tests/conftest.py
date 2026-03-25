@@ -1070,7 +1070,7 @@ def is_snowflake_env_set() -> bool:
     return all(os.getenv(env) for env in SF_ENVS)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     """
     This fixture is used to connect to the Snowflake TPCH database using
@@ -1078,6 +1078,7 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     Return a DatabaseContext for the Snowflake TPCH database.
     """
 
+    @cache
     def _impl(database_name: str, schema_name: str) -> DatabaseContext:
         if not is_snowflake_env_set():
             pytest.skip("Skipping Snowflake tests: environment variables not set.")
@@ -1096,17 +1097,16 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
             schema=schema_name,
         )
 
-        # Sqlite's datetime functions operate in UTC,
-        # while Snowflake's default timezone is Pacific Time.
-        # Setting the session timezone to match SQLite's behavior
-        # to ensure the date comparison is accurate.
         with connection.cursor() as cur:
+            # Sqlite's datetime functions operate in UTC,
+            # while Snowflake's default timezone is Pacific Time.
+            # Setting the session timezone to match SQLite's behavior
+            # to ensure the date comparison is accurate.
             cur.execute("ALTER SESSION SET TIMEZONE = 'UTC'")
 
-        # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day ('UTC').
-        # This runs regardless of CI to handle the case where the scheduled
-        # procedure ran before UTC midnight but tests start after midnight.
-        with connection.cursor() as cur:
+            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day ('UTC').
+            # This runs regardless of CI to handle the case where the scheduled
+            # procedure ran before UTC midnight but tests start after midnight.
             cur.execute("""
                 DECLARE last_mod DATE;
 
