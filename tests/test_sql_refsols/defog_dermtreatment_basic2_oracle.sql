@@ -1,0 +1,79 @@
+WITH "_T2" AS (
+  SELECT
+    end_dt AS END_DT,
+    patient_id AS PATIENT_ID,
+    treatment_id AS TREATMENT_ID
+  FROM MAIN.TREATMENTS
+  WHERE
+    EXTRACT(YEAR FROM CAST(end_dt AS DATE)) = 2022
+), "_T3" AS (
+  SELECT
+    day100_pasi_score AS DAY100_PASI_SCORE,
+    treatment_id AS TREATMENT_ID
+  FROM MAIN.OUTCOMES
+  WHERE
+    NOT day100_pasi_score IS NULL
+), "_u_0" AS (
+  SELECT
+    TREATMENT_ID AS "_u_1"
+  FROM "_T3"
+  GROUP BY
+    TREATMENT_ID
+), "_S3" AS (
+  SELECT
+    ins_type AS INS_TYPE,
+    patient_id AS PATIENT_ID
+  FROM MAIN.PATIENTS
+), "_S10" AS (
+  SELECT
+    "_S3".INS_TYPE,
+    COUNT(DISTINCT "_T2".PATIENT_ID) AS NDISTINCT_PATIENT_ID
+  FROM "_T2" "_T2"
+  LEFT JOIN "_u_0" "_u_0"
+    ON "_T2".TREATMENT_ID = "_u_0"."_u_1"
+  JOIN "_S3" "_S3"
+    ON "_S3".PATIENT_ID = "_T2".PATIENT_ID
+  WHERE
+    NOT "_u_0"."_u_1" IS NULL
+  GROUP BY
+    "_S3".INS_TYPE
+), "_u_2" AS (
+  SELECT
+    TREATMENT_ID AS "_u_3"
+  FROM "_T3"
+  GROUP BY
+    TREATMENT_ID
+), "_S9" AS (
+  SELECT
+    treatment_id AS TREATMENT_ID,
+    COUNT(day100_pasi_score) AS COUNT_DAY100_PASI_SCORE,
+    SUM(day100_pasi_score) AS SUM_DAY100_PASI_SCORE
+  FROM MAIN.OUTCOMES
+  GROUP BY
+    treatment_id
+), "_S11" AS (
+  SELECT
+    SUM("_S9".SUM_DAY100_PASI_SCORE) / SUM("_S9".COUNT_DAY100_PASI_SCORE) AS AVG_DAY100_PASI_SCORE,
+    "_S7".INS_TYPE
+  FROM "_T2" "_T6"
+  LEFT JOIN "_u_2" "_u_2"
+    ON "_T6".TREATMENT_ID = "_u_2"."_u_3"
+  JOIN "_S3" "_S7"
+    ON "_S7".PATIENT_ID = "_T6".PATIENT_ID
+  JOIN "_S9" "_S9"
+    ON "_S9".TREATMENT_ID = "_T6".TREATMENT_ID
+  WHERE
+    NOT "_u_2"."_u_3" IS NULL
+  GROUP BY
+    "_S7".INS_TYPE
+)
+SELECT
+  "_S10".INS_TYPE AS insurance_type,
+  "_S10".NDISTINCT_PATIENT_ID AS num_distinct_patients,
+  "_S11".AVG_DAY100_PASI_SCORE AS avg_pasi_score_day100
+FROM "_S10" "_S10"
+LEFT JOIN "_S11" "_S11"
+  ON "_S10".INS_TYPE = "_S11".INS_TYPE
+ORDER BY
+  3 NULLS FIRST
+FETCH FIRST 5 ROWS ONLY

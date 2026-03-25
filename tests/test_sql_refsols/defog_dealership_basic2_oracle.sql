@@ -1,0 +1,14 @@
+WITH "_u_0" AS (
+  SELECT
+    customer_id AS "_u_1"
+  FROM MAIN.SALES
+  GROUP BY
+    customer_id
+)
+SELECT
+  CUSTOMERS."_id"
+FROM MAIN.CUSTOMERS CUSTOMERS
+LEFT JOIN "_u_0" "_u_0"
+  ON CUSTOMERS."_id" = "_u_0"."_u_1"
+WHERE
+  NOT "_u_0"."_u_1" IS NULL

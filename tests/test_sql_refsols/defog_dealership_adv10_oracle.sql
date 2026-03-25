@@ -1,0 +1,18 @@
+WITH "_S1" AS (
+  SELECT
+    sale_id AS SALE_ID,
+    MAX(payment_date) AS MAX_PAYMENT_DATE
+  FROM MAIN.PAYMENTS_RECEIVED
+  GROUP BY
+    sale_id
+)
+SELECT
+  ROUND(
+    AVG(
+      TRUNC(CAST(CAST("_S1".MAX_PAYMENT_DATE AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(SALES.sale_date AS DATE) AS DATE), 'DD')
+    ),
+    2
+  ) AS avg_days_to_payment
+FROM MAIN.SALES SALES
+LEFT JOIN "_S1" "_S1"
+  ON SALES."_id" = "_S1".SALE_ID

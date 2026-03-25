@@ -1638,6 +1638,19 @@ def harmonize_types(column_a, column_b):
     Returns:
         A tuple of the two harmonized columns.
     """
+    # String Sanitization: Convert "\x00" to "" and handle None/NaN for strings
+    # Address issues where CHR(0) vs '' caused a mismatch.
+    if pd.api.types.is_object_dtype(column_a) or pd.api.types.is_object_dtype(column_b):
+
+        def sanitize_string(val):
+            if isinstance(val, str):
+                return val.replace("\x00", "")
+            return val
+
+        # Apply sanitization to both columns if they are object/string types
+        column_a = column_a.map(sanitize_string)
+        column_b = column_b.map(sanitize_string)
+
     # Different integer types
     if pd.api.types.is_integer_dtype(column_a) and pd.api.types.is_integer_dtype(
         column_b

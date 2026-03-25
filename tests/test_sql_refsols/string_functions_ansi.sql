@@ -7,14 +7,14 @@ SELECT
   customer.c_name LIKE '%sub%' AS contains_sub,
   customer.c_name LIKE '%test%' AS matches_like,
   CONCAT_WS('::', customer.c_name, nation.n_name) AS joined_string,
+  NULL AS join_nulls,
   CASE
     WHEN LENGTH(customer.c_name) >= 20
     THEN SUBSTRING(customer.c_name, 1, 20)
     ELSE SUBSTRING(CONCAT('********************', customer.c_name), -20)
   END AS lpad_name,
   SUBSTRING(CONCAT(customer.c_name, '--------------------'), 1, 20) AS rpad_name,
-  TRIM(customer.c_name, '
-	 ') AS stripped,
+  TRIM(customer.c_name, CONCAT(CHR(10), CHR(9), CHR(13), ' ')) AS stripped,
   TRIM(customer.c_name, 'aeiou') AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,

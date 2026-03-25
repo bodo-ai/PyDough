@@ -1,0 +1,10 @@
+WITH "_T0" AS (
+  SELECT
+    COUNT(*) AS N_ROWS
+  FROM TPCH.ORDERS
+  GROUP BY
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE))
+)
+SELECT
+  MAX(N_ROWS) AS best_year
+FROM "_T0"

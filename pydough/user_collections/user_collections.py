@@ -86,6 +86,27 @@ class PyDoughUserGeneratedCollection(ABC):
         Two collections are considered equal if they have the same name and columns.
         """
 
+    def to_explanation(self, verbose: bool) -> list[str]:
+        """
+        Return a list of explanation lines for this user-generated collection.
+        Subclasses should call super() and append type-specific lines.
+
+        Args:
+            `verbose`: Whether to include extra detail (e.g. DataFrame contents).
+
+        Returns:
+            A list of human-readable explanation strings.
+        """
+        lines = [
+            f"This node accesses user-generated collection {self.name!r}.\n"
+            f"Columns: {', '.join(sorted(self.columns))}",
+        ]
+        if verbose:
+            unique = self.unique_column_names[0]
+            unique_terms = [unique] if isinstance(unique, str) else unique
+            lines.append(f"Unique columns: {', '.join(sorted(unique_terms))}")
+        return lines
+
     def get_expression_position(self, expr_name: str) -> int:
         """
         Get the position of an expression in the collection.

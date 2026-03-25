@@ -46,14 +46,14 @@ jobs:
           )
 
           cursor = conn.cursor()
-
+          
           # Sqlite's datetime functions operate in UTC, 
           # while Snowflake's default timezone is Pacific Time.
           # Setting the session timezone to match SQLite's behavior 
           # to ensure the date comparison is accurate.
           cursor.execute("ALTER SESSION SET TIMEZONE = 'UTC'")
 
-          # Check if table data is a day or more old.
+          # Check if table data is a day or more old. 
           # If so, run the stored procedure to update it.
           cursor.execute("""
                 DECLARE last_mod DATE;

@@ -1,0 +1,10 @@
+SELECT
+  T1.FOO AS foo
+FROM (VALUES
+  (15),
+  (16),
+  (17),
+  (18),
+  (19)) AS T1(FOO)
+ORDER BY
+  1 NULLS FIRST

@@ -1,0 +1,29 @@
+WITH "_S0" AS (
+  SELECT
+    c_custkey AS C_CUSTKEY,
+    c_name AS C_NAME
+  FROM TPCH.CUSTOMER
+  ORDER BY
+    2 NULLS FIRST
+  FETCH FIRST 5 ROWS ONLY
+), "_T" AS (
+  SELECT
+    o_custkey AS O_CUSTKEY,
+    o_orderdate AS O_ORDERDATE,
+    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_totalprice DESC) AS "_W"
+  FROM TPCH.ORDERS
+), "_S1" AS (
+  SELECT
+    O_CUSTKEY,
+    O_ORDERDATE
+  FROM "_T"
+  WHERE
+    "_W" = 1
+)
+SELECT
+  "_S0".C_NAME AS name
+FROM "_S0" "_S0"
+LEFT JOIN "_S1" "_S1"
+  ON "_S0".C_CUSTKEY = "_S1".O_CUSTKEY
+ORDER BY
+  "_S1".O_ORDERDATE
