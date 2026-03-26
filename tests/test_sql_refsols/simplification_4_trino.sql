@@ -10,17 +10,15 @@ WITH _t AS (
 SELECT
   sbtxdatetime AS date_time,
   DATE_ADD(
-    'WEEK',
-    -8,
+    'DAY',
+    -56,
     DATE_TRUNC(
       'DAY',
       DATE_ADD(
         'DAY',
         (
           (
-            (
-              DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) % 7
-            ) + 0
+            DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) - 1
           ) % 7
         ) * -1,
         CAST(sbtxdatetime AS TIMESTAMP)

@@ -192,22 +192,34 @@ class TrinoTransformBindings(BaseTransformBindings):
         # Always ensure coercion occurs
         return self.handle_datetime_base_arg(arg)
 
+    def apply_datetime_offset(
+        self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
+    ) -> SQLGlotExpression:
+        # Convert week offsets to day offsets, since Trino week offsets are
+        # not well defined.
+        if unit == DateTimeUnit.WEEK:
+            unit = DateTimeUnit.DAY
+            amt *= 7
+
+        return super().apply_datetime_offset(base, amt, unit)
+
     def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         offset: int = (-self.start_of_week_offset) % 7
         dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
-        if offset == 1:
+        if offset == 6:
             return dow_expr
-        # TODO: FIX THE MOD PART
-        # breakpoint()
-        return sqlglot_expressions.Mod(
+        result = sqlglot_expressions.Mod(
             this=apply_parens(
-                sqlglot_expressions.Add(
-                    this=dow_expr,
-                    expression=sqlglot_expressions.Literal.number(offset - 1),
+                sqlglot_expressions.Sub(
+                    this=apply_parens(dow_expr),
+                    expression=sqlglot_expressions.Literal.number(
+                        self.start_of_week_offset + 1
+                    ),
                 )
             ),
             expression=sqlglot_expressions.Literal.number(7),
         )
+        return result
 
     def convert_join_strings(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -283,12 +295,12 @@ class TrinoTransformBindings(BaseTransformBindings):
         )
 
         # CASE WHEN index = 0 then <first_split>
-        #      WHEN index < -n then NULL
-        #      WHEN index > n then NULL
+        #      WHEN index < (-n-1) then NULL
+        #      WHEN index > (n+1) then NULL
         #      WHEN index < 0 then <reverse_split>
         #      ELSE <regular_split>
         # END
-        return (
+        result: sqlglot_expressions = (
             sqlglot_expressions.Case()
             .when(
                 sqlglot_expressions.EQ(
@@ -300,13 +312,24 @@ class TrinoTransformBindings(BaseTransformBindings):
             .when(
                 sqlglot_expressions.LT(
                     this=apply_parens(args[2]),
-                    expression=sqlglot_expressions.Neg(this=apply_parens(n_delim)),
+                    expression=apply_parens(
+                        sqlglot_expressions.Add(
+                            this=sqlglot_expressions.Neg(this=apply_parens(n_delim)),
+                            expression=sqlglot_expressions.Literal.number(-1),
+                        )
+                    ),
                 ),
                 sqlglot_expressions.Null(),
             )
             .when(
                 sqlglot_expressions.GT(
-                    this=apply_parens(args[2]), expression=apply_parens(n_delim)
+                    this=apply_parens(args[2]),
+                    expression=apply_parens(
+                        sqlglot_expressions.Add(
+                            this=apply_parens(n_delim),
+                            expression=sqlglot_expressions.Literal.number(1),
+                        )
+                    ),
                 ),
                 sqlglot_expressions.Null(),
             )
@@ -318,6 +341,31 @@ class TrinoTransformBindings(BaseTransformBindings):
                 reverse_split,
             )
             .else_(regular_split)
+        )
+
+        # CASE
+        #   WHEN delimiter = ""
+        #   THEN (CASE WHEN ABS(index) < 2 THEN string ELSE NULL END)
+        #   ELSE result
+        # END
+        return (
+            sqlglot_expressions.Case()
+            .when(
+                sqlglot_expressions.EQ(
+                    this=apply_parens(args[1]),
+                    expression=sqlglot_expressions.Literal.string(""),
+                ),
+                sqlglot_expressions.Case()
+                .when(
+                    sqlglot_expressions.LT(
+                        this=sqlglot_expressions.Abs(this=apply_parens(args[2])),
+                        expression=sqlglot_expressions.Literal.number(2),
+                    ),
+                    args[0],
+                )
+                .else_(sqlglot_expressions.Null()),
+            )
+            .else_(result)
         )
 
     def convert_replace(

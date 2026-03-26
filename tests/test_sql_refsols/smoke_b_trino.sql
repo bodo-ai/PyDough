@@ -10,53 +10,25 @@ SELECT
   CONCAT_WS(
     ':',
     CASE
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 1
+      WHEN DAY_OF_WEEK(o_orderdate) = 1
       THEN 'Monday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 2
+      WHEN DAY_OF_WEEK(o_orderdate) = 2
       THEN 'Tuesday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 3
+      WHEN DAY_OF_WEEK(o_orderdate) = 3
       THEN 'Wednesday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 4
+      WHEN DAY_OF_WEEK(o_orderdate) = 4
       THEN 'Thursday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 5
+      WHEN DAY_OF_WEEK(o_orderdate) = 5
       THEN 'Friday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 6
+      WHEN DAY_OF_WEEK(o_orderdate) = 6
       THEN 'Saturday'
-      WHEN (
-        (
-          DAY_OF_WEEK(o_orderdate) % 7
-        ) + 1
-      ) = 7
+      WHEN DAY_OF_WEEK(o_orderdate) = 7
       THEN 'Sunday'
     END,
     CAST((
       (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
+        DAY_OF_WEEK(o_orderdate) - 7
+      ) % 7
     ) AS VARCHAR)
   ) AS b,
   DATE_ADD('DAY', -13, DATE_ADD('MONTH', 6, DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)))) AS c,
@@ -90,11 +62,11 @@ SELECT
       'DAY',
       DATE_ADD(
         'DAY',
-        CAST((
+        (
           (
-            DAY_OF_WEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) % 7
-          ) + 1
-        ) AS BIGINT) * -1,
+            DAY_OF_WEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) - 7
+          ) % 7
+        ) * -1,
         CAST('1993-05-25 12:45:36' AS TIMESTAMP)
       )
     ) AS TIMESTAMP),
@@ -102,11 +74,11 @@ SELECT
       'DAY',
       DATE_ADD(
         'DAY',
-        CAST((
+        (
           (
-            DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) % 7
-          ) + 1
-        ) AS BIGINT) * -1,
+            DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) - 7
+          ) % 7
+        ) * -1,
         CAST(o_orderdate AS TIMESTAMP)
       )
     ) AS TIMESTAMP)
@@ -135,11 +107,11 @@ SELECT
     'DAY',
     DATE_ADD(
       'DAY',
-      CAST((
+      (
         (
-          DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) % 7
-        ) + 1
-      ) AS BIGINT) * -1,
+          DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) - 7
+        ) % 7
+      ) * -1,
       CAST(o_orderdate AS TIMESTAMP)
     )
   ) AS q

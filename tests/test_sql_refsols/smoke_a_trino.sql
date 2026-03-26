@@ -36,13 +36,17 @@ SELECT
   UPPER(
     LEAST(
       CASE
-        WHEN -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) > 2
+        WHEN (
+          -CAST(CAST((
+            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+          ) AS DOUBLE) AS BIGINT) + -1
+        ) > 2
         THEN NULL
-        WHEN CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) < 2
+        WHEN (
+          CAST(CAST((
+            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+          ) AS DOUBLE) AS BIGINT) + 1
+        ) < 2
         THEN NULL
         ELSE SPLIT_PART(p_name, ' ', 2)
       END,

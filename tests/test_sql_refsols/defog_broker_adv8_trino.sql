@@ -12,26 +12,22 @@ WHERE
       'DAY',
       (
         (
-          (
-            DAY_OF_WEEK(CURRENT_TIMESTAMP) % 7
-          ) + 0
+          DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
         ) % 7
       ) * -1,
       CURRENT_TIMESTAMP
     )
   )
   AND sbtransaction.sbtxdatetime >= DATE_ADD(
-    'WEEK',
-    -1,
+    'DAY',
+    -7,
     DATE_TRUNC(
       'DAY',
       DATE_ADD(
         'DAY',
         (
           (
-            (
-              DAY_OF_WEEK(CURRENT_TIMESTAMP) % 7
-            ) + 0
+            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
           ) % 7
         ) * -1,
         CURRENT_TIMESTAMP

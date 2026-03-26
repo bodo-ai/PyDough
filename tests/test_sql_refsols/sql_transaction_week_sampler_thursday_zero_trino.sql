@@ -1,69 +1,40 @@
 SELECT
-  sbtxdatetime AS date_time,
-  DATE_TRUNC(
+  sbtxdatetime AS x,
+  CAST('2025-05-02 11:00:00' AS TIMESTAMP) AS y1,
+  CAST('2023-04-03 13:16:30' AS TIMESTAMP) AS y,
+  DATE_DIFF(
+    'YEAR',
+    CAST(DATE_TRUNC('YEAR', CAST(sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('YEAR', CAST('2025-05-02 11:00:00' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS years_diff,
+  DATE_DIFF(
+    'MONTH',
+    CAST(DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('MONTH', CAST('2025-05-02 11:00:00' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS months_diff,
+  DATE_DIFF(
     'DAY',
-    DATE_ADD(
-      'DAY',
-      (
-        (
-          (
-            DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) % 7
-          ) + 4
-        ) % 7
-      ) * -1,
-      CAST(sbtxdatetime AS TIMESTAMP)
-    )
-  ) AS sow,
-  CASE
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 1
-    THEN 'Monday'
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 2
-    THEN 'Tuesday'
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 3
-    THEN 'Wednesday'
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 4
-    THEN 'Thursday'
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 5
-    THEN 'Friday'
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 6
-    THEN 'Saturday'
-    WHEN (
-      (
-        DAY_OF_WEEK(sbtxdatetime) % 7
-      ) + 1
-    ) = 7
-    THEN 'Sunday'
-  END AS dayname,
-  (
-    (
-      DAY_OF_WEEK(sbtxdatetime) % 7
-    ) + 4
-  ) % 7 AS dayofweek
+    CAST(DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('DAY', CAST('2025-05-02 11:00:00' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS days_diff,
+  DATE_DIFF(
+    'HOUR',
+    CAST(DATE_TRUNC('HOUR', CAST(sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('HOUR', CAST('2025-05-02 11:00:00' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS hours_diff,
+  DATE_DIFF(
+    'MINUTE',
+    CAST(DATE_TRUNC('MINUTE', CAST(sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('MINUTE', CAST('2023-04-03 13:16:30' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS minutes_diff,
+  DATE_DIFF(
+    'SECOND',
+    CAST(DATE_TRUNC('SECOND', CAST(sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP),
+    CAST(DATE_TRUNC('SECOND', CAST('2023-04-03 13:16:30' AS TIMESTAMP)) AS TIMESTAMP)
+  ) AS seconds_diff
 FROM main.sbtransaction
 WHERE
-  DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
-  AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025
+  YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025
+ORDER BY
+  4 NULLS FIRST
+LIMIT 30

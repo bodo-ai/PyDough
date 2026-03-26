@@ -14,11 +14,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(_s0.min_o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(_s0.min_o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(_s0.min_o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP),
@@ -26,11 +26,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(orders.o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(orders.o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(orders.o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP)
@@ -44,11 +44,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(_s0.min_o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(_s0.min_o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(_s0.min_o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP),
@@ -56,11 +56,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(orders.o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(orders.o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(orders.o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP)
@@ -81,11 +81,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(_s3.min_o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(_s3.min_o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(_s3.min_o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP),
@@ -93,11 +93,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(lineitem.l_receiptdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(lineitem.l_receiptdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(lineitem.l_receiptdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP)
@@ -114,11 +114,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(_s3.min_o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(_s3.min_o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(_s3.min_o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP),
@@ -126,11 +126,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(lineitem.l_receiptdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(lineitem.l_receiptdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(lineitem.l_receiptdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP)
@@ -142,11 +142,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(_s3.min_o_orderdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(_s3.min_o_orderdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(_s3.min_o_orderdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP),
@@ -154,11 +154,11 @@ WITH _t3 AS (
         'DAY',
         DATE_ADD(
           'DAY',
-          CAST((
+          (
             (
-              DAY_OF_WEEK(CAST(lineitem.l_receiptdate AS TIMESTAMP)) % 7
-            ) + 1
-          ) AS BIGINT) * -1,
+              DAY_OF_WEEK(CAST(lineitem.l_receiptdate AS TIMESTAMP)) - 7
+            ) % 7
+          ) * -1,
           CAST(lineitem.l_receiptdate AS TIMESTAMP)
         )
       ) AS TIMESTAMP)

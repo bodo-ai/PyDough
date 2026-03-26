@@ -42,11 +42,11 @@ SELECT
       'DAY',
       DATE_ADD(
         'DAY',
-        CAST((
+        (
           (
-            DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) % 7
-          ) + 1
-        ) AS BIGINT) * -1,
+            DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) - 7
+          ) % 7
+        ) * -1,
         CAST('1992-01-01' AS TIMESTAMP)
       )
     ) AS TIMESTAMP),
@@ -54,18 +54,18 @@ SELECT
       'DAY',
       DATE_ADD(
         'DAY',
-        CAST((
+        (
           (
-            DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) % 7
-          ) + 1
-        ) AS BIGINT) * -1,
+            DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) - 7
+          ) % 7
+        ) * -1,
         CAST('1992-01-01 12:30:45' AS TIMESTAMP)
       )
     ) AS TIMESTAMP)
   ) AS dd_dt_str,
   (
-    DAY_OF_WEEK(o_orderdate) % 7
-  ) + 1 AS dow_col,
+    DAY_OF_WEEK(o_orderdate) - 7
+  ) % 7 AS dow_col,
   3 AS dow_str1,
   4 AS dow_str2,
   5 AS dow_str3,
@@ -76,47 +76,19 @@ SELECT
   3 AS dow_dt,
   2 AS dow_pd,
   CASE
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 1
+    WHEN DAY_OF_WEEK(o_orderdate) = 1
     THEN 'Monday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 2
+    WHEN DAY_OF_WEEK(o_orderdate) = 2
     THEN 'Tuesday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 3
+    WHEN DAY_OF_WEEK(o_orderdate) = 3
     THEN 'Wednesday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 4
+    WHEN DAY_OF_WEEK(o_orderdate) = 4
     THEN 'Thursday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 5
+    WHEN DAY_OF_WEEK(o_orderdate) = 5
     THEN 'Friday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 6
+    WHEN DAY_OF_WEEK(o_orderdate) = 6
     THEN 'Saturday'
-    WHEN (
-      (
-        DAY_OF_WEEK(o_orderdate) % 7
-      ) + 1
-    ) = 7
+    WHEN DAY_OF_WEEK(o_orderdate) = 7
     THEN 'Sunday'
   END AS dayname_col,
   'Monday' AS dayname_str1,

@@ -1,29 +1,25 @@
+WITH _s1 AS (
+  SELECT
+    c_nationkey,
+    SUM(GREATEST(c_acctbal, 0)) AS expr_0,
+    COUNT(GREATEST(c_acctbal, 0)) AS expr_1_0
+  FROM tpch.customer
+  GROUP BY
+    1
+), _s3 AS (
+  SELECT
+    nation.n_regionkey,
+    SUM(_s1.expr_0) AS sum_expr,
+    SUM(_s1.expr_1_0) AS sum_expr_1
+  FROM tpch.nation AS nation
+  JOIN _s1 AS _s1
+    ON _s1.c_nationkey = nation.n_nationkey
+  GROUP BY
+    1
+)
 SELECT
-  LEAST(20, 10) AS s1,
-  LEAST(20, 20) AS s2,
-  LEAST(20, 10, 0) AS s3,
-  LEAST(20, 10, 10, -1, -2, 100, -200) AS s4,
-  NULL AS s5,
-  LEAST(20.22, 10.22, -0.34) AS s6,
-  LEAST(
-    CAST('2025-01-01 00:00:00' AS TIMESTAMP),
-    CAST('2024-01-01 00:00:00' AS TIMESTAMP),
-    CAST('2023-01-01 00:00:00' AS TIMESTAMP)
-  ) AS s7,
-  LEAST('', 'alphabet soup', 'Hello World') AS s8,
-  NULL AS s9,
-  GREATEST(20, 10) AS l1,
-  GREATEST(20, 20) AS l2,
-  GREATEST(20, 10, 0) AS l3,
-  GREATEST(20, 10, 10, -1, -2, 100, -200, 300) AS l4,
-  NULL AS l5,
-  GREATEST(20.22, 100.22, -0.34) AS l6,
-  GREATEST(
-    CAST('2025-01-01 00:00:00' AS TIMESTAMP),
-    CAST('2024-01-01 00:00:00' AS TIMESTAMP),
-    CAST('2023-01-01 00:00:00' AS TIMESTAMP)
-  ) AS l7,
-  GREATEST('', 'alphabet soup', 'Hello World') AS l8,
-  NULL AS l9
-FROM (VALUES
-  (NULL)) AS _q_0(_col_0)
+  region.r_name AS region_name,
+  CAST(_s3.sum_expr AS DOUBLE) / _s3.sum_expr_1 AS avg_bal_without_debt_erasure
+FROM tpch.region AS region
+JOIN _s3 AS _s3
+  ON _s3.n_regionkey = region.r_regionkey

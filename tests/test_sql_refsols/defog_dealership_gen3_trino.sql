@@ -12,9 +12,7 @@ WHERE
         'DAY',
         (
           (
-            (
-              DAY_OF_WEEK(CAST(payment_date AS TIMESTAMP)) % 7
-            ) + 0
+            DAY_OF_WEEK(CAST(payment_date AS TIMESTAMP)) - 1
           ) % 7
         ) * -1,
         CAST(payment_date AS TIMESTAMP)
@@ -26,9 +24,7 @@ WHERE
         'DAY',
         (
           (
-            (
-              DAY_OF_WEEK(CURRENT_TIMESTAMP) % 7
-            ) + 0
+            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
           ) % 7
         ) * -1,
         CURRENT_TIMESTAMP

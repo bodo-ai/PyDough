@@ -1,84 +1,29 @@
+WITH _s0 AS (
+  SELECT
+    c_custkey,
+    c_name
+  FROM tpch.customer
+  ORDER BY
+    2 NULLS FIRST
+  LIMIT 5
+), _t AS (
+  SELECT
+    o_custkey,
+    o_orderdate,
+    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_totalprice DESC NULLS FIRST) AS _w
+  FROM tpch.orders
+), _s1 AS (
+  SELECT
+    o_custkey,
+    o_orderdate
+  FROM _t
+  WHERE
+    _w = 1
+)
 SELECT
-  p_partkey AS key,
-  UPPER(
-    CASE
-      WHEN -CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) > 1
-      THEN NULL
-      WHEN CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) < 1
-      THEN NULL
-      ELSE SPLIT_PART(p_name, ' ', 1)
-    END
-  ) AS c1,
-  UPPER(
-    CASE
-      WHEN -CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) > 2
-      THEN NULL
-      WHEN CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) < 2
-      THEN NULL
-      ELSE SPLIT_PART(p_name, ' ', 2)
-    END
-  ) AS c2,
-  UPPER(
-    CASE
-      WHEN -CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) > 3
-      THEN NULL
-      WHEN CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) < 3
-      THEN NULL
-      ELSE SPLIT_PART(p_name, ' ', 3)
-    END
-  ) AS c3,
-  UPPER(
-    CASE
-      WHEN -CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) > 4
-      THEN NULL
-      WHEN CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) < 4
-      THEN NULL
-      ELSE SPLIT_PART(p_name, ' ', 4)
-    END
-  ) AS c4,
-  UPPER(
-    CASE
-      WHEN -CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) > 5
-      THEN NULL
-      WHEN CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) < 5
-      THEN NULL
-      ELSE SPLIT_PART(p_name, ' ', 5)
-    END
-  ) AS c5,
-  UPPER(
-    CASE
-      WHEN -CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) > 6
-      THEN NULL
-      WHEN CAST(CAST((
-        LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-      ) AS DOUBLE) AS BIGINT) < 6
-      THEN NULL
-      ELSE SPLIT_PART(p_name, ' ', 6)
-    END
-  ) AS c6
-FROM tpch.part
+  _s0.c_name AS name
+FROM _s0 AS _s0
+LEFT JOIN _s1 AS _s1
+  ON _s0.c_custkey = _s1.o_custkey
 ORDER BY
-  1 NULLS FIRST
-LIMIT 5
+  _s1.o_orderdate
