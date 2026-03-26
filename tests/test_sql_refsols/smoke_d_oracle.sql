@@ -1,5 +1,5 @@
 SELECT
-  CUSTOMER.c_custkey AS key,
+  CUSTOMER.c_custkey AS "key",
   ROW_NUMBER() OVER (ORDER BY CUSTOMER.c_acctbal, CUSTOMER.c_custkey) AS a,
   ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal, CUSTOMER.c_custkey) AS b,
   RANK() OVER (ORDER BY CUSTOMER.c_mktsegment) AS c,

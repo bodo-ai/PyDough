@@ -1596,8 +1596,9 @@ def verify_table_created_correctly(
     # Query the database for the schema of the created table
     actual_table_columns = database.connection.get_table_columns(table_name)
     # Compare the actual columns against the expected columns
-    # For Snowflake, column names are returned as uppercase, so compare case-insensitively
-    if database.dialect == DatabaseDialect.SNOWFLAKE:
+    # For Snowflake and Oracle, column names are returned as uppercase,
+    # so compare case-insensitively
+    if database.dialect in {DatabaseDialect.SNOWFLAKE, DatabaseDialect.ORACLE}:
         actual_lower = [c.lower() for c in actual_table_columns]
         expected_lower = (
             [c.lower() for c in expected_columns] if expected_columns else None
@@ -1758,6 +1759,17 @@ def harmonize_types(column_a, column_b):
         return column_a.apply(lambda x: pd.NA if pd.isna(x) else x).apply(
             lambda x: parser.parse(x).date() if isinstance(x, str) else x
         ), column_b
+
+    # Timestamp vs date. Oracle returns DATE columns as datetime64[ns] (Timestamp).
+    # Convert Timestamps to date objects for comparison.
+    if pd.api.types.is_datetime64_any_dtype(column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else x.date()), column_b
+    if any(
+        isinstance(elem, datetime.date) for elem in column_a
+    ) and pd.api.types.is_datetime64_any_dtype(column_b):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
 
     return column_a, column_b
 
