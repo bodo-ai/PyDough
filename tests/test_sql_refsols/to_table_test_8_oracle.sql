@@ -1,9 +1,9 @@
 SELECT
-  asian_nations_t8.nation_name,
-  asian_custs_t8.ckey
-FROM asian_nations_t8 asian_nations_t8
-JOIN asian_custs_t8 asian_custs_t8
-  ON asian_custs_t8.nkey = asian_nations_t8.nation_key
+  ASIAN_NATIONS_t8.nation_name,
+  ASIAN_CUSTS_T8.ckey
+FROM ASIAN_NATIONS_T8 ASIAN_NATIONS_t8
+JOIN ASIAN_CUSTS_T8 ASIAN_CUSTS_T8
+  ON ASIAN_CUSTS_T8.nkey = ASIAN_NATIONS_T8.nation_key
 ORDER BY
   2 NULLS FIRST
 FETCH FIRST 5 ROWS ONLY

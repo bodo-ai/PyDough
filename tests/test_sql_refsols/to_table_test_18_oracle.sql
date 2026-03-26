@@ -1,6 +1,6 @@
 SELECT
   "key",
   name
-FROM best_nation_t18
+FROM BEST_NATION_T18
 ORDER BY
   1 NULLS FIRST

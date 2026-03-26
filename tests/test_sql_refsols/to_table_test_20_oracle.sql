@@ -1,5 +1,5 @@
 SELECT
   num
-FROM nums_t20
+FROM NUMS_T20
 WHERE
   num > 2

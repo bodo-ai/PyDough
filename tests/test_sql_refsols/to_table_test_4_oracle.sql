@@ -1,6 +1,6 @@
 SELECT
   nation_key,
   nation_name
-FROM asian_nations_t4
+FROM ASIAN_NATIONS_T4
 ORDER BY
   1 NULLS FIRST

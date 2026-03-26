@@ -1,5 +1,5 @@
 SELECT
   name
-FROM asian_nations_t2
+FROM ASIAN_NATIONS_T2
 WHERE
   name LIKE '%I%'

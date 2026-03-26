@@ -1,7 +1,7 @@
 SELECT
   okey,
   total
-FROM order_summary_t12
+FROM ORDER_SUMMARY_T12
 WHERE
   total > 1000
 ORDER BY

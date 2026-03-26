@@ -1,15 +1,15 @@
 WITH "_u_0" AS (
   SELECT
     nation_key AS "_u_1"
-  FROM asian_nations_t5
+  FROM ASIAN_NATIONS_T5
   GROUP BY
-    1
+    nation_key
 )
 SELECT
   customer.c_name AS name
-FROM tpch.customer customer
+FROM TPCH.CUSTOMER CUSTOMER
 LEFT JOIN "_u_0" "_u_0"
-  ON "_u_0"."_u_1" = customer.c_nationkey
+  ON CUSTOMER.c_nationkey = "_u_0"."_u_1"
 WHERE
   NOT "_u_0"."_u_1" IS NULL
 ORDER BY

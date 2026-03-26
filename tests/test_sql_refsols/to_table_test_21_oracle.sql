@@ -1,6 +1,6 @@
 SELECT
   user_id,
   user_name
-FROM users_t21
+FROM USERS_T21
 ORDER BY
   1 NULLS FIRST

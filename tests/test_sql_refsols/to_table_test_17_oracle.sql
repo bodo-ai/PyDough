@@ -1,4 +1,4 @@
 SELECT
   "key",
   name
-FROM first_nation_t17
+FROM FIRST_NATION_T17

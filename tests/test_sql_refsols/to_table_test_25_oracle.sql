@@ -1,13 +1,13 @@
 WITH "_t" AS (
   SELECT
-    nation.n_name,
-    nation.n_nationkey,
-    regions_t25.rkey,
-    regions_t25.rname,
-    ROW_NUMBER() OVER (PARTITION BY regions_t25.rkey ORDER BY nation.n_nationkey NULLS FIRST) AS "_w"
-  FROM regions_t25 regions_t25
-  JOIN tpch.nation nation
-    ON nation.n_regionkey = regions_t25.rkey
+    NATION.n_name,
+    NATION.n_nationkey,
+    REGIONS_T25.rkey,
+    REGIONS_T25.rname,
+    ROW_NUMBER() OVER (PARTITION BY REGIONS_T25.rkey ORDER BY NATION.n_nationkey NULLS FIRST) AS "_w"
+  FROM REGIONS_T25 REGIONS_T25
+  JOIN TPCH.NATION NATION
+    ON NATION.n_regionkey = REGIONS_T25.rkey
 )
 SELECT
   rkey,

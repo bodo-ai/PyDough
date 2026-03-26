@@ -1,9 +1,9 @@
 SELECT
-  euro_regions_t24.rkey,
-  euro_regions_t24.rname,
-  tiers_t24.tier_id,
-  tiers_t24.tier_label
-FROM euro_regions_t24 euro_regions_t24
-CROSS JOIN tiers_t24 tiers_t24
+  EURO_REGIONS_T24.rkey,
+  EURO_REGIONS_T24.rname,
+  TIERS_T24.tier_id,
+  TIERS_T24.tier_label
+FROM EURO_REGIONS_T24 EURO_REGIONS_T24
+CROSS JOIN TIERS_T24 TIERS_T24
 ORDER BY
   3 NULLS FIRST

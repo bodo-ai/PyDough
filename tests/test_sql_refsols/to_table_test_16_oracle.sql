@@ -1,5 +1,5 @@
 SELECT
   rkey
-FROM region_counts_t16
+FROM REGION_COUNTS_T16
 ORDER BY
   1 NULLS FIRST
