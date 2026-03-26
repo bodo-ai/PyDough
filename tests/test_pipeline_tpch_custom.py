@@ -6407,9 +6407,9 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
 
         test_data = dataclasses.replace(
             test_data,
-            pydough_function=test_data.pydough_function.replace(
-                ", temp=True", ""
-            ).replace("temp=True, ", ""),
+            pydough_function=re.sub(
+                r"temp=True,\s*|,\s*temp=True", "", test_data.pydough_function
+            ),
         )
 
     test_data.run_e2e_test(
@@ -6445,11 +6445,24 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
         else ""
     )
 
+    test_data = tpch_custom_pipeline_to_table_test_data
+    if db_context.dialect == DatabaseDialect.ORACLE and isinstance(
+        test_data.pydough_function, str
+    ):
+        import dataclasses
+
+        test_data = dataclasses.replace(
+            test_data,
+            pydough_function=re.sub(
+                r"temp=True,\s*|,\s*temp=True", "", test_data.pydough_function
+            ),
+        )
+
     sql_file_path: str = get_sql_test_filename(
-        tpch_custom_pipeline_to_table_test_data.test_name,
+        test_data.test_name,
         db_context.dialect,
     )
-    tpch_custom_pipeline_to_table_test_data.run_sql_test(
+    test_data.run_sql_test(
         lambda _: graph,  # graph_fetcher that returns the graph directly
         sql_file_path,
         update_tests,

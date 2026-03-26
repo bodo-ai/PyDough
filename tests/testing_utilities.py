@@ -1394,6 +1394,8 @@ class PyDoughPandasTest:
         if mask_server is not None:
             call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
+        print("Generated SQL text:")
+        print(sql_text)
 
         # Either update the reference solution, or compare the generated sql
         # text against it.
