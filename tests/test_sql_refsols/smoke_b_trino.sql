@@ -56,33 +56,21 @@ SELECT
     CAST(DATE_TRUNC('MONTH', CAST('1993-05-25 12:45:36' AS TIMESTAMP)) AS TIMESTAMP),
     CAST(DATE_TRUNC('MONTH', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
   ) AS k,
-  DATE_DIFF(
-    'WEEK',
-    CAST(DATE_TRUNC(
+  CAST(CAST((
+    DATE_DIFF(
       'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) - 7
-          ) % 7
-        ) * -1,
-        CAST('1993-05-25 12:45:36' AS TIMESTAMP)
-      )
-    ) AS TIMESTAMP),
-    CAST(DATE_TRUNC(
-      'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) - 7
-          ) % 7
-        ) * -1,
-        CAST(o_orderdate AS TIMESTAMP)
-      )
-    ) AS TIMESTAMP)
-  ) AS l,
+      CAST(DATE_TRUNC('DAY', CAST('1993-05-25 12:45:36' AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
+    ) + (
+      (
+        DAY_OF_WEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) - 7
+      ) % 7
+    ) - (
+      (
+        DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) - 7
+      ) % 7
+    )
+  ) AS DOUBLE) / 7 AS BIGINT) AS l,
   DATE_DIFF(
     'DAY',
     CAST(DATE_TRUNC('DAY', CAST('1993-05-25 12:45:36' AS TIMESTAMP)) AS TIMESTAMP),

@@ -1221,6 +1221,149 @@ def get_trino_defog_graphs() -> graph_fetcher:
     return impl
 
 
+MONGO_DOCKER_CONTAINER = "mongo_tpch_test"
+MONGO_DOCKER_IMAGE = "bodoai1/pydough-mongo-tpch:latest"
+MONGO_HOST = "127.0.0.1"
+MONGO_PORT = 27019
+MONGO_DB = "tpch"
+
+
+@pytest.fixture(scope="session")
+def mongo_docker_setup() -> None:
+    """Set up the MongoDB Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(MONGO_DOCKER_CONTAINER):
+                if not container_is_running(MONGO_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", MONGO_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        MONGO_DOCKER_CONTAINER,
+                        "-e",
+                        "MONGO_USER=root_user",
+                        "-e",
+                        "MONGO_PASSWORD=mongo_pwd",
+                        "-p",
+                        f"{MONGO_PORT}:27017",
+                        MONGO_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up MongoDB Docker container: {e}")
+
+    # Check import
+    try:
+        from pymongo import MongoClient
+    except ImportError as e:
+        raise RuntimeError("pymongo is not installed") from e
+
+    # Wait for Mongo to be ready
+    for _ in range(300):
+        try:
+            client = MongoClient(
+                host=MONGO_HOST,
+                port=MONGO_PORT,
+                username="root_user",
+                password="mongo_pwd",
+                serverSelectionTimeoutMS=1000,
+            )
+            client.admin.command("ping")
+
+            if MONGO_DB in client.list_database_names():
+                client.close()
+                break
+
+        except Exception as e:
+            print("Error connecting to MongoDB:", e)
+            print(f"Waiting {_ + 1}/300 seconds for MongoDB...")
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", MONGO_DOCKER_CONTAINER])
+        pytest.fail("MongoDB container did not become ready in time.")
+
+
+CASSANDRA_DOCKER_CONTAINER = "cassandra_tpch_test"
+CASSANDRA_DOCKER_IMAGE = "bodoai1/pydough-cassandra-tpch:latest"
+CASSANDRA_HOST = "127.0.0.1"
+CASSANDRA_PORT = 9044
+CASSANDRA_KEYSPACE = "tpch"
+
+
+@pytest.fixture(scope="session")
+def cassandra_docker_setup() -> None:
+    """Set up the Cassandra Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(CASSANDRA_DOCKER_CONTAINER):
+                if not container_is_running(CASSANDRA_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", CASSANDRA_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        CASSANDRA_DOCKER_CONTAINER,
+                        "-e",
+                        "CASSANDRA_CLUSTER_NAME=test",
+                        "-e",
+                        "CASSANDRA_DC=datacenter1",
+                        "-e",
+                        "CASSANDRA_RACK=rack1",
+                        "-p",
+                        f"{CASSANDRA_PORT}:9042",
+                        CASSANDRA_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Cassandra Docker container: {e}")
+
+    # Check driver
+    try:
+        from cassandra.cluster import Cluster
+    except ImportError as e:
+        raise RuntimeError("cassandra-driver is not installed") from e
+
+    # Wait for Cassandra to be ready
+    for i in range(600):
+        try:
+            cluster = Cluster([CASSANDRA_HOST], port=CASSANDRA_PORT)
+            session = cluster.connect()
+
+            rows = session.execute("SELECT keyspace_name FROM system_schema.keyspaces")
+
+            keyspaces = [row.keyspace_name for row in rows]
+
+            if CASSANDRA_KEYSPACE in keyspaces:
+                session.shutdown()
+                cluster.shutdown()
+                break
+
+            session.shutdown()
+            cluster.shutdown()
+
+        except Exception as e:
+            print("Error connecting to Cassandra:", e)
+            print(f"Waiting {i + 1}/600 seconds for Cassandra...")
+            time.sleep(1)
+
+    else:
+        subprocess.run(["docker", "rm", "-f", CASSANDRA_DOCKER_CONTAINER])
+        pytest.fail("Cassandra container did not become ready in time.")
+
+
 TRINO_DOCKER_CONTAINER = "trino_tpch_test"
 TRINO_DOCKER_IMAGE = "bodoai1/pydough-trino:latest"
 TRINO_HOST = "127.0.0.1"
@@ -1240,7 +1383,12 @@ DOCKER_HOST = "host.docker.internal"
 
 
 @pytest.fixture(scope="session")
-def trino_docker_setup(mysql_docker_setup, postgres_docker_setup) -> None:
+def trino_docker_setup(
+    mysql_docker_setup,
+    postgres_docker_setup,
+    mongo_docker_setup,
+    cassandra_docker_setup,
+) -> None:
     """
     Set up the Trino Docker container for testing. The Trino container
     depends on several other containers to be set up first, since it connects
@@ -1279,6 +1427,20 @@ def trino_docker_setup(mysql_docker_setup, postgres_docker_setup) -> None:
                         f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
                         "-e",
                         f"POSTGRES_DB={POSTGRES_DB}",
+                        "-e",
+                        f"MONGO_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"MONGO_PORT={MONGO_PORT}",
+                        "-e",
+                        "MONGO_USER=root_user",
+                        "-e",
+                        "MONGO_PASSWORD=mongo_pwd",
+                        "-e",
+                        f"CASSANDRA_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"CASSANDRA_PORT={CASSANDRA_PORT}",
+                        "-e",
+                        "CASSANDRA_DC=datacenter1",
                         "-p",
                         f"{TRINO_PORT}:8080",
                         TRINO_DOCKER_IMAGE,

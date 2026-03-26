@@ -21,59 +21,35 @@ FROM postgres.main.payments_received AS payments_received
 JOIN postgres.main.sales AS sales
   ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
 WHERE
-  DATE_DIFF(
-    'WEEK',
-    CAST(DATE_TRUNC(
+  CAST(CAST((
+    DATE_DIFF(
       'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
-          ) % 7
-        ) * -1,
-        CAST(payments_received.payment_date AS TIMESTAMP)
-      )
-    ) AS TIMESTAMP),
-    CAST(DATE_TRUNC(
+      CAST(DATE_TRUNC('DAY', CAST(payments_received.payment_date AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
+    ) + (
+      (
+        DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
+      ) % 7
+    ) - (
+      (
+        DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+      ) % 7
+    )
+  ) AS DOUBLE) / 7 AS BIGINT) <= 8
+  AND CAST(CAST((
+    DATE_DIFF(
       'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
-          ) % 7
-        ) * -1,
-        CURRENT_TIMESTAMP
-      )
-    ) AS TIMESTAMP)
-  ) <= 8
-  AND DATE_DIFF(
-    'WEEK',
-    CAST(DATE_TRUNC(
-      'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
-          ) % 7
-        ) * -1,
-        CAST(payments_received.payment_date AS TIMESTAMP)
-      )
-    ) AS TIMESTAMP),
-    CAST(DATE_TRUNC(
-      'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
-          ) % 7
-        ) * -1,
-        CURRENT_TIMESTAMP
-      )
-    ) AS TIMESTAMP)
-  ) >= 1
+      CAST(DATE_TRUNC('DAY', CAST(payments_received.payment_date AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
+    ) + (
+      (
+        DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
+      ) % 7
+    ) - (
+      (
+        DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+      ) % 7
+    )
+  ) AS DOUBLE) / 7 AS BIGINT) >= 1
 GROUP BY
   1

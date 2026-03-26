@@ -36,33 +36,21 @@ SELECT
     CAST(DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP),
     CAST(DATE_TRUNC('YEAR', CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS TIMESTAMP)
   ) AS dd_col_dt,
-  DATE_DIFF(
-    'WEEK',
-    CAST(DATE_TRUNC(
+  CAST(CAST((
+    DATE_DIFF(
       'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) - 7
-          ) % 7
-        ) * -1,
-        CAST('1992-01-01' AS TIMESTAMP)
-      )
-    ) AS TIMESTAMP),
-    CAST(DATE_TRUNC(
-      'DAY',
-      DATE_ADD(
-        'DAY',
-        (
-          (
-            DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) - 7
-          ) % 7
-        ) * -1,
-        CAST('1992-01-01 12:30:45' AS TIMESTAMP)
-      )
-    ) AS TIMESTAMP)
-  ) AS dd_dt_str,
+      CAST(DATE_TRUNC('DAY', CAST('1992-01-01' AS TIMESTAMP)) AS TIMESTAMP),
+      CAST(DATE_TRUNC('DAY', CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS TIMESTAMP)
+    ) + (
+      (
+        DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) - 7
+      ) % 7
+    ) - (
+      (
+        DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) - 7
+      ) % 7
+    )
+  ) AS DOUBLE) / 7 AS BIGINT) AS dd_dt_str,
   (
     DAY_OF_WEEK(o_orderdate) - 7
   ) % 7 AS dow_col,

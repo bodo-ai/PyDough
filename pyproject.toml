@@ -40,6 +40,8 @@ dev-dependencies = [
     "pydough[server]",
     "pydough[bodosql]",
     "pydough[oracle]",
+    "pymongo",
+    "cassandra-driver",
 ]
 
 [project.optional-dependencies]

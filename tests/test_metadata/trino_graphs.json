@@ -6,7 +6,7 @@
       {
         "name": "regions",
         "type": "simple table",
-        "table path": "postgres.tpch.REGION",
+        "table path": "mongo.tpch.REGION",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -40,7 +40,7 @@
       {
         "name": "nations",
         "type": "simple table",
-        "table path": "mysql.tpch.NATION",
+        "table path": "cassandra.tpch.NATION",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -193,7 +193,7 @@
       {
         "name": "suppliers",
         "type": "simple table",
-        "table path": "postgres.tpch.SUPPLIER",
+        "table path": "mongo.tpch.SUPPLIER",
         "unique properties": ["key", "name", "phone", "address"],
         "properties": [
           {
@@ -409,7 +409,7 @@
       {
         "name": "supply_records",
         "type": "simple table",
-        "table path": "mysql.tpch.PARTSUPP",
+        "table path": "cassandra.tpch.PARTSUPP",
         "unique properties": [["part_key", "supplier_key"]],
         "properties": [
           {
@@ -874,7 +874,7 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "postgres.main.sbCustomer",
+        "table path": "mongo.main.sbCustomer",
         "unique properties": ["_id", "name", "email", "address1"],
         "properties": [
           {
@@ -1070,7 +1070,7 @@
       {
         "name": "daily_prices",
         "type": "simple table",
-        "table path": "postgres.main.sbDailyPrice",
+        "table path": "cassandra.main.sbDailyPrice",
         "unique properties": [["ticker_id", "date"]],
         "properties": [
           {
@@ -1487,7 +1487,7 @@
       {
         "name": "salespeople",
         "type": "simple table",
-        "table path": "postgres.main.salespersons",
+        "table path": "mongo.main.salespersons",
         "unique properties": ["_id", "email", "phone", ["first_name", "last_name"]],
         "properties": [
           {
@@ -1565,7 +1565,7 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "postgres.main.customers",
+        "table path": "cassandra.main.customers",
         "unique properties": ["_id", "email", "phone", "address", ["first_name", "last_name"]],
         "properties": [
           {
@@ -1747,7 +1747,7 @@
       {
         "name": "payments_received",
         "type": "simple table",
-        "table path": "postgres.main.payments_received",
+        "table path": "mongo.main.payments_received",
         "unique properties": ["_id"],
         "properties": [
           {
@@ -1809,7 +1809,7 @@
       {
         "name": "sales",
         "type": "simple table",
-        "table path": "postgres.main.sales",
+        "table path": "cassandra.main.sales",
         "unique properties": ["_id"],
         "properties": [
           {
@@ -2078,7 +2078,7 @@
       {
         "name": "doctors",
         "type": "simple table",
-        "table path": "postgres.main.doctors",
+        "table path": "mongo.main.doctors",
         "unique properties": ["doc_id", "first_name", "last_name", "board_certification_number"],
         "properties": [
           {
@@ -2177,7 +2177,7 @@
       {
         "name": "patients",
         "type": "simple table",
-        "table path": "postgres.main.patients",
+        "table path": "cassandra.main.patients",
         "unique properties": ["patient_id", "email", "phone", "first_name"],
         "properties": [
           {
@@ -2436,7 +2436,7 @@
       {
         "name": "diagnoses",
         "type": "simple table",
-        "table path": "postgres.main.diagnoses",
+        "table path": "mongo.main.diagnoses",
         "unique properties": ["_id", "code", "name", "description"],
         "properties": [
           {
@@ -2482,7 +2482,7 @@
       {
         "name": "treatments",
         "type": "simple table",
-        "table path": "postgres.main.treatments",
+        "table path": "cassandra.main.treatments",
         "unique properties": ["treatment_id"],
         "properties": [
           {
@@ -2750,7 +2750,7 @@
       {
         "name": "concomitant_meds",
         "type": "simple table",
-        "table path": "postgres.main.concomitant_meds",
+        "table path": "mongo.main.concomitant_meds",
         "unique properties": ["_id", ["treatment_id", "medicine_name"]],
         "properties": [
           {
@@ -2830,7 +2830,7 @@
       {
         "name": "adverse_events",
         "type": "simple table",
-        "table path": "postgres.main.adverse_events",
+        "table path": "cassandra.main.adverse_events",
         "unique properties": ["_id", "treatment_id"],
         "properties": [
           {
@@ -3185,7 +3185,7 @@
       {
         "name": "merchants",
         "type": "simple table",
-        "table path": "postgres.main.merchants",
+        "table path": "mongo.main.merchants",
         "unique properties": ["mid", "name"],
         "properties": [
           {
@@ -3355,7 +3355,7 @@
       {
         "name": "coupons",
         "type": "simple table",
-        "table path": "postgres.main.coupons",
+        "table path": "cassandra.main.coupons",
         "unique properties": ["cid"],
         "properties": [
           {
@@ -3657,7 +3657,7 @@
       {
         "name": "user_balances",
         "type": "simple table",
-        "table path": "postgres.main.wallet_user_balance_daily",
+        "table path": "mongo.main.wallet_user_balance_daily",
         "unique properties": [["user_id", "updated_at"]],
         "properties": [
           {
@@ -3693,7 +3693,7 @@
       {
         "name": "merchant_balances",
         "type": "simple table",
-        "table path": "postgres.main.wallet_merchant_balance_daily",
+        "table path": "cassandra.main.wallet_merchant_balance_daily",
         "unique properties": [["merchant_id", "updated_at"]],
         "properties": [
           {
@@ -3827,7 +3827,7 @@
       {
         "name": "user_sessions",
         "type": "simple table",
-        "table path": "postgres.main.user_sessions",
+        "table path": "mongo.main.user_sessions",
         "unique properties": [["user_id", "session_start"], ["user_id", "session_end"]],
         "properties": [
           {
@@ -3880,7 +3880,7 @@
       {
         "name": "user_setting_snapshots",
         "type": "simple table",
-        "table path": "postgres.main.user_setting_snapshot",
+        "table path": "cassandra.main.user_setting_snapshot",
         "unique properties": [["user_id", "snapshot_date"]],
         "properties": [
           {
@@ -4326,7 +4326,7 @@
       {
         "name": "citations",
         "type": "simple table",
-        "table path": "postgres.main.cite",
+        "table path": "mongo.main.cite",
         "unique properties": [
           ["cited",
           "citing"]
@@ -4357,7 +4357,7 @@
       {
         "name": "conferences",
         "type": "simple table",
-        "table path": "postgres.main.conference",
+        "table path": "cassandra.main.conference",
         "unique properties": [
           "conference_id"
         ],
@@ -4426,7 +4426,7 @@
       {
         "name": "domains_authors",
         "type": "simple table",
-        "table path": "postgres.main.domain_author",
+        "table path": "mongo.main.domain_author",
         "unique properties": [
           ["author_id",
           "domain_id"]
@@ -4457,7 +4457,7 @@
       {
         "name": "domains_conferences",
         "type": "simple table",
-        "table path": "postgres.main.domain_conference",
+        "table path": "cassandra.main.domain_conference",
         "unique properties": [
           ["conference_id",
           "domain_id"]
@@ -4519,7 +4519,7 @@
       {
         "name": "domains_keywords",
         "type": "simple table",
-        "table path": "postgres.main.domain_keyword",
+        "table path": "mongo.main.domain_keyword",
         "unique properties": [
           ["domain_id",
           "keyword_id"]
@@ -4550,7 +4550,7 @@
       {
         "name": "domains_publications",
         "type": "simple table",
-        "table path": "postgres.main.domain_publication",
+        "table path": "cassandra.main.domain_publication",
         "unique properties": [["domain_id", "publication_id"]],
         "properties": [
           {
@@ -4617,7 +4617,7 @@
       {
         "name": "keywords",
         "type": "simple table",
-        "table path": "postgres.main.keyword",
+        "table path": "mongo.main.keyword",
         "unique properties": [
           "keyword_id"
         ],
@@ -4647,7 +4647,7 @@
       {
         "name": "organizations",
         "type": "simple table",
-        "table path": "postgres.main.organization",
+        "table path": "cassandra.main.organization",
         "unique properties": [
           "organization_id"
         ],
@@ -4779,7 +4779,7 @@
       {
         "name": "publications_keywords",
         "type": "simple table",
-        "table path": "postgres.main.publication_keyword",
+        "table path": "mongo.main.publication_keyword",
         "unique properties": [["publication_id", "keyword_id"]],
         "properties": [
           {
@@ -4807,7 +4807,7 @@
       {
         "name": "writes",
         "type": "simple table",
-        "table path": "postgres.main.writes",
+        "table path": "cassandra.main.writes",
         "unique properties": [["author_id", "publication_id"]],
         "properties": [
           {
@@ -5357,7 +5357,7 @@
       {
         "name": "locations",
         "type": "simple table",
-        "table path": "postgres.main.location",
+        "table path": "mongo.main.location",
         "unique properties": [
           ["restaurant_id", "house_number", "street_name","city_name"]
         ],
@@ -5405,7 +5405,7 @@
       {
         "name": "restaurants",
         "type": "simple table",
-        "table path": "postgres.main.restaurant",
+        "table path": "cassandra.main.restaurant",
         "unique properties": [
           "id_"
         ],
