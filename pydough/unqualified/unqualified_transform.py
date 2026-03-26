@@ -510,7 +510,7 @@ def from_string(
         "pydough": pydough,
     }
     # Temporarily set the active session (or just metadata) so that functions like
-    # pydough.to_table can access session info during execution
+    # pydough.to_table can access session info during execution.
     old_session = pydough.active_session
     try:
         if session is not None:

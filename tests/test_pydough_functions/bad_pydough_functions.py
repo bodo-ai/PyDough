@@ -4,7 +4,6 @@
 
 import datetime
 import math
-import datetime
 
 import pydough
 

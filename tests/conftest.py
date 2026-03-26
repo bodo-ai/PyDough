@@ -116,6 +116,7 @@ def reset_active_session():
     pydough.active_session.database = DatabaseContext(
         empty_connection, DatabaseDialect.ANSI
     )
+    pydough.active_session.mask_server = None
 
 
 @pytest.fixture

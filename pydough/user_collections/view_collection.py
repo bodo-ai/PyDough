@@ -27,7 +27,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
         name: str,
         columns: list[str],
         types: list[PyDoughType],
-        is_view: bool = True,
+        is_view: bool = False,
         is_replace: bool = False,
         is_temp: bool = False,
         unique_columns: list[str | list[str]] | None = None,
@@ -39,7 +39,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
             name: The name of the view/table in the database (can be 'db.schema.name')
             columns: List of column names (from the query result used to create the view/table)
             types: List of PyDoughType for each column
-            is_view: True if this is a VIEW, False if it's a TABLE. Default is True (VIEW).
+            is_view: True if this is a VIEW, False if it's a TABLE. Default is False (TABLE).
             is_temp: True if this is a temporary view/table. Default is False (permanent).
             unique_columns: List of unique column names or column combinations.
                 If None, defaults to treating all columns together as a unique key.

@@ -4,6 +4,7 @@ import pydough
 from pydough.configs import PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import CreateCapabilities, DatabaseDialect
+from pydough.database_connectors.empty_connection import empty_connection
 from pydough.errors import PyDoughSessionException
 from pydough.errors.error_utils import is_valid_sql_name
 from pydough.logger import get_logger
@@ -72,10 +73,21 @@ def _generate_create_ddl(
         - ddl_statements is a list of DDL strings to execute in order
         - actual_temp is the final temp value (may differ from input due to dialect limitations)
     """
-    # Handle differences in CREATE syntax for different databases.
     create_caps: CreateCapabilities = db_dialect.create_capabilities
     object_type = "VIEW" if as_view else "TABLE"
     ddl_statements: list[str] = []
+
+    # Apply dialect-specific overrides that may force temp=True before
+    # validating temp support, so validation always sees the final value.
+    if as_view and not temp and db_dialect == DatabaseDialect.SQLITE:
+        # SQLite does not support persistent views that reference attached
+        # databases (e.g. tpch.orders). Only temporary views are supported.
+        temp = True
+        warnings.warn(
+            "SQLite does not support creating persistent views that reference "
+            "attached databases. Only temporary views are supported. "
+            "The view will be created as TEMPORARY."
+        )
 
     if temp:
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
@@ -84,27 +96,13 @@ def _generate_create_ddl(
                 f"TEMPORARY {object_type} is not supported for {db_dialect.name}"
             )
 
-    if as_view and not temp and db_dialect == DatabaseDialect.SQLITE:
-        # Sqlite does not support creating persistent views that reference attached databases.
-        # like tpch.order Only temporary views are supported.
-        # Override to be temporary and raise a warning.
-        temp = True
-        warnings.warn(
-            "SQLite does not support creating persistent views that reference attached databases. "
-            "Only temporary views are supported. The view will be created as TEMPORARY."
-        )
-
-    # Check if we can use CREATE OR REPLACE
+    # For databases that don't support CREATE OR REPLACE TABLE/VIEW,
+    # use DROP TABLE/VIEW IF EXISTS + CREATE TABLE/VIEW pattern.
     can_replace: bool = (
         create_caps.replace_view if as_view else create_caps.replace_table
     )
-
-    # For databases that don't support CREATE OR REPLACE TABLE/VIEW,
-    # use DROP TABLE/VIEW IF EXISTS + CREATE TABLE/VIEW pattern
     if replace and not can_replace:
-        drop_stmt = f"DROP {object_type} IF EXISTS {name}"
-        ddl_statements.append(drop_stmt)
-        # Don't add OR REPLACE since we're using DROP first
+        ddl_statements.append(f"DROP {object_type} IF EXISTS {name}")
         replace = False
 
     create = "CREATE"
@@ -112,7 +110,6 @@ def _generate_create_ddl(
         create += " OR REPLACE"
     if temp:
         create += " TEMPORARY"
-
     create += f" {object_type}"
 
     ddl_statements.append(f"{create} {name} AS {sql}")
@@ -153,9 +150,8 @@ def _compute_unique_columns(
     while node is not None:
         if isinstance(node, Calculate):
             for output_name, expr in node.calc_term_values.items():
-                if isinstance(expr, Reference):
+                if isinstance(expr, Reference) and expr.term_name not in rename_map:
                     rename_map[expr.term_name] = output_name
-            break
         node = getattr(node, "preceding_context", None)
 
     # Step 2: Traverse ancestor_context upward, collecting unique_terms
@@ -238,7 +234,7 @@ def to_table(
 
     # Load session and convert to relational tree (same as to_sql)
     session: PyDoughSession = _load_session_info(**kwargs)
-    if session.database is None:
+    if session.database.connection is empty_connection:
         raise PyDoughSessionException(
             "Cannot create view/table without a database connection.\n"
             "Please configure a database connection in the session."

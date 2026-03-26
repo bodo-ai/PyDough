@@ -106,7 +106,7 @@ class DatabaseConnection:
         finally:
             self.cursor.close()
 
-    def get_table_columns(self, table_name: str) -> pd.DataFrame:
+    def get_table_columns(self, table_name: str) -> list[str]:
         """Get the columns of a table.
 
         Args:

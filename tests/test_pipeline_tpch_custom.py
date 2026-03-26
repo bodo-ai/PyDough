@@ -5862,7 +5862,7 @@ def test_pipeline_e2e_errors(
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "total_orders": [
+                        "okey": [
                             972901,
                             1750466,
                             2185667,
@@ -5874,7 +5874,7 @@ def test_pipeline_e2e_errors(
                             4576548,
                             4722021,
                         ],
-                        "avg_price": [
+                        "total": [
                             508668.52,
                             555285.16,
                             511359.88,
@@ -6015,8 +6015,8 @@ def test_pipeline_e2e_errors(
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "total_orders": [1750466, 2232932, 3043270, 4576548, 4722021],
-                        "avg_price": [
+                        "okey": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "total": [
                             555285.16,
                             522720.61,
                             530604.44,
@@ -6374,6 +6374,24 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
 
+def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
+    """Return a copy of test_data with temp=True removed from the PyDough string.
+
+    Oracle does not support TEMPORARY TABLEs/VIEWs, so tests that use temp=True
+    are rewritten to use persistent tables (replace=True is preserved for cleanup).
+    """
+    import dataclasses
+
+    if not isinstance(test_data.pydough_function, str):
+        return test_data
+    return dataclasses.replace(
+        test_data,
+        pydough_function=re.sub(
+            r"temp=True,\s*|,\s*temp=True", "", test_data.pydough_function
+        ),
+    )
+
+
 @pytest.mark.execute
 def test_pipeline_tpch_e2e_to_table_all_dialects(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
@@ -6398,19 +6416,8 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     )
 
     test_data = tpch_custom_pipeline_to_table_test_data
-    if db_context.dialect == DatabaseDialect.ORACLE and isinstance(
-        test_data.pydough_function, str
-    ):
-        # Oracle does not support TEMPORARY TABLEs/VIEWs. Strip temp=True from
-        # the test string so Oracle tests run with persistent tables instead.
-        import dataclasses
-
-        test_data = dataclasses.replace(
-            test_data,
-            pydough_function=re.sub(
-                r"temp=True,\s*|,\s*temp=True", "", test_data.pydough_function
-            ),
-        )
+    if db_context.dialect == DatabaseDialect.ORACLE:
+        test_data = _strip_temp_for_oracle(test_data)
 
     test_data.run_e2e_test(
         lambda _: graph,  # graph_fetcher that returns the graph directly
@@ -6446,17 +6453,8 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     )
 
     test_data = tpch_custom_pipeline_to_table_test_data
-    if db_context.dialect == DatabaseDialect.ORACLE and isinstance(
-        test_data.pydough_function, str
-    ):
-        import dataclasses
-
-        test_data = dataclasses.replace(
-            test_data,
-            pydough_function=re.sub(
-                r"temp=True,\s*|,\s*temp=True", "", test_data.pydough_function
-            ),
-        )
+    if db_context.dialect == DatabaseDialect.ORACLE:
+        test_data = _strip_temp_for_oracle(test_data)
 
     sql_file_path: str = get_sql_test_filename(
         test_data.test_name,

@@ -965,17 +965,49 @@ def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
     """
     import re
 
-    # Collect all table names used in to_table name='...' calls before
-    # replacing, so we know which per= references should also be updated.
-    name_pattern = r"name=(['\"])([^'\"]+)\1"
-    to_table_names = {m.group(2) for m in re.finditer(name_pattern, pydough_code)}
+    # Collect name= kwargs scoped only to pydough.to_table(...) call.
+    to_table_names: set[str] = set()
+    # Each entry: (start, end, quote, name) where start is the index of the
+    # 'n' in `name=...` and end is one past the closing quote character.
+    name_spans: list[tuple[int, int, str, str]] = []
 
-    def replace_name(match: re.Match) -> str:
-        quote = match.group(1)
-        table_name = match.group(2)
-        return f"name={quote}{prefix}{table_name}{quote}"
+    for call_m in re.finditer(r"pydough\.to_table\s*\(", pydough_code):
+        pos = call_m.end()
+        depth = 1
+        in_str: str | None = None
+        while pos < len(pydough_code) and depth > 0:
+            ch = pydough_code[pos]
+            if in_str:
+                if ch == in_str:
+                    in_str = None
+            elif ch in ("'", '"'):
+                in_str = ch
+            elif ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            # At depth 1 (top-level args), check for name=<quote>...<quote>
+            elif depth == 1 and pydough_code[pos : pos + 5] == "name=":
+                j = pos + 5
+                if j < len(pydough_code) and pydough_code[j] in ("'", '"'):
+                    q = pydough_code[j]
+                    k = pydough_code.find(q, j + 1)
+                    if k != -1:
+                        table_name = pydough_code[j + 1 : k]
+                        to_table_names.add(table_name)
+                        name_spans.append((pos, k + 1, q, table_name))
+                        pos = k + 1
+                        continue
+            pos += 1
 
-    result = re.sub(name_pattern, replace_name, pydough_code)
+    # Apply name= replacements in reverse order to preserve indices.
+    result = pydough_code
+    for start, end, quote, table_name in reversed(name_spans):
+        result = (
+            result[:start] + f"name={quote}{prefix}{table_name}{quote}" + result[end:]
+        )
 
     # Also update per='...' references that match a to_table name so that
     # BEST/RANKING with per= pointing to a materialized collection resolves
@@ -1372,13 +1404,14 @@ class PyDoughPandasTest:
                 session.config = config
             if mask_server is not None:
                 session.mask_server = mask_server
-            # Add session to kwargs so that it can be used when executing the PyDough code
-            if self.kwargs is None:
-                self.kwargs = {}
-            self.kwargs["session"] = session
+            # Build kwargs with session without mutating self.kwargs (which is
+            # shared across test runs via the fixture parameter object).
+            exec_kwargs = {**(self.kwargs or {}), "session": session}
+        else:
+            exec_kwargs = self.kwargs or {}
 
         root: UnqualifiedNode = transform_and_exec_pydough(
-            pydough_func, graph, self.kwargs
+            pydough_func, graph, exec_kwargs
         )
 
         # Convert the PyDough code to SQL text
@@ -1394,8 +1427,6 @@ class PyDoughPandasTest:
         if mask_server is not None:
             call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
-        print("Generated SQL text:")
-        print(sql_text)
 
         # Either update the reference solution, or compare the generated sql
         # text against it.
@@ -1551,13 +1582,7 @@ class PyDoughPandasTest:
         # to be able to check to_table DDL generation logging.
         table_or_view = "VIEW" if as_view else "TABLE"
         cleanup_statement = f"DROP {table_or_view} IF EXISTS {table_name}"
-        cursor = database.connection.connection.cursor()
-        cursor.execute(cleanup_statement)
-        try:
-            cursor.fetchall()
-        except Exception:
-            pass  # No results to fetch (expected for DDL statements)
-        cursor.close()
+        database.connection.execute_ddl(cleanup_statement)
 
         call_kwargs: dict = {"metadata": graph, "database": database}
         if config is not None:
@@ -1578,7 +1603,7 @@ class PyDoughPandasTest:
             "to_table did not return an UnqualifiedGeneratedCollection as expected"
         )
         # Access the inner PyDoughUserGeneratedCollection to get columns
-        inner_collection = collection._parcel[0]
+        inner_collection = collection.user_collection
         verify_table_created_correctly(database, table_name, inner_collection.columns)
 
 
