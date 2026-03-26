@@ -201,6 +201,14 @@ class DatabaseDialect(Enum):
             case DatabaseDialect.SQLITE:
                 return CreateCapabilities(replace_table=False, replace_view=False)
             case DatabaseDialect.ORACLE:
+                # Oracle does not support TEMPORARY TABLE via CTAS (CREATE TABLE AS SELECT).
+                # Private Temporary Tables (PTT, Oracle 18c+) support CTAS but do not
+                # support the ON COMMIT clause in that form, making data only transaction-
+                # scoped and unavailable for subsequent queries in the same session.
+                # Global Temporary Tables (GTT) support session-scoped data via
+                # ON COMMIT PRESERVE ROWS, but require explicit column definitions and
+                # do not support CTAS. Supporting GTT would require a PyDoughType-to-Oracle-
+                # SQL-type mapping and a separate INSERT INTO ... SELECT step.
                 return CreateCapabilities(
                     replace_table=False,
                     temp_table=False,
