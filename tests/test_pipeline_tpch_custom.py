@@ -6397,7 +6397,22 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
         else ""
     )
 
-    tpch_custom_pipeline_to_table_test_data.run_e2e_test(
+    test_data = tpch_custom_pipeline_to_table_test_data
+    if db_context.dialect == DatabaseDialect.ORACLE and isinstance(
+        test_data.pydough_function, str
+    ):
+        # Oracle does not support TEMPORARY TABLEs/VIEWs. Strip temp=True from
+        # the test string so Oracle tests run with persistent tables instead.
+        import dataclasses
+
+        test_data = dataclasses.replace(
+            test_data,
+            pydough_function=test_data.pydough_function.replace(
+                ", temp=True", ""
+            ).replace("temp=True, ", ""),
+        )
+
+    test_data.run_e2e_test(
         lambda _: graph,  # graph_fetcher that returns the graph directly
         db_context,
         coerce_types=True,

@@ -1,0 +1,8 @@
+SELECT
+  okey,
+  total,
+  ROW_NUMBER() OVER (ORDER BY total DESC NULLS LAST) AS rank
+FROM order_summary_t9
+ORDER BY
+  2 DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY

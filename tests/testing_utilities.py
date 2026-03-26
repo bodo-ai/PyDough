@@ -1762,13 +1762,19 @@ def harmonize_types(column_a, column_b):
 
     # Timestamp vs date. Oracle returns DATE columns as datetime64[ns] (Timestamp).
     # Convert Timestamps to date objects for comparison.
-    if pd.api.types.is_datetime64_any_dtype(column_a) and any(
-        isinstance(elem, datetime.date) for elem in column_b
+    # Guard with explicit dtype checks: pd.Timestamp is a subclass of datetime.date,
+    # so we must ensure exactly one side is datetime64 to avoid false matches.
+    if (
+        pd.api.types.is_datetime64_any_dtype(column_a)
+        and not pd.api.types.is_datetime64_any_dtype(column_b)
+        and any(isinstance(elem, datetime.date) for elem in column_b)
     ):
         return column_a.apply(lambda x: pd.NA if pd.isna(x) else x.date()), column_b
-    if any(
-        isinstance(elem, datetime.date) for elem in column_a
-    ) and pd.api.types.is_datetime64_any_dtype(column_b):
+    if (
+        not pd.api.types.is_datetime64_any_dtype(column_a)
+        and pd.api.types.is_datetime64_any_dtype(column_b)
+        and any(isinstance(elem, datetime.date) for elem in column_a)
+    ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
 
     return column_a, column_b

@@ -66,4 +66,4 @@ jobs:
         run: uv run python -c "import oracledb; print('Oracle connector installed')"
 
       - name: Run Oracle Tests
-        run: uv run pytest -m oracle tests/ -rs
+        run: uv run pytest -vv -m oracle tests/ -rs

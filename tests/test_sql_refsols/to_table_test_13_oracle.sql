@@ -1,0 +1,7 @@
+SELECT
+  "key",
+  name
+FROM nations_t13
+ORDER BY
+  1 NULLS FIRST
+FETCH FIRST 5 ROWS ONLY
