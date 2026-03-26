@@ -1,16 +1,14 @@
 SELECT
-  sbcustname AS original_name,
-  RPAD('Cust0001', 30, '*') AS ref_rpad,
-  LPAD('Cust0001', 30, '*') AS ref_lpad,
-  RPAD(sbcustname, 30, '*') AS right_padded,
-  LPAD(sbcustname, 30, '#') AS left_padded,
-  RPAD(sbcustname, 8, '-') AS truncated_right,
-  LPAD(sbcustname, 8, '-') AS truncated_left,
-  RPAD(sbcustname, 0, '.') AS zero_pad_right,
-  LPAD(sbcustname, 0, '.') AS zero_pad_left,
-  RPAD(sbcustname, 30, ' ') AS right_padded_space,
-  LPAD(sbcustname, 30, ' ') AS left_padded_space
-FROM main.sbcustomer
-ORDER BY
-  1 NULLS FIRST
-LIMIT 5
+  sbtxdatetime AS date_time,
+  DATE_ADD('DAY', 7, CAST(sbtxdatetime AS TIMESTAMP)) AS week_adj1,
+  DATE_ADD('DAY', -7, CAST(sbtxdatetime AS TIMESTAMP)) AS week_adj2,
+  DATE_ADD('DAY', 14, DATE_ADD('HOUR', 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj3,
+  DATE_ADD('DAY', 14, DATE_ADD('SECOND', -1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj4,
+  DATE_ADD('DAY', 14, DATE_ADD('DAY', 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj5,
+  DATE_ADD('DAY', 14, DATE_ADD('MINUTE', -1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj6,
+  DATE_ADD('DAY', 14, DATE_ADD('MONTH', 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj7,
+  DATE_ADD('DAY', 14, DATE_ADD('YEAR', 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj8
+FROM main.sbtransaction
+WHERE
+  DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
+  AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025

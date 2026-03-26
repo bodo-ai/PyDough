@@ -145,6 +145,33 @@ class TrinoTransformBindings(BaseTransformBindings):
         if unit is None:
             raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
+        # Special case for week
+        if unit == DateTimeUnit.WEEK:
+            # raw_delta = number of days between date1 and date2
+            # dow1 = DAYOFWEEK(date1)
+            # dow2 = DAYOFWEEK(date2)
+            # result = INTEGER((raw_delta + dow1 - dow2) / 7)
+            date1 = self.make_datetime_arg(args[1])
+            date2 = self.make_datetime_arg(args[2])
+            raw_delta = self.convert_datediff(
+                [sqlglot_expressions.convert("DAY"), date1, date2], types
+            )
+            dow1 = self.convert_dayofweek([date1], [types[1]])
+            dow2 = self.convert_dayofweek([date2], [types[2]])
+            divion = sqlglot_expressions.Div(
+                this=apply_parens(
+                    sqlglot_expressions.Add(
+                        this=raw_delta,
+                        expression=sqlglot_expressions.Sub(this=dow1, expression=dow2),
+                    )
+                ),
+                expression=sqlglot_expressions.Literal.number(7),
+            )
+            print(divion.sql("trino"))
+            return sqlglot_expressions.Cast(
+                this=divion, to=sqlglot_expressions.DataType.build("BIGINT")
+            )
+
         # Truncate the arguments
         truncated_date1: SQLGlotExpression = self.apply_datetime_truncation(
             args[1], unit

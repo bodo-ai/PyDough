@@ -13,7 +13,8 @@ WITH _s0 AS (
     orders.o_totalprice
   FROM tpch.customer AS customer
   JOIN tpch.orders AS orders
-    ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000272'
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
+    AND customer.c_custkey = orders.o_custkey
 ), _t1 AS (
   SELECT
     _s0.n_name,
