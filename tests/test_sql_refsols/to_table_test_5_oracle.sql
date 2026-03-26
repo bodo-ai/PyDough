@@ -6,7 +6,7 @@ WITH "_u_0" AS (
     nation_key
 )
 SELECT
-  customer.c_name AS name
+  CUSTOMER.c_name AS name
 FROM TPCH.CUSTOMER CUSTOMER
 LEFT JOIN "_u_0" "_u_0"
   ON CUSTOMER.c_nationkey = "_u_0"."_u_1"

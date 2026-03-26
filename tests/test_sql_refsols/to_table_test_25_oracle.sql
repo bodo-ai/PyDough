@@ -1,21 +1,21 @@
-WITH "_t" AS (
+WITH "_T" AS (
   SELECT
-    NATION.n_name,
-    NATION.n_nationkey,
-    REGIONS_T25.rkey,
-    REGIONS_T25.rname,
-    ROW_NUMBER() OVER (PARTITION BY REGIONS_T25.rkey ORDER BY NATION.n_nationkey NULLS FIRST) AS "_w"
+    NATION.n_name AS N_NAME,
+    NATION.n_nationkey AS N_NATIONKEY,
+    REGIONS_T25.rkey AS RKEY,
+    REGIONS_T25.rname AS RNAME,
+    ROW_NUMBER() OVER (PARTITION BY REGIONS_T25.rkey ORDER BY NATION.n_nationkey) AS "_W"
   FROM REGIONS_T25 REGIONS_T25
   JOIN TPCH.NATION NATION
     ON NATION.n_regionkey = REGIONS_T25.rkey
 )
 SELECT
-  rkey,
-  rname,
-  n_nationkey AS nkey,
-  n_name AS nname
-FROM "_t"
+  RKEY AS rkey,
+  RNAME AS rname,
+  N_NATIONKEY AS nkey,
+  N_NAME AS nname
+FROM "_T"
 WHERE
-  "_w" = 1
+  "_W" = 1
 ORDER BY
   1 NULLS FIRST
