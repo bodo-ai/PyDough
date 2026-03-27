@@ -5051,6 +5051,16 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="dataframe_collection_correlation",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(selected_orders))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [10]}),
+                "rewrite_count_semi",
+            ),
+            id="rewrite_count_semi",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:

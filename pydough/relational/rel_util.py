@@ -24,6 +24,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable
 
 import pydough.pydough_operators as pydop
+from pydough.relational.relational_nodes.aggregate import Aggregate
 from pydough.types import BooleanType
 
 from .relational_expressions import (
@@ -810,3 +811,70 @@ def add_input_name(
 
     # For all other cases, just return the expression as is.
     return expr
+
+
+def rewrite_count_semi(
+    node: Aggregate,
+    input_unique_sets: set[frozenset[str]],
+    output_unique_sets: set[frozenset[str]],
+) -> tuple[RelationalNode, set[frozenset[str]]]:
+    """
+
+    This function optimize COUNT on top of SEMI join to NDISTINCT on the right
+    hand side.
+
+    Pre-requisites for the transformation:
+        - Current node is a no-groupby aggregation where the only aggfunc is
+        COUNT(*)
+        - Input to the node is a SEMI join where the condition is a single equality
+        check where the column form the left hand side is a uniqueness key from
+        the left hand side.
+        - The join has a reverse cardinality that always matches.
+
+    Args:
+        `node`: The node being transformed
+
+    Returns:
+        If all pre-requisites are met a new node with the transformation, the same
+        node otherwise.
+
+    TODO: Is it possible to have the inputs of the join the other way around?
+    The filter on the left side and the
+    """
+
+    if len(node.keys) != 0 and len(node.aggregations) != 1:
+        return node, output_unique_sets
+
+    ((agg_key, agg_value),) = node.aggregations.items()
+    if agg_value.op != pydop.COUNT or len(agg_value.inputs) != 0:
+        return node, output_unique_sets
+
+    agg_input: RelationalNode = node.input
+    if not isinstance(agg_input, Join) or agg_input.join_type != JoinType.SEMI:
+        return node, output_unique_sets
+
+    # Reverse cardinality that always matches
+    if not agg_input.reverse_cardinality.accesses:
+        return node, output_unique_sets
+
+    # the condition is a single
+    # equality check where the column form the left hand side is a uniqueness
+    # key from the left hand side (e.g. every row of LEFT_TREE has a unique
+    # value of LEFT_UNIQUE_KEY)
+    cond = agg_input.condition
+    if not (isinstance(cond, CallExpression) and cond.op == pydop.EQU):
+        return node, output_unique_sets
+
+    # agg_input.default_input_aliases.index("name")
+
+    cond.inputs[0]
+    rhs_input: RelationalExpression = cond.inputs[1]
+
+    agg_input.default_input_aliases[1]
+
+    ndistinct = CallExpression(pydop.NDISTINCT, agg_value.data_type, [rhs_input])
+
+    new_node = Aggregate(agg_input.inputs[1], {}, {agg_key: ndistinct})
+    breakpoint()
+
+    return new_node, output_unique_sets
