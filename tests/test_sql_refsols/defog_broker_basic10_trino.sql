@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     sbdptickerid AS _u_1
-  FROM postgres.main.sbdailyprice
+  FROM cassandra.defog.sbdailyprice
   GROUP BY
     1
 )

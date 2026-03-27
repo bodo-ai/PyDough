@@ -7,6 +7,6 @@ SELECT
       CAST(DATE_TRUNC('SECOND', CAST(session_end_ts AS TIMESTAMP)) AS TIMESTAMP)
     )
   ) AS avg_session_duration_seconds
-FROM postgres.main.user_sessions
+FROM mongo.defog.user_sessions
 GROUP BY
   1

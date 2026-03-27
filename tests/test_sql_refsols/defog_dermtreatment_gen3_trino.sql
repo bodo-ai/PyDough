@@ -6,6 +6,6 @@ SELECT
       CAST(DATE_TRUNC('YEAR', CURRENT_TIMESTAMP) AS TIMESTAMP)
     )
   ) AS average_age
-FROM postgres.main.patients
+FROM cassandra.defog.patients
 WHERE
   gender = 'Male' AND ins_type = 'private'

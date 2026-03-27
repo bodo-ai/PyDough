@@ -1,6 +1,6 @@
 SELECT
   AVG(balance) AS AMB
-FROM postgres.main.wallet_user_balance_daily
+FROM mongo.defog.wallet_user_balance_daily
 WHERE
   DATE_DIFF(
     'DAY',

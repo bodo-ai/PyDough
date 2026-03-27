@@ -6,7 +6,7 @@ WITH _s2 AS (
       CAST(LPAD(CAST(MONTH(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS month,
     COUNT(*) AS n_rows
-  FROM postgres.main.sbcustomer
+  FROM mongo.defog.sbcustomer
   WHERE
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)
     AND sbcustjoindate >= DATE_TRUNC('MONTH', DATE_ADD('MONTH', -6, CURRENT_TIMESTAMP))
@@ -20,7 +20,7 @@ WITH _s2 AS (
       CAST(LPAD(CAST(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
     ) AS month,
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
-  FROM postgres.main.sbcustomer AS sbcustomer
+  FROM mongo.defog.sbcustomer AS sbcustomer
   JOIN mysql.broker.sbtransaction AS sbtransaction
     ON MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) = MONTH(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
     AND YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) = YEAR(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))

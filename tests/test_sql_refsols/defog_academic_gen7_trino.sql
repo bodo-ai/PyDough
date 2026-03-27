@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     did,
     COUNT(DISTINCT aid) AS ndistinct_aid
-  FROM postgres.main.domain_author
+  FROM mongo.defog.domain_author
   GROUP BY
     1
 )

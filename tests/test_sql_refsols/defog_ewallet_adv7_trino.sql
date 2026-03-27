@@ -3,7 +3,7 @@ WITH _t AS (
     marketing_opt_in,
     user_id,
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC NULLS FIRST) AS _w
-  FROM postgres.main.user_setting_snapshot
+  FROM cassandra.defog.user_setting_snapshot
 )
 SELECT
   users.uid,

@@ -8,7 +8,7 @@ SELECT
     )
   ) AS total_duration
 FROM postgres.main.users AS users
-JOIN postgres.main.user_sessions AS user_sessions
+JOIN mongo.defog.user_sessions AS user_sessions
   ON user_sessions.session_end_ts < CAST('2023-06-08' AS DATE)
   AND user_sessions.session_start_ts >= CAST('2023-06-01' AS DATE)
   AND user_sessions.user_id = users.uid

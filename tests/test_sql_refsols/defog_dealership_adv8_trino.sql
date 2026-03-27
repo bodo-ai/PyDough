@@ -3,8 +3,8 @@ WITH _s3 AS (
     DATE_TRUNC('MONTH', CAST(sales.sale_date AS TIMESTAMP)) AS sale_month,
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
-  FROM postgres.main.sales AS sales
-  JOIN postgres.main.salespersons AS salespersons
+  FROM cassandra.defog.sales AS sales
+  JOIN mongo.defog.salespersons AS salespersons
     ON YEAR(CAST(salespersons.hire_date AS TIMESTAMP)) <= 2023
     AND YEAR(CAST(salespersons.hire_date AS TIMESTAMP)) >= 2022
     AND sales.salesperson_id = salespersons._id

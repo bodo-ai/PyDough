@@ -2,14 +2,14 @@ WITH _s1 AS (
   SELECT
     did,
     COUNT(*) AS n_rows
-  FROM postgres.main.domain_publication
+  FROM cassandra.defog.domain_publication
   GROUP BY
     1
 ), _s3 AS (
   SELECT
     did,
     COUNT(*) AS n_rows
-  FROM postgres.main.domain_keyword
+  FROM mongo.defog.domain_keyword
   GROUP BY
     1
 )

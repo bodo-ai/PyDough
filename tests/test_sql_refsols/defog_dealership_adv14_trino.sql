@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS TSC
-FROM postgres.main.sales
+FROM cassandra.defog.sales
 WHERE
   DATE_DIFF(
     'DAY',

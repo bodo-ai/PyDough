@@ -1,5 +1,5 @@
 SELECT
   AVG(weight_kg) AS CAW_male
-FROM postgres.main.patients
+FROM cassandra.defog.patients
 WHERE
   gender = 'Male'

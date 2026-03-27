@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     car_id,
     AVG(sale_price) AS avg_sale_price
-  FROM postgres.main.sales
+  FROM cassandra.defog.sales
   GROUP BY
     1
 )

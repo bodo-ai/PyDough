@@ -10,7 +10,7 @@ WITH _s0 AS (
     MAX(sbdphigh) AS max_sbdphigh,
     MIN(sbdplow) AS min_sbdplow,
     SUM(sbdpclose) AS sum_sbdpclose
-  FROM postgres.main.sbdailyprice
+  FROM cassandra.defog.sbdailyprice
   GROUP BY
     1,
     2

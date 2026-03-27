@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     sbdptickerid AS _u_1
-  FROM postgres.main.sbdailyprice
+  FROM cassandra.defog.sbdailyprice
   WHERE
     sbdpdate >= CAST('2023-04-01' AS DATE)
   GROUP BY

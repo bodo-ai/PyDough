@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     ARBITRARY(organization.continent) AS anything_continent,
     COUNT(author.oid) AS count_oid
-  FROM postgres.main.organization AS organization
+  FROM cassandra.defog.organization AS organization
   LEFT JOIN postgres.main.author AS author
     ON author.oid = organization.oid
   GROUP BY

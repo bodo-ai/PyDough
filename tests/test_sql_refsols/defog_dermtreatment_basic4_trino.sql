@@ -3,7 +3,7 @@ WITH _t1 AS (
     ARBITRARY(treatments.diag_id) AS anything_diag_id,
     ARBITRARY(treatments.patient_id) AS anything_patient_id,
     MAX(outcomes.day100_itch_vas) AS max_day100_itch_vas
-  FROM postgres.main.treatments AS treatments
+  FROM cassandra.defog.treatments AS treatments
   JOIN postgres.main.outcomes AS outcomes
     ON outcomes.treatment_id = treatments.treatment_id
   GROUP BY
@@ -21,7 +21,7 @@ SELECT
   diagnoses.diag_name AS diagnosis_name,
   _s3.ndistinct_anything_patient_id AS num_patients,
   _s3.max_max_day100_itch_vas AS max_itch_score
-FROM postgres.main.diagnoses AS diagnoses
+FROM mongo.defog.diagnoses AS diagnoses
 JOIN _s3 AS _s3
   ON _s3.anything_diag_id = diagnoses.diag_id
 ORDER BY

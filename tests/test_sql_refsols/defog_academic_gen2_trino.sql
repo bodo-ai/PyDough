@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     writes.aid,
     SUM(publication.citation_num) AS sum_citation_num
-  FROM postgres.main.writes AS writes
+  FROM cassandra.defog.writes AS writes
   JOIN postgres.main.publication AS publication
     ON publication.pid = writes.pid
   GROUP BY

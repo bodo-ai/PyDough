@@ -2,7 +2,7 @@ SELECT
   payment_method,
   COUNT(*) AS total_payments,
   COALESCE(SUM(payment_amount), 0) AS total_amount
-FROM postgres.main.payments_received
+FROM mongo.defog.payments_received
 GROUP BY
   1
 ORDER BY

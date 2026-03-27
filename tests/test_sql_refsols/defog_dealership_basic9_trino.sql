@@ -1,7 +1,7 @@
 SELECT
   state,
   COUNT(*) AS total_signups
-FROM postgres.main.customers
+FROM cassandra.defog.customers
 GROUP BY
   1
 ORDER BY

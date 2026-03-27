@@ -11,7 +11,7 @@ SELECT
   ARBITRARY(merchants.name) AS merchant_name,
   COUNT(_s1.receiver_id) AS total_transactions,
   COALESCE(SUM(_s1.amount), 0) AS total_amount
-FROM postgres.main.merchants AS merchants
+FROM mongo.defog.merchants AS merchants
 LEFT JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid
 GROUP BY

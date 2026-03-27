@@ -3,7 +3,7 @@ WITH _t AS (
     balance,
     user_id,
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY updated_at DESC NULLS FIRST) AS _w
-  FROM postgres.main.wallet_user_balance_daily
+  FROM mongo.defog.wallet_user_balance_daily
 )
 SELECT
   user_id,

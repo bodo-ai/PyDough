@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     car_id,
     SUM(sale_price) AS sum_sale_price
-  FROM postgres.main.sales
+  FROM cassandra.defog.sales
   WHERE
     YEAR(CAST(sale_date AS TIMESTAMP)) = 2023
   GROUP BY

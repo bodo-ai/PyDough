@@ -1,6 +1,6 @@
 SELECT
   name
-FROM postgres.main.restaurant
+FROM cassandra.defog.restaurant
 ORDER BY
   rating DESC,
   1 DESC

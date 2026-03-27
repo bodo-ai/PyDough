@@ -8,7 +8,7 @@ WITH _u_0 AS (
 SELECT
   sbcustomer.sbcustid AS _id,
   sbcustomer.sbcustname AS name
-FROM postgres.main.sbcustomer AS sbcustomer
+FROM mongo.defog.sbcustomer AS sbcustomer
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE

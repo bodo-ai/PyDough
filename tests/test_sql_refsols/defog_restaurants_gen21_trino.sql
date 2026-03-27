@@ -1,6 +1,6 @@
 SELECT
   city_name
-FROM postgres.main.restaurant
+FROM cassandra.defog.restaurant
 ORDER BY
   rating DESC
 LIMIT 1

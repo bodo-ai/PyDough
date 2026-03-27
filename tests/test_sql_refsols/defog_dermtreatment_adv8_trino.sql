@@ -3,7 +3,7 @@ WITH _t0 AS (
     DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) AS start_month,
     COUNT(*) AS n_rows,
     COUNT(DISTINCT diag_id) AS ndistinct_diag_id
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   WHERE
     DATE_ADD('MONTH', -12, DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)) <= DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP))
     AND DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)

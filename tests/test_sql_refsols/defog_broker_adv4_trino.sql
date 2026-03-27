@@ -3,7 +3,7 @@ WITH _s1 AS (
     sbdptickerid,
     MAX(sbdphigh) AS max_sbdphigh,
     MIN(sbdplow) AS min_sbdplow
-  FROM postgres.main.sbdailyprice
+  FROM cassandra.defog.sbdailyprice
   WHERE
     sbdpdate <= CAST('2023-04-04' AS DATE) AND sbdpdate >= CAST('2023-04-01' AS DATE)
   GROUP BY

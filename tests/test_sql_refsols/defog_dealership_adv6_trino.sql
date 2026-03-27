@@ -12,7 +12,7 @@ SELECT
 FROM postgres.main.cars AS cars
 JOIN _t AS _t
   ON NOT _t.is_in_inventory AND _t._w = 1 AND _t.car_id = cars._id
-LEFT JOIN postgres.main.sales AS sales
+LEFT JOIN cassandra.defog.sales AS sales
   ON cars._id = sales.car_id
 GROUP BY
   cars._id

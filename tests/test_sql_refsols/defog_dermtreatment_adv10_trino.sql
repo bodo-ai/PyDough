@@ -2,8 +2,8 @@ WITH _s3 AS (
   SELECT
     treatments.drug_id,
     COUNT(*) AS n_rows
-  FROM postgres.main.treatments AS treatments
-  JOIN postgres.main.adverse_events AS adverse_events
+  FROM cassandra.defog.treatments AS treatments
+  JOIN cassandra.defog.adverse_events AS adverse_events
     ON DATE_TRUNC('MONTH', CAST(adverse_events.reported_dt AS TIMESTAMP)) = DATE_TRUNC('MONTH', CAST(treatments.start_dt AS TIMESTAMP))
     AND adverse_events.treatment_id = treatments.treatment_id
   GROUP BY

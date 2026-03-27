@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     car_id AS _u_1
-  FROM postgres.main.sales
+  FROM cassandra.defog.sales
   GROUP BY
     1
 )

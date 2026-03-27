@@ -12,7 +12,7 @@ SELECT
   (
     100.0 * COALESCE(_t1.sum_expr, 0)
   ) / _t1.n_rows AS success_rate
-FROM postgres.main.sbcustomer AS sbcustomer
+FROM mongo.defog.sbcustomer AS sbcustomer
 JOIN _t1 AS _t1
   ON _t1.n_rows >= 5 AND _t1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY

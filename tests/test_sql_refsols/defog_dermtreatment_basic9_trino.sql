@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     patient_id AS _u_1
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   GROUP BY
     1
 )
@@ -9,7 +9,7 @@ SELECT
   patients.patient_id,
   patients.first_name,
   patients.last_name
-FROM postgres.main.patients AS patients
+FROM cassandra.defog.patients AS patients
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = patients.patient_id
 WHERE

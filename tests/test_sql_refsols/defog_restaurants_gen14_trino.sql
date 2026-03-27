@@ -1,6 +1,6 @@
 SELECT
   CAST(COUNT_IF(LOWER(food_type) = 'vegan') AS DOUBLE) / NULLIF(COUNT_IF(LOWER(food_type) <> 'vegan'), 0) AS ratio
-FROM postgres.main.restaurant
+FROM cassandra.defog.restaurant
 WHERE
   LOWER(city_name) = 'san francisco'
   AND (

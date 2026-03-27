@@ -2,8 +2,8 @@ WITH _t0 AS (
   SELECT
     writes.aid,
     COUNT(DISTINCT domain_publication.did) AS ndistinct_did
-  FROM postgres.main.writes AS writes
-  JOIN postgres.main.domain_publication AS domain_publication
+  FROM cassandra.defog.writes AS writes
+  JOIN cassandra.defog.domain_publication AS domain_publication
     ON domain_publication.pid = writes.pid
   JOIN postgres.main.domain AS domain
     ON domain.did = domain_publication.did

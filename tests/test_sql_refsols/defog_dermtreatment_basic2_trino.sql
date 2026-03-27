@@ -3,7 +3,7 @@ WITH _t2 AS (
     end_dt,
     patient_id,
     treatment_id
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   WHERE
     YEAR(CAST(end_dt AS TIMESTAMP)) = 2022
 ), _t3 AS (
@@ -23,7 +23,7 @@ WITH _t2 AS (
   SELECT
     ins_type,
     patient_id
-  FROM postgres.main.patients
+  FROM cassandra.defog.patients
 ), _s10 AS (
   SELECT
     _s3.ins_type,

@@ -6,7 +6,7 @@ WITH _s1 AS (
 ), _s6 AS (
   SELECT DISTINCT
     _s1.region
-  FROM postgres.main.location AS location
+  FROM mongo.defog.location AS location
   LEFT JOIN _s1 AS _s1
     ON _s1.city_name = location.city_name
 ), _s7 AS (
@@ -14,10 +14,10 @@ WITH _s1 AS (
     _s3.region,
     COUNT_IF(NOT restaurant.rating IS NULL) AS sum_expr,
     SUM(restaurant.rating) AS sum_rating
-  FROM postgres.main.location AS location
+  FROM mongo.defog.location AS location
   LEFT JOIN _s1 AS _s3
     ON _s3.city_name = location.city_name
-  JOIN postgres.main.restaurant AS restaurant
+  JOIN cassandra.defog.restaurant AS restaurant
     ON location.restaurant_id = restaurant.id
   GROUP BY
     1

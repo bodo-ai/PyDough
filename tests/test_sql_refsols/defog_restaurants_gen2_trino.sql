@@ -1,6 +1,6 @@
 SELECT
   city_name,
   COUNT(*) AS total_count
-FROM postgres.main.location
+FROM mongo.defog.location
 GROUP BY
   1

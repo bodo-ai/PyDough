@@ -7,7 +7,7 @@ SELECT
     CAST(DATE_TRUNC('DAY', CAST(hire_date AS TIMESTAMP)) AS TIMESTAMP),
     CAST(DATE_TRUNC('DAY', CAST(termination_date AS TIMESTAMP)) AS TIMESTAMP)
   ) AS days_employed
-FROM postgres.main.salespersons
+FROM mongo.defog.salespersons
 WHERE
   NOT termination_date IS NULL
 ORDER BY

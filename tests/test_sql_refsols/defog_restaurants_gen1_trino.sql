@@ -1,6 +1,6 @@
 SELECT
   food_type,
   COUNT(*) AS restaurants
-FROM postgres.main.restaurant
+FROM cassandra.defog.restaurant
 GROUP BY
   1

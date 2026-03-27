@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     writes.aid,
     COUNT(DISTINCT publication.pid) AS ndistinct_pid
-  FROM postgres.main.writes AS writes
+  FROM cassandra.defog.writes AS writes
   JOIN postgres.main.publication AS publication
     ON publication.pid = writes.pid AND publication.year = 2021
   GROUP BY

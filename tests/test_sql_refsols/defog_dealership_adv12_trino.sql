@@ -2,7 +2,7 @@ SELECT
   cars.make,
   cars.model,
   sales.sale_price
-FROM postgres.main.sales AS sales
+FROM cassandra.defog.sales AS sales
 JOIN postgres.main.cars AS cars
   ON cars._id = sales.car_id
 JOIN postgres.main.inventory_snapshots AS inventory_snapshots

@@ -2,7 +2,7 @@ SELECT
   payment_date,
   payment_method,
   COALESCE(SUM(payment_amount), 0) AS total_amount
-FROM postgres.main.payments_received
+FROM mongo.defog.payments_received
 WHERE
   CAST(CAST((
     DATE_DIFF(

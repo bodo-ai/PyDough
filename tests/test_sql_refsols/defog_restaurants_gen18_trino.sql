@@ -6,7 +6,7 @@ WITH _s0 AS (
 ), _s1 AS (
   SELECT
     city_name
-  FROM postgres.main.restaurant
+  FROM cassandra.defog.restaurant
 ), _u_0 AS (
   SELECT
     city_name AS _u_1
@@ -32,7 +32,7 @@ WITH _s0 AS (
     city_name,
     COUNT(rating) AS count_rating,
     SUM(rating) AS sum_rating
-  FROM postgres.main.restaurant
+  FROM cassandra.defog.restaurant
   GROUP BY
     1
 ), _s7 AS (

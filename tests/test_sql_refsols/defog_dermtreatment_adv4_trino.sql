@@ -1,8 +1,8 @@
 WITH _u_0 AS (
   SELECT
     treatments.patient_id AS _u_1
-  FROM postgres.main.treatments AS treatments
-  JOIN postgres.main.diagnoses AS diagnoses
+  FROM cassandra.defog.treatments AS treatments
+  JOIN mongo.defog.diagnoses AS diagnoses
     ON LOWER(diagnoses.diag_name) = 'psoriasis vulgaris'
     AND diagnoses.diag_id = treatments.diag_id
   JOIN postgres.main.drugs AS drugs
@@ -12,7 +12,7 @@ WITH _u_0 AS (
 )
 SELECT
   COUNT(*) AS patient_count
-FROM postgres.main.patients AS patients
+FROM cassandra.defog.patients AS patients
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = patients.patient_id
 WHERE

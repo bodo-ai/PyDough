@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     merchant_id,
     start_date
-  FROM postgres.main.coupons
+  FROM cassandra.defog.coupons
 ), _s1 AS (
   SELECT
     merchant_id,
@@ -16,10 +16,10 @@ WITH _t1 AS (
     _s1.min_start_date,
     ARBITRARY(merchants.created_at) AS anything_created_at,
     MAX(coupons.cid) AS max_cid
-  FROM postgres.main.merchants AS merchants
+  FROM mongo.defog.merchants AS merchants
   LEFT JOIN _s1 AS _s1
     ON _s1.merchant_id = merchants.mid
-  LEFT JOIN postgres.main.coupons AS coupons
+  LEFT JOIN cassandra.defog.coupons AS coupons
     ON _s1.min_start_date = coupons.start_date AND coupons.merchant_id = merchants.mid
   GROUP BY
     1,

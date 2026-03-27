@@ -1,7 +1,7 @@
 SELECT
   specialty,
   COUNT(*) AS num_doctors
-FROM postgres.main.doctors
+FROM mongo.defog.doctors
 GROUP BY
   1
 ORDER BY

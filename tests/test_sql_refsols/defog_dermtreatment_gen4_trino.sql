@@ -4,10 +4,10 @@ SELECT
   treatments_2.end_dt AS treatment_end_date,
   concomitant_meds.start_dt AS concomitant_med_start_date,
   concomitant_meds.end_dt AS concomitant_med_end_date
-FROM postgres.main.treatments AS treatments
-JOIN postgres.main.concomitant_meds AS concomitant_meds
+FROM cassandra.defog.treatments AS treatments
+JOIN mongo.defog.concomitant_meds AS concomitant_meds
   ON concomitant_meds.treatment_id = treatments.treatment_id
-JOIN postgres.main.treatments AS treatments_2
+JOIN cassandra.defog.treatments AS treatments_2
   ON DATE_DIFF(
     'DAY',
     CAST(DATE_TRUNC('DAY', CAST(treatments_2.start_dt AS TIMESTAMP)) AS TIMESTAMP),

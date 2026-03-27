@@ -24,7 +24,7 @@ SELECT
   _s2.sbtickertype AS ticker_type,
   SUM(_s2.sum_n_rows) AS num_transactions
 FROM _s2 AS _s2
-JOIN postgres.main.sbcustomer AS sbcustomer
+JOIN mongo.defog.sbcustomer AS sbcustomer
   ON _s2.sbtxcustid = sbcustomer.sbcustid
 GROUP BY
   1,

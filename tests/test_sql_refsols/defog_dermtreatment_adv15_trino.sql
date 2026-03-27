@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     drug_id AS _u_1
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY
@@ -19,7 +19,7 @@ WITH _u_0 AS (
         0
       )
     ) AS avg_ddd
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY

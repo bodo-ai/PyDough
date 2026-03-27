@@ -4,7 +4,7 @@ WITH _t1 AS (
     ARBITRARY(cars.model) AS anything_model,
     COUNT(sales.car_id) AS count_car_id
   FROM postgres.main.cars AS cars
-  LEFT JOIN postgres.main.sales AS sales
+  LEFT JOIN cassandra.defog.sales AS sales
     ON cars._id = sales.car_id
   WHERE
     LOWER(cars.vin_number) LIKE '%m5%'

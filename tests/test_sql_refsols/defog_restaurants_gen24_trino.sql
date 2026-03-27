@@ -1,5 +1,5 @@
 SELECT
   name
-FROM postgres.main.restaurant
+FROM cassandra.defog.restaurant
 WHERE
   LOWER(food_type) = 'italian'

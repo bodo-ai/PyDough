@@ -3,7 +3,7 @@ WITH _s1 AS (
     sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,
     SUM(sbdpclose) AS sum_sbdpclose
-  FROM postgres.main.sbdailyprice
+  FROM cassandra.defog.sbdailyprice
   WHERE
     DATE_DIFF(
       'DAY',

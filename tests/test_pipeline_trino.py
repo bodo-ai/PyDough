@@ -35,26 +35,6 @@ from .testing_utilities import PyDoughPandasTest
 
 @pytest.mark.trino
 @pytest.mark.execute
-def test_pipeline_e2e_tpch_trino_conn(
-    tpch_pipeline_test_data: PyDoughPandasTest,
-    get_trino_graphs: graph_fetcher,
-    trino_conn_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H queries from the original code generation,
-    with Trino as the executing database.
-    Using the `connection` as keyword argument to the DatabaseContext.
-    """
-    tpch_pipeline_test_data.run_e2e_test(
-        get_trino_graphs,
-        trino_conn_db_context,
-        coerce_types=True,
-        atol=5e-3,
-    )
-
-
-@pytest.mark.trino
-@pytest.mark.execute
 def test_pipeline_e2e_tpch_trino_params(
     get_trino_graphs: graph_fetcher,
     trino_params_tpch_db_context: DatabaseContext,

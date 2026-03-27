@@ -3,7 +3,7 @@ WITH _s1 AS (
     car_id,
     COUNT(*) AS n_rows,
     SUM(sale_price) AS sum_sale_price
-  FROM postgres.main.sales
+  FROM cassandra.defog.sales
   GROUP BY
     1
 )

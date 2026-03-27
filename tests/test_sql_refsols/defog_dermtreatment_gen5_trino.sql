@@ -1,7 +1,7 @@
 SELECT
   COUNT(*) AS num_treatments
-FROM postgres.main.treatments AS treatments
-JOIN postgres.main.diagnoses AS diagnoses
+FROM cassandra.defog.treatments AS treatments
+JOIN mongo.defog.diagnoses AS diagnoses
   ON LOWER(diagnoses.diag_name) LIKE '%psoriasis%'
   AND diagnoses.diag_id = treatments.diag_id
 JOIN postgres.main.drugs AS drugs

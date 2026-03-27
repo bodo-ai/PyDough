@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   COUNT(*) AS num_customers
-FROM postgres.main.sbcustomer
+FROM mongo.defog.sbcustomer
 GROUP BY
   1
 ORDER BY

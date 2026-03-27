@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     oid AS _u_1
-  FROM postgres.main.organization
+  FROM cassandra.defog.organization
   GROUP BY
     1
 )

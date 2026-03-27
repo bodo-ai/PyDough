@@ -2,7 +2,7 @@ SELECT
   ins_type AS insurance_type,
   AVG(height_cm) AS avg_height,
   AVG(weight_kg) AS avg_weight
-FROM postgres.main.patients
+FROM cassandra.defog.patients
 GROUP BY
   1
 ORDER BY

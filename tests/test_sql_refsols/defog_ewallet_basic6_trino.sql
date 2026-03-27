@@ -1,7 +1,7 @@
 SELECT
   device_type,
   COUNT(*) AS count
-FROM postgres.main.user_sessions
+FROM mongo.defog.user_sessions
 GROUP BY
   1
 ORDER BY

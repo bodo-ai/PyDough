@@ -3,7 +3,7 @@ WITH _s1 AS (
     doc_id,
     COUNT(*) AS n_rows,
     SUM(tot_drug_amt) AS sum_tot_drug_amt
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   WHERE
     start_dt >= DATE_TRUNC('DAY', DATE_ADD('MONTH', -6, CURRENT_TIMESTAMP))
   GROUP BY
@@ -13,7 +13,7 @@ WITH _s1 AS (
     doctors.specialty,
     SUM(_s1.n_rows) AS sum_n_rows,
     SUM(_s1.sum_tot_drug_amt) AS sum_sum_tot_drug_amt
-  FROM postgres.main.doctors AS doctors
+  FROM mongo.defog.doctors AS doctors
   LEFT JOIN _s1 AS _s1
     ON _s1.doc_id = doctors.doc_id
   GROUP BY

@@ -3,8 +3,8 @@ SELECT
   adverse_events.treatment_id,
   drugs.drug_id,
   drugs.drug_name
-FROM postgres.main.adverse_events AS adverse_events
-JOIN postgres.main.treatments AS treatments
+FROM cassandra.defog.adverse_events AS adverse_events
+JOIN cassandra.defog.treatments AS treatments
   ON adverse_events.treatment_id = treatments.treatment_id
 JOIN postgres.main.drugs AS drugs
   ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'topical'

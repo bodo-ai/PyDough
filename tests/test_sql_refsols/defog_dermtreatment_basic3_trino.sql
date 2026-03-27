@@ -3,7 +3,7 @@ WITH _s1 AS (
     drug_id,
     AVG(tot_drug_amt) AS avg_tot_drug_amt,
     COUNT(*) AS n_rows
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   GROUP BY
     1
 )

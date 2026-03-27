@@ -4,7 +4,7 @@ SELECT
   ARBITRARY(merchants.category) AS category,
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_revenue,
   ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC NULLS FIRST) AS mrr
-FROM postgres.main.merchants AS merchants
+FROM mongo.defog.merchants AS merchants
 JOIN postgres.main.wallet_transactions_daily AS wallet_transactions_daily
   ON merchants.mid = wallet_transactions_daily.receiver_id
   AND wallet_transactions_daily.receiver_type = 1

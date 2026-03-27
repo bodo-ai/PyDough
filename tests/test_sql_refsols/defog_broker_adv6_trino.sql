@@ -12,6 +12,6 @@ SELECT
   _s1.n_rows AS num_tx,
   COALESCE(_s1.sum_sbtxamount, 0) AS total_amount,
   RANK() OVER (ORDER BY COALESCE(_s1.sum_sbtxamount, 0) DESC NULLS FIRST) AS cust_rank
-FROM postgres.main.sbcustomer AS sbcustomer
+FROM mongo.defog.sbcustomer AS sbcustomer
 JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid

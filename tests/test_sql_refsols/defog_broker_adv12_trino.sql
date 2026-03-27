@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS n_customers
-FROM postgres.main.sbcustomer
+FROM mongo.defog.sbcustomer
 WHERE
   (
     LOWER(sbcustname) LIKE '%ez' OR STARTS_WITH(LOWER(sbcustname), 'j')

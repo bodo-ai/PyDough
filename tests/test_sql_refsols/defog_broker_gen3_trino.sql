@@ -13,6 +13,6 @@ SELECT
     CAST(DATE_TRUNC('SECOND', CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TIMESTAMP),
     CAST(DATE_TRUNC('SECOND', CAST(_s1.min_sbtxdatetime AS TIMESTAMP)) AS TIMESTAMP)
   ) AS DOUBLE) / 86400.0 AS DaysFromJoinToFirstTransaction
-FROM postgres.main.sbcustomer AS sbcustomer
+FROM mongo.defog.sbcustomer AS sbcustomer
 JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid

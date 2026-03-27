@@ -14,7 +14,7 @@ SELECT
   sbcustomer.sbcustid AS _id,
   sbcustomer.sbcustname AS name,
   COALESCE(_s1.n_rows, 0) AS num_transactions
-FROM postgres.main.sbcustomer AS sbcustomer
+FROM mongo.defog.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.month_sbtxdatetime = MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
   AND _s1.sbtxcustid = sbcustomer.sbcustid

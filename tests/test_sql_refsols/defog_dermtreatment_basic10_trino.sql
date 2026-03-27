@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     drug_id AS _u_1
-  FROM postgres.main.treatments
+  FROM cassandra.defog.treatments
   GROUP BY
     1
 )

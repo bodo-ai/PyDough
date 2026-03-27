@@ -1,7 +1,7 @@
 SELECT
   COUNT(*) AS num_treatments
-FROM postgres.main.treatments AS treatments
-JOIN postgres.main.patients AS patients
+FROM cassandra.defog.treatments AS treatments
+JOIN cassandra.defog.patients AS patients
   ON LOWER(patients.first_name) = 'alice'
   AND patients.patient_id = treatments.patient_id
 WHERE

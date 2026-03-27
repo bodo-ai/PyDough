@@ -10,7 +10,7 @@ WITH _u_0 AS (
 )
 SELECT
   COUNT(*) AS n_customers
-FROM postgres.main.sbcustomer AS sbcustomer
+FROM mongo.defog.sbcustomer AS sbcustomer
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE

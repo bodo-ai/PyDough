@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     city_name,
     COUNT(*) AS n_rows
-  FROM postgres.main.restaurant
+  FROM cassandra.defog.restaurant
   WHERE
     LOWER(food_type) = 'italian'
   GROUP BY

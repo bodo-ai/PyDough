@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     salesperson_id,
     SUM(sale_price) AS sum_sale_price
-  FROM postgres.main.sales
+  FROM cassandra.defog.sales
   GROUP BY
     1
 )
@@ -11,7 +11,7 @@ SELECT
   salespersons.first_name,
   salespersons.last_name,
   COALESCE(_s1.sum_sale_price, 0) AS total
-FROM postgres.main.salespersons AS salespersons
+FROM mongo.defog.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY

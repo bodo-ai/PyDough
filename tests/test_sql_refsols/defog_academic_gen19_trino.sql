@@ -1,7 +1,7 @@
 SELECT
   ARBITRARY(conference.name) AS name,
   COUNT(publication.cid) AS num_publications
-FROM postgres.main.conference AS conference
+FROM cassandra.defog.conference AS conference
 LEFT JOIN postgres.main.publication AS publication
   ON conference.cid = publication.cid
 GROUP BY

@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     aid,
     did
-  FROM postgres.main.domain_author
+  FROM mongo.defog.domain_author
 ), _u_0 AS (
   SELECT
     _s0.aid AS _u_1

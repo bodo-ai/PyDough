@@ -1,7 +1,7 @@
 SELECT
   city_name,
   AVG(rating) AS avg_rating
-FROM postgres.main.restaurant
+FROM cassandra.defog.restaurant
 WHERE
   LOWER(food_type) = 'mexican'
 GROUP BY

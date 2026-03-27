@@ -13,8 +13,8 @@ WITH _t0 AS (
       THEN wallet_merchant_balance_daily.balance
       ELSE NULL
     END AS expr_1
-  FROM postgres.main.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
-  JOIN postgres.main.merchants AS merchants
+  FROM cassandra.defog.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
+  JOIN mongo.defog.merchants AS merchants
     ON LOWER(merchants.category) LIKE '%retail%'
     AND merchants.mid = wallet_merchant_balance_daily.merchant_id
     AND merchants.status = 'active'
