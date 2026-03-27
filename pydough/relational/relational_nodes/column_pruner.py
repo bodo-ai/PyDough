@@ -70,6 +70,18 @@ class ColumnPruner:
             # want to decouple the keys from the columns so not all keys need to
             # be present in the output.
             required_columns = set(node.keys.keys())
+        elif isinstance(node, Join) and node.join_type in (
+            JoinType.SEMI,
+            JoinType.ANTI,
+        ):
+            # For SEMI and ANTI join this avoids prunning columns required for
+            # later optimizations
+            self._column_finder.reset()
+            node.condition.accept(self._column_finder)
+            condition_columns = self._column_finder.get_column_references()
+            required_columns = {
+                name for name, expr in node.columns.items() if expr in condition_columns
+            }
         else:
             required_columns = set()
         columns = {

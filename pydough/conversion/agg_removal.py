@@ -265,9 +265,7 @@ def aggregation_uniqueness_helper(
                     break
 
             if isinstance(node, Aggregate):
-                node, output_uniqueness = rewrite_count_semi(
-                    node, input_uniqueness, output_uniqueness
-                )
+                node = rewrite_count_semi(node, input_uniqueness)
             return node, output_uniqueness
         # For joins, gather the uniqueness information from each input, then
         # infer the combined uniqueness information after joining.

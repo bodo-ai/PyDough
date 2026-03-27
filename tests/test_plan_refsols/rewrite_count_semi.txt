@@ -1,4 +1,4 @@
 ROOT(columns=[('n', ndistinct_o_custkey)], orderings=[])
- AGGREGATE(keys={}, aggregations={'ndistinct_o_custkey': NDISTINCT(t1.o_custkey)})
-  FILTER(condition=(YEAR(o_orderdate) == 1994:numeric) & (o_orderpriority == '1-URGENT':string), columns={})
-   SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority})
+ AGGREGATE(keys={}, aggregations={'ndistinct_o_custkey': NDISTINCT(o_custkey)})
+  FILTER(condition=(YEAR(o_orderdate) == 1994:numeric) & (o_orderpriority == '1-URGENT':string), columns={'o_custkey': o_custkey})
+   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority})

@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  JOIN(condition=t0.s_nationkey == t1.n_nationkey, type=ANTI, columns={})
+  JOIN(condition=t0.s_nationkey == t1.n_nationkey, type=ANTI, columns={'s_nationkey': t0.s_nationkey})
    SCAN(table=tpch.SUPPLIER, columns={'s_nationkey': s_nationkey})
    JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey})
     SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
