@@ -12,7 +12,7 @@ WITH "_T1" AS (
     MERCHANT_ID
 ), "_S4" AS (
   SELECT
-    MERCHANTS.mid AS MID,
+    MERCHANTS.mid AS MERCHANT_ID,
     "_S1".MIN_START_DATE,
     ANY_VALUE(MERCHANTS.created_at) AS ANYTHING_CREATED_AT,
     MAX(COUPONS.cid) AS MAX_CID
@@ -26,11 +26,11 @@ WITH "_T1" AS (
     "_S1".MIN_START_DATE
 )
 SELECT
-  "_S4".MID AS merchants_id,
+  "_S4".MERCHANT_ID AS merchants_id,
   "_S4".ANYTHING_CREATED_AT AS merchant_registration_date,
   "_S4".MIN_START_DATE AS earliest_coupon_start_date,
   "_S4".MAX_CID AS earliest_coupon_id
 FROM "_S4" "_S4"
 JOIN "_T1" "_S5"
-  ON "_S4".MID = "_S5".MERCHANT_ID
+  ON "_S4".MERCHANT_ID = "_S5".MERCHANT_ID
   AND "_S5".START_DATE <= ADD_MONTHS(CAST("_S4".ANYTHING_CREATED_AT AS DATE), 12)

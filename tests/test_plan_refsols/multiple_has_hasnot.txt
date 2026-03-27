@@ -1,5 +1,5 @@
 ROOT(columns=[('name', p_name)], orderings=[])
- JOIN(condition=t0.p_partkey == t1.ps_partkey, type=SEMI, columns={'p_name': t0.p_name, 'p_partkey': t0.p_partkey})
+ JOIN(condition=t0.p_partkey == t1.ps_partkey, type=SEMI, columns={'p_name': t0.p_name})
   JOIN(condition=t0.p_partkey == t1.ps_partkey, type=ANTI, columns={'p_name': t0.p_name, 'p_partkey': t0.p_partkey})
    JOIN(condition=t0.p_partkey == t1.ps_partkey, type=SEMI, columns={'p_name': t0.p_name, 'p_partkey': t0.p_partkey})
     SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_partkey': p_partkey})

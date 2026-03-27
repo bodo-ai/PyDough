@@ -33,6 +33,7 @@ class ColumnPruner:
         self._correl_dispatcher = RelationalExpressionDispatcher(
             self._correl_finder, recurse=False
         )
+        self._keep_condition_columns = False
 
     def _prune_identity_project(self, node: RelationalNode) -> RelationalNode:
         """
@@ -70,11 +71,8 @@ class ColumnPruner:
             # want to decouple the keys from the columns so not all keys need to
             # be present in the output.
             required_columns = set(node.keys.keys())
-        elif isinstance(node, Join) and node.join_type in (
-            JoinType.SEMI,
-            JoinType.ANTI,
-        ):
-            # For SEMI and ANTI join this avoids prunning columns required for
+        elif isinstance(node, Join) and self._keep_condition_columns:
+            # For join this avoids prunning columns required for
             # later optimizations
             self._column_finder.reset()
             node.condition.accept(self._column_finder)
@@ -215,16 +213,21 @@ class ColumnPruner:
 
         return output, correl_refs
 
-    def prune_unused_columns(self, root: RelationalRoot) -> RelationalRoot:
+    def prune_unused_columns(
+        self, root: RelationalRoot, keep_condition_columns: bool = False
+    ) -> RelationalRoot:
         """
         Prune columns that are unused in each relational expression.
 
         Args:
             `root`: The tree root to prune columns from.
+            `keep_condition_columns`: If True don't prune the columns of the
+            condition of a Join
 
         Returns:
             The root after updating all inputs.
         """
+        self._keep_condition_columns = keep_condition_columns
         new_root, _ = self._prune_node_columns(root, set(root.columns.keys()))
         assert isinstance(new_root, RelationalRoot), "Expected a root node."
         return new_root

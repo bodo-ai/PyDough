@@ -1,9 +1,13 @@
-WITH _u_0 AS (
-  SELECT
-    c_custkey AS _u_1
+WITH _s1 AS (
+  SELECT DISTINCT
+    c_custkey
   FROM tpch.CUSTOMER
   WHERE
     c_mktsegment = 'BUILDING'
+), _u_0 AS (
+  SELECT
+    c_custkey AS _u_1
+  FROM _s1
   GROUP BY
     1
 ), _t AS (
