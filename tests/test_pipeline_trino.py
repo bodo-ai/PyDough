@@ -137,7 +137,7 @@ def test_pipeline_trino_e2e_defog_custom(
 @pytest.mark.execute
 def test_pipeline_e2e_trino_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
-    get_custom_datasets_graph: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
     trino_conn_db_context: DatabaseContext,
 ):
     """
@@ -145,7 +145,7 @@ def test_pipeline_e2e_trino_custom_datasets(
     refsol DataFrame.
     """
     custom_datasets_test_data.run_e2e_test(
-        get_custom_datasets_graph,
+        get_trino_graphs,
         trino_conn_db_context,
         coerce_types=True,
         atol=5e-3,
