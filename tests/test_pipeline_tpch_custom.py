@@ -5051,15 +5051,74 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="dataframe_collection_correlation",
         ),
+        # base case (should rewrite)
         pytest.param(
             PyDoughPandasTest(
                 "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
                 "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(selected_orders))))",
                 "TPCH",
-                lambda: pd.DataFrame({"n": [10]}),
+                lambda: pd.DataFrame({"n": [36049]}),
                 "rewrite_count_semi",
             ),
             id="rewrite_count_semi",
+        ),
+        # (should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "customers_china = customers.WHERE((nation.region.name == 'ASIA') & (nation.name == 'CHINA'))\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers_china))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [1]}),
+                "rewrite_count_complex_lhs",
+            ),
+            id="rewrite_count_complex_lhs",
+        ),
+        # LEFT->RIGHT=PLURAL_FILTER, RIGHT->LEFT=SINGULAR_FILTER (should not rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_europe = nations.WHERE(region.name == 'EUROPE')\n"
+                "building_customers = customers.WHERE(market_segment == 'BUILDING')\n"
+                "result = TPCH.CALCULATE(n=COUNT(nations_europe.WHERE(HAS(building_customers))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [5]}),
+                "rewrite_count_pf_sf",
+            ),
+            id="rewrite_count_pf_sf",
+        ),
+        # LEFT->RIGHT=PLURAL_FILTER, RIGHT->LEFT=SINGULAR_ACCESS(should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "customers_selected = customers.WHERE((market_segment == 'AUTOMOBILE') & (account_balance < -975))\n"
+                "result = TPCH.CALCULATE(n=COUNT(nations.WHERE(HAS(customers_selected))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [23]}),
+                "rewrite_count_pf_sa",
+            ),
+            id="rewrite_count_pf_sa",
+        ),
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_FILTER (should not rewrite)
+        # LHS matches at most one RHS row, RHS matches multiple LHS rows (some filters)
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_segmented = customer.WHERE((market_segment == 'AUTOMOBILE'))\n"
+                "orders_selected = orders.WHERE((order_status == 'F'))\n"
+                "result = TPCH.CALCULATE(n=COUNT(orders_selected.WHERE(HAS(customer_segmented))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [145055]}),
+                "rewrite_count_sf_pf",
+            ),
+            id="rewrite_count_sf_pf",
+        ),
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_ACCESS (should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "parts_selected = part.WHERE(brand == 'Brand#23')\n"
+                "result = TPCH.CALCULATE(n=COUNT(supply_records.WHERE(HAS(parts_selected))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [7870]}),
+                "rewrite_count_sf_pa",
+            ),
+            id="rewrite_count_sf_pa",
         ),
     ],
 )

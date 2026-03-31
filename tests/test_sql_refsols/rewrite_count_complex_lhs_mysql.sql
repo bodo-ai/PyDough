@@ -1,0 +1,7 @@
+SELECT
+  COUNT(DISTINCT NATION.n_nationkey) AS n
+FROM tpch.NATION AS NATION
+JOIN tpch.REGION AS REGION
+  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
+WHERE
+  NATION.n_name = 'CHINA'

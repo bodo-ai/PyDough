@@ -1,0 +1,4 @@
+ROOT(columns=[('n', ndistinct_p_partkey)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'ndistinct_p_partkey': NDISTINCT(p_partkey)})
+  FILTER(condition=p_brand == 'Brand#23':string, columns={'p_partkey': p_partkey})
+   SCAN(table=tpch.PART, columns={'p_brand': p_brand, 'p_partkey': p_partkey})

@@ -813,7 +813,7 @@ def add_input_name(
     return expr
 
 
-def rewrite_count_semi(
+def rewrite_count_ndistinct(
     node: Aggregate,
     input_unique_sets: set[frozenset[str]],
 ) -> RelationalNode:
@@ -838,15 +838,9 @@ def rewrite_count_semi(
         node otherwise.
     """
 
-    if len(node.keys) != 0 or len(node.aggregations) != 1:
-        return node
-
-    ((agg_key, agg_value),) = node.aggregations.items()
-    if agg_value.op != pydop.COUNT or len(agg_value.inputs) != 0:
-        return node
-
     agg_input: RelationalNode = node.input
-    if not isinstance(agg_input, Join) or agg_input.join_type != JoinType.SEMI:
+
+    if not isinstance(agg_input, Join):
         return node
 
     # Reverse cardinality that always matches
@@ -888,7 +882,32 @@ def rewrite_count_semi(
 
     assert isinstance(lhs_key, ColumnReference)
 
-    if frozenset([lhs_key.name]) not in input_unique_sets:
+    if agg_input.join_type == JoinType.SEMI:
+        # COUNT on top of SEMI join
+        if len(node.keys) != 0 or len(node.aggregations) != 1:
+            return node
+
+        ((agg_key, agg_value),) = node.aggregations.items()
+
+        if agg_value.op != pydop.COUNT or len(agg_value.inputs) != 0:
+            return node
+
+        if frozenset([lhs_key.name]) not in input_unique_sets:
+            return node
+
+    elif agg_input.join_type == JoinType.INNER:
+        # COUNT on top of INNER join
+        # make sure that NONE of the columns from the LHS are used in the aggregation
+        lhs_columns = agg_input.inputs[0].columns
+        for aggregation in node.aggregations.values():
+            for col in aggregation.inputs:
+                if isinstance(col, ColumnReference) and col.name in lhs_columns:
+                    return node
+
+        # Not sure about this one, there are multiple aggregations, and the first
+        # not allways is the COUNT()
+        agg_key, agg_value = next(iter(node.aggregations.items()))
+    else:
         return node
 
     ndistinct = CallExpression(
