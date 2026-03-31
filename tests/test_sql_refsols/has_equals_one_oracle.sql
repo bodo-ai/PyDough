@@ -1,5 +1,10 @@
+WITH "_T0" AS (
+  SELECT DISTINCT
+    o_custkey AS O_CUSTKEY
+  FROM TPCH.ORDERS
+  WHERE
+    o_orderpriority = '1-URGENT'
+)
 SELECT
-  COUNT(DISTINCT o_custkey) AS n
-FROM TPCH.ORDERS
-WHERE
-  o_orderpriority = '1-URGENT'
+  COUNT(DISTINCT O_CUSTKEY) AS n
+FROM "_T0"

@@ -837,10 +837,9 @@ def rewrite_count_ndistinct(
         If all pre-requisites are met a new node with the transformation, the same
         node otherwise.
     """
-
     agg_input: RelationalNode = node.input
 
-    if not isinstance(agg_input, Join):
+    if not isinstance(agg_input, Join) or len(node.keys) != 0:
         return node
 
     # Reverse cardinality that always matches
@@ -884,7 +883,7 @@ def rewrite_count_ndistinct(
 
     if agg_input.join_type == JoinType.SEMI:
         # COUNT on top of SEMI join
-        if len(node.keys) != 0 or len(node.aggregations) != 1:
+        if len(node.aggregations) != 1:
             return node
 
         ((agg_key, agg_value),) = node.aggregations.items()

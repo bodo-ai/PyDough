@@ -1,7 +1,5 @@
 SELECT
-  COUNT(*) AS n
-FROM tpch.CUSTOMER AS CUSTOMER
-JOIN tpch.NATION AS NATION
-  ON CUSTOMER.c_nationkey = NATION.n_nationkey
+  COUNT(DISTINCT NATION.n_nationkey) AS n
+FROM tpch.NATION AS NATION
 JOIN tpch.REGION AS REGION
   ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
