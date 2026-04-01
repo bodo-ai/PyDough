@@ -1,5 +1,5 @@
 SELECT
-  COUNT(DISTINCT p_partkey) AS n
-FROM TPCH.PART
-WHERE
-  p_brand = 'Brand#23'
+  COUNT(*) AS n
+FROM TPCH.PARTSUPP PARTSUPP
+JOIN TPCH.PART PART
+  ON PART.p_brand = 'Brand#23' AND PART.p_partkey = PARTSUPP.ps_partkey

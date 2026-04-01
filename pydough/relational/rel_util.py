@@ -881,8 +881,7 @@ def rewrite_count_ndistinct(
 
     assert isinstance(lhs_key, ColumnReference)
 
-    if agg_input.join_type == JoinType.SEMI:
-        # COUNT on top of SEMI join
+    if agg_input.join_type in (JoinType.SEMI, JoinType.INNER):
         if len(node.aggregations) != 1:
             return node
 
@@ -894,18 +893,6 @@ def rewrite_count_ndistinct(
         if frozenset([lhs_key.name]) not in input_unique_sets:
             return node
 
-    elif agg_input.join_type == JoinType.INNER:
-        # COUNT on top of INNER join
-        # make sure that NONE of the columns from the LHS are used in the aggregation
-        lhs_columns = agg_input.inputs[0].columns
-        for aggregation in node.aggregations.values():
-            for col in aggregation.inputs:
-                if isinstance(col, ColumnReference) and col.name in lhs_columns:
-                    return node
-
-        # Not sure about this one, there are multiple aggregations, and the first
-        # not allways is the COUNT()
-        agg_key, agg_value = next(iter(node.aggregations.items()))
     else:
         return node
 

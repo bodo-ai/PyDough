@@ -5068,7 +5068,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "customers_china = customers.WHERE((nation.region.name == 'ASIA') & (nation.name == 'CHINA'))\n"
                 "result = TPCH.CALCULATE(n=COUNT(customers_china))",
                 "TPCH",
-                lambda: pd.DataFrame({"n": [1]}),
+                lambda: pd.DataFrame({"n": [6024]}),
                 "rewrite_count_complex_lhs",
             ),
             id="rewrite_count_complex_lhs",
@@ -5109,13 +5109,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="rewrite_count_sf_pf",
         ),
-        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_ACCESS (should rewrite)
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_ACCESS (should not rewrite)
         pytest.param(
             PyDoughPandasTest(
                 "parts_selected = part.WHERE(brand == 'Brand#23')\n"
                 "result = TPCH.CALCULATE(n=COUNT(supply_records.WHERE(HAS(parts_selected))))",
                 "TPCH",
-                lambda: pd.DataFrame({"n": [7870]}),
+                lambda: pd.DataFrame({"n": [31480]}),
                 "rewrite_count_sf_pa",
             ),
             id="rewrite_count_sf_pa",
