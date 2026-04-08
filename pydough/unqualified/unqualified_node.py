@@ -792,6 +792,11 @@ class UnqualifiedGeneratedCollection(UnqualifiedNode):
     def __init__(self, user_collection: PyDoughUserGeneratedCollection):
         self._parcel: tuple[PyDoughUserGeneratedCollection] = (user_collection,)
 
+    @property
+    def user_collection(self) -> PyDoughUserGeneratedCollection:
+        """The wrapped user-generated collection."""
+        return self._parcel[0]
+
 
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """

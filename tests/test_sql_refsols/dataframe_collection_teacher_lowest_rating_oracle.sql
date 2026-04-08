@@ -62,7 +62,7 @@ LEFT JOIN (VALUES
   (15122, 'Imperative Programming', 'C'),
   (15150, 'Functional Programming', 'SML'),
   (15210, 'Parallel Algorithms', 'SML'),
-  (15251, 'Theoretical CS', NULL)) AS CLASSES(KEY, CLASS_NAME, LANGUAGE)
-  ON CLASSES.KEY = "_T".CLASS_KEY
+  (15251, 'Theoretical CS', NULL)) AS CLASSES("KEY", CLASS_NAME, LANGUAGE)
+  ON CLASSES."KEY" = "_T".CLASS_KEY
 WHERE
   "_T"."_W" = 1
