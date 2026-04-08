@@ -265,6 +265,9 @@ def aggregation_uniqueness_helper(
                     break
 
             if isinstance(node, Aggregate):
+                # If the aggregation was not deleted, attempt to rewrite COUNT to
+                # NDISTINCT to a non-aggregate expression if the input
+                # uniqueness allows for it
                 node = rewrite_count_ndistinct(node, input_uniqueness)
             return node, output_uniqueness
         # For joins, gather the uniqueness information from each input, then

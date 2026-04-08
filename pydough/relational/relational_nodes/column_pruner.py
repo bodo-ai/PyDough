@@ -34,6 +34,12 @@ class ColumnPruner:
             self._correl_finder, recurse=False
         )
         self._keep_condition_columns = False
+        """
+        A boolean toggle indicating whether to maintain the columns used in the
+        condition of a Join node in the output of the Join node even if they are
+        unused by the Join node's parent node. If False, the columns in the condition
+        will not be maintained in the Join node's columns unless they need to be.
+        """
 
     def _prune_identity_project(self, node: RelationalNode) -> RelationalNode:
         """
