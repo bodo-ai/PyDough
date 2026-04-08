@@ -819,19 +819,21 @@ def rewrite_count_ndistinct(
 ) -> RelationalNode:
     """
 
-    This function optimize COUNT on top of SEMI join to NDISTINCT on the right
-    hand side.
+    This function optimize COUNT on top of SEMI/INNER join to NDISTINCT on the
+    right hand side (RHS).
 
     Pre-requisites for the transformation:
         - Current node is a no-groupby aggregation where the only aggfunc is
         COUNT(*)
-        - Input to the node is a SEMI join where the condition is a single equality
+        - Input to the node is a SEMI/INNER join where the condition is a single equality
         check where the column form the left hand side is a uniqueness key from
         the left hand side.
-        - The join has a reverse cardinality that always matches.
+        - The join has a reverse cardinality that always matches (SINGULAR ACCESS,
+        PLURAL_ACCESS, UNKNOWN_ACCESS).
 
     Args:
         `node`: The node being transformed
+        `input_unique_sets`: The set of uniqueness sets from the input node
 
     Returns:
         If all pre-requisites are met a new node with the transformation, the same
@@ -839,63 +841,61 @@ def rewrite_count_ndistinct(
     """
     agg_input: RelationalNode = node.input
 
-    if not isinstance(agg_input, Join) or len(node.keys) != 0:
+    # Aggregate must be over a join, with no GROUP BY
+    if not isinstance(agg_input, Join) or node.keys:
         return node
 
     # Reverse cardinality that always matches
     if not agg_input.reverse_cardinality.accesses:
         return node
 
-    # the condition is a single
-    # equality check where the column form the left hand side is a uniqueness
-    # key from the left hand side (e.g. every row of LEFT_TREE has a unique
-    # value of LEFT_UNIQUE_KEY)
-    cond = agg_input.condition
+    # Join must be SEMI or INNER
+    if agg_input.join_type not in (JoinType.SEMI, JoinType.INNER):
+        return node
+
+    # Aggregate must contain exactly one aggregation: COUNT(*)
+    if len(node.aggregations) != 1:
+        return node
+
+    ((agg_key, agg_value),) = node.aggregations.items()
+    if agg_value.op != pydop.COUNT or agg_value.inputs:
+        return node
+
+    # The condition is a single equality check where the column form the left
+    # hand side is a uniqueness key from the left hand side
+    # (e.g. every row of LEFT_TREE has a unique value of LEFT_UNIQUE_KEY)
+    cond: RelationalExpression = agg_input.condition
     if not (
         isinstance(cond, CallExpression)
         and cond.op == pydop.EQU
         and len(cond.inputs) == 2
+        and isinstance(cond.inputs[0], ColumnReference)
+        and isinstance(cond.inputs[1], ColumnReference)
     ):
         return node
 
     lhs_key: RelationalExpression
     rhs_key: RelationalExpression
 
-    if isinstance(cond.inputs[0], ColumnReference) and isinstance(
-        cond.inputs[1], ColumnReference
+    if (
+        cond.inputs[0].input_name == agg_input.default_input_aliases[0]
+        and cond.inputs[1].input_name == agg_input.default_input_aliases[1]
     ):
-        if (
-            cond.inputs[0].input_name == agg_input.default_input_aliases[0]
-            and cond.inputs[1].input_name == agg_input.default_input_aliases[1]
-        ):
-            lhs_key, rhs_key = cond.inputs
-        elif (
-            cond.inputs[0].input_name == agg_input.default_input_aliases[1]
-            and cond.inputs[1].input_name == agg_input.default_input_aliases[0]
-        ):
-            rhs_key, lhs_key = cond.inputs
-        else:
-            return node
+        lhs_key, rhs_key = cond.inputs
+    elif (
+        cond.inputs[0].input_name == agg_input.default_input_aliases[1]
+        and cond.inputs[1].input_name == agg_input.default_input_aliases[0]
+    ):
+        rhs_key, lhs_key = cond.inputs
     else:
         return node
 
+    # LHS key must be unique
     assert isinstance(lhs_key, ColumnReference)
-
-    if agg_input.join_type in (JoinType.SEMI, JoinType.INNER):
-        if len(node.aggregations) != 1:
-            return node
-
-        ((agg_key, agg_value),) = node.aggregations.items()
-
-        if agg_value.op != pydop.COUNT or len(agg_value.inputs) != 0:
-            return node
-
-        if frozenset([lhs_key.name]) not in input_unique_sets:
-            return node
-
-    else:
+    if frozenset([lhs_key.name]) not in input_unique_sets:
         return node
 
+    # Rewrite COUNT(*) → NDISTINCT(rhs_key)
     ndistinct = CallExpression(
         pydop.NDISTINCT, agg_value.data_type, [add_input_name(rhs_key, None)]
     )

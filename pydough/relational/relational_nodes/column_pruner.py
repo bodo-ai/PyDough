@@ -72,7 +72,7 @@ class ColumnPruner:
             # be present in the output.
             required_columns = set(node.keys.keys())
         elif isinstance(node, Join) and self._keep_condition_columns:
-            # For join this avoids prunning columns required for
+            # For join this avoids pruning columns required for
             # later optimizations
             self._column_finder.reset()
             node.condition.accept(self._column_finder)
