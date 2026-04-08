@@ -204,6 +204,7 @@ def to_table(
     as_view: bool = False,
     replace: bool = False,
     temp: bool = False,
+    write_path: str | None = None,
     **kwargs,
 ) -> UnqualifiedGeneratedCollection:
     """
@@ -213,14 +214,22 @@ def to_table(
 
     Args:
         node: The PyDough query node to materialize.
-        name: The name of the view/table to create. Can optionally include
-            database and schema as 'db.schema.name'.
+        name: The logical name for this collection in PyDough queries.
+            Used to identify the collection in ``per=`` strings and other
+            PyDough DSL references. Must be a simple valid SQL identifier
+            (no dots).
         as_view: If True, create a VIEW. If False, create a TABLE.
             Default is False.
         replace: If True, use CREATE OR REPLACE to allow replacing an
             existing view/table. Default is False.
         temp: If True, create a TEMPORARY view/table that will be deleted
             when the database session closes. Default is False.
+        write_path: The fully-qualified SQL path used in DDL and FROM
+            clauses (e.g., ``'db.schema.table'``). When provided, the
+            table/view is created at this path in the database, while
+            ``name`` remains the short identifier used in PyDough ``per=``
+            references. If ``None``, ``name`` is used as the SQL path as
+            well.
 
     Returns:
         An UnqualifiedGeneratedCollection that can be used in subsequent
@@ -229,6 +238,8 @@ def to_table(
 
     """
     is_valid_sql_name.verify(name, "table/view name")
+    if write_path is not None:
+        is_valid_sql_name.verify(write_path, "write_path")
 
     display_sql: bool = bool(kwargs.pop("display_sql", False))
 
@@ -259,8 +270,10 @@ def to_table(
     )
 
     # Step 3: Generate and execute DDL to create view/table.
+    # Use write_path as the SQL name if provided, otherwise fall back to name.
+    sql_name: str = write_path if write_path is not None else name
     ddl_statements, actual_temp = _generate_create_ddl(
-        name, sql, as_view, replace, temp, session.database.dialect
+        sql_name, sql, as_view, replace, temp, session.database.dialect
     )
     pyd_logger = None
     if display_sql:
@@ -283,6 +296,7 @@ def to_table(
         is_replace=replace,
         is_temp=actual_temp,
         unique_columns=unique_columns,
+        write_path=write_path,
     )
 
     # Step 5: Wrap in UnqualifiedGeneratedCollection so it can be used in

@@ -1579,9 +1579,12 @@ class HybridTranslator:
                 ):
                     raise PyDoughSQLException(
                         f"Invalid use of CROSS: `CROSS({node.collection.name})` "
-                        f"cannot be used without a left-hand side collection. "
-                        f"Use `{node.collection.name}.CALCULATE(...)` or "
-                        f"`some_collection.CROSS({node.collection.name})` instead."
+                        f"cannot be used as a top-level collection. "
+                        f"Valid uses are: `some_collection.CROSS({node.collection.name})` "
+                        f"for a cross join, or `CROSS({node.collection.name})` inside "
+                        f"an aggregate expression, e.g. "
+                        f"`some_collection.CALCULATE("
+                        f"COUNT(CROSS({node.collection.name}).WHERE(...)))`."
                     )
                 hybrid_collection = HybridUserGeneratedCollection(node)
                 # Create a new hybrid tree for the user-generated collection.

@@ -603,6 +603,7 @@ The first argument it takes in is the PyDough node for the collection being mate
 - `as_view`: If `True`, creates a VIEW. If `False` creates a TABLE. Default is `False` (i.e. creates a TABLE).
 - `replace`: If `True`, drops table/view if exists and then creates the table/view. For Snowflake, use `CREATE OR REPLACE` to allow replacing an existing view/table. If `False` and the view/table already exists, an error will be raised. Default is `False`.
 - `temp`: If `True`, creates a TEMPORARY view/table that will be deleted when the database session closes. If `False`, creates a permanent view/table. Default is `False`.
+- `write_path`: The fully-qualified SQL path used in the DDL statement and in `FROM` clauses when querying the created table (e.g. `'my_db.my_schema.my_table'`). When provided, the table/view is created at this path while `name` remains the short identifier used in PyDough `per=` references and other DSL operations. If omitted, `name` is used as the SQL path as well. 
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion and execution (if omitted, `pydough.active_session.database` is used instead). A database connection is required for `to_table`.
@@ -621,6 +622,7 @@ Different databases have different capabilities for CREATE statements:
 | Snowflake  | Yes                    | Yes        | Yes                    | No        |
 | PostgreSQL | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
 | MySQL      | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
+| Oracle     | No (uses DROP + CREATE)| No         | Yes                    | No        |
 
 **Note:** SQLite does not support creating persistent views that reference attached databases. When creating a view without `temp=True` on SQLite, PyDough will automatically create a temporary view and issue a warning.
 
@@ -694,6 +696,24 @@ result = (
     .TOP_K(5, by=(nation_name, ckey))
 )
 pydough.to_df(result)
+```
+
+#### Example 3: Cross-Database Write with `write_path`
+
+Use `write_path` when the SQL path for the created table differs from the short PyDough name:
+
+```py
+%%pydough
+asian_tmp = pydough.to_table(
+    nations.WHERE(region.name == 'ASIA').CALCULATE(nkey=key, nname=name),
+    name='asian_nations',
+    write_path='E2E_DB.PUBLIC.asian_nations',
+    replace=True,
+)
+
+# The table is created at E2E_DB.PUBLIC.asian_nations in the database,
+# but PyDough references it by the short name 'asian_nations'.
+result = asian_tmp.CALCULATE(nkey, nname)
 ```
 
 <!-- TOC --><a name="transformation-apis"></a>

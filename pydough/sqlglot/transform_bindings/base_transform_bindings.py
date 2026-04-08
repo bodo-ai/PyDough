@@ -2391,9 +2391,9 @@ class BaseTransformBindings:
             A SQLGlotExpression representing a SELECT from the view/table.
         """
 
-        # Create the table reference
-        # Handle qualified names like "db.schema.table"
-        table_ref = sqlglot_expressions.to_table(collection.name)
+        # Create the table reference using the SQL name (write_path if set,
+        # otherwise name). Handles qualified names like "db.schema.table".
+        table_ref = sqlglot_expressions.to_table(collection.sql_name)
 
         # Build SELECT col1, col2, ... FROM view_name
         # We must explicitly select columns (not SELECT *) so that the

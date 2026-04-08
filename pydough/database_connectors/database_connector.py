@@ -169,9 +169,21 @@ class CreateCapabilities:
     """
 
     replace_table: bool = True
+    """
+    Whether the Database allows CREATE OR REPLACE on regular table writes.
+    """
     temp_table: bool = True
+    """
+    Whether the Database allows CREATE TEMPORARY TABLE statements.
+    """
     replace_view: bool = True
+    """
+    Whether the Database allows CREATE OR REPLACE on view creation.
+    """
     temp_view: bool = True
+    """
+    Whether the Database allows CREATE TEMPORARY VIEW statements.
+    """
 
 
 class DatabaseDialect(Enum):
@@ -212,12 +224,15 @@ class DatabaseDialect(Enum):
                 return CreateCapabilities(
                     replace_table=False,
                     temp_table=False,
-                    replace_view=True,
                     temp_view=False,
                 )
             case _:
-                # ANSI
-                return CreateCapabilities()
+                return CreateCapabilities(
+                    replace_table=False,
+                    temp_table=False,
+                    replace_view=False,
+                    temp_view=False,
+                )
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":

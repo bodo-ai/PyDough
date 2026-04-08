@@ -950,26 +950,28 @@ def make_relational_ordering(
 def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
     """
     Apply a table name prefix to all to_table calls in a PyDough code string.
-    This is used for cross-database writes (e.g., Snowflake writing to DEFOG database).
+    This is used for cross-database writes (e.g., Snowflake writing to DEFOG
+    database).
 
-    Also updates per='...' references in BEST/RANKING window functions when
-    the per= value matches a to_table table name, so that per= continues to
-    resolve correctly after the table name is prefixed.
+    For each ``pydough.to_table(...)`` call found, this inserts a
+    ``write_path=`` keyword argument containing the fully-qualified SQL path
+    (``prefix + name``). The ``name=`` argument is left unchanged so that
+    PyDough can still resolve ``per='name'`` references using the short name.
 
     Args:
         pydough_code: The PyDough code string containing to_table calls.
-        prefix: The prefix to prepend to table names (e.g., "E2E_TESTS_DB.PUBLIC.").
+        prefix: The prefix to prepend to table names (e.g.,
+            ``"E2E_TESTS_DB.PUBLIC."``).
 
     Returns:
-        The modified PyDough code string with prefixed table names.
+        The modified PyDough code string with ``write_path=`` injected into
+        each ``pydough.to_table(...)`` call.
     """
     import re
 
-    # Collect name= kwargs scoped only to pydough.to_table(...) call.
-    to_table_names: set[str] = set()
-    # Each entry: (start, end, quote, name) where start is the index of the
-    # 'n' in `name=...` and end is one past the closing quote character.
-    name_spans: list[tuple[int, int, str, str]] = []
+    # Each entry: (name_end, quote, name) where name_end is one past the
+    # closing quote of the name= value and quote is the quote character used.
+    name_spans: list[tuple[int, str, str]] = []
 
     for call_m in re.finditer(r"pydough\.to_table\s*\(", pydough_code):
         pos = call_m.end()
@@ -996,32 +998,19 @@ def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
                     k = pydough_code.find(q, j + 1)
                     if k != -1:
                         table_name = pydough_code[j + 1 : k]
-                        to_table_names.add(table_name)
-                        name_spans.append((pos, k + 1, q, table_name))
+                        name_spans.append((k + 1, q, table_name))
                         pos = k + 1
                         continue
             pos += 1
 
-    # Apply name= replacements in reverse order to preserve indices.
+    # Insert write_path= after each name=... in reverse order to preserve
+    # indices.
     result = pydough_code
-    for start, end, quote, table_name in reversed(name_spans):
-        result = (
-            result[:start] + f"name={quote}{prefix}{table_name}{quote}" + result[end:]
-        )
+    for name_end, quote, table_name in reversed(name_spans):
+        insert = f", write_path={quote}{prefix}{table_name}{quote}"
+        result = result[:name_end] + insert + result[name_end:]
 
-    # Also update per='...' references that match a to_table name so that
-    # BEST/RANKING with per= pointing to a materialized collection resolves
-    # correctly after the table name is prefixed.
-    per_pattern = r"per=(['\"])([^'\"]+)\1"
-
-    def replace_per(match: re.Match) -> str:
-        quote = match.group(1)
-        per_name = match.group(2)
-        if per_name in to_table_names:
-            return f"per={quote}{prefix}{per_name}{quote}"
-        return match.group(0)
-
-    return re.sub(per_pattern, replace_per, result)
+    return result
 
 
 def transform_and_exec_pydough(

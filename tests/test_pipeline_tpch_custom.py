@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import dataclasses
 import logging
 import re
 from collections.abc import Callable
@@ -5126,9 +5127,10 @@ def test_pipeline_e2e_tpch_custom(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    # Skip BodoSQL as custom tests were not checked with it.
+    # Skip BodoSQL, since checking all the custom tests with
+    # it would take too long.
     if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("Skipping tpch customer test for BodoSQL.")
+        pytest.skip("Skipping tpch custom test for BodoSQL.")
 
     if (
         db_context.dialect == DatabaseDialect.MYSQL
@@ -5545,9 +5547,11 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_12,
             None,
             re.escape(
-                "Invalid use of CROSS: `CROSS(nums)` cannot be used without a "
-                "left-hand side collection. Use `nums.CALCULATE(...)` or "
-                "`some_collection.CROSS(nums)` instead."
+                "Invalid use of CROSS: `CROSS(nums)` cannot be used as a "
+                "top-level collection. Valid uses are: "
+                "`some_collection.CROSS(nums)` for a cross join, or "
+                "`CROSS(nums)` inside an aggregate expression, e.g. "
+                "`some_collection.CALCULATE(COUNT(CROSS(nums).WHERE(...)))`."
             ),
             id="bad_cross_12",
         ),
@@ -6380,7 +6384,6 @@ def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
     Oracle does not support TEMPORARY TABLEs/VIEWs, so tests that use temp=True
     are rewritten to use persistent tables (replace=True is preserved for cleanup).
     """
-    import dataclasses
 
     if not isinstance(test_data.pydough_function, str):
         return test_data
@@ -6405,7 +6408,7 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     db_context, graph = all_dialects_tpch_db_context
 
     if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("to_table() is not yet implemented for BodoSQL")
+        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
     # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
     # write to E2E_TESTS_DB.PUBLIC)
@@ -6442,7 +6445,7 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     db_context, graph = all_dialects_tpch_db_context
 
     if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("to_table() is not yet implemented for BodoSQL")
+        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
     # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
     # write to E2E_TESTS_DB.PUBLIC)
@@ -6533,7 +6536,7 @@ def test_pipeline_to_table_ddl(
     db_context, graph = all_dialects_tpch_db_context
 
     if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("to_table() is not yet implemented for BodoSQL")
+        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
     # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
     # write to E2E_TESTS_DB.PUBLIC)
