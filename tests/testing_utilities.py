@@ -1101,6 +1101,16 @@ class PyDoughSQLComparisonTest:
     same column names as in the reference solution.
     """
 
+    fixed_today: pd.Timestamp | None = None
+    """
+    If set, ``pd.Timestamp.today`` is patched to return this value during
+    SQL generation in ``test_defog_until_sql``. Use this for queries that
+    call ``pd.Timestamp.today()`` internally (e.g. to build a date-range
+    dataframe), so the generated SQL stays deterministic and the reference
+    ``.sql`` files never go stale. The execution test (``test_defog_e2e``)
+    is unaffected; it uses SQL-native ``DATE('now', ...)`` expressions.
+    """
+
     def run_e2e_test(
         self,
         fetcher: graph_fetcher,
