@@ -80,29 +80,6 @@ def test_pipeline_e2e_tpch_sf_params(
     )
 
 
-@pytest.mark.snowflake
-@pytest.mark.execute
-def test_pipeline_e2e_snowflake_tpch_custom(
-    tpch_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
-    get_sf_sample_graph: graph_fetcher,
-    sf_conn_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H custom queries from the original code generation on
-    Snowflake.
-    """
-    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
-        sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1").dialect,
-        tpch_custom_pipeline_test_data,
-    )
-
-    tpch_custom_pipeline_test_data.run_e2e_test(
-        get_sf_sample_graph,
-        sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
-        coerce_types=True,
-    )
-
-
 @pytest.fixture
 def defog_sf_test_data(
     defog_custom_pipeline_test_data: PyDoughPandasTest,

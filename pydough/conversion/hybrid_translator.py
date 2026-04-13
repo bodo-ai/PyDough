@@ -1567,6 +1567,25 @@ class HybridTranslator:
                 # A user-generated collection is a special case of a collection
                 # access that is not a sub-collection, but rather a user-defined
                 # collection that is defined in the PyDough user collections.
+                #
+                # Detect standalone CROSS(var) at the top level: the ancestor
+                # is a ChildOperatorChildAccess (produced by _ROOT.CROSS(var))
+                # but there is no parent hybrid tree to attach to.
+                # This happens when a user writes `CROSS(my_table)` without a
+                # left-hand side, which is always equivalent to just `my_table`.
+                if (
+                    isinstance(node.ancestor_context, ChildOperatorChildAccess)
+                    and parent is None
+                ):
+                    raise PyDoughSQLException(
+                        f"Invalid use of CROSS: `CROSS({node.collection.name})` "
+                        f"cannot be used as a top-level collection. "
+                        f"Valid uses are: `some_collection.CROSS({node.collection.name})` "
+                        f"for a cross join, or `CROSS({node.collection.name})` inside "
+                        f"an aggregate expression, e.g. "
+                        f"`some_collection.CALCULATE("
+                        f"COUNT(CROSS({node.collection.name}).WHERE(...)))`."
+                    )
                 hybrid_collection = HybridUserGeneratedCollection(node)
                 # Create a new hybrid tree for the user-generated collection.
                 successor_hybrid = HybridTree(hybrid_collection, node.ancestral_mapping)
@@ -1730,6 +1749,10 @@ class HybridTranslator:
         """
         # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
+        print()
+        print(node.to_tree_string())
+        print()
+        print(hybrid)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common

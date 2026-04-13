@@ -26,8 +26,8 @@ dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab", "pyarr
 # TODO: Add homepage + documentation when docs are live.
 Repository = "https://github.com/bodo-ai/PyDough"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pre-commit",
     "pytest",
     "ruff==0.6.7",

@@ -59,6 +59,7 @@ jobs:
           CASSANDRA_CLUSTER_NAME: "test"
           CASSANDRA_DC: "datacenter1"
           CASSANDRA_RACK: "rack1"
+          CASSANDRA_HOST: 127.0.0.1
         ports:
           - 9042:9042
       trino:
@@ -90,6 +91,7 @@ jobs:
       MYSQL_PORT: 3306
       MYSQL_HOST: 127.0.0.1
       MONGO_HOST: 127.0.0.1
+      CASSANDRA_HOST: 127.0.0.1
 
     steps:
       - uses: actions/checkout@v4

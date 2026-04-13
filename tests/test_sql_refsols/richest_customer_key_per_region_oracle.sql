@@ -7,7 +7,7 @@ WITH "_T" AS (
     ON CUSTOMER.c_nationkey = NATION.n_nationkey
 )
 SELECT
-  C_CUSTKEY AS key
+  C_CUSTKEY AS "key"
 FROM "_T"
 WHERE
   "_W" = 1

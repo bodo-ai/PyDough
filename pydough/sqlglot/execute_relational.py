@@ -483,10 +483,29 @@ def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
             remove_tuple_row_values(arg)
 
 
+# Oracle reserved words that are not in SQLGlot's keyword list but must be
+# double-quoted when used as column aliases (especially in CTAS, where Oracle
+# creates actual column names). Sourced from Oracle 19c+ reserved word list
+# and confirmed issues with TPCH column names.
+_ORACLE_RESERVED_ALIASES: frozenset[str] = frozenset(
+    {
+        # Oracle 19c reserved words that appear as TPCH column aliases
+        "comment",  # COMMENT ON TABLE/COLUMN DDL syntax
+        "size",  # SIZE clause in storage specs
+        "level",  # CONNECT BY LEVEL pseudo-column
+        "date",  # DATE data type
+        "number",  # NUMBER data type
+        "key",  # Oracle 21c+ JSON KEY keyword
+    }
+)
+
+
 def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -> None:
     """
-    Add quotes to all Identifiers that start with '_'. Identifiers that start with
-    '_' are invalid for Oracle unless they are quoted.
+    Add quotes to Identifiers that are invalid as unquoted Oracle identifiers:
+    - Identifiers starting with '_' (Oracle syntax restriction)
+    - Oracle reserved words used as column aliases (e.g. COMMENT, KEY, SIZE)
+      which cause ORA-00923 parse errors, especially in CTAS statements.
 
     Note: This only is required for the Oracle dialect.
 
@@ -501,8 +520,10 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
         return
 
     if isinstance(expr, sqlglot_expressions.Identifier):
-        # Identifiers starting with _ are required to be quoted for Oracle
-        if expr.this.startswith("_"):
+        needs_quoting = expr.this.startswith("_") or (
+            expr.this.lower() in _ORACLE_RESERVED_ALIASES
+        )
+        if needs_quoting:
             new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
             expr.replace(new_identifier)
             # Identifiers are leaf nodes, so no recursion is needed

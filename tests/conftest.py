@@ -103,6 +103,22 @@ from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
 
 
+@pytest.fixture(autouse=True)
+def reset_active_session():
+    """
+    Automatically reset the global active_session after each test to ensure
+    test isolation. This prevents state from leaking between tests.
+    """
+    yield
+    # Reset the active session to a fresh state after each test
+    pydough.active_session.metadata = None
+    pydough.active_session.config = PyDoughConfigs()
+    pydough.active_session.database = DatabaseContext(
+        empty_connection, DatabaseDialect.ANSI
+    )
+    pydough.active_session.mask_server = None
+
+
 @pytest.fixture
 def default_config() -> PyDoughConfigs:
     """
@@ -1780,6 +1796,10 @@ def postgres_conn_db_context(
         host=postgres_host,
         port=postgres_port,
     )
+    # Enable autocommit to avoid transaction conflicts with DDL operations
+    # like CREATE TEMPORARY TABLE. Without this, psycopg2 starts an implicit
+    # transaction that can hold locks and block DDL.
+    connection.autocommit = True
 
     return load_database_context(
         "postgres",

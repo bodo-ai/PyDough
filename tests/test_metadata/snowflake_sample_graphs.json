@@ -6,7 +6,7 @@
       {
         "name": "regions",
         "type": "simple table",
-        "table path": "TPCH_SF1.REGION",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.REGION",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -40,7 +40,7 @@
       {
         "name": "nations",
         "type": "simple table",
-        "table path": "TPCH_SF1.NATION",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.NATION",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -82,7 +82,7 @@
       {
         "name": "parts",
         "type": "simple table",
-        "table path": "TPCH_SF1.PART",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -169,7 +169,7 @@
       {
         "name": "suppliers",
         "type": "simple table",
-        "table path": "TPCH_SF1.SUPPLIER",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.SUPPLIER",
         "unique properties": ["key", "name", "phone", "address"],
         "properties": [
           {
@@ -239,7 +239,7 @@
       {
         "name": "lines",
         "type": "simple table",
-        "table path": "TPCH_SF1.LINEITEM",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM",
         "unique properties": [["order_key", "line_number"]],
         "properties": [
           {
@@ -385,7 +385,7 @@
       {
         "name": "supply_records",
         "type": "simple table",
-        "table path": "TPCH_SF1.PARTSUPP",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PARTSUPP",
         "unique properties": [["part_key", "supplier_key"]],
         "properties": [
           {
@@ -438,7 +438,7 @@
       {
         "name": "orders",
         "type": "simple table",
-        "table path": "TPCH_SF1.ORDERS",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS",
         "unique properties": ["key"],
         "properties": [
           {
@@ -526,7 +526,7 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "TPCH_SF1.CUSTOMER",
+        "table path": "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER",
         "unique properties": ["key", "name", "address"],
         "properties": [
           {

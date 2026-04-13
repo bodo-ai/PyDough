@@ -47,6 +47,18 @@ This module defines the user collections that can be created on the fly and used
 ### [user_collections.py](user_collections.py)
   - `PyDoughUserGeneratedCollection`: Base class for all user-generated collections in PyDough.
 
+
+### [view_collection.py](view_collection.py)
+  - `ViewGeneratedCollection`: Class used to create a view collection based on a given PyDough node. It generates a collection by materializing the results of the node as a view/table in the database.
+    - `name`: The name of the view collection.
+    - `columns`: The list of columns in the view collection.
+    - `types`: The list of data types corresponding to the columns in the view collection.
+    - `is_view`: If `True`, creates a VIEW. If `False`, creates a TABLE. Default is `False` (i.e. creates a TABLE).
+    - `is_replace`: If `True`, drops table/view if exists and then creates the table/view. For Snowflake, use `CREATE OR REPLACE` to allow replacing an existing view/table. If `False` and the view/table already exists, an error will be raised. Default is `False`.
+    - `is_temp`: If `True`, creates a TEMPORARY view/table that will be deleted when the database session closes. If `False`, creates a permanent view/table. Default is `False`.
+    - `unique_column_names`: List of strings or list of list of string 
+    `(list [str | list[ str ]])` representing the unique properties for the view collection.
+
 ## Usage
 
 You can access user collections through `pydough` and call them with the required arguments. For example:
@@ -103,3 +115,4 @@ The range collection, generates a sequence of numbers. The `RangeGeneratedCollec
 The dataframe collection, generates a collection based on the given Pandas Dataframe. The `DataframeGeneratedCollection` class
 allows user to create a collection by specifying the dataframe and name. The `dataframe_collection` function is a convenient API
 to create instances of `DataframeGeneratedCollection`.
+The view collection generates a collection by materializing the results of a given PyDough node as a view/table in the database. The `ViewGeneratedCollection` class allows users to define a view collection by specifying the name, columns, types, and other properties. The `to_table` function in the evaluation module is responsible for materializing the view collection in the database based on the provided PyDough node.

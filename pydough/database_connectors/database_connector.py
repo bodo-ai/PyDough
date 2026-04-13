@@ -4,7 +4,12 @@ by leveraging PEP 249 (Python Database API Specification v2.0).
 https://peps.python.org/pep-0249/
 """
 
-__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
+__all__ = [
+    "CreateCapabilities",
+    "DatabaseConnection",
+    "DatabaseContext",
+    "DatabaseDialect",
+]
 
 from dataclasses import dataclass
 from enum import Enum
@@ -52,30 +57,84 @@ class DatabaseConnection:
         self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
+
+            # This is only for MyPy to pass and know about fetch_pandas_all()
+            # NOTE: Code does not run in type checking mode, so we need to
+            # check at run-time if the cursor has the method.
+            if TYPE_CHECKING:
+                _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
+            # At run-time check and run the fetch.
+            if hasattr(self.cursor, "fetch_pandas_all"):
+                return self.cursor.fetch_pandas_all()
+            else:
+                # Assume sqlite3
+                column_names: list[str] = [
+                    description[0] for description in self.cursor.description
+                ]
+                # TODO: (gh #174) Cache the cursor?
+                # TODO: (gh #175) enable typed DataFrames.
+                data = self.cursor.fetchall()
+                return pd.DataFrame(data, columns=column_names)
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, True
             ) from e
+        finally:
+            self.cursor.close()
 
-        # This is only for MyPy to pass and know about fetch_pandas_all()
-        # NOTE: Code does not run in type checking mode, so we need to
-        # check at run-time if the cursor has the method.
-        if TYPE_CHECKING:
-            _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
-        # At run-time check and run the fetch.
-        if hasattr(self.cursor, "fetch_pandas_all"):
-            return self.cursor.fetch_pandas_all()
-        else:
-            # Assume sqlite3
-            column_names: list[str] = [
-                description[0] for description in self.cursor.description
-            ]
-            # No need to close the cursor, as its closed by del.
-            # TODO: (gh #174) Cache the cursor?
-            # TODO: (gh #175) enable typed DataFrames.
-            data = self.cursor.fetchall()
-            return pd.DataFrame(data, columns=column_names)
+    def execute_ddl(self, sql: str) -> None:
+        """Create a cursor object using the connection and execute the DDL query.
+
+        Args:
+            `sql`: The DDL SQL query to execute.
+        """
+        self._cursor = self._connection.cursor()
+        try:
+            self.cursor.execute(sql)
+            # Consume any results to avoid MySQL "Unread result found" error
+            try:
+                self.cursor.fetchall()
+            except Exception:
+                pass  # No results to fetch (expected for DDL statements)
+            self._connection.commit()
+        except Exception as e:
+            print(f"ERROR WHILE EXECUTING DDL:\n{sql}")
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                sql, e, False
+            ) from e
+        finally:
+            self.cursor.close()
+
+    def get_table_columns(self, table_name: str) -> list[str]:
+        """Get the columns of a table.
+
+        Args:
+            `table_name`: The name of the table to get the schema for.
+        Returns:
+            A list of column names in the table.
+        """
+        self._cursor = self._connection.cursor()
+        try:
+            # WHERE 1=0 returns no rows but populates cursor.description
+            # with column metadata on all supported dialects.
+            # Used instead of LIMIT 0 which is not supported in all dialects
+            # (e.g. Oracle).
+            self.cursor.execute(f"SELECT * FROM {table_name} WHERE 1=0")
+            column_names = [description[0] for description in self.cursor.description]
+            # Consume any results to avoid MySQL "Unread result found" error
+            try:
+                self.cursor.fetchall()
+            except Exception:
+                pass
+            return column_names
+        except Exception as e:
+            print(f"ERROR WHILE GETTING COLUMN NAMES FOR TABLE {table_name}")
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                f"Failed to get column names for table {table_name}", e, False
+            ) from e
+        finally:
+            self.cursor.close()
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
@@ -101,6 +160,32 @@ class DatabaseConnection:
         return self._cursor
 
 
+@dataclass(frozen=True)
+class CreateCapabilities:
+    """
+    Defines the DDL capabilities of a database dialect for CREATE statements.
+    Used to determine which syntax options are available when creating
+    views/tables in different databases.
+    """
+
+    replace_table: bool = True
+    """
+    Whether the Database allows CREATE OR REPLACE on regular table writes.
+    """
+    temp_table: bool = True
+    """
+    Whether the Database allows CREATE TEMPORARY TABLE statements.
+    """
+    replace_view: bool = True
+    """
+    Whether the Database allows CREATE OR REPLACE on view creation.
+    """
+    temp_view: bool = True
+    """
+    Whether the Database allows CREATE TEMPORARY VIEW statements.
+    """
+
+
 class DatabaseDialect(Enum):
     """Enum for the supported database dialects.
     In general the dialects should"""
@@ -113,6 +198,42 @@ class DatabaseDialect(Enum):
     POSTGRES = "postgres"
     ORACLE = "oracle"
     BODOSQL = "bodosql"
+
+    @property
+    def create_capabilities(self) -> CreateCapabilities:
+        """
+        Returns the DDL CREATE capabilities for this dialect.
+        """
+        match self:
+            case DatabaseDialect.SNOWFLAKE:
+                return CreateCapabilities(temp_view=False)
+            case DatabaseDialect.POSTGRES:
+                return CreateCapabilities(replace_table=False, temp_view=False)
+            case DatabaseDialect.MYSQL:
+                return CreateCapabilities(replace_table=False, temp_view=False)
+            case DatabaseDialect.SQLITE:
+                return CreateCapabilities(replace_table=False, replace_view=False)
+            case DatabaseDialect.ORACLE:
+                # Oracle does not support TEMPORARY TABLE via CTAS (CREATE TABLE AS SELECT).
+                # Private Temporary Tables (PTT, Oracle 18c+) support CTAS but do not
+                # support the ON COMMIT clause in that form, making data only transaction-
+                # scoped and unavailable for subsequent queries in the same session.
+                # Global Temporary Tables (GTT) support session-scoped data via
+                # ON COMMIT PRESERVE ROWS, but require explicit column definitions and
+                # do not support CTAS. Supporting GTT would require a PyDoughType-to-Oracle-
+                # SQL-type mapping and a separate INSERT INTO ... SELECT step.
+                return CreateCapabilities(
+                    replace_table=False,
+                    temp_table=False,
+                    temp_view=False,
+                )
+            case _:
+                return CreateCapabilities(
+                    replace_table=False,
+                    temp_table=False,
+                    replace_view=False,
+                    temp_view=False,
+                )
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":

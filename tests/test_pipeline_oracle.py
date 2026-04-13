@@ -24,7 +24,6 @@ from tests.testing_utilities import (
     graph_fetcher,
 )
 
-from .conftest import tpch_custom_test_data_dialect_replacements
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
@@ -366,28 +365,6 @@ def test_pipeline_e2e_oracle_custom_functions(
     """
     custom_functions_test_data.run_e2e_test(
         get_sample_graph, oracle_conn_db_context("tpch"), coerce_types=True
-    )
-
-
-@pytest.mark.oracle
-@pytest.mark.execute
-def test_pipeline_e2e_oracle_tpch_custom(
-    tpch_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
-    get_sample_graph: graph_fetcher,
-    oracle_conn_db_context: Callable[[str], DatabaseContext],
-):
-    """
-    Test executing the TPC-H custom queries from the original code generation on
-    Oracle.
-    """
-    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
-        oracle_conn_db_context("tpch").dialect, tpch_custom_pipeline_test_data
-    )
-
-    tpch_custom_pipeline_test_data.run_e2e_test(
-        get_sample_graph,
-        oracle_conn_db_context("tpch"),
-        coerce_types=True,
     )
 
 

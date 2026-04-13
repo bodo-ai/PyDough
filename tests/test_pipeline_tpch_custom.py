@@ -3,8 +3,11 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import dataclasses
+import logging
 import re
 from collections.abc import Callable
+from datetime import date
 from decimal import Decimal
 
 import numpy as np
@@ -16,6 +19,7 @@ from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.database_connectors.database_connector import DatabaseDialect
+from pydough.errors import PyDoughException
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -32,6 +36,7 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_cross_9,
     bad_cross_10,
     bad_cross_11,
+    bad_cross_12,
     bad_name_1,
     bad_name_2,
     bad_name_3,
@@ -5120,15 +5125,31 @@ def test_pipeline_until_sql_tpch_custom(
 @pytest.mark.execute
 def test_pipeline_e2e_tpch_custom(
     tpch_custom_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    sqlite_tpch_db_context: DatabaseContext,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
 ):
     """
     Test executing the the custom queries with TPC-H data from the original
     code generation.
     """
+    db_context, graph = all_dialects_tpch_db_context
+
+    # Skip BodoSQL, since checking all the custom tests with
+    # it would take too long.
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("Skipping tpch custom test for BodoSQL.")
+
+    if (
+        db_context.dialect == DatabaseDialect.MYSQL
+        and tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
+    ):
+        pytest.skip("Skipping test as MySQL does not support Infinity values.")
+
+    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
+        db_context.dialect, tpch_custom_pipeline_test_data
+    )
+
     tpch_custom_pipeline_test_data.run_e2e_test(
-        get_sample_graph, sqlite_tpch_db_context, coerce_types=True
+        lambda _: graph, db_context, coerce_types=True
     )
 
 
@@ -5614,6 +5635,18 @@ def test_pipeline_e2e_simple_week(
             id="bad_cross_11",
         ),
         pytest.param(
+            bad_cross_12,
+            None,
+            re.escape(
+                "Invalid use of CROSS: `CROSS(nums)` cannot be used as a "
+                "top-level collection. Valid uses are: "
+                "`some_collection.CROSS(nums)` for a cross join, or "
+                "`CROSS(nums)` inside an aggregate expression, e.g. "
+                "`some_collection.CALCULATE(COUNT(CROSS(nums).WHERE(...)))`."
+            ),
+            id="bad_cross_12",
+        ),
+        pytest.param(
             bad_quantile_1,
             None,
             re.escape(
@@ -5811,4 +5844,886 @@ def test_pipeline_e2e_errors(
         graph,
         columns=columns,
         database=sqlite_tpch_db_context,
+    )
+
+
+@pytest.fixture(
+    params=[
+        # NOTE: all tests  have replace [temp] tables to ensure
+        # that we don't have to worry about cleanup after tests,
+        # and to make sure tests work with multiple runs without
+        # interference from previous runs.
+        # Test 1: UnqualifiedWhere: Basic WHERE filter,
+        # then CALCULATE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t1', temp=True, replace=True)\n"
+                "result = asian_tmp.CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"name": ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"]}
+                ),
+                "to_table_test_1",
+            ),
+            id="to_table_test_1",
+        ),
+        # Test 2: UnqualifiedWhere: WHERE followed by WHERE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_countries = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_countries_tmp = pydough.to_table(asian_countries, name='asian_nations_t2', replace=True)\n"
+                "result = asian_countries_tmp.WHERE(CONTAINS(name, 'I')).CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"]}
+                ),
+                "to_table_test_2",
+            ),
+            id="to_table_test_2",
+        ),
+        # Test 3: UnqualifiedWhere: Accessing materialized view columns directly
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t3', replace=True, temp=True)\n"
+                "result = asian_tmp.CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [8, 9, 12, 18, 21],
+                        "name": ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"],
+                    }
+                ),
+                "to_table_test_3",
+            ),
+            id="to_table_test_3",
+        ),
+        # Test 4: UnqualifiedCalculate: WHERE + CALCULATE,
+        # then access materialized view and select columns.
+        # Get 5 Asian nations ordered by nation_key
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t4', replace=True)\n"
+                "result = asian_tmp.CALCULATE(nation_key, nation_name).ORDER_BY(nation_key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_key": [8, 9, 12, 18, 21],
+                        "nation_name": [
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "CHINA",
+                            "VIETNAM",
+                        ],
+                    }
+                ),
+                "to_table_test_4",
+            ),
+            id="to_table_test_4",
+        ),
+        # Test 5: UnqualifiedCalculate: WHERE + CALCULATE,
+        # then HAS correlation with materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t5', temp=True, replace=True)\n"
+                "result = customers.CALCULATE(name, cust_nation_key=nation.key).WHERE(HAS(asian_tmp.WHERE(nation_key == cust_nation_key))).CALCULATE(name).TOP_K(5, by=name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000007",
+                            "Customer#000000009",
+                            "Customer#000000019",
+                            "Customer#000000021",
+                            "Customer#000000025",
+                        ]
+                    }
+                ),
+                "to_table_test_5",
+            ),
+            id="to_table_test_5",
+        ),
+        # Test 6: UnqualifiedCalculate: CALCULATE,
+        # then TOP_K on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "expensive_orders = orders.CALCULATE(okey=key, total=total_price)\n"
+                "orders_tmp = pydough.to_table(expensive_orders, name='expensive_orders_t6', replace=True)\n"
+                "result = orders_tmp.TOP_K(10, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [
+                            972901,
+                            1750466,
+                            2185667,
+                            2199712,
+                            2232932,
+                            3043270,
+                            3586919,
+                            4515876,
+                            4576548,
+                            4722021,
+                        ],
+                        "total": [
+                            508668.52,
+                            555285.16,
+                            511359.88,
+                            515531.82,
+                            522720.61,
+                            530604.44,
+                            522644.48,
+                            510061.6,
+                            525590.57,
+                            544089.09,
+                        ],
+                    }
+                ),
+                "to_table_test_6",
+            ),
+            id="to_table_test_6",
+        ),
+        # Test 7: Multiple to_table: Two materialized views joined via CROSS
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t7', replace=True, temp=True)\n"
+                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
+                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t7', temp=True, replace=True)\n"
+                "result = asian_tmp.CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=(nation_name, ckey))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "CHINA", "CHINA", "CHINA", "CHINA"],
+                        "ckey": [7, 19, 75, 82, 118],
+                    }
+                ),
+                "to_table_test_7",
+            ),
+            id="to_table_test_7",
+        ),
+        # Test 8: Multiple to_table: Two materialized views joined,
+        # different sort column
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)\n"
+                "asian_tmp = pydough.to_table(asian_nations, name='asian_nations_t8', replace=True, temp=True)\n"
+                "asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)\n"
+                "custs_tmp = pydough.to_table(asian_custs, name='asian_custs_t8', replace=True)\n"
+                "result = asian_tmp.CALCULATE(nation_key, nation_name).CROSS(custs_tmp).WHERE(nation_key == nkey).CALCULATE(nation_name, ckey).TOP_K(5, by=ckey)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "CHINA", "INDIA", "INDIA", "JAPAN"],
+                        "ckey": [7, 19, 9, 21, 25],
+                    }
+                ),
+                "to_table_test_8",
+            ),
+            id="to_table_test_8",
+        ),
+        # Test 9: UnqualifiedCalculate: CALCULATE with relationship traversal,
+        # then RANKING window function
+        pytest.param(
+            PyDoughPandasTest(
+                "order_summary = orders.CALCULATE(okey=key, total=total_price, ckey=customer.key)\n"
+                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t9', temp=True, replace=True)\n"
+                "result = summary_tmp.CALCULATE(okey, total, rank=RANKING(by=total.DESC())).TOP_K(5, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "total": [
+                            555285.16,
+                            522720.61,
+                            530604.44,
+                            525590.57,
+                            544089.09,
+                        ],
+                        "rank": [1, 5, 3, 4, 2],
+                    }
+                ),
+                "to_table_test_9",
+            ),
+            id="to_table_test_9",
+        ),
+        # Test 10: UnqualifiedWhere + UnqualifiedCalculate: Date filter,
+        # then second WHERE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "recent_orders = orders.WHERE(order_date > DATETIME('1995-01-01')).CALCULATE(okey=key, odate=order_date)\n"
+                "recent_tmp = pydough.to_table(recent_orders, name='recent_orders_t10', replace=True)\n"
+                "result = recent_tmp.WHERE(odate < DATETIME('1995-06-01')).CALCULATE(okey, odate).TOP_K(5, by=okey.ASC(na_pos='last'))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [65, 162, 197, 225, 327],
+                        "odate": [
+                            date(1995, 3, 18),
+                            date(1995, 5, 8),
+                            date(1995, 4, 7),
+                            date(1995, 5, 25),
+                            date(1995, 4, 17),
+                        ],
+                    }
+                ),
+                "to_table_test_10",
+            ),
+            id="to_table_test_10",
+        ),
+        # Test 11: UnqualifiedWhere + UnqualifiedCalculate: WHERE on parts,
+        # then CALCULATE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "parts_summary = parts.WHERE(size > 10).CALCULATE(pkey=key, pname=name, psize=size)\n"
+                "parts_tmp = pydough.to_table(parts_summary, name='parts_summary_t11', replace=True, temp=True)\n"
+                "result = parts_tmp.CALCULATE(pkey, pname, psize).TOP_K(5, by=(psize.DESC(), pkey.ASC()))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "pkey": [232, 273, 414, 436, 679],
+                        "pname": [
+                            "ivory peru lavender orange dark",
+                            "pink white sky burnished coral",
+                            "pink brown purple puff snow",
+                            "turquoise yellow dim purple antique",
+                            "purple blanched linen metallic indian",
+                        ],
+                        "psize": [50, 50, 50, 50, 50],
+                    }
+                ),
+                "to_table_test_11",
+            ),
+            id="to_table_test_11",
+        ),
+        # Test 12: UnqualifiedCalculate: CALCULATE,
+        # then WHERE on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "order_summary = orders.CALCULATE(okey=key, total=total_price)\n"
+                "summary_tmp = pydough.to_table(order_summary, name='order_summary_t12', temp=True, replace=True)\n"
+                "result = summary_tmp.WHERE(total > 1000).CALCULATE(okey, total).TOP_K(5, by=total.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "okey": [1750466, 2232932, 3043270, 4576548, 4722021],
+                        "total": [
+                            555285.16,
+                            522720.61,
+                            530604.44,
+                            525590.57,
+                            544089.09,
+                        ],
+                    }
+                ),
+                "to_table_test_12",
+            ),
+            id="to_table_test_12",
+        ),
+        # Test 13: UnqualifiedRoot: Direct table reference (no transformations)
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_copy = pydough.to_table(nations, name='nations_t13', replace=True)\n"
+                "result = nations_copy.CALCULATE(key, name).TOP_K(5, by=key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 1, 2, 3, 4],
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "EGYPT",
+                        ],
+                    }
+                ),
+                "to_table_test_13",
+            ),
+            id="to_table_test_13",
+        ),
+        # Test 14: UnqualifiedOrderBy: ORDER_BY collection to to_table,
+        # then TOP_K on materialized view
+        pytest.param(
+            PyDoughPandasTest(
+                "sorted_nations = nations.ORDER_BY(name.DESC())\n"
+                "sorted_tmp = pydough.to_table(sorted_nations, name='sorted_nations_t14', temp=True, replace=True)\n"
+                "result = sorted_tmp.CALCULATE(key, name).TOP_K(5, by=name.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [21, 24, 23, 20, 22],
+                        "name": [
+                            "VIETNAM",
+                            "UNITED STATES",
+                            "UNITED KINGDOM",
+                            "SAUDI ARABIA",
+                            "RUSSIA",
+                        ],
+                    }
+                ),
+                "to_table_test_14",
+            ),
+            id="to_table_test_14",
+        ),
+        # Test 15: UnqualifiedTopK: TOP_K before materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "top_nations = nations.TOP_K(3, by=key.ASC())\n"
+                "top_tmp = pydough.to_table(top_nations, name='top_nations_t15', temp=True, replace=True)\n"
+                "result = top_tmp.CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 1, 2],
+                        "name": ["ALGERIA", "ARGENTINA", "BRAZIL"],
+                    }
+                ),
+                "to_table_test_15",
+            ),
+            id="to_table_test_15",
+        ),
+        # Test 16: UnqualifiedPartition: PARTITION materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "nation_regions = nations.CALCULATE(nkey=key, rkey=region.key)"
+                ".PARTITION(name='by_region', by=rkey)\n"
+                "counts_tmp = pydough.to_table(nation_regions, name='region_counts_t16', replace=True)\n"
+                "result = counts_tmp.CALCULATE(rkey).ORDER_BY(rkey.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                    }
+                ),
+                "to_table_test_16",
+            ),
+            id="to_table_test_16",
+        ),
+        # Test 17: UnqualifiedSingular: SINGULAR single-row materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "first_nation = nations.TOP_K(1, by=key.ASC()).SINGULAR()\n"
+                "first_tmp = pydough.to_table(first_nation, name='first_nation_t17', temp=True, replace=True)\n"
+                "result = first_tmp.CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0],
+                        "name": ["ALGERIA"],
+                    }
+                ),
+                "to_table_test_17",
+            ),
+            id="to_table_test_17",
+        ),
+        # Test 18: UnqualifiedBest: BEST per group materialization
+        pytest.param(
+            PyDoughPandasTest(
+                "best_nation_per_region = regions.nations"
+                ".BEST(by=key.ASC(), per='regions')\n"
+                "best_tmp = pydough.to_table(best_nation_per_region, name='best_nation_t18', temp=True, replace=True)\n"
+                "result = best_tmp.CALCULATE(key, name).ORDER_BY(key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 1, 4, 6, 8],
+                        "name": ["ALGERIA", "ARGENTINA", "EGYPT", "FRANCE", "INDIA"],
+                    }
+                ),
+                "to_table_test_18",
+            ),
+            id="to_table_test_18",
+        ),
+        # Test 19: to_table result as input
+        pytest.param(
+            PyDoughPandasTest(
+                "step1 = nations.WHERE(region.name == 'ASIA').CALCULATE(nkey=key, nname=name)\n"
+                "step1_tmp = pydough.to_table(step1, name='step1_t19', temp=True, replace=True)\n"
+                "step2 = step1_tmp.WHERE(nkey < 15)\n"
+                "step2_tmp = pydough.to_table(step2, name='step2_t19', temp=True, replace=True)\n"
+                "result = step2_tmp.CALCULATE(nkey, nname).ORDER_BY(nkey.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nkey": [8, 9, 12],
+                        "nname": ["INDIA", "INDONESIA", "JAPAN"],
+                    }
+                ),
+                "to_table_test_19",
+            ),
+            id="to_table_test_19",
+        ),
+        # Test 20: range_collection + to_table
+        pytest.param(
+            PyDoughPandasTest(
+                "numbers = pydough.range_collection('nums', 'num', 1, 6, 1)\n"
+                "nums_tmp = pydough.to_table(numbers, name='nums_t20', replace=True)\n"
+                "result = nums_tmp.CALCULATE(num).WHERE(num > 2)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "num": [3, 4, 5],
+                    }
+                ),
+                "to_table_test_20",
+            ),
+            id="to_table_test_20",
+        ),
+        # Test 21: dataframe_collection + to_table
+        pytest.param(
+            PyDoughPandasTest(
+                "users = pydough.dataframe_collection('users', users_df, ['user_id'])\n"
+                "users_tmp = pydough.to_table(users, name='users_t21', temp=True, replace=True)\n"
+                "result = users_tmp.CALCULATE(user_id, user_name).ORDER_BY(user_id.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "user_id": [1, 2, 3],
+                        "user_name": ["Alice", "Bob", "Charlie"],
+                    }
+                ),
+                "to_table_test_21",
+                kwargs={
+                    "users_df": pd.DataFrame(
+                        {"user_id": [1, 2, 3], "user_name": ["Alice", "Bob", "Charlie"]}
+                    )
+                },
+            ),
+            id="to_table_test_21",
+        ),
+        # Test 22: Combined - range_collection + dataframe_collection + to_table
+        # Note: Need intermediate CALCULATE to project columns before second CROSS
+        pytest.param(
+            PyDoughPandasTest(
+                "multipliers = pydough.range_collection('mults', 'mult', 1, 4, 1)\n"
+                "mult_tmp = pydough.to_table(multipliers, name='mult_t22', replace=True)\n"
+                "products = pydough.dataframe_collection('products', products_df, ['pid'])\n"
+                "prod_tmp = pydough.to_table(products, name='prod_t22', replace=True)\n"
+                "result = mult_tmp.CALCULATE(mult).CROSS(prod_tmp)"
+                ".CALCULATE(mult, pid, pname=product_name)"
+                ".ORDER_BY(mult.ASC(), pid.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "mult": [1, 1, 2, 2, 3, 3],
+                        "pid": [10, 20, 10, 20, 10, 20],
+                        "pname": [
+                            "Apple",
+                            "Banana",
+                            "Apple",
+                            "Banana",
+                            "Apple",
+                            "Banana",
+                        ],
+                    }
+                ),
+                "to_table_test_22",
+                kwargs={
+                    "products_df": pd.DataFrame(
+                        {"pid": [10, 20], "product_name": ["Apple", "Banana"]}
+                    )
+                },
+            ),
+            id="to_table_test_22",
+        ),
+        # Test 23: CROSS TPCH view with range_collection view
+        # Verifies that a to_table of a TPCH query can be crossed with
+        # a to_table of a range_collection.
+        pytest.param(
+            PyDoughPandasTest(
+                "asian_nations = nations.WHERE(region.name == 'ASIA')"
+                ".CALCULATE(nkey=key, nname=name)\n"
+                "nations_tmp = pydough.to_table(asian_nations, name='asia_nations_t23', replace=True)\n"
+                "multipliers = pydough.range_collection('mults', 'mult', 1, 3, 1)\n"
+                "mult_tmp = pydough.to_table(multipliers, name='mults_t23', replace=True)\n"
+                "result = (\n"
+                "    nations_tmp\n"
+                "    .CALCULATE(nkey, nname)\n"
+                "    .CROSS(mult_tmp)\n"
+                "    .CALCULATE(nkey, nname, mult)\n"
+                "    .ORDER_BY(nkey.ASC(), mult.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "nkey": [8, 8, 9, 9, 12, 12, 18, 18, 21, 21],
+                        "nname": [
+                            "INDIA",
+                            "INDIA",
+                            "INDONESIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "JAPAN",
+                            "CHINA",
+                            "CHINA",
+                            "VIETNAM",
+                            "VIETNAM",
+                        ],
+                        "mult": [1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+                    }
+                ),
+                "to_table_test_23",
+            ),
+            id="to_table_test_23",
+        ),
+        # Test 24: CROSS TPCH view with dataframe_collection view
+        # Verifies that a to_table of a TPCH query can be crossed with
+        # a to_table of a dataframe_collection.
+        pytest.param(
+            PyDoughPandasTest(
+                "euro_region = regions.WHERE(name == 'EUROPE').CALCULATE(rkey=key, rname=name)\n"
+                "regions_tmp = pydough.to_table(euro_region, name='euro_regions_t24', replace=True)\n"
+                "tiers = pydough.dataframe_collection('tiers', tiers_df, ['tier_id'])\n"
+                "tiers_tmp = pydough.to_table(tiers, name='tiers_t24', replace=True)\n"
+                "result = (\n"
+                "    regions_tmp\n"
+                "    .CALCULATE(rkey, rname)\n"
+                "    .CROSS(tiers_tmp)\n"
+                "    .CALCULATE(rkey, rname, tier_id, tier_label)\n"
+                "    .ORDER_BY(tier_id.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [3, 3, 3],
+                        "rname": ["EUROPE", "EUROPE", "EUROPE"],
+                        "tier_id": [1, 2, 3],
+                        "tier_label": ["Gold", "Silver", "Bronze"],
+                    }
+                ),
+                "to_table_test_24",
+                kwargs={
+                    "tiers_df": pd.DataFrame(
+                        {
+                            "tier_id": [1, 2, 3],
+                            "tier_label": ["Gold", "Silver", "Bronze"],
+                        }
+                    )
+                },
+            ),
+            id="to_table_test_24",
+        ),
+        # Test 25: BEST where per= ancestor is the to_table collection.
+        # Verifies that uniqueness columns from ViewGeneratedCollection are
+        # used correctly in the BEST window function's PARTITION BY clause.
+        # regions_tmp unique_columns = [['rkey']] (computed from regions metadata key),
+        # so PARTITION BY (rkey) is used to find the best nation per region.
+        pytest.param(
+            PyDoughPandasTest(
+                "regions_tmp = pydough.to_table(\n"
+                "    regions.CALCULATE(rkey=key, rname=name),\n"
+                "    name='regions_t25', replace=True\n"
+                ")\n"
+                "result = (\n"
+                "    regions_tmp\n"
+                "    .CALCULATE(rkey, rname)\n"
+                "    .CROSS(nations)\n"
+                "    .WHERE(region_key == rkey)\n"
+                "    .BEST(by=key.ASC(), per='regions_t25')\n"
+                "    .CALCULATE(rkey, rname, nkey=key, nname=name)\n"
+                "    .ORDER_BY(rkey.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                        "rname": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nkey": [0, 1, 8, 6, 4],
+                        "nname": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "INDIA",
+                            "FRANCE",
+                            "EGYPT",
+                        ],
+                    }
+                ),
+                "to_table_test_25",
+            ),
+            id="to_table_test_25",
+        ),
+    ],
+)
+def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests on custom queries using the TPC-H database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
+    """
+    return request.param
+
+
+# Snowflake table name prefix for cross-database writes (read from
+# SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
+SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
+
+
+def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
+    """Return a copy of test_data with temp=True removed from the PyDough string.
+
+    Oracle does not support TEMPORARY TABLEs/VIEWs, so tests that use temp=True
+    are rewritten to use persistent tables (replace=True is preserved for cleanup).
+    """
+
+    if not isinstance(test_data.pydough_function, str):
+        return test_data
+    return dataclasses.replace(
+        test_data,
+        pydough_function=re.sub(
+            r"temp=True,\s*|,\s*temp=True", "", test_data.pydough_function
+        ),
+    )
+
+
+@pytest.mark.execute
+def test_pipeline_tpch_e2e_to_table_all_dialects(
+    tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+):
+    """
+    Test executing to_table e2e tests for all supported database dialects.
+    Uses the all_dialects_tpch_db_context fixture to run on sqlite, mysql,
+    postgres, and snowflake.
+    """
+    db_context, graph = all_dialects_tpch_db_context
+
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
+
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
+    # write to E2E_TESTS_DB.PUBLIC)
+    table_prefix = (
+        SNOWFLAKE_TABLE_PREFIX
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else ""
+    )
+
+    test_data = tpch_custom_pipeline_to_table_test_data
+    if db_context.dialect == DatabaseDialect.ORACLE:
+        test_data = _strip_temp_for_oracle(test_data)
+
+    test_data.run_e2e_test(
+        lambda _: graph,  # graph_fetcher that returns the graph directly
+        db_context,
+        coerce_types=True,
+        table_name_prefix=table_prefix,
+    )
+
+
+@pytest.mark.execute
+def test_pipeline_tpch_sql_to_table_all_dialects(
+    tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Test/update expected SQL output for to_table tests across all dialects.
+    Uses the all_dialects_tpch_db_context fixture to run on sqlite, mysql,
+    postgres, and snowflake.
+    """
+    db_context, graph = all_dialects_tpch_db_context
+
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
+
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
+    # write to E2E_TESTS_DB.PUBLIC)
+    table_prefix = (
+        SNOWFLAKE_TABLE_PREFIX
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else ""
+    )
+
+    test_data = tpch_custom_pipeline_to_table_test_data
+    if db_context.dialect == DatabaseDialect.ORACLE:
+        test_data = _strip_temp_for_oracle(test_data)
+
+    sql_file_path: str = get_sql_test_filename(
+        test_data.test_name,
+        db_context.dialect,
+    )
+    test_data.run_sql_test(
+        lambda _: graph,  # graph_fetcher that returns the graph directly
+        sql_file_path,
+        update_tests,
+        db_context,
+        table_name_prefix=table_prefix,
+    )
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_1,
+                "TPCH",
+                lambda: pd.DataFrame(),
+                "window_filter_order_1",
+            ),
+            id="window_filter_order_1",
+        ),
+    ]
+)
+def tpch_custom_to_table_test_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests on custom queries using the TPC-H database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
+    """
+    return request.param
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "as_view, replace, temp",
+    [
+        (False, False, False),
+        (False, False, True),
+        (True, False, True),
+        (True, False, False),
+        (False, True, False),
+        (False, True, True),
+        (True, True, False),
+        (True, True, True),
+    ],
+)
+def test_pipeline_to_table_ddl(
+    tpch_custom_to_table_test_data: PyDoughPandasTest,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+    as_view: bool,
+    replace: bool,
+    temp: bool,
+    caplog: pytest.LogCaptureFixture,
+):
+    """
+    Test that a simple to_table call can be materialized and executed on the
+    database.
+    Args:
+    - tpch_custom_to_table_test_data: Test data for the to_table test, containing
+        the PyDough code to_run.
+    - get_sample_graph: Fixture to get the sample graph.
+    - sqlite_tpch_db_context: Fixture to get the database context
+        for the TPC-H database on SQLite.
+    - as_view: Whether to create the table as a view or a table.
+    - replace: Whether to replace the table/view if it already exists.
+    - temp: Whether to create a temporary materialized view/table.
+    - caplog: Fixture to capture logs for assertions. Used to verify that
+        the expected [DROP and ] CREATE statement(s) is logged when
+        running to_table.
+    """
+
+    db_context, graph = all_dialects_tpch_db_context
+
+    if db_context.dialect == DatabaseDialect.BODOSQL:
+        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
+
+    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
+    # write to E2E_TESTS_DB.PUBLIC)
+    table_prefix = (
+        SNOWFLAKE_TABLE_PREFIX
+        if db_context.dialect == DatabaseDialect.SNOWFLAKE
+        else ""
+    )
+
+    # TEMP VIEWS (not tables) are not supported for Snowflake, MySQL, Postgres, and Oracle.
+    # So run and catch PyDoughException that indicates temp view is not supported, and skip the rest of the test in that case.
+    if (
+        temp
+        and as_view
+        and db_context.dialect
+        in {
+            DatabaseDialect.SNOWFLAKE,
+            DatabaseDialect.MYSQL,
+            DatabaseDialect.POSTGRES,
+            DatabaseDialect.ORACLE,
+        }
+    ):
+        with pytest.raises(
+            PyDoughException, match="TEMPORARY VIEW is not supported for"
+        ):
+            tpch_custom_to_table_test_data.run_e2e_test_to_table(
+                lambda _: graph,
+                db_context,
+                as_view=as_view,
+                replace=replace,
+                temp=temp,
+                table_name_prefix=table_prefix,
+            )
+        return
+    # TEMP TABLES are not supported for Oracle.
+    if temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
+        with pytest.raises(
+            PyDoughException, match="TEMPORARY TABLE is not supported for"
+        ):
+            tpch_custom_to_table_test_data.run_e2e_test_to_table(
+                lambda _: graph,
+                db_context,
+                as_view=as_view,
+                replace=replace,
+                temp=temp,
+                table_name_prefix=table_prefix,
+            )
+        return
+    caplog.set_level(logging.INFO)
+    tpch_custom_to_table_test_data.run_e2e_test_to_table(
+        lambda _: graph,
+        db_context,
+        as_view=as_view,
+        replace=replace,
+        temp=temp,
+        table_name_prefix=table_prefix,
+    )
+    expected_create_statement = "CREATE"
+
+    table_or_view = " VIEW" if as_view else " TABLE"
+    # SQLite, PostgreSQL, MySQL, and Oracle do not support REPLACE TABLE
+    # Also, SQLite does not support REPLACE VIEW too but other dialects too.
+    # So table/view will be dropped first if replace and the other conditions
+    # are met. In this case, look for DROP then CREATE statements in the logs.
+    if replace:
+        if (
+            table_or_view == " TABLE"
+            and db_context.dialect
+            in {
+                DatabaseDialect.SQLITE,
+                DatabaseDialect.POSTGRES,
+                DatabaseDialect.MYSQL,
+                DatabaseDialect.ORACLE,
+            }
+        ) or (
+            table_or_view == " VIEW"
+            and db_context.dialect
+            in {
+                DatabaseDialect.SQLITE,
+            }
+        ):
+            expected_create_statement = rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"
+        else:
+            expected_create_statement += " OR REPLACE"
+
+    # SQLite does not support creating persistent views
+    # that reference attached databases.
+    # SQLite the only one that supports temporary views.
+    # So the view will be created as TEMPORARY.
+    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
+        expected_create_statement += " TEMPORARY"
+    elif temp:
+        expected_create_statement += " TEMPORARY"
+
+    expected_create_statement += table_or_view
+
+    assert re.search(expected_create_statement, caplog.text, re.DOTALL), (
+        f"Expected to see '{expected_create_statement}' in the logs when running to_table"
     )
