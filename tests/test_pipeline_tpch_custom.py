@@ -5120,6 +5120,18 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="rewrite_count_sf_pa",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = customers.CALCULATE(c_key=key).orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(min_k=MIN(selected_orders.c_key), max_k=MAX(selected_orders.c_key), n=COUNT(selected_orders))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"min_k": [36049], "max_k": [36049], "n": [36049]}
+                ),
+                "rewrite_min_inner",
+            ),
+            id="rewrite_min_inner",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:

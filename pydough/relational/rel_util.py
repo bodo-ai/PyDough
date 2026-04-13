@@ -946,10 +946,10 @@ def rewrite_count_ndistinct(
         return node
 
     # Aggregate must contain exactly one aggregation:
-    if len(node.aggregations) != 1:
-        return node
+    # if len(node.aggregations) != 1:
+    #     return node
 
-    ((agg_key, agg_value),) = node.aggregations.items()
+    # ((agg_key, agg_value),) = node.aggregations.items()
 
     cond: RelationalExpression = agg_input.condition
 
@@ -981,42 +981,42 @@ def rewrite_count_ndistinct(
     else:
         return node
 
-    new_node: RelationalNode = node
     assert isinstance(rhs_key, ColumnReference)
 
-    match agg_value.op:
-        case pydop.COUNT if not agg_value.inputs:
-            # LHS key must be unique
-            assert isinstance(lhs_key, ColumnReference)
-            if frozenset([lhs_key.name]) not in input_unique_sets:
+    new_aggregations: dict[str, CallExpression] = {}
+
+    for agg_key, agg_value in node.aggregations.items():
+        match agg_value.op:
+            case pydop.COUNT if not agg_value.inputs:
+                # LHS key must be unique
+                assert isinstance(lhs_key, ColumnReference)
+                if frozenset([lhs_key.name]) not in input_unique_sets:
+                    return node
+
+                # Rewrite COUNT(*) → NDISTINCT(rhs_key)
+                ndistinct = CallExpression(
+                    pydop.NDISTINCT,
+                    agg_value.data_type,
+                    [add_input_name(rhs_key, None)],
+                )
+                new_aggregations[agg_key] = ndistinct
+
+            case pydop.MIN | pydop.MAX | pydop.ANYTHING:
+                # it can only reference columns from the RHS
+                if not only_references_columns(agg_value, {rhs_key.name}):
+                    return node
+
+                min_input = CallExpression(
+                    agg_value.op,
+                    agg_value.data_type,
+                    [add_input_name(agg_input.columns[agg_key], None)],
+                )
+
+                breakpoint()
+
+                new_aggregations[agg_key] = min_input
+
+            case _:
                 return node
 
-            # Rewrite COUNT(*) → NDISTINCT(rhs_key)
-            ndistinct = CallExpression(
-                pydop.NDISTINCT, agg_value.data_type, [add_input_name(rhs_key, None)]
-            )
-
-            new_node = Aggregate(agg_input.inputs[1], {}, {agg_key: ndistinct})
-
-        case pydop.MIN:
-            if agg_value.inputs:
-                return node
-
-            # it can only reference columns from the RHS
-            if not only_references_columns(agg_value, {rhs_key.name}):
-                return node
-
-            min_input = CallExpression(
-                pydop.MIN,
-                agg_value.data_type,
-                [add_input_name(agg_input.columns[agg_key], None)],
-            )
-            new_node = Aggregate(agg_input, {}, {agg_key: min_input})
-
-        case pydop.MAX:
-            pass
-
-        case _:
-            pass
-
-    return new_node
+    return Aggregate(agg_input.inputs[1], {}, new_aggregations)
