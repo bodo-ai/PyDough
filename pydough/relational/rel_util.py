@@ -984,7 +984,6 @@ def rewrite_count_ndistinct(
     assert isinstance(rhs_key, ColumnReference)
 
     new_aggregations: dict[str, CallExpression] = {}
-
     for agg_key, agg_value in node.aggregations.items():
         match agg_value.op:
             case pydop.COUNT if not agg_value.inputs:

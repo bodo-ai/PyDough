@@ -398,6 +398,10 @@ def attempt_join_aggregate_transpose(
     # Keep a dictionary for the projection columns that will be used to post-process
     # the output of the aggregates, if needed.
     projection_columns: dict[str, RelationalExpression] = {}
+
+    for column_name, column_expr in node.columns.items():
+        projection_columns[column_name] = column_expr
+
     need_projection: bool = False
 
     # If we need count aggregates, add one to each side of the join.
