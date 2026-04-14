@@ -945,12 +945,6 @@ def rewrite_count_ndistinct(
     if agg_input.join_type not in (JoinType.SEMI, JoinType.INNER):
         return node
 
-    # Aggregate must contain exactly one aggregation:
-    # if len(node.aggregations) != 1:
-    #     return node
-
-    # ((agg_key, agg_value),) = node.aggregations.items()
-
     cond: RelationalExpression = agg_input.condition
 
     # The condition is a single equality check where the column form the left
@@ -983,6 +977,14 @@ def rewrite_count_ndistinct(
 
     assert isinstance(rhs_key, ColumnReference)
 
+    rhs_columns: set[str] = set()
+    for join_col_key, join_col_val in agg_input.columns.items():
+        if (
+            isinstance(join_col_val, ColumnReference)
+            and join_col_val.input_name == agg_input.default_input_aliases[1]
+        ):
+            rhs_columns.add(join_col_key)
+
     new_aggregations: dict[str, CallExpression] = {}
     for agg_key, agg_value in node.aggregations.items():
         match agg_value.op:
@@ -1001,17 +1003,27 @@ def rewrite_count_ndistinct(
                 new_aggregations[agg_key] = ndistinct
 
             case pydop.MIN | pydop.MAX | pydop.ANYTHING:
-                # it can only reference columns from the RHS
-                if not only_references_columns(agg_value, {rhs_key.name}):
+                # It can only reference columns from the RHS
+                if not only_references_columns(agg_value, rhs_columns):
                     return node
+
+                # Inline expressions
+                agg_sub: dict[RelationalExpression, RelationalExpression] = {}
+                for col_name in rhs_columns:
+                    agg_sub[ColumnReference(col_name, agg_value.data_type)] = (
+                        add_input_name(
+                            ColumnReference(col_name, agg_value.data_type), None
+                        )
+                    )
+                new_input_arg: RelationalExpression = apply_substitution(
+                    agg_value.inputs[0], agg_sub, {}
+                )
 
                 min_input = CallExpression(
                     agg_value.op,
                     agg_value.data_type,
-                    [add_input_name(agg_input.columns[agg_key], None)],
+                    [new_input_arg],
                 )
-
-                breakpoint()
 
                 new_aggregations[agg_key] = min_input
 
