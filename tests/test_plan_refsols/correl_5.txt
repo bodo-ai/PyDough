@@ -1,6 +1,6 @@
 ROOT(columns=[('name', anything_r_name)], orderings=[(anything_r_name):asc_first])
  AGGREGATE(keys={'r_regionkey': r_regionkey}, aggregations={'anything_r_name': ANYTHING(r_name)})
-  JOIN(condition=t1.s_acctbal <= t0.min_s_acctbal + 4.0:numeric & t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
+  JOIN(condition=(t1.s_acctbal <= (t0.min_s_acctbal + 4.0:numeric)) & (t0.n_nationkey == t1.s_nationkey), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
    JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'min_s_acctbal': t0.min_s_acctbal, 'n_nationkey': t1.n_nationkey, 'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
     JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'min_s_acctbal': t0.min_s_acctbal, 'r_name': t1.r_name, 'r_regionkey': t1.r_regionkey})
      AGGREGATE(keys={}, aggregations={'min_s_acctbal': MIN(s_acctbal)})

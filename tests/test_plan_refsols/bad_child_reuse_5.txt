@@ -1,6 +1,6 @@
-ROOT(columns=[('cust_key', c_custkey), ('n_orders', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(c_acctbal):desc_last])
+ROOT(columns=[('cust_key', c_custkey), ('n_orders', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(c_acctbal):desc_last, (c_custkey):desc_last])
  JOIN(condition=t0.c_custkey == t1.o_custkey, type=ANTI, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey, 'n_rows': t0.n_rows})
-  LIMIT(limit=10:numeric, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'n_rows': n_rows}, orderings=[(c_acctbal):desc_last])
+  LIMIT(limit=10:numeric, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'n_rows': n_rows}, orderings=[(c_acctbal):desc_last, (c_custkey):desc_last])
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey, 'n_rows': t1.n_rows})
     SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey})
     AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})

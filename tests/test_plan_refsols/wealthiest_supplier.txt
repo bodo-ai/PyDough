@@ -1,3 +1,3 @@
 ROOT(columns=[('name', s_name), ('account_balance', s_acctbal)], orderings=[])
- FILTER(condition=RANKING(args=[], partition=[], order=[(s_acctbal):desc_first, (s_name):asc_last], allow_ties=False) == 1:numeric, columns={'s_acctbal': s_acctbal, 's_name': s_name})
+ FILTER(condition=1:numeric == RANKING(args=[], partition=[], order=[(s_acctbal):desc_first, (s_name):asc_last], allow_ties=False), columns={'s_acctbal': s_acctbal, 's_name': s_name})
   SCAN(table=tpch.SUPPLIER, columns={'s_acctbal': s_acctbal, 's_name': s_name})

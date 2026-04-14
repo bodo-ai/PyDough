@@ -4,10 +4,11 @@ Overridden version of the pushdown_projections.py file from sqlglot.
 
 from collections import defaultdict
 
-from sqlglot import exp
-from sqlglot.optimizer.pushdown_projections import SELECT_ALL, _remove_unused_selections
+from sqlglot import exp, alias
+from sqlglot.optimizer.pushdown_projections import SELECT_ALL
 from sqlglot.optimizer.scope import Scope, traverse_scope
 from sqlglot.schema import ensure_schema
+from sqlglot.optimizer.qualify_columns import Resolver
 
 # ruff: noqa
 # mypy: ignore-errors
@@ -94,3 +95,75 @@ def pushdown_projections(expression, schema=None, remove_unused_selections=True)
                     source_column_alias_count[source] = len(column_aliases)
 
     return expression
+
+
+def _remove_unused_selections(scope, parent_selections, schema, alias_count):
+    """
+    Unmodified function from sqlglot. It is needed because the change is in the
+    `default_selection` function which is used here.
+    """
+    order = scope.expression.args.get("order")
+
+    if order:
+        # Assume columns without a qualified table are references to output columns
+        order_refs = {c.name for c in order.find_all(exp.Column) if not c.table}
+    else:
+        order_refs = set()
+
+    new_selections = []
+    removed = False
+    star = False
+    is_agg = False
+
+    select_all = SELECT_ALL in parent_selections
+
+    for selection in scope.expression.selects:
+        name = selection.alias_or_name
+
+        if (
+            select_all
+            or name in parent_selections
+            or name in order_refs
+            or alias_count > 0
+        ):
+            new_selections.append(selection)
+            alias_count -= 1
+        else:
+            if selection.is_star:
+                star = True
+            removed = True
+
+        if not is_agg and selection.find(exp.AggFunc):
+            is_agg = True
+
+    if star:
+        resolver = Resolver(scope, schema)
+        names = {s.alias_or_name for s in new_selections}
+
+        for name in sorted(parent_selections):
+            if name not in names:
+                new_selections.append(
+                    alias(
+                        exp.column(name, table=resolver.get_table(name)),
+                        name,
+                        copy=False,
+                    )
+                )
+
+    # If there are no remaining selections, just select a single constant
+    if not new_selections:
+        new_selections.append(default_selection(is_agg))
+
+    scope.expression.select(*new_selections, append=False, copy=False)
+
+    if removed:
+        scope.clear_cache()
+
+
+# Selection to use if selection list is empty
+def default_selection(is_agg: bool) -> exp.Alias:
+    # PyDough Change: quoted=True avoiding `as _` which may be incorrect for some
+    # dialects
+    return alias(
+        exp.Max(this=exp.Literal.number(1)) if is_agg else "1", "_", quoted=True
+    )

@@ -1,0 +1,21 @@
+WITH "_S1" AS (
+  SELECT
+    sbdptickerid AS SBDPTICKERID,
+    MAX(sbdphigh) AS MAX_SBDPHIGH,
+    MIN(sbdplow) AS MIN_SBDPLOW
+  FROM MAIN.SBDAILYPRICE
+  WHERE
+    sbdpdate <= TO_DATE('2023-04-04', 'YYYY-MM-DD')
+    AND sbdpdate >= TO_DATE('2023-04-01', 'YYYY-MM-DD')
+  GROUP BY
+    sbdptickerid
+)
+SELECT
+  SBTICKER.sbtickersymbol AS symbol,
+  "_S1".MAX_SBDPHIGH - "_S1".MIN_SBDPLOW AS price_change
+FROM MAIN.SBTICKER SBTICKER
+LEFT JOIN "_S1" "_S1"
+  ON SBTICKER.sbtickerid = "_S1".SBDPTICKERID
+ORDER BY
+  2 DESC NULLS LAST
+FETCH FIRST 3 ROWS ONLY

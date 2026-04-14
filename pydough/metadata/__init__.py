@@ -15,11 +15,12 @@ __all__ = [
     "SubcollectionRelationshipMetadata",
     "TableColumnMetadata",
     "parse_json_metadata_from_file",
+    "parse_metadata_from_list",
 ]
 
 from .collections import CollectionMetadata, SimpleTableMetadata
 from .graphs import GraphMetadata
-from .parse import parse_json_metadata_from_file
+from .parse import parse_json_metadata_from_file, parse_metadata_from_list
 from .properties import (
     CartesianProductMetadata,
     GeneralJoinMetadata,

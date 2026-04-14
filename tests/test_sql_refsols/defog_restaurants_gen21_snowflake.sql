@@ -1,6 +1,6 @@
 SELECT
   city_name
-FROM main.restaurant
+FROM restaurants.restaurant
 ORDER BY
   rating DESC NULLS LAST
 LIMIT 1

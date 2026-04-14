@@ -1,0 +1,6 @@
+ROOT(columns=[('word', LINEWORD), ('play', PLAY), ('act', ACT), ('scene', SCENE), ('line', LINE), ('player', PLAYER)], orderings=[])
+ JOIN(condition=t0.Word == t1.LINEWORD, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ACT': t1.ACT, 'LINE': t1.LINE, 'LINEWORD': t1.LINEWORD, 'PLAY': t1.PLAY, 'PLAYER': t1.PLAYER, 'SCENE': t1.SCENE})
+  FILTER(condition=(Word < 'c':string) & (LENGTH(Word) == 10:numeric) & (POS == 'a.':string), columns={'Word': Word})
+   SCAN(table=DICT, columns={'POS': POS, 'Word': Word})
+  FILTER(condition=ISIN(PLAY, ['much ado about nothing', 'henry viii', 'merry wives of windsor', 'romeo and juliet', 'pericles', 'king john', 'othello']:array[unknown]), columns={'ACT': ACT, 'LINE': LINE, 'LINEWORD': LINEWORD, 'PLAY': PLAY, 'PLAYER': PLAYER, 'SCENE': SCENE})
+   SCAN(table=SHAKE, columns={'ACT': ACT, 'LINE': LINE, 'LINEWORD': LINEWORD, 'PLAY': PLAY, 'PLAYER': PLAYER, 'SCENE': SCENE})

@@ -17,9 +17,9 @@ SELECT
       DAYOFWEEK(payments_received.payment_date) + 6
     ) % 7
   ) IN (5, 6)) AS weekend_payments
-FROM main.payments_received AS payments_received
-JOIN main.sales AS sales
-  ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
+FROM dealership.payments_received AS payments_received
+JOIN dealership.sales AS sales
+  ON payments_received.sale_id = sales.id AND sales.sale_price > 30000
 WHERE
   DATEDIFF(
     WEEK,
@@ -36,10 +36,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+          DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
         ) % 7
       ) * -1,
-      CURRENT_TIMESTAMP()
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   ) <= 8
   AND DATEDIFF(
@@ -57,10 +57,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+          DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
         ) % 7
       ) * -1,
-      CURRENT_TIMESTAMP()
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   ) >= 1
 GROUP BY

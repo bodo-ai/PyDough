@@ -1,0 +1,6 @@
+ROOT(columns=[('branch_name', b_name), ('key', UNMASK::(CASE WHEN [a_key] = 0 THEN 0 ELSE (CASE WHEN [a_key] > 0 THEN 1 ELSE -1 END) * CAST(SUBSTRING([a_key], 1 + INSTR([a_key], '-'), LENGTH([a_key]) / 2) AS INTEGER) END)), ('creation_timestamp', UNMASK::(DATETIME([a_open_ts], '+123456789 seconds')))], orderings=[(b_name):asc_first])
+ FILTER(condition=1:numeric == RANKING(args=[], partition=[a_branchkey], order=[(YEAR(UNMASK::(DATETIME([a_open_ts], '+123456789 seconds'))) == 2021:numeric):asc_last, (UNMASK::(CASE WHEN [a_key] = 0 THEN 0 ELSE (CASE WHEN [a_key] > 0 THEN 1 ELSE -1 END) * CAST(SUBSTRING([a_key], 1 + INSTR([a_key], '-'), LENGTH([a_key]) / 2) AS INTEGER) END)):asc_last], allow_ties=False), columns={'a_key': a_key, 'a_open_ts': a_open_ts, 'b_name': b_name})
+  JOIN(condition=t0.b_key == t1.a_branchkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'a_branchkey': t1.a_branchkey, 'a_key': t1.a_key, 'a_open_ts': t1.a_open_ts, 'b_name': t0.b_name})
+   FILTER(condition=CONTAINS(b_addr, ';CA;':string), columns={'b_key': b_key, 'b_name': b_name})
+    SCAN(table=CRBNK.BRANCHES, columns={'b_addr': b_addr, 'b_key': b_key, 'b_name': b_name})
+   SCAN(table=CRBNK.ACCOUNTS, columns={'a_branchkey': a_branchkey, 'a_key': a_key, 'a_open_ts': a_open_ts})

@@ -3,12 +3,15 @@ Definitions of various fixtures used in PyDough tests that are automatically
 available.
 """
 
+import json
+import logging
 import os
 import sqlite3
 import subprocess
 import time
 from collections.abc import Callable
 from functools import cache
+from typing import Any
 
 import boto3
 import httpx
@@ -18,7 +21,12 @@ from botocore.exceptions import ClientError
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import DayOfWeek, PyDoughConfigs, PyDoughSession
+from pydough.configs import (
+    DayOfWeek,
+    DivisionByZeroBehavior,
+    PyDoughConfigs,
+    PyDoughSession,
+)
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -27,8 +35,17 @@ from pydough.database_connectors import (
     load_database_context,
 )
 from pydough.errors import PyDoughTestingException
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
+from tests.test_pydough_functions.simple_pydough_functions import (
+    simple_int_float_string_cast,
+    string_format_specifiers_bodosql,
+    string_format_specifiers_mysql,
+    string_format_specifiers_oracle,
+    string_format_specifiers_postgres,
+    string_format_specifiers_snowflake,
+)
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
     tpch_q2_output,
@@ -77,10 +94,29 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_dataframe_collection_3_oracle,
+)
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
+
+
+@pytest.fixture(autouse=True)
+def reset_active_session():
+    """
+    Automatically reset the global active_session after each test to ensure
+    test isolation. This prevents state from leaking between tests.
+    """
+    yield
+    # Reset the active session to a fresh state after each test
+    pydough.active_session.metadata = None
+    pydough.active_session.config = PyDoughConfigs()
+    pydough.active_session.database = DatabaseContext(
+        empty_connection, DatabaseDialect.ANSI
+    )
+    pydough.active_session.mask_server = None
 
 
 @pytest.fixture
@@ -95,6 +131,7 @@ def default_config() -> PyDoughConfigs:
     config.avg_default_zero = False
     config.start_of_week = DayOfWeek.SUNDAY
     config.start_week_as_zero = True
+    config.division_by_zero = DivisionByZeroBehavior.DATABASE
     return config
 
 
@@ -111,6 +148,7 @@ def defog_config() -> PyDoughConfigs:
     config.avg_default_zero = False
     config.start_of_week = DayOfWeek.MONDAY
     config.start_week_as_zero = True
+    config.division_by_zero = DivisionByZeroBehavior.NULL
     return config
 
 
@@ -124,6 +162,21 @@ def empty_sqlite_tpch_session(
     """
     session: PyDoughSession = PyDoughSession()
     session.load_metadata_graph(sample_graph_path, "TPCH")
+    session.config = default_config
+    session.database = DatabaseContext(empty_connection, DatabaseDialect.SQLITE)
+    return session
+
+
+@pytest.fixture
+def empty_sqlite_udf_session(
+    udf_graph_path: str, default_config: PyDoughConfigs
+) -> PyDoughSession:
+    """
+    A PyDough session with an empty SQLite database connection and the
+    TPCH_SQLITE_UDFS graph loaded.
+    """
+    session: PyDoughSession = PyDoughSession()
+    session.load_metadata_graph(udf_graph_path, "TPCH_SQLITE_UDFS")
     session.config = default_config
     session.database = DatabaseContext(empty_connection, DatabaseDialect.SQLITE)
     return session
@@ -211,7 +264,23 @@ def get_custom_datasets_graph() -> graph_fetcher:
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/custom_datasets_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_oracle_custom_datasets_graph() -> graph_fetcher:
+    """
+    Returns the graph for the given custom dataset name for oracle.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/oracle_custom_datasets_graphs.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
@@ -226,6 +295,38 @@ def get_mysql_defog_graphs() -> graph_fetcher:
     @cache
     def impl(name: str) -> GraphMetadata:
         path: str = f"{os.path.dirname(__file__)}/test_metadata/mysql_defog_graphs.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_postgres_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Postgres.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/postgres_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_oracle_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Oracle.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/oracle_defog_graphs.json"
+        )
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
@@ -400,6 +501,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
+        pytest.param(DatabaseDialect.ORACLE, id="oracle"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -475,7 +577,7 @@ def sqlite_people_jobs_session(
     return session
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def sqlite_tpch_db_path() -> str:
     """
     Return the path to the TPCH database. We setup testing
@@ -518,6 +620,71 @@ def sqlite_tpch_session(
     return empty_sqlite_tpch_session
 
 
+@pytest.fixture(
+    params=[
+        pytest.param("sqlite", id="sqlite"),
+        pytest.param(
+            "snowflake",
+            id="snowflake",
+            marks=[pytest.mark.snowflake],
+        ),
+        pytest.param(
+            "mysql",
+            id="mysql",
+            marks=[pytest.mark.mysql],
+        ),
+        pytest.param(
+            "postgres",
+            id="postgres",
+            marks=[pytest.mark.postgres],
+        ),
+        pytest.param(
+            "oracle",
+            id="oracle",
+            marks=[pytest.mark.oracle],
+        ),
+    ],
+)
+def all_dialects_tpch_db_context(
+    request,
+    get_sample_graph: graph_fetcher,
+    get_sf_sample_graph: graph_fetcher,
+) -> tuple[DatabaseContext, GraphMetadata]:
+    """
+    General fixture providing TPCH database context and graph metadata
+    for each supported database dialect. Uses lazy fixture loading to
+    avoid triggering setup for unused databases.
+
+    Returns:
+        A tuple of (DatabaseContext, GraphMetadata) for the TPCH graph.
+    """
+    match request.param:
+        case "sqlite":
+            db_context = request.getfixturevalue("sqlite_tpch_db_context")
+            return db_context, get_sample_graph("TPCH")
+        case "snowflake":
+            sf_conn = request.getfixturevalue("sf_conn_db_context")
+            return (
+                sf_conn("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+                get_sf_sample_graph("TPCH"),
+            )
+        case "mysql":
+            mysql_conn = request.getfixturevalue("mysql_conn_db_context")
+            return mysql_conn("tpch"), get_sample_graph("TPCH")
+        case "postgres":
+            db_context = request.getfixturevalue("postgres_conn_db_context")
+            return db_context, get_sample_graph("TPCH")
+        case "oracle":
+            db_context = request.getfixturevalue("oracle_conn_db_context")
+            return db_context("tpch"), get_sample_graph("TPCH")
+
+        # TODO: Add bodosql later
+
+    # Default fallback
+    db_context = request.getfixturevalue("sqlite_tpch_db_context")
+    return db_context, get_sample_graph("TPCH")
+
+
 @pytest.fixture(scope="session")
 def defog_graphs() -> graph_fetcher:
     """
@@ -529,6 +696,33 @@ def defog_graphs() -> graph_fetcher:
     def impl(name: str) -> GraphMetadata:
         path: str = f"{os.path.dirname(__file__)}/test_metadata/defog_graphs.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_dialect_defog_graphs(
+    defog_graphs,
+    get_mysql_defog_graphs,
+    get_sf_defog_graphs,
+    get_postgres_defog_graphs,
+) -> Callable[[DatabaseDialect, str], GraphMetadata]:
+    """
+    Returns the graphs for the defog database based on the dialect
+    """
+    # Setup the directory to be the main PyDough directory.
+
+    def impl(dialect: DatabaseDialect, name: str) -> GraphMetadata:
+        match dialect:
+            case DatabaseDialect.MYSQL:
+                return get_mysql_defog_graphs(name)
+            case DatabaseDialect.SNOWFLAKE:
+                return get_sf_defog_graphs(name)
+            case DatabaseDialect.POSTGRES:
+                return get_postgres_defog_graphs(name)
+            case _:
+                # Use the base graph
+                return defog_graphs(name)
 
     return impl
 
@@ -676,7 +870,7 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators"]
+S3_DATASETS = ["synthea", "world_development_indicators", "menu", "donor", "movielens"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
@@ -877,7 +1071,7 @@ def is_snowflake_env_set() -> bool:
     return all(os.getenv(env) for env in SF_ENVS)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     """
     This fixture is used to connect to the Snowflake TPCH database using
@@ -885,6 +1079,7 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     Return a DatabaseContext for the Snowflake TPCH database.
     """
 
+    @cache
     def _impl(database_name: str, schema_name: str) -> DatabaseContext:
         if not is_snowflake_env_set():
             pytest.skip("Skipping Snowflake tests: environment variables not set.")
@@ -903,26 +1098,33 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
             schema=schema_name,
         )
 
-        if not is_ci():
-            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day
-            with connection.cursor() as cur:
-                cur.execute("""
-                    DECLARE last_mod DATE;
+        with connection.cursor() as cur:
+            # Sqlite's datetime functions operate in UTC,
+            # while Snowflake's default timezone is Pacific Time.
+            # Setting the session timezone to match SQLite's behavior
+            # to ensure the date comparison is accurate.
+            cur.execute("ALTER SESSION SET TIMEZONE = 'UTC'")
 
-                BEGIN
-                    -- Get table last modified date
-                    SELECT DATE(LAST_ALTERED) INTO last_mod
-                    FROM INFORMATION_SCHEMA.TABLES
-                    WHERE table_catalog='DEFOG' 
-                        AND table_schema = 'BROKER'
-                        AND table_name = 'SBDAILYPRICE';
+            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day ('UTC').
+            # This runs regardless of CI to handle the case where the scheduled
+            # procedure ran before UTC midnight but tests start after midnight.
+            cur.execute("""
+                DECLARE last_mod DATE;
 
-                    -- If last modified is before today, call the procedure
-                    IF (last_mod < CURRENT_DATE()) THEN
-                        CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
-                    END IF;
-                END;
-                """)
+            BEGIN
+                -- Get table last modified date
+                SELECT DATE(LAST_ALTERED) INTO last_mod
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE table_catalog='DEFOG'
+                    AND table_schema = 'BROKER'
+                    AND table_name = 'SBDAILYPRICE';
+
+                -- If last modified is before today, call the procedure
+                IF (last_mod < CURRENT_DATE()) THEN
+                    CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
+                END IF;
+            END;
+            """)
 
         return load_database_context("snowflake", connection=connection)
 
@@ -1245,6 +1447,10 @@ def postgres_conn_db_context(
         host=postgres_host,
         port=postgres_port,
     )
+    # Enable autocommit to avoid transaction conflicts with DDL operations
+    # like CREATE TEMPORARY TABLE. Without this, psycopg2 starts an implicit
+    # transaction that can hold locks and block DDL.
+    connection.autocommit = True
 
     return load_database_context(
         "postgres",
@@ -1275,6 +1481,162 @@ def postgres_params_tpch_db_context(
         password=postgres_password,
         host=postgres_host,
         port=postgres_port,
+    )
+
+
+ORACLE_ENVS = ["ORACLE_PASSWORD"]
+"""
+    Oracle environment variables required for connection.
+    `ORACLE_PASSWORD`: The password for Oracle.
+"""
+
+
+@pytest.fixture(scope="session")
+def require_oracle_env() -> None:
+    """
+    Check if the Oracle environment variables are set. Allowing empty strings.
+    Returns:
+        bool: True if all required Oracle environment variables are set, False otherwise.
+    """
+    if not all(os.getenv(var) is not None for var in ORACLE_ENVS):
+        pytest.skip("Skipping Oracle tests: environment variables not set.")
+
+
+ORACLE_DOCKER_CONTAINER = "oracle_tpch_test"
+ORACLE_DOCKER_IMAGE = "bodoai1/pydough-oracle-tpch:latest"
+ORACLE_HOST = "127.0.0.1"
+ORACLE_PORT = 1521
+"""
+    CONSTANTS for the Oracle Docker container setup.
+    - ORACLE_DOCKER_CONTAINER: The name of the Docker container.
+    - ORACLE_DOCKER_IMAGE: The Docker image to use for the Oracle container.
+    - ORACLE_HOST: The host address for Oracle.
+    - ORACLE_PORT: The port on which Oracle is exposed.
+"""
+
+
+@pytest.fixture(scope="session")
+def oracle_docker_setup() -> None:
+    """Set up the Oracle Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(ORACLE_DOCKER_CONTAINER):
+                if not container_is_running(ORACLE_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", ORACLE_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        ORACLE_DOCKER_CONTAINER,
+                        "--platform",
+                        "linux/amd64",
+                        "-p",
+                        f"{ORACLE_PORT}:{ORACLE_PORT}",
+                        "-e",
+                        f"ORACLE_PWD={os.getenv('ORACLE_PASSWORD')}",
+                        ORACLE_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Oracle Docker container: {e}")
+
+    # Check import is successful
+    try:
+        import oracledb
+    except ImportError as e:
+        raise RuntimeError("python-oracledb is not installed") from e
+
+    # Wait for Oracle to be ready for 10 minutes max
+    # Check for keywords (last created schema)
+    conn: oracledb.Connection | None = None
+    for _ in range(600):
+        try:
+            if not conn:
+                conn = oracledb.connect(
+                    user="tpch",
+                    password=os.getenv("ORACLE_PASSWORD"),
+                    host=ORACLE_HOST,
+                    port=ORACLE_PORT,
+                    service_name="FREEPDB1",
+                )
+
+            # Checking the last last table of keywords was loaded correctly
+            # before running the test
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM lineitem")
+            row = cur.fetchone()
+            if row and row[0] == 6001215:
+                conn.close()
+                break
+            else:
+                print(f"Waiting {_ + 1}/600 seconds for data to be load...")
+                time.sleep(1)
+
+        except oracledb.Error as e:
+            print("Error occurred while connecting to Oracle:", e)
+            print(f"Waiting {_ + 1}/600 seconds for Oracle to be ready...")
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", ORACLE_DOCKER_CONTAINER])
+        pytest.fail(
+            f"Oracle container did not become ready in time. Waited {_}/600 seconds"
+        )
+
+
+@pytest.fixture(scope="session")
+def oracle_conn_db_context(
+    require_oracle_env, oracle_docker_setup
+) -> Callable[[str], DatabaseContext]:
+    """
+    This fixture is used to connect to the Oracle TPCH/Defog database using
+    a connection object.
+    Returns a DatabaseContext for the Oracle TPCH/Defog database.
+    """
+    import oracledb
+
+    @cache
+    def _impl(oracle_user: str) -> DatabaseContext:
+        oracle_password = os.getenv("ORACLE_PASSWORD")
+
+        connection: oracledb.Connection = oracledb.connect(
+            user=oracle_user,
+            password=oracle_password,
+            host=ORACLE_HOST,
+            port=ORACLE_PORT,
+            service_name="FREEPDB1",
+        )
+        return load_database_context(
+            "oracle",
+            connection=connection,
+        )
+
+    return _impl
+
+
+@pytest.fixture
+def oracle_params_tpch_db_context(
+    require_oracle_env, oracle_docker_setup
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the oracle TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the oracle TPCH database.
+    """
+    oracle_password: str | None = os.getenv("ORACLE_PASSWORD")
+
+    return load_database_context(
+        "oracle",
+        user="tpch",
+        password=oracle_password,
+        host=ORACLE_HOST,
+        port=ORACLE_PORT,
+        service_name="FREEPDB1",
     )
 
 
@@ -1717,7 +2079,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 " e=PERCENTILE(by=(account_balance.ASC(), key.ASC())),"
                 " f=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=12, per='nations'),"
                 " g=PREV(key, by=key.ASC()),"
-                " h=PREV(key, n=2, default=-1, by=key.ASC(), per='nations'),"
+                " h=PREV(key, n=2, default=42, by=key.ASC(), per='nations'),"
                 " i=NEXT(key, by=key.ASC()),"
                 " j=NEXT(key, n=6000, by=key.ASC(), per='nations'),"
                 " k=RELSUM(account_balance, per='nations'),"
@@ -1761,7 +2123,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                         "e": [97, 85, 91, 23, 74, 19, 55, 1, 67, 100],
                         "f": [12, 11, 11, 3, 9, 3, 7, 1, 9, 12],
                         "g": [None, 7, 9, 19, 21, 25, 28, 36, 37, 38],
-                        "h": [-1, -1, -1, -1, -1, 9, -1, 21, -1, -1],
+                        "h": [42, 42, 42, 42, 42, 9, 42, 21, 42, 42],
                         "i": [9, 19, 21, 25, 28, 36, 37, 38, 45, 51],
                         "j": [
                             149394,
@@ -2007,3 +2369,373 @@ def mock_server_setup():
     # Cleanup after tests
     proc.terminate()
     proc.wait()
+
+
+def tpch_custom_test_data_dialect_replacements(
+    dialect: DatabaseDialect, test: PyDoughPandasTest
+) -> PyDoughPandasTest:
+    """
+    Replace specific TPC-H custom test data with dialect-specific versions.
+    """
+    if test.test_name == "string_format_specifiers":
+        match dialect:
+            case DatabaseDialect.MYSQL:
+                return PyDoughPandasTest(
+                    string_format_specifiers_mysql,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["Sat"],
+                            "d2": ["Jul"],
+                            "d3": ["7"],
+                            "d4": ["15th"],
+                            "d5": ["15"],
+                            "d6": ["15"],
+                            "d7": ["000000"],
+                            "d8": ["14"],
+                            "d9": ["02"],
+                            "d10": ["02"],
+                            "d11": ["30"],
+                            "d12": ["196"],
+                            "d13": ["14"],
+                            "d14": ["2"],
+                            "d15": ["30"],
+                            "d16": ["07"],
+                            "d17": ["PM"],
+                            "d18": ["02:30:45 PM"],
+                            "d19": ["45"],
+                            "d20": ["45"],
+                            "d21": ["14:30:45"],
+                            "d22": ["28"],
+                            "d23": ["28"],
+                            "d24": ["28"],
+                            "d25": ["28"],
+                            "d26": ["28"],
+                            "d27": ["6"],
+                            "d28": ["2023"],
+                            "d29": ["2023"],
+                            "d30": ["2023"],
+                            "d31": ["23"],
+                            "d32": ["2023-07-15"],
+                            "d33": ["14:30"],
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+
+            case DatabaseDialect.POSTGRES:
+                return PyDoughPandasTest(
+                    string_format_specifiers_postgres,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            # HOURS / MINUTES / SECONDS
+                            "h1": ["02"],  # HH
+                            "h2": ["02"],  # HH12
+                            "h3": ["14"],  # HH24
+                            "m1": ["30"],  # MI
+                            "s1": ["45"],  # SS
+                            "ms1": ["000"],  # MS
+                            "us1": ["000000"],  # US
+                            "ff1": ["0"],  # FF1
+                            "ff2": ["00"],  # FF2
+                            "ff3": ["000"],  # FF3
+                            "ff4": ["0000"],  # FF4
+                            "ff5": ["00000"],  # FF5
+                            "ff6": ["000000"],  # FF6
+                            "ssss1": ["52245"],  # SSSS
+                            "ssss2": ["52245"],  # SSSSS
+                            # MERIDIEM
+                            "am1": ["PM"],  # AM
+                            "am2": ["pm"],  # am
+                            "am3": ["P.M."],  # A.M.
+                            "am4": ["p.m."],  # a.m.
+                            # YEAR FORMATS
+                            "y1": ["2,023"],  # Y,YYY
+                            "y2": ["2023"],  # YYYY
+                            "y3": ["023"],  # YYY
+                            "y4": ["23"],  # YY
+                            "y5": ["3"],  # Y
+                            "iy1": ["2023"],  # IYYY
+                            "iy2": ["023"],  # IYY
+                            "iy3": ["23"],  # IY
+                            "iy4": ["3"],  # I
+                            # ERA
+                            "era1": ["AD"],  # AD
+                            "era2": ["A.D."],  # A.D.
+                            # MONTH NAMES
+                            "mon1": ["JULY     "],  # MONTH (blank-padded)
+                            "mon2": ["July     "],  # Month
+                            "mon3": ["july     "],  # month
+                            "mon4": ["JUL"],  # MON
+                            "mon5": ["Jul"],  # Mon
+                            "mon6": ["jul"],  # mon
+                            "mon7": ["07"],  # MM
+                            # DAY NAMES
+                            "day1": ["SATURDAY "],  # DAY (blank-padded)
+                            "day2": ["Saturday "],  # Day
+                            "day3": ["saturday "],  # day
+                            "day4": ["SAT"],  # DY
+                            "day5": ["Sat"],  # Dy
+                            "day6": ["sat"],  # dy
+                            # DAY / WEEK / YEAR METRICS
+                            "doy1": ["196"],  # DDD
+                            "doy2": ["195"],  # IDDD
+                            "dom1": ["15"],  # DD
+                            "dow1": ["7"],  # D (Sunday=1)
+                            "dow2": ["6"],  # ID (Monday=1)
+                            "wom1": ["3"],  # W
+                            "woy1": ["28"],  # WW
+                            "woy2": ["28"],  # IW
+                            # OTHER DATE COMPONENTS
+                            "c1": ["21"],  # CC
+                            "j1": ["2460141"],  # J (Julian day number)
+                            "q1": ["3"],  # Q
+                            "rm1": ["VII "],  # RM
+                            "rm2": ["vii "],  # rm
+                            # TIME ZONE (timestamp without time zone → empty)
+                            "tz1": [""],  # TZ
+                            "tz2": [""],  # tz
+                            "tz3": ["+00"],  # TZH
+                            "tz4": ["00"],  # TZM
+                            "tz5": ["+00"],  # OF
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+
+            case DatabaseDialect.SNOWFLAKE:
+                return PyDoughPandasTest(
+                    string_format_specifiers_snowflake,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # Mon
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # DD
+                            "d7": ["Sat"],  # DY
+                            "d8": ["Saturday"],  # DYDY
+                            "d9": ["14"],  # HH24
+                            "d10": ["02"],  # HH12
+                            "d11": ["30"],  # MI
+                            "d12": ["45"],  # SS
+                            "d13": ["PM"],  # AM / PM
+                            "d14": [".000000000"],  # .FF
+                            "d15": ["Z"],  # TZH:TZM (NTZ → empty)
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.ORACLE:
+                return PyDoughPandasTest(
+                    string_format_specifiers_oracle,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            # ===== YEAR =====
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["23"],  # RR  (2023 → 23)
+                            # ===== MONTH =====
+                            "d4": ["07"],  # MM
+                            "d5": ["JUL"],  # MON
+                            "d6": ["JULY     "],  # MONTH (space-padded)
+                            "d7": ["3"],  # Q (July → Q3)
+                            # ===== DAY =====
+                            "d8": ["15"],  # DD
+                            "d9": ["196"],  # DDD (day of year)
+                            "d10": ["7"],  # D (Saturday, NLS_TERRITORY dependent)
+                            "d11": ["SAT"],  # DY
+                            "d12": ["SATURDAY "],  # DAY (space-padded)
+                            # ===== WEEK =====
+                            "d13": ["3"],  # W  (week of month)
+                            "d14": ["28"],  # WW (week of year)
+                            "d15": ["28"],  # IW (ISO week)
+                            # ===== TIME =====
+                            "d16": ["14"],  # HH24
+                            "d17": ["02"],  # HH12
+                            "d18": ["30"],  # MI
+                            "d19": ["45"],  # SS
+                            "d20": ["P.M."],  # AM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.BODOSQL:
+                return PyDoughPandasTest(
+                    string_format_specifiers_bodosql,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # YYYY
+                            "d2": ["23"],  # YY
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # Mon
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # DD
+                            "d7": ["Sat"],  # DY
+                            "d9": ["14"],  # HH24
+                            "d10": ["02"],  # HH12
+                            "d11": ["30"],  # MI
+                            "d12": ["45"],  # SS
+                            "d13": ["PM"],  # AM / PM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case _:
+                pytest.skip("Skipping test: Unsupported dialect for test replacement")
+
+    if test.test_name == "simple_int_float_string_cast":
+        if dialect == DatabaseDialect.ORACLE:
+            # Oracle needs different answer
+            return PyDoughPandasTest(
+                simple_int_float_string_cast,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "i1": [1],
+                        "i2": [2],
+                        "i3": [3],
+                        "i4": [4],
+                        "i5": [-5],
+                        "i6": [-6],
+                        "f1": [1.0],
+                        "f2": [2.2],
+                        "f3": [3.0],
+                        "f4": [4.3],
+                        "f5": [-5.888],
+                        "f6": [-6.0],
+                        "f7": [0.0],
+                        "s1": ["1"],
+                        "s2": ["2.2"],
+                        "s3": ["3"],
+                        "s4": ["4.3"],
+                        "s5": ["-5.888"],
+                        "s6": ["-6.1"],
+                        "s7": [".1"],
+                        "s8": ["0.0"],
+                        "s9": ["abc def"],
+                    }
+                ),
+                "simple_int_float_string_cast",
+            )
+
+    if (
+        test.test_name == "simple_dataframe_collection_3"
+        and dialect == DatabaseDialect.ORACLE
+    ):
+        return PyDoughPandasTest(
+            simple_dataframe_collection_3_oracle,
+            "TPCH",
+            lambda: pd.DataFrame(
+                {
+                    "user_id": [1, 2, 3, 4],
+                    '"`name\'["': ["Alice", "Bob", "Charlie", "David"],
+                    '"space country"': ["US", "CR", "US", "MX"],
+                    '"CAST"': [25, 30, 22, 30],
+                }
+            ),
+            "simple_dataframe_collection_3",
+        )
+    return test
+
+
+@pytest.fixture(scope="session")
+def mock_server_info(mock_server_setup: str) -> MaskServerInfo:
+    """
+    Returns the MaskServerInfo for the mock server.
+    """
+    return MaskServerInfo(base_url=mock_server_setup, token=None)
+
+
+@pytest.fixture(scope="session")
+def true_mask_server_info() -> MaskServerInfo:
+    """
+    Returns the MaskServerInfo for the true Mask server.
+    """
+    if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
+        pytest.skip("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
+
+    # Send a health request to ensure the server is reachable and functioning.
+    # If not, then halt testing early.
+    response: httpx.Response = httpx.get(
+        os.environ["PYDOUGH_MASK_SERVER_PATH"] + "/health", timeout=1
+    )
+    json: dict = response.json()
+    if (
+        response.status_code != 200
+        or json.get("status", None) != "ok"
+        or json.get("column_store", {}).get("status", "down") != "up"
+    ):
+        pytest.fail(f"Mask server is not reachable (health check failed: {json})")
+
+    return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)
+
+
+def reset_logger(name: str):
+    """
+    Resets a logger to a clean default state.
+
+    This function clears all handlers and filters from the specified logger,
+    resets its level to `logging.NOTSET`, re-enables propagation, and ensures
+    the logger is not disabled. It is primarily intended for use in tests to
+    avoid cross-test contamination of logging state.
+
+    Args:
+        `name` : The name of the logger to reset.
+
+    Returns:
+        `None`
+    """
+    logger = logging.getLogger(name)
+    logger.handlers.clear()
+    logger.filters.clear()
+    logger.setLevel(logging.NOTSET)
+    logger.propagate = True
+    logger.disabled = False
+
+
+@pytest.fixture(scope="function")
+def clean_pydough_logger():
+    """
+    Pytest fixture that resets PyDough loggers before and after each test.
+
+    This fixture ensures that the `pydough` and `pydough.mask_server` loggers
+    start each test in a clean state, with no handlers, default levels, and
+    propagation enabled. It prevents logging configuration from leaking
+    between tests and causing order-dependent failures.
+
+    Yields:
+        `None`
+    """
+    # Before test
+    reset_logger("pydough")
+    reset_logger("pydough.mask_server")
+
+    yield
+
+    # After test (cleanup)
+    reset_logger("pydough")
+    reset_logger("pydough.mask_server")
+
+
+@pytest.fixture(scope="session")
+def get_custom_datasets_graph_list() -> Callable[[str], Any]:
+    """
+    Returns the json object for the given metadata file name.
+    """
+
+    @cache
+    def impl(file_name: str) -> Callable[[str], Any]:
+        file_path: str = os.path.join(
+            os.path.dirname(__file__), "test_metadata", file_name
+        )
+        with open(file_path) as f:
+            as_json: Any = json.load(f)
+        return as_json
+
+    return impl

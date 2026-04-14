@@ -237,7 +237,7 @@ def aggregation_uniqueness_helper(
     match node:
         # Scans are unchanged, and their uniqueness is based on the unique sets
         # of the underlying table.
-        case Scan():
+        case Scan() | GeneratedTable():
             return node, bubble_uniqueness(node.unique_sets, node.columns, None)
         # For filters, projections, limits and roots, the node is unchanged,
         # and the uniqueness should be propagated upward through the selected
@@ -277,7 +277,7 @@ def aggregation_uniqueness_helper(
             )
             return node, final_uniqueness
         # Empty singletons don't have uniqueness information.
-        case EmptySingleton() | GeneratedTable():
+        case EmptySingleton():
             return node, set()
         case _:
             raise NotImplementedError(

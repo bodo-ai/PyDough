@@ -3,6 +3,7 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+import sys
 from types import NoneType
 
 from dateutil import parser  # type: ignore[import-untyped]
@@ -23,13 +24,18 @@ __all__ = [
     "TableCollectionInfo",
     "TopKInfo",
     "WhereInfo",
+    "extract_batch_requests_from_logs",
     "graph_fetcher",
     "map_over_dict_values",
+    "temp_env_override",
 ]
 
 import datetime
+import os
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
@@ -39,12 +45,13 @@ import pytest
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough import init_pydough_context, to_df, to_sql
+from pydough import init_pydough_context, to_df, to_sql, to_table
 from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.errors import PyDoughTestingException
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
@@ -74,6 +81,39 @@ from pydough.unqualified import (
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
 graph_fetcher = Callable[[str], GraphMetadata]
+
+
+@contextmanager
+def temp_env_override(env_vars: dict[str, str | None]):
+    """Update the current environment variables with key-value pairs provided
+    in a dictionary and then restore it after.
+
+    Args
+        env_vars (dict(str, str or None)): A dictionary of environment variables to set.
+            A value of None indicates a variable should be removed.
+    """
+
+    def update_env_vars(env_vars):
+        old_env_vars: dict[str, str | None] = {}
+        for k, v in env_vars.items():
+            if k in os.environ:
+                old_env_vars[k] = os.environ[k]
+            else:
+                old_env_vars[k] = None
+
+            if v is None:
+                if k in os.environ:
+                    del os.environ[k]
+            else:
+                os.environ[k] = v
+        return old_env_vars
+
+    old_env = {}
+    try:
+        old_env = update_env_vars(env_vars)
+        yield
+    finally:
+        update_env_vars(old_env)
 
 
 def map_over_dict_values(
@@ -907,10 +947,77 @@ def make_relational_ordering(
     return ExpressionSortInfo(expr, ascending, nulls_first)
 
 
+def apply_table_name_prefix(pydough_code: str, prefix: str) -> str:
+    """
+    Apply a table name prefix to all to_table calls in a PyDough code string.
+    This is used for cross-database writes (e.g., Snowflake writing to DEFOG
+    database).
+
+    For each ``pydough.to_table(...)`` call found, this inserts a
+    ``write_path=`` keyword argument containing the fully-qualified SQL path
+    (``prefix + name``). The ``name=`` argument is left unchanged so that
+    PyDough can still resolve ``per='name'`` references using the short name.
+
+    Args:
+        pydough_code: The PyDough code string containing to_table calls.
+        prefix: The prefix to prepend to table names (e.g.,
+            ``"E2E_TESTS_DB.PUBLIC."``).
+
+    Returns:
+        The modified PyDough code string with ``write_path=`` injected into
+        each ``pydough.to_table(...)`` call.
+    """
+    import re
+
+    # Each entry: (name_end, quote, name) where name_end is one past the
+    # closing quote of the name= value and quote is the quote character used.
+    name_spans: list[tuple[int, str, str]] = []
+
+    for call_m in re.finditer(r"pydough\.to_table\s*\(", pydough_code):
+        pos = call_m.end()
+        depth = 1
+        in_str: str | None = None
+        while pos < len(pydough_code) and depth > 0:
+            ch = pydough_code[pos]
+            if in_str:
+                if ch == in_str:
+                    in_str = None
+            elif ch in ("'", '"'):
+                in_str = ch
+            elif ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            # At depth 1 (top-level args), check for name=<quote>...<quote>
+            elif depth == 1 and pydough_code[pos : pos + 5] == "name=":
+                j = pos + 5
+                if j < len(pydough_code) and pydough_code[j] in ("'", '"'):
+                    q = pydough_code[j]
+                    k = pydough_code.find(q, j + 1)
+                    if k != -1:
+                        table_name = pydough_code[j + 1 : k]
+                        name_spans.append((k + 1, q, table_name))
+                        pos = k + 1
+                        continue
+            pos += 1
+
+    # Insert write_path= after each name=... in reverse order to preserve
+    # indices.
+    result = pydough_code
+    for name_end, quote, table_name in reversed(name_spans):
+        insert = f", write_path={quote}{prefix}{table_name}{quote}"
+        result = result[:name_end] + insert + result[name_end:]
+
+    return result
+
+
 def transform_and_exec_pydough(
     pydough_impl: Callable[..., UnqualifiedNode] | str,
     graph: GraphMetadata,
     kwargs: dict | None,
+    session: PyDoughSession | None = None,
 ) -> UnqualifiedNode:
     """
     Obtains the unqualified node from a PyDough function by invoking the
@@ -923,6 +1030,9 @@ def transform_and_exec_pydough(
         `graph`: The metadata being used.
         `kwargs`: The keyword arguments to pass to the PyDough function, if
         any.
+        `session`: An optional PyDoughSession to use during string execution.
+        This allows functions like `pydough.to_table` to access database
+        connections when called within string code.
 
     Returns:
         The unqualified node created by running the transformed version of
@@ -930,10 +1040,17 @@ def transform_and_exec_pydough(
     """
     kwargs = kwargs if kwargs is not None else {}
     if isinstance(pydough_impl, str):
+        if session is None:
+            session = kwargs.get("session", None)
         # If the pydough_impl is a string, parse it with pydough.from_string.
+        # Pass either session or metadata, not both (session carries its own metadata).
+        if session is not None:
+            return pydough.from_string(
+                pydough_impl, environment=kwargs, session=session
+            )
         return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
     else:
-        # OTherwise, transform the function with the decorator and call it.
+        # Otherwise, transform the function with the decorator and call it.
         return init_pydough_context(graph)(pydough_impl)(**kwargs)
 
 
@@ -984,6 +1101,16 @@ class PyDoughSQLComparisonTest:
     same column names as in the reference solution.
     """
 
+    fixed_today: pd.Timestamp | None = None
+    """
+    If set, ``pd.Timestamp.today`` is patched to return this value during
+    SQL generation in ``test_defog_until_sql``. Use this for queries that
+    call ``pd.Timestamp.today()`` internally (e.g. to build a date-range
+    dataframe), so the generated SQL stays deterministic and the reference
+    ``.sql`` files never go stale. The execution test (``test_defog_e2e``)
+    is unaffected; it uses SQL-native ``DATE('now', ...)`` expressions.
+    """
+
     def run_e2e_test(
         self,
         fetcher: graph_fetcher,
@@ -1011,8 +1138,15 @@ class PyDoughSQLComparisonTest:
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+        # Create a session with the database so that functions like pydough.to_table
+        # can access it when called within string code
+        session = PyDoughSession()
+        session.metadata = graph
+        session.database = database
+        if config is not None:
+            session.config = config
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, None
+            self.pydough_function, graph, None, session=session
         )
 
         # Obtain the DataFrame result from the PyDough code
@@ -1021,15 +1155,15 @@ class PyDoughSQLComparisonTest:
             call_kwargs["config"] = config
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
-        result: pd.DataFrame = to_df(root, **call_kwargs)
+        result: pd.DataFrame = to_df(root, **call_kwargs, display_sql=True)
 
         # Obtain the reference solution by executing the refsol SQL query
         sql_text: str = self.sql_function()
         refsol: pd.DataFrame
         if reference_database is not None:
-            refsol = reference_database.connection.execute_query_df(sql_text)
+            refsol = reference_database.execute_query_df(sql_text)
         else:
-            refsol = database.connection.execute_query_df(sql_text)
+            refsol = database.execute_query_df(sql_text)
 
         # If the query does not care about column names, update the answer to use
         # the column names in the refsol.
@@ -1038,7 +1172,7 @@ class PyDoughSQLComparisonTest:
             result.columns = refsol.columns
 
         # If the query is not order-sensitive, sort the DataFrames before comparison
-        if not self.order_sensitive:
+        if not self.order_sensitive and len(result) > 1 and len(refsol) > 1:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
@@ -1050,7 +1184,9 @@ class PyDoughSQLComparisonTest:
                 )
 
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol, rtol=rtol, atol=atol)
+        pd.testing.assert_frame_equal(
+            result, refsol, rtol=rtol, atol=atol, check_dtype=not coerce_types
+        )
 
 
 @dataclass
@@ -1073,7 +1209,11 @@ class PyDoughPandasTest:
     - `fix_column_names` (optional): if True, ignore whatever column names are
       in the output and just use the same column names as in the reference
       solution.
-    - `args` (optional): additional arguments to pass to the PyDough function.
+    - `kwargs` (optional): additional keyword arguments to pass to the PyDough
+      function, or to use as the environment when evaluating the PyDough code if
+      it is provided as a string.
+    - `extra_test_data` (optional): a dictionary of any additional data that
+      should be used by the test to handle additional checks or logic.
     - `skip_relational`: (optional): if True, does not run the test as part of
        relational plan testing. Default is False.
     - `skip_sql`: (optional): if True, does not run the test as part of SQL
@@ -1127,6 +1267,14 @@ class PyDoughPandasTest:
     executing it. If None, no additional keyword arguments are passed.
     """
 
+    extra_test_data: dict | None = None
+    """
+    A dictionary of any additional data that should be used by the test to
+    handle additional checks or logic. For example, this could be used to store
+    expected logging messages for tests that will verify the logging messages
+    match certain values.
+    """
+
     skip_relational: bool = False
     """
     If True, does not run the test as part of relational plan testing.
@@ -1148,6 +1296,7 @@ class PyDoughPandasTest:
         file_path: str,
         update: bool,
         config: PyDoughConfigs | None = None,
+        mask_server: MaskServerInfo | None = None,
     ) -> None:
         """
         Runs a test on the relational plan code generated by the PyDough code,
@@ -1162,6 +1311,7 @@ class PyDoughPandasTest:
             plan text, otherwise compares the generated relational plan text
             against the expected relational plan text in the file.
             `config`: The PyDough configuration to use for the test, if any.
+            `mask_server`: The mask server to use for the test, if any.
         """
         # Skip if indicated.
         if self.skip_relational:
@@ -1178,6 +1328,7 @@ class PyDoughPandasTest:
         session: PyDoughSession = PyDoughSession()
         session.metadata = graph
         session.config = config if config is not None else pydough.active_session.config
+        session.mask_server = mask_server
         qualified: PyDoughQDAG = qualify_node(root, session)
         assert isinstance(qualified, PyDoughCollectionQDAG), (
             "Expected qualified answer to be a collection, not an expression"
@@ -1205,7 +1356,9 @@ class PyDoughPandasTest:
         update: bool,
         database: DatabaseContext,
         config: PyDoughConfigs | None = None,
+        mask_server: MaskServerInfo | None = None,
         max_rows: int | None = None,
+        table_name_prefix: str = "",
     ) -> None:
         """
         Runs a test on the SQL code generated by the PyDough code,
@@ -1222,7 +1375,10 @@ class PyDoughPandasTest:
             `database`: The database context to determine what dialect of SQL
             to use when generating the SQL test.
             `config`: The PyDough configuration to use for the test, if any.
+            `mask_server`: The mask server to use for the test, if any.
             `max_rows`: The maximum number of rows to return from the query.
+            `table_name_prefix`: Prefix to prepend to table names in to_table calls.
+                Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
         # Skip if indicated.
         if self.skip_sql:
@@ -1230,8 +1386,31 @@ class PyDoughPandasTest:
 
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+
+        # Apply table name prefix if provided (for cross-database writes like Snowflake)
+        pydough_func = self.pydough_function
+        if table_name_prefix and isinstance(pydough_func, str):
+            pydough_func = apply_table_name_prefix(pydough_func, table_name_prefix)
+
+        if "to_table" in file_path:
+            # For to_table tests, we need to create a session and execute the
+            # PyDough code to get the resulting table name, since the SQL text
+            # generation needs to know the table name to generate the correct SQL.
+            session = PyDoughSession()
+            session.metadata = graph
+            session.database = database
+            if config is not None:
+                session.config = config
+            if mask_server is not None:
+                session.mask_server = mask_server
+            # Build kwargs with session without mutating self.kwargs (which is
+            # shared across test runs via the fixture parameter object).
+            exec_kwargs = {**(self.kwargs or {}), "session": session}
+        else:
+            exec_kwargs = self.kwargs or {}
+
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, self.kwargs
+            pydough_func, graph, exec_kwargs
         )
 
         # Convert the PyDough code to SQL text
@@ -1244,6 +1423,8 @@ class PyDoughPandasTest:
             call_kwargs["config"] = config
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
+        if mask_server is not None:
+            call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
 
         # Either update the reference solution, or compare the generated sql
@@ -1265,7 +1446,9 @@ class PyDoughPandasTest:
         config: PyDoughConfigs | None = None,
         display_sql: bool = False,
         coerce_types: bool = False,
+        mask_server: MaskServerInfo | None = None,
         max_rows: int | None = None,
+        table_name_prefix: str = "",
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -1281,11 +1464,28 @@ class PyDoughPandasTest:
             `coerce_types`: If True, coerces the types of the result and reference
             solution DataFrames to ensure compatibility.
             `max_rows`: The maximum number of rows to return from the query.
+            `table_name_prefix`: Prefix to prepend to table names in to_table calls.
+                Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
+
+        # Apply table name prefix if provided (for cross-database writes like Snowflake)
+        pydough_func = self.pydough_function
+        if table_name_prefix and isinstance(pydough_func, str):
+            pydough_func = apply_table_name_prefix(pydough_func, table_name_prefix)
+
+        # Create a session with the database so that functions like pydough.to_table
+        # can access it when called within string code
+        session = PyDoughSession()
+        session.metadata = graph
+        session.database = database
+        if config is not None:
+            session.config = config
+        if mask_server is not None:
+            session.mask_server = mask_server
         root: UnqualifiedNode = transform_and_exec_pydough(
-            self.pydough_function, graph, self.kwargs
+            pydough_func, graph, self.kwargs, session=session
         )
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {
@@ -1298,6 +1498,8 @@ class PyDoughPandasTest:
             call_kwargs["config"] = config
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
+        if mask_server is not None:
+            call_kwargs["mask_server"] = mask_server
         result: pd.DataFrame = to_df(root, **call_kwargs)
         # Extract the reference solution from the function
         refsol: pd.DataFrame = self.pd_function()
@@ -1321,8 +1523,9 @@ class PyDoughPandasTest:
                     "1992-10-19",
                 ]
 
-        # If the query is not order-sensitive, sort the DataFrames before comparison
-        if not self.order_sensitive:
+        # If the query is not order-sensitive, sort the DataFrames before
+        # comparison.
+        if not self.order_sensitive and len(result) > 1 and len(refsol) > 1:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
@@ -1331,10 +1534,114 @@ class PyDoughPandasTest:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
+
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )
+
+    def run_e2e_test_to_table(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        as_view: bool = False,
+        replace: bool = False,
+        temp: bool = False,
+        config: PyDoughConfigs | None = None,
+        table_name_prefix: str = "",
+    ) -> None:
+        """
+        Runs an end-to-end test using `to_table` to ensure DDL is generated correctly,
+        comparing the result of the PyDough code against the reference solution.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `database`: The database context to use for executing SQL.
+            `config`: The PyDough configuration to use for the test, if any.
+            `table_name_prefix`: Prefix to prepend to table names.
+                Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
+        # Include view, replace, temp options and Python version as part
+        # of the table name to ensure uniqueness and avoid conflicts when
+        # running tests in parallel (problem more likely to arise in CI)
+        py_ver = f"py{sys.version_info.major}{sys.version_info.minor}"
+        v = 1 if as_view else 0
+        r = 1 if replace else 0
+        t = 1 if temp else 0
+        base_table_name = f"{self.test_name}_V{v}_R{r}_T{t}_{py_ver}"
+        # Apply prefix for cross-database writes (e.g., Snowflake writing to DEFOG)
+        table_name = f"{table_name_prefix}{base_table_name}"
+        # Drop the created table/view from transform_and_exec_pydough
+        # to be able to check to_table DDL generation logging.
+        table_or_view = "VIEW" if as_view else "TABLE"
+        cleanup_statement = f"DROP {table_or_view} IF EXISTS {table_name}"
+        database.connection.execute_ddl(cleanup_statement)
+
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        collection = to_table(
+            root,
+            name=table_name,
+            as_view=as_view,
+            replace=replace,
+            temp=temp,
+            display_sql=True,
+            **call_kwargs,
+        )
+        # to_table returns an UnqualifiedGeneratedCollection wrapping a ViewGeneratedCollection
+        from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+
+        assert isinstance(collection, UnqualifiedGeneratedCollection), (
+            "to_table did not return an UnqualifiedGeneratedCollection as expected"
+        )
+        # Access the inner PyDoughUserGeneratedCollection to get columns
+        inner_collection = collection.user_collection
+        verify_table_created_correctly(database, table_name, inner_collection.columns)
+
+
+def verify_table_created_correctly(
+    database: DatabaseContext,
+    table_name: str,
+    expected_columns: list[str] | None = None,
+) -> None:
+    """
+    Verifies that a table was created correctly in the database by comparing the actual schema of the table against the expected schema.
+
+    Args:
+        `database`: The database context to use for executing SQL.
+        `table_name`: The name of the table to verify.
+        `expected_schema`: A dictionary mapping column names to expected data types.
+    """
+    # Query the database for the schema of the created table
+    actual_table_columns = database.connection.get_table_columns(table_name)
+    # Compare the actual columns against the expected columns
+    # For Snowflake and Oracle, column names are returned as uppercase,
+    # so compare case-insensitively
+    if database.dialect in {DatabaseDialect.SNOWFLAKE, DatabaseDialect.ORACLE}:
+        actual_lower = [c.lower() for c in actual_table_columns]
+        expected_lower = (
+            [c.lower() for c in expected_columns] if expected_columns else None
+        )
+        assert actual_lower == expected_lower, (
+            f"Columns of table {table_name} do not match expected columns. Actual: {actual_table_columns}, Expected: {expected_columns}"
+        )
+    else:
+        assert actual_table_columns == expected_columns, (
+            f"Columns of table {table_name} do not match expected columns. Actual: {actual_table_columns}, Expected: {expected_columns}"
+        )
+    # Anything else to verify about the created table can be added here,
+    # such as checking if it's a view or a temp table, etc.?
+    # I didn't add datatype verification because that needs changes to the way
+    # DDL is generated in PyDough to ensure we have the expected data types
+    # available in the test, which is a larger change that I wanted to avoid
+    # for now. Plus will vary across dialects.
 
 
 def harmonize_types(column_a, column_b):
@@ -1358,6 +1665,19 @@ def harmonize_types(column_a, column_b):
     Returns:
         A tuple of the two harmonized columns.
     """
+    # String Sanitization: Convert "\x00" to "" and handle None/NaN for strings
+    # Address issues where CHR(0) vs '' caused a mismatch.
+    if pd.api.types.is_object_dtype(column_a) or pd.api.types.is_object_dtype(column_b):
+
+        def sanitize_string(val):
+            if isinstance(val, str):
+                return val.replace("\x00", "")
+            return val
+
+        # Apply sanitization to both columns if they are object/string types
+        column_a = column_a.map(sanitize_string)
+        column_b = column_b.map(sanitize_string)
+
     # Different integer types
     if pd.api.types.is_integer_dtype(column_a) and pd.api.types.is_integer_dtype(
         column_b
@@ -1405,18 +1725,21 @@ def harmonize_types(column_a, column_b):
             lambda x: pd.NA if pd.isna(x) else float(x)
         )
 
+    # String vs None. Convert to empty string.
     if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
         isinstance(elem, (str, NoneType)) for elem in column_b
     ):
         return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
             lambda x: "" if pd.isna(x) else str(x)
         )
+
     # float vs None. Convert to nullable floats
     if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
         isinstance(elem, (float, NoneType)) for elem in column_b
     ):
         return column_a.astype("Float64"), column_b.astype("Float64")
 
+    # Decimal vs int. Convert Decimal to int, coercing NaNs to pd.NA.
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, int) for elem in column_b
     ):
@@ -1425,6 +1748,8 @@ def harmonize_types(column_a, column_b):
         isinstance(elem, Decimal) for elem in column_b
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else int(x))
+
+    # Decimal vs float. Convert Decimal to float, coercing NaNs to pd.NA.
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, float) for elem in column_b
     ):
@@ -1433,6 +1758,7 @@ def harmonize_types(column_a, column_b):
         isinstance(elem, Decimal) for elem in column_b
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
+    # String vs datetime. Convert string to datetime, coercing NaNs to pd.NA.
     if any(isinstance(elem, pd.Timestamp) for elem in column_a) and any(
         isinstance(elem, str) for elem in column_b
     ):
@@ -1440,23 +1766,43 @@ def harmonize_types(column_a, column_b):
             lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
         )
     if any(isinstance(elem, str) for elem in column_a) and any(
-        isinstance(elem, datetime.date) for elem in column_b
+        isinstance(elem, pd.Timestamp) for elem in column_b
     ):
         return column_a.apply(
             lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
         ), column_b
+
+    # String vs date. Convert string to date, coercing NaNs to pd.NA.
     if any(isinstance(elem, datetime.date) for elem in column_a) and any(
         isinstance(elem, str) for elem in column_b
     ):
-        return column_a, column_b.apply(
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x).apply(
             lambda x: parser.parse(x).date() if isinstance(x, str) else x
         )
     if any(isinstance(elem, str) for elem in column_a) and any(
         isinstance(elem, datetime.date) for elem in column_b
     ):
-        return column_a.apply(
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else x).apply(
             lambda x: parser.parse(x).date() if isinstance(x, str) else x
         ), column_b
+
+    # Timestamp vs date. Oracle returns DATE columns as datetime64[ns] (Timestamp).
+    # Convert Timestamps to date objects for comparison.
+    # Guard with explicit dtype checks: pd.Timestamp is a subclass of datetime.date,
+    # so we must ensure exactly one side is datetime64 to avoid false matches.
+    if (
+        pd.api.types.is_datetime64_any_dtype(column_a)
+        and not pd.api.types.is_datetime64_any_dtype(column_b)
+        and any(isinstance(elem, datetime.date) for elem in column_b)
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else x.date()), column_b
+    if (
+        not pd.api.types.is_datetime64_any_dtype(column_a)
+        and pd.api.types.is_datetime64_any_dtype(column_b)
+        and any(isinstance(elem, datetime.date) for elem in column_a)
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
+
     return column_a, column_b
 
 
@@ -1494,3 +1840,66 @@ def run_e2e_error_test(
         if columns is not None:
             call_kwargs["columns"] = columns
         to_df(root, **call_kwargs)
+
+
+def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
+    """
+    Extracts the batch requests made to a mask server from the provided log
+    string. Each batch request will have a corresponding sequence of log lines
+    in the following format (the phrase "Batch request" sometimes followed by
+    the text "(dry run)" if the mask server is in dry run mode):
+
+    ```
+    INFO     pydough.mask_server.mask_server:mask_server.py:149 Batch request to Mask Server (2 items):
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (1) CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (2) CRBNK/CUSTOMERS/c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]
+    ```
+
+    A log message string with those lines would return the following list of
+    sets (if doing a dry run, then "DRY_RUN" is also included in the set):
+
+    ```
+    [
+        {
+            "CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']",
+            "CRBNK/CUSTOMERS/c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]",
+        }
+    ]
+    ```
+
+    Args:
+        `log_str`: The log string to extract batch requests from.
+
+    Returns:
+        A list of sets, each set indicating one of the batch requests made to
+        the mask server during the conversion process and logged in the logger
+        that was dumped into the log string. The format for each set entry is
+        `db_name.table_name.column_name: [expression_list]`.
+    """
+    header_pattern: re.Pattern = re.compile(
+        r"Batch request( \(dry run\))? to Mask Server \((\d+) items?\):"
+    )
+    entry_pattern: re.Pattern = re.compile(r"\(\d+\) (.+)")
+    result: list[set[str]] = []
+    current_set: set[str] = set()
+    lines_remaining: int = 0
+    for line in log_str.splitlines():
+        header_match = re.findall(header_pattern, line)
+        if header_match:
+            assert lines_remaining == 0, (
+                "Malformed log: new batch request started before previous one ended."
+            )
+            current_set = set()
+            if bool(header_match[0][0]):
+                current_set.add("DRY_RUN")
+            lines_remaining = int(header_match[0][1])
+            result.append(current_set)
+        elif lines_remaining > 0:
+            entry_match = re.findall(entry_pattern, line)
+            assert entry_match, "Malformed log: expected batch request entry line."
+            current_set.add(entry_match[0])
+            lines_remaining -= 1
+    assert lines_remaining == 0, (
+        "Malformed log: batch request did not have expected number of entries."
+    )
+    return result

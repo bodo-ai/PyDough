@@ -11,7 +11,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughSession
+from pydough.configs import DivisionByZeroBehavior, PyDoughSession
+from pydough.database_connectors.database_connector import DatabaseDialect
+from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
+from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
@@ -45,7 +48,10 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
+    RelationalExpressionDispatcher,
     RelationalExpressionShuttle,
+    RelationalExpressionShuttleDispatcher,
+    RelationalExpressionVisitor,
     RelationalNode,
     RelationalRoot,
     Scan,
@@ -125,12 +131,14 @@ class TranslationOutput:
 
 
 class RelTranslation:
-    def __init__(self):
+    def __init__(self, session: PyDoughSession):
         # An index used for creating fake column names
         self.dummy_idx = 1
         # A stack of contexts used to point to ancestors for correlated
         # references.
         self.stack: list[TranslationOutput] = []
+        # The session object for configuration access
+        self.session: PyDoughSession = session
 
     def make_null_column(self, relation: RelationalNode) -> ColumnReference:
         """
@@ -197,6 +205,140 @@ class RelTranslation:
             self.dummy_idx += 1
         return context.correlated_name
 
+    def _is_zero_check_condition(
+        self, condition: RelationalExpression, value: RelationalExpression
+    ) -> bool:
+        """
+        Check if condition is 'value != 0' with a literal zero.
+
+        Args:
+            `condition`: The condition expression to check.
+            `value`: The value that should be compared against zero.
+
+        Returns:
+            True if condition is 'value != 0' with literal 0, False otherwise.
+        """
+        if not isinstance(condition, CallExpression):
+            return False
+        if condition.op != pydop.NEQ:
+            return False
+        lhs, rhs = condition.inputs
+        # Check if one side is value and other is literal 0
+        is_lhs_zero = isinstance(lhs, LiteralExpression) and lhs.value == 0
+        is_rhs_zero = isinstance(rhs, LiteralExpression) and rhs.value == 0
+        return (lhs == value and is_rhs_zero) or (rhs == value and is_lhs_zero)
+
+    def _has_zero_guard(self, expr: RelationalExpression) -> bool:
+        """
+        Checks if an expression has a zero-guard wrapper (KEEP_IF or IFF with
+        condition 'value != 0' and literal 0).
+
+        Args:
+            `expr`: The expression to check.
+
+        Returns:
+            True if the expression has a zero-guard wrapper, False otherwise.
+        """
+        if not isinstance(expr, CallExpression):
+            return False
+        if expr.op == pydop.KEEP_IF:
+            # KEEP_IF(value, condition) - check if condition is 'value != 0'
+            value = expr.inputs[0]
+            condition = expr.inputs[1]
+            return self._is_zero_check_condition(condition, value)
+        elif expr.op == pydop.IFF:
+            # IFF(condition, then_value, else_value)
+            # Only matches pattern IFF(x != 0, x, 0)
+            condition = expr.inputs[0]
+            then_value = expr.inputs[1]
+            else_value = expr.inputs[2]
+            is_else_zero = (
+                isinstance(else_value, LiteralExpression) and else_value.value == 0
+            )
+            return is_else_zero and self._is_zero_check_condition(condition, then_value)
+        return False
+
+    def _apply_division_by_zero_handling(
+        self,
+        dividend: RelationalExpression,
+        divisor: RelationalExpression,
+        typ: PyDoughType,
+    ) -> RelationalExpression:
+        """
+        Applies division-by-zero handling based on the session configuration.
+
+        Args:
+            `dividend`: The dividend (numerator) expression.
+            `divisor`: The divisor (denominator) expression.
+            `typ`: The result type of the division.
+
+        Returns:
+            A RelationalExpression representing the division with appropriate
+            zero-handling based on the config.
+        """
+        # Check if divisor already has a zero guard
+        if self._has_zero_guard(divisor):
+            # Already has a zero guard, just return normal division
+            return CallExpression(pydop.DIV, typ, [dividend, divisor])
+
+        match self.session.config.division_by_zero:
+            case DivisionByZeroBehavior.DATABASE:
+                # Database will decide how to handle division by zero
+                return CallExpression(pydop.DIV, typ, [dividend, divisor])
+
+            case DivisionByZeroBehavior.NULL:
+                # If b == 0, return NULL
+                # Wrap divisor with KEEP_IF(b, b != 0)
+                is_not_zero_expr = CallExpression(
+                    pydop.NEQ,
+                    BooleanType(),
+                    [divisor, LiteralExpression(0, divisor.data_type)],
+                )
+                guarded_divisor = CallExpression(
+                    pydop.KEEP_IF,
+                    divisor.data_type,
+                    [divisor, is_not_zero_expr],
+                )
+                return CallExpression(pydop.DIV, typ, [dividend, guarded_divisor])
+
+            case DivisionByZeroBehavior.ZERO:
+                # If b == 0, return 0
+                # Replace with IFF(b == 0, 0, a / b)
+                # The IFF guards against zero, so no KEEP_IF needed on divisor
+                div_expr: CallExpression
+                if self.session.database.dialect != DatabaseDialect.BODOSQL:
+                    div_expr = CallExpression(pydop.DIV, typ, [dividend, divisor])
+                else:
+                    # Implementation for BodoSQL
+                    # IFF(b == 0, 0, a / KEEP_IF(b, b != 0))
+                    #  b != 0
+                    not_zero_expr = CallExpression(
+                        pydop.NEQ,
+                        BooleanType(),
+                        [divisor, LiteralExpression(0, divisor.data_type)],
+                    )
+                    # KEEP_IF(b, b != 0)
+                    keep_not_zero = CallExpression(
+                        pydop.KEEP_IF, typ, [divisor, not_zero_expr]
+                    )
+                    # a / KEEP_IF(b, b != 0)
+                    div_expr = CallExpression(pydop.DIV, typ, [dividend, keep_not_zero])
+
+                is_zero_expr = CallExpression(
+                    pydop.EQU,
+                    BooleanType(),
+                    [divisor, LiteralExpression(0, divisor.data_type)],
+                )
+
+                return CallExpression(
+                    pydop.IFF,
+                    typ,
+                    [is_zero_expr, LiteralExpression(0, typ), div_expr],
+                )
+
+        # Default: return normal division
+        return CallExpression(pydop.DIV, typ, [dividend, divisor])
+
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
     ) -> RelationalExpression:
@@ -239,6 +381,11 @@ class RelTranslation:
                 return context.expressions[expr]
             case HybridFunctionExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
+                # Apply division-by-zero handling for DIV operations
+                if expr.operator == pydop.DIV:
+                    return self._apply_division_by_zero_handling(
+                        inputs[0], inputs[1], expr.typ
+                    )
                 return CallExpression(expr.operator, expr.typ, inputs)
             case HybridWindowExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
@@ -726,10 +873,17 @@ class RelTranslation:
                             child_output = self.apply_aggregations(
                                 child, child_output, child.subtree.agg_keys
                             )
+                        # Optimize SEMI to INNER for singular subtrees
+                        join_type = child.connection_type.join_type
+                        if (
+                            child.connection_type == ConnectionType.SEMI
+                            and child.subtree.is_singular()
+                        ):
+                            join_type = JoinType.INNER
                         context = self.join_outputs(
                             context,
                             child_output,
-                            child.connection_type.join_type,
+                            join_type,
                             cardinality,
                             child.reverse_cardinality,
                             join_keys,
@@ -861,7 +1015,9 @@ class RelTranslation:
                     )
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
-                            hybrid_expr.column.column_property, True
+                            hybrid_expr.column.column_property,
+                            node.collection.collection.table_path,
+                            True,
                         ),
                         hybrid_expr.column.column_property.unprotected_data_type,
                         [ColumnReference(name, hybrid_expr.typ)],
@@ -1291,7 +1447,20 @@ class RelTranslation:
             out_columns[hybrid_ref] = col_ref
             gen_columns[column_name] = col_ref
 
-        answer = GeneratedTable(collection)
+        # Generate the unique set
+        uniqueness: set[frozenset[str]] = set()
+        for unique_set in node.user_collection.unique_terms:
+            names: list[str] = (
+                [unique_set] if isinstance(unique_set, str) else unique_set
+            )
+            real_names: set[str] = set()
+            for name in names:
+                expr = gen_columns[name]
+                assert isinstance(expr, ColumnReference)
+                real_names.add(expr.name)
+            uniqueness.add(frozenset(real_names))
+
+        answer: RelationalNode = GeneratedTable(collection, uniqueness)
         return TranslationOutput(answer, out_columns)
 
     def rel_translation(
@@ -1423,7 +1592,11 @@ class RelTranslation:
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_hybridroot(context)
             case HybridUserGeneratedCollection():
-                assert context is not None, "Malformed HybridTree pattern."
+                # Account for cases where there is no ancestor preceding the
+                # generated collection
+                if context is None:
+                    context = TranslationOutput(EmptySingleton(), {})
+
                 result = self.build_user_generated_table(operation)
                 result = self.join_outputs(
                     context,
@@ -1561,7 +1734,9 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
 def optimize_relational_tree(
     root: RelationalRoot,
     session: PyDoughSession,
-    additional_shuttles: list[RelationalExpressionShuttle],
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ],
 ) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
@@ -1570,8 +1745,8 @@ def optimize_relational_tree(
     Args:
         `root`: the relational root to optimize.
         `configs`: PyDough session used during optimization.
-        `additional_shuttles`: additional relational expression shuttles to use
-        for expression simplification.
+        `additional_shuttles`: additional relational expression shuttles or
+        visitors to use for expression simplification.
 
     Returns:
         The optimized relational root.
@@ -1633,7 +1808,7 @@ def optimize_relational_tree(
 
     # Run the following pipeline twice:
     #   A: projection pullup
-    #   B: expression simplification
+    #   B: expression simplification (followed by additional shuttles)
     #   C: filter pushdown
     #   D: join-aggregate transpose
     #   E: projection pullup again
@@ -1647,7 +1822,13 @@ def optimize_relational_tree(
     # pullup and pushdown and so on.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
-        simplify_expressions(root, session, additional_shuttles)
+        simplify_expressions(root, session)
+        # Run all of the other shuttles/visitors over the entire tree.
+        for shuttle_or_visitor in additional_shuttles:
+            if isinstance(shuttle_or_visitor, RelationalExpressionShuttle):
+                root.accept(RelationalExpressionShuttleDispatcher(shuttle_or_visitor))
+            else:
+                root.accept(RelationalExpressionDispatcher(shuttle_or_visitor, True))
         root = confirm_root(push_filters(root, session))
         root = confirm_root(pull_aggregates_above_joins(root))
         root = confirm_root(pullup_projections(root))
@@ -1697,11 +1878,12 @@ def convert_ast_to_relational(
     """
     # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
-    rel_translator: RelTranslation = RelTranslation()
+    rel_translator: RelTranslation = RelTranslation(session)
     node = rel_translator.preprocess_root(node, columns)
 
     # Convert the QDAG node to a hybrid tree, including any necessary
     # transformations such as de-correlation.
+
     hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
 
@@ -1716,10 +1898,19 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    additional_shuttles: list[RelationalExpressionShuttle] = []
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ] = []
     # Add the mask literal comparison shuttle if the environment variable
-    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1.
+    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1. If a masking rewrite server has
+    # been attached to the session, include the shuttles for that as well.
     if os.getenv("PYDOUGH_ENABLE_MASK_REWRITES") == "1":
+        if session.mask_server is not None:
+            candidate_shuttle: MaskServerCandidateVisitor = MaskServerCandidateVisitor()
+            additional_shuttles.append(candidate_shuttle)
+            additional_shuttles.append(
+                MaskServerRewriteShuttle(session.mask_server, candidate_shuttle)
+            )
         additional_shuttles.append(MaskLiteralComparisonShuttle())
     optimized_result: RelationalRoot = optimize_relational_tree(
         raw_result, session, additional_shuttles

@@ -1,5 +1,5 @@
 ROOT(columns=[('rname', r_name), ('price', l_extendedprice)], orderings=[])
- JOIN(condition=t0.l_partkey == t1.ps_partkey & t0.l_suppkey == t1.ps_suppkey & t0.r_name == t1.r_name, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'l_extendedprice': t0.l_extendedprice, 'r_name': t0.r_name})
+ JOIN(condition=(t0.l_partkey == t1.ps_partkey) & (t0.l_suppkey == t1.ps_suppkey) & (t0.r_name == t1.r_name), type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'l_extendedprice': t0.l_extendedprice, 'r_name': t0.r_name})
   JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'l_extendedprice': t0.l_extendedprice, 'l_partkey': t0.l_partkey, 'l_suppkey': t0.l_suppkey, 'r_name': t1.r_name})
    SCAN(table=tpch.LINEITEM, columns={'l_extendedprice': l_extendedprice, 'l_orderkey': l_orderkey, 'l_partkey': l_partkey, 'l_suppkey': l_suppkey})
    JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'o_orderkey': t0.o_orderkey, 'r_name': t1.r_name})

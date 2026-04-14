@@ -157,6 +157,8 @@ Properties of this type use the type string "masked table column" and include al
 - `protect protocol` (required): a Python format string, in the same format as `unprotect protocol`, used to describe how the data was originally masked. This can be used to generate masked values consistent with the encryption scheme, allowing operations such as comparisons between masked data.
 - `protected data type` (optional): same as `data type`, except referring to the type of the data when it is protected, whereas `data type` refers to the raw unprotected column. If omitted, it is assumed that the data type is the same between the unprotected vs protected data.
 - `server masked` (optional): a boolean flag indicating whether the column was masked on a server that is attached to PyDough. If `true`, PyDough can use it to optimize queries by rewriting predicates and expressions to avoid unmasking the data.
+- `server dataset id` (optional): a string that must be provided `server masked` is `true`, indicating the `dataset id` value to be used when looking up this column in a remote server to optimize it by rewriting predicates.
+
 
 Example of the structure of the metadata for a masked table column property where the string data is masked by moving the first character to the end, and unmasked by moving it back to the beginning:
 

@@ -1,0 +1,3 @@
+SELECT
+  x
+FROM GENERATE_SERIES(0, -2, 1) AS t3(x)

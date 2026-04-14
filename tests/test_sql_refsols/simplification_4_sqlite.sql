@@ -1,8 +1,8 @@
 WITH _t AS (
   SELECT
     sbtxdatetime,
-    ROW_NUMBER() OVER (ORDER BY sbtxdatetime) AS _w,
-    ROW_NUMBER() OVER (ORDER BY sbtxdatetime DESC) AS _w_2
+    ROW_NUMBER() OVER (ORDER BY sbtxdatetime DESC) AS _w,
+    ROW_NUMBER() OVER (ORDER BY sbtxdatetime) AS _w_2
   FROM main.sbtransaction
   WHERE
     CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) = 2023

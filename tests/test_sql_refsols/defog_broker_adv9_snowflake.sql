@@ -17,8 +17,8 @@ SELECT
       DAYOFWEEK(sbtransaction.sbtxdatetime) + 6
     ) % 7
   ) IN (5, 6)) AS weekend_transactions
-FROM main.sbtransaction AS sbtransaction
-JOIN main.sbticker AS sbticker
+FROM broker.sbtransaction AS sbtransaction
+JOIN broker.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
   AND sbticker.sbtickertype = 'stock'
 WHERE
@@ -28,10 +28,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+          DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
         ) % 7
       ) * -1,
-      CURRENT_TIMESTAMP()
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   )
   AND sbtransaction.sbtxdatetime >= DATEADD(
@@ -43,10 +43,10 @@ WHERE
         DAY,
         (
           (
-            DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+            DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
           ) % 7
         ) * -1,
-        CURRENT_TIMESTAMP()
+        CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
       )
     )
   )

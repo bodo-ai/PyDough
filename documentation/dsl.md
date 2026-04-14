@@ -21,6 +21,8 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [CROSS](#cross)
 - [User Generated Collections](#user-generated-collections)
     * [range_collection](#range_collection)
+    * [dataframe_collection](#dataframe_collection)
+    * [View/Table Collections (via to_table)](#view_collection)
 - [Larger Examples](#larger-examples)
    * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
    * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
@@ -1537,9 +1539,6 @@ People.CROSS(Addresses).current_address
 <!-- TOC --><a name="user-generated-collections"></a>
 ## User Generated Collections
 
-> [!WARNING]  
-> NOTE: User collections are currently supported **only in the Snowflake context**.
-
 This section describes APIs for dynamically creating PyDough collections and using them alongside other data sources.
 
 <!-- TOC --><a name="range_collection"></a>
@@ -1577,6 +1576,205 @@ Output:
 3     7
 4     9
 ```
+
+<!-- TOC --><a name="dataframe_collection"></a>
+### `pydough.dataframe_collection`
+
+The `dataframe_collection` creates a collection from a specified Pandas DataFrame. 
+This is useful for building datasets dynamically.
+
+It takes in the following arguments:
+
+- `name`: The name of the dataframe collection.
+- `dataframe`: Pandas DataFrame containing the corresponding data.
+- `unique_column_names`: List of strings or list of list of strings
+`(list [str | list[ str ]])` representing the unique properties for the dataframe 
+collection. For example: ["column1", ["column2", "column3"]] indicates `column1`
+is a unique property and the combination of column2 and column3 is also unique.
+- `column_subset` (optional): List of filter/selected columns from the dataframe.
+If provided, indicates a subset of the columns from the original dataframe that will be in the
+final dataframe collection, and the order they will be in. If omitted, indicates that
+all of the columns should be included in the same order they are currently present
+
+**Note**: All columns in `unique_column_names` must be included in `column_subset`; otherwise, an error will be raised. 
+
+#### Datatypes
+`dataframe_collection` doesn't support mix datatypes in one column.
+
+The supported PyDough types for `dataframe_collection` are:
+- `NumericType`: includes float, integer, infinity, Nan.
+- `BooleanType`: True or False.
+- `StringType`: alphanumeric characters.
+- `Datetype`: date and datetime.
+- `UnknownType`: used for all `None` columns.
+
+Note: MySQL by default does not support infinity values. When PyDough detects 
+infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
+
+#### Example 1
+
+```python
+import pydough
+import pandas as pd
+
+df = pd.DataFrame({
+  "color": ["red", "orange", "yellow", "green", "blue", "indigo", "violet", None]
+  "idx": range(8)
+})
+rainbow_table = pydough.dataframe_collection(name='rainbow', dataframe=df, unique_column_names=["idx"])
+df = pydough.to_df(rainbow_table)
+print(df)
+```
+Output:
+```
+    color   idx
+0   red     1
+1   orange  2
+2   yellow  3
+3   green   4
+4   blue    5
+5   indigo  6
+6   violet  7
+7   None    8
+```
+
+#### Example 2: Dataframe suppliers threshold (using TPCH)
+**Question**: Return how many suppliers whose account_balance is greater than the DataFrame value are per region.
+
+**Answer**
+```py
+%%pydough
+
+threshold_df = pd.DataFrame(
+    {
+        "region_name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+        "min_account_balance": [5000.32, 8000, 4600.32, 6400.50, 8999.99],
+    }
+)
+
+thresholds = pydough.dataframe_collection(
+    name="thresholds_collection", dataframe=threshold_df, unique_column_names=["region_name"]
+).CALCULATE(region_name, min_account_balance)
+
+suppliers_info = suppliers.CALCULATE(
+    sup_region_name=nation.region.name, account_balance=account_balance
+)
+
+result = (
+    thresholds.CROSS(suppliers_info)
+    .WHERE(
+        (sup_region_name == region_name) & (account_balance > min_account_balance)
+    )
+    .PARTITION(name="region", by=sup_region_name)
+    .CALCULATE(region_name=sup_region_name, n_suppliers=COUNT(suppliers_info))
+)
+df = pydough.to_df(rainbow_table)
+print(df)
+```
+
+Output:
+```
+    region_name     n_suppliers
+0   EUROPE          649
+1   AMERICA         385
+2   AFRICA          877
+3   ASIA            988
+4   MIDDLE EAST     144
+```
+
+<!-- TOC --><a name="view_collection"></a>
+### View/Table Collections (via `pydough.to_table`)
+
+The `to_table` function materializes a PyDough query as a database view or table and returns a collection that can be used in subsequent PyDough queries. This is useful for breaking down complex queries into intermediate results, improving performance, or creating reusable database objects.
+
+See the [Usage Guide](usage.md#pydoughto_table) for the full API documentation of `pydough.to_table`.
+
+The returned collection has the following characteristics:
+- **Schema Inference**: Column names and types are automatically inferred from the query being materialized.
+- **Database Object**: The view/table is actually created in the database, making it available for the current session (temp) or persistently.
+- **Collection Operations**: The returned collection supports all standard PyDough operations: `.CALCULATE()`, `.WHERE()`, `.TOP_K()`, `.ORDER_BY()`, `PARTITION()`, etc.
+- **Cross-Database Access**: The collection can be joined with other collections using `CROSS()`.
+
+#### Example 1: Materializing and Querying
+
+```py
+%%pydough
+# Materialize a filtered subset of nations as a temporary table
+asian_nations = nations.WHERE(region.name == 'ASIA')
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', temp=True)
+
+# Query from the materialized table - direct method call works for simple queries
+result = asian_tmp.CALCULATE(name)
+```
+
+Result:
+```
+        NAME
+0      INDIA
+1  INDONESIA
+2      JAPAN
+3      CHINA
+4    VIETNAM
+```
+
+#### Example 2: Joining Multiple Materialized Collections
+
+When joining multiple collections, use `.CROSS()` to establish cross-join relationships:
+
+```py
+%%pydough
+# Create two materialized tables
+asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', replace=True, temp=True)
+
+asian_custs = customers.CALCULATE(ckey=key, nkey=nation.key)
+custs_tmp = pydough.to_table(asian_custs, name='asian_custs', temp=True)
+
+# Join the materialized collections: asian_tmp.CROSS(custs_tmp)
+result = (
+    asian_tmp
+    .CALCULATE(nation_key, nation_name)
+    .CROSS(custs_tmp)
+    .WHERE(nation_key == nkey)
+    .CALCULATE(nation_name, ckey)
+    .TOP_K(5, by=(nation_name, ckey))
+)
+```
+
+Result:
+```
+  NATION_NAME  CKEY
+0       CHINA     7
+1       CHINA    19
+2       CHINA    75
+3       CHINA    82
+4       CHINA   118
+```
+
+#### Example 3: Using with PARTITION
+
+```py
+%%pydough
+# Materialize nation data
+asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', replace=True)
+
+# Partition by nation_key and count records in each partition
+result = (
+    asian_tmp
+    .PARTITION(name='by_nation', by=nation_key)
+    .CALCULATE(nation_key, cnt=COUNT(asian_tmp))
+    .TOP_K(3, by=cnt.DESC())
+)
+```
+
+Result:
+```
+   NATION_KEY  CNT
+0           8    1
+1           9    1
+2          12    1
+``` 
 
 <!-- TOC --><a name="larger-examples"></a>
 ## Larger Examples

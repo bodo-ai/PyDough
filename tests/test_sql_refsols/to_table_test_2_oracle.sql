@@ -1,0 +1,5 @@
+SELECT
+  name
+FROM ASIAN_NATIONS_T2
+WHERE
+  name LIKE '%I%'

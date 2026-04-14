@@ -17,8 +17,8 @@ SELECT
       DAYOFWEEK(notifications.created_at) + 6
     ) % 7
   ) IN (5, 6)) AS weekend_notifs
-FROM main.notifications AS notifications
-JOIN main.users AS users
+FROM ewallet.notifications AS notifications
+JOIN ewallet.users AS users
   ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')
 WHERE
   notifications.created_at < DATE_TRUNC(
@@ -27,10 +27,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+          DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
         ) % 7
       ) * -1,
-      CURRENT_TIMESTAMP()
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   )
   AND notifications.created_at >= DATEADD(
@@ -42,10 +42,10 @@ WHERE
         DAY,
         (
           (
-            DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+            DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
           ) % 7
         ) * -1,
-        CURRENT_TIMESTAMP()
+        CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
       )
     )
   )

@@ -121,6 +121,9 @@ __all__ = [
 ]
 
 import datetime
+import pandas as pd
+
+import pydough
 
 
 # ruff: noqa
@@ -407,7 +410,10 @@ def impl_defog_broker_adv15():
     n_active = SUM(customers.status == "active")
     n_custs = COUNT(customers)
     return (
-        customers.WHERE((join_date >= "2022-01-01") & (join_date <= "2022-12-31"))
+        customers.WHERE(
+            (join_date >= DATETIME("2022-01-01"))
+            & (join_date <= DATETIME("2022-12-31"))
+        )
         .PARTITION(name="countries", by=country)
         .CALCULATE(
             country,
@@ -834,23 +840,46 @@ def impl_defog_dealership_adv8():
     Order by month ascending. PMSPS = per month salesperson sales count. PMSR =
     per month sales revenue in dollars. Truncate date to month for aggregation.
     """
-    eligible_salespersons = salespeople.WHERE(
-        (YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023)
+
+    now = pd.Timestamp.today().normalize().replace(day=1)
+
+    months = pd.date_range(
+        start=now - pd.DateOffset(months=6),
+        end=now - pd.DateOffset(months=1),
+        freq="MS",  # Month Start
     )
+    date_range_df = pd.DataFrame({"dt": months})
+    date_range = pydough.dataframe_collection(
+        "months_range", date_range_df, ["dt"]
+    ).CALCULATE(month_start=DATETIME(dt, "start of month"))
+
+    filtered_sales = (
+        CROSS(sales.CALCULATE(sale_month=DATETIME(sale_date, "start of month")))
+        .WHERE(MONOTONIC(2022, YEAR(salesperson.hire_date), 2023))
+        .WHERE(sale_month == month_start)
+    )
+
     return (
-        sales.WHERE(
-            MONOTONIC(
-                1, DATEDIFF("months", sale_date, DATETIME("now", "start of month")), 6
-            )
-            & HAS(
-                salespeople.WHERE((YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023))
-            )
+        date_range.CALCULATE(month_start)
+        .CALCULATE(
+            month=STRING(month_start, "%Y-%m-%d"),
+            PMSPS=COUNT(filtered_sales),
+            PMSR=SUM(filtered_sales.sale_price),
         )
-        .CALCULATE(sale_price, sale_month=DATETIME(sale_date, "start of month"))
-        .PARTITION(name="months", by=sale_month)
-        .CALCULATE(sale_month, PMSPS=COUNT(sales), PMSR=SUM(sales.sale_price))
-        .ORDER_BY(sale_month.ASC())
+        .ORDER_BY(month_start.ASC())
     )
+
+    # months_ago = pydough.range_collection("months_ago", "n", 1, 7).CALCULATE(n)
+    # selected_sales = sales.WHERE(
+    #     MONOTONIC(2022, YEAR(salesperson.hire_date), 2023) &
+    #     (DATEDIFF("months", sale_date, "now") == months_ago)
+    # )
+    # return (
+    #     months_ago
+    #     .CALCULATE(
+
+    #     )
+    # )
 
 
 def impl_defog_dealership_adv9():
@@ -861,7 +890,7 @@ def impl_defog_dealership_adv9():
     Sale Price in the first quarter of 2023.
     """
     selected_sales = sales.WHERE(
-        (sale_date >= "2023-01-01") & (sale_date <= "2023-03-31")
+        (sale_date >= DATETIME("2023-01-01")) & (sale_date <= DATETIME("2023-03-31"))
     )
     return Dealership.CALCULATE(ASP=AVG(selected_sales.sale_price))
 
@@ -943,22 +972,29 @@ def impl_defog_dealership_adv13():
     value). Return all months in your answer, including those where there were
     no payments.
     """
-    # TODO (gh #162): add user created collections support to PyDough
 
-    filtered_payments = payments_received.CALCULATE(
-        payment_amount,
-        month=DATETIME(payment_date, "start of month"),
+    all_months = pydough.range_collection("months", "n", 0, 12).CALCULATE(n)
+
+    group_payments = (
+        payments_received.CALCULATE(
+            start_month=DATETIME(payment_date, "start of month")
+        )
+        .PARTITION(name="month", by=start_month)
+        .CALCULATE(total_payments=SUM(payments_received.payment_amount))
     )
 
-    monthly_totals = filtered_payments.PARTITIOn(name="months", by=month).CALCULATE(
-        total_payments=SUM(payments_received.payment_amount)
+    return (
+        all_months.CROSS(group_payments)
+        .CALCULATE(dt=ADD_MONTHS(start_month, n), payment=IFF(n > 0, 0, total_payments))
+        .WHERE(dt <= DATETIME("now", "start of month", "+1 hour"))
+        .PARTITION(name="full_months", by=dt)
+        .CALCULATE(
+            dt,
+            total_payments=SUM(month.payment),
+            MoM_change=SUM(month.payment) - PREV(SUM(month.payment), by=dt.ASC()),
+        )
+        .ORDER_BY(dt)
     )
-
-    return monthly_totals.CALCULATE(
-        month,
-        total_payments,
-        MoM_change=total_payments - PREV(total_payments, by=month.ASC()),
-    ).ORDER_BY(month.ASC())
 
 
 def impl_defog_dealership_adv14():
@@ -1291,7 +1327,7 @@ def impl_defog_ewallet_adv2():
         )
         .CALCULATE(
             week=DATETIME(created_at, "start of week"),
-            is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
+            is_weekend=IFF(ISIN(DAYOFWEEK(created_at), (5, 6)), 1, 0),
         )
         .PARTITION(name="weeks", by=week)
         .CALCULATE(
@@ -1449,7 +1485,8 @@ def impl_defog_ewallet_adv11():
     duration first.
     """
     selected_sessions = sessions.WHERE(
-        (session_start >= "2023-06-01") & (session_end < "2023-06-08")
+        (session_start >= DATETIME("2023-06-01"))
+        & (session_end < DATETIME("2023-06-08"))
     ).CALCULATE(duration=DATEDIFF("seconds", session_start, session_end))
     return (
         users.WHERE(HAS(selected_sessions))
@@ -2565,9 +2602,7 @@ def impl_defog_academic_gen11():
     """
     n_pub = COUNT(publications)
     n_auth = COUNT(authors)
-    return Academic.CALCULATE(
-        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth != 0)
-    )
+    return Academic.CALCULATE(publication_to_author_ratio=n_pub / n_auth)
 
 
 def impl_defog_academic_gen12():
@@ -2580,7 +2615,7 @@ def impl_defog_academic_gen12():
     """
     n_confs = SUM(PRESENT(publications.conference_id))
     n_jours = SUM(PRESENT(publications.journal_id))
-    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours != 0))
+    return Academic.CALCULATE(ratio=n_confs / n_jours)
 
 
 def impl_defog_academic_gen13():
@@ -2594,7 +2629,7 @@ def impl_defog_academic_gen13():
 
     n_pubs = COUNT(domain_publications)
     n_keys = COUNT(domain_keywords)
-    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys != 0))
+    return domains.CALCULATE(domain_id, ratio=n_pubs / n_keys)
 
 
 def impl_defog_academic_gen14():
@@ -2607,11 +2642,15 @@ def impl_defog_academic_gen14():
     """
     n_pubs = COUNT(publications)
     n_jours = NDISTINCT(publications.journal_id)
-    return publications.PARTITION(name="years", by=year).CALCULATE(
-        year,
-        num_publications=n_pubs,
-        num_journals=n_jours,
-        ratio=n_pubs / KEEP_IF(n_jours, n_jours != 0),
+    return (
+        publications.PARTITION(name="years", by=year)
+        .CALCULATE(
+            year,
+            num_publications=n_pubs,
+            num_journals=n_jours,
+            ratio=n_pubs / n_jours,
+        )
+        .ORDER_BY(year.ASC(na_pos="last"))
     )
 
 
@@ -2673,7 +2712,7 @@ def impl_defog_academic_gen18():
     """
     return journals.CALCULATE(
         name, journal_id, num_publications=COUNT(archives)
-    ).ORDER_BY(num_publications.DESC())
+    ).ORDER_BY(num_publications.DESC(), name.ASC())
 
 
 def impl_defog_academic_gen19():
@@ -2937,9 +2976,7 @@ def impl_defog_restaurants_gen12():
     """
     n_hi_rating = SUM(restaurants.rating > 4.0)
     n_lo_rating = SUM(restaurants.rating < 4.0)
-    return Restaurants.CALCULATE(
-        ratio=n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0)
-    )
+    return Restaurants.CALCULATE(ratio=n_hi_rating / n_lo_rating)
 
 
 def impl_defog_restaurants_gen13():
@@ -2953,9 +2990,7 @@ def impl_defog_restaurants_gen13():
     nyc_restaurants = restaurants.WHERE(LOWER(city_name) == "new york")
     n_hi_rating = SUM(nyc_restaurants.rating > 4.0)
     n_lo_rating = SUM(nyc_restaurants.rating < 4.0)
-    return Restaurants.CALCULATE(
-        ratio=(n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0))
-    )
+    return Restaurants.CALCULATE(ratio=(n_hi_rating / n_lo_rating))
 
 
 def impl_defog_restaurants_gen14():
@@ -2967,11 +3002,9 @@ def impl_defog_restaurants_gen14():
     non-vegan food in San Francisco? Match food_type case insensitively
     """
     sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
-    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
-    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
-    return Restaurants.CALCULATE(
-        ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
-    )
+    n_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) == "vegan"))
+    n_non_vegan = COUNT(sf_restaurants.WHERE(LOWER(food_type) != "vegan"))
+    return Restaurants.CALCULATE(ratio=n_vegan / n_non_vegan)
 
 
 def impl_defog_restaurants_gen15():
@@ -2983,9 +3016,9 @@ def impl_defog_restaurants_gen15():
     Los Angeles?
     """
     la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
-    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la_italian = COUNT(la_restaurants.WHERE(LOWER(food_type) == "italian"))
     n_la = COUNT(la_restaurants)
-    return Restaurants.CALCULATE(ratio=(n_la_italian / KEEP_IF(n_la, n_la != 0)))
+    return Restaurants.CALCULATE(ratio=(n_la_italian / n_la))
 
 
 def impl_defog_restaurants_gen16():

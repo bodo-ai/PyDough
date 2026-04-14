@@ -1,0 +1,3 @@
+ROOT(columns=[('n_neg', DEFAULT_TO(sum_expr, 0:numeric)), ('n_positive', DEFAULT_TO(sum_expr_3, 0:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_expr': SUM((UNMASK::((1025.67 - ([t_amount]))) < 0:numeric)), 'sum_expr_3': SUM((UNMASK::((1025.67 - ([t_amount]))) > 0:numeric))})
+  SCAN(table=CRBNK.TRANSACTIONS, columns={'t_amount': t_amount})

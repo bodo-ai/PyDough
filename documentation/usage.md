@@ -13,6 +13,7 @@ This document describes how to set up & interact with PyDough. For instructions 
 - [Evaluation APIs](#evaluation-apis)
    * [`pydough.to_sql`](#pydoughto_sql)
    * [`pydough.to_df`](#pydoughto_df)
+   * [`pydough.to_table`](#pydoughto_table)
 - [Transformation APIs](#transformation-apis)
    * [`pydough.from_string`](#pydoughfrom_string)
 - [Exploration APIs](#exploration-apis)
@@ -345,7 +346,12 @@ Below is a list of all supported values for the database name:
 
 - `snowflake`: uses a Snowflake database. [See here](https://docs.snowflake.com/en/user-guide/python-connector.html#connecting-to-snowflake) for details on the connection API and what keyword arguments can be passed in.
 
-- `postgres` or `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
+- `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
+
+- `oracle`: uses an Oracle database. [See here](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) for details on the connection API and what keyword arguments can be passed in.
+
+- `bodosql`: uses a BodoSQL context. [See here](https://docs.bodo.ai/latest/api_docs/sql/bodosqlcontext/) for details on the BodoSQL context and [here](https://docs.bodo.ai/latest/api_docs/sql/database_catalogs/) for details on the various kinds of catalogs that can be connected to a BodoSQL context.
+
 
 > Note: If you installed PyDough via pip, you can install optional connectors using pip extras:
 >
@@ -353,7 +359,8 @@ Below is a list of all supported values for the database name:
 > pip install pydough[mysql]         # Install MySQL connector
 > pip install pydough[snowflake]    # Install Snowflake connector
 > pip install pydough[postgres]    # Install Postgres connector
-> pip install "pydough[mysql,snowflake,postgres]"  # Install all of them at once
+> pip install pydough[bodosql]    # Install BodoSQL dependencies
+> pip install "pydough[mysql,snowflake,postgres,bodosql]"  # Install all of them at once
 > ```
 
 Here’s a quick reference table showing which connector is needed for each dialect:
@@ -364,6 +371,8 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `mysql`     | `mysql-connector-python`               |
 | `snowflake` | `snowflake-connector-python[pandas]`  |
 | `postgres` | `psycopg2-binary`  |
+| `oracle` | `python-oracledb`  |
+| `bodosql`    | Depends on the catalog being used |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
@@ -438,6 +447,40 @@ You can find a full example of using MySQL database with PyDough in [this usage 
     pydough.active_session.connect_database("postgres", connection=postgres_conn)
   ```
 You can find a full example of using Postgres database with PyDough in [this usage guide](./../demos/notebooks/PG_TPCH.ipynb).
+
+- Oracle: You can connect to an Oracle database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("oracle", 
+          user=oracle_user,
+          password=oracle_password,
+          host=oracle_host,
+          port=oracle_port
+          service_name=oracle_service_name,
+    )
+  ```
+  Also you can use `dsn` instead of `host`, `port` and `service_name`.
+
+  Example with a connection object
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    oracle_conn: oracledb.connection =  oracledb.connect(
+        dbname=oracle_db,
+        user=oracle_user,
+        password=oracle_password,
+        host=oracle_host,
+        port=oracle_port,
+        service_name=oracle_service_name,
+    )
+    pydough.active_session.connect_database("oracle", connection=oracle_conn)
+  ```
+You can find a full example of using an Oracle database with PyDough in [this usage guide](./../demos/notebooks/Oracle_TPCH.ipynb).
+
+**Note**: Oracle doesn't support "" (doubles quotes) inside identifiers. This means that even though PyDough support
+double quotes inside column/table names executing SQL with such characters will raise an error when using Oracle.
+
+**Note**: PyDough intentionally uses `TO_DATE` instead of `TO_TIMESTAMP` for datetime
+literals. This ensures consistent behavior across DATE expressions. But sub-second precision (microseconds) is silently truncated.
 
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
@@ -549,6 +592,129 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 </div>
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
+
+<!-- TOC --><a name="pydoughto_table"></a>
+### `pydough.to_table`
+
+The `to_table` API materializes a PyDough query as a database view or table, and returns a collection reference that can be used in subsequent PyDough queries. This is useful for breaking down complex queries into intermediate results, improving performance by materializing frequently-used subqueries, or creating reusable database objects.
+
+The first argument it takes in is the PyDough node for the collection being materialized. The second argument is the name of the view/table to create. It can optionally take in the following keyword arguments:
+
+- `as_view`: If `True`, creates a VIEW. If `False` creates a TABLE. Default is `False` (i.e. creates a TABLE).
+- `replace`: If `True`, drops table/view if exists and then creates the table/view. For Snowflake, use `CREATE OR REPLACE` to allow replacing an existing view/table. If `False` and the view/table already exists, an error will be raised. Default is `False`.
+- `temp`: If `True`, creates a TEMPORARY view/table that will be deleted when the database session closes. If `False`, creates a permanent view/table. Default is `False`.
+- `write_path`: The fully-qualified SQL path used in the DDL statement and in `FROM` clauses when querying the created table (e.g. `'my_db.my_schema.my_table'`). When provided, the table/view is created at this path while `name` remains the short identifier used in PyDough `per=` references and other DSL operations. If omitted, `name` is used as the SQL path as well. 
+- `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
+- `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
+- `database`: the database context to use for the conversion and execution (if omitted, `pydough.active_session.database` is used instead). A database connection is required for `to_table`.
+- `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
+- `display_sql`: if `True`, prints the generated DDL SQL via the logger.
+
+The returned collection can be used with PyDough operations like `.CALCULATE()`, `.WHERE()`, `.TOP_K()`, etc., just like any other collection.
+
+#### Database Dialect Support
+
+Different databases have different capabilities for CREATE statements:
+
+| Dialect    | CREATE OR REPLACE TABLE | TEMP TABLE | CREATE OR REPLACE VIEW | TEMP VIEW |
+|------------|------------------------|------------|------------------------|-----------|
+| SQLite     | No (uses DROP + CREATE)| Yes        | No (uses DROP + CREATE)| Yes       |
+| Snowflake  | Yes                    | Yes        | Yes                    | No        |
+| PostgreSQL | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
+| MySQL      | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
+| Oracle     | No (uses DROP + CREATE)| No         | Yes                    | No        |
+
+**Note:** SQLite does not support creating persistent views that reference attached databases. When creating a view without `temp=True` on SQLite, PyDough will automatically create a temporary view and issue a warning.
+
+**Note:** TEMPORARY views are not supported on Snowflake, MySQL, and PostgreSQL. Attempting to create a temp view on these databases will raise an error.
+
+#### Example 1: Basic Table Materialization
+
+Below is an example of using `pydough.to_table` to materialize a filtered query as a temporary table, then query from it:
+
+```py
+%%pydough
+# Create a temporary table with Asian nations
+asian_nations = nations.WHERE(region.name == 'ASIA')
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', temp=True)
+
+# Query from the materialized table - direct method call
+result = asian_tmp.CALCULATE(name)
+pydough.to_df(result)
+```
+
+**Step 1 — DDL SQL** (executed by `to_table`, creates the table):
+```sql
+CREATE TEMPORARY TABLE asian_nations AS
+SELECT
+  nation.n_nationkey AS key,
+  nation.n_regionkey AS region_key,
+  nation.n_name AS name,
+  nation.n_comment AS comment
+FROM nation AS nation
+JOIN region AS region
+  ON nation.n_regionkey = region.r_regionkey
+  AND region.r_name = 'ASIA'
+```
+
+**Step 2 — Query SQL** (executed by `to_df(result)`):
+```sql
+SELECT name
+FROM asian_nations
+```
+
+**Step 3 — Result** (the output of the query):
+```name
+0   INDIA
+1   INDONESIA
+2   JAPAN
+3   CHINA
+4   VIETNAM
+```
+
+#### Example 2: Multiple Materialized Tables with Join
+
+When joining multiple materialized collections, use `.CROSS()` to establish the cross-join relationship:
+
+```py
+%%pydough
+# Create first temporary table: Asian nations
+asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', replace=True, temp=True)
+
+# Create second temporary table: Customer info
+customer_info = customers.CALCULATE(ckey=key, nkey=nation.key)
+custs_tmp = pydough.to_table(customer_info, name='customer_info', temp=True)
+
+# Join the materialized tables: asian_tmp.CROSS(custs_tmp)
+result = (
+    asian_tmp
+    .CALCULATE(nation_key, nation_name)
+    .CROSS(custs_tmp)
+    .WHERE(nation_key == nkey)
+    .CALCULATE(nation_name, ckey)
+    .TOP_K(5, by=(nation_name, ckey))
+)
+pydough.to_df(result)
+```
+
+#### Example 3: Cross-Database Write with `write_path`
+
+Use `write_path` when the SQL path for the created table differs from the short PyDough name:
+
+```py
+%%pydough
+asian_tmp = pydough.to_table(
+    nations.WHERE(region.name == 'ASIA').CALCULATE(nkey=key, nname=name),
+    name='asian_nations',
+    write_path='E2E_DB.PUBLIC.asian_nations',
+    replace=True,
+)
+
+# The table is created at E2E_DB.PUBLIC.asian_nations in the database,
+# but PyDough references it by the short name 'asian_nations'.
+result = asian_tmp.CALCULATE(nkey, nname)
+```
 
 <!-- TOC --><a name="transformation-apis"></a>
 ## Transformation APIs

@@ -4,12 +4,22 @@ Definition of SQLGlot transformation bindings for the Postgres dialect.
 
 __all__ = ["PostgresTransformBindings"]
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -22,6 +32,10 @@ class PostgresTransformBindings(BaseTransformBindings):
     """
     Subclass of BaseTransformBindings for the Postgres dialect.
     """
+
+    @property
+    def values_alias_column(self) -> bool:
+        return False
 
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.CEIL: "CEIL",
@@ -99,6 +113,12 @@ class PostgresTransformBindings(BaseTransformBindings):
             ),
         )
         return result
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         extract_expr: SQLGlotExpression = sqlglot_expressions.Extract(
@@ -577,9 +597,24 @@ class PostgresTransformBindings(BaseTransformBindings):
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        return sqlglot_expressions.Cast(
-            this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
-        )
+        assert len(args) == 1
+
+        # Cast as integer directly fails if the argument is a string literal
+        # with decimals. In that case, for literals we first cast to NUMERIC
+        #  then truncate the decimal part.
+        if isinstance(args[0], sqlglot_expressions.Literal):
+            return sqlglot_expressions.Anonymous(
+                this="TRUNC",
+                expressions=[
+                    sqlglot_expressions.Cast(
+                        this=args[0], to=sqlglot_expressions.DataType.build("NUMERIC")
+                    )
+                ],
+            )
+        else:
+            return sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
+            )
 
     def convert_lpad(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -606,3 +641,99 @@ class PostgresTransformBindings(BaseTransformBindings):
             is_left=False,
         )
         return result
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range collection to its Postgres SQLGlot
+        representation.
+
+        For example, `pydough.range_collection("table_name", "column_name", 1, 10, 2)` becomes:
+        SELECT column_name
+        FROM generate_series(1, 10, 2) AS table_name(column_name);
+
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+
+        column_quoted, column_normalized = normalize_column_name(collection.column_name)
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=column_normalized, quoted=column_quoted
+        )
+        table_quoted, table_normalized = normalize_column_name(collection.name)
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=table_normalized, quoted=table_quoted
+        )
+
+        start: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.start)
+        end: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.end)
+        step: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.step)
+
+        alias_table = sqlglot_expressions.TableAlias(
+            this=table_name, columns=[column_name]
+        )
+
+        # Because Postgres generate_series includes the last number in the range,
+        # we need to adjust the end to exclude the last number.
+        # Example:
+        # generate_series(1, 5, 1) -> [1, 2, 3, 4, 5] but we want [1, 2, 3, 4]
+        # For positive step, we subtract 1 from the end.
+        # For negative step, we add 1 to the end.
+        adjustment_num: SQLGlotExpression = (
+            sqlglot_expressions.Literal.number(1)
+            if collection.step > 0
+            else sqlglot_expressions.Literal.number(-1)
+        )
+
+        # The range collection end minus the adjustment number excluding the
+        # last number. Example:
+        # generate_series(1, 5, 1) -> [1, 2, 3, 4, 5]
+        # With adjustment:
+        # generate_series(1, 5-1, 1) -> [1, 2, 3, 4]
+        effective_end = sqlglot_expressions.Sub(
+            this=end,
+            expression=adjustment_num,
+        )
+
+        generate_series: SQLGlotExpression = sqlglot_expressions.GenerateSeries(
+            start=start, end=effective_end, step=step
+        )
+
+        table = sqlglot_expressions.Table(this=generate_series, alias=alias_table)
+        result: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[sqlglot_expressions.Column(this=column_name)]
+        ).from_(table)
+
+        return result
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Literal.string("inf"),
+                            to=sqlglot_expressions.DataType.build("REAL"),
+                        )
+                    else:
+                        return sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Literal.string("-inf"),
+                            to=sqlglot_expressions.DataType.build("REAL"),
+                        )
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

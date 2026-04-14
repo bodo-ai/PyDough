@@ -10,7 +10,7 @@ WITH _s0 AS (
     MAX(sbdphigh) AS max_sbDpHigh,
     MIN(sbdplow) AS min_sbDpLow,
     SUM(sbdpclose) AS sum_sbDpClose
-  FROM main.sbDailyPrice
+  FROM broker.sbDailyPrice
   GROUP BY
     1,
     2
@@ -23,7 +23,7 @@ WITH _s0 AS (
     SUM(_s0.count_sbDpClose) AS sum_count_sbDpClose,
     SUM(_s0.sum_sbDpClose) AS sum_sum_sbDpClose
   FROM _s0 AS _s0
-  JOIN main.sbTicker AS sbTicker
+  JOIN broker.sbTicker AS sbTicker
     ON _s0.sbDpTickerId = sbTicker.sbtickerid
   GROUP BY
     1,
@@ -39,5 +39,8 @@ SELECT
     (
       sum_sum_sbDpClose / sum_count_sbDpClose
     ) - LAG(sum_sum_sbDpClose / sum_count_sbDpClose, 1) OVER (PARTITION BY sbTickerSymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin)
-  ) / LAG(sum_sum_sbDpClose / sum_count_sbDpClose, 1) OVER (PARTITION BY sbTickerSymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin) AS momc
+  ) / NULLIF(
+    LAG(sum_sum_sbDpClose / sum_count_sbDpClose, 1) OVER (PARTITION BY sbTickerSymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin),
+    0
+  ) AS momc
 FROM _t0

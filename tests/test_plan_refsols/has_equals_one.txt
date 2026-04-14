@@ -1,0 +1,4 @@
+ROOT(columns=[('n', ndistinct_o_custkey)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'ndistinct_o_custkey': NDISTINCT(o_custkey)})
+  FILTER(condition=o_orderpriority == '1-URGENT':string, columns={'o_custkey': o_custkey})
+   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderpriority': o_orderpriority})

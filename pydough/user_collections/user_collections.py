@@ -41,6 +41,11 @@ class PyDoughUserGeneratedCollection(ABC):
         """Return the name used for the collection."""
         return self._name
 
+    @name.setter
+    def name(self, new_name: str) -> None:
+        """Set a new name for the collection."""
+        self._name = new_name
+
     @property
     def columns(self) -> list[str]:
         """Return column names."""
@@ -53,8 +58,14 @@ class PyDoughUserGeneratedCollection(ABC):
 
     @property
     @abstractmethod
-    def unique_column_names(self) -> list[str]:
-        """Return the set of unique column names in the collection."""
+    def unique_column_names(self) -> list[str | list[str]]:
+        """
+        The list of all names of properties of the user generated collection that
+        are guaranteed to be unique within the collection. Entries that are a
+        string represent a single column being completely unique, while entries
+        that are a list of strings indicate that each combination of those
+        properties is unique.
+        """
 
     @abstractmethod
     def always_exists(self) -> bool:
@@ -74,6 +85,27 @@ class PyDoughUserGeneratedCollection(ABC):
         Check if this collection is equal to another collection.
         Two collections are considered equal if they have the same name and columns.
         """
+
+    def to_explanation(self, verbose: bool) -> list[str]:
+        """
+        Return a list of explanation lines for this user-generated collection.
+        Subclasses should call super() and append type-specific lines.
+
+        Args:
+            `verbose`: Whether to include extra detail (e.g. DataFrame contents).
+
+        Returns:
+            A list of human-readable explanation strings.
+        """
+        lines = [
+            f"This node accesses user-generated collection {self.name!r}.\n"
+            f"Columns: {', '.join(sorted(self.columns))}",
+        ]
+        if verbose:
+            unique = self.unique_column_names[0]
+            unique_terms = [unique] if isinstance(unique, str) else unique
+            lines.append(f"Unique columns: {', '.join(sorted(unique_terms))}")
+        return lines
 
     def get_expression_position(self, expr_name: str) -> int:
         """

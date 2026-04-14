@@ -1,4 +1,4 @@
-ROOT(columns=[('year', year_pr_release), ('ir', ROUND(DEFAULT_TO(n_rows, 0:numeric) / sum_n_rows, 2:numeric))], orderings=[(year_pr_release):asc_first])
+ROOT(columns=[('year', year_pr_release), ('ir', ROUND((DEFAULT_TO(n_rows, 0:numeric) / sum_n_rows), 2:numeric))], orderings=[(year_pr_release):asc_first])
  JOIN(condition=t0.year_pr_release == t1.year_pr_release, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'n_rows': t1.n_rows, 'sum_n_rows': t0.sum_n_rows, 'year_pr_release': t0.year_pr_release})
   AGGREGATE(keys={'year_pr_release': YEAR(pr_release)}, aggregations={'sum_n_rows': SUM(n_rows)})
    JOIN(condition=t0.de_product_id == t1.pr_id, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_rows': t0.n_rows, 'pr_release': t1.pr_release})

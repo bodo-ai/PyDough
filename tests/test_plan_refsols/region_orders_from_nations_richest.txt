@@ -3,7 +3,7 @@ ROOT(columns=[('region_name', r_name), ('n_orders', DEFAULT_TO(sum_n_rows, 0:num
   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
   AGGREGATE(keys={'n_regionkey': n_regionkey}, aggregations={'sum_n_rows': SUM(n_rows)})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_regionkey': t0.n_regionkey, 'n_rows': t1.n_rows})
-    FILTER(condition=RANKING(args=[], partition=[c_nationkey], order=[(c_acctbal):desc_first, (c_name):asc_last], allow_ties=False) == 1:numeric, columns={'c_custkey': c_custkey, 'n_regionkey': n_regionkey})
+    FILTER(condition=1:numeric == RANKING(args=[], partition=[c_nationkey], order=[(c_acctbal):desc_first, (c_name):asc_last], allow_ties=False), columns={'c_custkey': c_custkey, 'n_regionkey': n_regionkey})
      JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'c_acctbal': t1.c_acctbal, 'c_custkey': t1.c_custkey, 'c_name': t1.c_name, 'c_nationkey': t1.c_nationkey, 'n_regionkey': t0.n_regionkey})
       SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
       SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_name': c_name, 'c_nationkey': c_nationkey})

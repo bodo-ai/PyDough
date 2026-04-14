@@ -875,7 +875,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
             re.escape(
-                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'protected data type', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
+                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'protected data type', 'sample values', 'server dataset id', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
             ),
             id="MASKED_TABLE_COLUMN_EXTRA_FIELDS",
         ),

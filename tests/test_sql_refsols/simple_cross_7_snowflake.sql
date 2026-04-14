@@ -1,0 +1,32 @@
+WITH _s3 AS (
+  SELECT
+    part.p_partkey,
+    COUNT(*) AS n_rows
+  FROM tpch.part AS part
+  JOIN tpch.part AS part_2
+    ON ABS(part_2.p_retailprice - part.p_retailprice) < 5.0
+    AND CONTAINS(part_2.p_name, 'tomato')
+    AND part.p_brand = part_2.p_brand
+    AND part.p_mfgr = part_2.p_mfgr
+    AND part.p_partkey < part_2.p_partkey
+  WHERE
+    CONTAINS(part.p_name, 'tomato')
+    AND part.p_brand = 'Brand#35'
+    AND part.p_mfgr = 'Manufacturer#3'
+  GROUP BY
+    1
+)
+SELECT
+  part.p_partkey AS original_part_key,
+  COALESCE(_s3.n_rows, 0) AS n_other_parts
+FROM tpch.part AS part
+LEFT JOIN _s3 AS _s3
+  ON _s3.p_partkey = part.p_partkey
+WHERE
+  CONTAINS(part.p_name, 'tomato')
+  AND part.p_brand = 'Brand#35'
+  AND part.p_mfgr = 'Manufacturer#3'
+ORDER BY
+  2 DESC NULLS LAST,
+  1 NULLS FIRST
+LIMIT 5

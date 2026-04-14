@@ -3,9 +3,12 @@ WITH _s1 AS (
     doc_id,
     COUNT(*) AS n_rows,
     SUM(tot_drug_amt) AS sum_tot_drug_amt
-  FROM main.treatments
+  FROM dermtreatment.treatments
   WHERE
-    start_dt >= DATE_TRUNC('DAY', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
+    start_dt >= DATE_TRUNC(
+      'DAY',
+      DATEADD(MONTH, -6, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
   GROUP BY
     1
 ), _t1 AS (
@@ -13,7 +16,7 @@ WITH _s1 AS (
     doctors.specialty,
     SUM(_s1.n_rows) AS sum_n_rows,
     SUM(_s1.sum_tot_drug_amt) AS sum_sum_tot_drug_amt
-  FROM main.doctors AS doctors
+  FROM dermtreatment.doctors AS doctors
   LEFT JOIN _s1 AS _s1
     ON _s1.doc_id = doctors.doc_id
   GROUP BY

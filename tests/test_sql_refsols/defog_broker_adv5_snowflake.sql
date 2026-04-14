@@ -10,7 +10,7 @@ WITH _s0 AS (
     MAX(sbdphigh) AS max_sbdphigh,
     MIN(sbdplow) AS min_sbdplow,
     SUM(sbdpclose) AS sum_sbdpclose
-  FROM main.sbdailyprice
+  FROM broker.sbdailyprice
   GROUP BY
     1,
     2
@@ -23,7 +23,7 @@ WITH _s0 AS (
     SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
     SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose
   FROM _s0 AS _s0
-  JOIN main.sbticker AS sbticker
+  JOIN broker.sbticker AS sbticker
     ON _s0.sbdptickerid = sbticker.sbtickerid
   GROUP BY
     1,
@@ -39,5 +39,8 @@ SELECT
     (
       sum_sum_sbdpclose / sum_count_sbdpclose
     ) - LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) / LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month) AS momc
+  ) / NULLIF(
+    LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month),
+    0
+  ) AS momc
 FROM _t0

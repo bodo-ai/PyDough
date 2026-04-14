@@ -1,5 +1,5 @@
 ROOT(columns=[('c', c), ('n', n_rows)], orderings=[(c):asc_first])
  AGGREGATE(keys={'c': c}, aggregations={'n_rows': COUNT()})
   PROJECT(columns={'c': ROUND(CUMULATIVE_DISTRIBUTION(args=[], partition=[], order=[(o_orderpriority):asc_last]), 4:numeric)})
-   FILTER(condition=YEAR(o_orderdate) == 1998:numeric | o_orderpriority == '2-HIGH':string & YEAR(o_orderdate) == 1992:numeric, columns={'o_orderpriority': o_orderpriority})
+   FILTER(condition=((YEAR(o_orderdate) == 1992:numeric) & (o_orderpriority == '2-HIGH':string)) | (YEAR(o_orderdate) == 1998:numeric), columns={'o_orderpriority': o_orderpriority})
     SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority})

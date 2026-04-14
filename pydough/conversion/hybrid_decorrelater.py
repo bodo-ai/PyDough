@@ -527,11 +527,7 @@ class HybridDecorrelater:
                         skipped_levels,
                         preserved_steps,
                     )
-                case (
-                    ConnectionType.NDISTINCT
-                    | ConnectionType.NDISTINCT_ONLY_MATCH
-                    | ConnectionType.NO_MATCH_SINGULAR
-                ):
+                case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(
                         f"PyDough does not yet support correlated references with the {child.connection_type.name} pattern."
                     )

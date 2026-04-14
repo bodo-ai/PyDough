@@ -29,6 +29,7 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
     def __init__(
         self,
         masking_metadata: MaskedTableColumnMetadata,
+        table_path: str,
         is_unmask: bool,
     ):
         # Create a dummy verifier that requires exactly one argument, since all
@@ -49,6 +50,7 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
             "UNMASK" if is_unmask else "MASK", False, verifier, deducer, False
         )
         self._masking_metadata: MaskedTableColumnMetadata = masking_metadata
+        self._table_path: str = table_path
         self._is_unmask: bool = is_unmask
 
     @property
@@ -57,6 +59,13 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
         The metadata for the masked column.
         """
         return self._masking_metadata
+
+    @property
+    def table_path(self) -> str:
+        """
+        The fully qualified SQL table path for the masked column.
+        """
+        return self._table_path
 
     @property
     def is_unmask(self) -> bool:
@@ -75,6 +84,19 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
             self.masking_metadata.unprotect_protocol
             if self.is_unmask
             else self.masking_metadata.protect_protocol
+        )
+
+    def toggle_protection(self) -> "MaskedExpressionFunctionOperator":
+        """
+        Returns a new MaskedExpressionFunctionOperator with the same metadata
+        and table path, but with the is_unmask flag toggled.
+
+        Returns:
+            A new MaskedExpressionFunctionOperator with the toggled is_unmask
+            flag.
+        """
+        return MaskedExpressionFunctionOperator(
+            self.masking_metadata, self.table_path, not self.is_unmask
         )
 
     def to_string(self, arg_strings: list[str]) -> str:

@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.retail.transactions
 WHERE
-  payment_method <> PTY_PROTECT_ACCOUNT('Credit Card')
+  payment_method IN ('CsNw', 'DwXR YwQL', 'BaGWrt IqJfFoq')

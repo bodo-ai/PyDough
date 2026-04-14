@@ -45,5 +45,8 @@ SELECT
     (
       CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose
     ) - LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) AS REAL) / LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month) AS momc
+  ) AS REAL) / NULLIF(
+    LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month),
+    0
+  ) AS momc
 FROM _t0

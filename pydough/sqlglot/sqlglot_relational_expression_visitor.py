@@ -5,7 +5,6 @@ the relation Tree to a single SQLGlot query component.
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
-import datetime
 import warnings
 from typing import TYPE_CHECKING
 
@@ -176,9 +175,22 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # Visit the inputs in reverse order so we can pop them off in order.
         for arg in reversed(window_expression.inputs):
             arg.accept(self)
-        arg_exprs: list[SQLGlotExpression] = [
-            self._stack.pop() for _ in range(len(window_expression.inputs))
-        ]
+        arg_exprs: list[SQLGlotExpression] = []
+        for _ in range(len(window_expression.inputs)):
+            expr: SQLGlotExpression = self._stack.pop()
+            # Some dialects require a cast before calling a windows function
+            # like AVG with NULL or other datatypes
+            if isinstance(expr, sqlglot_expressions.Null):
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("INTEGER")
+                )
+            # Fix the precision gap. For exmaple: 7.333 now will be 7.333333
+            # which is the exepected value
+            elif window_expression.op.function_name == "RELAVG":
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("DOUBLE")
+                )
+            arg_exprs.append(expr)
         # Do the same with the partition expressions.
         for arg in reversed(window_expression.partition_inputs):
             arg.accept(self)
@@ -325,32 +337,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 elements.append(element_expr)
             literal = sqlglot_expressions.Array(expressions=elements)
         else:
-            literal = sqlglot_expressions.convert(literal_expression.value)
+            literal = self._bindings.convert_literal_expression(literal_expression)
 
-        # Special handling: insert cast calls for ansi casting of date/time
-        # instead of relying on SQLGlot conversion functions. This is because
-        # the default handling in SQLGlot without a dialect is to produce a
-        # nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
-        # specific dialect is responsible for translating into its own logic.
-        # Rather than have that logic show up in the ANSI sql text, we will
-        # instead create the CAST calls ourselves.
-        if self._dialect == DatabaseDialect.ANSI:
-            if isinstance(literal_expression.value, datetime.date):
-                date: datetime.date = literal_expression.value
-                literal = sqlglot_expressions.Cast(
-                    this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
-                    to=sqlglot_expressions.DataType.build("DATE"),
-                )
-            if isinstance(literal_expression.value, datetime.datetime):
-                dt: datetime.datetime = literal_expression.value
-                if dt.tzinfo is not None:
-                    raise PyDoughSQLException(
-                        "PyDough does not yet support datetime values with a timezone"
-                    )
-                literal = sqlglot_expressions.Cast(
-                    this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
-                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
-                )
         self._stack.append(literal)
 
     def visit_correlated_reference(

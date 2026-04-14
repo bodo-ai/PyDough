@@ -1,5 +1,5 @@
 SELECT
-  COALESCE(SUM(LOWER(food_type) = 'italian'), 0) / NULLIF(COUNT(*), 0) AS ratio
-FROM main.restaurant
+  SUM(LOWER(food_type) = 'italian') / NULLIF(COUNT(*), 0) AS ratio
+FROM restaurants.restaurant
 WHERE
   LOWER(city_name) = 'los angeles'

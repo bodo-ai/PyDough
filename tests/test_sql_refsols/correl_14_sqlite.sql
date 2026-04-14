@@ -1,7 +1,7 @@
 WITH _s4 AS (
   SELECT
     partsupp.ps_suppkey,
-    SUM(IIF(NOT part.p_retailprice IS NULL, 1, 0)) AS sum_expr,
+    SUM(NOT part.p_retailprice IS NULL) AS sum_expr,
     SUM(part.p_retailprice) AS sum_p_retailprice
   FROM tpch.supplier AS supplier
   JOIN tpch.partsupp AS partsupp
