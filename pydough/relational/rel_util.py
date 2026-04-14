@@ -986,6 +986,7 @@ def rewrite_count_ndistinct(
             rhs_columns.add(join_col_key)
 
     new_aggregations: dict[str, CallExpression] = {}
+    new_agg: CallExpression
     for agg_key, agg_value in node.aggregations.items():
         match agg_value.op:
             case pydop.COUNT if not agg_value.inputs:
@@ -995,37 +996,56 @@ def rewrite_count_ndistinct(
                     return node
 
                 # Rewrite COUNT(*) → NDISTINCT(rhs_key)
-                ndistinct = CallExpression(
+                new_agg = CallExpression(
                     pydop.NDISTINCT,
                     agg_value.data_type,
                     [add_input_name(rhs_key, None)],
                 )
-                new_aggregations[agg_key] = ndistinct
+                new_aggregations[agg_key] = new_agg
 
             case pydop.MIN | pydop.MAX | pydop.ANYTHING:
-                # It can only reference columns from the RHS
-                if not only_references_columns(agg_value, rhs_columns):
-                    return node
+                # Special case: input is the LHS uniqueness key
+                agg_arg: RelationalExpression = agg_value.inputs[0]
+                assert isinstance(lhs_key, ColumnReference)
+                if (
+                    isinstance(agg_arg, ColumnReference)
+                    and agg_arg.name == lhs_key.name
+                ):
+                    if frozenset([lhs_key.name]) not in input_unique_sets:
+                        return node
 
-                # Inline expressions
-                agg_sub: dict[RelationalExpression, RelationalExpression] = {}
-                for col_name in rhs_columns:
-                    agg_sub[ColumnReference(col_name, agg_value.data_type)] = (
-                        add_input_name(
-                            ColumnReference(col_name, agg_value.data_type), None
-                        )
+                    # Rewrite MIN(lhs_key) → MIN(rhs_key)
+                    new_agg = CallExpression(
+                        agg_value.op,
+                        agg_value.data_type,
+                        [add_input_name(rhs_key, None)],
                     )
-                new_input_arg: RelationalExpression = apply_substitution(
-                    agg_value.inputs[0], agg_sub, {}
-                )
+                    new_aggregations[agg_key] = new_agg
 
-                min_input = CallExpression(
-                    agg_value.op,
-                    agg_value.data_type,
-                    [new_input_arg],
-                )
+                else:
+                    # It can only reference columns from the RHS
+                    if not only_references_columns(agg_arg, rhs_columns):
+                        return node
 
-                new_aggregations[agg_key] = min_input
+                    # Inline expressions
+                    agg_sub: dict[RelationalExpression, RelationalExpression] = {}
+                    for col_name in rhs_columns:
+                        agg_sub[ColumnReference(col_name, agg_arg.data_type)] = (
+                            add_input_name(
+                                ColumnReference(col_name, agg_arg.data_type), None
+                            )
+                        )
+                    new_input_arg: RelationalExpression = apply_substitution(
+                        agg_arg, agg_sub, {}
+                    )
+
+                    new_agg = CallExpression(
+                        agg_value.op,
+                        agg_value.data_type,
+                        [new_input_arg],
+                    )
+
+                    new_aggregations[agg_key] = new_agg
 
             case _:
                 return node
