@@ -51,7 +51,9 @@ jobs:
           - 27017:27017
       cassandra:
         image: bodoai1/pydough-cassandra-tpch:latest
-        command: ["--memory=4g", "--memory-swap=6g"]
+        options: >-
+          --memory=4g
+          --memory-swap=6g
         env:
           # Set environment variables for Cassandra container
           MAX_HEAP_SIZE: "2G"
@@ -78,11 +80,6 @@ jobs:
             MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         ports:
             - "8080:8080"
-        depends_on:
-            - postgres
-            - mysql
-            - mongo
-            - cassandra
     env:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}

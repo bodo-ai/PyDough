@@ -1749,10 +1749,6 @@ class HybridTranslator:
         """
         # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
-        print()
-        print(node.to_tree_string())
-        print()
-        print(hybrid)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common
