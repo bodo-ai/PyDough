@@ -1,5 +1,5 @@
 SELECT
-  PART.p_partkey AS key,
+  PART.p_partkey AS "key",
   REGION.r_name AS region,
   DENSE_RANK() OVER (PARTITION BY NATION.n_regionkey ORDER BY PART.p_size DESC, PART.p_container DESC, PART.p_type DESC) AS rank
 FROM TPCH.REGION REGION

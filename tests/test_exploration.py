@@ -59,6 +59,7 @@ from tests.test_pydough_functions.exploration_examples import (
     udf_positive_impl,
     udf_ranking_impl,
     udf_relmin_impl,
+    view_collection_exploration_impl,
 )
 from tests.testing_utilities import graph_fetcher
 
@@ -1387,6 +1388,46 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """,
             ),
             id="dataframe_collection",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                view_collection_exploration_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── ViewGeneratedCollection(name='orders_view', columns=['key', 'status'])
+
+This node accesses user-generated collection 'orders_view'.
+Columns: key, status
+This collection is a materialized view.
+Unique columns: key, status
+Created with replace=False
+
+The following terms will be included in the result if this collection is executed:
+  key, status
+
+The collection has access to the following expressions:
+  key, status
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node accesses user-generated collection 'orders_view'.
+Columns: key, status
+This collection is a materialized view.
+
+The collection has access to the following expressions:
+  key, status
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="view_collection",
         ),
         pytest.param(
             (

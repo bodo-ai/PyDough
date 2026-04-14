@@ -49,6 +49,7 @@ __all__ = [
     "udf_positive_impl",
     "udf_ranking_impl",
     "udf_relmin_impl",
+    "view_collection_exploration_impl",
 ]
 
 from collections.abc import Callable
@@ -249,6 +250,23 @@ def range_collection_exploration_impl() -> UnqualifiedNode:
 def dataframe_collection_exploration_impl() -> UnqualifiedNode:
     df = pd.DataFrame({"id": [1]})
     return pydough.dataframe_collection("df_coll", df, ["id"])
+
+
+def view_collection_exploration_impl() -> UnqualifiedNode:
+    from pydough.types import NumericType, StringType
+    from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+    from pydough.user_collections.view_collection import ViewGeneratedCollection
+
+    collection = ViewGeneratedCollection(
+        name="orders_view",
+        columns=["key", "status"],
+        types=[NumericType(), StringType()],
+        is_view=True,
+        is_replace=False,
+        is_temp=False,
+        unique_columns=[["key", "status"]],
+    )
+    return UnqualifiedGeneratedCollection(collection)
 
 
 def udf_format_datetime_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:

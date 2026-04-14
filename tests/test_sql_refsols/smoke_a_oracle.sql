@@ -1,5 +1,5 @@
 SELECT
-  p_partkey AS key,
+  p_partkey AS "key",
   TRUNC(
     CAST(NVL(SUBSTR(p_brand, CASE WHEN ABS(-2) < LENGTH(p_brand) THEN -2 ELSE 1 END), '') || '' || NVL(SUBSTR(p_brand, 8), '') || '' || NVL(
       SUBSTR(

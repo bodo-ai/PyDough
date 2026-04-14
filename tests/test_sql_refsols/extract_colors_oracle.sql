@@ -1,5 +1,5 @@
 SELECT
-  p_partkey AS key,
+  p_partkey AS "key",
   UPPER(
     REGEXP_SUBSTR(
       p_name,

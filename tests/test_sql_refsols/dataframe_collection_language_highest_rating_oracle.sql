@@ -9,7 +9,7 @@ WITH "_T" AS (
     (15122, 'Imperative Programming', 'C'),
     (15150, 'Functional Programming', 'SML'),
     (15210, 'Parallel Algorithms', 'SML'),
-    (15251, 'Theoretical CS', NULL)) AS CLASSES(KEY, CLASS_NAME, LANGUAGE)
+    (15251, 'Theoretical CS', NULL)) AS CLASSES("KEY", CLASS_NAME, LANGUAGE)
   JOIN (VALUES
     (15112, 1, '2020-09-01', 11.39),
     (15122, 2, '2020-09-01', 9.22),
@@ -41,7 +41,7 @@ WITH "_T" AS (
     (15150, 4, '2023-02-01', 9.73),
     (15210, 5, '2023-02-01', 0.12),
     (15251, 6, '2023-02-01', 4.99)) AS TEACHING(CLASS_KEY, TEACHER_ID, SEMESTER, RATING)
-    ON CLASSES.KEY = TEACHING.CLASS_KEY
+    ON CLASSES."KEY" = TEACHING.CLASS_KEY
   WHERE
     NOT CLASSES.LANGUAGE IS NULL
 )
