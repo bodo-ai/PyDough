@@ -1348,7 +1348,7 @@ def cassandra_docker_setup() -> None:
                         "-e",
                         "TPCH_TABLES=partsupp,nation",
                         "-e",
-                        'DEFOG_TABLES="sbDailyPrice,customers,sales,patients,treatments,adverse_events,coupons,wallet_merchant_balance_daily,user_setting_snapshot,conference,domain_conference,domain_publication,organization,writes,restaurant"',
+                        "DEFOG_TABLES=sbDailyPrice,customers,sales,patients,treatments,adverse_events,coupons,wallet_merchant_balance_daily,user_setting_snapshot,conference,domain_conference,domain_publication,organization,writes,restaurant",
                         "-p",
                         f"{CASSANDRA_PORT}:9042",
                         CASSANDRA_DOCKER_IMAGE,

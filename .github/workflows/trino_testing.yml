@@ -62,9 +62,9 @@ jobs:
           CASSANDRA_DC: "datacenter1"
           CASSANDRA_RACK: "rack1"
           CASSANDRA_HOST: 127.0.0.1
-          FILTER_TABLES: "true"
-          TPCH_TABLES: "partsupp,nation"
-          DEFOG_TABLES: "sbDailyPrice,customers,sales,patients,treatments,adverse_events,coupons,wallet_merchant_balance_daily,user_setting_snapshot,conference,domain_conference,domain_publication,organization,writes,restaurant"
+          FILTER_TABLES: true
+          TPCH_TABLES: partsupp,nation
+          DEFOG_TABLES: sbDailyPrice,customers,sales,patients,treatments,adverse_events,coupons,wallet_merchant_balance_daily,user_setting_snapshot,conference,domain_conference,domain_publication,organization,writes,restaurant
         ports:
           - 9042:9042
       trino:

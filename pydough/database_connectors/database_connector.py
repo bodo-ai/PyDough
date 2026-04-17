@@ -227,6 +227,11 @@ class DatabaseDialect(Enum):
                     temp_table=False,
                     temp_view=False,
                 )
+            case DatabaseDialect.TRINO:
+                return CreateCapabilities(
+                    temp_table=False,
+                    temp_view=False,
+                )
             case _:
                 return CreateCapabilities(
                     replace_table=False,
