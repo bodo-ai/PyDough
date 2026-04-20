@@ -5142,10 +5142,10 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
-                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
-                "result = TPCH.CALCULATE(any=ANYTHING(customers.WHERE(HAS(selected_orders)).name))",
+                "selected_orders = orders.WHERE((clerk == 'Clerk#000000470') & (total_price == 252004.18))\n"
+                "result = TPCH.CALCULATE(any_customer=ANYTHING(customers.WHERE(HAS(selected_orders)).name))",
                 "TPCH",
-                lambda: pd.DataFrame({"any": ["Customer#000149998"]}),
+                lambda: pd.DataFrame({"any_customer": ["Customer#000039136"]}),
                 "rewrite_any_inner_rhs",
             ),
             id="rewrite_any_inner_rhs",

@@ -3,13 +3,12 @@ WITH _u_0 AS (
     o_custkey AS _u_1
   FROM tpch.ORDERS
   WHERE
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) = 1994
-    AND o_orderpriority = '1-URGENT'
+    o_clerk = 'Clerk#000000470' AND o_totalprice = 252004.18
   GROUP BY
     1
 )
 SELECT
-  ANY_VALUE(CUSTOMER.c_name) AS any
+  ANY_VALUE(CUSTOMER.c_name) AS any_customer
 FROM tpch.CUSTOMER AS CUSTOMER
 LEFT JOIN _u_0 AS _u_0
   ON CUSTOMER.c_custkey = _u_0._u_1
