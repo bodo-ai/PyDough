@@ -26,7 +26,7 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     bubble_uniqueness,
     extract_equijoin_keys,
-    rewrite_count_ndistinct,
+    rewrite_aggregations_on_join,
 )
 from pydough.types import BooleanType, NumericType
 
@@ -268,7 +268,7 @@ def aggregation_uniqueness_helper(
                 # If the aggregation was not deleted, attempt to rewrite COUNT to
                 # NDISTINCT to a non-aggregate expression if the input
                 # uniqueness allows for it
-                node = rewrite_count_ndistinct(node, input_uniqueness)
+                node = rewrite_aggregations_on_join(node, input_uniqueness)
             return node, output_uniqueness
         # For joins, gather the uniqueness information from each input, then
         # infer the combined uniqueness information after joining.

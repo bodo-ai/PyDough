@@ -1,7 +1,5 @@
 SELECT
-  MIN(o_custkey) AS min_k,
-  MAX(o_custkey) AS max_k,
-  COUNT(*) AS n
+  MIN(o_custkey) AS min_k
 FROM tpch.orders
 WHERE
   CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) = 1994

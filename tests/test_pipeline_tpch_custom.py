@@ -5125,24 +5125,40 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "selected_orders = customers.CALCULATE(c_key=key).orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
                 "result = TPCH.CALCULATE(min_k=MIN(selected_orders.c_key), max_k=MAX(selected_orders.c_key), n=COUNT(selected_orders))",
                 "TPCH",
-                lambda: pd.DataFrame(
-                    {"min_k": [36049], "max_k": [36049], "n": [36049]}
-                ),
+                lambda: pd.DataFrame({"min_k": [2], "max_k": [149998], "n": [45877]}),
                 "rewrite_min_inner",
             ),
             id="rewrite_min_inner",
         ),
         pytest.param(
             PyDoughPandasTest(
-                "selected_orders = customers.CALCULATE(c_key=key).orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
-                "result = TPCH.CALCULATE(min_k=MIN(selected_orders.customer_key), max_k=MAX(selected_orders.customer_key), n=COUNT(selected_orders))",
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(min_k=MIN(customers.WHERE(HAS(selected_orders)).key))",
                 "TPCH",
-                lambda: pd.DataFrame(
-                    {"min_k": [36049], "max_k": [36049], "n": [36049]}
-                ),
+                lambda: pd.DataFrame({"min_k": [2]}),
                 "rewrite_min_inner_rhs",
             ),
             id="rewrite_min_inner_rhs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(any=ANYTHING(customers.WHERE(HAS(selected_orders)).name))",
+                "TPCH",
+                lambda: pd.DataFrame({"any": ["Customer#000149998"]}),
+                "rewrite_any_inner_rhs",
+            ),
+            id="rewrite_any_inner_rhs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_with_i = nations.WHERE(STARTSWITH(name, 'I'))\n"
+                "result = TPCH.CALCULATE(min_region=MIN(regions.WHERE(HAS(nations_with_i)).key))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_region": [2]}),
+                "rewrite_min_region",
+            ),
+            id="rewrite_min_region",
         ),
     ],
 )

@@ -1,4 +1,4 @@
-ROOT(columns=[('min_k', min_o_custkey), ('max_k', max_o_custkey), ('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'max_o_custkey': MAX(o_custkey), 'min_o_custkey': MIN(o_custkey), 'n_rows': COUNT()})
+ROOT(columns=[('min_k', min_o_custkey)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'min_o_custkey': MIN(o_custkey)})
   FILTER(condition=(YEAR(o_orderdate) == 1994:numeric) & (o_orderpriority == '1-URGENT':string), columns={'o_custkey': o_custkey})
    SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority})
