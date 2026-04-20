@@ -9,7 +9,7 @@ The exploration module has the following notable APIs available for use:
 - `explain`: A function that provides detailed explanations of PyDough metadata objects and unqualified nodes.
 - `explain_structure`: A function that provides detailed explanations about the overall structure of a PyDough metadata graph.
 - `explain_term`: A function that provides detailed explanations of PyDough unqualified nodes within the context of another PyDough unqualified node.
-- `explain_llm`: A function that returns a structured, JSON-serialisable description of a PyDough collection expression, designed for programmatic consumption by LLMs.
+- `explain_llm`: A function that returns a structured description of a PyDough collection expression for LLM consumption. Returns a JSON-serialisable dict by default (`format="json"`) or a markdown string (`format="md"`) suitable for use in LLM judge prompts.
 
 The APIs take an optional `session` argument which can be used to specify the PyDough session to use for the exploration.
 
