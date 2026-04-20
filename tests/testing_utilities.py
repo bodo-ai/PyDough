@@ -1397,7 +1397,6 @@ class PyDoughPandasTest:
                 )
 
         # Perform the comparison between the result and the reference solution
-        # breakpoint()
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )
