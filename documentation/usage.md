@@ -20,6 +20,7 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
    * [`pydough.explain_term`](#pydoughexplain_term)
+   * [`pydough.explain_llm`](#pydoughexplain_llm)
 - [Logging](#logging)
 
 <!-- TOC end -->
@@ -1300,6 +1301,151 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(AVG(customers.acctbal))
+```
+
+<!-- TOC --><a name="pydoughexplain_llm"></a>
+### `pydough.explain_llm`
+
+The `explain_llm` API returns a structured, JSON-serialisable description of a PyDough collection expression. Unlike `explain`, which returns human-readable prose, `explain_llm` is designed for programmatic consumption — particularly by LLMs that need to validate, diff, or self-correct PyDough code.
+
+The output always has a consistent shape regardless of whether the expression is valid:
+
+```python
+# Success
+{
+    "error": False,
+    "tree_string": "...",   # canonical tree for diffing
+    "steps": [...],          # ordered list of operation steps
+    "schema": {...}          # source collection, output columns and types
+}
+
+# Failure (unrecognised term, wrong type, etc.)
+{
+    "error": True,
+    "message": "Unrecognised term 'typo'. Did you mean: name?",
+    "tree_string": None,
+    "steps": [],
+    "schema": None
+}
+```
+
+The `explain_llm` API has the following optional argument:
+* `session` (default None): if provided, specifies what configs etc. to use when qualifying the expression (if not provided, uses `pydough.active_session`).
+
+Each entry in `steps` represents one operation in execution order (earliest first). Every step has:
+* `order` — 1-based position in the chain
+* `type` — stable string tag: `"GlobalContext"`, `"TableCollection"`, `"Cross"`, `"SubCollection"`, `"Where"`, `"Calculate"`, `"OrderBy"`, `"TopK"`, `"PartitionBy"`, `"PartitionChild"`, `"Singular"`, `"UserGeneratedCollection"`
+* `description` — short human-readable phrase
+* `available_terms` — `{"expressions": [...], "collections": [...]}` showing what is in scope at this step
+* `notes` — list of strings; always present, may be empty
+
+The `schema` section (when `"error"` is `False`) includes:
+* `source_collection` — the root table name, or `null` for graph-level expressions
+* `available_expressions`, `available_collections` — terms in scope at the final step
+* `output_columns` — sorted list of explicitly computed column names (only non-empty when the expression ends with a `CALCULATE`)
+* `column_types` — map of column name → PyDough type string (e.g. `"string"`, `"numeric"`)
+
+**Example — simple filter and calculate:**
+
+```py
+%%pydough
+result = nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
+pydough.explain_llm(result)
+```
+
+```json
+{
+  "error": false,
+  "tree_string": "──┬─ TPCH\n  ├─── TableCollection[nations]\n  ├─┬─ Where[...]\n  │ └─ ...\n  └─── Calculate[key=key, name=name]",
+  "steps": [
+    {
+      "order": 1, "type": "GlobalContext",
+      "description": "Entry point: the graph-level context.",
+      "available_terms": {"expressions": [], "collections": ["customers", "nations", "regions", ...]},
+      "notes": []
+    },
+    {
+      "order": 2, "type": "TableCollection",
+      "description": "Accesses the 'nations' collection.",
+      "collection": "nations",
+      "available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]},
+      "notes": []
+    },
+    {
+      "order": 3, "type": "Where",
+      "description": "Filters rows to those matching the given conditions.",
+      "conditions": ["region.name == 'ASIA'"],
+      "condition_summary": "region.name == 'ASIA'",
+      "available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]},
+      "notes": ["Only rows satisfying these conditions are retained in all downstream steps."]
+    },
+    {
+      "order": 4, "type": "Calculate",
+      "description": "Adds computed expressions to the collection.",
+      "terms": ["key", "name"],
+      "term_details": {
+        "key": {"kind": "Reference", "text": "key", "term_name": "key"},
+        "name": {"kind": "Reference", "text": "name", "term_name": "name"}
+      },
+      "available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]},
+      "notes": []
+    }
+  ],
+  "schema": {
+    "source_collection": "nations",
+    "available_expressions": ["comment", "key", "name", "region_key"],
+    "available_collections": ["customers", "region", "suppliers"],
+    "output_columns": ["key", "name"],
+    "column_types": {"key": "numeric", "name": "string"}
+  }
+}
+```
+
+**Example — aggregation with implicit scoping note:**
+
+```py
+%%pydough
+result = customers.CALCULATE(key, n_orders=COUNT(orders))
+pydough.explain_llm(result)
+```
+
+The `Calculate` step will include a `term_details` entry for `n_orders` with `"kind": "Aggregation"`, and a note explaining that `orders` is scoped to each `customers` row via relationship navigation (not an explicit filter):
+
+```json
+"term_details": {
+  "n_orders": {
+    "kind": "Aggregation",
+    "text": "COUNT(orders)",
+    "function": "COUNT",
+    "args": [{
+      "name": "orders",
+      "access_path": ["orders"],
+      "filters": [],
+      "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path."
+    }]
+  }
+},
+"notes": [
+  "Note: 'n_orders' aggregates 'orders' — scoping is implicit via 'orders' relationship navigation, not an explicit filter."
+]
+```
+
+**Example — unrecognised term (LLM self-correction):**
+
+```py
+%%pydough
+result = nations.WHERE(typo_field == "ASIA")
+pydough.explain_llm(result)
+```
+
+```json
+{
+  "error": true,
+  "message": "Unrecognized term of TPCH.nations: 'typo_field'. Did you mean: key, name, region_key?",
+  "tree_string": null,
+  "steps": [],
+  "schema": null
+}
 ```
 
 <!-- TOC --><a name="logging"></a>
