@@ -1306,7 +1306,7 @@ For example, the following is valid:
 <!-- TOC --><a name="pydoughexplain_llm"></a>
 ### `pydough.explain_llm`
 
-The `explain_llm` API returns a structured, JSON-serialisable description of a PyDough collection expression. Unlike `explain`, which returns human-readable prose, `explain_llm` is designed for programmatic consumption — particularly by LLMs that need to validate, diff, or self-correct PyDough code.
+The `explain_llm` API returns a structured description of a PyDough collection expression. Unlike `explain`, which returns human-readable prose, `explain_llm` is designed for programmatic consumption — particularly by LLMs that need to validate, diff, or self-correct PyDough code.
 
 The output always has a consistent shape regardless of whether the expression is valid:
 
@@ -1314,36 +1314,38 @@ The output always has a consistent shape regardless of whether the expression is
 # Success
 {
     "error": False,
-    "tree_string": "...",   # canonical tree for diffing
+    "query_summary": "...",  # deterministic plain-English sentence
     "steps": [...],          # ordered list of operation steps
-    "schema": {...}          # source collection, output columns and types
+    "schema": {...}          # source collection, output columns, ordering, limit
 }
 
 # Failure (unrecognised term, wrong type, etc.)
 {
     "error": True,
     "message": "Unrecognised term 'typo'. Did you mean: name?",
-    "tree_string": None,
     "steps": [],
     "schema": None
 }
 ```
 
-The `explain_llm` API has the following optional argument:
-* `session` (default None): if provided, specifies what configs etc. to use when qualifying the expression (if not provided, uses `pydough.active_session`).
+The `explain_llm` API has the following optional arguments:
+* `session` (default `None`): if provided, specifies what configs etc. to use when qualifying the expression (if not provided, uses `pydough.active_session`).
+* `format` (default `"json"`): `"json"` returns a JSON-serialisable dict; `"md"` returns a markdown string with the same information structured into `## Query Summary`, `## Steps`, and `## Schema` sections — easier for an LLM judge to read in a prompt.
 
 Each entry in `steps` represents one operation in execution order (earliest first). Every step has:
 * `order` — 1-based position in the chain
 * `type` — stable string tag: `"GlobalContext"`, `"TableCollection"`, `"Cross"`, `"SubCollection"`, `"Where"`, `"Calculate"`, `"OrderBy"`, `"TopK"`, `"PartitionBy"`, `"PartitionChild"`, `"Singular"`, `"UserGeneratedCollection"`
 * `description` — short human-readable phrase
-* `available_terms` — `{"expressions": [...], "collections": [...]}` showing what is in scope at this step
+* `debug` — `{"available_terms": {"expressions": [...], "collections": [...]}}` — scope information, separated from the main payload so LLM judges are not distracted by fields irrelevant to correctness
 * `notes` — list of strings; always present, may be empty
 
 The `schema` section (when `"error"` is `False`) includes:
 * `source_collection` — the root table name, or `null` for graph-level expressions
-* `available_expressions`, `available_collections` — terms in scope at the final step
-* `output_columns` — sorted list of explicitly computed column names (only non-empty when the expression ends with a `CALCULATE`)
+* `available_expressions` — expression names in scope at the final step
+* `output_columns` — explicitly computed column names (only non-empty when the expression ends with `CALCULATE`)
 * `column_types` — map of column name → PyDough type string (e.g. `"string"`, `"numeric"`)
+* `ordering` — list of `{"text": ..., "direction": "ASC"|"DESC", "nulls": "FIRST"|"LAST"}` from the last `ORDER_BY` or `TOP_K`; empty list when no sort is present
+* `limit` — record limit from `TOP_K`; `null` otherwise
 
 **Example — simple filter and calculate:**
 
@@ -1356,47 +1358,48 @@ pydough.explain_llm(result)
 ```json
 {
   "error": false,
-  "tree_string": "──┬─ TPCH\n  ├─── TableCollection[nations]\n  ├─┬─ Where[...]\n  │ └─ ...\n  └─── Calculate[key=key, name=name]",
+  "query_summary": "Accesses 'nations', filtered to rows where region.name == 'ASIA', selecting key, name.",
   "steps": [
     {
       "order": 1, "type": "GlobalContext",
       "description": "Entry point: the graph-level context.",
-      "available_terms": {"expressions": [], "collections": ["customers", "nations", "regions", ...]},
+      "debug": {"available_terms": {"expressions": [], "collections": ["customers", "nations", "regions", "..."]}},
       "notes": []
     },
     {
       "order": 2, "type": "TableCollection",
       "description": "Accesses the 'nations' collection.",
       "collection": "nations",
-      "available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]},
+      "debug": {"available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]}},
       "notes": []
     },
     {
       "order": 3, "type": "Where",
       "description": "Filters rows to those matching the given conditions.",
-      "conditions": ["region.name == 'ASIA'"],
+      "conditions": [{"kind": "BinaryOp", "text": "region.name == 'ASIA'", "operator": "==", "left": {"kind": "ChildReference", "text": "region.name", "term_name": "name", "child_idx": 0}, "right": {"kind": "Literal", "text": "'ASIA'", "value": "ASIA", "data_type": "string"}}],
       "condition_summary": "region.name == 'ASIA'",
-      "available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]},
-      "notes": ["Only rows satisfying these conditions are retained in all downstream steps."]
+      "debug": {"available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]}},
+      "notes": []
     },
     {
       "order": 4, "type": "Calculate",
       "description": "Adds computed expressions to the collection.",
       "terms": ["key", "name"],
       "term_details": {
-        "key": {"kind": "Reference", "text": "key", "term_name": "key"},
-        "name": {"kind": "Reference", "text": "name", "term_name": "name"}
+        "key": {"kind": "Reference", "term_name": "key"},
+        "name": {"kind": "Reference", "term_name": "name"}
       },
-      "available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]},
+      "debug": {"available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]}},
       "notes": []
     }
   ],
   "schema": {
     "source_collection": "nations",
     "available_expressions": ["comment", "key", "name", "region_key"],
-    "available_collections": ["customers", "region", "suppliers"],
     "output_columns": ["key", "name"],
-    "column_types": {"key": "numeric", "name": "string"}
+    "column_types": {"key": "numeric", "name": "string"},
+    "ordering": [],
+    "limit": null
   }
 }
 ```
@@ -1442,10 +1445,56 @@ pydough.explain_llm(result)
 {
   "error": true,
   "message": "Unrecognized term of TPCH.nations: 'typo_field'. Did you mean: key, name, region_key?",
-  "tree_string": null,
   "steps": [],
   "schema": null
 }
+```
+
+**Example — markdown format for LLM judge prompts:**
+
+```py
+%%pydough
+result = nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
+print(pydough.explain_llm(result, format="md"))
+```
+
+```markdown
+## Query Summary
+
+Accesses 'nations', filtered to rows where region.name == 'ASIA', selecting key, name.
+
+## Steps
+
+### Step 1 — GlobalContext
+
+Entry point: the graph-level context.
+
+### Step 2 — TableCollection
+
+Accesses the 'nations' collection.
+
+- Collection: `nations`
+
+### Step 3 — Where
+
+Filters rows to those matching the given conditions.
+
+- Condition: `region.name == 'ASIA'`
+
+### Step 4 — Calculate
+
+Adds computed expressions to the collection.
+
+- Terms:
+  - `key` → reference
+  - `name` → reference
+
+## Schema
+
+- **Source collection:** `nations`
+- **Output columns:** `key` (numeric), `name` (string)
+- **Ordering:** _(none)_
+- **Limit:** _(none)_
 ```
 
 <!-- TOC --><a name="logging"></a>
