@@ -1542,10 +1542,10 @@ class PyDoughPandasTest:
                 )
 
         # Perform the comparison between the result and the reference solution
-        print()
-        print(result.to_string())
-        print()
-        print(refsol.to_string())
+        # print()
+        # print(result.to_string())
+        # print()
+        # print(refsol.to_string())
         pd.testing.assert_frame_equal(
             result,
             refsol,
