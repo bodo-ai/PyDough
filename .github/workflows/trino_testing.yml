@@ -47,6 +47,9 @@ jobs:
           MONGO_HOST: 127.0.0.1
           MONGO_USER: "root_user"
           MONGO_PASSWORD: "mongo_pwd"
+          FILTER_TABLES: true
+          TPCH_TABLES: region,supplier
+          DEFOG_TABLES: sbCustomer,salespersons,payments_received,doctors,diagnoses,concomitant_meds,merchants,wallet_user_balance_daily,user_sessions,cite,domain_author,domain_keyword,keyword,publication_keyword,location
         ports:
           - 27017:27017
       cassandra:

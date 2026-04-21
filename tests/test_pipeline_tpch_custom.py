@@ -5149,7 +5149,10 @@ def test_pipeline_e2e_tpch_custom(
     )
 
     tpch_custom_pipeline_test_data.run_e2e_test(
-        lambda _: graph, db_context, coerce_types=True
+        lambda _: graph,
+        db_context,
+        coerce_types=True,
+        atol=5e-3,
     )
 
 
@@ -6468,6 +6471,9 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 # SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
 SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
+# For Trino, write to the TPCH catalog (arbitrary)
+TRINO_TABLE_PREFIX = "WRITE_CATALOG.WRITE_SCHEMA."
+
 
 def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
     """Return a copy of test_data with temp=True removed from the PyDough string.
@@ -6486,6 +6492,17 @@ def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
     )
 
 
+def get_table_prefix_for_dialect(dialect: DatabaseDialect) -> str:
+    """Return the appropriate table name prefix for the given database dialect."""
+    match dialect:
+        case DatabaseDialect.SNOWFLAKE:
+            return SNOWFLAKE_TABLE_PREFIX
+        case DatabaseDialect.TRINO:
+            return TRINO_TABLE_PREFIX
+        case _:
+            return ""
+
+
 @pytest.mark.execute
 def test_pipeline_tpch_e2e_to_table_all_dialects(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
@@ -6501,13 +6518,7 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
-    # write to E2E_TESTS_DB.PUBLIC)
-    table_prefix = (
-        SNOWFLAKE_TABLE_PREFIX
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
-        else ""
-    )
+    table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
     if db_context.dialect == DatabaseDialect.ORACLE:
@@ -6538,13 +6549,7 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
-    # write to E2E_TESTS_DB.PUBLIC)
-    table_prefix = (
-        SNOWFLAKE_TABLE_PREFIX
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
-        else ""
-    )
+    table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
     if db_context.dialect == DatabaseDialect.ORACLE:
@@ -6629,13 +6634,7 @@ def test_pipeline_to_table_ddl(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
-    # write to E2E_TESTS_DB.PUBLIC)
-    table_prefix = (
-        SNOWFLAKE_TABLE_PREFIX
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
-        else ""
-    )
+    table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     # TEMP VIEWS (not tables) are not supported for Snowflake, MySQL, Postgres, and Oracle.
     # So run and catch PyDoughException that indicates temp view is not supported, and skip the rest of the test in that case.

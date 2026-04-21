@@ -6,18 +6,14 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-          ) / LENGTH(' ')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -26,9 +22,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-          ) / LENGTH(' ')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -37,9 +31,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-          ) / LENGTH(' ')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -53,9 +45,7 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -64,9 +54,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-          ) / LENGTH(' ')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -79,9 +67,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-          ) / LENGTH(' ')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -94,9 +80,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-          ) / LENGTH(' ')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -112,18 +96,14 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-        ) / LENGTH('.')
+        LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-          ) / LENGTH('.')
+          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -132,9 +112,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-          ) / LENGTH('.')
+          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -143,9 +121,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-          ) / LENGTH('.')
+          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -159,9 +135,7 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-        ) / LENGTH('.')
+        LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -170,9 +144,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-          ) / LENGTH('.')
+          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -185,9 +157,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-          ) / LENGTH('.')
+          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -200,9 +170,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
-          ) / LENGTH('.')
+          LENGTH(sbcustemail) - LENGTH(REPLACE(sbcustemail, '.'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -218,18 +186,14 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-        ) / LENGTH('-')
+        LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -238,9 +202,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -249,9 +211,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -265,9 +225,7 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-        ) / LENGTH('-')
+        LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -276,9 +234,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -291,9 +247,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -306,9 +260,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -326,7 +278,7 @@ SELECT
       WHEN (
         (
           LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-        ) / LENGTH('00')
+        ) / 2
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -335,7 +287,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-          ) / LENGTH('00')
+          ) / 2
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -346,7 +298,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-          ) / LENGTH('00')
+          ) / 2
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -357,7 +309,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-          ) / LENGTH('00')
+          ) / 2
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -373,7 +325,7 @@ SELECT
       WHEN (
         (
           LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-        ) / LENGTH('00')
+        ) / 2
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -384,7 +336,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-          ) / LENGTH('00')
+          ) / 2
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -399,7 +351,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-          ) / LENGTH('00')
+          ) / 2
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -414,7 +366,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '00'))
-          ) / LENGTH('00')
+          ) / 2
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -430,18 +382,14 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
-        ) / LENGTH('!')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
-          ) / LENGTH('!')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -450,9 +398,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
-          ) / LENGTH('!')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -461,9 +407,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
-          ) / LENGTH('!')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '!'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -477,9 +421,7 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
-        ) / LENGTH('@')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -488,9 +430,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
-          ) / LENGTH('@')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -503,9 +443,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
-          ) / LENGTH('@')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -518,9 +456,7 @@ SELECT
         ) > 0
         THEN 0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
-          ) / LENGTH('@')
+          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '@'))
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -538,7 +474,7 @@ SELECT
       WHEN (
         (
           LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, 'aa'))
-        ) / LENGTH('aa')
+        ) / 2
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -547,7 +483,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, 'aa'))
-          ) / LENGTH('aa')
+          ) / 2
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -558,7 +494,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, 'aa'))
-          ) / LENGTH('aa')
+          ) / 2
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -569,7 +505,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, 'aa'))
-          ) / LENGTH('aa')
+          ) / 2
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -585,7 +521,7 @@ SELECT
       WHEN (
         (
           LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '#$*'))
-        ) / LENGTH('#$*')
+        ) / 3
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
@@ -596,7 +532,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '#$*'))
-          ) / LENGTH('#$*')
+          ) / 3
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -611,7 +547,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '#$*'))
-          ) / LENGTH('#$*')
+          ) / 3
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -626,7 +562,7 @@ SELECT
         ELSE (
           (
             LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, '#$*'))
-          ) / LENGTH('#$*')
+          ) / 3
         ) + 2 + (
           0 - TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         )
@@ -647,18 +583,14 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH('') - LENGTH(REPLACE('', ' '))
-        ) / LENGTH(' ')
+        0 - LENGTH(REPLACE('', ' '))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH('') - LENGTH(REPLACE('', ' '))
-          ) / LENGTH(' ')
+          0 - LENGTH(REPLACE('', ' '))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -667,9 +599,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH('') - LENGTH(REPLACE('', ' '))
-          ) / LENGTH(' ')
+          0 - LENGTH(REPLACE('', ' '))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -678,9 +608,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH('') - LENGTH(REPLACE('', ' '))
-          ) / LENGTH(' ')
+          0 - LENGTH(REPLACE('', ' '))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -694,9 +622,7 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) >= 0
       THEN 1
       ELSE NULL
@@ -766,9 +692,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-          ) / LENGTH('-')
+          LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
         ) >= 0
         THEN 1
         ELSE NULL
@@ -780,7 +704,46 @@ SELECT
     1,
     CASE
       WHEN (
-        (
+        LENGTH(
+          REGEXP_SUBSTR(
+            sbcustphone,
+            '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+            1,
+            CASE
+              WHEN (
+                LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
+              ) >= 0
+              THEN 1
+              ELSE NULL
+            END,
+            NULL,
+            1
+          )
+        ) - LENGTH(
+          REPLACE(
+            REGEXP_SUBSTR(
+              sbcustphone,
+              '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+              1,
+              CASE
+                WHEN (
+                  LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
+                ) >= 0
+                THEN 1
+                ELSE NULL
+              END,
+              NULL,
+              1
+            ),
+            '5'
+          )
+        )
+      ) + 1 >= CASE
+        WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
+        THEN 1
+        WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
+        THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
+        ELSE (
           LENGTH(
             REGEXP_SUBSTR(
               sbcustphone,
@@ -788,9 +751,7 @@ SELECT
               1,
               CASE
                 WHEN (
-                  (
-                    LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                  ) / LENGTH('-')
+                  LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
                 ) >= 0
                 THEN 1
                 ELSE NULL
@@ -806,9 +767,7 @@ SELECT
                 1,
                 CASE
                   WHEN (
-                    (
-                      LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                    ) / LENGTH('-')
+                    LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
                   ) >= 0
                   THEN 1
                   ELSE NULL
@@ -819,53 +778,6 @@ SELECT
               '5'
             )
           )
-        ) / LENGTH('5')
-      ) + 1 >= CASE
-        WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
-        THEN 1
-        WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
-        THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
-        ELSE (
-          (
-            LENGTH(
-              REGEXP_SUBSTR(
-                sbcustphone,
-                '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
-                1,
-                CASE
-                  WHEN (
-                    (
-                      LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                    ) / LENGTH('-')
-                  ) >= 0
-                  THEN 1
-                  ELSE NULL
-                END,
-                NULL,
-                1
-              )
-            ) - LENGTH(
-              REPLACE(
-                REGEXP_SUBSTR(
-                  sbcustphone,
-                  '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
-                  1,
-                  CASE
-                    WHEN (
-                      (
-                        LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                      ) / LENGTH('-')
-                    ) >= 0
-                    THEN 1
-                    ELSE NULL
-                  END,
-                  NULL,
-                  1
-                ),
-                '5'
-              )
-            )
-          ) / LENGTH('5')
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -874,46 +786,40 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(
+          LENGTH(
+            REGEXP_SUBSTR(
+              sbcustphone,
+              '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+              1,
+              CASE
+                WHEN (
+                  LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
+                ) >= 0
+                THEN 1
+                ELSE NULL
+              END,
+              NULL,
+              1
+            )
+          ) - LENGTH(
+            REPLACE(
               REGEXP_SUBSTR(
                 sbcustphone,
                 '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
                 1,
                 CASE
                   WHEN (
-                    (
-                      LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                    ) / LENGTH('-')
+                    LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
                   ) >= 0
                   THEN 1
                   ELSE NULL
                 END,
                 NULL,
                 1
-              )
-            ) - LENGTH(
-              REPLACE(
-                REGEXP_SUBSTR(
-                  sbcustphone,
-                  '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
-                  1,
-                  CASE
-                    WHEN (
-                      (
-                        LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                      ) / LENGTH('-')
-                    ) >= 0
-                    THEN 1
-                    ELSE NULL
-                  END,
-                  NULL,
-                  1
-                ),
-                '5'
-              )
+              ),
+              '5'
             )
-          ) / LENGTH('5')
+          )
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -922,46 +828,40 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(
+          LENGTH(
+            REGEXP_SUBSTR(
+              sbcustphone,
+              '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+              1,
+              CASE
+                WHEN (
+                  LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
+                ) >= 0
+                THEN 1
+                ELSE NULL
+              END,
+              NULL,
+              1
+            )
+          ) - LENGTH(
+            REPLACE(
               REGEXP_SUBSTR(
                 sbcustphone,
                 '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
                 1,
                 CASE
                   WHEN (
-                    (
-                      LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                    ) / LENGTH('-')
+                    LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
                   ) >= 0
                   THEN 1
                   ELSE NULL
                 END,
                 NULL,
                 1
-              )
-            ) - LENGTH(
-              REPLACE(
-                REGEXP_SUBSTR(
-                  sbcustphone,
-                  '(.*?)(' || REGEXP_REPLACE('-', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
-                  1,
-                  CASE
-                    WHEN (
-                      (
-                        LENGTH(sbcustphone) - LENGTH(REPLACE(sbcustphone, '-'))
-                      ) / LENGTH('-')
-                    ) >= 0
-                    THEN 1
-                    ELSE NULL
-                  END,
-                  NULL,
-                  1
-                ),
-                '5'
-              )
+              ),
+              '5'
             )
-          ) / LENGTH('5')
+          )
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL
@@ -975,18 +875,14 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
-        ) / LENGTH('0')
+        LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
       ) + 1 >= CASE
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') = 0
         THEN 1
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
-          ) / LENGTH('0')
+          LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       AND CASE
@@ -995,9 +891,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
-          ) / LENGTH('0')
+          LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END >= 1
       THEN CASE
@@ -1006,9 +900,7 @@ SELECT
         WHEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0') > 0
         THEN TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
         ELSE (
-          (
-            LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
-          ) / LENGTH('0')
+          LENGTH(sbcustpostalcode) - LENGTH(REPLACE(sbcustpostalcode, '0'))
         ) + 2 + TRUNC(CAST(SUBSTR(sbcustid, 2) AS DOUBLE PRECISION), '0')
       END
       ELSE NULL

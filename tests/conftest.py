@@ -1266,6 +1266,12 @@ def mongo_docker_setup() -> None:
                         "MONGO_USER=root_user",
                         "-e",
                         "MONGO_PASSWORD=mongo_pwd",
+                        "-e",
+                        "FILTER_TABLES=true",
+                        "-e",
+                        "TPCH_TABLES=region,supplier",
+                        "-e",
+                        "DEFOG_TABLES=sbCustomer,salespersons,payments_received,doctors,diagnoses,concomitant_meds,merchants,wallet_user_balance_daily,user_sessions,cite,domain_author,domain_keyword,keyword,publication_keyword,location",
                         "-p",
                         f"{MONGO_PORT}:27017",
                         MONGO_DOCKER_IMAGE,
@@ -1521,6 +1527,12 @@ def trino_conn_db_context(trino_docker_setup) -> DatabaseContext:
         user=TRINO_USER,
         timezone="UTC",
     )
+
+    # # Create a new catalog/schema that can be written to during testing
+    # cursor = connection.cursor()
+    # cursor.execute("CREATE CATALOG IF NOT EXISTS WRITE_CATALOG USING memory")
+    # cursor.execute("CREATE SCHEMA IF NOT EXISTS WRITE_CATALOG.WRITE_SCHEMA")
+    # cursor.commit()
 
     return load_database_context("trino", connection=connection)
 

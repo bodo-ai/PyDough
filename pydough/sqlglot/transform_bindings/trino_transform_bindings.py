@@ -167,7 +167,6 @@ class TrinoTransformBindings(BaseTransformBindings):
                 ),
                 expression=sqlglot_expressions.Literal.number(7),
             )
-            print(divion.sql("trino"))
             return sqlglot_expressions.Cast(
                 this=divion, to=sqlglot_expressions.DataType.build("BIGINT")
             )
@@ -233,15 +232,11 @@ class TrinoTransformBindings(BaseTransformBindings):
     def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         offset: int = (-self.start_of_week_offset) % 7
         dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
-        if offset == 6:
-            return dow_expr
         result = sqlglot_expressions.Mod(
             this=apply_parens(
-                sqlglot_expressions.Sub(
+                sqlglot_expressions.Add(
                     this=apply_parens(dow_expr),
-                    expression=sqlglot_expressions.Literal.number(
-                        self.start_of_week_offset + 1
-                    ),
+                    expression=sqlglot_expressions.Literal.number(offset - 1),
                 )
             ),
             expression=sqlglot_expressions.Literal.number(7),

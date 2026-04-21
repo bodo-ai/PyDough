@@ -2136,19 +2136,20 @@ def step_slicing():
 
 def sign():
     return (
-        daily_prices.CALCULATE(
-            high,
-            high_neg=-1 * high,
-            high_zero=0 * high,
-        )
-        .TOP_K(5, by=high.ASC())
+        daily_prices.TOP_K(5, by=(date.ASC(), ticker_id.ASC()))
+        .CALCULATE(exp=high - 185)
         .CALCULATE(
-            high,
-            high_neg,
-            high_zero,
-            sign_high=SIGN(high),
-            sign_high_neg=SIGN(high_neg),
-            sign_high_zero=SIGN(high_zero),
+            ticker_id,
+            exp,
+            sign_exp=SIGN(exp),
+            sign_neg_exp_a=SIGN(-exp),
+            sign_neg_exp_b=SIGN(-1.0 * exp),
+            sign_pos=SIGN(13),
+            sign_neg=SIGN(-0.5),
+            sign_zero=SIGN(0),
+            sign_exp_zero=SIGN(0 * exp),
+            sign_abs_exp=SIGN(ABS(exp)),
+            sign_neg_abs_exp=SIGN(-ABS(exp)),
         )
     )
 

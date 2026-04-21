@@ -27,7 +27,7 @@ SELECT
     END,
     CAST((
       (
-        DAY_OF_WEEK(o_orderdate) - 7
+        DAY_OF_WEEK(o_orderdate) + 0
       ) % 7
     ) AS VARCHAR)
   ) AS b,
@@ -63,11 +63,11 @@ SELECT
       CAST(DATE_TRUNC('DAY', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
     ) + (
       (
-        DAY_OF_WEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) - 7
+        DAY_OF_WEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) + 0
       ) % 7
     ) - (
       (
-        DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) - 7
+        DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) + 0
       ) % 7
     )
   ) AS DOUBLE) / 7 AS BIGINT) AS l,
@@ -97,7 +97,7 @@ SELECT
       'DAY',
       (
         (
-          DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) - 7
+          DAY_OF_WEEK(CAST(o_orderdate AS TIMESTAMP)) + 0
         ) % 7
       ) * -1,
       CAST(o_orderdate AS TIMESTAMP)

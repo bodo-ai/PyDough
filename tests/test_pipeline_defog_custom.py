@@ -967,17 +967,20 @@ def get_day_name(dt: pd.Timestamp):
                 "Broker",
                 lambda: pd.DataFrame(
                     {
-                        "high": [83.0, 83.6, 84.2, 84.8, 85.4],
+                        "transaction_id": ["T001", "T002", "T003", "T004", "T005"],
+                        "exp": [-32.5, 97.75, 3040, 0, 2340],
+                        "sign_exp": [-1, 1, 1, 0, 1],
+                        "sign_neg_exp_a": [1, -1, -1, 0, -1],
+                        "sign_neg_exp_b": [1, -1, -1, 0, -1],
+                        "sign_pos": [1] * 5,
+                        "sign_neg": [-1] * 5,
+                        "sign_zero": [0] * 5,
+                        "sign_zero_exp": [0] * 5,
+                        "sign_abs_exp": [1, 1, 1, 0, 1],
+                        "sign_neg_abs_exp": [-1, -1, -1, 0, -1],
                     }
-                ).assign(
-                    high_neg=lambda x: x["high"] * -1,
-                    high_zero=lambda x: x["high"] * 0,
-                    sign_high=1,
-                    sign_high_neg=-1,
-                    sign_high_zero=0,
                 ),
                 "sign",
-                skip_sql=True,
             ),
             id="sign",
         ),
