@@ -80,128 +80,6 @@ def test_pipeline_e2e_tpch_sf_params(
     )
 
 
-def simple_week_sampler():
-    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
-    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
-    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
-    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
-    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
-    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
-    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
-    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
-    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
-    return TPCH.CALCULATE(
-        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
-        sow1=DATETIME(y_dt, "start of week"),
-        sow2=DATETIME(y_dt2, "start of week"),
-        sow3=DATETIME(y_dt3, "start of week"),
-        sow4=DATETIME(y_dt4, "start of week"),
-        sow5=DATETIME(y_dt5, "start of week"),
-        sow6=DATETIME(y_dt6, "start of week"),
-        sow7=DATETIME(y_dt7, "start of week"),
-        sow8=DATETIME(y_dt8, "start of week"),
-        dayname1=DAYNAME(y_dt),
-        dayname2=DAYNAME(y_dt2),
-        dayname3=DAYNAME(y_dt3),
-        dayname4=DAYNAME(y_dt4),
-        dayname5=DAYNAME(y_dt5),
-        dayname6=DAYNAME(y_dt6),
-        dayname7=DAYNAME(y_dt7),
-        dayname8=DAYNAME(y_dt8),
-        dayofweek1=DAYOFWEEK(y_dt),
-        dayofweek2=DAYOFWEEK(y_dt2),
-        dayofweek3=DAYOFWEEK(y_dt3),
-        dayofweek4=DAYOFWEEK(y_dt4),
-        dayofweek5=DAYOFWEEK(y_dt5),
-        dayofweek6=DAYOFWEEK(y_dt6),
-        dayofweek7=DAYOFWEEK(y_dt7),
-        dayofweek8=DAYOFWEEK(y_dt8),
-    )
-
-
-@pytest.mark.snowflake
-@pytest.mark.execute
-def test_pipeline_e2e_tpch_simple_week(
-    get_sf_sample_graph: graph_fetcher,
-    sf_conn_db_context: DatabaseContext,
-    week_handling_config: PyDoughConfigs,
-):
-    """
-    Test executing simple_week_sampler using the tpch schemas with different
-    week configurations, comparing against expected results.
-    """
-    graph: GraphMetadata = get_sf_sample_graph("TPCH")
-    root: UnqualifiedNode = init_pydough_context(graph)(simple_week_sampler)()
-    result: pd.DataFrame = to_df(
-        root,
-        metadata=graph,
-        database=sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
-        config=week_handling_config,
-    )
-
-    # Generate expected DataFrame based on week_handling_config
-    start_of_week = week_handling_config.start_of_week
-    start_week_as_zero = week_handling_config.start_week_as_zero
-
-    x_dt = pd.Timestamp(2025, 3, 10, 11, 0, 0)
-    y_dt = pd.Timestamp(2025, 3, 14, 11, 0, 0)
-    y_dt2 = pd.Timestamp(2025, 3, 15, 11, 0, 0)
-    y_dt3 = pd.Timestamp(2025, 3, 16, 11, 0, 0)
-    y_dt4 = pd.Timestamp(2025, 3, 17, 11, 0, 0)
-    y_dt5 = pd.Timestamp(2025, 3, 18, 11, 0, 0)
-    y_dt6 = pd.Timestamp(2025, 3, 19, 11, 0, 0)
-    y_dt7 = pd.Timestamp(2025, 3, 20, 11, 0, 0)
-    y_dt8 = pd.Timestamp(2025, 3, 21, 11, 0, 0)
-
-    # Calculate weeks difference
-    x_sow = get_start_of_week(x_dt, start_of_week)
-    y_sow = get_start_of_week(y_dt, start_of_week)
-    weeks_diff = (y_sow - x_sow).days // 7
-
-    # Create lists to store calculated values
-    dates = [y_dt, y_dt2, y_dt3, y_dt4, y_dt5, y_dt6, y_dt7, y_dt8]
-    sows = []
-    daynames = []
-    dayofweeks = []
-
-    # Calculate values for each date in a loop
-    for dt in dates:
-        # Calculate start of week
-        sow = get_start_of_week(dt, start_of_week).strftime("%Y-%m-%d")
-        sows.append(sow)
-
-        # Get day name
-        dayname = dt.day_name()
-        daynames.append(dayname)
-
-        # Calculate day of week
-        dayofweek = get_day_of_week(dt, start_of_week, start_week_as_zero)
-        dayofweeks.append(dayofweek)
-
-    # Create dictionary for DataFrame
-    data_dict = {"WEEKS_DIFF": [weeks_diff]}
-
-    # Add start of week columns
-    for i in range(len(dates)):
-        data_dict[f"SOW{i + 1}"] = [sows[i]]
-
-    # Add day name columns
-    for i in range(len(dates)):
-        data_dict[f"DAYNAME{i + 1}"] = [daynames[i]]
-
-    # Add day of week columns
-    for i in range(len(dates)):
-        data_dict[f"DAYOFWEEK{i + 1}"] = [dayofweeks[i]]
-
-    # Create DataFrame with expected results
-    expected_df = pd.DataFrame(data_dict)
-    for col_name in result.columns:
-        result[col_name], expected_df[col_name] = harmonize_types(
-            result[col_name], expected_df[col_name]
-        )
-    pd.testing.assert_frame_equal(result, expected_df, check_dtype=False)
-
-
 @pytest.fixture
 def defog_sf_test_data(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
@@ -539,6 +417,7 @@ def test_defog_e2e(
     )
 
 
+@pytest.mark.custom_datasets
 @pytest.mark.snowflake
 @pytest.mark.execute
 def test_pipeline_e2e_snowflake_custom_datasets(

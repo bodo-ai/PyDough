@@ -1982,45 +1982,6 @@ def minutes_seconds_datediff():
     )
 
 
-def simple_week_sampler():
-    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
-    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
-    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
-    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
-    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
-    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
-    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
-    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
-    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
-    return Broker.CALCULATE(
-        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
-        sow1=DATETIME(y_dt, "start of week"),
-        sow2=DATETIME(y_dt2, "start of week"),
-        sow3=DATETIME(y_dt3, "start of week"),
-        sow4=DATETIME(y_dt4, "start of week"),
-        sow5=DATETIME(y_dt5, "start of week"),
-        sow6=DATETIME(y_dt6, "start of week"),
-        sow7=DATETIME(y_dt7, "start of week"),
-        sow8=DATETIME(y_dt8, "start of week"),
-        dayname1=DAYNAME(y_dt),
-        dayname2=DAYNAME(y_dt2),
-        dayname3=DAYNAME(y_dt3),
-        dayname4=DAYNAME(y_dt4),
-        dayname5=DAYNAME(y_dt5),
-        dayname6=DAYNAME(y_dt6),
-        dayname7=DAYNAME(y_dt7),
-        dayname8=DAYNAME(y_dt8),
-        dayofweek1=DAYOFWEEK(y_dt),
-        dayofweek2=DAYOFWEEK(y_dt2),
-        dayofweek3=DAYOFWEEK(y_dt3),
-        dayofweek4=DAYOFWEEK(y_dt4),
-        dayofweek5=DAYOFWEEK(y_dt5),
-        dayofweek6=DAYOFWEEK(y_dt6),
-        dayofweek7=DAYOFWEEK(y_dt7),
-        dayofweek8=DAYOFWEEK(y_dt8),
-    )
-
-
 def simple_week_sampler_tpch():
     x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
     y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
@@ -2175,19 +2136,20 @@ def step_slicing():
 
 def sign():
     return (
-        daily_prices.CALCULATE(
-            high,
-            high_neg=-1 * high,
-            high_zero=0 * high,
-        )
-        .TOP_K(5, by=high.ASC())
+        daily_prices.TOP_K(5, by=(date.ASC(), ticker_id.ASC()))
+        .CALCULATE(exp=high - 185)
         .CALCULATE(
-            high,
-            high_neg,
-            high_zero,
-            sign_high=SIGN(high),
-            sign_high_neg=SIGN(high_neg),
-            sign_high_zero=SIGN(high_zero),
+            ticker_id,
+            exp,
+            sign_exp=SIGN(exp),
+            sign_neg_exp_a=SIGN(-exp),
+            sign_neg_exp_b=SIGN(-1.0 * exp),
+            sign_pos=SIGN(13),
+            sign_neg=SIGN(-0.5),
+            sign_zero=SIGN(0),
+            sign_exp_zero=SIGN(0 * exp),
+            sign_abs_exp=SIGN(ABS(exp)),
+            sign_neg_abs_exp=SIGN(-ABS(exp)),
         )
     )
 
@@ -2616,11 +2578,11 @@ def string_format_specifiers_sqlite():
         # day of month: 01-31
         d1=STRING(static_date, "%d"),
         # day of month without leading zero: 1-31
-        d2=STRING("2023-07-15 14:30:45", "%e"),
+        d2=STRING(DATETIME("2023-07-15 14:30:45"), "%e"),
         # fractional seconds: SS.SSS
-        d3=STRING("2023-07-15 14:30:45", "%f"),
+        d3=STRING(DATETIME("2023-07-15 14:30:45"), "%f"),
         # ISO 8601 date: YYYY-MM-DD
-        d4=STRING("2023-07-15 14:30:45", "%F"),
+        d4=STRING(DATETIME("2023-07-15 14:30:45"), "%F"),
         # hour: 00-24
         d5=STRING(static_date, "%H"),
         # hour for 12-hour clock: 01-12
@@ -3670,41 +3632,41 @@ def agg_simplification_2():
 
 
 def simple_division_by_zero():
-    return lines.CALCULATE(computed_value=extended_price / discount).TOP_K(
-        1, by=computed_value.ASC(na_pos="first")
+    return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
+        computed_value=extended_price / discount
     )
 
 
 def division_with_multiple_ops():
     """Test: a*(c / b) + z pattern"""
-    return lines.CALCULATE(
+    return lines.TOP_K(1, by=(discount.ASC(), tax.ASC())).CALCULATE(
         computed_value=quantity * (extended_price / discount) + tax
-    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    )
 
 
 def division_with_complex_operands():
     """Test: (a+b)/(z*2) pattern"""
-    return lines.CALCULATE(
+    return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=(extended_price + tax) / (discount * 2)
-    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    )
 
 
 def division_with_keep_if_denom():
     """Test: x / KEEP_IF(y, y > threshold) - denominator already has KEEP_IF"""
-    return lines.CALCULATE(
+    return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / KEEP_IF(discount, discount > 0.05)
-    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    )
 
 
 def division_with_iff_denom_true_branch():
     """Test: x / IFF(cond, y, fallback) - division by IFF where divisor is in true branch"""
-    return lines.CALCULATE(
+    return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, discount, 1)
-    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    )
 
 
 def division_with_iff_denom_false_branch():
     """Test: x / IFF(cond, fallback, y) - division by IFF where divisor is in false branch"""
-    return lines.CALCULATE(
+    return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, 1, discount)
-    ).TOP_K(1, by=computed_value.ASC(na_pos="first"))
+    )

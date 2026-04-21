@@ -135,13 +135,9 @@ SELECT
   SUBSTRING(CAST(p_size AS TEXT) || '000', 1, 3) AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
-  CASE
-    WHEN LENGTH('o') = 0
-    THEN 0
-    ELSE CAST(CAST((
-      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
-    ) AS REAL) / LENGTH('o') AS INTEGER)
-  END + (
+  CAST(CAST((
+    LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+  ) AS REAL) AS INTEGER) + (
     CAST((
       INSTR(p_name, 'o') - 1
     ) AS REAL) / 100.0

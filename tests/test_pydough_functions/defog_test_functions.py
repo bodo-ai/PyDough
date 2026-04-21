@@ -869,18 +869,6 @@ def impl_defog_dealership_adv8():
         .ORDER_BY(month_start.ASC())
     )
 
-    # months_ago = pydough.range_collection("months_ago", "n", 1, 7).CALCULATE(n)
-    # selected_sales = sales.WHERE(
-    #     MONOTONIC(2022, YEAR(salesperson.hire_date), 2023) &
-    #     (DATEDIFF("months", sale_date, "now") == months_ago)
-    # )
-    # return (
-    #     months_ago
-    #     .CALCULATE(
-
-    #     )
-    # )
-
 
 def impl_defog_dealership_adv9():
     """
@@ -1502,7 +1490,7 @@ def impl_defog_ewallet_adv12():
     What is the total transaction amount for each coupon offered by merchant
     with ID 1? Return the coupon ID and total amount transacted with it.
     """
-    return coupons.WHERE(merchant_id == "1").CALCULATE(
+    return coupons.WHERE(merchant_id == 1).CALCULATE(
         coupon_id=cid, total_discount=SUM(transaction_used_in.amount)
     )
 
@@ -2363,9 +2351,10 @@ def impl_defog_dermtreatment_adv16():
     # Calculate the overall D7D100PIR
     return DermTreatment.CALCULATE(
         d7d100pir=(
-            AVG(valid_outcomes.day100_pasi_score) - AVG(valid_outcomes.day7_pasi_score)
+            AVG(FLOAT(valid_outcomes.day100_pasi_score))
+            - AVG(FLOAT(valid_outcomes.day7_pasi_score))
         )
-        / AVG(valid_outcomes.day7_pasi_score)
+        / AVG(FLOAT(valid_outcomes.day7_pasi_score))
         * 100
     )
 

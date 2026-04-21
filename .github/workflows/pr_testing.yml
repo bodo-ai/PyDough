@@ -40,6 +40,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-trino:
+        description: "Run Trino Tests"
+        type: boolean
+        required: false
+        default: false
       run-mysql:
         description: "Run MySQL Tests"
         type: boolean
@@ -202,6 +207,25 @@ jobs:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
       SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
       SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+
+  run-trino-tests:
+    name: Trino Tests
+    needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run trino]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-trino))
+    uses: ./.github/workflows/trino_testing.yml
+    secrets:
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

@@ -5,23 +5,15 @@ SELECT
     1,
     CASE
       WHEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) + 1 >= (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) + 1
       AND (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) >= 0
       THEN (
-        (
-          LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
-        ) / LENGTH(' ')
+        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
       ) + 1
       ELSE NULL
     END,

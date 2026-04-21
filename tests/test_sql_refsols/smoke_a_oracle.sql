@@ -24,9 +24,7 @@ SELECT
           1,
           CASE
             WHEN (
-              (
-                LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-              ) / LENGTH(' ')
+              LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
             ) >= 1
             THEN 2
             ELSE NULL
@@ -43,23 +41,15 @@ SELECT
           1,
           CASE
             WHEN (
-              (
-                LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-              ) / LENGTH(' ')
+              LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
             ) + 1 >= (
-              (
-                LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-              ) / LENGTH(' ')
+              LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
             ) + 1
             AND (
-              (
-                LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-              ) / LENGTH(' ')
+              LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
             ) >= 0
             THEN (
-              (
-                LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-              ) / LENGTH(' ')
+              LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
             ) + 1
             ELSE NULL
           END,
@@ -76,11 +66,11 @@ SELECT
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CASE
-    WHEN LENGTH('o') IS NULL OR LENGTH(p_name) IS NULL
+    WHEN LENGTH(p_name) IS NULL
     THEN 0
     ELSE CAST((
       LENGTH(p_name) - NVL(LENGTH(REPLACE(p_name, 'o', '')), 0)
-    ) / LENGTH('o') AS INT)
+    ) AS INT)
   END + (
     (
       INSTR(p_name, 'o') - 1

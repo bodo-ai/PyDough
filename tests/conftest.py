@@ -217,6 +217,14 @@ def sf_sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def trino_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the Trino sample graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/trino_graphs.json"
+
+
+@pytest.fixture(scope="session")
 def udf_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the UDF graphs.
@@ -499,6 +507,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
         pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
+        pytest.param(DatabaseDialect.TRINO, id="trino"),
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
         pytest.param(DatabaseDialect.ORACLE, id="oracle"),
@@ -629,6 +638,11 @@ def sqlite_tpch_session(
             marks=[pytest.mark.snowflake],
         ),
         pytest.param(
+            "trino",
+            id="trino",
+            marks=[pytest.mark.trino],
+        ),
+        pytest.param(
             "mysql",
             id="mysql",
             marks=[pytest.mark.mysql],
@@ -649,6 +663,7 @@ def all_dialects_tpch_db_context(
     request,
     get_sample_graph: graph_fetcher,
     get_sf_sample_graph: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     General fixture providing TPCH database context and graph metadata
@@ -668,6 +683,9 @@ def all_dialects_tpch_db_context(
                 sf_conn("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
                 get_sf_sample_graph("TPCH"),
             )
+        case "trino":
+            trino_conn = request.getfixturevalue("trino_conn_db_context")
+            return trino_conn, get_trino_graphs("TPCH")
         case "mysql":
             mysql_conn = request.getfixturevalue("mysql_conn_db_context")
             return mysql_conn("tpch"), get_sample_graph("TPCH")
@@ -702,10 +720,11 @@ def defog_graphs() -> graph_fetcher:
 
 @pytest.fixture(scope="session")
 def get_dialect_defog_graphs(
-    defog_graphs,
-    get_mysql_defog_graphs,
-    get_sf_defog_graphs,
-    get_postgres_defog_graphs,
+    defog_graphs: graph_fetcher,
+    get_mysql_defog_graphs: graph_fetcher,
+    get_sf_defog_graphs: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
+    get_postgres_defog_graphs: graph_fetcher,
 ) -> Callable[[DatabaseDialect, str], GraphMetadata]:
     """
     Returns the graphs for the defog database based on the dialect
@@ -718,6 +737,8 @@ def get_dialect_defog_graphs(
                 return get_mysql_defog_graphs(name)
             case DatabaseDialect.SNOWFLAKE:
                 return get_sf_defog_graphs(name)
+            case DatabaseDialect.TRINO:
+                return get_trino_graphs(name)
             case DatabaseDialect.POSTGRES:
                 return get_postgres_defog_graphs(name)
             case _:
@@ -1184,6 +1205,352 @@ def container_is_running(name: str) -> bool:
         ["docker", "ps", "--format", "{{.Names}}"], stdout=subprocess.PIPE, text=True
     )
     return name in result.stdout.splitlines()
+
+
+@pytest.fixture(scope="session")
+def get_trino_graphs(trino_graph_path: str) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported Trino graph
+    names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=trino_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_trino_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Trino.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/trino_defog_graphs.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+MONGO_DOCKER_CONTAINER = "mongo_tpch_test"
+MONGO_DOCKER_IMAGE = "bodoai1/pydough-mongo-tpch:latest"
+MONGO_HOST = "127.0.0.1"
+MONGO_PORT = 27019
+MONGO_DB = "tpch"
+
+
+@pytest.fixture(scope="session")
+def mongo_docker_setup() -> None:
+    """Set up the MongoDB Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(MONGO_DOCKER_CONTAINER):
+                if not container_is_running(MONGO_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", MONGO_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        MONGO_DOCKER_CONTAINER,
+                        "-e",
+                        "MONGO_USER=root_user",
+                        "-e",
+                        "MONGO_PASSWORD=mongo_pwd",
+                        "-e",
+                        "FILTER_TABLES=true",
+                        "-e",
+                        "TPCH_TABLES=region,supplier",
+                        "-e",
+                        "DEFOG_TABLES=sbCustomer,salespersons,payments_received,doctors,diagnoses,concomitant_meds,merchants,wallet_user_balance_daily,user_sessions,cite,domain_author,domain_keyword,keyword,publication_keyword,location",
+                        "-p",
+                        f"{MONGO_PORT}:27017",
+                        MONGO_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up MongoDB Docker container: {e}")
+
+    # Check import
+    try:
+        from pymongo import MongoClient
+    except ImportError as e:
+        raise RuntimeError("pymongo is not installed") from e
+
+    # Wait for Mongo to be ready
+    for _ in range(300):
+        try:
+            client = MongoClient(
+                host=MONGO_HOST,
+                port=MONGO_PORT,
+                username="root_user",
+                password="mongo_pwd",
+                serverSelectionTimeoutMS=1000,
+            )
+            client.admin.command("ping")
+
+            if MONGO_DB in client.list_database_names():
+                client.close()
+                break
+
+        except Exception as e:
+            print("Error connecting to MongoDB:", e)
+            print(f"Waiting {_ + 1}/300 seconds for MongoDB...")
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", MONGO_DOCKER_CONTAINER])
+        pytest.fail("MongoDB container did not become ready in time.")
+
+
+CASSANDRA_DOCKER_CONTAINER = "cassandra_tpch_test"
+CASSANDRA_DOCKER_IMAGE = "bodoai1/pydough-cassandra-tpch:latest"
+CASSANDRA_HOST = "127.0.0.1"
+CASSANDRA_PORT = 9044
+CASSANDRA_KEYSPACE = "tpch"
+
+
+@pytest.fixture(scope="session")
+def cassandra_docker_setup() -> None:
+    """Set up the Cassandra Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(CASSANDRA_DOCKER_CONTAINER):
+                if not container_is_running(CASSANDRA_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", CASSANDRA_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        CASSANDRA_DOCKER_CONTAINER,
+                        "--memory=4g",
+                        "--memory-swap=6g",
+                        "-e",
+                        "MAX_HEAP_SIZE=2G",
+                        "-e",
+                        "HEAP_NEWSIZE=512M",
+                        "-e",
+                        "CASSANDRA_CLUSTER_NAME=test",
+                        "-e",
+                        "CASSANDRA_DC=datacenter1",
+                        "-e",
+                        "CASSANDRA_RACK=rack1",
+                        "-e",
+                        "FILTER_TABLES=true",
+                        "-e",
+                        "TPCH_TABLES=partsupp,nation",
+                        "-e",
+                        "DEFOG_TABLES=sbDailyPrice,customers,sales,patients,treatments,adverse_events,coupons,wallet_merchant_balance_daily,user_setting_snapshot,conference,domain_conference,domain_publication,organization,writes,restaurant",
+                        "-p",
+                        f"{CASSANDRA_PORT}:9042",
+                        CASSANDRA_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Cassandra Docker container: {e}")
+
+    # Check driver
+    try:
+        from cassandra.cluster import Cluster
+    except ImportError as e:
+        raise RuntimeError("cassandra-driver is not installed") from e
+
+    # Wait for Cassandra to be ready
+    for i in range(600):
+        try:
+            cluster = Cluster([CASSANDRA_HOST], port=CASSANDRA_PORT)
+            session = cluster.connect()
+
+            rows = session.execute("SELECT keyspace_name FROM system_schema.keyspaces")
+
+            keyspaces = [row.keyspace_name for row in rows]
+
+            if CASSANDRA_KEYSPACE in keyspaces:
+                session.shutdown()
+                cluster.shutdown()
+                break
+
+            session.shutdown()
+            cluster.shutdown()
+
+        except Exception as e:
+            print("Error connecting to Cassandra:", e)
+            print(f"Waiting {i + 1}/600 seconds for Cassandra...")
+            time.sleep(1)
+
+    else:
+        subprocess.run(["docker", "rm", "-f", CASSANDRA_DOCKER_CONTAINER])
+        pytest.fail("Cassandra container did not become ready in time.")
+
+
+TRINO_DOCKER_CONTAINER = "trino_tpch_test"
+TRINO_DOCKER_IMAGE = "bodoai1/pydough-trino:latest"
+TRINO_HOST = "127.0.0.1"
+TRINO_PORT = "8080"
+TRINO_USER = "root"
+DOCKER_HOST = "host.docker.internal"
+"""
+    CONSTANTS for the Trino Docker container setup.
+    - DOCKER_CONTAINER: The name of the Docker container.
+    - DOCKER_IMAGE: The Docker image to use for the Trino container.
+    - TRINO_HOST: The host address for Trino.
+    - TRINO_PORT: The port on which Trino is exposed.
+    - TRINO_USER: The username for accessing the Trino container.
+    - DOCKER_HOST: The host address to use when connecting to other containers
+      from within the Trino container.
+"""
+
+
+@pytest.fixture(scope="session")
+def trino_docker_setup(
+    mysql_docker_setup,
+    postgres_docker_setup,
+    mongo_docker_setup,
+    cassandra_docker_setup,
+) -> None:
+    """
+    Set up the Trino Docker container for testing. The Trino container
+    depends on several other containers to be set up first, since it connects
+    to them as data sources.
+    """
+    try:
+        if not is_ci():
+            if container_exists(TRINO_DOCKER_CONTAINER):
+                if not container_is_running(TRINO_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", TRINO_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        TRINO_DOCKER_CONTAINER,
+                        "-e",
+                        f"MYSQL_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"MYSQL_PORT={MYSQL_PORT}",
+                        "-e",
+                        f"MYSQL_USER={os.getenv('MYSQL_USERNAME')}",
+                        "-e",
+                        f"MYSQL_PASSWORD={os.getenv('MYSQL_PASSWORD')}",
+                        "-e",
+                        f"POSTGRES_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"POSTGRES_PORT={POSTGRES_PORT}",
+                        "-e",
+                        f"POSTGRES_USER={os.getenv('POSTGRES_USER')}",
+                        "-e",
+                        f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
+                        "-e",
+                        f"POSTGRES_DB={POSTGRES_DB}",
+                        "-e",
+                        f"MONGO_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"MONGO_PORT={MONGO_PORT}",
+                        "-e",
+                        "MONGO_USER=root_user",
+                        "-e",
+                        "MONGO_PASSWORD=mongo_pwd",
+                        "-e",
+                        f"CASSANDRA_HOST={DOCKER_HOST}",
+                        "-e",
+                        f"CASSANDRA_PORT={CASSANDRA_PORT}",
+                        "-e",
+                        "CASSANDRA_DC=datacenter1",
+                        "-p",
+                        f"{TRINO_PORT}:8080",
+                        TRINO_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Trino Docker container: {e}")
+
+    # Check import is successful
+    try:
+        import trino
+    except ImportError as e:
+        raise RuntimeError("trino is not installed") from e
+
+    # Wait for Trino to be ready for 3 minutes max
+    for i in range(180):
+        try:
+            conn = trino.dbapi.connect(
+                host="127.0.0.1",
+                port=TRINO_PORT,
+                user=TRINO_USER,
+            )
+            cur = conn.cursor()
+            cur.execute("SHOW CATALOGS")
+            cur.fetchone()
+            conn.close()
+            break
+        except Exception as e:
+            print("Error occurred while connecting to Trino:", e)
+            print(f"Waiting {i + 1}/180 seconds for Trino to be ready...")
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", POSTGRES_DOCKER_CONTAINER])
+        pytest.fail("Postgres container did not become ready in time.")
+
+
+@pytest.fixture(scope="session")
+def trino_conn_db_context(trino_docker_setup) -> DatabaseContext:
+    """
+    This fixture is used to connect to the Trino TPCH database using
+    a connection object.
+    Returns a DatabaseContext for the Trino TPCH database.
+    """
+    import trino
+
+    connection: trino.dbapi.Connection = trino.dbapi.connect(
+        host=TRINO_HOST,
+        port=TRINO_PORT,
+        user=TRINO_USER,
+        timezone="UTC",
+    )
+
+    # # Create a new catalog/schema that can be written to during testing
+    # cursor = connection.cursor()
+    # cursor.execute("CREATE CATALOG IF NOT EXISTS WRITE_CATALOG USING memory")
+    # cursor.execute("CREATE SCHEMA IF NOT EXISTS WRITE_CATALOG.WRITE_SCHEMA")
+    # cursor.commit()
+
+    return load_database_context("trino", connection=connection)
+
+
+@pytest.fixture(scope="session")
+def trino_params_tpch_db_context(trino_docker_setup) -> DatabaseContext:
+    """
+    This fixture is used to connect to the Trino TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Trino TPCH database.
+    """
+    return load_database_context(
+        "trino",
+        host=TRINO_HOST,
+        port=TRINO_PORT,
+        user=TRINO_USER,
+        timezone="UTC",
+    )
 
 
 MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]

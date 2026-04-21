@@ -193,6 +193,7 @@ class DatabaseDialect(Enum):
     ANSI = "ansi"
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
+    TRINO = "trino"
     MYSQL = "mysql"
     POSTGRES = "postgres"
     ORACLE = "oracle"
@@ -223,6 +224,11 @@ class DatabaseDialect(Enum):
                 # SQL-type mapping and a separate INSERT INTO ... SELECT step.
                 return CreateCapabilities(
                     replace_table=False,
+                    temp_table=False,
+                    temp_view=False,
+                )
+            case DatabaseDialect.TRINO:
+                return CreateCapabilities(
                     temp_table=False,
                     temp_view=False,
                 )

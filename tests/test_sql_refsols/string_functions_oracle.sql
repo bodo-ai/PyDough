@@ -18,11 +18,11 @@ SELECT
   REPLACE(CUSTOMER.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
   CASE
-    WHEN LENGTH('e') IS NULL OR LENGTH(CUSTOMER.c_name) IS NULL
+    WHEN LENGTH(CUSTOMER.c_name) IS NULL
     THEN 0
     ELSE CAST((
       LENGTH(CUSTOMER.c_name) - NVL(LENGTH(REPLACE(CUSTOMER.c_name, 'e', '')), 0)
-    ) / LENGTH('e') AS INT)
+    ) AS INT)
   END AS count_e,
   INSTR(CUSTOMER.c_name, 'Alex') - 1 AS idx_Alex
 FROM TPCH.CUSTOMER CUSTOMER
