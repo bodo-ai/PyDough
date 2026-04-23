@@ -854,9 +854,7 @@ def rewrite_aggregations_on_join(
 
     cond: RelationalExpression = agg_input.condition
 
-    # The condition is a single equality check where the column form the left
-    # hand side is a uniqueness key from the left hand side
-    # (e.g. every row of LEFT_TREE has a unique value of LEFT_UNIQUE_KEY)
+    # Ensure the join condition is a single equality the form: col_ref_a == col_ref_b
     if not (
         isinstance(cond, CallExpression)
         and cond.op == pydop.EQU
@@ -866,6 +864,10 @@ def rewrite_aggregations_on_join(
     ):
         return node
 
+    # Ensure the each column reference is from a different side of the join,
+    # and assign the LHS and RHS keys accordingly. This way, when doing
+    # COUNT(*) -> NDISTINCT rewrite, we know which columns to use for the
+    # transformation.
     lhs_key: RelationalExpression
     rhs_key: RelationalExpression
 
@@ -884,6 +886,7 @@ def rewrite_aggregations_on_join(
 
     assert isinstance(rhs_key, ColumnReference)
 
+    # Identify which columns come from the RHS of the join.
     rhs_columns: set[str] = set()
     for join_col_key, join_col_val in agg_input.columns.items():
         if (
@@ -897,6 +900,25 @@ def rewrite_aggregations_on_join(
     for agg_key, agg_value in node.aggregations.items():
         match agg_value.op:
             case pydop.COUNT if not agg_value.inputs:
+                """
+                Apply the following equivalent transformation:
+                    SELECT COUNT(*)
+                    FROM T1
+                    SEMI JOIN T2
+                    ON T1.x = T2.y
+                Becomes:
+                   SELECT COUNT(DISTINCT y)
+                   FROM T2
+                """
+
+                # LHS rows can fan out to multiple RHS rows.
+                # The rewrite is only safe if forward cardinality is singular
+                if (
+                    agg_input.join_type == JoinType.SEMI
+                    and not agg_input.cardinality.singular
+                ):
+                    return node
+
                 # LHS key must be unique
                 assert isinstance(lhs_key, ColumnReference)
                 if frozenset([lhs_key.name]) not in input_unique_sets:
@@ -911,6 +933,17 @@ def rewrite_aggregations_on_join(
                 new_aggregations[agg_key] = new_agg
 
             case pydop.MIN | pydop.MAX | pydop.ANYTHING:
+                """
+                Apply the following equivalent transformation:
+                    SELECT MIN(x)
+                    FROM T1
+                    SEMI JOIN T2
+                    ON T1.x = T2.y
+                Becomes:
+                   SELECT MIN(y)
+                   FROM T2
+                (and similarly for MAX and ANYTHING)
+                """
                 # Special case: input is the LHS uniqueness key
                 agg_arg: RelationalExpression = agg_value.inputs[0]
                 assert isinstance(lhs_key, ColumnReference)
@@ -922,6 +955,7 @@ def rewrite_aggregations_on_join(
                         return node
 
                     # Rewrite MIN(lhs_key) → MIN(rhs_key)
+                    # Also applies to MAX and ANYTHING
                     new_agg = CallExpression(
                         agg_value.op,
                         agg_value.data_type,

@@ -265,9 +265,12 @@ def aggregation_uniqueness_helper(
                     break
 
             if isinstance(node, Aggregate):
-                # If the aggregation was not deleted, attempt to rewrite COUNT to
-                # NDISTINCT to a non-aggregate expression if the input
-                # uniqueness allows for it
+                # If the aggregation was not deleted, attempt to rewrite
+                # aggregations atop joins into an aggregation atop one of the
+                # join's input if skipping the join and aggregating the input directly
+                # would produce the same answer. For example, COUNT(*) on
+                # the output of a SEMI join could become NDISTINCT on the
+                # join key from the right hand side.
                 node = rewrite_aggregations_on_join(node, input_uniqueness)
             return node, output_uniqueness
         # For joins, gather the uniqueness information from each input, then

@@ -396,7 +396,7 @@ def attempt_join_aggregate_transpose(
             ), False
 
     # Keep a dictionary for the projection columns that will be used to post-process
-    # the output of the aggregates, if needed. Start it out as an identity map.
+    # the output of the aggregates, if needed. Initialize an identity mapping.
     projection_columns: dict[str, RelationalExpression] = {}
     for column_name, column_expr in node.columns.items():
         projection_columns[column_name] = ColumnReference(
