@@ -24,6 +24,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable
 
 import pydough.pydough_operators as pydop
+from pydough.relational.relational_nodes.aggregate import Aggregate
 from pydough.types import BooleanType
 
 from .relational_expressions import (
@@ -810,3 +811,183 @@ def add_input_name(
 
     # For all other cases, just return the expression as is.
     return expr
+
+
+def rewrite_aggregations_on_join(
+    node: Aggregate,
+    input_unique_sets: set[frozenset[str]],
+) -> RelationalNode:
+    """
+    This function optimize some aggregations (COUNT, MIN, MAX, ANYTHING) on top
+    of SEMI/INNER join.
+
+    Pre-requisites for the transformation:
+        - Current node is a no-groupby aggregation where the aggfunctions are
+        COUNT, MIN, MAX, ANYTHING
+        - Input to the node is a SEMI/INNER join where the condition is a single equality
+        check where the column form the left hand side is a uniqueness key from
+        the left hand side.
+        - The join has a reverse cardinality that always matches (SINGULAR ACCESS,
+        PLURAL_ACCESS, UNKNOWN_ACCESS).
+
+    Args:
+        `node`: The node being transformed
+        `input_unique_sets`: The set of uniqueness sets from the input node
+
+    Returns:
+        If all pre-requisites are met a new node with the transformation, the same
+        node otherwise.
+    """
+    agg_input: RelationalNode = node.input
+
+    # Aggregate must be over a join, with no GROUP BY
+    if not isinstance(agg_input, Join) or node.keys:
+        return node
+
+    # Reverse cardinality that always matches
+    if not agg_input.reverse_cardinality.accesses:
+        return node
+
+    # Join must be SEMI or INNER
+    if agg_input.join_type not in (JoinType.SEMI, JoinType.INNER):
+        return node
+
+    cond: RelationalExpression = agg_input.condition
+
+    # Ensure the join condition is a single equality the form: col_ref_a == col_ref_b
+    if not (
+        isinstance(cond, CallExpression)
+        and cond.op == pydop.EQU
+        and len(cond.inputs) == 2
+        and isinstance(cond.inputs[0], ColumnReference)
+        and isinstance(cond.inputs[1], ColumnReference)
+    ):
+        return node
+
+    # Ensure the each column reference is from a different side of the join,
+    # and assign the LHS and RHS keys accordingly. This way, when doing
+    # COUNT(*) -> NDISTINCT rewrite, we know which columns to use for the
+    # transformation.
+    lhs_key: RelationalExpression
+    rhs_key: RelationalExpression
+
+    if (
+        cond.inputs[0].input_name == agg_input.default_input_aliases[0]
+        and cond.inputs[1].input_name == agg_input.default_input_aliases[1]
+    ):
+        lhs_key, rhs_key = cond.inputs
+    elif (
+        cond.inputs[0].input_name == agg_input.default_input_aliases[1]
+        and cond.inputs[1].input_name == agg_input.default_input_aliases[0]
+    ):
+        rhs_key, lhs_key = cond.inputs
+    else:
+        return node
+
+    assert isinstance(rhs_key, ColumnReference)
+
+    # Identify which columns come from the RHS of the join.
+    rhs_columns: set[str] = set()
+    for join_col_key, join_col_val in agg_input.columns.items():
+        if (
+            isinstance(join_col_val, ColumnReference)
+            and join_col_val.input_name == agg_input.default_input_aliases[1]
+        ):
+            rhs_columns.add(join_col_key)
+
+    new_aggregations: dict[str, CallExpression] = {}
+    new_agg: CallExpression
+    for agg_key, agg_value in node.aggregations.items():
+        match agg_value.op:
+            case pydop.COUNT if not agg_value.inputs:
+                """
+                Apply the following equivalent transformation:
+                    SELECT COUNT(*)
+                    FROM T1
+                    SEMI JOIN T2
+                    ON T1.x = T2.y
+                Becomes:
+                   SELECT COUNT(DISTINCT y)
+                   FROM T2
+                """
+
+                # LHS rows can fan out to multiple RHS rows.
+                # The rewrite is only safe if forward cardinality is singular
+                if (
+                    agg_input.join_type == JoinType.SEMI
+                    and not agg_input.cardinality.singular
+                ):
+                    return node
+
+                # LHS key must be unique
+                assert isinstance(lhs_key, ColumnReference)
+                if frozenset([lhs_key.name]) not in input_unique_sets:
+                    return node
+
+                # Rewrite COUNT(*) → NDISTINCT(rhs_key)
+                new_agg = CallExpression(
+                    pydop.NDISTINCT,
+                    agg_value.data_type,
+                    [add_input_name(rhs_key, None)],
+                )
+                new_aggregations[agg_key] = new_agg
+
+            case pydop.MIN | pydop.MAX | pydop.ANYTHING:
+                """
+                Apply the following equivalent transformation:
+                    SELECT MIN(x)
+                    FROM T1
+                    SEMI JOIN T2
+                    ON T1.x = T2.y
+                Becomes:
+                   SELECT MIN(y)
+                   FROM T2
+                (and similarly for MAX and ANYTHING)
+                """
+                # Special case: input is the LHS uniqueness key
+                agg_arg: RelationalExpression = agg_value.inputs[0]
+                assert isinstance(lhs_key, ColumnReference)
+                if (
+                    isinstance(agg_arg, ColumnReference)
+                    and agg_arg.name == lhs_key.name
+                ):
+                    if frozenset([lhs_key.name]) not in input_unique_sets:
+                        return node
+
+                    # Rewrite MIN(lhs_key) → MIN(rhs_key)
+                    # Also applies to MAX and ANYTHING
+                    new_agg = CallExpression(
+                        agg_value.op,
+                        agg_value.data_type,
+                        [add_input_name(rhs_key, None)],
+                    )
+                    new_aggregations[agg_key] = new_agg
+
+                else:
+                    # It can only reference columns from the RHS
+                    if not only_references_columns(agg_arg, rhs_columns):
+                        return node
+
+                    # Inline expressions
+                    agg_sub: dict[RelationalExpression, RelationalExpression] = {}
+                    for col_name in rhs_columns:
+                        agg_sub[ColumnReference(col_name, agg_arg.data_type)] = (
+                            add_input_name(
+                                ColumnReference(col_name, agg_arg.data_type), None
+                            )
+                        )
+                    new_input_arg: RelationalExpression = apply_substitution(
+                        agg_arg, agg_sub, {}
+                    )
+
+                    new_agg = CallExpression(
+                        agg_value.op,
+                        agg_value.data_type,
+                        [new_input_arg],
+                    )
+                    new_aggregations[agg_key] = new_agg
+
+            case _:
+                return node
+
+    return Aggregate(agg_input.inputs[1], {}, new_aggregations)
