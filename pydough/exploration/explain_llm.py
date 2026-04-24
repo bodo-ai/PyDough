@@ -58,6 +58,7 @@ import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.qdag import (
     Calculate,
+    ChildReferenceExpression,
     ExpressionFunctionCall,
     GlobalContext,
     OrderBy,
@@ -65,6 +66,7 @@ from pydough.qdag import (
     PartitionChild,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
+    Reference,
     Singular,
     SubCollection,
     TableCollection,
@@ -308,7 +310,12 @@ def _build_partition_by_step(node: PartitionBy, order: int) -> dict:
     the subcollection holding the per-partition rows (accessible inside
     aggregations).
     """
-    keys = [k.expr.to_string() for k in node.keys]
+    keys = [
+        k.expr.term_name
+        if isinstance(k.expr, (Reference, ChildReferenceExpression))
+        else k.expr.to_string()
+        for k in node.keys
+    ]
     child_expr_names, child_coll_names = extract_terms(node.child)
     expr_names, coll_names = extract_terms(node)
     return {
@@ -459,9 +466,8 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
                 step = _build_calculate_step(node, order)
             case PartitionBy():
                 step = _build_partition_by_step(node, order)
-                # PartitionBy introduces its key expression names as
-                # context-introducing terms for child-scope aggregations
-                context_introducing_terms = step["keys"]
+                # COUNT(child) inside a PARTITION is always correctly scoped
+                # by the partition itself — no warning needed, unlike CROSS.
             case PartitionChild():
                 step = _build_partition_child_step(node, order)
             case Singular():
@@ -525,14 +531,18 @@ def _build_schema(root: PyDoughCollectionQDAG) -> dict:
         The schema dict.
     """
     expr_names, _ = extract_terms(root)
-    # Only expose output_columns when there is an explicit CALCULATE at the
-    # root.  Without one, calc_terms inherits the predecessor's terms, which
-    # would imply a SELECT * — not meaningful as named output columns.
-    output_columns = sorted(root.calc_terms) if isinstance(root, Calculate) else []
+    # Walk up to the nearest Calculate for output columns — TopK/OrderBy sit
+    # above a Calculate and shouldn't hide its terms.
+    calc_for_cols: PyDoughCollectionQDAG | None = root
+    while calc_for_cols is not None and not isinstance(calc_for_cols, Calculate):
+        calc_for_cols = getattr(calc_for_cols, "preceding_context", None)
+    output_columns = (
+        sorted(calc_for_cols.calc_terms) if calc_for_cols is not None else []
+    )
     column_types: dict[str, str] = {}
     for name in output_columns:
         try:
-            expr = root.get_expr(name)
+            expr = (calc_for_cols or root).get_expr(name)
             column_types[name] = expr.pydough_type.json_string
         except Exception:
             column_types[name] = "unknown"
