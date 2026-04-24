@@ -114,7 +114,10 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
     while current is not None:
         if isinstance(current, TableCollection):
             return current.collection.name
-        current = getattr(current, "preceding_context", None)
+        elif isinstance(current, ChildOperatorChildAccess):
+            current = current.child_access
+        else:
+            current = getattr(current, "preceding_context", None)
     return None
 
 
