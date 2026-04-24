@@ -270,6 +270,10 @@ def _resolve_collection_arg(
         child = parent.children[arg.child_idx]
         if isinstance(child, ChildOperatorChildAccess):
             return child.child_access
+    # ChildReferenceCollection always carries the underlying collection via
+    # .collection — use it as a fallback when the children-list path fails.
+    if isinstance(arg, ChildReferenceCollection):
+        return arg.collection
     return arg
 
 
@@ -567,7 +571,27 @@ def generate_query_summary(steps: list[dict]) -> str:
     elif user_step:
         parts.append(f"Accesses user-generated collection '{user_step['name']}'")
     else:
-        return "Graph-level context with no collection access."
+        # Global-level CALCULATE: infer subject from aggregation subcollection
+        # args so the summary names what is actually being counted/aggregated.
+        calc_for_subject = next(
+            (s for s in reversed(steps) if s["type"] == "Calculate"), None
+        )
+        agg_colls: list[str] = []
+        if calc_for_subject:
+            for tname in calc_for_subject.get("terms", []):
+                detail = calc_for_subject.get("term_details", {}).get(tname, {})
+                if detail.get("kind") == "Aggregation":
+                    for arg_d in detail.get("args", []):
+                        cname = arg_d.get("name")
+                        if cname and cname != "unknown" and cname not in agg_colls:
+                            agg_colls.append(cname)
+        if agg_colls:
+            parts.append(
+                "Graph-level aggregation over subcollection(s): "
+                + ", ".join(f"'{c}'" for c in agg_colls)
+            )
+        else:
+            return "Graph-level context with no collection access."
 
     # ------------------------------------------------------------------ #
     # 2. Filter                                                            #
