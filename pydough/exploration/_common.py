@@ -3,6 +3,7 @@ Shared helpers used by both `explain` and `explain_llm`.
 """
 
 __all__ = [
+    "_resolve_collection_arg",
     "describe_expression",
     "describe_subcollection_arg",
     "extract_conditions",
@@ -578,15 +579,15 @@ def generate_query_summary(steps: list[dict]) -> str:
     elif user_step:
         parts.append(f"Accesses user-generated collection '{user_step['name']}'")
     else:
-        # Global-level CALCULATE: infer subject from aggregation subcollection
-        # args so the summary names what is actually being counted/aggregated.
-        calc_for_subject = next(
-            (s for s in reversed(steps) if s["type"] == "Calculate"), None
-        )
+        # Global-level CALCULATE: infer subject from aggregation args across
+        # ALL Calculate steps (chained CALCULATEs put aggregations in earlier
+        # steps, not necessarily the last one).
         agg_colls: list[str] = []
-        if calc_for_subject:
-            for tname in calc_for_subject.get("terms", []):
-                detail = calc_for_subject.get("term_details", {}).get(tname, {})
+        for s in steps:
+            if s["type"] != "Calculate":
+                continue
+            for tname in s.get("terms", []):
+                detail = s.get("term_details", {}).get(tname, {})
                 if detail.get("kind") == "Aggregation":
                     for arg_d in detail.get("args", []):
                         cname = arg_d.get("name")
@@ -594,7 +595,7 @@ def generate_query_summary(steps: list[dict]) -> str:
                             agg_colls.append(cname)
         if agg_colls:
             parts.append(
-                "Graph-level aggregation over subcollection(s): "
+                "Graph-level aggregation over collection(s): "
                 + ", ".join(f"'{c}'" for c in agg_colls)
             )
         else:

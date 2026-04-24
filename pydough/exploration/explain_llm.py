@@ -54,9 +54,11 @@ sections — easier for an LLM judge to read than raw JSON.
 __all__ = ["explain_llm"]
 
 import pydough
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.qdag import (
     Calculate,
+    ExpressionFunctionCall,
     GlobalContext,
     OrderBy,
     PartitionBy,
@@ -76,6 +78,7 @@ from pydough.unqualified import UnqualifiedNode
 
 from ._common import (
     _is_cross,
+    _resolve_collection_arg,
     describe_expression,
     extract_conditions,
     extract_terms,
@@ -562,8 +565,36 @@ def _build_schema(root: PyDoughCollectionQDAG) -> dict:
             break
         current = getattr(current, "preceding_context", None)
 
+    # find_source_collection returns None for global-level CALCULATEs; fall
+    # back to inspecting aggregation args across the QDAG chain so the schema
+    # still names the collection(s) being accessed.
+    source = find_source_collection(root)
+    if source is None:
+        cur: PyDoughCollectionQDAG | None = root
+        while cur is not None and source is None:
+            if isinstance(cur, Calculate):
+                for tname in cur.calc_terms:
+                    try:
+                        expr = cur.get_expr(tname)
+                    except Exception:
+                        continue
+                    if not isinstance(expr, ExpressionFunctionCall):
+                        continue
+                    if expr.operator not in (pydop.COUNT, pydop.NDISTINCT):
+                        continue
+                    if not expr.args or not isinstance(
+                        expr.args[0], PyDoughCollectionQDAG
+                    ):
+                        continue
+                    resolved = _resolve_collection_arg(expr.args[0], cur)
+                    candidate = find_source_collection(resolved)
+                    if candidate and candidate != "unknown":
+                        source = candidate
+                        break
+            cur = getattr(cur, "preceding_context", None)
+
     return {
-        "source_collection": find_source_collection(root),
+        "source_collection": source,
         "available_expressions": expr_names,
         "output_columns": output_columns,
         "column_types": column_types,
@@ -635,10 +666,14 @@ def _render_step_body(step: dict) -> list[str]:
                     args = detail.get("args", [])
                     arg_name = args[0]["name"] if args else "?"
                     implicit = args[0].get("implicit_scope_note") if args else None
+                    filters = args[0].get("filters", []) if args else []
                     scope = (
                         " _(implicitly scoped via relationship)_" if implicit else ""
                     )
-                    lines.append(f"  - `{name}` → {fn}(`{arg_name}`){scope}")
+                    filter_str = " where " + " AND ".join(filters) if filters else ""
+                    lines.append(
+                        f"  - `{name}` → {fn}(`{arg_name}`){filter_str}{scope}"
+                    )
                 else:
                     lines.append(f"  - `{name}` → {detail.get('text', kind)}")
 
