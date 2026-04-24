@@ -202,6 +202,8 @@ def describe_subcollection_arg(
     # Walk the preceding_context chain collecting SubCollection hops and
     # Where conditions.  SubCollection.preceding_context is always None
     # (it is a ChildAccess), so the loop naturally terminates there.
+    # ChildOperatorChildAccess is a transparent wrapper — unwrap it via
+    # .child_access so the walk continues into the real subcollection node.
     current: PyDoughCollectionQDAG | None = collection
     while current is not None:
         if isinstance(current, Where):
@@ -211,6 +213,8 @@ def describe_subcollection_arg(
         elif isinstance(current, SubCollection):
             access_path.insert(0, current.subcollection_property.name)
             current = None  # ChildAccess — always None
+        elif isinstance(current, ChildOperatorChildAccess):
+            current = current.child_access
         else:
             current = getattr(current, "preceding_context", None)
 
