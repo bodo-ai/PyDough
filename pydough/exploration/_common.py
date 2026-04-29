@@ -112,13 +112,20 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
         (e.g. global calc or user-generated collection root).
     """
     current: PyDoughCollectionQDAG | None = node
-    while current is not None:
+    visited: set[int] = set()
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
         if isinstance(current, TableCollection):
             return current.collection.name
         elif isinstance(current, ChildOperatorChildAccess):
             current = current.child_access
         else:
-            current = getattr(current, "preceding_context", None)
+            nxt = getattr(current, "preceding_context", None)
+            if nxt is None:
+                # At a ChildAccess (SubCollection etc.) — cross into the
+                # ancestor_context chain to find the parent collection.
+                nxt = getattr(current, "ancestor_context", None)
+            current = nxt
     return None
 
 
@@ -493,6 +500,30 @@ def generate_step_notes(
                 f"'{left_name}' \u00d7 '{right_name}' \u2014 both their "
                 f"terms are available downstream."
             )
+
+        case Where():
+            # Detect window functions (RANKING, PERCENTILE, etc.) in the
+            # condition.  Their `per=` partition argument is resolved to SQL
+            # PARTITION BY during compilation and is NOT stored on the
+            # WindowCall QDAG node, so it cannot be shown in the condition
+            # text above.  Alert the judge so it doesn't mis-read a
+            # per-partition rank as a global rank.
+            def _has_window(expr: PyDoughExpressionQDAG) -> bool:
+                if isinstance(expr, WindowCall):
+                    return True
+                for arg in getattr(expr, "args", []) or []:
+                    if isinstance(arg, PyDoughExpressionQDAG) and _has_window(arg):
+                        return True
+                return False
+
+            if _has_window(node.condition):
+                notes.append(
+                    "Note: this condition uses a window function (e.g. RANKING, "
+                    "PERCENTILE). If 'per=' was specified in the source code, the "
+                    "function ranks within partitions defined by that ancestor "
+                    "collection — not globally. The partition scope is resolved at "
+                    "SQL generation time and does not appear in the condition text."
+                )
 
         case PartitionBy():
             keys = step.get("keys", [])

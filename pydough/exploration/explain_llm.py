@@ -431,15 +431,32 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
         nodes.append(current)
         current = getattr(current, "preceding_context", None)
 
-    # The GlobalContext at the top of the preceding_context chain is missing
-    # (TableCollection.preceding_context is None via ChildAccess).  Add it.
-    # Walk ancestor_context to reach the true root GlobalContext.
+    # Walk ancestor_context from the top of the preceding_context chain to
+    # collect nodes that are not reachable via preceding_context alone.
+    # The classic case: SubCollection.preceding_context = None (ChildAccess),
+    # but its ancestor_context points to the Where/TableCollection that filters
+    # the parent collection before the subcollection hop.  We walk the full
+    # preceding_context chain of each ancestor so we don't miss nodes like a
+    # TableCollection that sits beneath a Where in the parent chain.
     top = nodes[-1]
+    seen_ids: set[int] = {id(n) for n in nodes}
     ancestor: PyDoughCollectionQDAG | None = getattr(top, "ancestor_context", None)
-    while ancestor is not None and not isinstance(ancestor, GlobalContext):
+    while ancestor is not None:
+        if id(ancestor) not in seen_ids:
+            # Walk the preceding_context chain of this ancestor node so we
+            # capture e.g. the TableCollection beneath a Where.
+            anc_chain: list[PyDoughCollectionQDAG] = []
+            cur_a: PyDoughCollectionQDAG | None = ancestor
+            while cur_a is not None and id(cur_a) not in seen_ids:
+                anc_chain.append(cur_a)
+                seen_ids.add(id(cur_a))
+                if isinstance(cur_a, GlobalContext):
+                    break
+                cur_a = getattr(cur_a, "preceding_context", None)
+            nodes.extend(anc_chain)
+        if isinstance(ancestor, GlobalContext):
+            break
         ancestor = getattr(ancestor, "ancestor_context", None)
-    if ancestor is not None and not any(isinstance(n, GlobalContext) for n in nodes):
-        nodes.append(ancestor)
 
     nodes.reverse()  # now shallowest → deepest (execution order)
 
