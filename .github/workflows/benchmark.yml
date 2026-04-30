@@ -1,0 +1,81 @@
+name: Run Benchmark
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      
+      pull-requests: write 
+
+    services:
+      postgres:
+        image: bodoai1/pydough-benchmarker:latest
+        ports:
+          - 5433:5432
+        env:
+          POSTGRES_DB: benchmarker
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd "pg_isready -U root -d benchmarker"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+ 
+      - name: Create virtual environment
+        run: uv venv
+ 
+      - name: Install dependencies
+        run: uv pip install -e ".[postgres]"
+
+      - name: Run benchmark
+        run: python benchmark/executer.py
+
+      - name: Create branch and commit metrics
+        id: commit
+        run: |
+          BRANCH="benchmark/metrics-$(date +'%Y-%m-%d-%H%M%S')"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add .                   # stages all generated metrics files
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update benchmark metrics $(date +'%Y-%m-%d')"
+          git push origin "$BRANCH"
+
+      - name: Open Pull Request
+        if: steps.commit.outputs.branch != ''
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.commit.outputs.branch }}
+          base: main
+          title: "Benchmark metrics update — ${{ github.ref_name }}"
+          body: |
+            Automated benchmark run completed successfully.
+
+            **Triggered by:** `${{ github.event_name }}`
+            **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Please review the updated metrics files before merging.
+          labels: benchmark, automated
