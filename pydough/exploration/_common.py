@@ -318,8 +318,16 @@ def describe_expression(
     text: str = expr.to_string()
 
     match expr:
-        case Reference():
-            return {"kind": "Reference", "term_name": expr.term_name}
+        case ChildReferenceExpression():
+            # Must come before Reference() — ChildReferenceExpression and
+            # BackReferenceExpression are both subclasses of Reference and
+            # would be matched by case Reference() first otherwise.
+            return {
+                "kind": "ChildReference",
+                "text": text,
+                "term_name": expr.term_name,
+                "child_idx": expr.child_idx,
+            }
 
         case BackReferenceExpression():
             return {
@@ -329,13 +337,8 @@ def describe_expression(
                 "back_levels": expr.back_levels,
             }
 
-        case ChildReferenceExpression():
-            return {
-                "kind": "ChildReference",
-                "text": text,
-                "term_name": expr.term_name,
-                "child_idx": expr.child_idx,
-            }
+        case Reference():
+            return {"kind": "Reference", "term_name": expr.term_name}
 
         case ColumnProperty():
             return {
@@ -519,10 +522,12 @@ def generate_step_notes(
             if _has_window(node.condition):
                 notes.append(
                     "Note: this condition uses a window function (e.g. RANKING, "
-                    "PERCENTILE). If 'per=' was specified in the source code, the "
-                    "function ranks within partitions defined by that ancestor "
-                    "collection — not globally. The partition scope is resolved at "
-                    "SQL generation time and does not appear in the condition text."
+                    "PERCENTILE). PyDough window functions commonly use 'per=' to "
+                    "rank within partitions of an ancestor collection rather than "
+                    "globally. The partition scope is resolved at SQL generation "
+                    "time and is NOT shown in the condition text — check the "
+                    "source code for a 'per=' argument before assuming this is a "
+                    "global rank."
                 )
 
         case PartitionBy():
@@ -635,19 +640,33 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     # 2. Filter                                                            #
     # ------------------------------------------------------------------ #
-    all_conditions: list[str] = []
+    # Split WHERE conditions by hierarchy level: conditions before the first
+    # SubCollection belong to the root collection; conditions after belong to
+    # a deeper subcollection and must be described separately so the judge
+    # understands they filter a different level of the data.
+    def _cond_texts(where_step: dict) -> list[str]:
+        out: list[str] = []
+        for cond in where_step.get("conditions", []):
+            out.append(
+                cond.get("text", str(cond)) if isinstance(cond, dict) else str(cond)
+            )
+        return out
+
+    top_conds: list[str] = []
+    sub_conds: list[str] = []
+    past_first_sub = False
     for s in steps:
-        if s["type"] != "Where":
-            continue
-        for cond in s.get("conditions", []):
-            # conditions are now dicts; use "text" when available, else
-            # fall back to condition_summary of the step
-            if isinstance(cond, dict):
-                all_conditions.append(cond.get("text", str(cond)))
-            else:
-                all_conditions.append(str(cond))
-    if all_conditions:
-        parts.append("filtered to rows where " + " and ".join(all_conditions))
+        if s["type"] in ("SubCollection", "Cross"):
+            past_first_sub = True
+        elif s["type"] == "Where":
+            (sub_conds if past_first_sub else top_conds).extend(_cond_texts(s))
+
+    if top_conds:
+        parts.append("filtered to rows where " + " and ".join(top_conds))
+    if sub_conds:
+        parts.append(
+            "then subcollection filtered to rows where " + " and ".join(sub_conds)
+        )
 
     # ------------------------------------------------------------------ #
     # 3. Partition                                                         #
