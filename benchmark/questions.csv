@@ -1,0 +1,975 @@
+benchmark,question_id,pydough,sql
+TPCH,1,"result = (
+        lines.WHERE(ship_date <= DATETIME('1998-12-1', '-90 days'))
+        .PARTITION(name=""groups"", by=(return_flag, status))
+        .CALCULATE(
+            L_RETURNFLAG=return_flag,
+            L_LINESTATUS=status,
+            SUM_QTY=SUM(lines.quantity),
+            SUM_BASE_PRICE=SUM(lines.extended_price),
+            SUM_DISC_PRICE=SUM(lines.extended_price * (1 - lines.discount)),
+            SUM_CHARGE=SUM(
+                lines.extended_price * (1 - lines.discount) * (1 + lines.tax)
+            ),
+            AVG_QTY=AVG(lines.quantity),
+            AVG_PRICE=AVG(lines.extended_price),
+            AVG_DISC=AVG(lines.discount),
+            COUNT_ORDER=COUNT(lines),
+        )
+        .ORDER_BY(L_RETURNFLAG.ASC(), L_LINESTATUS.ASC())
+    )","SELECT
+    l_returnflag,
+    l_linestatus,
+    SUM(l_quantity) AS sum_qty,
+    SUM(l_extendedprice) AS sum_base_price,
+    SUM(l_extendedprice * (1 - l_discount)) AS sum_disc_price,
+    SUM(l_extendedprice * (1 - l_discount) * (1 + l_tax)) AS sum_charge,
+    AVG(l_quantity) AS avg_qty,
+    AVG(l_extendedprice) AS avg_price,
+    AVG(l_discount) AS avg_disc,
+    COUNT(*) AS count_order
+FROM
+    tpch.lineitem
+WHERE
+    l_shipdate <= DATE '1998-12-01' - INTERVAL '90 days'
+GROUP BY
+    l_returnflag,
+    l_linestatus
+ORDER BY
+    l_returnflag,
+    l_linestatus;"
+TPCH,2,"result = (
+        parts.WHERE(ENDSWITH(part_type, ""BRASS"") & (size == 15))
+        .CALCULATE(P_PARTKEY=key, P_MFGR=manufacturer)
+        .supply_records.WHERE(supplier.nation.region.name == ""EUROPE"")
+        .BEST(by=supply_cost.ASC(), per=""parts"", allow_ties=True)
+        .CALCULATE(
+            S_ACCTBAL=supplier.account_balance,
+            S_NAME=supplier.name,
+            N_NAME=supplier.nation.name,
+            P_PARTKEY=P_PARTKEY,
+            P_MFGR=P_MFGR,
+            S_ADDRESS=supplier.address,
+            S_PHONE=supplier.phone,
+            S_COMMENT=supplier.comment,
+        )
+        .TOP_K(
+            10,
+            by=(S_ACCTBAL.DESC(), N_NAME.ASC(), S_NAME.ASC(), P_PARTKEY.ASC()),
+        )
+    )","SELECT
+    s.s_acctbal,
+    s.s_name,
+    n.n_name,
+    p.p_partkey,
+    p.p_mfgr,
+    s.s_address,
+    s.s_phone,
+    s.s_comment
+FROM
+    tpch.part p
+JOIN tpch.partsupp ps
+    ON p.p_partkey = ps.ps_partkey
+JOIN tpch.supplier s
+    ON s.s_suppkey = ps.ps_suppkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+JOIN tpch.region r
+    ON n.n_regionkey = r.r_regionkey
+WHERE
+    p.p_size = 15
+    AND p.p_type LIKE '%BRASS'
+    AND r.r_name = 'EUROPE'
+    AND ps.ps_supplycost = (
+        SELECT
+            MIN(ps2.ps_supplycost)
+        FROM
+            tpch.partsupp ps2
+        JOIN tpch.supplier s2
+            ON s2.s_suppkey = ps2.ps_suppkey
+        JOIN tpch.nation n2
+            ON s2.s_nationkey = n2.n_nationkey
+        JOIN tpch.region r2
+            ON n2.n_regionkey = r2.r_regionkey
+        WHERE
+            ps2.ps_partkey = p.p_partkey
+            AND r2.r_name = 'EUROPE'
+    )
+ORDER BY
+    s.s_acctbal DESC,
+    n.n_name,
+    s.s_name,
+    p.p_partkey
+LIMIT 10;"
+TPCH,3,"result = (
+        orders.CALCULATE(order_date, ship_priority)
+        .WHERE(
+            (customer.market_segment == ""BUILDING"")
+            & (order_date < DATETIME('1995-3-15'))
+        )
+        .lines.WHERE(ship_date > DATETIME('1995-3-15'))
+        .PARTITION(name=""groups"", by=(order_key, order_date, ship_priority))
+        .CALCULATE(
+            L_ORDERKEY=order_key,
+            REVENUE=SUM(lines.extended_price * (1 - lines.discount)),
+            O_ORDERDATE=order_date,
+            O_SHIPPRIORITY=ship_priority,
+        )
+        .TOP_K(10, by=(REVENUE.DESC(), O_ORDERDATE.ASC(), L_ORDERKEY.ASC()))
+    )","SELECT
+    l.l_orderkey,
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue,
+    o.o_orderdate,
+    o.o_shippriority
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON l.l_orderkey = o.o_orderkey
+WHERE
+    c.c_mktsegment = 'BUILDING'
+    AND o.o_orderdate < DATE '1995-03-15'
+    AND l.l_shipdate > DATE '1995-03-15'
+GROUP BY
+    l.l_orderkey,
+    o.o_orderdate,
+    o.o_shippriority
+ORDER BY
+    revenue DESC,
+    o.o_orderdate
+LIMIT 10;"
+TPCH,4,"result = (
+        orders.WHERE(
+            (YEAR(order_date) == 1993)
+            & (QUARTER(order_date) == 3)
+            & HAS(lines.WHERE(commit_date < receipt_date))
+        )
+        .PARTITION(name=""priorities"", by=order_priority)
+        .CALCULATE(
+            O_ORDERPRIORITY=order_priority,
+            ORDER_COUNT=COUNT(orders),
+        )
+        .ORDER_BY(O_ORDERPRIORITY.ASC())
+    )","SELECT
+    o.o_orderpriority,
+    COUNT(*) AS order_count
+FROM
+    tpch.orders o
+WHERE
+    o.o_orderdate >= DATE '1993-07-01'
+    AND o.o_orderdate < DATE '1993-07-01' + INTERVAL '3 months'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            tpch.lineitem l
+        WHERE
+            l.l_orderkey = o.o_orderkey
+            AND l.l_commitdate < l.l_receiptdate
+    )
+GROUP BY
+    o.o_orderpriority
+ORDER BY
+    o.o_orderpriority;"
+TPCH,5,"selected_lines = (
+    customers.orders.WHERE(
+        (order_date >= DATETIME('1994-1-1'))
+        & (order_date < DATETIME('1995-1-1'))
+    )
+    .lines.WHERE(supplier.nation.name == nation_name)
+    .CALCULATE(value=extended_price * (1 - discount))
+)
+result = (nations.CALCULATE(nation_name=name)
+    .WHERE(region.name == ""ASIA"")
+    .WHERE(HAS(selected_lines))
+    .CALCULATE(N_NAME=name, REVENUE=SUM(selected_lines.value))
+    .ORDER_BY(REVENUE.DESC())
+)","SELECT
+    n.n_name,
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON l.l_orderkey = o.o_orderkey
+JOIN tpch.supplier s
+    ON l.l_suppkey = s.s_suppkey
+    AND c.c_nationkey = s.s_nationkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+JOIN tpch.region r
+    ON n.n_regionkey = r.r_regionkey
+WHERE
+    r.r_name = 'ASIA'
+    AND o.o_orderdate >= DATE '1994-01-01'
+    AND o.o_orderdate < DATE '1994-01-01' + INTERVAL '1 year'
+GROUP BY
+    n.n_name
+ORDER BY
+    revenue DESC;"
+TPCH,6,"selected_lines = lines.WHERE(
+    (ship_date >= DATETIME('1994-1-1'))
+    & (ship_date < DATETIME('1995-1-1'))
+    & (0.05 <= discount)
+    & (discount <= 0.07)
+    & (quantity < 24)
+).CALCULATE(amt=extended_price * discount)
+result = TPCH.CALCULATE(REVENUE=SUM(selected_lines.amt))","SELECT
+    SUM(l.l_extendedprice * l.l_discount) AS revenue
+FROM
+    tpch.lineitem l
+WHERE
+    l.l_shipdate >= DATE '1994-01-01'
+    AND l.l_shipdate < DATE '1994-01-01' + INTERVAL '1 year'
+    AND l.l_discount BETWEEN 0.06 - 0.01 AND 0.06 + 0.01
+    AND l.l_quantity < 24;"
+TPCH,7,"result = (
+        lines.CALCULATE(
+            supp_nation=supplier.nation.name,
+            cust_nation=order.customer.nation.name,
+            l_year=YEAR(ship_date),
+            volume=extended_price * (1 - discount),
+        )
+        .WHERE(
+            ISIN(YEAR(ship_date), (1995, 1996))
+            & (
+                ((supp_nation == ""FRANCE"") & (cust_nation == ""GERMANY""))
+                | ((supp_nation == ""GERMANY"") & (cust_nation == ""FRANCE""))
+            )
+        )
+        .PARTITION(name=""groups"", by=(supp_nation, cust_nation, l_year))
+        .CALCULATE(
+            SUPP_NATION=supp_nation,
+            CUST_NATION=cust_nation,
+            L_YEAR=l_year,
+            REVENUE=SUM(lines.volume),
+        )
+        .ORDER_BY(SUPP_NATION.ASC(), CUST_NATION.ASC(), L_YEAR.ASC())
+    )","SELECT
+    supp_nation,
+    cust_nation,
+    l_year,
+    SUM(volume) AS revenue
+FROM (
+    SELECT
+        n1.n_name AS supp_nation,
+        n2.n_name AS cust_nation,
+        EXTRACT(YEAR FROM l.l_shipdate) AS l_year,
+        l.l_extendedprice * (1 - l.l_discount) AS volume
+    FROM
+        tpch.supplier s
+    JOIN tpch.lineitem l
+        ON s.s_suppkey = l.l_suppkey
+    JOIN tpch.orders o
+        ON o.o_orderkey = l.l_orderkey
+    JOIN tpch.customer c
+        ON c.c_custkey = o.o_custkey
+    JOIN tpch.nation n1
+        ON s.s_nationkey = n1.n_nationkey
+    JOIN tpch.nation n2
+        ON c.c_nationkey = n2.n_nationkey
+    WHERE
+        (
+            (n1.n_name = 'FRANCE' AND n2.n_name = 'GERMANY')
+            OR
+            (n1.n_name = 'GERMANY' AND n2.n_name = 'FRANCE')
+        )
+        AND l.l_shipdate BETWEEN DATE '1995-01-01'
+                            AND DATE '1996-12-31'
+) AS shipping
+GROUP BY
+    supp_nation,
+    cust_nation,
+    l_year
+ORDER BY
+    supp_nation,
+    cust_nation,
+    l_year;"
+TPCH,8,"vol_metric = extended_price * (1 - discount)
+is_brazilian = supplier.nation.name == ""BRAZIL""
+result = (
+    lines.WHERE(
+        (part.part_type == ""ECONOMY ANODIZED STEEL"")
+        & ISIN(YEAR(order.order_date), (1995, 1996))
+        & (order.customer.nation.region.name == ""AMERICA"")
+    )
+    .CALCULATE(
+        O_YEAR=YEAR(order.order_date),
+        volume=vol_metric,
+        brazil_volume=IFF(is_brazilian, vol_metric, 0),
+    )
+    .PARTITION(name=""years"", by=O_YEAR)
+    .CALCULATE(
+        O_YEAR,
+        MKT_SHARE=SUM(lines.brazil_volume) / SUM(lines.volume),
+    )
+)","SELECT
+    o_year,
+    SUM(
+        CASE
+            WHEN nation = 'BRAZIL' THEN volume
+            ELSE 0
+        END
+    ) / SUM(volume) AS mkt_share
+FROM (
+    SELECT
+        EXTRACT(YEAR FROM o.o_orderdate) AS o_year,
+        l.l_extendedprice * (1 - l.l_discount) AS volume,
+        n2.n_name AS nation
+    FROM
+        tpch.part p
+    JOIN tpch.lineitem l
+        ON p.p_partkey = l.l_partkey
+    JOIN tpch.supplier s
+        ON s.s_suppkey = l.l_suppkey
+    JOIN tpch.orders o
+        ON o.o_orderkey = l.l_orderkey
+    JOIN tpch.customer c
+        ON c.c_custkey = o.o_custkey
+    JOIN tpch.nation n1
+        ON c.c_nationkey = n1.n_nationkey
+    JOIN tpch.region r
+        ON n1.n_regionkey = r.r_regionkey
+    JOIN tpch.nation n2
+        ON s.s_nationkey = n2.n_nationkey
+    WHERE
+        r.r_name = 'AMERICA'
+        AND o.o_orderdate BETWEEN DATE '1995-01-01'
+                              AND DATE '1996-12-31'
+        AND p.p_type = 'ECONOMY ANODIZED STEEL'
+) AS all_nations
+GROUP BY
+    o_year
+ORDER BY
+    o_year;"
+TPCH,9,"result = (
+    lines.WHERE(CONTAINS(part.name, 'green'))
+    .CALCULATE(
+        nation_name=supplier.nation.name,
+        o_year=YEAR(order.order_date),
+        value=extended_price * (1 - discount)
+        - part_and_supplier.supply_cost * quantity,
+    ).PARTITION(name='groups', by=(nation_name, o_year))
+    .CALCULATE(NATION=nation_name, O_YEAR=o_year, sum_profit=SUM(lines.value))
+    .ORDER_BY(NATION.ASC(), O_YEAR.DESC())
+)","SELECT
+    nation,
+    o_year,
+    SUM(amount) AS sum_profit
+FROM (
+    SELECT
+        n.n_name AS nation,
+        EXTRACT(YEAR FROM o.o_orderdate) AS o_year,
+        l.l_extendedprice * (1 - l.l_discount)
+            - ps.ps_supplycost * l.l_quantity AS amount
+    FROM
+        tpch.part p
+    JOIN tpch.lineitem l
+        ON p.p_partkey = l.l_partkey
+    JOIN tpch.partsupp ps
+        ON ps.ps_partkey = l.l_partkey
+        AND ps.ps_suppkey = l.l_suppkey
+    JOIN tpch.supplier s
+        ON s.s_suppkey = l.l_suppkey
+    JOIN tpch.orders o
+        ON o.o_orderkey = l.l_orderkey
+    JOIN tpch.nation n
+        ON s.s_nationkey = n.n_nationkey
+    WHERE
+        p.p_name LIKE '%green%'
+) AS profit
+GROUP BY
+    nation,
+    o_year
+ORDER BY
+    nation,
+    o_year DESC;"
+TPCH,10,"selected_lines = orders.WHERE(
+    (YEAR(order_date) == 1993) & (QUARTER(order_date) == 4)
+).lines.WHERE(return_flag == ""R"")
+result = customers.CALCULATE(
+    C_CUSTKEY=key,
+    C_NAME=name,
+    REVENUE=SUM(selected_lines.extended_price * (1 - selected_lines.discount)),
+    C_ACCTBAL=account_balance,
+    N_NAME=nation.name,
+    C_ADDRESS=address,
+    C_PHONE=phone,
+    C_COMMENT=comment,
+).TOP_K(20, by=(REVENUE.DESC(), C_CUSTKEY.ASC()))","SELECT
+    c.c_custkey,
+    c.c_name,
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue,
+    c.c_acctbal,
+    n.n_name,
+    c.c_address,
+    c.c_phone,
+    c.c_comment
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON l.l_orderkey = o.o_orderkey
+JOIN tpch.nation n
+    ON c.c_nationkey = n.n_nationkey
+WHERE
+    o.o_orderdate >= DATE '1993-10-01'
+    AND o.o_orderdate < DATE '1993-10-01' + INTERVAL '3 months'
+    AND l.l_returnflag = 'R'
+GROUP BY
+    c.c_custkey,
+    c.c_name,
+    c.c_acctbal,
+    c.c_phone,
+    n.n_name,
+    c.c_address,
+    c.c_comment
+ORDER BY
+    revenue DESC
+LIMIT 20;"
+TPCH,11,"is_german_supplier = supplier.nation.name == ""GERMANY""
+selected_records = supply_records.WHERE(is_german_supplier).CALCULATE(
+    metric=supply_cost * available_quantity
+)
+result = (
+    TPCH.CALCULATE(min_market_share=SUM(selected_records.metric) * 0.0001)
+    .supply_records.WHERE(is_german_supplier)
+    .PARTITION(name=""parts"", by=part_key)
+    .CALCULATE(
+        PS_PARTKEY=part_key,
+        VALUE=SUM(supply_records.supply_cost * supply_records.available_quantity),
+    )
+    .WHERE(VALUE > min_market_share)
+    .TOP_K(10, by=VALUE.DESC())
+)","SELECT
+    ps.ps_partkey,
+    SUM(ps.ps_supplycost * ps.ps_availqty) AS value
+FROM
+    tpch.partsupp ps
+JOIN tpch.supplier s
+    ON ps.ps_suppkey = s.s_suppkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+WHERE
+    n.n_name = 'GERMANY'
+GROUP BY
+    ps.ps_partkey
+HAVING
+    SUM(ps.ps_supplycost * ps.ps_availqty) > (
+        SELECT
+            SUM(ps2.ps_supplycost * ps2.ps_availqty) * 0.0001
+        FROM
+            tpch.partsupp ps2
+        JOIN tpch.supplier s2
+            ON ps2.ps_suppkey = s2.s_suppkey
+        JOIN tpch.nation n2
+            ON s2.s_nationkey = n2.n_nationkey
+        WHERE
+            n2.n_name = 'GERMANY'
+    )
+ORDER BY
+    value DESC;"
+TPCH,12,"result = (
+        lines.WHERE(
+            ((ship_mode == ""MAIL"") | (ship_mode == ""SHIP""))
+            & (ship_date < commit_date)
+            & (commit_date < receipt_date)
+            & (YEAR(receipt_date) == 1994)
+        )
+        .CALCULATE(
+            is_high_priority=ISIN(order.order_priority, (""1-URGENT"", ""2-HIGH"")),
+        )
+        .PARTITION(""modes"", by=ship_mode)
+        .CALCULATE(
+            L_SHIPMODE=ship_mode,
+            HIGH_LINE_COUNT=SUM(lines.is_high_priority),
+            LOW_LINE_COUNT=SUM(~(lines.is_high_priority)),
+        )
+        .ORDER_BY(L_SHIPMODE.ASC())
+    )","SELECT
+    l.l_shipmode,
+    SUM(
+        CASE
+            WHEN o.o_orderpriority = '1-URGENT'
+              OR o.o_orderpriority = '2-HIGH'
+            THEN 1
+            ELSE 0
+        END
+    ) AS high_line_count,
+    SUM(
+        CASE
+            WHEN o.o_orderpriority <> '1-URGENT'
+             AND o.o_orderpriority <> '2-HIGH'
+            THEN 1
+            ELSE 0
+        END
+    ) AS low_line_count
+FROM
+    tpch.orders o
+JOIN tpch.lineitem l
+    ON o.o_orderkey = l.l_orderkey
+WHERE
+    l.l_shipmode IN ('MAIL', 'SHIP')
+    AND l.l_commitdate < l.l_receiptdate
+    AND l.l_shipdate < l.l_commitdate
+    AND l.l_receiptdate >= DATE '1994-01-01'
+    AND l.l_receiptdate < DATE '1994-01-01' + INTERVAL '1 year'
+GROUP BY
+    l.l_shipmode
+ORDER BY
+    l.l_shipmode;"
+TPCH,13,"selected_orders = orders.WHERE(~(LIKE(comment, ""%special%requests%"")))
+result = (
+    customers.CALCULATE(num_non_special_orders=COUNT(selected_orders))
+    .PARTITION(name=""num_order_groups"", by=num_non_special_orders)
+    .CALCULATE(C_COUNT=num_non_special_orders, CUSTDIST=COUNT(customers))
+    .TOP_K(10, by=(CUSTDIST.DESC(), C_COUNT.DESC()))
+)","SELECT
+    c_count,
+    COUNT(*) AS custdist
+FROM (
+    SELECT
+        c.c_custkey,
+        COUNT(o.o_orderkey) AS c_count
+    FROM
+        tpch.customer c
+    LEFT JOIN tpch.orders o
+        ON c.c_custkey = o.o_custkey
+        AND o.o_comment NOT LIKE '%special%requests%'
+    GROUP BY
+        c.c_custkey
+) AS c_orders
+GROUP BY
+    c_count
+ORDER BY
+    custdist DESC,
+    c_count DESC
+LIMIT 10;"
+TPCH,14,"value_metric = extended_price * (1 - discount)
+selected_lines = lines.WHERE(
+    (YEAR(ship_date) == 1995) & (MONTH(ship_date) == 9)
+).CALCULATE(
+    value=value_metric,
+    promo_value=IFF(STARTSWITH(part.part_type, ""PROMO""), value_metric, 0),
+)
+result = TPCH.CALCULATE(
+    PROMO_REVENUE=100.0
+    * SUM(selected_lines.promo_value)
+    / SUM(selected_lines.value)
+)","SELECT
+    100.00 * SUM(
+        CASE
+            WHEN p.p_type LIKE 'PROMO%'
+            THEN l.l_extendedprice * (1 - l.l_discount)
+            ELSE 0
+        END
+    ) / SUM(l.l_extendedprice * (1 - l.l_discount)) AS promo_revenue
+FROM
+    tpch.lineitem l
+JOIN tpch.part p
+    ON l.l_partkey = p.p_partkey
+WHERE
+    l.l_shipdate >= DATE '1995-09-01'
+    AND l.l_shipdate < DATE '1995-09-01' + INTERVAL '1 month';"
+TPCH,15,"selected_lines = lines.WHERE(
+    (ship_date >= DATETIME('1996-1-1'))
+    & (ship_date < DATETIME('1996-4-1'))
+)
+total = SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+result = (
+    TPCH.CALCULATE(
+        max_revenue=MAX(
+            suppliers.WHERE(HAS(selected_lines))
+            .CALCULATE(total_revenue=total)
+            .total_revenue
+        )
+    )
+    .suppliers.WHERE(HAS(selected_lines) & (total == max_revenue))
+    .CALCULATE(
+        S_SUPPKEY=key,
+        S_NAME=name,
+        S_ADDRESS=address,
+        S_PHONE=phone,
+        TOTAL_REVENUE=total,
+    )
+    .ORDER_BY(S_SUPPKEY.ASC())
+)","WITH revenue AS (
+    SELECT
+        l.l_suppkey AS supplier_no,
+        SUM(l.l_extendedprice * (1 - l.l_discount)) AS total_revenue
+    FROM
+        tpch.lineitem l
+    WHERE
+        l.l_shipdate >= DATE '1996-01-01'
+        AND l.l_shipdate < DATE '1996-01-01' + INTERVAL '3 months'
+    GROUP BY
+        l.l_suppkey
+)
+SELECT
+    s.s_suppkey,
+    s.s_name,
+    s.s_address,
+    s.s_phone,
+    r.total_revenue
+FROM
+    tpch.supplier s
+JOIN revenue r
+    ON s.s_suppkey = r.supplier_no
+WHERE
+    r.total_revenue = (
+        SELECT
+            MAX(total_revenue)
+        FROM
+            revenue
+    )
+ORDER BY
+    s.s_suppkey;"
+TPCH,16,"valid_part = part.WHERE(
+    (brand != ""BRAND#45"")
+    & ~STARTSWITH(part_type, ""MEDIUM POLISHED%"")
+    & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])
+)
+result = (
+    supply_records.WHERE(
+        ~LIKE(supplier.comment, ""%Customer%Complaints%"") & HAS(valid_part)
+    )
+    .CALCULATE(
+        P_BRAND=valid_part.brand,
+        P_TYPE=valid_part.part_type,
+        P_SIZE=valid_part.size,
+    )
+    .PARTITION(name=""groups"", by=(P_BRAND, P_TYPE, P_SIZE))
+    .CALCULATE(
+        P_BRAND,
+        P_TYPE,
+        P_SIZE,
+        SUPPLIER_COUNT=NDISTINCT(supply_records.supplier_key),
+    )
+    .TOP_K(
+        10, by=(SUPPLIER_COUNT.DESC(), P_BRAND.ASC(), P_TYPE.ASC(), P_SIZE.ASC())
+    )
+)","SELECT
+    p.p_brand,
+    p.p_type,
+    p.p_size,
+    COUNT(DISTINCT ps.ps_suppkey) AS supplier_count
+FROM
+    tpch.part p
+JOIN tpch.partsupp ps
+    ON p.p_partkey = ps.ps_partkey
+WHERE
+    p.p_brand <> 'Brand#45'
+    AND p.p_type NOT LIKE 'MEDIUM POLISHED%'
+    AND p.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
+    AND ps.ps_suppkey NOT IN (
+        SELECT
+            s.s_suppkey
+        FROM
+            tpch.supplier s
+        WHERE
+            s.s_comment LIKE '%Customer%Complaints%'
+    )
+GROUP BY
+    p.p_brand,
+    p.p_type,
+    p.p_size
+ORDER BY
+    supplier_count DESC,
+    p.p_brand,
+    p.p_type,
+    p.p_size
+LIMIT 10;"
+TPCH,17,"selected_lines = parts.WHERE(
+    (brand == ""Brand#23"") & (container == ""MED BOX"")
+).lines.WHERE(quantity < 0.2 * RELAVG(quantity, per=""parts""))
+result = TPCH.CALCULATE(AVG_YEARLY=SUM(selected_lines.extended_price) / 7.0)","WITH avg_qty AS (
+  SELECT
+    l_partkey,
+    0.2 * AVG(l_quantity) AS avg_q
+  FROM tpch.lineitem
+  GROUP BY l_partkey
+)
+SELECT
+  SUM(l.l_extendedprice) / 7.0 AS avg_yearly
+FROM tpch.lineitem l
+JOIN tpch.part p
+  ON p.p_partkey = l.l_partkey
+JOIN avg_qty a
+  ON a.l_partkey = l.l_partkey
+WHERE p.p_brand = 'Brand#23'
+  AND p.p_container = 'MED BOX'
+  AND l.l_quantity < a.avg_q;"
+TPCH,18,"result = (
+        orders.CALCULATE(
+            C_NAME=customer.name,
+            C_CUSTKEY=customer.key,
+            O_ORDERKEY=key,
+            O_ORDERDATE=order_date,
+            O_TOTALPRICE=total_price,
+            TOTAL_QUANTITY=SUM(lines.quantity),
+        )
+        .WHERE(TOTAL_QUANTITY > 300)
+        .TOP_K(
+            10,
+            by=(O_TOTALPRICE.DESC(), O_ORDERDATE.ASC()),
+        )
+    )","SELECT
+    c.c_name,
+    c.c_custkey,
+    o.o_orderkey,
+    o.o_orderdate,
+    o.o_totalprice,
+    SUM(l.l_quantity) AS total_quantity
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON o.o_orderkey = l.l_orderkey
+WHERE
+    o.o_orderkey IN (
+        SELECT
+            l2.l_orderkey
+        FROM
+            tpch.lineitem l2
+        GROUP BY
+            l2.l_orderkey
+        HAVING
+            SUM(l2.l_quantity) > 300
+    )
+GROUP BY
+    c.c_name,
+    c.c_custkey,
+    o.o_orderkey,
+    o.o_orderdate,
+    o.o_totalprice
+ORDER BY
+    o.o_totalprice DESC,
+    o.o_orderdate
+LIMIT 10;"
+TPCH,19,"selected_lines = lines.WHERE(
+    (ISIN(ship_mode, (""AIR"", ""AIR REG"")))
+    & (ship_instruct == ""DELIVER IN PERSON"")
+    & (
+        (
+            MONOTONIC(1, part.size, 5)
+            & MONOTONIC(1, quantity, 11)
+            & ISIN(
+                part.container,
+                (""SM CASE"", ""SM BOX"", ""SM PACK"", ""SM PKG""),
+            )
+            & (part.brand == ""Brand#12"")
+        )
+        | (
+            MONOTONIC(1, part.size, 10)
+            & MONOTONIC(10, quantity, 20)
+            & ISIN(
+                part.container,
+                (""MED BAG"", ""MED BOX"", ""MED PACK"", ""MED PKG""),
+            )
+            & (part.brand == ""Brand#23"")
+        )
+        | (
+            MONOTONIC(1, part.size, 15)
+            & MONOTONIC(20, quantity, 30)
+            & ISIN(
+                part.container,
+                (""LG CASE"", ""LG BOX"", ""LG PACK"", ""LG PKG""),
+            )
+            & (part.brand == ""Brand#34"")
+        )
+    )
+)
+result = TPCH.CALCULATE(
+    REVENUE=SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+)","SELECT
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue
+FROM
+    tpch.lineitem l
+JOIN tpch.part p
+    ON p.p_partkey = l.l_partkey
+WHERE
+    (
+        p.p_brand = 'Brand#12'
+        AND p.p_container IN (
+            'SM CASE', 'SM BOX', 'SM PACK', 'SM PKG'
+        )
+        AND l.l_quantity BETWEEN 1 AND 11
+        AND p.p_size BETWEEN 1 AND 5
+        AND l.l_shipmode IN ('AIR', 'AIR REG')
+        AND l.l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    OR (
+        p.p_brand = 'Brand#23'
+        AND p.p_container IN (
+            'MED BAG', 'MED BOX', 'MED PKG', 'MED PACK'
+        )
+        AND l.l_quantity BETWEEN 10 AND 20
+        AND p.p_size BETWEEN 1 AND 10
+        AND l.l_shipmode IN ('AIR', 'AIR REG')
+        AND l.l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    OR (
+        p.p_brand = 'Brand#34'
+        AND p.p_container IN (
+            'LG CASE', 'LG BOX', 'LG PACK', 'LG PKG'
+        )
+        AND l.l_quantity BETWEEN 20 AND 30
+        AND p.p_size BETWEEN 1 AND 15
+        AND l.l_shipmode IN ('AIR', 'AIR REG')
+        AND l.l_shipinstruct = 'DELIVER IN PERSON'
+    );"
+TPCH,20,"selected_lines = lines.WHERE(YEAR(ship_date) == 1994)
+selected_parts_supplied = supply_records.WHERE(
+    HAS(part.WHERE(STARTSWITH(name, 'forest')))
+    & (available_quantity > 0.5 * SUM(selected_lines.quantity))
+    & HAS(selected_lines)
+)
+result = (
+    suppliers.CALCULATE(S_NAME=name, S_ADDRESS=address)
+    .WHERE(
+        (nation.name == 'CANADA')
+        & HAS(selected_parts_supplied)
+    )
+    .TOP_K(10, by=S_NAME.ASC())
+)","WITH forest_parts AS (
+    SELECT p_partkey
+    FROM tpch.part
+    WHERE p_name LIKE 'forest%'
+),
+lineitem_agg AS (
+    SELECT
+        l_partkey,
+        l_suppkey,
+        0.5 * SUM(l_quantity) AS half_qty
+    FROM tpch.lineitem
+    WHERE
+        l_shipdate >= DATE '1994-01-01'
+        AND l_shipdate < DATE '1994-01-01' + INTERVAL '1' YEAR
+    GROUP BY l_partkey, l_suppkey
+),
+qualified_suppliers AS (
+    SELECT DISTINCT ps.ps_suppkey
+    FROM tpch.partsupp ps
+    JOIN forest_parts fp
+        ON ps.ps_partkey = fp.p_partkey
+    JOIN lineitem_agg la
+        ON la.l_partkey = ps.ps_partkey
+        AND la.l_suppkey = ps.ps_suppkey
+    WHERE ps.ps_availqty > la.half_qty
+)
+SELECT
+    s.s_name,
+    s.s_address
+FROM tpch.supplier s
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+JOIN qualified_suppliers qs
+    ON s.s_suppkey = qs.ps_suppkey
+WHERE
+    n.n_name = 'CANADA'
+ORDER BY
+    s.s_name
+LIMIT 10;"
+TPCH,21,"date_check = receipt_date > commit_date
+waiting_entries = (
+    lines.CALCULATE(original_key=supplier_key)
+    .WHERE(date_check)
+    .order.WHERE(
+        (order_status == ""F"")
+        & HAS(lines.WHERE(supplier_key != original_key))
+        & HASNOT(lines.WHERE((supplier_key != original_key) & date_check))
+    )
+)
+result = (
+    suppliers.WHERE(nation.name == ""SAUDI ARABIA"")
+    .CALCULATE(
+        S_NAME=name,
+        NUMWAIT=COUNT(waiting_entries),
+    )
+    .TOP_K(
+        10,
+        by=(NUMWAIT.DESC(), S_NAME.ASC()),
+    )
+)","SELECT
+    s.s_name,
+    COUNT(*) AS numwait
+FROM tpch.supplier s
+JOIN tpch.lineitem l1
+    ON s.s_suppkey = l1.l_suppkey
+JOIN tpch.orders o
+    ON o.o_orderkey = l1.l_orderkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+WHERE o.o_orderstatus = 'F'
+  AND l1.l_receiptdate > l1.l_commitdate
+  AND EXISTS (
+      SELECT 1
+      FROM tpch.lineitem l2
+      WHERE l2.l_orderkey = l1.l_orderkey
+        AND l2.l_suppkey <> l1.l_suppkey
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM tpch.lineitem l3
+      WHERE l3.l_orderkey = l1.l_orderkey
+        AND l3.l_suppkey <> l1.l_suppkey
+        AND l3.l_receiptdate > l3.l_commitdate
+  )
+  AND n.n_name = 'SAUDI ARABIA'
+GROUP BY s.s_name
+ORDER BY numwait DESC, s.s_name
+LIMIT 10;"
+TPCH,22,"is_selected_code = ISIN(cntry_code, (""13"", ""31"", ""23"", ""29"", ""30"", ""18"", ""17""))
+selected_customers = customers.CALCULATE(cntry_code=phone[:2]).WHERE(
+    is_selected_code
+)
+result = (
+    TPCH.CALCULATE(
+        global_avg_balance=AVG(
+            selected_customers.WHERE(account_balance > 0.0).account_balance
+        )
+    )
+    .customers.CALCULATE(cntry_code=phone[:2])
+    .WHERE(
+        is_selected_code & (account_balance > global_avg_balance) & HASNOT(orders)
+    )
+    .PARTITION(
+        name=""countries"",
+        by=cntry_code,
+    )
+    .CALCULATE(
+        CNTRYCODE=cntry_code,
+        NUMCUST=COUNT(customers),
+        TOTACCTBAL=SUM(customers.account_balance),
+    )
+    .ORDER_BY(CNTRYCODE.ASC())
+)","SELECT
+    cntrycode,
+    COUNT(*) AS numcust,
+    SUM(c_acctbal) AS totacctbal
+FROM (
+    SELECT
+        SUBSTRING(c.c_phone FROM 1 FOR 2) AS cntrycode,
+        c.c_acctbal
+    FROM tpch.customer c
+    WHERE SUBSTRING(c.c_phone FROM 1 FOR 2) IN
+          ('13', '31', '23', '29', '30', '18', '17')
+      AND c.c_acctbal > (
+          SELECT AVG(c2.c_acctbal)
+          FROM tpch.customer c2
+          WHERE c2.c_acctbal > 0.00
+            AND SUBSTRING(c2.c_phone FROM 1 FOR 2) IN
+                ('13', '31', '23', '29', '30', '18', '17')
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM tpch.orders o
+          WHERE o.o_custkey = c.c_custkey
+      )
+) AS custsale
+GROUP BY cntrycode
+ORDER BY cntrycode;"
