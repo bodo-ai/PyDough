@@ -33,6 +33,13 @@ class ColumnPruner:
         self._correl_dispatcher = RelationalExpressionDispatcher(
             self._correl_finder, recurse=False
         )
+        self._keep_condition_columns = False
+        """
+        A boolean toggle indicating whether to maintain the columns used in the
+        condition of a Join node in the output of the Join node even if they are
+        unused by the Join node's parent node. If False, the columns in the condition
+        will not be maintained in the Join node's columns unless they need to be.
+        """
 
     def _prune_identity_project(self, node: RelationalNode) -> RelationalNode:
         """
@@ -70,6 +77,15 @@ class ColumnPruner:
             # want to decouple the keys from the columns so not all keys need to
             # be present in the output.
             required_columns = set(node.keys.keys())
+        elif isinstance(node, Join) and self._keep_condition_columns:
+            # For join this avoids pruning columns required for
+            # later optimizations
+            self._column_finder.reset()
+            node.condition.accept(self._column_finder)
+            condition_columns = self._column_finder.get_column_references()
+            required_columns = {
+                name for name, expr in node.columns.items() if expr in condition_columns
+            }
         else:
             required_columns = set()
         columns = {
@@ -203,16 +219,21 @@ class ColumnPruner:
 
         return output, correl_refs
 
-    def prune_unused_columns(self, root: RelationalRoot) -> RelationalRoot:
+    def prune_unused_columns(
+        self, root: RelationalRoot, keep_condition_columns: bool = False
+    ) -> RelationalRoot:
         """
         Prune columns that are unused in each relational expression.
 
         Args:
             `root`: The tree root to prune columns from.
+            `keep_condition_columns`: If True don't prune the columns of the
+            condition of a Join
 
         Returns:
             The root after updating all inputs.
         """
+        self._keep_condition_columns = keep_condition_columns
         new_root, _ = self._prune_node_columns(root, set(root.columns.keys()))
         assert isinstance(new_root, RelationalRoot), "Expected a root node."
         return new_root

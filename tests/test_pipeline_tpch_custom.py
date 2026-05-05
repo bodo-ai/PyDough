@@ -5060,6 +5060,115 @@ from .testing_utilities import (
             ),
             id="dataframe_collection_correlation",
         ),
+        # base case (should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(selected_orders))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [36049]}),
+                "rewrite_count_semi",
+            ),
+            id="rewrite_count_semi",
+        ),
+        # (should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "customers_china = customers.WHERE((nation.region.name == 'ASIA') & (nation.name == 'CHINA'))\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers_china))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [6024]}),
+                "rewrite_count_complex_lhs",
+            ),
+            id="rewrite_count_complex_lhs",
+        ),
+        # LEFT->RIGHT=PLURAL_FILTER, RIGHT->LEFT=SINGULAR_FILTER (should not rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_europe = nations.WHERE(region.name == 'EUROPE')\n"
+                "building_customers = customers.WHERE(market_segment == 'BUILDING')\n"
+                "result = TPCH.CALCULATE(n=COUNT(nations_europe.WHERE(HAS(building_customers))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [5]}),
+                "rewrite_count_pf_sf",
+            ),
+            id="rewrite_count_pf_sf",
+        ),
+        # LEFT->RIGHT=PLURAL_FILTER, RIGHT->LEFT=SINGULAR_ACCESS(should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "customers_selected = customers.WHERE((market_segment == 'AUTOMOBILE') & (account_balance < -975))\n"
+                "result = TPCH.CALCULATE(n=COUNT(nations.WHERE(HAS(customers_selected))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [23]}),
+                "rewrite_count_pf_sa",
+            ),
+            id="rewrite_count_pf_sa",
+        ),
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_FILTER (should not rewrite)
+        # LHS matches at most one RHS row, RHS matches multiple LHS rows (some filters)
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_segmented = customer.WHERE((market_segment == 'AUTOMOBILE'))\n"
+                "orders_selected = orders.WHERE((order_status == 'F'))\n"
+                "result = TPCH.CALCULATE(n=COUNT(orders_selected.WHERE(HAS(customer_segmented))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [145055]}),
+                "rewrite_count_sf_pf",
+            ),
+            id="rewrite_count_sf_pf",
+        ),
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_ACCESS (should not rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "parts_selected = part.WHERE(brand == 'Brand#23')\n"
+                "result = TPCH.CALCULATE(n=COUNT(supply_records.WHERE(HAS(parts_selected))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [31480]}),
+                "rewrite_count_sf_pa",
+            ),
+            id="rewrite_count_sf_pa",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = customers.CALCULATE(c_key=key).orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(min_k=MIN(selected_orders.c_key), max_k=MAX(selected_orders.c_key), n=COUNT(selected_orders))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_k": [2], "max_k": [149998], "n": [45877]}),
+                "rewrite_min_inner",
+            ),
+            id="rewrite_min_inner",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(min_k=MIN(customers.WHERE(HAS(selected_orders)).key))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_k": [2]}),
+                "rewrite_min_inner_rhs",
+            ),
+            id="rewrite_min_inner_rhs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((clerk == 'Clerk#000000470') & (total_price == 252004.18))\n"
+                "result = TPCH.CALCULATE(any_customer=ANYTHING(customers.WHERE(HAS(selected_orders)).name))",
+                "TPCH",
+                lambda: pd.DataFrame({"any_customer": ["Customer#000039136"]}),
+                "rewrite_any_inner_rhs",
+            ),
+            id="rewrite_any_inner_rhs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_with_i = nations.WHERE(STARTSWITH(name, 'I'))\n"
+                "result = TPCH.CALCULATE(min_region=MIN(regions.WHERE(HAS(nations_with_i)).key))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_region": [2]}),
+                "rewrite_min_region",
+            ),
+            id="rewrite_min_region",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:

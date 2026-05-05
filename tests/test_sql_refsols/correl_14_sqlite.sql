@@ -1,6 +1,6 @@
 WITH _s4 AS (
   SELECT
-    partsupp.ps_suppkey,
+    partsupp.ps_suppkey AS s_suppkey,
     SUM(NOT part.p_retailprice IS NULL) AS sum_expr,
     SUM(part.p_retailprice) AS sum_p_retailprice
   FROM tpch.supplier AS supplier
@@ -14,10 +14,10 @@ WITH _s4 AS (
     1
 )
 SELECT
-  COUNT(DISTINCT _s4.ps_suppkey) AS n
+  COUNT(DISTINCT _s4.s_suppkey) AS n
 FROM _s4 AS _s4
 JOIN tpch.partsupp AS partsupp
-  ON _s4.ps_suppkey = partsupp.ps_suppkey
+  ON _s4.s_suppkey = partsupp.ps_suppkey
 JOIN tpch.part AS part
   ON part.p_container = 'LG DRUM'
   AND part.p_partkey = partsupp.ps_partkey

@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
     writes.aid,
-    COUNT(DISTINCT publication.pid) AS ndistinct_pid
+    COUNT(DISTINCT publication.pid) AS ndistinct_publication_id
   FROM academic.writes AS writes
   JOIN academic.publication AS publication
     ON publication.pid = writes.pid AND publication.year = 2021
@@ -10,7 +10,7 @@ WITH _s3 AS (
 )
 SELECT
   author.name,
-  _s3.ndistinct_pid AS count_publication
+  _s3.ndistinct_publication_id AS count_publication
 FROM academic.author AS author
 JOIN _s3 AS _s3
   ON _s3.aid = author.aid

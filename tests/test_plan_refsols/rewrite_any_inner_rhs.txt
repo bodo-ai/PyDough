@@ -1,0 +1,6 @@
+ROOT(columns=[('any_customer', anything_c_name)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'anything_c_name': ANYTHING(c_name)})
+  JOIN(condition=t0.c_custkey == t1.o_custkey, type=SEMI, columns={'c_name': t0.c_name})
+   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name})
+   FILTER(condition=(o_clerk == 'Clerk#000000470':string) & (o_totalprice == 252004.18:numeric), columns={'o_custkey': o_custkey})
+    SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_custkey': o_custkey, 'o_totalprice': o_totalprice})
