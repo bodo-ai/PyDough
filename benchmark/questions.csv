@@ -655,7 +655,7 @@ result = (
     p.p_brand,
     p.p_type,
     p.p_size,
-    COUNT(DISTINCT ps.ps_suppkey) AS supplier_cnt
+    COUNT(DISTINCT ps.ps_suppkey) AS supplier_count
 FROM
     tpch.part p
 JOIN tpch.partsupp ps
@@ -677,7 +677,7 @@ GROUP BY
     p.p_type,
     p.p_size
 ORDER BY
-    supplier_cnt DESC,
+    supplier_count DESC,
     p.p_brand,
     p.p_type,
     p.p_size
@@ -716,41 +716,39 @@ TPCH,18,"result = (
             10,
             by=(O_TOTALPRICE.DESC(), O_ORDERDATE.ASC()),
         )
-    )","WITH forest_parts AS (
-  SELECT p_partkey
-  FROM tpch.part
-  WHERE p_name LIKE 'forest%'
-),
-lineitem_sum AS (
-  SELECT
-    l_partkey,
-    l_suppkey,
-    SUM(l_quantity) AS sum_qty
-  FROM tpch.lineitem
-  WHERE l_shipdate >= DATE '1994-01-01'
-    AND l_shipdate <  DATE '1994-01-01' + INTERVAL '1 year'
-  GROUP BY l_partkey, l_suppkey
-),
-qualified_partsupp AS (
-  SELECT
-    ps.ps_suppkey
-  FROM tpch.partsupp ps
-  JOIN forest_parts fp
-    ON fp.p_partkey = ps.ps_partkey
-  JOIN lineitem_sum ls
-    ON ls.l_partkey = ps.ps_partkey
-   AND ls.l_suppkey = ps.ps_suppkey
-  WHERE ps.ps_availqty > 0.5 * ls.sum_qty
-)
-SELECT
-  s.s_name,
-  s.s_address
-FROM tpch.supplier s
-JOIN tpch.nation n
-  ON s.s_nationkey = n.n_nationkey
-WHERE n.n_name = 'CANADA'
-  AND s.s_suppkey IN (SELECT ps_suppkey FROM qualified_partsupp)
-ORDER BY s.s_name
+    )","SELECT
+    c.c_name,
+    c.c_custkey,
+    o.o_orderkey,
+    o.o_orderdate,
+    o.o_totalprice,
+    SUM(l.l_quantity) AS total_quantity
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON o.o_orderkey = l.l_orderkey
+WHERE
+    o.o_orderkey IN (
+        SELECT
+            l2.l_orderkey
+        FROM
+            tpch.lineitem l2
+        GROUP BY
+            l2.l_orderkey
+        HAVING
+            SUM(l2.l_quantity) > 300
+    )
+GROUP BY
+    c.c_name,
+    c.c_custkey,
+    o.o_orderkey,
+    o.o_orderdate,
+    o.o_totalprice
+ORDER BY
+    o.o_totalprice DESC,
+    o.o_orderdate
 LIMIT 10;"
 TPCH,19,"selected_lines = lines.WHERE(
     (ISIN(ship_mode, (""AIR"", ""AIR REG"")))
@@ -825,17 +823,15 @@ WHERE
         AND l.l_shipinstruct = 'DELIVER IN PERSON'
     );"
 TPCH,20,"selected_lines = lines.WHERE(YEAR(ship_date) == 1994)
-selected_part = part.WHERE(
-    STARTSWITH(name, ""forest"") & HAS(selected_lines)
-).CALCULATE(part_qty=SUM(selected_lines.quantity))
 selected_parts_supplied = supply_records.WHERE(
-    HAS(selected_part) & (available_quantity > 0.5 * SUM(selected_part.part_qty))
+    HAS(part.WHERE(STARTSWITH(name, 'forest')))
+    & (available_quantity > 0.5 * SUM(selected_lines.quantity))
+    & HAS(selected_lines)
 )
 result = (
     suppliers.CALCULATE(S_NAME=name, S_ADDRESS=address)
     .WHERE(
-        (nation.name == ""CANADA"")
-        & (COUNT(selected_parts_supplied) > 0)
+        (nation.name == 'CANADA')
         & HAS(selected_parts_supplied)
     )
     .TOP_K(10, by=S_NAME.ASC())
@@ -852,7 +848,7 @@ lineitem_agg AS (
     FROM tpch.lineitem
     WHERE
         l_shipdate >= DATE '1994-01-01'
-        AND l_shipdate < DATE '1995-01-01'
+        AND l_shipdate < DATE '1994-01-01' + INTERVAL '1' YEAR
     GROUP BY l_partkey, l_suppkey
 ),
 qualified_suppliers AS (

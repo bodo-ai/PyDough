@@ -5,12 +5,21 @@ with the results.
 
 import os
 
-from .benchmarker import Benchmarker, Connection
+from benchmarker import Benchmarker, Connection
+
+username: str | None = os.getenv("POSTGRES_USER")
+password: str | None = os.getenv("POSTGRES_PASSWORD")
+
+# Check for the necessary environment variables before running the benchmark
+if username is None or password is None:
+    raise ValueError(
+        "Environment variables POSTGRES_USER and POSTGRES_PASSWORD must be set."
+    )
 
 postgres_conn: Connection = Connection(
     db_name="benchmarker",
-    user=os.getenv("POSTGRES_USER"),
-    password=os.getenv("POSTGRES_PASSWORD"),
+    user=username,
+    password=password,
     port=5433,
 )
 

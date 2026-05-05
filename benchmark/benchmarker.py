@@ -15,6 +15,7 @@ from pandas import DataFrame
 
 import pydough
 from pydough.unqualified.unqualified_node import UnqualifiedNode
+from tests.testing_utilities import harmonize_types
 
 
 class Connection:
@@ -279,7 +280,16 @@ class Benchmarker:
             # Check for correctness
             row_metrics: dict[str, str | int | float]
             try:
-                pd.testing.assert_frame_equal(pydough_result, ground_truth_result)
+                for col_name in pydough_result.columns:
+                    pydough_result[col_name], ground_truth_result[col_name] = (
+                        harmonize_types(
+                            pydough_result[col_name], ground_truth_result[col_name]
+                        )
+                    )
+
+                pd.testing.assert_frame_equal(
+                    pydough_result, ground_truth_result, rtol=1e-6, atol=1e-9
+                )
 
                 row_metrics = {
                     "question_id": index + 1,
