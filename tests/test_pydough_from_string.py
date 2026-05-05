@@ -11,7 +11,9 @@ import pandas as pd
 import pytest
 
 import pydough
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import DatabaseContext
+from pydough.errors import PyDoughSessionException
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
 from tests.testing_utilities import graph_fetcher
@@ -139,3 +141,24 @@ def test_invalid_tpch_data_e2e_from_string(
             pydough_code, answer_variable, metadata=graph, environment=env
         )
         pydough.to_sql(query, metadata=graph)
+
+
+def test_from_string_session_and_metadata_conflict(
+    get_sample_graph: graph_fetcher,
+):
+    """
+    Providing both session= and metadata= to from_string is ambiguous and
+    should raise PyDoughSessionException immediately.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    session = PyDoughSession()
+    session.metadata = graph
+    with pytest.raises(
+        PyDoughSessionException,
+        match="Cannot provide both 'session' and 'metadata' to from_string",
+    ):
+        pydough.from_string(
+            "result = nations.CALCULATE(name)",
+            metadata=graph,
+            session=session,
+        )

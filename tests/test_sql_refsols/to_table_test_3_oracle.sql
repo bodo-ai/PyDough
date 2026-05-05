@@ -1,0 +1,4 @@
+SELECT
+  "key",
+  name
+FROM ASIAN_NATIONS_T3

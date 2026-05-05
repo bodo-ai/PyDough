@@ -6,9 +6,7 @@ explanations of PyDough metadata objects and unqualified nodes.
 __all__ = ["explain"]
 
 import pydough
-import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
-from pydough.errors import PyDoughQDAGException
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -26,14 +24,12 @@ from pydough.qdag import (
     BackReferenceExpression,
     Calculate,
     ChildOperator,
-    ExpressionFunctionCall,
     GlobalContext,
     OrderBy,
     PartitionBy,
     PartitionChild,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
-    PyDoughQDAG,
     Reference,
     Singular,
     SubCollection,
@@ -48,9 +44,9 @@ from pydough.unqualified import (
     UnqualifiedCross,
     UnqualifiedNode,
     display_raw,
-    qualify_node,
 )
 
+from ._common import extract_conditions, extract_terms, qualify_safely
 from .term import find_unqualified_root
 
 
@@ -281,9 +277,8 @@ def explain_unqualified(
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified.
     root: UnqualifiedNode | None = find_unqualified_root(node)
-    try:
-        qualified_node = qualify_node(node, session)
-    except PyDoughQDAGException as e:
+    qualified_node, error = qualify_safely(node, session)
+    if error is not None:
         if root is None:
             # Rootless node that failed to qualify (e.g. bare expression
             # LOWER(first_name) with no context).
@@ -291,15 +286,15 @@ def explain_unqualified(
                 f"Cannot call pydough.explain on {display_raw(node)}.\n"
                 "Did you mean to use pydough.explain_term?"
             )
-        elif "Unrecognized term" in str(e):
+        elif "Unrecognized term" in str(error):
             lines.append(
-                f"{str(e)}\n"
+                f"{str(error)}\n"
                 "This could mean you accessed a property using a name that does not exist, or\n"
                 "that you need to place your PyDough code into a context for it to make sense.\n"
                 "Did you mean to use pydough.explain_term?"
             )
         else:
-            raise e
+            raise error
         return "\n".join(lines)
 
     # If the qualification succeeded, dump info about the qualified node.
@@ -416,17 +411,7 @@ def explain_unqualified(
                         lines.append(
                             "The main task of this node is to filter on the following conditions:"
                         )
-                        conditions: list[PyDoughExpressionQDAG] = []
-                        if (
-                            isinstance(qualified_node.condition, ExpressionFunctionCall)
-                            and qualified_node.condition.operator == pydop.BAN
-                        ):
-                            for arg in qualified_node.condition.args:
-                                assert isinstance(arg, PyDoughExpressionQDAG)
-                                conditions.append(arg)
-                        else:
-                            conditions.append(qualified_node.condition)
-                        for condition in conditions:
+                        for condition in extract_conditions(qualified_node.condition):
                             tree_string = condition.to_string(True)
                             regular_string = condition.to_string(False)
                             expr_string = tree_string
@@ -485,16 +470,7 @@ def explain_unqualified(
                 )
 
         # Dump the collection & expression terms of the collection
-        expr_names: list[str] = []
-        collection_names: list[str] = []
-        for name in qualified_node.all_terms:
-            term: PyDoughQDAG = qualified_node.get_term(name)
-            if isinstance(term, PyDoughExpressionQDAG):
-                expr_names.append(name)
-            else:
-                collection_names.append(name)
-        expr_names.sort()
-        collection_names.sort()
+        expr_names, collection_names = extract_terms(qualified_node)
 
         if len(expr_names) > 0:
             lines.append(

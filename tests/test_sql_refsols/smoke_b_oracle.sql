@@ -1,5 +1,5 @@
 SELECT
-  o_orderkey AS key,
+  o_orderkey AS "key",
   NVL(EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)), '') || '_' || NVL(FLOOR((
     EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - 1
   ) / 3) + 1, '') || '_' || NVL(EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)), '') || '_' || NVL(EXTRACT(DAY FROM CAST(o_orderdate AS DATE)), '') AS a,

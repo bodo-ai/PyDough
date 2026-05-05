@@ -1,0 +1,6 @@
+SELECT
+  nkey,
+  nname
+FROM STEP2_T19
+ORDER BY
+  1 NULLS FIRST

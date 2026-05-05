@@ -13,6 +13,7 @@ This document describes how to set up & interact with PyDough. For instructions 
 - [Evaluation APIs](#evaluation-apis)
    * [`pydough.to_sql`](#pydoughto_sql)
    * [`pydough.to_df`](#pydoughto_df)
+   * [`pydough.to_table`](#pydoughto_table)
 - [Transformation APIs](#transformation-apis)
    * [`pydough.from_string`](#pydoughfrom_string)
 - [Exploration APIs](#exploration-apis)
@@ -591,6 +592,129 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 </div>
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
+
+<!-- TOC --><a name="pydoughto_table"></a>
+### `pydough.to_table`
+
+The `to_table` API materializes a PyDough query as a database view or table, and returns a collection reference that can be used in subsequent PyDough queries. This is useful for breaking down complex queries into intermediate results, improving performance by materializing frequently-used subqueries, or creating reusable database objects.
+
+The first argument it takes in is the PyDough node for the collection being materialized. The second argument is the name of the view/table to create. It can optionally take in the following keyword arguments:
+
+- `as_view`: If `True`, creates a VIEW. If `False` creates a TABLE. Default is `False` (i.e. creates a TABLE).
+- `replace`: If `True`, drops table/view if exists and then creates the table/view. For Snowflake, use `CREATE OR REPLACE` to allow replacing an existing view/table. If `False` and the view/table already exists, an error will be raised. Default is `False`.
+- `temp`: If `True`, creates a TEMPORARY view/table that will be deleted when the database session closes. If `False`, creates a permanent view/table. Default is `False`.
+- `write_path`: The fully-qualified SQL path used in the DDL statement and in `FROM` clauses when querying the created table (e.g. `'my_db.my_schema.my_table'`). When provided, the table/view is created at this path while `name` remains the short identifier used in PyDough `per=` references and other DSL operations. If omitted, `name` is used as the SQL path as well. 
+- `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
+- `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
+- `database`: the database context to use for the conversion and execution (if omitted, `pydough.active_session.database` is used instead). A database connection is required for `to_table`.
+- `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
+- `display_sql`: if `True`, prints the generated DDL SQL via the logger.
+
+The returned collection can be used with PyDough operations like `.CALCULATE()`, `.WHERE()`, `.TOP_K()`, etc., just like any other collection.
+
+#### Database Dialect Support
+
+Different databases have different capabilities for CREATE statements:
+
+| Dialect    | CREATE OR REPLACE TABLE | TEMP TABLE | CREATE OR REPLACE VIEW | TEMP VIEW |
+|------------|------------------------|------------|------------------------|-----------|
+| SQLite     | No (uses DROP + CREATE)| Yes        | No (uses DROP + CREATE)| Yes       |
+| Snowflake  | Yes                    | Yes        | Yes                    | No        |
+| PostgreSQL | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
+| MySQL      | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
+| Oracle     | No (uses DROP + CREATE)| No         | Yes                    | No        |
+
+**Note:** SQLite does not support creating persistent views that reference attached databases. When creating a view without `temp=True` on SQLite, PyDough will automatically create a temporary view and issue a warning.
+
+**Note:** TEMPORARY views are not supported on Snowflake, MySQL, and PostgreSQL. Attempting to create a temp view on these databases will raise an error.
+
+#### Example 1: Basic Table Materialization
+
+Below is an example of using `pydough.to_table` to materialize a filtered query as a temporary table, then query from it:
+
+```py
+%%pydough
+# Create a temporary table with Asian nations
+asian_nations = nations.WHERE(region.name == 'ASIA')
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', temp=True)
+
+# Query from the materialized table - direct method call
+result = asian_tmp.CALCULATE(name)
+pydough.to_df(result)
+```
+
+**Step 1 — DDL SQL** (executed by `to_table`, creates the table):
+```sql
+CREATE TEMPORARY TABLE asian_nations AS
+SELECT
+  nation.n_nationkey AS key,
+  nation.n_regionkey AS region_key,
+  nation.n_name AS name,
+  nation.n_comment AS comment
+FROM nation AS nation
+JOIN region AS region
+  ON nation.n_regionkey = region.r_regionkey
+  AND region.r_name = 'ASIA'
+```
+
+**Step 2 — Query SQL** (executed by `to_df(result)`):
+```sql
+SELECT name
+FROM asian_nations
+```
+
+**Step 3 — Result** (the output of the query):
+```name
+0   INDIA
+1   INDONESIA
+2   JAPAN
+3   CHINA
+4   VIETNAM
+```
+
+#### Example 2: Multiple Materialized Tables with Join
+
+When joining multiple materialized collections, use `.CROSS()` to establish the cross-join relationship:
+
+```py
+%%pydough
+# Create first temporary table: Asian nations
+asian_nations = nations.WHERE(region.name == 'ASIA').CALCULATE(nation_key=key, nation_name=name)
+asian_tmp = pydough.to_table(asian_nations, name='asian_nations', replace=True, temp=True)
+
+# Create second temporary table: Customer info
+customer_info = customers.CALCULATE(ckey=key, nkey=nation.key)
+custs_tmp = pydough.to_table(customer_info, name='customer_info', temp=True)
+
+# Join the materialized tables: asian_tmp.CROSS(custs_tmp)
+result = (
+    asian_tmp
+    .CALCULATE(nation_key, nation_name)
+    .CROSS(custs_tmp)
+    .WHERE(nation_key == nkey)
+    .CALCULATE(nation_name, ckey)
+    .TOP_K(5, by=(nation_name, ckey))
+)
+pydough.to_df(result)
+```
+
+#### Example 3: Cross-Database Write with `write_path`
+
+Use `write_path` when the SQL path for the created table differs from the short PyDough name:
+
+```py
+%%pydough
+asian_tmp = pydough.to_table(
+    nations.WHERE(region.name == 'ASIA').CALCULATE(nkey=key, nname=name),
+    name='asian_nations',
+    write_path='E2E_DB.PUBLIC.asian_nations',
+    replace=True,
+)
+
+# The table is created at E2E_DB.PUBLIC.asian_nations in the database,
+# but PyDough references it by the short name 'asian_nations'.
+result = asian_tmp.CALCULATE(nkey, nname)
+```
 
 <!-- TOC --><a name="transformation-apis"></a>
 ## Transformation APIs

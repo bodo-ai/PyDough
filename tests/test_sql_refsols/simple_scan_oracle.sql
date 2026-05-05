@@ -1,3 +1,3 @@
 SELECT
-  o_orderkey AS key
+  o_orderkey AS "key"
 FROM TPCH.ORDERS
