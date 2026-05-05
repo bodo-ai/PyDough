@@ -866,8 +866,7 @@ def rewrite_aggregations_on_join(
 
     # Ensure the each column reference is from a different side of the join,
     # and assign the LHS and RHS keys accordingly. This way, when doing
-    # COUNT(*) -> NDISTINCT rewrite, we know which columns to use for the
-    # transformation.
+    # the rewrites, we know which columns to use for the transformation.
     lhs_key: RelationalExpression
     rhs_key: RelationalExpression
 
