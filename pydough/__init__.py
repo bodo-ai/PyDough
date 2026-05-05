@@ -7,6 +7,7 @@ __all__ = [
     "dataframe_collection",
     "display_raw",
     "explain",
+    "explain_llm",
     "explain_structure",
     "explain_term",
     "from_string",
@@ -22,7 +23,7 @@ __all__ = [
 
 from .configs import PyDoughSession
 from .evaluation import to_df, to_sql, to_table
-from .exploration import explain, explain_structure, explain_term
+from .exploration import explain, explain_llm, explain_structure, explain_term
 from .logger import get_logger
 from .metadata import parse_json_metadata_from_file, parse_metadata_from_list
 from .unqualified import display_raw, from_string, init_pydough_context

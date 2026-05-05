@@ -20,6 +20,7 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
    * [`pydough.explain_term`](#pydoughexplain_term)
+   * [`pydough.explain_llm`](#pydoughexplain_llm)
 - [Logging](#logging)
 
 <!-- TOC end -->
@@ -894,7 +895,7 @@ ORDER BY
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
-This section describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
+This section describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `session` argument which can be used to specify the PyDough session to use for the exploration.
 
 See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 
@@ -1300,6 +1301,200 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(AVG(customers.acctbal))
+```
+
+<!-- TOC --><a name="pydoughexplain_llm"></a>
+### `pydough.explain_llm`
+
+The `explain_llm` API returns a structured description of a PyDough collection expression. Unlike `explain`, which returns human-readable prose, `explain_llm` is designed for programmatic consumption — particularly by LLMs that need to validate, diff, or self-correct PyDough code.
+
+The output always has a consistent shape regardless of whether the expression is valid:
+
+```python
+# Success
+{
+    "error": False,
+    "query_summary": "...",  # deterministic plain-English sentence
+    "steps": [...],          # ordered list of operation steps
+    "schema": {...}          # source collection, output columns, ordering, limit
+}
+
+# Failure (unrecognised term, wrong type, etc.)
+{
+    "error": True,
+    "message": "Unrecognised term 'typo'. Did you mean: name?",
+    "steps": [],
+    "schema": None
+}
+```
+
+The `explain_llm` API has the following optional arguments:
+* `session` (default `None`): if provided, specifies what configs etc. to use when qualifying the expression (if not provided, uses `pydough.active_session`).
+* `format` (default `"json"`): `"json"` returns a JSON-serialisable dict; `"md"` returns a markdown string with the same information structured into `## Query Summary`, `## Steps`, and `## Schema` sections — easier for an LLM judge to read in a prompt.
+
+Each entry in `steps` represents one operation in execution order (earliest first). Every step has:
+* `order` — 1-based position in the chain
+* `type` — stable string tag: `"GlobalContext"`, `"TableCollection"`, `"Cross"`, `"SubCollection"`, `"Where"`, `"Calculate"`, `"OrderBy"`, `"TopK"`, `"PartitionBy"`, `"PartitionChild"`, `"Singular"`, `"UserGeneratedCollection"`
+* `description` — short human-readable phrase
+* `debug` — `{"available_terms": {"expressions": [...], "collections": [...]}}` — scope information, separated from the main payload so LLM judges are not distracted by fields irrelevant to correctness
+* `notes` — list of strings; always present, may be empty
+
+The `schema` section (when `"error"` is `False`) includes:
+* `source_collection` — the root table name, or `null` for graph-level expressions
+* `available_expressions` — expression names in scope at the final step
+* `output_columns` — explicitly computed column names (only non-empty when the expression ends with `CALCULATE`)
+* `column_types` — map of column name → PyDough type string (e.g. `"string"`, `"numeric"`)
+* `ordering` — list of `{"text": ..., "direction": "ASC"|"DESC", "nulls": "FIRST"|"LAST"}` from the last `ORDER_BY` or `TOP_K`; empty list when no sort is present
+* `limit` — record limit from `TOP_K`; `null` otherwise
+
+**Example — simple filter and calculate:**
+
+```py
+%%pydough
+result = nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
+pydough.explain_llm(result)
+```
+
+```json
+{
+  "error": false,
+  "query_summary": "Accesses 'nations', filtered to rows where region.name == 'ASIA', selecting key, name.",
+  "steps": [
+    {
+      "order": 1, "type": "GlobalContext",
+      "description": "Entry point: the graph-level context.",
+      "debug": {"available_terms": {"expressions": [], "collections": ["customers", "nations", "regions", "..."]}},
+      "notes": []
+    },
+    {
+      "order": 2, "type": "TableCollection",
+      "description": "Accesses the 'nations' collection.",
+      "collection": "nations",
+      "debug": {"available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]}},
+      "notes": []
+    },
+    {
+      "order": 3, "type": "Where",
+      "description": "Filters rows to those matching the given conditions.",
+      "conditions": [{"kind": "BinaryOp", "text": "region.name == 'ASIA'", "operator": "==", "left": {"kind": "ChildReference", "text": "region.name", "term_name": "name", "child_idx": 0}, "right": {"kind": "Literal", "text": "'ASIA'", "value": "ASIA", "data_type": "string"}}],
+      "condition_summary": "region.name == 'ASIA'",
+      "debug": {"available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]}},
+      "notes": []
+    },
+    {
+      "order": 4, "type": "Calculate",
+      "description": "Adds computed expressions to the collection.",
+      "terms": ["key", "name"],
+      "term_details": {
+        "key": {"kind": "Reference", "term_name": "key"},
+        "name": {"kind": "Reference", "term_name": "name"}
+      },
+      "debug": {"available_terms": {"expressions": ["comment", "key", "name", "region_key"], "collections": ["customers", "region", "suppliers"]}},
+      "notes": []
+    }
+  ],
+  "schema": {
+    "source_collection": "nations",
+    "available_expressions": ["comment", "key", "name", "region_key"],
+    "output_columns": ["key", "name"],
+    "column_types": {"key": "numeric", "name": "string"},
+    "ordering": [],
+    "limit": null
+  }
+}
+```
+
+**Example — aggregation with implicit scoping note:**
+
+```py
+%%pydough
+result = customers.CALCULATE(key, n_orders=COUNT(orders))
+pydough.explain_llm(result)
+```
+
+The `Calculate` step will include a `term_details` entry for `n_orders` with `"kind": "Aggregation"`, and a note explaining that `orders` is scoped to each `customers` row via relationship navigation (not an explicit filter):
+
+```json
+"term_details": {
+  "n_orders": {
+    "kind": "Aggregation",
+    "text": "COUNT(orders)",
+    "function": "COUNT",
+    "args": [{
+      "name": "orders",
+      "access_path": ["orders"],
+      "filters": [],
+      "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path."
+    }]
+  }
+},
+"notes": [
+  "Note: 'n_orders' aggregates 'orders' — scoping is implicit via 'orders' relationship navigation, not an explicit filter."
+]
+```
+
+**Example — unrecognised term (LLM self-correction):**
+
+```py
+%%pydough
+result = nations.WHERE(typo_field == "ASIA")
+pydough.explain_llm(result)
+```
+
+```json
+{
+  "error": true,
+  "message": "Unrecognized term of TPCH.nations: 'typo_field'. Did you mean: key, name, region_key?",
+  "steps": [],
+  "schema": null
+}
+```
+
+**Example — markdown format for LLM judge prompts:**
+
+```py
+%%pydough
+result = nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
+print(pydough.explain_llm(result, format="md"))
+```
+
+```markdown
+## Query Summary
+
+Accesses 'nations', filtered to rows where region.name == 'ASIA', selecting key, name.
+
+## Steps
+
+### Step 1 — GlobalContext
+
+Entry point: the graph-level context.
+
+### Step 2 — TableCollection
+
+Accesses the 'nations' collection.
+
+- Collection: `nations`
+
+### Step 3 — Where
+
+Filters rows to those matching the given conditions.
+
+- Condition: `region.name == 'ASIA'`
+
+### Step 4 — Calculate
+
+Adds computed expressions to the collection.
+
+- Terms:
+  - `key` → reference
+  - `name` → reference
+
+## Schema
+
+- **Source collection:** `nations`
+- **Output columns:** `key` (numeric), `name` (string)
+- **Ordering:** _(none)_
+- **Limit:** _(none)_
 ```
 
 <!-- TOC --><a name="logging"></a>
