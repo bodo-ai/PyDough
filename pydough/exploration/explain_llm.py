@@ -73,6 +73,9 @@ from pydough.qdag import (
     TopK,
     Where,
 )
+from pydough.qdag.collections.child_operator_child_access import (
+    ChildOperatorChildAccess,
+)
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
@@ -438,16 +441,34 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     # the parent collection before the subcollection hop.  We walk the full
     # preceding_context chain of each ancestor so we don't miss nodes like a
     # TableCollection that sits beneath a Where in the parent chain.
+    #
+    # Special case — PartitionBy: its ancestor_context jumps directly to
+    # GlobalContext, bypassing the collection being partitioned.  The real
+    # pre-partition chain (e.g. customers.WHERE(...).orders) is accessible via
+    # child.ancestor_context instead.
     top = nodes[-1]
     seen_ids: set[int] = {id(n) for n in nodes}
-    ancestor: PyDoughCollectionQDAG | None = getattr(top, "ancestor_context", None)
+    if isinstance(top, PartitionBy) and hasattr(top, "child"):
+        child_anc = getattr(top.child, "ancestor_context", None)
+        ancestor: PyDoughCollectionQDAG | None = (
+            child_anc
+            if child_anc is not None and not isinstance(child_anc, GlobalContext)
+            else getattr(top, "ancestor_context", None)
+        )
+    else:
+        ancestor = getattr(top, "ancestor_context", None)
     while ancestor is not None:
         if id(ancestor) not in seen_ids:
             # Walk the preceding_context chain of this ancestor node so we
             # capture e.g. the TableCollection beneath a Where.
+            # ChildOperatorChildAccess is a transparent wrapper — unwrap it
+            # via .child_access so we reach the real collection node.
             anc_chain: list[PyDoughCollectionQDAG] = []
             cur_a: PyDoughCollectionQDAG | None = ancestor
             while cur_a is not None and id(cur_a) not in seen_ids:
+                if isinstance(cur_a, ChildOperatorChildAccess):
+                    cur_a = cur_a.child_access
+                    continue
                 anc_chain.append(cur_a)
                 seen_ids.add(id(cur_a))
                 if isinstance(cur_a, GlobalContext):
