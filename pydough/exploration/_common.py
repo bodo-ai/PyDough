@@ -679,18 +679,40 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     # 4. Compute                                                           #
     # ------------------------------------------------------------------ #
+    # Use the last Calculate for output column names, but collect aggregation
+    # descriptions from ALL Calculate steps — chained patterns like
+    # .CALCULATE(n=COUNT(...)).TOP_K(...).CALCULATE(col) put the aggregation
+    # in an earlier step, not the final one.
     calc_step = next((s for s in reversed(steps) if s["type"] == "Calculate"), None)
     if calc_step:
-        ref_terms: list[str] = []
+        ref_terms: list[str] = list(calc_step.get("terms", []))
         agg_terms: list[str] = []
-        for name in calc_step.get("terms", []):
-            detail = calc_step.get("term_details", {}).get(name, {})
-            if detail.get("kind") == "Aggregation":
+
+        has_partition = any(s["type"] == "PartitionBy" for s in steps)
+        for s in steps:
+            if s["type"] != "Calculate":
+                continue
+            for name in s.get("terms", []):
+                detail = s.get("term_details", {}).get(name, {})
+                if detail.get("kind") != "Aggregation":
+                    continue
                 fn = detail.get("function", "AGG").lower()
                 arg_name = (detail.get("args") or [{}])[0].get("name", "?")
-                agg_terms.append(f"{fn}({arg_name}) as '{name}'")
-            else:
-                ref_terms.append(name)
+                # Use explicit semantic labels so the judge can distinguish
+                # "counting records per group" (COUNT inside PARTITION) from
+                # "counting all records" (global COUNT) and from
+                # "finding a max/min value" (TOP_K or MAX/MIN aggregation).
+                if fn == "count":
+                    scope = " per group" if has_partition else ""
+                    agg_terms.append(f"counting {arg_name} records{scope} as '{name}'")
+                elif fn == "ndistinct":
+                    scope = " per group" if has_partition else ""
+                    agg_terms.append(f"counting distinct {arg_name}{scope} as '{name}'")
+                else:
+                    agg_terms.append(f"{fn}({arg_name}) as '{name}'")
+                # Don't re-list aggregation output names in ref_terms
+                if name in ref_terms:
+                    ref_terms.remove(name)
 
         compute_parts: list[str] = []
         if ref_terms:
