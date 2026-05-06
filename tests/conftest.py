@@ -2990,6 +2990,38 @@ def tpch_custom_test_data_dialect_replacements(
                 ),
                 "simple_int_float_string_cast",
             )
+        if dialect == DatabaseDialect.TRINO:
+            return PyDoughPandasTest(
+                simple_int_float_string_cast,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "i1": [1],
+                        "i2": [2],
+                        "i3": [3],
+                        "i4": [4],
+                        "i5": [-6],
+                        "i6": [-6],
+                        "f1": [1.0],
+                        "f2": [2.2],
+                        "f3": [3.0],
+                        "f4": [4.3],
+                        "f5": [-5.888],
+                        "f6": [-6.0],
+                        "f7": [0.0],
+                        "s1": ["1"],
+                        "s2": ["2.2"],
+                        "s3": ["3"],
+                        "s4": ["4.3"],
+                        "s5": ["-5.888"],
+                        "s6": ["-6.1"],
+                        "s7": ["0.1"],
+                        "s8": ["0.0"],
+                        "s9": ["abc def"],
+                    }
+                ),
+                "simple_int_float_string_cast",
+            )
 
     if (
         test.test_name == "simple_dataframe_collection_3"

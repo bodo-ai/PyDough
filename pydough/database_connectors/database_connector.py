@@ -256,6 +256,31 @@ class DatabaseDialect(Enum):
         else:
             raise PyDoughSessionException(f"Unsupported dialect: {dialect}")
 
+    @property
+    def sqlglot_dialect(self) -> str | None:
+        """Get the corresponding SQLGlot dialect string for this DatabaseDialect.
+
+        Returns:
+            The SQLGlot dialect string.
+        """
+        match self:
+            case DatabaseDialect.ANSI:
+                return None
+            case DatabaseDialect.SQLITE:
+                return "sqlite"
+            case DatabaseDialect.SNOWFLAKE | DatabaseDialect.BODOSQL:
+                return "snowflake"
+            case DatabaseDialect.TRINO:
+                return "trino"
+            case DatabaseDialect.MYSQL:
+                return "mysql"
+            case DatabaseDialect.POSTGRES:
+                return "postgres"
+            case DatabaseDialect.ORACLE:
+                return "oracle"
+            case _:
+                raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
+
 
 @dataclass
 class DatabaseContext:

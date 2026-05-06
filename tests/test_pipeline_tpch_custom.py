@@ -6471,8 +6471,8 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 # SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
 SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
-# For Trino, write to the TPCH catalog (arbitrary)
-TRINO_TABLE_PREFIX = "WRITE_CATALOG.WRITE_SCHEMA."
+# For Trino, write to the Postgres TPCH catalog (arbitrary)
+TRINO_TABLE_PREFIX = "POSTGRES.TPCH."
 
 
 def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
@@ -6647,6 +6647,7 @@ def test_pipeline_to_table_ddl(
             DatabaseDialect.MYSQL,
             DatabaseDialect.POSTGRES,
             DatabaseDialect.ORACLE,
+            DatabaseDialect.TRINO,
         }
     ):
         with pytest.raises(
@@ -6661,8 +6662,12 @@ def test_pipeline_to_table_ddl(
                 table_name_prefix=table_prefix,
             )
         return
-    # TEMP TABLES are not supported for Oracle.
-    if temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
+    # TEMP TABLES are not supported for Oracle/Trino.
+    if (
+        temp
+        and not as_view
+        and db_context.dialect in {DatabaseDialect.ORACLE, DatabaseDialect.TRINO}
+    ):
         with pytest.raises(
             PyDoughException, match="TEMPORARY TABLE is not supported for"
         ):

@@ -66,30 +66,6 @@ def test_pipeline_e2e_tpch_trino_params(
 
 @pytest.mark.trino
 @pytest.mark.execute
-def test_pipeline_e2e_trino_tpch_custom(
-    tpch_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
-    get_trino_graphs: graph_fetcher,
-    trino_conn_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H custom queries from the original code generation on
-    Trino.
-    """
-    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
-        trino_conn_db_context.dialect,
-        tpch_custom_pipeline_test_data,
-    )
-
-    tpch_custom_pipeline_test_data.run_e2e_test(
-        get_trino_graphs,
-        trino_conn_db_context,
-        coerce_types=True,
-        atol=5e-3,
-    )
-
-
-@pytest.mark.trino
-@pytest.mark.execute
 def test_defog_e2e(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,
     get_trino_graphs: graph_fetcher,

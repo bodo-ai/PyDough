@@ -254,7 +254,10 @@ class BaseTransformBindings:
             else:
                 fmt_string = operator.macro_text
             combined_string: str = fmt_string.format(*arg_strings)
-            return parse_one(combined_string)
+            return parse_one(
+                combined_string,
+                dialect=self._visitor._session.database.dialect.sqlglot_dialect,
+            )
         match operator:
             case pydop.NOT:
                 return sqlglot_expressions.Not(this=apply_parens(args[0]))

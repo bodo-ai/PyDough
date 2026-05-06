@@ -8,6 +8,10 @@ on:
         type: string
         required: true
     secrets:
+      MYSQL_USERNAME:
+        required: true
+      MYSQL_PASSWORD:
+        required: true
       POSTGRES_USER:
         required: true
       POSTGRES_PASSWORD:

@@ -2061,7 +2061,7 @@
       {
         "name": "ADD_MONTHS",
         "type": "sql macro",
-        "macro text": "DATE_ADD('month', {0}, {1})",
+        "macro text": "DATE_ADD('MONTH', {1}, {0})",
         "description": "Adds a number of months to a date value in trino",
         "input signature": {"type": "fixed arguments", "value": ["datetime", "numeric"]},
         "output signature": {"type": "constant", "value": "datetime"}
