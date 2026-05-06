@@ -96,6 +96,8 @@ testing, the `tpch.db` file must be located in the `tests` directory.
 Additionally, the [`setup_defog.sh`](https://github.com/bodo-ai/PyDough/blob/main/tests/setup_defog.sh)
 script must be run so that the `defog.db` file is located in the `tests` directory.
 
+To learn more about the implementation of PyDough in order to modify it, read about the various [IRs used within PyDough](https://github.com/bodo-ai/PyDough/blob/main/documentation/ir.md)
+
 ## Running CI Tests
 
 When submitting a PR, you can control which CI tests run by adding special flags
