@@ -5,7 +5,7 @@ SELECT
       'DAY',
       (
         (
-          DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
+          DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) + -1
         ) % 7
       ) * -1,
       CAST(payments_received.payment_date AS TIMESTAMP)
@@ -14,7 +14,7 @@ SELECT
   COUNT(*) AS total_payments,
   COUNT_IF((
     (
-      DAY_OF_WEEK(payments_received.payment_date) - 1
+      DAY_OF_WEEK(payments_received.payment_date) + -1
     ) % 7
   ) IN (5, 6)) AS weekend_payments
 FROM mongo.defog.payments_received AS payments_received
@@ -28,11 +28,11 @@ WHERE
       CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
     ) + (
       (
-        DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
+        DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) + -1
       ) % 7
     ) - (
       (
-        DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+        DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
       ) % 7
     )
   ) AS DOUBLE) / 7 AS BIGINT) <= 8
@@ -43,11 +43,11 @@ WHERE
       CAST(DATE_TRUNC('DAY', CURRENT_TIMESTAMP) AS TIMESTAMP)
     ) + (
       (
-        DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) - 1
+        DAY_OF_WEEK(CAST(payments_received.payment_date AS TIMESTAMP)) + -1
       ) % 7
     ) - (
       (
-        DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+        DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
       ) % 7
     )
   ) AS DOUBLE) / 7 AS BIGINT) >= 1

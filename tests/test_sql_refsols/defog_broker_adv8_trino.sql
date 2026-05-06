@@ -12,7 +12,7 @@ WHERE
       'DAY',
       (
         (
-          DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+          DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
         ) % 7
       ) * -1,
       CURRENT_TIMESTAMP
@@ -27,7 +27,7 @@ WHERE
         'DAY',
         (
           (
-            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+            DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
           ) % 7
         ) * -1,
         CURRENT_TIMESTAMP

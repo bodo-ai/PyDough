@@ -6,7 +6,7 @@ SELECT
       'DAY',
       (
         (
-          DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) - 4
+          DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) + 3
         ) % 7
       ) * -1,
       CAST(sbtxdatetime AS TIMESTAMP)
@@ -30,7 +30,7 @@ SELECT
   END AS dayname,
   (
     (
-      DAY_OF_WEEK(sbtxdatetime) - 4
+      DAY_OF_WEEK(sbtxdatetime) + 3
     ) % 7
   ) + 1 AS dayofweek
 FROM main.sbtransaction

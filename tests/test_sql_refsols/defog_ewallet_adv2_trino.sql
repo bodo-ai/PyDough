@@ -5,7 +5,7 @@ SELECT
       'DAY',
       (
         (
-          DAY_OF_WEEK(CAST(notifications.created_at AS TIMESTAMP)) - 1
+          DAY_OF_WEEK(CAST(notifications.created_at AS TIMESTAMP)) + -1
         ) % 7
       ) * -1,
       CAST(notifications.created_at AS TIMESTAMP)
@@ -14,7 +14,7 @@ SELECT
   COUNT(*) AS num_notifs,
   COUNT_IF((
     (
-      DAY_OF_WEEK(notifications.created_at) - 1
+      DAY_OF_WEEK(notifications.created_at) + -1
     ) % 7
   ) IN (5, 6)) AS weekend_notifs
 FROM postgres.main.notifications AS notifications
@@ -27,7 +27,7 @@ WHERE
       'DAY',
       (
         (
-          DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+          DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
         ) % 7
       ) * -1,
       CURRENT_TIMESTAMP
@@ -42,7 +42,7 @@ WHERE
         'DAY',
         (
           (
-            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+            DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
           ) % 7
         ) * -1,
         CURRENT_TIMESTAMP

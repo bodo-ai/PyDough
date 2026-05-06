@@ -18,7 +18,7 @@ SELECT
         'DAY',
         (
           (
-            DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) - 1
+            DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) + -1
           ) % 7
         ) * -1,
         CAST(sbtxdatetime AS TIMESTAMP)

@@ -43,16 +43,16 @@ SELECT
       CAST(DATE_TRUNC('DAY', CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS TIMESTAMP)
     ) + (
       (
-        DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) - 7
+        DAY_OF_WEEK(CAST('1992-01-01' AS TIMESTAMP)) + 0
       ) % 7
     ) - (
       (
-        DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) - 7
+        DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) + 0
       ) % 7
     )
   ) AS DOUBLE) / 7 AS BIGINT) AS dd_dt_str,
   (
-    DAY_OF_WEEK(o_orderdate) - 7
+    DAY_OF_WEEK(o_orderdate) + 0
   ) % 7 AS dow_col,
   3 AS dow_str1,
   4 AS dow_str2,

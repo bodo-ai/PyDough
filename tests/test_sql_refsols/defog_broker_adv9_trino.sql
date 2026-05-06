@@ -5,7 +5,7 @@ SELECT
       'DAY',
       (
         (
-          DAY_OF_WEEK(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) - 1
+          DAY_OF_WEEK(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) + -1
         ) % 7
       ) * -1,
       CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)
@@ -14,7 +14,7 @@ SELECT
   COUNT(*) AS num_transactions,
   COUNT_IF((
     (
-      DAY_OF_WEEK(sbtransaction.sbtxdatetime) - 1
+      DAY_OF_WEEK(sbtransaction.sbtxdatetime) + -1
     ) % 7
   ) IN (5, 6)) AS weekend_transactions
 FROM mysql.broker.sbtransaction AS sbtransaction
@@ -28,7 +28,7 @@ WHERE
       'DAY',
       (
         (
-          DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+          DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
         ) % 7
       ) * -1,
       CURRENT_TIMESTAMP
@@ -43,7 +43,7 @@ WHERE
         'DAY',
         (
           (
-            DAY_OF_WEEK(CURRENT_TIMESTAMP) - 1
+            DAY_OF_WEEK(CURRENT_TIMESTAMP) + -1
           ) % 7
         ) * -1,
         CURRENT_TIMESTAMP

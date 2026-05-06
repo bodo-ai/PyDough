@@ -4,7 +4,11 @@ SELECT
     'DAY',
     DATE_ADD(
       'DAY',
-      CAST(DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) AS BIGINT) * -1,
+      (
+        (
+          DAY_OF_WEEK(CAST(sbtxdatetime AS TIMESTAMP)) + 5
+        ) % 7
+      ) * -1,
       CAST(sbtxdatetime AS TIMESTAMP)
     )
   ) AS sow,
@@ -24,7 +28,9 @@ SELECT
     WHEN DAY_OF_WEEK(sbtxdatetime) = 7
     THEN 'Sunday'
   END AS dayname,
-  DAY_OF_WEEK(sbtxdatetime) AS dayofweek
+  (
+    DAY_OF_WEEK(sbtxdatetime) + 5
+  ) % 7 AS dayofweek
 FROM main.sbtransaction
 WHERE
   DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
