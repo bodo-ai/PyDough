@@ -214,7 +214,7 @@ jobs:
 
   run-trino-tests:
     name: Trino Tests
-    needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
+    needs: [get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
