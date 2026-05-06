@@ -4,6 +4,12 @@ on:
   workflow_dispatch:
   release:
     types: [published]
+  workflow_call:
+    secrets:
+      POSTGRES_USER:
+        required: true
+      POSTGRES_PASSWORD:
+        required: true
 
 jobs:
   benchmark:
@@ -58,7 +64,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "$BRANCH"
-          git add .                   # stages all generated metrics files
+          git add benchmark                   # stages all generated metrics files
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update benchmark metrics $(date +'%Y-%m-%d')"
           git push origin "$BRANCH"

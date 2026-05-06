@@ -70,6 +70,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-benchmark:
+        description: "Run Benchmark"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -307,3 +312,14 @@ jobs:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
                       || '["3.10", "3.11", "3.12", "3.13"]' }}
+  
+  run-benchmark:
+    name: Run Benchmark
+    needs: [get-msg]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run benchmark]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-benchmark)
+    uses: ./.github/workflows/benchmark.yml
+    secrets:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
