@@ -1,9 +1,9 @@
 name: Run Benchmark
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
-  workflow_dispatch:
 
 jobs:
   benchmark:
