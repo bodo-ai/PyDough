@@ -1,6 +1,6 @@
 WITH _s5 AS (
   SELECT
-    LINEITEM.l_partkey,
+    LINEITEM.l_partkey AS p_partkey,
     SUM(LINEITEM.l_quantity) AS sum_l_quantity
   FROM tpch.PART AS PART
   JOIN tpch.LINEITEM AS LINEITEM
@@ -23,7 +23,7 @@ JOIN _s5 AS _s5
   ON PARTSUPP.ps_availqty > (
     0.5 * COALESCE(_s5.sum_l_quantity, 0)
   )
-  AND PARTSUPP.ps_partkey = _s5.l_partkey
+  AND PARTSUPP.ps_partkey = _s5.p_partkey
 GROUP BY
   PARTSUPP.ps_suppkey
 ORDER BY
