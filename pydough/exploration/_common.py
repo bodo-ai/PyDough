@@ -685,7 +685,22 @@ def generate_query_summary(steps: list[dict]) -> str:
     # in an earlier step, not the final one.
     calc_step = next((s for s in reversed(steps) if s["type"] == "Calculate"), None)
     if calc_step:
-        ref_terms: list[str] = list(calc_step.get("terms", []))
+        # Annotate computed (non-Reference, non-Aggregation) terms with their
+        # expression so the judge can see e.g. "full_name (JOIN_STRINGS(...))"
+        # instead of just "full_name", making field-combination patterns visible.
+        _MAX_EXPR_LEN = 60
+        ref_terms: list[str] = []
+        for _n in calc_step.get("terms", []):
+            _d = calc_step.get("term_details", {}).get(_n, {})
+            _kind = _d.get("kind", "")
+            if _kind == "Reference":
+                ref_terms.append(_n)
+            elif _kind != "Aggregation":
+                _text = _d.get("text", "")
+                if _text and len(_text) <= _MAX_EXPR_LEN:
+                    ref_terms.append(f"{_n} ({_text})")
+                else:
+                    ref_terms.append(f"{_n} (computed)")
         agg_terms: list[str] = []
 
         has_partition = any(s["type"] == "PartitionBy" for s in steps)
