@@ -32,9 +32,14 @@ for i in range(600):
             database=database,
         )
         cur = conn.cursor()
-        cur.execute("SELECT 1 FROM tpch.lineitem LIMIT 1;")
-        conn.close()
-        print("Postgres is ready.")
+        cur.execute("SELECT COUNT(*) FROM tpch.lineitem;")
+        row = cur.fetchone()
+        if row and row[0] == 59986052:
+            conn.close()
+            break
+        else:
+            print(f"Waiting {i + 1}/600 seconds for data to be load...")
+            time.sleep(1)
         break
     except psycopg2.Error as e:
         print(f"[{i + 1}/600] Waiting for Postgres/data: {e}")
