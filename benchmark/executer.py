@@ -21,8 +21,8 @@ if username is None or password is None:
         "Environment variables POSTGRES_USER and POSTGRES_PASSWORD must be set."
     )
 
-# Wait for Postgres to be ready for 5 minutes max
-for _ in range(300):
+# Wait for Postgres to be ready for 10 minutes max
+for _ in range(600):
     try:
         conn = psycopg2.connect(
             host=host,
@@ -40,15 +40,19 @@ for _ in range(300):
             conn.close()
             break
         else:
-            print(f"Waiting {_ + 1}/300 seconds for data to be load...")
+            print(f"Waiting {_ + 1}/600 seconds for data to be load...")
+            print(
+                f"Expected 59986052 rows in TPCH.lineitem, but got {row[0] if row else 'no result'}"
+            )
             time.sleep(1)
     except psycopg2.Error as e:
         print("Error occurred while connecting to Postgres:", e)
-        print(f"Waiting {_ + 1}/300 seconds for Postgres to be ready...")
+        print(f"Waiting {_ + 1}/600 seconds for Postgres to be ready...")
         time.sleep(1)
 else:
-    raise TimeoutError("Postgres did not become ready within 5 minutes.")
+    raise TimeoutError("Postgres did not become ready within 10 minutes.")
 
+print("Postgres is ready. Starting benchmark...")
 postgres_conn: Connection = Connection(
     db_name=database,
     user=username,
