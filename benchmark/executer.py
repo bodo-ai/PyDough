@@ -60,6 +60,6 @@ benchmarker: Benchmarker = Benchmarker(
     postgres_conn,
     questions_path="./benchmark",
     export_metrics=True,
-    metadata_path="./benchmark/benchmark_metadata.json",
+    metadata_path="./benchmark/benchmark_metadata",
 )
 benchmarker.measure()
