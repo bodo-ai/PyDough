@@ -23,7 +23,7 @@ jobs:
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
     services:
-      postgres:
+      benchmark-container:
         image: bodoai1/pydough-benchmarker:latest
         ports:
           - 5433:5432
@@ -32,8 +32,8 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         options: >-
-          --name pydough-benchmarker
-          --health-cmd "pg_isready -U ${POSTGRES_USER} -d benchmarker"
+          --name benchmark-container
+          --health-cmd "pg_isready -h localhost -U $POSTGRES_USER -d benchmarker"
           --health-interval 15s
           --health-timeout 10s
           --health-retries 30
@@ -65,7 +65,7 @@ jobs:
 
       - name: Dump Postgres logs on failure
         if: failure()
-        run: docker logs pydough-benchmarker
+        run: docker logs benchmark-container
 
       - name: Create branch and commit metrics
         id: commit
