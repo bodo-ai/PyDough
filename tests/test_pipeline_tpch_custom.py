@@ -6471,8 +6471,8 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 # SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
 SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
-# For Trino, write to the Postgres TPCH catalog (arbitrary)
-TRINO_TABLE_PREFIX = "POSTGRES.TPCH."
+# For Trino, write to the in-memory connector
+TRINO_TABLE_PREFIX = "memory.default."
 
 
 def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
@@ -6521,7 +6521,7 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
-    if db_context.dialect == DatabaseDialect.ORACLE:
+    if db_context.dialect in (DatabaseDialect.ORACLE, DatabaseDialect.TRINO):
         test_data = _strip_temp_for_oracle(test_data)
 
     test_data.run_e2e_test(
@@ -6552,7 +6552,7 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
-    if db_context.dialect == DatabaseDialect.ORACLE:
+    if db_context.dialect in (DatabaseDialect.ORACLE, DatabaseDialect.TRINO):
         test_data = _strip_temp_for_oracle(test_data)
 
     sql_file_path: str = get_sql_test_filename(
@@ -6692,8 +6692,8 @@ def test_pipeline_to_table_ddl(
     expected_create_statement = "CREATE"
 
     table_or_view = " VIEW" if as_view else " TABLE"
-    # SQLite, PostgreSQL, MySQL, and Oracle do not support REPLACE TABLE
-    # Also, SQLite does not support REPLACE VIEW too but other dialects too.
+    # SQLite, PostgreSQL, MySQL, Trino, and Oracle do not support REPLACE TABLE
+    # Also, SQLite/Trino do not support REPLACE VIEW too but other dialects too.
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
     if replace:
@@ -6705,12 +6705,14 @@ def test_pipeline_to_table_ddl(
                 DatabaseDialect.POSTGRES,
                 DatabaseDialect.MYSQL,
                 DatabaseDialect.ORACLE,
+                DatabaseDialect.TRINO,
             }
         ) or (
             table_or_view == " VIEW"
             and db_context.dialect
             in {
                 DatabaseDialect.SQLITE,
+                DatabaseDialect.TRINO,
             }
         ):
             expected_create_statement = rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"
