@@ -206,7 +206,7 @@ class Benchmarker:
         pydough_version: str = version("pydough")
 
         self.question_metrics.to_csv(
-            f"metrics/{date.today()}_{pydough_version}.csv", index=True
+            f"benchmark/metrics/{date.today()}_{pydough_version}.csv", index=True
         )
 
     def generate_benchmark_metrics(self, total_time_min: float) -> None:
@@ -225,8 +225,8 @@ class Benchmarker:
 
         new_df = pd.DataFrame([new_row])
 
-        if Path("benchmark_metrics.csv").exists():
-            existing_df = pd.read_csv("benchmark_metrics.csv")
+        if Path("benchmark/benchmark_metrics.csv").exists():
+            existing_df = pd.read_csv("benchmark/benchmark_metrics.csv")
 
             combined_df = pd.concat(
                 [existing_df, new_df],
@@ -236,7 +236,7 @@ class Benchmarker:
         else:
             combined_df = new_df
 
-        combined_df.to_csv("benchmark_metrics.csv", index=False)
+        combined_df.to_csv("benchmark/benchmark_metrics.csv", index=False)
 
     def measure(self) -> None:
         """

@@ -57,6 +57,9 @@ postgres_conn: Connection = Connection(
 )
 
 benchmarker: Benchmarker = Benchmarker(
-    postgres_conn, questions_path="./benchmark", export_metrics=True
+    postgres_conn,
+    questions_path="./benchmark",
+    export_metrics=True,
+    metadata_path="./benchmark/benchmark_metadata.json",
 )
 benchmarker.measure()
