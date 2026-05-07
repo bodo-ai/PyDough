@@ -777,6 +777,37 @@ def _render_md(result: dict) -> str:
         return "\n".join(lines)
 
     # ------------------------------------------------------------------ #
+    # Key Facts — quick-reference block at the top so the judge sees the  #
+    # most checkable facts before reading any steps.                      #
+    # ------------------------------------------------------------------ #
+    schema = result["schema"]
+    steps = result["steps"]
+
+    src = schema.get("source_collection")
+    limit = schema.get("limit")
+
+    # Collect top-level filters: WHERE conditions before the first SubCollection
+    _top_filters: list[str] = []
+    _past_sub = False
+    for _s in steps:
+        if _s["type"] in ("SubCollection", "Cross"):
+            _past_sub = True
+        elif _s["type"] == "Where" and not _past_sub:
+            for _c in _s.get("conditions", []):
+                _txt = _c.get("text", str(_c)) if isinstance(_c, dict) else str(_c)
+                _top_filters.append(_txt)
+
+    lines.append("## Key Facts")
+    lines.append("")
+    lines.append(f"- **Source collection:** {f'`{src}`' if src else '_(none)_'}")
+    lines.append(f"- **Limit:** {limit if limit is not None else 'none'}")
+    if _top_filters:
+        lines.append("- **Filters:** " + " AND ".join(_top_filters))
+    else:
+        lines.append("- **Filters:** none")
+    lines.append("")
+
+    # ------------------------------------------------------------------ #
     # Query Summary                                                        #
     # ------------------------------------------------------------------ #
     lines.append("## Query Summary")
@@ -810,11 +841,9 @@ def _render_md(result: dict) -> str:
     # ------------------------------------------------------------------ #
     # Schema                                                               #
     # ------------------------------------------------------------------ #
-    schema = result["schema"]
     lines.append("## Schema")
     lines.append("")
 
-    src = schema.get("source_collection")
     lines.append(f"- **Source collection:** {f'`{src}`' if src else '_(none)_'}")
 
     output_cols = schema.get("output_columns", [])
