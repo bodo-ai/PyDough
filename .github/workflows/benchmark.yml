@@ -28,10 +28,11 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         options: >-
-          --health-cmd "pg_isready -U root -d benchmarker"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd "pg_isready -U ${{ secrets.POSTGRES_USER }} -d benchmarker"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 30
+          --health-start-period 300s
 
     steps:
       - name: Checkout repository
@@ -52,7 +53,7 @@ jobs:
         run: uv pip install -e ".[postgres]"
 
       - name: Run benchmark
-        run: python benchmark/executer.py
+        run: uv run python benchmark/executer.py
 
       - name: Create branch and commit metrics
         id: commit
