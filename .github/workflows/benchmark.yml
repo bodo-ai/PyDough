@@ -32,6 +32,7 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         options: >-
+          --name pydough-benchmarker
           --health-cmd "pg_isready -U ${POSTGRES_USER} -d benchmarker"
           --health-interval 15s
           --health-timeout 10s
@@ -61,7 +62,7 @@ jobs:
 
       - name: Dump Postgres logs on failure
         if: failure()
-        run: docker logs postgres
+        run: docker logs pydough-benchmarker
 
       - name: Create branch and commit metrics
         id: commit
