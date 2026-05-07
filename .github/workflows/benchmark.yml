@@ -59,6 +59,10 @@ jobs:
       - name: Run benchmark
         run: uv run python benchmark/executer.py
 
+      - name: Dump Postgres logs on failure
+        if: failure()
+        run: docker logs postgres
+
       - name: Create branch and commit metrics
         id: commit
         run: |

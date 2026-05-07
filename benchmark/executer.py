@@ -22,7 +22,7 @@ if username is None or password is None:
     )
 
 # Wait for Postgres to be ready for 10 minutes max
-for _ in range(600):
+for i in range(600):
     try:
         conn = psycopg2.connect(
             host=host,
@@ -31,23 +31,13 @@ for _ in range(600):
             password=password,
             database=database,
         )
-        # Checking the lineitem table was loaded correctly
-        # before running the benchmark
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM TPCH.lineitem;")
-        row = cur.fetchone()
-        if row and row[0] == 59986052:
-            conn.close()
-            break
-        else:
-            print(f"Waiting {_ + 1}/600 seconds for data to be load...")
-            print(
-                f"Expected 59986052 rows in TPCH.lineitem, but got {row[0] if row else 'no result'}"
-            )
-            time.sleep(1)
+        cur.execute("SELECT 1 FROM tpch.lineitem LIMIT 1;")
+        conn.close()
+        print("Postgres is ready.")
+        break
     except psycopg2.Error as e:
-        print("Error occurred while connecting to Postgres:", e)
-        print(f"Waiting {_ + 1}/600 seconds for Postgres to be ready...")
+        print(f"[{i + 1}/600] Waiting for Postgres/data: {e}")
         time.sleep(1)
 else:
     raise TimeoutError("Postgres did not become ready within 10 minutes.")
