@@ -28,7 +28,7 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         options: >-
-          --health-cmd "pg_isready -U ${{ env.POSTGRES_USER }} -d benchmarker"
+          --health-cmd "pg_isready -U ${POSTGRES_USER} -d benchmarker"
           --health-interval 15s
           --health-timeout 10s
           --health-retries 30
