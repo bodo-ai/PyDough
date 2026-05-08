@@ -25,7 +25,7 @@ WITH _t5 AS (
     1
 ), _s8 AS (
   SELECT
-    _s5.c_nationkey,
+    _s5.c_nationkey AS n_nationkey,
     MAX(_t3.anything_n_name) AS anything_anything_n_name,
     MAX(_t3.anything_n_regionkey) AS anything_anything_n_regionkey,
     MAX(_t3.n_rows) AS anything_n_rows,
@@ -60,7 +60,7 @@ SELECT
   MAX(_s8.max_c_acctbal) AS max_cust_acctbal
 FROM _s8 AS _s8
 JOIN _s6 AS _s6
-  ON _s6.s_nationkey = _s8.c_nationkey
+  ON _s6.s_nationkey = _s8.n_nationkey
 JOIN _t6 AS _s7
   ON _s6.avg_s_acctbal < _s7.s_acctbal AND _s6.s_nationkey = _s7.s_nationkey
 GROUP BY

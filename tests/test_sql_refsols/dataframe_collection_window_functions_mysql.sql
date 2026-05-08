@@ -17,7 +17,7 @@ WITH _t AS (
     ON CUSTOMER.c_nationkey = NATION.n_nationkey
 ), _s6 AS (
   SELECT
-    _t.c_custkey,
+    _t.c_custkey AS o_custkey,
     ANY_VALUE(_t.c_acctbal) AS anything_c_acctbal,
     ANY_VALUE(_t.c_name) AS anything_c_name,
     ANY_VALUE(_t.nation_name) AS anything_nation_name,
@@ -78,8 +78,8 @@ SELECT
   _s6.anything_c_acctbal / COUNT(*) OVER () AS ratio
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
-  ON _s6.c_custkey = _s7.o_custkey
+  ON _s6.o_custkey = _s7.o_custkey
 LEFT JOIN _s9 AS _s9
-  ON _s6.c_custkey = _s9.o_custkey
+  ON _s6.o_custkey = _s9.o_custkey
 ORDER BY
   1

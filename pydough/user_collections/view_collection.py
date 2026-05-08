@@ -62,7 +62,7 @@ class ViewGeneratedCollection(PyDoughUserGeneratedCollection):
         self._is_replace = is_replace
         self._is_temp = is_temp
         # Default to all columns as the unique key if not specified
-        self._unique_columns = (
+        self._unique_columns: list[str | list[str]] = (
             unique_columns if unique_columns is not None else [columns]
         )
         self._write_path = write_path

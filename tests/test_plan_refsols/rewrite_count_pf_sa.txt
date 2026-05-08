@@ -1,0 +1,4 @@
+ROOT(columns=[('n', ndistinct_c_nationkey)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'ndistinct_c_nationkey': NDISTINCT(c_nationkey)})
+  FILTER(condition=(c_acctbal < -975:numeric) & (c_mktsegment == 'AUTOMOBILE':string), columns={'c_nationkey': c_nationkey})
+   SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_mktsegment': c_mktsegment, 'c_nationkey': c_nationkey})
