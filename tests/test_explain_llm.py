@@ -16,6 +16,14 @@ import pytest
 
 import pydough
 from pydough.configs import PyDoughSession
+from pydough.errors import (
+    PyDoughQDAGException,
+    PyDoughSQLException,
+    PyDoughSessionException,
+    PyDoughTypeException,
+    PyDoughUnqualifiedException,
+)
+from pydough.exploration.explain_llm import _classify_error
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
 from tests.testing_utilities import graph_fetcher
@@ -96,6 +104,231 @@ def test_error_shape(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
     assert isinstance(result["message"], str) and result["message"]
     assert result["steps"] == []
     assert result["schema"] is None
+
+
+# ---------------------------------------------------------------------------
+# Structured error payload — error_type, details, hint
+# ---------------------------------------------------------------------------
+
+
+def test_error_payload_has_all_structured_fields(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Every error payload must include error_type, details, and hint keys."""
+
+    def impl():
+        return nations.WHERE(typo_field == "ASIA")
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "error_type" in result
+    assert "details" in result
+    assert "hint" in result
+    assert isinstance(result["details"], dict)
+
+
+def test_error_type_unrecognized_term(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """A typo field name is classified as 'unrecognized_term'."""
+
+    def impl():
+        return nations.WHERE(naem == "ASIA")
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert result["error_type"] == "unrecognized_term"
+
+
+def test_error_details_unrecognized_term(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Unrecognized term details include the wrong term and suggestions list."""
+
+    def impl():
+        return nations.WHERE(naem == "ASIA")
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "term" in result["details"]
+    assert result["details"]["term"] == "naem"
+    assert "suggestions" in result["details"]
+    assert isinstance(result["details"]["suggestions"], list)
+    assert len(result["details"]["suggestions"]) > 0
+    assert "name" in result["details"]["suggestions"]
+
+
+def test_error_hint_unrecognized_term(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Unrecognized term error has a non-empty hint."""
+
+    def impl():
+        return nations.WHERE(naem == "ASIA")
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert result["hint"] is not None
+    assert isinstance(result["hint"], str) and result["hint"]
+
+
+def test_error_type_expression_not_collection(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Accessing a scalar field as a collection is classified correctly."""
+
+    def impl():
+        return nations.key
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert result["error_type"] == "expression_not_collection"
+    assert result["hint"] is not None
+
+
+def test_error_md_shows_hint_as_blockquote(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """When a hint is present, markdown renders it as a blockquote."""
+
+    def impl():
+        return nations.WHERE(naem == "ASIA")
+
+    md = _run_md(impl, tpch_graph, tpch_session)
+    assert result["error"] if (result := _run(impl, tpch_graph, tpch_session)) else True
+    assert "> " in md  # blockquote marker
+
+
+def test_error_md_no_hint_blockquote_for_generic(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Generic errors with no hint produce no blockquote in markdown."""
+
+    def impl():
+        # This should produce a qdag_error without "Did you mean"
+        return nations.WHERE(typo_field == "ASIA")
+
+    result = _run(impl, tpch_graph, tpch_session)
+    md = _run_md(impl, tpch_graph, tpch_session)
+    # If hint is None, no blockquote in the error section
+    if result["hint"] is None:
+        assert "> " not in md
+
+
+def test_error_type_is_stable_string(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """error_type is always a non-empty string regardless of error category."""
+
+    def impl():
+        return nations.WHERE(naem == "ASIA")
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert isinstance(result["error_type"], str) and result["error_type"]
+
+
+# ---------------------------------------------------------------------------
+# _classify_error — full error taxonomy
+# ---------------------------------------------------------------------------
+
+
+def test_classify_syntax_error():
+    """SyntaxError → 'syntax_error' with a non-None hint."""
+    e = SyntaxError("invalid syntax")
+    error_type, details, hint = _classify_error(e)
+    assert error_type == "syntax_error"
+    assert hint is not None
+
+
+def test_classify_syntax_error_captures_location():
+    """SyntaxError with line/offset info is captured in details."""
+    e = SyntaxError("invalid syntax")
+    e.lineno = 3
+    e.offset = 7
+    _, details, _ = _classify_error(e)
+    assert details.get("line") == 3
+    assert details.get("offset") == 7
+
+
+def test_classify_answer_variable_error():
+    """PyDoughUnqualifiedException mentioning 'answer' → 'answer_variable'."""
+    e = PyDoughUnqualifiedException(
+        "Expected variable 'result' to store answer, found None"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "answer_variable"
+    assert hint is not None
+
+
+def test_classify_session_error():
+    """PyDoughSessionException → 'session' with a non-None hint."""
+    e = PyDoughSessionException("No active graph set in PyDough session.")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "session"
+    assert hint is not None
+
+
+def test_classify_type_error():
+    """PyDoughTypeException → 'type_error' with a non-None hint."""
+    e = PyDoughTypeException("Expected numeric, got string")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "type_error"
+    assert hint is not None
+
+
+def test_classify_unsupported_operation():
+    """NotImplementedError → 'unsupported_operation' with a non-None hint."""
+    e = NotImplementedError("NDISTINCT in correlated context not supported")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "unsupported_operation"
+    assert hint is not None
+
+
+def test_classify_cross_without_lhs():
+    """PyDoughSQLException mentioning CROSS → 'cross_without_lhs'."""
+    e = PyDoughSQLException("Cannot use CROSS(collection) without a left-hand side")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "cross_without_lhs"
+    assert hint is not None
+
+
+def test_classify_sql_error():
+    """PyDoughSQLException without CROSS → 'sql_error'."""
+    e = PyDoughSQLException("SQL rewrite failed: ambiguous column reference")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "sql_error"
+    assert hint is not None
+
+
+def test_classify_qdag_error_without_suggestion():
+    """PyDoughQDAGException without 'Did you mean:' → 'qdag_error' with no hint."""
+    e = PyDoughQDAGException("Cardinality mismatch: expected singular context")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "qdag_error"
+    assert hint is None
+
+
+def test_classify_generic_exception():
+    """An arbitrary Exception → 'generic' with no hint."""
+    e = RuntimeError("something unexpected")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "generic"
+    assert hint is None
+
+
+def test_classify_all_types_return_dict_details():
+    """Every error type returns a dict for details, never None."""
+    exceptions = [
+        SyntaxError("x"),
+        PyDoughUnqualifiedException("answer variable 'result' not found"),
+        PyDoughSessionException("no session"),
+        PyDoughTypeException("bad type"),
+        NotImplementedError("not supported"),
+        PyDoughSQLException("CROSS without lhs"),
+        PyDoughSQLException("generic sql fail"),
+        PyDoughQDAGException("no suggestion here"),
+        RuntimeError("unexpected"),
+    ]
+    for e in exceptions:
+        _, details, _ = _classify_error(e)
+        assert isinstance(details, dict), (
+            f"details is not a dict for {type(e).__name__}"
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -53,6 +53,11 @@ sections — easier for an LLM judge to read than raw JSON.
 
 __all__ = ["explain_llm"]
 
+# ---------------------------------------------------------------------------
+# Error classification and payload
+# ---------------------------------------------------------------------------
+import re as _re
+
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
@@ -93,15 +98,137 @@ from ._common import (
     qualify_safely,
 )
 
-# ---------------------------------------------------------------------------
-# Error payload helper
-# ---------------------------------------------------------------------------
+_HINT_MAP: dict[str, str | None] = {
+    "unrecognized_term": (
+        "Use one of the suggested names above. "
+        "Do not reuse the name that caused this error."
+    ),
+    "expression_not_collection": (
+        "The result is an expression, not a collection. "
+        "Wrap it in a collection operation (CALCULATE, WHERE) "
+        "or use pydough.explain_term() instead."
+    ),
+    "syntax_error": "Fix the Python syntax error in the PyDough code before retrying.",
+    "answer_variable": (
+        "Set answer_variable= in from_string to match the variable "
+        "name used to store the result in the code."
+    ),
+    "session": (
+        "Ensure the session has a metadata graph loaded before calling explain_llm."
+    ),
+    "unsupported_operation": (
+        "This PyDough operation is not yet supported. "
+        "Rewrite the query using supported operations."
+    ),
+    "cross_without_lhs": (
+        "CROSS requires a left-hand collection: "
+        "use left_collection.CROSS(right), not CROSS(right) standalone."
+    ),
+    "sql_error": "The query produced invalid SQL. Check the query structure.",
+    "type_error": "Check that the argument types match what the function expects.",
+    "generic": None,
+}
 
 
-def _error_payload(message: str) -> dict:
+def _classify_error(
+    e: BaseException,
+) -> tuple[str, dict, str | None]:
+    """
+    Returns ``(error_type, details, hint)`` for a PyDough exception.
+
+    ``error_type`` is a stable machine-readable tag.  ``details`` carries
+    structured fields extracted from the message (e.g. the wrong term name
+    and the list of suggestions).  ``hint`` is the actionable guidance string
+    for the LLM — ``None`` when no specific hint is available.
+    """
+    from pydough.errors import (
+        PyDoughQDAGException,
+        PyDoughSessionException,
+        PyDoughSQLException,
+        PyDoughTypeException,
+        PyDoughUnqualifiedException,
+    )
+
+    msg = str(e)
+
+    # ── Unrecognized term with suggestions ──────────────────────────────────
+    if "Did you mean" in msg:
+        details: dict = {}
+        # Extract the wrong term: "Unrecognized term of ...: 'TERM'."
+        term_match = _re.search(r":\s*'([^']+)'", msg)
+        if term_match:
+            details["term"] = term_match.group(1)
+        # Extract suggestions: "Did you mean: a, b, c?"
+        sugg_match = _re.search(r"Did you mean:\s*([^?]+)\?", msg)
+        if sugg_match:
+            details["suggestions"] = [s.strip() for s in sugg_match.group(1).split(",")]
+        return "unrecognized_term", details, _HINT_MAP["unrecognized_term"]
+
+    # ── Expression received where collection expected ───────────────────────
+    if "Expected a collection, but received an expression" in msg:
+        return "expression_not_collection", {}, _HINT_MAP["expression_not_collection"]
+
+    # ── Python syntax error ─────────────────────────────────────────────────
+    if isinstance(e, SyntaxError) or "Syntax error" in msg:
+        details = {}
+        if isinstance(e, SyntaxError):
+            details = {"line": e.lineno, "offset": e.offset}
+        return "syntax_error", details, _HINT_MAP["syntax_error"]
+
+    # ── answer_variable not found ───────────────────────────────────────────
+    if isinstance(e, PyDoughUnqualifiedException):
+        if "answer" in msg.lower() or "variable" in msg.lower():
+            return "answer_variable", {}, _HINT_MAP["answer_variable"]
+        return "generic", {}, None
+
+    # ── Session / metadata not configured ───────────────────────────────────
+    if isinstance(e, PyDoughSessionException):
+        return "session", {}, _HINT_MAP["session"]
+
+    # ── Type mismatch ────────────────────────────────────────────────────────
+    if isinstance(e, PyDoughTypeException):
+        return "type_error", {}, _HINT_MAP["type_error"]
+
+    # ── Unsupported operation (hybrid/relational layer) ──────────────────────
+    if isinstance(e, NotImplementedError):
+        return "unsupported_operation", {}, _HINT_MAP["unsupported_operation"]
+
+    # ── SQL generation / execution errors ────────────────────────────────────
+    if isinstance(e, PyDoughSQLException):
+        if "CROSS" in msg:
+            return "cross_without_lhs", {}, _HINT_MAP["cross_without_lhs"]
+        return "sql_error", {}, _HINT_MAP["sql_error"]
+
+    # ── QDAGException without "Did you mean" ────────────────────────────────
+    if isinstance(e, PyDoughQDAGException):
+        return "qdag_error", {}, None
+
+    return "generic", {}, None
+
+
+def _error_payload(
+    e: BaseException | str,
+) -> dict:
+    """
+    Builds a structured error payload from an exception or a raw message string.
+
+    The payload always has a stable shape so the markdown renderer and any
+    programmatic consumer can handle every error the same way.
+    """
+    if isinstance(e, str):
+        message = e
+        details_: dict[str, object] = {}
+        error_type, details, hint = "generic", details_, None
+    else:
+        message = str(e)
+        error_type, details, hint = _classify_error(e)
+
     return {
         "error": True,
+        "error_type": error_type,
         "message": message,
+        "details": details,
+        "hint": hint,
         "steps": [],
         "schema": None,
     }
@@ -786,6 +913,11 @@ def _render_md(result: dict) -> str:
         lines.append("## Error")
         lines.append("")
         lines.append(result["message"])
+        # Structured hint — rendered from the classified field, not string-matched
+        hint = result.get("hint")
+        if hint:
+            lines.append("")
+            lines.append(f"> {hint}")
         return "\n".join(lines)
 
     # ------------------------------------------------------------------ #
@@ -954,14 +1086,18 @@ def explain_llm(
     # --- qualification -------------------------------------------------------
     qualified, error = qualify_safely(data, session)
     if error is not None:
-        result = _error_payload(str(error))
+        result = _error_payload(error)
         return _render_md(result) if format == "md" else result
 
     if isinstance(qualified, PyDoughExpressionQDAG):
-        result = _error_payload(
+        msg = (
             f"Expected a collection, but received an expression: "
             f"{qualified.to_string()}. Did you mean to use explain_term?"
         )
+        result = _error_payload(msg)
+        # Override the generic classification with the specific type
+        result["error_type"] = "expression_not_collection"
+        result["hint"] = _HINT_MAP["expression_not_collection"]
         return _render_md(result) if format == "md" else result
 
     assert isinstance(qualified, PyDoughCollectionQDAG)
