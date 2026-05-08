@@ -1,0 +1,2775 @@
+,question_id,benchmark,ground_truth,pydough_code,pydough_sql,exec_time,pydough_exec_time,exec_plan,pydough_exec_plan,status
+0,1,TPCH,"SELECT
+    l_returnflag,
+    l_linestatus,
+    SUM(l_quantity) AS sum_qty,
+    SUM(l_extendedprice) AS sum_base_price,
+    SUM(l_extendedprice * (1 - l_discount)) AS sum_disc_price,
+    SUM(l_extendedprice * (1 - l_discount) * (1 + l_tax)) AS sum_charge,
+    AVG(l_quantity) AS avg_qty,
+    AVG(l_extendedprice) AS avg_price,
+    AVG(l_discount) AS avg_disc,
+    COUNT(*) AS count_order
+FROM
+    tpch.lineitem
+WHERE
+    l_shipdate <= DATE '1998-12-01' - INTERVAL '90 days'
+GROUP BY
+    l_returnflag,
+    l_linestatus
+ORDER BY
+    l_returnflag,
+    l_linestatus;","result = (
+        lines.WHERE(ship_date <= DATETIME('1998-12-1', '-90 days'))
+        .PARTITION(name=""groups"", by=(return_flag, status))
+        .CALCULATE(
+            L_RETURNFLAG=return_flag,
+            L_LINESTATUS=status,
+            SUM_QTY=SUM(lines.quantity),
+            SUM_BASE_PRICE=SUM(lines.extended_price),
+            SUM_DISC_PRICE=SUM(lines.extended_price * (1 - lines.discount)),
+            SUM_CHARGE=SUM(
+                lines.extended_price * (1 - lines.discount) * (1 + lines.tax)
+            ),
+            AVG_QTY=AVG(lines.quantity),
+            AVG_PRICE=AVG(lines.extended_price),
+            AVG_DISC=AVG(lines.discount),
+            COUNT_ORDER=COUNT(lines),
+        )
+        .ORDER_BY(L_RETURNFLAG.ASC(), L_LINESTATUS.ASC())
+    )","SELECT
+  l_returnflag AS L_RETURNFLAG,
+  l_linestatus AS L_LINESTATUS,
+  COALESCE(SUM(l_quantity), 0) AS SUM_QTY,
+  COALESCE(SUM(l_extendedprice), 0) AS SUM_BASE_PRICE,
+  COALESCE(SUM(l_extendedprice * (
+    1 - l_discount
+  )), 0) AS SUM_DISC_PRICE,
+  COALESCE(SUM(l_extendedprice * (
+    1 - l_discount
+  ) * (
+    1 + l_tax
+  )), 0) AS SUM_CHARGE,
+  AVG(CAST(l_quantity AS DECIMAL)) AS AVG_QTY,
+  AVG(CAST(l_extendedprice AS DECIMAL)) AS AVG_PRICE,
+  AVG(CAST(l_discount AS DECIMAL)) AS AVG_DISC,
+  COUNT(*) AS COUNT_ORDER
+FROM tpch.lineitem
+WHERE
+  l_shipdate <= CAST('1998-09-02' AS DATE)
+GROUP BY
+  1,
+  2
+ORDER BY
+  1 NULLS FIRST,
+  2 NULLS FIRST",27.995911105000005,29.189111785000023,"Finalize GroupAggregate  (cost=1685201.13..1698235.12 rows=40000 width=248)
+  Group Key: l_returnflag, l_linestatus
+  ->  Gather Merge  (cost=1685201.13..1694535.12 rows=80000 width=248)
+        Workers Planned: 2
+        ->  Sort  (cost=1684201.11..1684301.11 rows=40000 width=248)
+              Sort Key: l_returnflag, l_linestatus
+              ->  Partial HashAggregate  (cost=1593260.22..1676492.06 rows=40000 width=248)
+                    Group Key: l_returnflag, l_linestatus
+                    Planned Partitions: 8
+                    ->  Parallel Seq Scan on lineitem  (cost=0.00..1098328.25 rows=3010993 width=88)
+                          Filter: (l_shipdate <= '1998-09-02 00:00:00'::timestamp without time zone)
+JIT:
+  Functions: 9
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize GroupAggregate  (cost=1700456.10..1714290.08 rows=40000 width=248)
+  Group Key: l_returnflag, l_linestatus
+  ->  Gather Merge  (cost=1700456.10..1709790.08 rows=80000 width=248)
+        Workers Planned: 2
+        ->  Sort  (cost=1699456.07..1699556.07 rows=40000 width=248)
+              Sort Key: l_returnflag NULLS FIRST, l_linestatus NULLS FIRST
+              ->  Partial HashAggregate  (cost=1608315.19..1691747.03 rows=40000 width=248)
+                    Group Key: l_returnflag, l_linestatus
+                    Planned Partitions: 8
+                    ->  Parallel Seq Scan on lineitem  (cost=0.00..1098328.25 rows=3010993 width=88)
+                          Filter: (l_shipdate <= '1998-09-02'::date)
+JIT:
+  Functions: 9
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+1,2,TPCH,"SELECT
+    s.s_acctbal,
+    s.s_name,
+    n.n_name,
+    p.p_partkey,
+    p.p_mfgr,
+    s.s_address,
+    s.s_phone,
+    s.s_comment
+FROM
+    tpch.part p
+JOIN tpch.partsupp ps
+    ON p.p_partkey = ps.ps_partkey
+JOIN tpch.supplier s
+    ON s.s_suppkey = ps.ps_suppkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+JOIN tpch.region r
+    ON n.n_regionkey = r.r_regionkey
+WHERE
+    p.p_size = 15
+    AND p.p_type LIKE '%BRASS'
+    AND r.r_name = 'EUROPE'
+    AND ps.ps_supplycost = (
+        SELECT
+            MIN(ps2.ps_supplycost)
+        FROM
+            tpch.partsupp ps2
+        JOIN tpch.supplier s2
+            ON s2.s_suppkey = ps2.ps_suppkey
+        JOIN tpch.nation n2
+            ON s2.s_nationkey = n2.n_nationkey
+        JOIN tpch.region r2
+            ON n2.n_regionkey = r2.r_regionkey
+        WHERE
+            ps2.ps_partkey = p.p_partkey
+            AND r2.r_name = 'EUROPE'
+    )
+ORDER BY
+    s.s_acctbal DESC,
+    n.n_name,
+    s.s_name,
+    p.p_partkey
+LIMIT 10;","result = (
+        parts.WHERE(ENDSWITH(part_type, ""BRASS"") & (size == 15))
+        .CALCULATE(P_PARTKEY=key, P_MFGR=manufacturer)
+        .supply_records.WHERE(supplier.nation.region.name == ""EUROPE"")
+        .BEST(by=supply_cost.ASC(), per=""parts"", allow_ties=True)
+        .CALCULATE(
+            S_ACCTBAL=supplier.account_balance,
+            S_NAME=supplier.name,
+            N_NAME=supplier.nation.name,
+            P_PARTKEY=P_PARTKEY,
+            P_MFGR=P_MFGR,
+            S_ADDRESS=supplier.address,
+            S_PHONE=supplier.phone,
+            S_COMMENT=supplier.comment,
+        )
+        .TOP_K(
+            10,
+            by=(S_ACCTBAL.DESC(), N_NAME.ASC(), S_NAME.ASC(), P_PARTKEY.ASC()),
+        )
+    )","WITH _t AS (
+  SELECT
+    nation.n_name,
+    part.p_mfgr,
+    part.p_partkey,
+    supplier.s_acctbal,
+    supplier.s_address,
+    supplier.s_comment,
+    supplier.s_name,
+    supplier.s_phone,
+    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) AS _w
+  FROM tpch.part AS part
+  JOIN tpch.partsupp AS partsupp
+    ON part.p_partkey = partsupp.ps_partkey
+  JOIN tpch.supplier AS supplier
+    ON partsupp.ps_suppkey = supplier.s_suppkey
+  JOIN tpch.nation AS nation
+    ON nation.n_nationkey = supplier.s_nationkey
+  JOIN tpch.region AS region
+    ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
+  WHERE
+    part.p_size = 15 AND part.p_type LIKE '%BRASS'
+)
+SELECT
+  s_acctbal AS S_ACCTBAL,
+  s_name AS S_NAME,
+  n_name AS N_NAME,
+  p_partkey AS P_PARTKEY,
+  p_mfgr AS P_MFGR,
+  s_address AS S_ADDRESS,
+  s_phone AS S_PHONE,
+  s_comment AS S_COMMENT
+FROM _t
+WHERE
+  _w = 1
+ORDER BY
+  1 DESC NULLS LAST,
+  3 NULLS FIRST,
+  2 NULLS FIRST,
+  4 NULLS FIRST
+LIMIT 10",195.20820565499992,2.498311106000074,"Limit  (cost=515993.31..515993.31 rows=1 width=216)
+  ->  Sort  (cost=515993.31..515993.31 rows=1 width=216)
+        Sort Key: s.s_acctbal DESC, n.n_name, s.s_name, p.p_partkey
+        ->  Merge Join  (cost=199789.87..515993.30 rows=1 width=216)
+              Merge Cond: (p.p_partkey = ps.ps_partkey)
+              Join Filter: (ps.ps_supplycost = (SubPlan 1))
+              ->  Gather Merge  (cost=1000.45..83546.34 rows=7832 width=19)
+                    Workers Planned: 2
+                    ->  Parallel Index Scan using part_pkey on part p  (cost=0.43..81642.31 rows=3263 width=19)
+                          Filter: (((p_type)::text ~~ '%BRASS'::text) AND (p_size = 15))
+              ->  Sort  (cost=198789.42..198828.58 rows=15664 width=219)
+                    Sort Key: ps.ps_partkey
+                    ->  Gather  (cost=3976.60..197698.02 rows=15664 width=219)
+                          Workers Planned: 2
+                          ->  Parallel Hash Join  (cost=2976.60..195131.62 rows=6527 width=219)
+                                Hash Cond: (ps.ps_suppkey = s.s_suppkey)
+                                ->  Parallel Seq Scan on partsupp ps  (cost=0.00..187466.51 rows=1240051 width=26)
+                                ->  Parallel Hash  (cost=2972.74..2972.74 rows=309 width=201)
+                                      ->  Hash Join  (cost=24.81..2972.74 rows=309 width=201)
+                                            Hash Cond: (s.s_nationkey = n.n_nationkey)
+                                            ->  Parallel Seq Scan on supplier s  (cost=0.00..2724.24 rows=58824 width=137)
+                                            ->  Hash  (cost=24.80..24.80 rows=1 width=72)
+                                                  ->  Hash Join  (cost=12.39..24.80 rows=1 width=72)
+                                                        Hash Cond: (n.n_regionkey = r.r_regionkey)
+                                                        ->  Seq Scan on nation n  (cost=0.00..11.90 rows=190 width=76)
+                                                        ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                              ->  Seq Scan on region r  (cost=0.00..12.38 rows=1 width=4)
+                                                                    Filter: ((r_name)::text = 'EUROPE'::text)
+              SubPlan 1
+                ->  Aggregate  (cost=3828.82..3828.83 rows=1 width=32)
+                      ->  Nested Loop  (cost=25.24..3828.63 rows=78 width=18)
+                            ->  Hash Join  (cost=24.81..3541.07 rows=526 width=4)
+                                  Hash Cond: (s2.s_nationkey = n2.n_nationkey)
+                                  ->  Seq Scan on supplier s2  (cost=0.00..3136.00 rows=100000 width=8)
+                                  ->  Hash  (cost=24.80..24.80 rows=1 width=4)
+                                        ->  Hash Join  (cost=12.39..24.80 rows=1 width=4)
+                                              Hash Cond: (n2.n_regionkey = r2.r_regionkey)
+                                              ->  Seq Scan on nation n2  (cost=0.00..11.90 rows=190 width=8)
+                                              ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                    ->  Seq Scan on region r2  (cost=0.00..12.38 rows=1 width=4)
+                                                          Filter: ((r_name)::text = 'EUROPE'::text)
+                            ->  Index Scan using partsupp_pkey on partsupp ps2  (cost=0.43..9.06 rows=74 width=22)
+                                  Index Cond: ((ps_partkey = p.p_partkey) AND (ps_suppkey = s2.s_suppkey))
+JIT:
+  Functions: 69
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=199452.74..199452.75 rows=1 width=216)
+  ->  Sort  (cost=199452.74..199452.75 rows=1 width=216)
+        Sort Key: _t.s_acctbal DESC NULLS LAST, _t.n_name NULLS FIRST, _t.s_name NULLS FIRST, _t.p_partkey NULLS FIRST
+        ->  Subquery Scan on _t  (cost=199443.80..199452.73 rows=1 width=216)
+              Filter: (_t._w = 1)
+              ->  WindowAgg  (cost=199443.80..199451.97 rows=61 width=246)
+                    Run Condition: (rank() OVER (?) <= 1)
+                    ->  Gather Merge  (cost=199443.80..199450.90 rows=61 width=238)
+                          Workers Planned: 2
+                          ->  Sort  (cost=198443.78..198443.84 rows=25 width=238)
+                                Sort Key: partsupp.ps_partkey, partsupp.ps_supplycost
+                                ->  Nested Loop  (cost=2977.03..198443.19 rows=25 width=238)
+                                      ->  Parallel Hash Join  (cost=2976.60..195131.62 rows=6527 width=219)
+                                            Hash Cond: (partsupp.ps_suppkey = supplier.s_suppkey)
+                                            ->  Parallel Seq Scan on partsupp  (cost=0.00..187466.51 rows=1240051 width=26)
+                                            ->  Parallel Hash  (cost=2972.74..2972.74 rows=309 width=201)
+                                                  ->  Hash Join  (cost=24.81..2972.74 rows=309 width=201)
+                                                        Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
+                                                        ->  Parallel Seq Scan on supplier  (cost=0.00..2724.24 rows=58824 width=137)
+                                                        ->  Hash  (cost=24.80..24.80 rows=1 width=72)
+                                                              ->  Hash Join  (cost=12.39..24.80 rows=1 width=72)
+                                                                    Hash Cond: (nation.n_regionkey = region.r_regionkey)
+                                                                    ->  Seq Scan on nation  (cost=0.00..11.90 rows=190 width=76)
+                                                                    ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                                          ->  Seq Scan on region  (cost=0.00..12.38 rows=1 width=4)
+                                                                                Filter: ((r_name)::text = 'EUROPE'::text)
+                                      ->  Index Scan using part_pkey on part  (cost=0.43..0.51 rows=1 width=19)
+                                            Index Cond: (p_partkey = partsupp.ps_partkey)
+                                            Filter: (((p_type)::text ~~ '%BRASS'::text) AND (p_size = 15))
+JIT:
+  Functions: 44
+  Options: Inlining false, Optimization false, Expressions true, Deforming true",SUCCESS
+2,3,TPCH,"SELECT
+    l.l_orderkey,
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue,
+    o.o_orderdate,
+    o.o_shippriority
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON l.l_orderkey = o.o_orderkey
+WHERE
+    c.c_mktsegment = 'BUILDING'
+    AND o.o_orderdate < DATE '1995-03-15'
+    AND l.l_shipdate > DATE '1995-03-15'
+GROUP BY
+    l.l_orderkey,
+    o.o_orderdate,
+    o.o_shippriority
+ORDER BY
+    revenue DESC,
+    o.o_orderdate
+LIMIT 10;","result = (
+        orders.CALCULATE(order_date, ship_priority)
+        .WHERE(
+            (customer.market_segment == ""BUILDING"")
+            & (order_date < DATETIME('1995-3-15'))
+        )
+        .lines.WHERE(ship_date > DATETIME('1995-3-15'))
+        .PARTITION(name=""groups"", by=(order_key, order_date, ship_priority))
+        .CALCULATE(
+            L_ORDERKEY=order_key,
+            REVENUE=SUM(lines.extended_price * (1 - lines.discount)),
+            O_ORDERDATE=order_date,
+            O_SHIPPRIORITY=ship_priority,
+        )
+        .TOP_K(10, by=(REVENUE.DESC(), O_ORDERDATE.ASC(), L_ORDERKEY.ASC()))
+    )","SELECT
+  lineitem.l_orderkey AS L_ORDERKEY,
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) AS REVENUE,
+  orders.o_orderdate AS O_ORDERDATE,
+  orders.o_shippriority AS O_SHIPPRIORITY
+FROM tpch.orders AS orders
+JOIN tpch.customer AS customer
+  ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'BUILDING'
+JOIN tpch.lineitem AS lineitem
+  ON lineitem.l_orderkey = orders.o_orderkey
+  AND lineitem.l_shipdate > CAST('1995-03-15' AS DATE)
+WHERE
+  orders.o_orderdate < CAST('1995-03-15' AS DATE)
+GROUP BY
+  1,
+  3,
+  4
+ORDER BY
+  2 DESC NULLS LAST,
+  3 NULLS FIRST,
+  1 NULLS FIRST
+LIMIT 10",47.87501621999991,45.29542904500022,"Limit  (cost=1541040.95..1541040.97 rows=10 width=44)
+  ->  Sort  (cost=1541040.95..1542248.55 rows=483043 width=44)
+        Sort Key: (sum((l.l_extendedprice * ('1'::numeric - l.l_discount)))) DESC, o.o_orderdate
+        ->  Finalize GroupAggregate  (cost=1467032.14..1530602.56 rows=483043 width=44)
+              Group Key: l.l_orderkey, o.o_orderdate, o.o_shippriority
+              ->  Gather Merge  (cost=1467032.14..1519532.82 rows=402536 width=44)
+                    Workers Planned: 2
+                    ->  Partial GroupAggregate  (cost=1466032.12..1472070.16 rows=201268 width=44)
+                          Group Key: l.l_orderkey, o.o_orderdate, o.o_shippriority
+                          ->  Sort  (cost=1466032.12..1466535.29 rows=201268 width=48)
+                                Sort Key: l.l_orderkey, o.o_orderdate, o.o_shippriority
+                                ->  Parallel Hash Join  (cost=331652.06..1442110.15 rows=201268 width=48)
+                                      Hash Cond: (l.l_orderkey = o.o_orderkey)
+                                      ->  Parallel Seq Scan on lineitem l  (cost=0.00..1098328.25 rows=3010993 width=40)
+                                            Filter: (l_shipdate > '1995-03-15'::date)
+                                      ->  Parallel Hash  (cost=329632.72..329632.72 rows=161547 width=12)
+                                            ->  Parallel Hash Join  (cost=45124.50..329632.72 rows=161547 width=12)
+                                                  Hash Cond: (o.o_custkey = c.c_custkey)
+                                                  ->  Parallel Seq Scan on orders o  (cost=0.00..282393.54 rows=805588 width=16)
+                                                        Filter: (o_orderdate < '1995-03-15'::date)
+                                                  ->  Parallel Hash  (cost=43557.61..43557.61 rows=125351 width=4)
+                                                        ->  Parallel Seq Scan on customer c  (cost=0.00..43557.61 rows=125351 width=4)
+                                                              Filter: ((c_mktsegment)::text = 'BUILDING'::text)
+JIT:
+  Functions: 34
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=1541040.95..1541040.97 rows=10 width=44)
+  ->  Sort  (cost=1541040.95..1542248.55 rows=483043 width=44)
+        Sort Key: (COALESCE(sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount))), '0'::numeric)) DESC NULLS LAST, orders.o_orderdate NULLS FIRST, lineitem.l_orderkey NULLS FIRST
+        ->  Finalize GroupAggregate  (cost=1467032.14..1530602.56 rows=483043 width=44)
+              Group Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
+              ->  Gather Merge  (cost=1467032.14..1519532.82 rows=402536 width=44)
+                    Workers Planned: 2
+                    ->  Partial GroupAggregate  (cost=1466032.12..1472070.16 rows=201268 width=44)
+                          Group Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
+                          ->  Sort  (cost=1466032.12..1466535.29 rows=201268 width=48)
+                                Sort Key: lineitem.l_orderkey NULLS FIRST, orders.o_orderdate NULLS FIRST, orders.o_shippriority
+                                ->  Parallel Hash Join  (cost=331652.06..1442110.15 rows=201268 width=48)
+                                      Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
+                                      ->  Parallel Seq Scan on lineitem  (cost=0.00..1098328.25 rows=3010993 width=40)
+                                            Filter: (l_shipdate > '1995-03-15'::date)
+                                      ->  Parallel Hash  (cost=329632.72..329632.72 rows=161547 width=12)
+                                            ->  Parallel Hash Join  (cost=45124.50..329632.72 rows=161547 width=12)
+                                                  Hash Cond: (orders.o_custkey = customer.c_custkey)
+                                                  ->  Parallel Seq Scan on orders  (cost=0.00..282393.54 rows=805588 width=16)
+                                                        Filter: (o_orderdate < '1995-03-15'::date)
+                                                  ->  Parallel Hash  (cost=43557.61..43557.61 rows=125351 width=4)
+                                                        ->  Parallel Seq Scan on customer  (cost=0.00..43557.61 rows=125351 width=4)
+                                                              Filter: ((c_mktsegment)::text = 'BUILDING'::text)
+JIT:
+  Functions: 34
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+3,4,TPCH,"SELECT
+    o.o_orderpriority,
+    COUNT(*) AS order_count
+FROM
+    tpch.orders o
+WHERE
+    o.o_orderdate >= DATE '1993-07-01'
+    AND o.o_orderdate < DATE '1993-07-01' + INTERVAL '3 months'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            tpch.lineitem l
+        WHERE
+            l.l_orderkey = o.o_orderkey
+            AND l.l_commitdate < l.l_receiptdate
+    )
+GROUP BY
+    o.o_orderpriority
+ORDER BY
+    o.o_orderpriority;","result = (
+        orders.WHERE(
+            (YEAR(order_date) == 1993)
+            & (QUARTER(order_date) == 3)
+            & HAS(lines.WHERE(commit_date < receipt_date))
+        )
+        .PARTITION(name=""priorities"", by=order_priority)
+        .CALCULATE(
+            O_ORDERPRIORITY=order_priority,
+            ORDER_COUNT=COUNT(orders),
+        )
+        .ORDER_BY(O_ORDERPRIORITY.ASC())
+    )","WITH _u_0 AS (
+  SELECT
+    l_orderkey AS _u_1
+  FROM tpch.lineitem
+  WHERE
+    l_commitdate < l_receiptdate
+  GROUP BY
+    1
+)
+SELECT
+  orders.o_orderpriority AS O_ORDERPRIORITY,
+  COUNT(*) AS ORDER_COUNT
+FROM tpch.orders AS orders
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = orders.o_orderkey
+WHERE
+  EXTRACT(MONTH FROM CAST(orders.o_orderdate AS TIMESTAMP)) IN (7, 8, 9)
+  AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1993
+  AND NOT _u_0._u_1 IS NULL
+GROUP BY
+  1
+ORDER BY
+  1 NULLS FIRST",137.19654388100003,51.89439001200003,"Sort  (cost=1277495.04..1277495.05 rows=5 width=17)
+  Sort Key: o.o_orderpriority
+  ->  HashAggregate  (cost=1277494.93..1277494.98 rows=5 width=17)
+        Group Key: o.o_orderpriority
+        ->  Nested Loop  (cost=1274471.79..1276165.82 rows=265822 width=9)
+              ->  HashAggregate  (cost=1274471.36..1274473.36 rows=200 width=4)
+                    Group Key: l.l_orderkey
+                    ->  Seq Scan on lineitem l  (cost=0.00..1256405.40 rows=7226384 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+              ->  Index Scan using orders_pkey on orders o  (cost=0.43..8.46 rows=1 width=13)
+                    Index Cond: (o_orderkey = l.l_orderkey)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01 00:00:00'::timestamp without time zone))
+JIT:
+  Functions: 13
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","GroupAggregate  (cost=1108569.21..1108569.23 rows=1 width=17)
+  Group Key: orders.o_orderpriority
+  ->  Sort  (cost=1108569.21..1108569.21 rows=1 width=9)
+        Sort Key: orders.o_orderpriority NULLS FIRST
+        ->  Nested Loop  (cost=1106828.20..1108569.20 rows=1 width=9)
+              ->  Group  (cost=1106827.76..1106875.43 rows=200 width=4)
+                    Group Key: lineitem.l_orderkey
+                    ->  Gather Merge  (cost=1106827.76..1106874.43 rows=400 width=4)
+                          Workers Planned: 2
+                          ->  Sort  (cost=1105827.74..1105828.24 rows=200 width=4)
+                                Sort Key: lineitem.l_orderkey
+                                ->  Partial HashAggregate  (cost=1105818.09..1105820.09 rows=200 width=4)
+                                      Group Key: lineitem.l_orderkey
+                                      ->  Parallel Seq Scan on lineitem  (cost=0.00..1098328.25 rows=2995938 width=4)
+                                            Filter: ((l_orderkey IS NOT NULL) AND (l_commitdate < l_receiptdate))
+              ->  Index Scan using orders_pkey on orders  (cost=0.43..8.47 rows=1 width=13)
+                    Index Cond: (o_orderkey = lineitem.l_orderkey)
+                    Filter: ((EXTRACT(year FROM (o_orderdate)::timestamp without time zone) = '1993'::numeric) AND (EXTRACT(month FROM (o_orderdate)::timestamp without time zone) = ANY ('{7,8,9}'::numeric[])))
+JIT:
+  Functions: 17
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+4,5,TPCH,"SELECT
+    n.n_name,
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON l.l_orderkey = o.o_orderkey
+JOIN tpch.supplier s
+    ON l.l_suppkey = s.s_suppkey
+    AND c.c_nationkey = s.s_nationkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+JOIN tpch.region r
+    ON n.n_regionkey = r.r_regionkey
+WHERE
+    r.r_name = 'ASIA'
+    AND o.o_orderdate >= DATE '1994-01-01'
+    AND o.o_orderdate < DATE '1994-01-01' + INTERVAL '1 year'
+GROUP BY
+    n.n_name
+ORDER BY
+    revenue DESC;","selected_lines = (
+    customers.orders.WHERE(
+        (order_date >= DATETIME('1994-1-1'))
+        & (order_date < DATETIME('1995-1-1'))
+    )
+    .lines.WHERE(supplier.nation.name == nation_name)
+    .CALCULATE(value=extended_price * (1 - discount))
+)
+result = (nations.CALCULATE(nation_name=name)
+    .WHERE(region.name == ""ASIA"")
+    .WHERE(HAS(selected_lines))
+    .CALCULATE(N_NAME=name, REVENUE=SUM(selected_lines.value))
+    .ORDER_BY(REVENUE.DESC())
+)","WITH _s11 AS (
+  SELECT
+    nation.n_name,
+    supplier.s_suppkey
+  FROM tpch.supplier AS supplier
+  JOIN tpch.nation AS nation
+    ON nation.n_nationkey = supplier.s_nationkey
+)
+SELECT
+  MAX(nation.n_name) AS N_NAME,
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) AS REVENUE
+FROM tpch.nation AS nation
+JOIN tpch.region AS region
+  ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'
+JOIN tpch.customer AS customer
+  ON customer.c_nationkey = nation.n_nationkey
+JOIN tpch.orders AS orders
+  ON customer.c_custkey = orders.o_custkey
+  AND orders.o_orderdate < CAST('1995-01-01' AS DATE)
+  AND orders.o_orderdate >= CAST('1994-01-01' AS DATE)
+JOIN tpch.lineitem AS lineitem
+  ON lineitem.l_orderkey = orders.o_orderkey
+JOIN _s11 AS _s11
+  ON _s11.n_name = nation.n_name AND _s11.s_suppkey = lineitem.l_suppkey
+GROUP BY
+  nation.n_nationkey
+ORDER BY
+  2 DESC NULLS LAST",20.712405864999937,29.79555895700014,"Sort  (cost=1130946.45..1130946.93 rows=190 width=100)
+  Sort Key: (sum((l.l_extendedprice * ('1'::numeric - l.l_discount)))) DESC
+  ->  Finalize GroupAggregate  (cost=1130898.01..1130939.26 rows=190 width=100)
+        Group Key: n.n_name
+        ->  Gather Merge  (cost=1130898.01..1130935.46 rows=190 width=100)
+              Workers Planned: 1
+              ->  Partial GroupAggregate  (cost=1129898.00..1129914.08 rows=190 width=100)
+                    Group Key: n.n_name
+                    ->  Sort  (cost=1129898.00..1129900.74 rows=1096 width=80)
+                          Sort Key: n.n_name
+                          ->  Parallel Hash Join  (cost=1126672.68..1129842.66 rows=1096 width=80)
+                                Hash Cond: ((s.s_suppkey = l.l_suppkey) AND (s.s_nationkey = c.c_nationkey))
+                                ->  Parallel Seq Scan on supplier s  (cost=0.00..2724.24 rows=58824 width=8)
+                                ->  Parallel Hash  (cost=1126373.13..1126373.13 rows=19970 width=92)
+                                      ->  Nested Loop  (cost=44438.38..1126373.13 rows=19970 width=92)
+                                            ->  Parallel Hash Join  (cost=44437.81..393946.86 rows=4993 width=80)
+                                                  Hash Cond: (o.o_custkey = c.c_custkey)
+                                                  ->  Parallel Seq Scan on orders o  (cost=0.00..345930.41 rows=948755 width=8)
+                                                        Filter: ((o_orderdate >= '1994-01-01'::date) AND (o_orderdate < '1995-01-01 00:00:00'::timestamp without time zone))
+                                                  ->  Parallel Hash  (cost=44396.69..44396.69 rows=3290 width=80)
+                                                        ->  Hash Join  (cost=24.81..44396.69 rows=3290 width=80)
+                                                              Hash Cond: (c.c_nationkey = n.n_nationkey)
+                                                              ->  Parallel Seq Scan on customer c  (cost=0.00..41994.89 rows=625089 width=8)
+                                                              ->  Hash  (cost=24.80..24.80 rows=1 width=72)
+                                                                    ->  Hash Join  (cost=12.39..24.80 rows=1 width=72)
+                                                                          Hash Cond: (n.n_regionkey = r.r_regionkey)
+                                                                          ->  Seq Scan on nation n  (cost=0.00..11.90 rows=190 width=76)
+                                                                          ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                                                ->  Seq Scan on region r  (cost=0.00..12.38 rows=1 width=4)
+                                                                                      Filter: ((r_name)::text = 'ASIA'::text)
+                                            ->  Index Scan using lineitem_pkey on lineitem l  (cost=0.56..145.47 rows=122 width=20)
+                                                  Index Cond: (l_orderkey = o.o_orderkey)
+JIT:
+  Functions: 55
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Sort  (cost=1130879.96..1130880.43 rows=190 width=68)
+  Sort Key: (COALESCE(sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount))), '0'::numeric)) DESC NULLS LAST
+  ->  Finalize GroupAggregate  (cost=1130848.79..1130872.77 rows=190 width=68)
+        Group Key: nation.n_nationkey
+        ->  Gather Merge  (cost=1130848.79..1130868.95 rows=144 width=68)
+              Workers Planned: 1
+              ->  Partial GroupAggregate  (cost=1129848.78..1129852.74 rows=144 width=68)
+                    Group Key: nation.n_nationkey
+                    ->  Sort  (cost=1129848.78..1129849.14 rows=144 width=84)
+                          Sort Key: nation.n_nationkey
+                          ->  Hash Join  (cost=1126640.82..1129843.62 rows=144 width=84)
+                                Hash Cond: ((supplier.s_nationkey = nation_1.n_nationkey) AND ((nation.n_name)::text = (nation_1.n_name)::text))
+                                ->  Parallel Hash Join  (cost=1126626.07..1129685.04 rows=27394 width=88)
+                                      Hash Cond: (supplier.s_suppkey = lineitem.l_suppkey)
+                                      ->  Parallel Seq Scan on supplier  (cost=0.00..2724.24 rows=58824 width=8)
+                                      ->  Parallel Hash  (cost=1126376.46..1126376.46 rows=19969 width=88)
+                                            ->  Nested Loop  (cost=44438.38..1126376.46 rows=19969 width=88)
+                                                  ->  Parallel Hash Join  (cost=44437.81..393946.86 rows=4993 width=76)
+                                                        Hash Cond: (orders.o_custkey = customer.c_custkey)
+                                                        ->  Parallel Seq Scan on orders  (cost=0.00..345930.41 rows=948755 width=8)
+                                                              Filter: ((o_orderdate < '1995-01-01'::date) AND (o_orderdate >= '1994-01-01'::date))
+                                                        ->  Parallel Hash  (cost=44396.69..44396.69 rows=3290 width=76)
+                                                              ->  Hash Join  (cost=24.81..44396.69 rows=3290 width=76)
+                                                                    Hash Cond: (customer.c_nationkey = nation.n_nationkey)
+                                                                    ->  Parallel Seq Scan on customer  (cost=0.00..41994.89 rows=625089 width=8)
+                                                                    ->  Hash  (cost=24.80..24.80 rows=1 width=72)
+                                                                          ->  Hash Join  (cost=12.39..24.80 rows=1 width=72)
+                                                                                Hash Cond: (nation.n_regionkey = region.r_regionkey)
+                                                                                ->  Seq Scan on nation  (cost=0.00..11.90 rows=190 width=76)
+                                                                                ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                                                      ->  Seq Scan on region  (cost=0.00..12.38 rows=1 width=4)
+                                                                                            Filter: ((r_name)::text = 'ASIA'::text)
+                                                  ->  Index Scan using lineitem_pkey on lineitem  (cost=0.56..145.47 rows=122 width=20)
+                                                        Index Cond: (l_orderkey = orders.o_orderkey)
+                                ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                                      ->  Seq Scan on nation nation_1  (cost=0.00..11.90 rows=190 width=72)
+JIT:
+  Functions: 62
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+5,6,TPCH,"SELECT
+    SUM(l.l_extendedprice * l.l_discount) AS revenue
+FROM
+    tpch.lineitem l
+WHERE
+    l.l_shipdate >= DATE '1994-01-01'
+    AND l.l_shipdate < DATE '1994-01-01' + INTERVAL '1 year'
+    AND l.l_discount BETWEEN 0.06 - 0.01 AND 0.06 + 0.01
+    AND l.l_quantity < 24;","selected_lines = lines.WHERE(
+    (ship_date >= DATETIME('1994-1-1'))
+    & (ship_date < DATETIME('1995-1-1'))
+    & (0.05 <= discount)
+    & (discount <= 0.07)
+    & (quantity < 24)
+).CALCULATE(amt=extended_price * discount)
+result = TPCH.CALCULATE(REVENUE=SUM(selected_lines.amt))","SELECT
+  COALESCE(SUM(l_extendedprice * l_discount), 0) AS REVENUE
+FROM tpch.lineitem
+WHERE
+  l_discount <= 0.07
+  AND l_discount >= 0.05
+  AND l_quantity < 24
+  AND l_shipdate < CAST('1995-01-01' AS DATE)
+  AND l_shipdate >= CAST('1994-01-01' AS DATE)",13.125297427000078,13.363860896000006,"Finalize Aggregate  (cost=1551186.04..1551186.05 rows=1 width=32)
+  ->  Gather  (cost=1551185.82..1551186.03 rows=2 width=32)
+        Workers Planned: 2
+        ->  Partial Aggregate  (cost=1550185.82..1550185.83 rows=1 width=32)
+              ->  Parallel Seq Scan on lineitem l  (cost=0.00..1547782.43 rows=480678 width=12)
+                    Filter: ((l_shipdate >= '1994-01-01'::date) AND (l_shipdate < '1995-01-01 00:00:00'::timestamp without time zone) AND (l_discount >= 0.05) AND (l_discount <= 0.07) AND (l_quantity < '24'::numeric))
+JIT:
+  Functions: 7
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize Aggregate  (cost=1551186.04..1551186.05 rows=1 width=32)
+  ->  Gather  (cost=1551185.82..1551186.03 rows=2 width=32)
+        Workers Planned: 2
+        ->  Partial Aggregate  (cost=1550185.82..1550185.83 rows=1 width=32)
+              ->  Parallel Seq Scan on lineitem  (cost=0.00..1547782.43 rows=480678 width=12)
+                    Filter: ((l_discount <= 0.07) AND (l_discount >= 0.05) AND (l_quantity < '24'::numeric) AND (l_shipdate < '1995-01-01'::date) AND (l_shipdate >= '1994-01-01'::date))
+JIT:
+  Functions: 7
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+6,7,TPCH,"SELECT
+    supp_nation,
+    cust_nation,
+    l_year,
+    SUM(volume) AS revenue
+FROM (
+    SELECT
+        n1.n_name AS supp_nation,
+        n2.n_name AS cust_nation,
+        EXTRACT(YEAR FROM l.l_shipdate) AS l_year,
+        l.l_extendedprice * (1 - l.l_discount) AS volume
+    FROM
+        tpch.supplier s
+    JOIN tpch.lineitem l
+        ON s.s_suppkey = l.l_suppkey
+    JOIN tpch.orders o
+        ON o.o_orderkey = l.l_orderkey
+    JOIN tpch.customer c
+        ON c.c_custkey = o.o_custkey
+    JOIN tpch.nation n1
+        ON s.s_nationkey = n1.n_nationkey
+    JOIN tpch.nation n2
+        ON c.c_nationkey = n2.n_nationkey
+    WHERE
+        (
+            (n1.n_name = 'FRANCE' AND n2.n_name = 'GERMANY')
+            OR
+            (n1.n_name = 'GERMANY' AND n2.n_name = 'FRANCE')
+        )
+        AND l.l_shipdate BETWEEN DATE '1995-01-01'
+                            AND DATE '1996-12-31'
+) AS shipping
+GROUP BY
+    supp_nation,
+    cust_nation,
+    l_year
+ORDER BY
+    supp_nation,
+    cust_nation,
+    l_year;","result = (
+        lines.CALCULATE(
+            supp_nation=supplier.nation.name,
+            cust_nation=order.customer.nation.name,
+            l_year=YEAR(ship_date),
+            volume=extended_price * (1 - discount),
+        )
+        .WHERE(
+            ISIN(YEAR(ship_date), (1995, 1996))
+            & (
+                ((supp_nation == ""FRANCE"") & (cust_nation == ""GERMANY""))
+                | ((supp_nation == ""GERMANY"") & (cust_nation == ""FRANCE""))
+            )
+        )
+        .PARTITION(name=""groups"", by=(supp_nation, cust_nation, l_year))
+        .CALCULATE(
+            SUPP_NATION=supp_nation,
+            CUST_NATION=cust_nation,
+            L_YEAR=l_year,
+            REVENUE=SUM(lines.volume),
+        )
+        .ORDER_BY(SUPP_NATION.ASC(), CUST_NATION.ASC(), L_YEAR.ASC())
+    )","WITH _s9 AS (
+  SELECT
+    nation.n_name,
+    orders.o_orderkey
+  FROM tpch.orders AS orders
+  JOIN tpch.customer AS customer
+    ON customer.c_custkey = orders.o_custkey
+  JOIN tpch.nation AS nation
+    ON customer.c_nationkey = nation.n_nationkey
+    AND (
+      nation.n_name = 'FRANCE' OR nation.n_name = 'GERMANY'
+    )
+)
+SELECT
+  nation.n_name AS SUPP_NATION,
+  _s9.n_name AS CUST_NATION,
+  EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) AS L_YEAR,
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) AS REVENUE
+FROM tpch.lineitem AS lineitem
+JOIN tpch.supplier AS supplier
+  ON lineitem.l_suppkey = supplier.s_suppkey
+JOIN tpch.nation AS nation
+  ON nation.n_nationkey = supplier.s_nationkey
+JOIN _s9 AS _s9
+  ON (
+    _s9.n_name = 'FRANCE' OR nation.n_name = 'FRANCE'
+  )
+  AND (
+    _s9.n_name = 'GERMANY' OR nation.n_name = 'GERMANY'
+  )
+  AND _s9.o_orderkey = lineitem.l_orderkey
+  AND (
+    nation.n_name = 'FRANCE' OR nation.n_name = 'GERMANY'
+  )
+WHERE
+  EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
+GROUP BY
+  1,
+  2,
+  3
+ORDER BY
+  1 NULLS FIRST,
+  2 NULLS FIRST,
+  3 NULLS FIRST",25.19719354200015,25.2456917359998,"Finalize GroupAggregate  (cost=1776917.21..1777053.10 rows=1005 width=200)
+  Group Key: n1.n_name, n2.n_name, (EXTRACT(year FROM l.l_shipdate))
+  ->  Gather Merge  (cost=1776917.21..1777027.55 rows=838 width=200)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=1775917.19..1775930.80 rows=419 width=200)
+              Group Key: n1.n_name, n2.n_name, (EXTRACT(year FROM l.l_shipdate))
+              ->  Sort  (cost=1775917.19..1775918.23 rows=419 width=180)
+                    Sort Key: n1.n_name, n2.n_name, (EXTRACT(year FROM l.l_shipdate))
+                    ->  Parallel Hash Join  (cost=385884.85..1775898.94 rows=419 width=180)
+                          Hash Cond: (l.l_suppkey = s.s_suppkey)
+                          Join Filter: ((((n1.n_name)::text = 'FRANCE'::text) AND ((n2.n_name)::text = 'GERMANY'::text)) OR (((n1.n_name)::text = 'GERMANY'::text) AND ((n2.n_name)::text = 'FRANCE'::text)))
+                          ->  Parallel Hash Join  (cost=382982.14..1772679.79 rows=81491 width=88)
+                                Hash Cond: (l.l_orderkey = o.o_orderkey)
+                                ->  Parallel Seq Scan on lineitem l  (cost=0.00..1360326.95 rows=7741640 width=24)
+                                      Filter: ((l_shipdate >= '1995-01-01'::date) AND (l_shipdate <= '1996-12-31'::date))
+                                ->  Parallel Hash  (cost=382159.80..382159.80 rows=65787 width=72)
+                                      ->  Parallel Hash Join  (cost=43767.48..382159.80 rows=65787 width=72)
+                                            Hash Cond: (o.o_custkey = c.c_custkey)
+                                            ->  Parallel Seq Scan on orders o  (cost=0.00..314681.60 rows=6249760 width=8)
+                                            ->  Parallel Hash  (cost=43685.23..43685.23 rows=6580 width=72)
+                                                  ->  Hash Join  (cost=12.88..43685.23 rows=6580 width=72)
+                                                        Hash Cond: (c.c_nationkey = n2.n_nationkey)
+                                                        ->  Parallel Seq Scan on customer c  (cost=0.00..41994.89 rows=625089 width=8)
+                                                        ->  Hash  (cost=12.85..12.85 rows=2 width=72)
+                                                              ->  Seq Scan on nation n2  (cost=0.00..12.85 rows=2 width=72)
+                                                                    Filter: (((n_name)::text = 'GERMANY'::text) OR ((n_name)::text = 'FRANCE'::text))
+                          ->  Parallel Hash  (cost=2894.97..2894.97 rows=619 width=72)
+                                ->  Hash Join  (cost=12.88..2894.97 rows=619 width=72)
+                                      Hash Cond: (s.s_nationkey = n1.n_nationkey)
+                                      ->  Parallel Seq Scan on supplier s  (cost=0.00..2724.24 rows=58824 width=8)
+                                      ->  Hash  (cost=12.85..12.85 rows=2 width=72)
+                                            ->  Seq Scan on nation n1  (cost=0.00..12.85 rows=2 width=72)
+                                                  Filter: (((n_name)::text = 'FRANCE'::text) OR ((n_name)::text = 'GERMANY'::text))
+JIT:
+  Functions: 62
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","GroupAggregate  (cost=1427724.05..1427733.98 rows=1 width=200)
+  Group Key: nation.n_name, nation_1.n_name, EXTRACT(year FROM (lineitem.l_shipdate)::timestamp without time zone)
+  ->  Nested Loop  (cost=1427724.05..1427733.95 rows=1 width=180)
+        Join Filter: (nation_1.n_nationkey = customer.c_nationkey)
+        ->  Nested Loop  (cost=1427723.62..1427728.77 rows=1 width=160)
+              ->  Gather Merge  (cost=1427723.19..1427723.31 rows=1 width=160)
+                    Workers Planned: 2
+                    ->  Sort  (cost=1426723.16..1426723.17 rows=1 width=160)
+                          Sort Key: nation.n_name NULLS FIRST, nation_1.n_name NULLS FIRST, (EXTRACT(year FROM (lineitem.l_shipdate)::timestamp without time zone)) NULLS FIRST
+                          ->  Parallel Hash Join  (cost=2973.75..1426723.15 rows=1 width=160)
+                                Hash Cond: (lineitem.l_suppkey = supplier.s_suppkey)
+                                ->  Parallel Seq Scan on lineitem  (cost=0.00..1422812.11 rows=249941 width=24)
+                                      Filter: (EXTRACT(year FROM (l_shipdate)::timestamp without time zone) = ANY ('{1995,1996}'::numeric[]))
+                                ->  Parallel Hash  (cost=2973.73..2973.73 rows=1 width=144)
+                                      ->  Hash Join  (cost=25.81..2973.73 rows=1 width=144)
+                                            Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
+                                            ->  Parallel Seq Scan on supplier  (cost=0.00..2724.24 rows=58824 width=8)
+                                            ->  Hash  (cost=25.79..25.79 rows=1 width=144)
+                                                  ->  Nested Loop  (cost=0.00..25.79 rows=1 width=144)
+                                                        Join Filter: ((((nation_1.n_name)::text = 'FRANCE'::text) OR ((nation.n_name)::text = 'FRANCE'::text)) AND (((nation_1.n_name)::text = 'GERMANY'::text) OR ((nation.n_name)::text = 'GERMANY'::text)))
+                                                        ->  Seq Scan on nation  (cost=0.00..12.85 rows=2 width=72)
+                                                              Filter: (((n_name)::text = 'FRANCE'::text) OR ((n_name)::text = 'GERMANY'::text))
+                                                        ->  Materialize  (cost=0.00..12.86 rows=2 width=72)
+                                                              ->  Seq Scan on nation nation_1  (cost=0.00..12.85 rows=2 width=72)
+                                                                    Filter: (((n_name)::text = 'FRANCE'::text) OR ((n_name)::text = 'GERMANY'::text))
+              ->  Index Scan using orders_pkey on orders  (cost=0.43..5.46 rows=1 width=8)
+                    Index Cond: (o_orderkey = lineitem.l_orderkey)
+        ->  Index Scan using customer_pkey on customer  (cost=0.43..5.17 rows=1 width=8)
+              Index Cond: (c_custkey = orders.o_custkey)
+JIT:
+  Functions: 45
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+7,8,TPCH,"SELECT
+    o_year,
+    SUM(
+        CASE
+            WHEN nation = 'BRAZIL' THEN volume
+            ELSE 0
+        END
+    ) / SUM(volume) AS mkt_share
+FROM (
+    SELECT
+        EXTRACT(YEAR FROM o.o_orderdate) AS o_year,
+        l.l_extendedprice * (1 - l.l_discount) AS volume,
+        n2.n_name AS nation
+    FROM
+        tpch.part p
+    JOIN tpch.lineitem l
+        ON p.p_partkey = l.l_partkey
+    JOIN tpch.supplier s
+        ON s.s_suppkey = l.l_suppkey
+    JOIN tpch.orders o
+        ON o.o_orderkey = l.l_orderkey
+    JOIN tpch.customer c
+        ON c.c_custkey = o.o_custkey
+    JOIN tpch.nation n1
+        ON c.c_nationkey = n1.n_nationkey
+    JOIN tpch.region r
+        ON n1.n_regionkey = r.r_regionkey
+    JOIN tpch.nation n2
+        ON s.s_nationkey = n2.n_nationkey
+    WHERE
+        r.r_name = 'AMERICA'
+        AND o.o_orderdate BETWEEN DATE '1995-01-01'
+                              AND DATE '1996-12-31'
+        AND p.p_type = 'ECONOMY ANODIZED STEEL'
+) AS all_nations
+GROUP BY
+    o_year
+ORDER BY
+    o_year;","vol_metric = extended_price * (1 - discount)
+is_brazilian = supplier.nation.name == ""BRAZIL""
+result = (
+    lines.WHERE(
+        (part.part_type == ""ECONOMY ANODIZED STEEL"")
+        & ISIN(YEAR(order.order_date), (1995, 1996))
+        & (order.customer.nation.region.name == ""AMERICA"")
+    )
+    .CALCULATE(
+        O_YEAR=YEAR(order.order_date),
+        volume=vol_metric,
+        brazil_volume=IFF(is_brazilian, vol_metric, 0),
+    )
+    .PARTITION(name=""years"", by=O_YEAR)
+    .CALCULATE(
+        O_YEAR,
+        MKT_SHARE=SUM(lines.brazil_volume) / SUM(lines.volume),
+    )
+)","SELECT
+  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
+  CAST(COALESCE(
+    SUM(
+      CASE
+        WHEN nation_2.n_name = 'BRAZIL'
+        THEN lineitem.l_extendedprice * (
+          1 - lineitem.l_discount
+        )
+        ELSE 0
+      END
+    ),
+    0
+  ) AS DOUBLE PRECISION) / COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) AS MKT_SHARE
+FROM tpch.lineitem AS lineitem
+JOIN tpch.part AS part
+  ON lineitem.l_partkey = part.p_partkey AND part.p_type = 'ECONOMY ANODIZED STEEL'
+JOIN tpch.orders AS orders
+  ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) IN (1995, 1996)
+  AND lineitem.l_orderkey = orders.o_orderkey
+JOIN tpch.customer AS customer
+  ON customer.c_custkey = orders.o_custkey
+JOIN tpch.nation AS nation
+  ON customer.c_nationkey = nation.n_nationkey
+JOIN tpch.region AS region
+  ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
+JOIN tpch.supplier AS supplier
+  ON lineitem.l_suppkey = supplier.s_suppkey
+JOIN tpch.nation AS nation_2
+  ON nation_2.n_nationkey = supplier.s_nationkey
+GROUP BY
+  1",14.867993740999964,18.164999584000043,"Finalize GroupAggregate  (cost=1749415.97..1749504.66 rows=618 width=64)
+  Group Key: (EXTRACT(year FROM o.o_orderdate))
+  ->  Gather Merge  (cost=1749415.97..1749485.85 rows=516 width=96)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=1748415.95..1748426.27 rows=258 width=96)
+              Group Key: (EXTRACT(year FROM o.o_orderdate))
+              ->  Sort  (cost=1748415.95..1748416.59 rows=258 width=112)
+                    Sort Key: (EXTRACT(year FROM o.o_orderdate))
+                    ->  Hash Join  (cost=445473.96..1748405.62 rows=258 width=112)
+                          Hash Cond: (s.s_nationkey = n2.n_nationkey)
+                          ->  Nested Loop  (cost=445459.68..1748390.01 rows=258 width=20)
+                                ->  Parallel Hash Join  (cost=445459.39..1747037.46 rows=265 width=20)
+                                      Hash Cond: (l.l_orderkey = o.o_orderkey)
+                                      ->  Parallel Hash Join  (cost=47681.43..1348647.61 rows=162877 width=20)
+                                            Hash Cond: (l.l_partkey = p.p_partkey)
+                                            ->  Parallel Seq Scan on lineitem l  (cost=0.00..1235356.63 rows=24994063 width=24)
+                                            ->  Parallel Hash  (cost=47612.15..47612.15 rows=5542 width=4)
+                                                  ->  Parallel Seq Scan on part p  (cost=0.00..47612.15 rows=5542 width=4)
+                                                        Filter: ((p_type)::text = 'ECONOMY ANODIZED STEEL'::text)
+                                      ->  Parallel Hash  (cost=397650.94..397650.94 rows=10162 width=8)
+                                            ->  Parallel Hash Join  (cost=44437.81..397650.94 rows=10162 width=8)
+                                                  Hash Cond: (o.o_custkey = c.c_custkey)
+                                                  ->  Parallel Seq Scan on orders o  (cost=0.00..345930.41 rows=1930769 width=12)
+                                                        Filter: ((o_orderdate >= '1995-01-01'::date) AND (o_orderdate <= '1996-12-31'::date))
+                                                  ->  Parallel Hash  (cost=44396.69..44396.69 rows=3290 width=4)
+                                                        ->  Hash Join  (cost=24.81..44396.69 rows=3290 width=4)
+                                                              Hash Cond: (c.c_nationkey = n1.n_nationkey)
+                                                              ->  Parallel Seq Scan on customer c  (cost=0.00..41994.89 rows=625089 width=8)
+                                                              ->  Hash  (cost=24.80..24.80 rows=1 width=4)
+                                                                    ->  Hash Join  (cost=12.39..24.80 rows=1 width=4)
+                                                                          Hash Cond: (n1.n_regionkey = r.r_regionkey)
+                                                                          ->  Seq Scan on nation n1  (cost=0.00..11.90 rows=190 width=8)
+                                                                          ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                                                ->  Seq Scan on region r  (cost=0.00..12.38 rows=1 width=4)
+                                                                                      Filter: ((r_name)::text = 'AMERICA'::text)
+                                ->  Index Scan using supplier_pkey on supplier s  (cost=0.29..5.10 rows=1 width=8)
+                                      Index Cond: (s_suppkey = l.l_suppkey)
+                          ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                                ->  Seq Scan on nation n2  (cost=0.00..11.90 rows=190 width=72)
+JIT:
+  Functions: 68
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize GroupAggregate  (cost=463869.69..463872.62 rows=20 width=40)
+  Group Key: (EXTRACT(year FROM (orders.o_orderdate)::timestamp without time zone))
+  ->  Gather Merge  (cost=463869.69..463871.87 rows=16 width=96)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=462869.66..462870.00 rows=8 width=96)
+              Group Key: (EXTRACT(year FROM (orders.o_orderdate)::timestamp without time zone))
+              ->  Sort  (cost=462869.66..462869.68 rows=8 width=112)
+                    Sort Key: (EXTRACT(year FROM (orders.o_orderdate)::timestamp without time zone))
+                    ->  Hash Join  (cost=44453.37..462869.54 rows=8 width=112)
+                          Hash Cond: (supplier.s_nationkey = nation_2.n_nationkey)
+                          ->  Nested Loop  (cost=44439.10..462855.21 rows=8 width=20)
+                                ->  Nested Loop  (cost=44438.80..462809.27 rows=9 width=20)
+                                      ->  Nested Loop  (cost=44438.38..455884.76 rows=1315 width=24)
+                                            ->  Parallel Hash Join  (cost=44437.81..406228.36 rows=329 width=8)
+                                                  Hash Cond: (orders.o_custkey = customer.c_custkey)
+                                                  ->  Parallel Seq Scan on orders  (cost=0.00..361554.81 rows=62498 width=12)
+                                                        Filter: (EXTRACT(year FROM (o_orderdate)::timestamp without time zone) = ANY ('{1995,1996}'::numeric[]))
+                                                  ->  Parallel Hash  (cost=44396.69..44396.69 rows=3290 width=4)
+                                                        ->  Hash Join  (cost=24.81..44396.69 rows=3290 width=4)
+                                                              Hash Cond: (customer.c_nationkey = nation.n_nationkey)
+                                                              ->  Parallel Seq Scan on customer  (cost=0.00..41994.89 rows=625089 width=8)
+                                                              ->  Hash  (cost=24.80..24.80 rows=1 width=4)
+                                                                    ->  Hash Join  (cost=12.39..24.80 rows=1 width=4)
+                                                                          Hash Cond: (nation.n_regionkey = region.r_regionkey)
+                                                                          ->  Seq Scan on nation  (cost=0.00..11.90 rows=190 width=8)
+                                                                          ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                                                ->  Seq Scan on region  (cost=0.00..12.38 rows=1 width=4)
+                                                                                      Filter: ((r_name)::text = 'AMERICA'::text)
+                                            ->  Index Scan using lineitem_pkey on lineitem  (cost=0.56..149.71 rows=122 width=24)
+                                                  Index Cond: (l_orderkey = orders.o_orderkey)
+                                      ->  Index Scan using part_pkey on part  (cost=0.43..5.27 rows=1 width=4)
+                                            Index Cond: (p_partkey = lineitem.l_partkey)
+                                            Filter: ((p_type)::text = 'ECONOMY ANODIZED STEEL'::text)
+                                ->  Index Scan using supplier_pkey on supplier  (cost=0.29..5.10 rows=1 width=8)
+                                      Index Cond: (s_suppkey = lineitem.l_suppkey)
+                          ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                                ->  Seq Scan on nation nation_2  (cost=0.00..11.90 rows=190 width=72)
+JIT:
+  Functions: 59
+  Options: Inlining false, Optimization false, Expressions true, Deforming true",SUCCESS
+8,9,TPCH,"SELECT
+    nation,
+    o_year,
+    SUM(amount) AS sum_profit
+FROM (
+    SELECT
+        n.n_name AS nation,
+        EXTRACT(YEAR FROM o.o_orderdate) AS o_year,
+        l.l_extendedprice * (1 - l.l_discount)
+            - ps.ps_supplycost * l.l_quantity AS amount
+    FROM
+        tpch.part p
+    JOIN tpch.lineitem l
+        ON p.p_partkey = l.l_partkey
+    JOIN tpch.partsupp ps
+        ON ps.ps_partkey = l.l_partkey
+        AND ps.ps_suppkey = l.l_suppkey
+    JOIN tpch.supplier s
+        ON s.s_suppkey = l.l_suppkey
+    JOIN tpch.orders o
+        ON o.o_orderkey = l.l_orderkey
+    JOIN tpch.nation n
+        ON s.s_nationkey = n.n_nationkey
+    WHERE
+        p.p_name LIKE '%green%'
+) AS profit
+GROUP BY
+    nation,
+    o_year
+ORDER BY
+    nation,
+    o_year DESC;","result = (
+    lines.WHERE(CONTAINS(part.name, 'green'))
+    .CALCULATE(
+        nation_name=supplier.nation.name,
+        o_year=YEAR(order.order_date),
+        value=extended_price * (1 - discount)
+        - part_and_supplier.supply_cost * quantity,
+    ).PARTITION(name='groups', by=(nation_name, o_year))
+    .CALCULATE(NATION=nation_name, O_YEAR=o_year, sum_profit=SUM(lines.value))
+    .ORDER_BY(NATION.ASC(), O_YEAR.DESC())
+)","SELECT
+  nation.n_name AS NATION,
+  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
+  COALESCE(
+    SUM(
+      lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) - partsupp.ps_supplycost * lineitem.l_quantity
+    ),
+    0
+  ) AS sum_profit
+FROM tpch.lineitem AS lineitem
+JOIN tpch.part AS part
+  ON lineitem.l_partkey = part.p_partkey AND part.p_name LIKE '%green%'
+JOIN tpch.supplier AS supplier
+  ON lineitem.l_suppkey = supplier.s_suppkey
+JOIN tpch.nation AS nation
+  ON nation.n_nationkey = supplier.s_nationkey
+JOIN tpch.orders AS orders
+  ON lineitem.l_orderkey = orders.o_orderkey
+JOIN tpch.partsupp AS partsupp
+  ON lineitem.l_partkey = partsupp.ps_partkey
+  AND lineitem.l_suppkey = partsupp.ps_suppkey
+GROUP BY
+  1,
+  2
+ORDER BY
+  1 NULLS FIRST,
+  2 DESC NULLS LAST",29.38682178099998,29.896304526999984,"Finalize GroupAggregate  (cost=1683589.89..1683614.68 rows=185 width=132)
+  Group Key: n.n_name, (EXTRACT(year FROM o.o_orderdate))
+  ->  Gather Merge  (cost=1683589.89..1683610.36 rows=154 width=132)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=1682589.87..1682592.56 rows=77 width=132)
+              Group Key: n.n_name, (EXTRACT(year FROM o.o_orderdate))
+              ->  Sort  (cost=1682589.87..1682590.06 rows=77 width=123)
+                    Sort Key: n.n_name, (EXTRACT(year FROM o.o_orderdate)) DESC
+                    ->  Hash Join  (cost=323179.22..1682587.46 rows=77 width=123)
+                          Hash Cond: (s.s_nationkey = n.n_nationkey)
+                          ->  Nested Loop  (cost=323164.94..1682572.79 rows=77 width=31)
+                                ->  Nested Loop  (cost=323164.51..1682138.14 rows=77 width=31)
+                                      ->  Parallel Hash Join  (cost=323164.22..1681721.17 rows=77 width=35)
+                                            Hash Cond: ((p.p_partkey = ps.ps_partkey) AND (l.l_suppkey = ps.ps_suppkey))
+                                            ->  Parallel Hash Join  (cost=48453.86..1349420.05 rows=1978814 width=33)
+                                                  Hash Cond: (l.l_partkey = p.p_partkey)
+                                                  ->  Parallel Seq Scan on lineitem l  (cost=0.00..1235356.63 rows=24994063 width=29)
+                                                  ->  Parallel Hash  (cost=47612.15..47612.15 rows=67337 width=4)
+                                                        ->  Parallel Seq Scan on part p  (cost=0.00..47612.15 rows=67337 width=4)
+                                                              Filter: ((p_name)::text ~~ '%green%'::text)
+                                            ->  Parallel Hash  (cost=208410.94..208410.94 rows=3334494 width=14)
+                                                  ->  Parallel Seq Scan on partsupp ps  (cost=0.00..208410.94 rows=3334494 width=14)
+                                      ->  Index Scan using supplier_pkey on supplier s  (cost=0.29..5.42 rows=1 width=8)
+                                            Index Cond: (s_suppkey = ps.ps_suppkey)
+                                ->  Index Scan using orders_pkey on orders o  (cost=0.43..5.64 rows=1 width=8)
+                                      Index Cond: (o_orderkey = l.l_orderkey)
+                          ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                                ->  Seq Scan on nation n  (cost=0.00..11.90 rows=190 width=72)
+JIT:
+  Functions: 47
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize GroupAggregate  (cost=1683556.49..1683580.61 rows=176 width=132)
+  Group Key: nation.n_name, (EXTRACT(year FROM (orders.o_orderdate)::timestamp without time zone))
+  ->  Gather Merge  (cost=1683556.49..1683576.07 rows=146 width=132)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=1682556.46..1682559.20 rows=73 width=132)
+              Group Key: nation.n_name, (EXTRACT(year FROM (orders.o_orderdate)::timestamp without time zone))
+              ->  Sort  (cost=1682556.46..1682556.64 rows=73 width=123)
+                    Sort Key: nation.n_name NULLS FIRST, (EXTRACT(year FROM (orders.o_orderdate)::timestamp without time zone)) DESC NULLS LAST
+                    ->  Nested Loop  (cost=323179.22..1682554.20 rows=73 width=123)
+                          ->  Hash Join  (cost=323178.78..1682141.77 rows=73 width=95)
+                                Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
+                                ->  Nested Loop  (cost=323164.51..1682127.30 rows=73 width=31)
+                                      ->  Parallel Hash Join  (cost=323164.22..1681721.17 rows=75 width=35)
+                                            Hash Cond: ((lineitem.l_partkey = partsupp.ps_partkey) AND (lineitem.l_suppkey = partsupp.ps_suppkey))
+                                            ->  Parallel Hash Join  (cost=48453.86..1349420.05 rows=1978814 width=33)
+                                                  Hash Cond: (lineitem.l_partkey = part.p_partkey)
+                                                  ->  Parallel Seq Scan on lineitem  (cost=0.00..1235356.63 rows=24994063 width=29)
+                                                  ->  Parallel Hash  (cost=47612.15..47612.15 rows=67337 width=4)
+                                                        ->  Parallel Seq Scan on part  (cost=0.00..47612.15 rows=67337 width=4)
+                                                              Filter: ((p_name)::text ~~ '%green%'::text)
+                                            ->  Parallel Hash  (cost=208410.94..208410.94 rows=3334494 width=14)
+                                                  ->  Parallel Seq Scan on partsupp  (cost=0.00..208410.94 rows=3334494 width=14)
+                                      ->  Index Scan using supplier_pkey on supplier  (cost=0.29..5.42 rows=1 width=8)
+                                            Index Cond: (s_suppkey = lineitem.l_suppkey)
+                                ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                                      ->  Seq Scan on nation  (cost=0.00..11.90 rows=190 width=72)
+                          ->  Index Scan using orders_pkey on orders  (cost=0.43..5.64 rows=1 width=8)
+                                Index Cond: (o_orderkey = lineitem.l_orderkey)
+JIT:
+  Functions: 47
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+9,10,TPCH,"SELECT
+    c.c_custkey,
+    c.c_name,
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue,
+    c.c_acctbal,
+    n.n_name,
+    c.c_address,
+    c.c_phone,
+    c.c_comment
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON l.l_orderkey = o.o_orderkey
+JOIN tpch.nation n
+    ON c.c_nationkey = n.n_nationkey
+WHERE
+    o.o_orderdate >= DATE '1993-10-01'
+    AND o.o_orderdate < DATE '1993-10-01' + INTERVAL '3 months'
+    AND l.l_returnflag = 'R'
+GROUP BY
+    c.c_custkey,
+    c.c_name,
+    c.c_acctbal,
+    c.c_phone,
+    n.n_name,
+    c.c_address,
+    c.c_comment
+ORDER BY
+    revenue DESC
+LIMIT 20;","selected_lines = orders.WHERE(
+    (YEAR(order_date) == 1993) & (QUARTER(order_date) == 4)
+).lines.WHERE(return_flag == ""R"")
+result = customers.CALCULATE(
+    C_CUSTKEY=key,
+    C_NAME=name,
+    REVENUE=SUM(selected_lines.extended_price * (1 - selected_lines.discount)),
+    C_ACCTBAL=account_balance,
+    N_NAME=nation.name,
+    C_ADDRESS=address,
+    C_PHONE=phone,
+    C_COMMENT=comment,
+).TOP_K(20, by=(REVENUE.DESC(), C_CUSTKEY.ASC()))","WITH _s3 AS (
+  SELECT
+    orders.o_custkey,
+    SUM(lineitem.l_extendedprice * (
+      1 - lineitem.l_discount
+    )) AS sum_expr
+  FROM tpch.orders AS orders
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
+  WHERE
+    EXTRACT(MONTH FROM CAST(orders.o_orderdate AS TIMESTAMP)) IN (10, 11, 12)
+    AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1993
+  GROUP BY
+    1
+)
+SELECT
+  customer.c_custkey AS C_CUSTKEY,
+  customer.c_name AS C_NAME,
+  COALESCE(_s3.sum_expr, 0) AS REVENUE,
+  customer.c_acctbal AS C_ACCTBAL,
+  nation.n_name AS N_NAME,
+  customer.c_address AS C_ADDRESS,
+  customer.c_phone AS C_PHONE,
+  customer.c_comment AS C_COMMENT
+FROM tpch.customer AS customer
+LEFT JOIN _s3 AS _s3
+  ON _s3.o_custkey = customer.c_custkey
+JOIN tpch.nation AS nation
+  ON customer.c_nationkey = nation.n_nationkey
+ORDER BY
+  3 DESC NULLS LAST,
+  1 NULLS FIRST
+LIMIT 20",17.176932289999968,17.399834001999807,"Limit  (cost=1942088.92..1942088.97 rows=20 width=244)
+  ->  Sort  (cost=1942088.92..1943536.43 rows=579005 width=244)
+        Sort Key: (sum((l.l_extendedprice * ('1'::numeric - l.l_discount)))) DESC
+        ->  Finalize GroupAggregate  (cost=1852291.84..1926681.80 rows=579005 width=244)
+              Group Key: c.c_custkey, n.n_name
+              ->  Gather Merge  (cost=1852291.84..1914619.20 rows=482504 width=244)
+                    Workers Planned: 2
+                    ->  Partial GroupAggregate  (cost=1851291.81..1857926.24 rows=241252 width=244)
+                          Group Key: c.c_custkey, n.n_name
+                          ->  Sort  (cost=1851291.81..1851894.94 rows=241252 width=224)
+                                Sort Key: c.c_custkey, n.n_name
+                                ->  Hash Join  (cost=413269.57..1804159.67 rows=241252 width=224)
+                                      Hash Cond: (c.c_nationkey = n.n_nationkey)
+                                      ->  Parallel Hash Join  (cost=413255.30..1803497.98 rows=241252 width=160)
+                                            Hash Cond: (o.o_custkey = c.c_custkey)
+                                            ->  Parallel Hash Join  (cost=350016.79..1723840.19 rows=241252 width=16)
+                                                  Hash Cond: (l.l_orderkey = o.o_orderkey)
+                                                  ->  Parallel Seq Scan on lineitem l  (cost=0.00..1297841.79 rows=6053562 width=16)
+                                                        Filter: (l_returnflag = 'R'::bpchar)
+                                                  ->  Parallel Hash  (cost=345930.41..345930.41 rows=249071 width=8)
+                                                        ->  Parallel Seq Scan on orders o  (cost=0.00..345930.41 rows=249071 width=8)
+                                                              Filter: ((o_orderdate >= '1993-10-01'::date) AND (o_orderdate < '1994-01-01 00:00:00'::timestamp without time zone))
+                                            ->  Parallel Hash  (cost=41994.89..41994.89 rows=625089 width=148)
+                                                  ->  Parallel Seq Scan on customer c  (cost=0.00..41994.89 rows=625089 width=148)
+                                      ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                                            ->  Seq Scan on nation n  (cost=0.00..11.90 rows=190 width=72)
+JIT:
+  Functions: 39
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=616256.27..616256.32 rows=20 width=244)
+  ->  Sort  (cost=616256.27..620006.80 rows=1500214 width=244)
+        Sort Key: (COALESCE(_s3.sum_expr, '0'::numeric)) DESC NULLS LAST, customer.c_custkey NULLS FIRST
+        ->  Hash Join  (cost=517626.00..576336.11 rows=1500214 width=244)
+              Hash Cond: (customer.c_nationkey = nation.n_nationkey)
+              ->  Hash Left Join  (cost=517611.72..572295.93 rows=1500214 width=180)
+                    Hash Cond: (customer.c_custkey = _s3.o_custkey)
+                    ->  Seq Scan on customer  (cost=0.00..50746.14 rows=1500214 width=148)
+                    ->  Hash  (cost=517598.10..517598.10 rows=1090 width=36)
+                          ->  Subquery Scan on _s3  (cost=517450.60..517598.10 rows=1090 width=36)
+                                ->  Finalize GroupAggregate  (cost=517450.60..517587.20 rows=1090 width=36)
+                                      Group Key: orders.o_custkey
+                                      ->  Gather Merge  (cost=517450.60..517566.76 rows=908 width=36)
+                                            Workers Planned: 2
+                                            ->  Partial GroupAggregate  (cost=516450.58..516461.93 rows=454 width=36)
+                                                  Group Key: orders.o_custkey
+                                                  ->  Sort  (cost=516450.58..516451.72 rows=454 width=16)
+                                                        Sort Key: orders.o_custkey
+                                                        ->  Nested Loop  (cost=0.56..516430.54 rows=454 width=16)
+                                                              ->  Parallel Seq Scan on orders  (cost=0.00..416240.21 rows=469 width=8)
+                                                                    Filter: ((EXTRACT(year FROM (o_orderdate)::timestamp without time zone) = '1993'::numeric) AND (EXTRACT(month FROM (o_orderdate)::timestamp without time zone) = ANY ('{10,11,12}'::numeric[])))
+                                                              ->  Index Scan using lineitem_pkey on lineitem  (cost=0.56..213.34 rows=29 width=16)
+                                                                    Index Cond: (l_orderkey = orders.o_orderkey)
+                                                                    Filter: (l_returnflag = 'R'::bpchar)
+              ->  Hash  (cost=11.90..11.90 rows=190 width=72)
+                    ->  Seq Scan on nation  (cost=0.00..11.90 rows=190 width=72)
+JIT:
+  Functions: 36
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+10,11,TPCH,"SELECT
+    ps.ps_partkey,
+    SUM(ps.ps_supplycost * ps.ps_availqty) AS value
+FROM
+    tpch.partsupp ps
+JOIN tpch.supplier s
+    ON ps.ps_suppkey = s.s_suppkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+WHERE
+    n.n_name = 'GERMANY'
+GROUP BY
+    ps.ps_partkey
+HAVING
+    SUM(ps.ps_supplycost * ps.ps_availqty) > (
+        SELECT
+            SUM(ps2.ps_supplycost * ps2.ps_availqty) * 0.0001
+        FROM
+            tpch.partsupp ps2
+        JOIN tpch.supplier s2
+            ON ps2.ps_suppkey = s2.s_suppkey
+        JOIN tpch.nation n2
+            ON s2.s_nationkey = n2.n_nationkey
+        WHERE
+            n2.n_name = 'GERMANY'
+    )
+ORDER BY
+    value DESC;","is_german_supplier = supplier.nation.name == ""GERMANY""
+selected_records = supply_records.WHERE(is_german_supplier).CALCULATE(
+    metric=supply_cost * available_quantity
+)
+result = (
+    TPCH.CALCULATE(min_market_share=SUM(selected_records.metric) * 0.0001)
+    .supply_records.WHERE(is_german_supplier)
+    .PARTITION(name=""parts"", by=part_key)
+    .CALCULATE(
+        PS_PARTKEY=part_key,
+        VALUE=SUM(supply_records.supply_cost * supply_records.available_quantity),
+    )
+    .WHERE(VALUE > min_market_share)
+    .TOP_K(10, by=VALUE.DESC())
+)","WITH _s0 AS (
+  SELECT
+    s_nationkey,
+    s_suppkey
+  FROM tpch.supplier
+), _t2 AS (
+  SELECT
+    n_name,
+    n_nationkey
+  FROM tpch.nation
+  WHERE
+    n_name = 'GERMANY'
+), _s8 AS (
+  SELECT
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_metric
+  FROM tpch.partsupp AS partsupp
+  JOIN _s0 AS _s0
+    ON _s0.s_suppkey = partsupp.ps_suppkey
+  JOIN _t2 AS _t2
+    ON _s0.s_nationkey = _t2.n_nationkey
+), _s9 AS (
+  SELECT
+    partsupp.ps_partkey,
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr
+  FROM tpch.partsupp AS partsupp
+  JOIN _s0 AS _s4
+    ON _s4.s_suppkey = partsupp.ps_suppkey
+  JOIN _t2 AS _t4
+    ON _s4.s_nationkey = _t4.n_nationkey
+  GROUP BY
+    1
+)
+SELECT
+  _s9.ps_partkey AS PS_PARTKEY,
+  COALESCE(_s9.sum_expr, 0) AS VALUE
+FROM _s8 AS _s8
+JOIN _s9 AS _s9
+  ON (
+    COALESCE(_s8.sum_metric, 0) * 0.0001
+  ) < COALESCE(_s9.sum_expr, 0)
+ORDER BY
+  2 DESC NULLS LAST
+LIMIT 10",3.8293259469999157,4.257550004999985,"Sort  (cost=457554.83..457589.93 rows=14040 width=36)
+  Sort Key: (sum((ps.ps_supplycost * (ps.ps_availqty)::numeric))) DESC
+  InitPlan 1 (returns $1)
+    ->  Finalize Aggregate  (cost=225048.53..225048.54 rows=1 width=32)
+          ->  Gather  (cost=225048.31..225048.52 rows=2 width=32)
+                Workers Planned: 2
+                ->  Partial Aggregate  (cost=224048.31..224048.32 rows=1 width=32)
+                      ->  Parallel Hash Join  (cost=2898.35..223916.68 rows=17550 width=10)
+                            Hash Cond: (ps2.ps_suppkey = s2.s_suppkey)
+                            ->  Parallel Seq Scan on partsupp ps2  (cost=0.00..208410.94 rows=3334494 width=14)
+                            ->  Parallel Hash  (cost=2894.48..2894.48 rows=309 width=4)
+                                  ->  Hash Join  (cost=12.39..2894.48 rows=309 width=4)
+                                        Hash Cond: (s2.s_nationkey = n2.n_nationkey)
+                                        ->  Parallel Seq Scan on supplier s2  (cost=0.00..2724.24 rows=58824 width=8)
+                                        ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                              ->  Seq Scan on nation n2  (cost=0.00..12.38 rows=1 width=4)
+                                                    Filter: ((n_name)::text = 'GERMANY'::text)
+  ->  Finalize GroupAggregate  (cost=226153.91..231539.12 rows=14040 width=36)
+        Group Key: ps.ps_partkey
+        Filter: (sum((ps.ps_supplycost * (ps.ps_availqty)::numeric)) > $1)
+        ->  Gather Merge  (cost=226153.91..230644.07 rows=35100 width=36)
+              Workers Planned: 2
+              ->  Partial GroupAggregate  (cost=225153.88..225592.63 rows=17550 width=36)
+                    Group Key: ps.ps_partkey
+                    ->  Sort  (cost=225153.88..225197.76 rows=17550 width=14)
+                          Sort Key: ps.ps_partkey
+                          ->  Parallel Hash Join  (cost=2898.35..223916.68 rows=17550 width=14)
+                                Hash Cond: (ps.ps_suppkey = s.s_suppkey)
+                                ->  Parallel Seq Scan on partsupp ps  (cost=0.00..208410.94 rows=3334494 width=18)
+                                ->  Parallel Hash  (cost=2894.48..2894.48 rows=309 width=4)
+                                      ->  Hash Join  (cost=12.39..2894.48 rows=309 width=4)
+                                            Hash Cond: (s.s_nationkey = n.n_nationkey)
+                                            ->  Parallel Seq Scan on supplier s  (cost=0.00..2724.24 rows=58824 width=8)
+                                            ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                  ->  Seq Scan on nation n  (cost=0.00..12.38 rows=1 width=4)
+                                                        Filter: ((n_name)::text = 'GERMANY'::text)
+JIT:
+  Functions: 53
+  Options: Inlining false, Optimization false, Expressions true, Deforming true","Limit  (cost=896285.04..896285.06 rows=10 width=36)
+  CTE _s0
+    ->  Seq Scan on supplier  (cost=0.00..3136.00 rows=100000 width=8)
+  CTE _t2
+    ->  Seq Scan on nation  (cost=0.00..12.38 rows=1 width=72)
+          Filter: ((n_name)::text = 'GERMANY'::text)
+  ->  Sort  (cost=893136.66..893170.13 rows=13386 width=36)
+        Sort Key: (COALESCE((sum((partsupp_1.ps_supplycost * (partsupp_1.ps_availqty)::numeric))), '0'::numeric)) DESC NULLS LAST
+        ->  Nested Loop  (cost=891241.06..892847.39 rows=13386 width=36)
+              Join Filter: ((COALESCE((sum((partsupp.ps_supplycost * (partsupp.ps_availqty)::numeric))), '0'::numeric) * 0.0001) < COALESCE((sum((partsupp_1.ps_supplycost * (partsupp_1.ps_availqty)::numeric))), '0'::numeric))
+              ->  Aggregate  (cost=436420.74..436420.76 rows=1 width=32)
+                    ->  Hash Join  (cost=394205.72..436119.56 rows=40158 width=10)
+                          Hash Cond: (_s0.s_suppkey = partsupp.ps_suppkey)
+                          ->  Hash Join  (cost=0.03..2380.03 rows=500 width=4)
+                                Hash Cond: (_s0.s_nationkey = _t2.n_nationkey)
+                                ->  CTE Scan on _s0  (cost=0.00..2000.00 rows=100000 width=8)
+                                ->  Hash  (cost=0.02..0.02 rows=1 width=4)
+                                      ->  CTE Scan on _t2  (cost=0.00..0.02 rows=1 width=4)
+                          ->  Hash  (cost=255093.86..255093.86 rows=8002786 width=14)
+                                ->  Seq Scan on partsupp  (cost=0.00..255093.86 rows=8002786 width=14)
+              ->  GroupAggregate  (cost=454820.32..455824.27 rows=40158 width=36)
+                    Group Key: partsupp_1.ps_partkey
+                    ->  Sort  (cost=454820.32..454920.71 rows=40158 width=14)
+                          Sort Key: partsupp_1.ps_partkey
+                          ->  Hash Join  (cost=402020.72..451749.56 rows=40158 width=14)
+                                Hash Cond: (_s4.s_suppkey = partsupp_1.ps_suppkey)
+                                ->  Hash Join  (cost=0.03..2380.03 rows=500 width=4)
+                                      Hash Cond: (_s4.s_nationkey = _t4.n_nationkey)
+                                      ->  CTE Scan on _s0 _s4  (cost=0.00..2000.00 rows=100000 width=8)
+                                      ->  Hash  (cost=0.02..0.02 rows=1 width=4)
+                                            ->  CTE Scan on _t2 _t4  (cost=0.00..0.02 rows=1 width=4)
+                                ->  Hash  (cost=255093.86..255093.86 rows=8002786 width=18)
+                                      ->  Seq Scan on partsupp partsupp_1  (cost=0.00..255093.86 rows=8002786 width=18)
+JIT:
+  Functions: 52
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+11,12,TPCH,"SELECT
+    l.l_shipmode,
+    SUM(
+        CASE
+            WHEN o.o_orderpriority = '1-URGENT'
+              OR o.o_orderpriority = '2-HIGH'
+            THEN 1
+            ELSE 0
+        END
+    ) AS high_line_count,
+    SUM(
+        CASE
+            WHEN o.o_orderpriority <> '1-URGENT'
+             AND o.o_orderpriority <> '2-HIGH'
+            THEN 1
+            ELSE 0
+        END
+    ) AS low_line_count
+FROM
+    tpch.orders o
+JOIN tpch.lineitem l
+    ON o.o_orderkey = l.l_orderkey
+WHERE
+    l.l_shipmode IN ('MAIL', 'SHIP')
+    AND l.l_commitdate < l.l_receiptdate
+    AND l.l_shipdate < l.l_commitdate
+    AND l.l_receiptdate >= DATE '1994-01-01'
+    AND l.l_receiptdate < DATE '1994-01-01' + INTERVAL '1 year'
+GROUP BY
+    l.l_shipmode
+ORDER BY
+    l.l_shipmode;","result = (
+        lines.WHERE(
+            ((ship_mode == ""MAIL"") | (ship_mode == ""SHIP""))
+            & (ship_date < commit_date)
+            & (commit_date < receipt_date)
+            & (YEAR(receipt_date) == 1994)
+        )
+        .CALCULATE(
+            is_high_priority=ISIN(order.order_priority, (""1-URGENT"", ""2-HIGH"")),
+        )
+        .PARTITION(""modes"", by=ship_mode)
+        .CALCULATE(
+            L_SHIPMODE=ship_mode,
+            HIGH_LINE_COUNT=SUM(lines.is_high_priority),
+            LOW_LINE_COUNT=SUM(~(lines.is_high_priority)),
+        )
+        .ORDER_BY(L_SHIPMODE.ASC())
+    )","SELECT
+  lineitem.l_shipmode AS L_SHIPMODE,
+  COALESCE(
+    SUM(CASE WHEN orders.o_orderpriority IN ('1-URGENT', '2-HIGH') THEN 1 ELSE 0 END),
+    0
+  ) AS HIGH_LINE_COUNT,
+  COALESCE(
+    SUM(CASE WHEN NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH') THEN 1 ELSE 0 END),
+    0
+  ) AS LOW_LINE_COUNT
+FROM tpch.lineitem AS lineitem
+JOIN tpch.orders AS orders
+  ON lineitem.l_orderkey = orders.o_orderkey
+WHERE
+  EXTRACT(YEAR FROM CAST(lineitem.l_receiptdate AS TIMESTAMP)) = 1994
+  AND lineitem.l_commitdate < lineitem.l_receiptdate
+  AND lineitem.l_commitdate > lineitem.l_shipdate
+  AND (
+    lineitem.l_shipmode = 'MAIL' OR lineitem.l_shipmode = 'SHIP'
+  )
+GROUP BY
+  1
+ORDER BY
+  1 NULLS FIRST",17.024870960000044,13.475934187999883,"Finalize GroupAggregate  (cost=2016175.37..2018559.33 rows=7 width=21)
+  Group Key: l.l_shipmode
+  ->  Gather Merge  (cost=2016175.37..2018559.16 rows=14 width=21)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=2015175.35..2017557.52 rows=7 width=21)
+              Group Key: l.l_shipmode
+              ->  Sort  (cost=2015175.35..2015473.11 rows=119105 width=14)
+                    Sort Key: l.l_shipmode
+                    ->  Parallel Hash Join  (cost=423320.60..2003096.68 rows=119105 width=14)
+                          Hash Cond: (l.l_orderkey = o.o_orderkey)
+                          ->  Parallel Seq Scan on lineitem l  (cost=0.00..1547782.43 rows=119105 width=9)
+                                Filter: (((l_shipmode)::text = ANY ('{MAIL,SHIP}'::text[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))
+                          ->  Parallel Hash  (cost=314681.60..314681.60 rows=6249760 width=13)
+                                ->  Parallel Seq Scan on orders o  (cost=0.00..314681.60 rows=6249760 width=13)
+JIT:
+  Functions: 20
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize GroupAggregate  (cost=1703358.33..1703415.31 rows=7 width=21)
+  Group Key: lineitem.l_shipmode
+  ->  Gather Merge  (cost=1703358.33..1703415.14 rows=14 width=21)
+        Workers Planned: 2
+        ->  Partial GroupAggregate  (cost=1702358.30..1702413.50 rows=7 width=21)
+              Group Key: lineitem.l_shipmode
+              ->  Sort  (cost=1702358.30..1702367.49 rows=3675 width=14)
+                    Sort Key: lineitem.l_shipmode NULLS FIRST
+                    ->  Nested Loop  (cost=0.43..1702140.68 rows=3675 width=14)
+                          ->  Parallel Seq Scan on lineitem  (cost=0.00..1672752.74 rows=3675 width=9)
+                                Filter: ((l_commitdate < l_receiptdate) AND (l_commitdate > l_shipdate) AND (((l_shipmode)::text = 'MAIL'::text) OR ((l_shipmode)::text = 'SHIP'::text)) AND (EXTRACT(year FROM (l_receiptdate)::timestamp without time zone) = '1994'::numeric))
+                          ->  Index Scan using orders_pkey on orders  (cost=0.43..8.00 rows=1 width=13)
+                                Index Cond: (o_orderkey = lineitem.l_orderkey)
+JIT:
+  Functions: 15
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+12,13,TPCH,"SELECT
+    c_count,
+    COUNT(*) AS custdist
+FROM (
+    SELECT
+        c.c_custkey,
+        COUNT(o.o_orderkey) AS c_count
+    FROM
+        tpch.customer c
+    LEFT JOIN tpch.orders o
+        ON c.c_custkey = o.o_custkey
+        AND o.o_comment NOT LIKE '%special%requests%'
+    GROUP BY
+        c.c_custkey
+) AS c_orders
+GROUP BY
+    c_count
+ORDER BY
+    custdist DESC,
+    c_count DESC
+LIMIT 10;","selected_orders = orders.WHERE(~(LIKE(comment, ""%special%requests%"")))
+result = (
+    customers.CALCULATE(num_non_special_orders=COUNT(selected_orders))
+    .PARTITION(name=""num_order_groups"", by=num_non_special_orders)
+    .CALCULATE(C_COUNT=num_non_special_orders, CUSTDIST=COUNT(customers))
+    .TOP_K(10, by=(CUSTDIST.DESC(), C_COUNT.DESC()))
+)","WITH _s1 AS (
+  SELECT
+    o_custkey,
+    COUNT(*) AS n_rows
+  FROM tpch.orders
+  WHERE
+    NOT o_comment LIKE '%special%requests%'
+  GROUP BY
+    1
+)
+SELECT
+  COALESCE(_s1.n_rows, 0) AS C_COUNT,
+  COUNT(*) AS CUSTDIST
+FROM tpch.customer AS customer
+LEFT JOIN _s1 AS _s1
+  ON _s1.o_custkey = customer.c_custkey
+GROUP BY
+  1
+ORDER BY
+  2 DESC NULLS LAST,
+  1 DESC NULLS LAST
+LIMIT 10",6.094674008000084,5.131763904999843,"Limit  (cost=1413862.83..1413862.85 rows=10 width=16)
+  ->  Sort  (cost=1413862.83..1413863.33 rows=200 width=16)
+        Sort Key: (count(*)) DESC, (count(o.o_orderkey)) DESC
+        ->  HashAggregate  (cost=1413856.51..1413858.51 rows=200 width=16)
+              Group Key: count(o.o_orderkey)
+              ->  Finalize HashAggregate  (cost=1347050.10..1391353.30 rows=1500214 width=12)
+                    Group Key: c.c_custkey
+                    Planned Partitions: 32
+                    ->  Gather  (cost=790968.88..1154835.18 rows=3000428 width=12)
+                          Workers Planned: 2
+                          ->  Partial HashAggregate  (cost=789968.88..853792.38 rows=1500214 width=12)
+                                Group Key: c.c_custkey
+                                Planned Partitions: 32
+                                ->  Parallel Hash Right Join  (cost=40481.00..438455.03 rows=6249135 width=8)
+                                      Hash Cond: (o.o_custkey = c.c_custkey)
+                                      ->  Parallel Seq Scan on orders o  (cost=0.00..330306.01 rows=6249135 width=8)
+                                            Filter: ((o_comment)::text !~~ '%special%requests%'::text)
+                                      ->  Parallel Hash  (cost=30225.39..30225.39 rows=625089 width=4)
+                                            ->  Parallel Index Only Scan using customer_pkey on customer c  (cost=0.43..30225.39 rows=625089 width=4)
+JIT:
+  Functions: 17
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=1136925.79..1136925.81 rows=10 width=16)
+  ->  Sort  (cost=1136925.79..1136926.29 rows=200 width=16)
+        Sort Key: (count(*)) DESC NULLS LAST, (COALESCE((count(*)), '0'::bigint)) DESC NULLS LAST
+        ->  HashAggregate  (cost=1136919.46..1136921.46 rows=200 width=16)
+              Group Key: COALESCE((count(*)), '0'::bigint)
+              ->  Merge Left Join  (cost=842881.68..1129418.39 rows=1500214 width=8)
+                    Merge Cond: (customer.c_custkey = orders.o_custkey)
+                    ->  Index Only Scan using customer_pkey on customer  (cost=0.43..38976.64 rows=1500214 width=4)
+                    ->  Finalize GroupAggregate  (cost=842881.25..1066804.57 rows=883851 width=12)
+                          Group Key: orders.o_custkey
+                          ->  Gather Merge  (cost=842881.25..1049127.55 rows=1767702 width=12)
+                                Workers Planned: 2
+                                ->  Sort  (cost=841881.23..844090.86 rows=883851 width=12)
+                                      Sort Key: orders.o_custkey
+                                      ->  Partial HashAggregate  (cost=681819.85..739479.73 rows=883851 width=12)
+                                            Group Key: orders.o_custkey
+                                            Planned Partitions: 16
+                                            ->  Parallel Seq Scan on orders  (cost=0.00..330306.01 rows=6249135 width=4)
+                                                  Filter: ((o_comment)::text !~~ '%special%requests%'::text)
+JIT:
+  Functions: 14
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+13,14,TPCH,"SELECT
+    100.00 * SUM(
+        CASE
+            WHEN p.p_type LIKE 'PROMO%'
+            THEN l.l_extendedprice * (1 - l.l_discount)
+            ELSE 0
+        END
+    ) / SUM(l.l_extendedprice * (1 - l.l_discount)) AS promo_revenue
+FROM
+    tpch.lineitem l
+JOIN tpch.part p
+    ON l.l_partkey = p.p_partkey
+WHERE
+    l.l_shipdate >= DATE '1995-09-01'
+    AND l.l_shipdate < DATE '1995-09-01' + INTERVAL '1 month';","value_metric = extended_price * (1 - discount)
+selected_lines = lines.WHERE(
+    (YEAR(ship_date) == 1995) & (MONTH(ship_date) == 9)
+).CALCULATE(
+    value=value_metric,
+    promo_value=IFF(STARTSWITH(part.part_type, ""PROMO""), value_metric, 0),
+)
+result = TPCH.CALCULATE(
+    PROMO_REVENUE=100.0
+    * SUM(selected_lines.promo_value)
+    / SUM(selected_lines.value)
+)","SELECT
+  (
+    100.0 * COALESCE(
+      SUM(
+        CASE
+          WHEN part.p_type LIKE 'PROMO%'
+          THEN lineitem.l_extendedprice * (
+            1 - lineitem.l_discount
+          )
+          ELSE 0
+        END
+      ),
+      0
+    )
+  ) / COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) AS PROMO_REVENUE
+FROM tpch.lineitem AS lineitem
+JOIN tpch.part AS part
+  ON lineitem.l_partkey = part.p_partkey
+WHERE
+  EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 9
+  AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995",13.582797951000202,14.210535780999862,"Finalize Aggregate  (cost=1438089.94..1438089.95 rows=1 width=32)
+  ->  Gather  (cost=1438089.70..1438089.91 rows=2 width=64)
+        Workers Planned: 2
+        ->  Partial Aggregate  (cost=1437089.70..1437089.71 rows=1 width=64)
+              ->  Parallel Hash Join  (cost=61642.07..1431619.51 rows=312582 width=33)
+                    Hash Cond: (l.l_partkey = p.p_partkey)
+                    ->  Parallel Seq Scan on lineitem l  (cost=0.00..1360326.95 rows=319044 width=16)
+                          Filter: ((l_shipdate >= '1995-09-01'::date) AND (l_shipdate < '1995-10-01 00:00:00'::timestamp without time zone))
+                    ->  Parallel Hash  (cost=45528.92..45528.92 rows=833292 width=25)
+                          ->  Parallel Seq Scan on part p  (cost=0.00..45528.92 rows=833292 width=25)
+JIT:
+  Functions: 16
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize Aggregate  (cost=1616208.33..1616208.34 rows=1 width=32)
+  ->  Gather  (cost=1616208.09..1616208.30 rows=2 width=64)
+        Workers Planned: 2
+        ->  Partial Aggregate  (cost=1615208.09..1615208.10 rows=1 width=64)
+              ->  Nested Loop  (cost=0.43..1615197.38 rows=612 width=33)
+                    ->  Parallel Seq Scan on lineitem  (cost=0.00..1610267.58 rows=625 width=16)
+                          Filter: ((EXTRACT(month FROM (l_shipdate)::timestamp without time zone) = '9'::numeric) AND (EXTRACT(year FROM (l_shipdate)::timestamp without time zone) = '1995'::numeric))
+                    ->  Index Scan using part_pkey on part  (cost=0.43..7.89 rows=1 width=25)
+                          Index Cond: (p_partkey = lineitem.l_partkey)
+JIT:
+  Functions: 11
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+14,15,TPCH,"WITH revenue AS (
+    SELECT
+        l.l_suppkey AS supplier_no,
+        SUM(l.l_extendedprice * (1 - l.l_discount)) AS total_revenue
+    FROM
+        tpch.lineitem l
+    WHERE
+        l.l_shipdate >= DATE '1996-01-01'
+        AND l.l_shipdate < DATE '1996-01-01' + INTERVAL '3 months'
+    GROUP BY
+        l.l_suppkey
+)
+SELECT
+    s.s_suppkey,
+    s.s_name,
+    s.s_address,
+    s.s_phone,
+    r.total_revenue
+FROM
+    tpch.supplier s
+JOIN revenue r
+    ON s.s_suppkey = r.supplier_no
+WHERE
+    r.total_revenue = (
+        SELECT
+            MAX(total_revenue)
+        FROM
+            revenue
+    )
+ORDER BY
+    s.s_suppkey;","selected_lines = lines.WHERE(
+    (ship_date >= DATETIME('1996-1-1'))
+    & (ship_date < DATETIME('1996-4-1'))
+)
+total = SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+result = (
+    TPCH.CALCULATE(
+        max_revenue=MAX(
+            suppliers.WHERE(HAS(selected_lines))
+            .CALCULATE(total_revenue=total)
+            .total_revenue
+        )
+    )
+    .suppliers.WHERE(HAS(selected_lines) & (total == max_revenue))
+    .CALCULATE(
+        S_SUPPKEY=key,
+        S_NAME=name,
+        S_ADDRESS=address,
+        S_PHONE=phone,
+        TOTAL_REVENUE=total,
+    )
+    .ORDER_BY(S_SUPPKEY.ASC())
+)","WITH _t3 AS (
+  SELECT
+    l_discount,
+    l_extendedprice,
+    l_shipdate,
+    l_suppkey
+  FROM tpch.lineitem
+  WHERE
+    l_shipdate < CAST('1996-04-01' AS DATE)
+    AND l_shipdate >= CAST('1996-01-01' AS DATE)
+), _t1 AS (
+  SELECT
+    SUM(l_extendedprice * (
+      1 - l_discount
+    )) AS sum_expr
+  FROM _t3
+  GROUP BY
+    l_suppkey
+), _s0 AS (
+  SELECT
+    MAX(COALESCE(sum_expr, 0)) AS max_total_revenue
+  FROM _t1
+), _s3 AS (
+  SELECT
+    l_suppkey,
+    SUM(l_extendedprice * (
+      1 - l_discount
+    )) AS sum_expr
+  FROM _t3
+  GROUP BY
+    1
+)
+SELECT
+  supplier.s_suppkey AS S_SUPPKEY,
+  supplier.s_name AS S_NAME,
+  supplier.s_address AS S_ADDRESS,
+  supplier.s_phone AS S_PHONE,
+  COALESCE(_s3.sum_expr, 0) AS TOTAL_REVENUE
+FROM _s0 AS _s0
+CROSS JOIN tpch.supplier AS supplier
+JOIN _s3 AS _s3
+  ON _s0.max_total_revenue = COALESCE(_s3.sum_expr, 0)
+  AND _s3.l_suppkey = supplier.s_suppkey
+ORDER BY
+  1 NULLS FIRST",13.922902478000196,15.883284445000072,"Sort  (cost=1480080.86..1480082.15 rows=515 width=96)
+  Sort Key: s.s_suppkey
+  CTE revenue
+    ->  Finalize GroupAggregate  (cost=1445514.10..1472358.92 rows=102913 width=36)
+          Group Key: l.l_suppkey
+          ->  Gather Merge  (cost=1445514.10..1469528.81 rows=205826 width=36)
+                Workers Planned: 2
+                ->  Sort  (cost=1444514.08..1444771.36 rows=102913 width=36)
+                      Sort Key: l.l_suppkey
+                      ->  Partial HashAggregate  (cost=1422982.45..1433128.52 rows=102913 width=36)
+                            Group Key: l.l_suppkey
+                            Planned Partitions: 4
+                            ->  Parallel Seq Scan on lineitem l  (cost=0.00..1360326.95 rows=907229 width=16)
+                                  Filter: ((l_shipdate >= '1996-01-01'::date) AND (l_shipdate < '1996-04-01 00:00:00'::timestamp without time zone))
+  InitPlan 2 (returns $2)
+    ->  Aggregate  (cost=2315.54..2315.55 rows=1 width=32)
+          ->  CTE Scan on revenue  (cost=0.00..2058.26 rows=102913 width=32)
+  ->  Nested Loop  (cost=0.29..5383.19 rows=515 width=96)
+        ->  CTE Scan on revenue r  (cost=0.00..2315.54 rows=515 width=36)
+              Filter: (total_revenue = $2)
+        ->  Index Scan using supplier_pkey on supplier s  (cost=0.29..5.96 rows=1 width=64)
+              Index Cond: (s_suppkey = r.supplier_no)
+JIT:
+  Functions: 19
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Sort  (cost=1709720.11..1709720.11 rows=1 width=96)
+  Sort Key: supplier.s_suppkey NULLS FIRST
+  CTE _t3
+    ->  Gather  (cost=1000.00..1579061.95 rows=2177350 width=20)
+          Workers Planned: 2
+          ->  Parallel Seq Scan on lineitem  (cost=0.00..1360326.95 rows=907229 width=20)
+                Filter: ((l_shipdate < '1996-04-01'::date) AND (l_shipdate >= '1996-01-01'::date))
+  ->  Nested Loop  (cost=130646.32..130658.15 rows=1 width=96)
+        ->  Hash Join  (cost=130646.02..130651.06 rows=1 width=36)
+              Hash Cond: (COALESCE((sum((_t3.l_extendedprice * ('1'::numeric - _t3.l_discount)))), '0'::numeric) = (max(COALESCE((sum((_t3_1.l_extendedprice * ('1'::numeric - _t3_1.l_discount)))), '0'::numeric))))
+              ->  HashAggregate  (cost=65320.50..65323.00 rows=200 width=36)
+                    Group Key: _t3.l_suppkey
+                    ->  CTE Scan on _t3  (cost=0.00..43547.00 rows=2177350 width=40)
+              ->  Hash  (cost=65325.51..65325.51 rows=1 width=32)
+                    ->  Aggregate  (cost=65325.50..65325.51 rows=1 width=32)
+                          ->  HashAggregate  (cost=65320.50..65323.00 rows=200 width=36)
+                                Group Key: _t3_1.l_suppkey
+                                ->  CTE Scan on _t3 _t3_1  (cost=0.00..43547.00 rows=2177350 width=40)
+        ->  Index Scan using supplier_pkey on supplier  (cost=0.29..7.09 rows=1 width=64)
+              Index Cond: (s_suppkey = _t3.l_suppkey)
+JIT:
+  Functions: 23
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+15,16,TPCH,"SELECT
+    p.p_brand,
+    p.p_type,
+    p.p_size,
+    COUNT(DISTINCT ps.ps_suppkey) AS supplier_count
+FROM
+    tpch.part p
+JOIN tpch.partsupp ps
+    ON p.p_partkey = ps.ps_partkey
+WHERE
+    p.p_brand <> 'Brand#45'
+    AND p.p_type NOT LIKE 'MEDIUM POLISHED%'
+    AND p.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
+    AND ps.ps_suppkey NOT IN (
+        SELECT
+            s.s_suppkey
+        FROM
+            tpch.supplier s
+        WHERE
+            s.s_comment LIKE '%Customer%Complaints%'
+    )
+GROUP BY
+    p.p_brand,
+    p.p_type,
+    p.p_size
+ORDER BY
+    supplier_count DESC,
+    p.p_brand,
+    p.p_type,
+    p.p_size
+LIMIT 10;","valid_part = part.WHERE(
+    (brand != ""BRAND#45"")
+    & ~STARTSWITH(part_type, ""MEDIUM POLISHED%"")
+    & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])
+)
+result = (
+    supply_records.WHERE(
+        ~LIKE(supplier.comment, ""%Customer%Complaints%"") & HAS(valid_part)
+    )
+    .CALCULATE(
+        P_BRAND=valid_part.brand,
+        P_TYPE=valid_part.part_type,
+        P_SIZE=valid_part.size,
+    )
+    .PARTITION(name=""groups"", by=(P_BRAND, P_TYPE, P_SIZE))
+    .CALCULATE(
+        P_BRAND,
+        P_TYPE,
+        P_SIZE,
+        SUPPLIER_COUNT=NDISTINCT(supply_records.supplier_key),
+    )
+    .TOP_K(
+        10, by=(SUPPLIER_COUNT.DESC(), P_BRAND.ASC(), P_TYPE.ASC(), P_SIZE.ASC())
+    )
+)","SELECT
+  part.p_brand AS P_BRAND,
+  part.p_type AS P_TYPE,
+  part.p_size AS P_SIZE,
+  COUNT(DISTINCT partsupp.ps_suppkey) AS SUPPLIER_COUNT
+FROM tpch.partsupp AS partsupp
+JOIN tpch.supplier AS supplier
+  ON NOT supplier.s_comment LIKE '%Customer%Complaints%'
+  AND partsupp.ps_suppkey = supplier.s_suppkey
+JOIN tpch.part AS part
+  ON NOT part.p_type LIKE 'MEDIUM POLISHED%%'
+  AND part.p_brand <> 'BRAND#45'
+  AND part.p_partkey = partsupp.ps_partkey
+  AND part.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
+GROUP BY
+  1,
+  2,
+  3
+ORDER BY
+  4 DESC NULLS LAST,
+  1 NULLS FIRST,
+  2 NULLS FIRST,
+  3 NULLS FIRST
+LIMIT 10",3.228129428999864,2.340564077999943,"Limit  (cost=360192.23..360192.26 rows=10 width=42)
+  ->  Sort  (cost=360192.23..360573.64 rows=152564 width=42)
+        Sort Key: (count(DISTINCT ps.ps_suppkey)) DESC, p.p_brand, p.p_type, p.p_size
+        ->  GroupAggregate  (cost=281613.73..356895.38 rows=152564 width=42)
+              Group Key: p.p_brand, p.p_type, p.p_size
+              ->  Gather Merge  (cost=281613.73..349537.68 rows=583206 width=38)
+                    Workers Planned: 2
+                    ->  Sort  (cost=280613.71..281221.21 rows=243002 width=38)
+                          Sort Key: p.p_brand, p.p_type, p.p_size, ps.ps_suppkey
+                          ->  Parallel Hash Join  (cost=63881.92..252229.94 rows=243002 width=38)
+                                Hash Cond: (ps.ps_partkey = p.p_partkey)
+                                ->  Parallel Index Only Scan using partsupp_pkey on partsupp ps  (cost=3386.46..173382.94 rows=1667247 width=8)
+                                      Filter: (NOT (hashed SubPlan 1))
+                                      SubPlan 1
+                                        ->  Seq Scan on supplier s  (cost=0.00..3386.00 rows=10 width=4)
+                                              Filter: ((s_comment)::text ~~ '%Customer%Complaints%'::text)
+                                ->  Parallel Hash  (cost=58028.30..58028.30 rows=121453 width=38)
+                                      ->  Parallel Seq Scan on part p  (cost=0.00..58028.30 rows=121453 width=38)
+                                            Filter: (((p_brand)::text <> 'Brand#45'::text) AND ((p_type)::text !~~ 'MEDIUM POLISHED%'::text) AND (p_size = ANY ('{49,14,23,45,19,3,36,9}'::integer[])))
+JIT:
+  Functions: 25
+  Options: Inlining false, Optimization false, Expressions true, Deforming true","Limit  (cost=438655.05..438655.08 rows=10 width=42)
+  ->  Sort  (cost=438655.05..439042.95 rows=155158 width=42)
+        Sort Key: (count(DISTINCT partsupp.ps_suppkey)) DESC NULLS LAST, part.p_brand NULLS FIRST, part.p_type NULLS FIRST, part.p_size NULLS FIRST
+        ->  GroupAggregate  (cost=280022.21..435302.14 rows=155158 width=42)
+              Group Key: part.p_brand, part.p_type, part.p_size
+              ->  Gather Merge  (cost=280022.21..421594.90 rows=1215566 width=38)
+                    Workers Planned: 2
+                    ->  Sort  (cost=279022.19..280288.40 rows=506486 width=38)
+                          Sort Key: part.p_brand NULLS FIRST, part.p_type NULLS FIRST, part.p_size NULLS FIRST, partsupp.ps_suppkey
+                          ->  Parallel Hash Join  (cost=3606.95..217182.72 rows=506486 width=38)
+                                Hash Cond: (partsupp.ps_suppkey = supplier.s_suppkey)
+                                ->  Nested Loop  (cost=0.43..212246.49 rows=506536 width=38)
+                                      ->  Parallel Seq Scan on part  (cost=0.00..58028.30 rows=126584 width=38)
+                                            Filter: (((p_type)::text !~~ 'MEDIUM POLISHED%%'::text) AND ((p_brand)::text <> 'BRAND#45'::text) AND (p_size = ANY ('{49,14,23,45,19,3,36,9}'::integer[])))
+                                      ->  Index Only Scan using partsupp_pkey on partsupp  (cost=0.43..1.04 rows=18 width=8)
+                                            Index Cond: (ps_partkey = part.p_partkey)
+                                ->  Parallel Hash  (cost=2871.29..2871.29 rows=58818 width=4)
+                                      ->  Parallel Seq Scan on supplier  (cost=0.00..2871.29 rows=58818 width=4)
+                                            Filter: ((s_comment)::text !~~ '%Customer%Complaints%'::text)
+JIT:
+  Functions: 18
+  Options: Inlining false, Optimization false, Expressions true, Deforming true",SUCCESS
+16,17,TPCH,"WITH avg_qty AS (
+  SELECT
+    l_partkey,
+    0.2 * AVG(l_quantity) AS avg_q
+  FROM tpch.lineitem
+  GROUP BY l_partkey
+)
+SELECT
+  SUM(l.l_extendedprice) / 7.0 AS avg_yearly
+FROM tpch.lineitem l
+JOIN tpch.part p
+  ON p.p_partkey = l.l_partkey
+JOIN avg_qty a
+  ON a.l_partkey = l.l_partkey
+WHERE p.p_brand = 'Brand#23'
+  AND p.p_container = 'MED BOX'
+  AND l.l_quantity < a.avg_q;","selected_lines = parts.WHERE(
+    (brand == ""Brand#23"") & (container == ""MED BOX"")
+).lines.WHERE(quantity < 0.2 * RELAVG(quantity, per=""parts""))
+result = TPCH.CALCULATE(AVG_YEARLY=SUM(selected_lines.extended_price) / 7.0)","WITH _t AS (
+  SELECT
+    lineitem.l_extendedprice,
+    lineitem.l_quantity,
+    AVG(CAST(lineitem.l_quantity AS DOUBLE PRECISION)) OVER (PARTITION BY lineitem.l_partkey) AS _w
+  FROM tpch.part AS part
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_partkey = part.p_partkey
+  WHERE
+    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
+)
+SELECT
+  CAST(COALESCE(SUM(l_extendedprice), 0) AS DOUBLE PRECISION) / 7.0 AS AVG_YEARLY
+FROM _t
+WHERE
+  l_quantity < (
+    0.2 * _w
+  )",46.987686407999945,13.34718855899996,"Aggregate  (cost=5386633.32..5386633.33 rows=1 width=32)
+  ->  Hash Join  (cost=4062436.34..5386579.55 rows=21506 width=8)
+        Hash Cond: (p.p_partkey = lineitem.l_partkey)
+        Join Filter: (l.l_quantity < ((0.2 * avg(lineitem.l_quantity))))
+        ->  Gather  (cost=50706.58..1357993.86 rows=63211 width=21)
+              Workers Planned: 2
+              ->  Parallel Hash Join  (cost=49706.58..1350672.76 rows=26338 width=21)
+                    Hash Cond: (l.l_partkey = p.p_partkey)
+                    ->  Parallel Seq Scan on lineitem l  (cost=0.00..1235356.63 rows=24994063 width=17)
+                    ->  Parallel Hash  (cost=49695.38..49695.38 rows=896 width=4)
+                          ->  Parallel Seq Scan on part p  (cost=0.00..49695.38 rows=896 width=4)
+                                Filter: (((p_brand)::text = 'Brand#23'::text) AND ((p_container)::text = 'MED BOX'::text))
+        ->  Hash  (cost=3970266.22..3970266.22 rows=2041243 width=36)
+              ->  Finalize GroupAggregate  (cost=3432705.64..3970266.22 rows=2041243 width=36)
+                    Group Key: lineitem.l_partkey
+                    ->  Gather Merge  (cost=3432705.64..3909028.93 rows=4082486 width=36)
+                          Workers Planned: 2
+                          ->  Sort  (cost=3431705.62..3436808.73 rows=2041243 width=36)
+                                Sort Key: lineitem.l_partkey
+                                ->  Partial HashAggregate  (cost=2836538.79..3106136.98 rows=2041243 width=36)
+                                      Group Key: lineitem.l_partkey
+                                      Planned Partitions: 128
+                                      ->  Parallel Seq Scan on lineitem  (cost=0.00..1235356.63 rows=24994063 width=9)
+JIT:
+  Functions: 29
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Aggregate  (cost=1363233.66..1363233.68 rows=1 width=8)
+  ->  Subquery Scan on _t  (cost=1353606.64..1363180.98 rows=21070 width=8)
+        Filter: ((_t.l_quantity)::double precision < ('0.2'::double precision * _t._w))
+        ->  WindowAgg  (cost=1353606.64..1362074.79 rows=63211 width=25)
+              ->  Gather Merge  (cost=1353606.64..1360968.60 rows=63211 width=17)
+                    Workers Planned: 2
+                    ->  Sort  (cost=1352606.61..1352672.46 rows=26338 width=17)
+                          Sort Key: lineitem.l_partkey
+                          ->  Parallel Hash Join  (cost=49706.58..1350672.76 rows=26338 width=17)
+                                Hash Cond: (lineitem.l_partkey = part.p_partkey)
+                                ->  Parallel Seq Scan on lineitem  (cost=0.00..1235356.63 rows=24994063 width=17)
+                                ->  Parallel Hash  (cost=49695.38..49695.38 rows=896 width=4)
+                                      ->  Parallel Seq Scan on part  (cost=0.00..49695.38 rows=896 width=4)
+                                            Filter: (((p_brand)::text = 'Brand#23'::text) AND ((p_container)::text = 'MED BOX'::text))
+JIT:
+  Functions: 20
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+17,18,TPCH,"SELECT
+    c.c_name,
+    c.c_custkey,
+    o.o_orderkey,
+    o.o_orderdate,
+    o.o_totalprice,
+    SUM(l.l_quantity) AS total_quantity
+FROM
+    tpch.customer c
+JOIN tpch.orders o
+    ON c.c_custkey = o.o_custkey
+JOIN tpch.lineitem l
+    ON o.o_orderkey = l.l_orderkey
+WHERE
+    o.o_orderkey IN (
+        SELECT
+            l2.l_orderkey
+        FROM
+            tpch.lineitem l2
+        GROUP BY
+            l2.l_orderkey
+        HAVING
+            SUM(l2.l_quantity) > 300
+    )
+GROUP BY
+    c.c_name,
+    c.c_custkey,
+    o.o_orderkey,
+    o.o_orderdate,
+    o.o_totalprice
+ORDER BY
+    o.o_totalprice DESC,
+    o.o_orderdate
+LIMIT 10;","result = (
+        orders.CALCULATE(
+            C_NAME=customer.name,
+            C_CUSTKEY=customer.key,
+            O_ORDERKEY=key,
+            O_ORDERDATE=order_date,
+            O_TOTALPRICE=total_price,
+            TOTAL_QUANTITY=SUM(lines.quantity),
+        )
+        .WHERE(TOTAL_QUANTITY > 300)
+        .TOP_K(
+            10,
+            by=(O_TOTALPRICE.DESC(), O_ORDERDATE.ASC()),
+        )
+    )","WITH _t1 AS (
+  SELECT
+    l_orderkey,
+    SUM(l_quantity) AS sum_l_quantity
+  FROM tpch.lineitem
+  GROUP BY
+    1
+)
+SELECT
+  customer.c_name AS C_NAME,
+  customer.c_custkey AS C_CUSTKEY,
+  orders.o_orderkey AS O_ORDERKEY,
+  orders.o_orderdate AS O_ORDERDATE,
+  orders.o_totalprice AS O_TOTALPRICE,
+  _t1.sum_l_quantity AS TOTAL_QUANTITY
+FROM tpch.orders AS orders
+JOIN tpch.customer AS customer
+  ON customer.c_custkey = orders.o_custkey
+JOIN _t1 AS _t1
+  ON NOT _t1.sum_l_quantity IS NULL
+  AND _t1.l_orderkey = orders.o_orderkey
+  AND _t1.sum_l_quantity > 300
+ORDER BY
+  5 DESC NULLS LAST,
+  4 NULLS FIRST
+LIMIT 10",66.52064058500014,41.56555927000022,"Limit  (cost=6530843.94..6530843.97 rows=10 width=71)
+  ->  Sort  (cost=6530843.94..6532485.63 rows=656677 width=71)
+        Sort Key: o.o_totalprice DESC, o.o_orderdate
+        ->  GroupAggregate  (cost=6383950.25..6516653.39 rows=656677 width=71)
+              Group Key: c.c_custkey, o.o_orderkey
+              ->  Incremental Sort  (cost=6383950.25..6503519.85 rows=656677 width=44)
+                    Sort Key: c.c_custkey, o.o_orderkey
+                    Presorted Key: c.c_custkey
+                    ->  Merge Join  (cost=6383950.11..6473969.38 rows=656677 width=44)
+                          Merge Cond: (c.c_custkey = o.o_custkey)
+                          ->  Index Scan using customer_pkey on customer c  (cost=0.43..74778.15 rows=1500214 width=23)
+                          ->  Materialize  (cost=6383949.35..6387232.73 rows=656677 width=25)
+                                ->  Sort  (cost=6383949.35..6385591.04 rows=656677 width=25)
+                                      Sort Key: o.o_custkey
+                                      ->  Hash Join  (cost=3901233.65..6304783.51 rows=656677 width=25)
+                                            Hash Cond: (l.l_orderkey = o.o_orderkey)
+                                            ->  Seq Scan on lineitem l  (cost=0.00..1585273.52 rows=59985752 width=9)
+                                            ->  Hash  (cost=3898218.13..3898218.13 rows=164202 width=24)
+                                                  ->  Hash Join  (cost=3280248.37..3898218.13 rows=164202 width=24)
+                                                        Hash Cond: (o.o_orderkey = l2.l_orderkey)
+                                                        ->  Seq Scan on orders o  (cost=0.00..402178.25 rows=14999425 width=20)
+                                                        ->  Hash  (cost=3277553.85..3277553.85 rows=164202 width=4)
+                                                              ->  Finalize GroupAggregate  (cost=3147826.51..3277553.85 rows=164202 width=4)
+                                                                    Group Key: l2.l_orderkey
+                                                                    Filter: (sum(l2.l_quantity) > '300'::numeric)
+                                                                    ->  Gather Merge  (cost=3147826.51..3262775.70 rows=985210 width=36)
+                                                                          Workers Planned: 2
+                                                                          ->  Sort  (cost=3146826.48..3148058.00 rows=492605 width=36)
+                                                                                Sort Key: l2.l_orderkey
+                                                                                ->  Partial HashAggregate  (cost=2836538.79..3086779.00 rows=492605 width=36)
+                                                                                      Group Key: l2.l_orderkey
+                                                                                      Planned Partitions: 32
+                                                                                      ->  Parallel Seq Scan on lineitem l2  (cost=0.00..1235356.63 rows=24994063 width=9)
+JIT:
+  Functions: 37
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=3979083.48..3979083.50 rows=10 width=71)
+  ->  Sort  (cost=3979083.48..3979491.93 rows=163381 width=71)
+        Sort Key: orders.o_totalprice DESC NULLS LAST, orders.o_orderdate NULLS FIRST
+        ->  Nested Loop  (cost=3282507.35..3975552.87 rows=163381 width=71)
+              ->  Hash Join  (cost=3282506.92..3901111.67 rows=163381 width=52)
+                    Hash Cond: (orders.o_orderkey = _t1.l_orderkey)
+                    ->  Seq Scan on orders  (cost=0.00..402178.25 rows=14999425 width=20)
+                    ->  Hash  (cost=3279187.66..3279187.66 rows=163381 width=36)
+                          ->  Subquery Scan on _t1  (cost=3147826.51..3279187.66 rows=163381 width=36)
+                                ->  Finalize GroupAggregate  (cost=3147826.51..3277553.85 rows=163381 width=36)
+                                      Group Key: lineitem.l_orderkey
+                                      Filter: ((sum(lineitem.l_quantity) IS NOT NULL) AND (sum(lineitem.l_quantity) > '300'::numeric))
+                                      ->  Gather Merge  (cost=3147826.51..3262775.70 rows=985210 width=36)
+                                            Workers Planned: 2
+                                            ->  Sort  (cost=3146826.48..3148058.00 rows=492605 width=36)
+                                                  Sort Key: lineitem.l_orderkey
+                                                  ->  Partial HashAggregate  (cost=2836538.79..3086779.00 rows=492605 width=36)
+                                                        Group Key: lineitem.l_orderkey
+                                                        Planned Partitions: 32
+                                                        ->  Parallel Seq Scan on lineitem  (cost=0.00..1235356.63 rows=24994063 width=9)
+              ->  Index Scan using customer_pkey on customer  (cost=0.43..0.46 rows=1 width=23)
+                    Index Cond: (c_custkey = orders.o_custkey)
+JIT:
+  Functions: 22
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+18,19,TPCH,"SELECT
+    SUM(l.l_extendedprice * (1 - l.l_discount)) AS revenue
+FROM
+    tpch.lineitem l
+JOIN tpch.part p
+    ON p.p_partkey = l.l_partkey
+WHERE
+    (
+        p.p_brand = 'Brand#12'
+        AND p.p_container IN (
+            'SM CASE', 'SM BOX', 'SM PACK', 'SM PKG'
+        )
+        AND l.l_quantity BETWEEN 1 AND 11
+        AND p.p_size BETWEEN 1 AND 5
+        AND l.l_shipmode IN ('AIR', 'AIR REG')
+        AND l.l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    OR (
+        p.p_brand = 'Brand#23'
+        AND p.p_container IN (
+            'MED BAG', 'MED BOX', 'MED PKG', 'MED PACK'
+        )
+        AND l.l_quantity BETWEEN 10 AND 20
+        AND p.p_size BETWEEN 1 AND 10
+        AND l.l_shipmode IN ('AIR', 'AIR REG')
+        AND l.l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    OR (
+        p.p_brand = 'Brand#34'
+        AND p.p_container IN (
+            'LG CASE', 'LG BOX', 'LG PACK', 'LG PKG'
+        )
+        AND l.l_quantity BETWEEN 20 AND 30
+        AND p.p_size BETWEEN 1 AND 15
+        AND l.l_shipmode IN ('AIR', 'AIR REG')
+        AND l.l_shipinstruct = 'DELIVER IN PERSON'
+    );","selected_lines = lines.WHERE(
+    (ISIN(ship_mode, (""AIR"", ""AIR REG"")))
+    & (ship_instruct == ""DELIVER IN PERSON"")
+    & (
+        (
+            MONOTONIC(1, part.size, 5)
+            & MONOTONIC(1, quantity, 11)
+            & ISIN(
+                part.container,
+                (""SM CASE"", ""SM BOX"", ""SM PACK"", ""SM PKG""),
+            )
+            & (part.brand == ""Brand#12"")
+        )
+        | (
+            MONOTONIC(1, part.size, 10)
+            & MONOTONIC(10, quantity, 20)
+            & ISIN(
+                part.container,
+                (""MED BAG"", ""MED BOX"", ""MED PACK"", ""MED PKG""),
+            )
+            & (part.brand == ""Brand#23"")
+        )
+        | (
+            MONOTONIC(1, part.size, 15)
+            & MONOTONIC(20, quantity, 30)
+            & ISIN(
+                part.container,
+                (""LG CASE"", ""LG BOX"", ""LG PACK"", ""LG PKG""),
+            )
+            & (part.brand == ""Brand#34"")
+        )
+    )
+)
+result = TPCH.CALCULATE(
+    REVENUE=SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+)","SELECT
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) AS REVENUE
+FROM tpch.lineitem AS lineitem
+JOIN tpch.part AS part
+  ON (
+    (
+      lineitem.l_quantity <= 11
+      AND lineitem.l_quantity >= 1
+      AND part.p_brand = 'Brand#12'
+      AND part.p_container IN ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+      AND part.p_size <= 5
+      AND part.p_size >= 1
+    )
+    OR (
+      lineitem.l_quantity <= 20
+      AND lineitem.l_quantity >= 10
+      AND part.p_brand = 'Brand#23'
+      AND part.p_container IN ('MED BAG', 'MED BOX', 'MED PACK', 'MED PKG')
+      AND part.p_size <= 10
+      AND part.p_size >= 1
+    )
+    OR (
+      lineitem.l_quantity <= 30
+      AND lineitem.l_quantity >= 20
+      AND part.p_brand = 'Brand#34'
+      AND part.p_container IN ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+      AND part.p_size <= 15
+      AND part.p_size >= 1
+    )
+  )
+  AND lineitem.l_partkey = part.p_partkey
+WHERE
+  lineitem.l_shipinstruct = 'DELIVER IN PERSON'
+  AND lineitem.l_shipmode IN ('AIR', 'AIR REG')",5.768150112000058,3.9672188460001507,"Finalize Aggregate  (cost=1810114.56..1810114.57 rows=1 width=32)
+  ->  Gather  (cost=1810114.34..1810114.55 rows=2 width=32)
+        Workers Planned: 2
+        ->  Partial Aggregate  (cost=1809114.34..1809114.35 rows=1 width=32)
+              ->  Parallel Hash Join  (cost=72636.51..1809110.77 rows=475 width=12)
+                    Hash Cond: (l.l_partkey = p.p_partkey)
+                    Join Filter: ((((p.p_brand)::text = 'Brand#12'::text) AND ((p.p_container)::text = ANY ('{""SM CASE"",""SM BOX"",""SM PACK"",""SM PKG""}'::text[])) AND (l.l_quantity >= '1'::numeric) AND (l.l_quantity <= '11'::numeric) AND (p.p_size <= 5)) OR (((p.p_brand)::text = 'Brand#23'::text) AND ((p.p_container)::text = ANY ('{""MED BAG"",""MED BOX"",""MED PKG"",""MED PACK""}'::text[])) AND (l.l_quantity >= '10'::numeric) AND (l.l_quantity <= '20'::numeric) AND (p.p_size <= 10)) OR (((p.p_brand)::text = 'Brand#34'::text) AND ((p.p_container)::text = ANY ('{""LG CASE"",""LG BOX"",""LG PACK"",""LG PKG""}'::text[])) AND (l.l_quantity >= '20'::numeric) AND (l.l_quantity <= '30'::numeric) AND (p.p_size <= 15)))
+                    ->  Parallel Seq Scan on lineitem l  (cost=0.00..1735237.90 rows=470993 width=21)
+                          Filter: (((l_shipmode)::text = ANY ('{AIR,""AIR REG""}'::text[])) AND ((l_shipinstruct)::text = 'DELIVER IN PERSON'::text) AND (((l_quantity >= '1'::numeric) AND (l_quantity <= '11'::numeric)) OR ((l_quantity >= '10'::numeric) AND (l_quantity <= '20'::numeric)) OR ((l_quantity >= '20'::numeric) AND (l_quantity <= '30'::numeric))))
+                    ->  Parallel Hash  (cost=72610.91..72610.91 rows=2048 width=25)
+                          ->  Parallel Seq Scan on part p  (cost=0.00..72610.91 rows=2048 width=25)
+                                Filter: ((p_size >= 1) AND ((((p_brand)::text = 'Brand#12'::text) AND ((p_container)::text = ANY ('{""SM CASE"",""SM BOX"",""SM PACK"",""SM PKG""}'::text[])) AND (p_size <= 5)) OR (((p_brand)::text = 'Brand#23'::text) AND ((p_container)::text = ANY ('{""MED BAG"",""MED BOX"",""MED PKG"",""MED PACK""}'::text[])) AND (p_size <= 10)) OR (((p_brand)::text = 'Brand#34'::text) AND ((p_container)::text = ANY ('{""LG CASE"",""LG BOX"",""LG PACK"",""LG PKG""}'::text[])) AND (p_size <= 15))))
+JIT:
+  Functions: 21
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Finalize Aggregate  (cost=1810114.56..1810114.57 rows=1 width=32)
+  ->  Gather  (cost=1810114.34..1810114.55 rows=2 width=32)
+        Workers Planned: 2
+        ->  Partial Aggregate  (cost=1809114.34..1809114.35 rows=1 width=32)
+              ->  Parallel Hash Join  (cost=72636.51..1809110.77 rows=475 width=12)
+                    Hash Cond: (lineitem.l_partkey = part.p_partkey)
+                    Join Filter: (((lineitem.l_quantity <= '11'::numeric) AND (lineitem.l_quantity >= '1'::numeric) AND ((part.p_brand)::text = 'Brand#12'::text) AND ((part.p_container)::text = ANY ('{""SM CASE"",""SM BOX"",""SM PACK"",""SM PKG""}'::text[])) AND (part.p_size <= 5)) OR ((lineitem.l_quantity <= '20'::numeric) AND (lineitem.l_quantity >= '10'::numeric) AND ((part.p_brand)::text = 'Brand#23'::text) AND ((part.p_container)::text = ANY ('{""MED BAG"",""MED BOX"",""MED PACK"",""MED PKG""}'::text[])) AND (part.p_size <= 10)) OR ((lineitem.l_quantity <= '30'::numeric) AND (lineitem.l_quantity >= '20'::numeric) AND ((part.p_brand)::text = 'Brand#34'::text) AND ((part.p_container)::text = ANY ('{""LG CASE"",""LG BOX"",""LG PACK"",""LG PKG""}'::text[])) AND (part.p_size <= 15)))
+                    ->  Parallel Seq Scan on lineitem  (cost=0.00..1735237.90 rows=470993 width=21)
+                          Filter: (((l_shipmode)::text = ANY ('{AIR,""AIR REG""}'::text[])) AND ((l_shipinstruct)::text = 'DELIVER IN PERSON'::text) AND (((l_quantity <= '11'::numeric) AND (l_quantity >= '1'::numeric)) OR ((l_quantity <= '20'::numeric) AND (l_quantity >= '10'::numeric)) OR ((l_quantity <= '30'::numeric) AND (l_quantity >= '20'::numeric))))
+                    ->  Parallel Hash  (cost=72610.91..72610.91 rows=2048 width=25)
+                          ->  Parallel Seq Scan on part  (cost=0.00..72610.91 rows=2048 width=25)
+                                Filter: ((p_size >= 1) AND ((((p_brand)::text = 'Brand#12'::text) AND ((p_container)::text = ANY ('{""SM CASE"",""SM BOX"",""SM PACK"",""SM PKG""}'::text[])) AND (p_size <= 5)) OR (((p_brand)::text = 'Brand#23'::text) AND ((p_container)::text = ANY ('{""MED BAG"",""MED BOX"",""MED PACK"",""MED PKG""}'::text[])) AND (p_size <= 10)) OR (((p_brand)::text = 'Brand#34'::text) AND ((p_container)::text = ANY ('{""LG CASE"",""LG BOX"",""LG PACK"",""LG PKG""}'::text[])) AND (p_size <= 15))))
+JIT:
+  Functions: 21
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+19,20,TPCH,"WITH forest_parts AS (
+    SELECT p_partkey
+    FROM tpch.part
+    WHERE p_name LIKE 'forest%'
+),
+lineitem_agg AS (
+    SELECT
+        l_partkey,
+        l_suppkey,
+        0.5 * SUM(l_quantity) AS half_qty
+    FROM tpch.lineitem
+    WHERE
+        l_shipdate >= DATE '1994-01-01'
+        AND l_shipdate < DATE '1994-01-01' + INTERVAL '1' YEAR
+    GROUP BY l_partkey, l_suppkey
+),
+qualified_suppliers AS (
+    SELECT DISTINCT ps.ps_suppkey
+    FROM tpch.partsupp ps
+    JOIN forest_parts fp
+        ON ps.ps_partkey = fp.p_partkey
+    JOIN lineitem_agg la
+        ON la.l_partkey = ps.ps_partkey
+        AND la.l_suppkey = ps.ps_suppkey
+    WHERE ps.ps_availqty > la.half_qty
+)
+SELECT
+    s.s_name,
+    s.s_address
+FROM tpch.supplier s
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+JOIN qualified_suppliers qs
+    ON s.s_suppkey = qs.ps_suppkey
+WHERE
+    n.n_name = 'CANADA'
+ORDER BY
+    s.s_name
+LIMIT 10;","selected_lines = lines.WHERE(YEAR(ship_date) == 1994)
+selected_parts_supplied = supply_records.WHERE(
+    HAS(part.WHERE(STARTSWITH(name, 'forest')))
+    & (available_quantity > 0.5 * SUM(selected_lines.quantity))
+    & HAS(selected_lines)
+)
+result = (
+    suppliers.CALCULATE(S_NAME=name, S_ADDRESS=address)
+    .WHERE(
+        (nation.name == 'CANADA')
+        & HAS(selected_parts_supplied)
+    )
+    .TOP_K(10, by=S_NAME.ASC())
+)","WITH _s5 AS (
+  SELECT
+    l_partkey,
+    l_suppkey,
+    SUM(l_quantity) AS sum_l_quantity
+  FROM tpch.lineitem
+  WHERE
+    EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994
+  GROUP BY
+    1,
+    2
+), _u_0 AS (
+  SELECT
+    partsupp.ps_suppkey AS _u_1
+  FROM tpch.partsupp AS partsupp
+  JOIN tpch.part AS part
+    ON part.p_name LIKE 'forest%' AND part.p_partkey = partsupp.ps_partkey
+  JOIN _s5 AS _s5
+    ON _s5.l_partkey = partsupp.ps_partkey
+    AND _s5.l_suppkey = partsupp.ps_suppkey
+    AND partsupp.ps_availqty > (
+      0.5 * COALESCE(_s5.sum_l_quantity, 0)
+    )
+  GROUP BY
+    1
+)
+SELECT
+  supplier.s_name AS S_NAME,
+  supplier.s_address AS S_ADDRESS
+FROM tpch.supplier AS supplier
+JOIN tpch.nation AS nation
+  ON nation.n_name = 'CANADA' AND nation.n_nationkey = supplier.s_nationkey
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = supplier.s_suppkey
+WHERE
+  NOT _u_0._u_1 IS NULL
+ORDER BY
+  1 NULLS FIRST
+LIMIT 10",17.284292597999865,12.724307744999805,"Limit  (cost=2744883.38..2744967.02 rows=1 width=44)
+  ->  Nested Loop  (cost=2744883.38..2744967.02 rows=1 width=44)
+        Join Filter: (s.s_suppkey = ps.ps_suppkey)
+        ->  Gather Merge  (cost=3907.27..3967.22 rows=526 width=48)
+              Workers Planned: 1
+              ->  Sort  (cost=2907.26..2908.04 rows=309 width=48)
+                    Sort Key: s.s_name
+                    ->  Hash Join  (cost=12.39..2894.48 rows=309 width=48)
+                          Hash Cond: (s.s_nationkey = n.n_nationkey)
+                          ->  Parallel Seq Scan on supplier s  (cost=0.00..2724.24 rows=58824 width=52)
+                          ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                ->  Seq Scan on nation n  (cost=0.00..12.38 rows=1 width=4)
+                                      Filter: ((n_name)::text = 'CANADA'::text)
+        ->  Materialize  (cost=2740976.11..2740976.14 rows=3 width=4)
+              ->  Unique  (cost=2740976.11..2740976.12 rows=3 width=4)
+                    ->  Sort  (cost=2740976.11..2740976.12 rows=3 width=4)
+                          Sort Key: ps.ps_suppkey
+                          ->  Nested Loop  (cost=2536929.26..2740976.09 rows=3 width=4)
+                                Join Filter: (ps.ps_partkey = part.p_partkey)
+                                ->  Hash Join  (cost=2536928.83..2710108.44 rows=48730 width=44)
+                                      Hash Cond: (lineitem.l_partkey = part.p_partkey)
+                                      ->  HashAggregate  (cost=2486044.06..2646559.92 rows=4824279 width=40)
+                                            Group Key: lineitem.l_partkey, lineitem.l_suppkey
+                                            Planned Partitions: 256
+                                            ->  Seq Scan on lineitem  (cost=0.00..1885202.28 rows=9026731 width=13)
+                                                  Filter: ((l_shipdate >= '1994-01-01'::date) AND (l_shipdate < '1995-01-01 00:00:00'::timestamp without time zone))
+                                      ->  Hash  (cost=50632.25..50632.25 rows=20201 width=4)
+                                            ->  Gather  (cost=1000.00..50632.25 rows=20201 width=4)
+                                                  Workers Planned: 2
+                                                  ->  Parallel Seq Scan on part  (cost=0.00..47612.15 rows=8417 width=4)
+                                                        Filter: ((p_name)::text ~~ 'forest%'::text)
+                                ->  Index Scan using partsupp_pkey on partsupp ps  (cost=0.43..0.62 rows=1 width=12)
+                                      Index Cond: ((ps_partkey = lineitem.l_partkey) AND (ps_suppkey = lineitem.l_suppkey))
+                                      Filter: ((ps_availqty)::numeric > ((0.5 * sum(lineitem.l_quantity))))
+JIT:
+  Functions: 41
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=1539950.03..1540017.88 rows=1 width=44)
+  ->  Nested Loop  (cost=1539950.03..1540017.88 rows=1 width=44)
+        Join Filter: (supplier.s_suppkey = partsupp.ps_suppkey)
+        ->  Gather Merge  (cost=3907.27..3967.22 rows=526 width=48)
+              Workers Planned: 1
+              ->  Sort  (cost=2907.26..2908.04 rows=309 width=48)
+                    Sort Key: supplier.s_name NULLS FIRST
+                    ->  Hash Join  (cost=12.39..2894.48 rows=309 width=48)
+                          Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
+                          ->  Parallel Seq Scan on supplier  (cost=0.00..2724.24 rows=58824 width=52)
+                          ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                ->  Seq Scan on nation  (cost=0.00..12.38 rows=1 width=4)
+                                      Filter: ((n_name)::text = 'CANADA'::text)
+        ->  Materialize  (cost=1536042.76..1536042.77 rows=1 width=4)
+              ->  Group  (cost=1536042.76..1536042.76 rows=1 width=4)
+                    Group Key: partsupp.ps_suppkey
+                    ->  Sort  (cost=1536042.76..1536042.76 rows=1 width=4)
+                          Sort Key: partsupp.ps_suppkey
+                          ->  Nested Loop  (cost=1488607.38..1536042.75 rows=1 width=4)
+                                Join Filter: (partsupp.ps_partkey = part.p_partkey)
+                                ->  Merge Join  (cost=1488606.94..1527297.12 rows=2962 width=44)
+                                      Merge Cond: (lineitem.l_partkey = part.p_partkey)
+                                      ->  Finalize GroupAggregate  (cost=1436530.11..1474356.48 rows=293270 width=40)
+                                            Group Key: lineitem.l_partkey, lineitem.l_suppkey
+                                            ->  Gather Merge  (cost=1436530.11..1468191.21 rows=249940 width=40)
+                                                  Workers Planned: 2
+                                                  ->  Partial GroupAggregate  (cost=1435530.08..1438341.91 rows=124970 width=40)
+                                                        Group Key: lineitem.l_partkey, lineitem.l_suppkey
+                                                        ->  Sort  (cost=1435530.08..1435842.51 rows=124970 width=13)
+                                                              Sort Key: lineitem.l_partkey, lineitem.l_suppkey
+                                                              ->  Parallel Seq Scan on lineitem  (cost=0.00..1422812.11 rows=124970 width=13)
+                                                                    Filter: (EXTRACT(year FROM (l_shipdate)::timestamp without time zone) = '1994'::numeric)
+                                      ->  Sort  (cost=52076.84..52127.34 rows=20201 width=4)
+                                            Sort Key: part.p_partkey
+                                            ->  Gather  (cost=1000.00..50632.25 rows=20201 width=4)
+                                                  Workers Planned: 2
+                                                  ->  Parallel Seq Scan on part  (cost=0.00..47612.15 rows=8417 width=4)
+                                                        Filter: ((p_name)::text ~~ 'forest%'::text)
+                                ->  Index Scan using partsupp_pkey on partsupp  (cost=0.43..2.94 rows=1 width=12)
+                                      Index Cond: ((ps_partkey = lineitem.l_partkey) AND (ps_suppkey = lineitem.l_suppkey) AND (ps_suppkey IS NOT NULL))
+                                      Filter: ((ps_availqty)::numeric > (0.5 * COALESCE((sum(lineitem.l_quantity)), '0'::numeric)))
+JIT:
+  Functions: 48
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+20,21,TPCH,"SELECT
+    s.s_name,
+    COUNT(*) AS numwait
+FROM tpch.supplier s
+JOIN tpch.lineitem l1
+    ON s.s_suppkey = l1.l_suppkey
+JOIN tpch.orders o
+    ON o.o_orderkey = l1.l_orderkey
+JOIN tpch.nation n
+    ON s.s_nationkey = n.n_nationkey
+WHERE o.o_orderstatus = 'F'
+  AND l1.l_receiptdate > l1.l_commitdate
+  AND EXISTS (
+      SELECT 1
+      FROM tpch.lineitem l2
+      WHERE l2.l_orderkey = l1.l_orderkey
+        AND l2.l_suppkey <> l1.l_suppkey
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM tpch.lineitem l3
+      WHERE l3.l_orderkey = l1.l_orderkey
+        AND l3.l_suppkey <> l1.l_suppkey
+        AND l3.l_receiptdate > l3.l_commitdate
+  )
+  AND n.n_name = 'SAUDI ARABIA'
+GROUP BY s.s_name
+ORDER BY numwait DESC, s.s_name
+LIMIT 10;","date_check = receipt_date > commit_date
+waiting_entries = (
+    lines.CALCULATE(original_key=supplier_key)
+    .WHERE(date_check)
+    .order.WHERE(
+        (order_status == ""F"")
+        & HAS(lines.WHERE(supplier_key != original_key))
+        & HASNOT(lines.WHERE((supplier_key != original_key) & date_check))
+    )
+)
+result = (
+    suppliers.WHERE(nation.name == ""SAUDI ARABIA"")
+    .CALCULATE(
+        S_NAME=name,
+        NUMWAIT=COUNT(waiting_entries),
+    )
+    .TOP_K(
+        10,
+        by=(NUMWAIT.DESC(), S_NAME.ASC()),
+    )
+)","WITH _t5 AS (
+  SELECT
+    l_commitdate,
+    l_linenumber,
+    l_orderkey,
+    l_receiptdate,
+    l_suppkey
+  FROM tpch.lineitem
+  WHERE
+    l_commitdate < l_receiptdate
+), _t3 AS (
+  SELECT
+    _t5.l_linenumber,
+    _t5.l_orderkey,
+    orders.o_orderkey,
+    MAX(_t5.l_suppkey) AS anything_l_suppkey,
+    MAX(orders.o_orderstatus) AS anything_o_orderstatus
+  FROM _t5 AS _t5
+  JOIN tpch.orders AS orders
+    ON _t5.l_orderkey = orders.o_orderkey
+  JOIN tpch.lineitem AS lineitem
+    ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
+  GROUP BY
+    1,
+    2,
+    3
+), _u_0 AS (
+  SELECT
+    _t6.l_linenumber AS _u_1,
+    _t6.l_orderkey AS _u_2
+  FROM _t5 AS _t6
+  JOIN tpch.lineitem AS lineitem
+    ON _t6.l_orderkey = lineitem.l_orderkey
+    AND _t6.l_suppkey <> lineitem.l_suppkey
+    AND lineitem.l_commitdate < lineitem.l_receiptdate
+  GROUP BY
+    1,
+    2
+), _s11 AS (
+  SELECT
+    _t3.anything_l_suppkey
+  FROM _t3 AS _t3
+  LEFT JOIN _u_0 AS _u_0
+    ON _t3.l_linenumber = _u_0._u_1
+    AND _t3.l_orderkey = _u_0._u_2
+    AND _t3.o_orderkey = _u_0._u_2
+  WHERE
+    _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+)
+SELECT
+  MAX(supplier.s_name) AS S_NAME,
+  COUNT(_s11.anything_l_suppkey) AS NUMWAIT
+FROM tpch.supplier AS supplier
+JOIN tpch.nation AS nation
+  ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
+LEFT JOIN _s11 AS _s11
+  ON _s11.anything_l_suppkey = supplier.s_suppkey
+GROUP BY
+  supplier.s_suppkey
+ORDER BY
+  2 DESC NULLS LAST,
+  1 NULLS FIRST
+LIMIT 10",5.579016270000011,258.84927968399984,"Limit  (cost=1752258.77..1752258.77 rows=1 width=27)
+  ->  Sort  (cost=1752258.77..1752258.77 rows=1 width=27)
+        Sort Key: (count(*)) DESC, s.s_name
+        ->  GroupAggregate  (cost=1752258.74..1752258.76 rows=1 width=27)
+              Group Key: s.s_name
+              ->  Sort  (cost=1752258.74..1752258.74 rows=1 width=19)
+                    Sort Key: s.s_name
+                    ->  Nested Loop  (cost=3899.91..1752258.73 rows=1 width=19)
+                          ->  Nested Loop Semi Join  (cost=3899.48..1752251.56 rows=1 width=27)
+                                ->  Gather  (cost=3898.91..1752059.12 rows=1 width=27)
+                                      Workers Planned: 2
+                                      ->  Nested Loop Anti Join  (cost=2898.91..1751059.02 rows=1 width=27)
+                                            ->  Parallel Hash Join  (cost=2898.35..1332232.87 rows=42608 width=27)
+                                                  Hash Cond: (l1.l_suppkey = s.s_suppkey)
+                                                  ->  Parallel Seq Scan on lineitem l1  (cost=0.00..1297841.79 rows=8331355 width=8)
+                                                        Filter: (l_receiptdate > l_commitdate)
+                                                  ->  Parallel Hash  (cost=2894.48..2894.48 rows=309 width=23)
+                                                        ->  Hash Join  (cost=12.39..2894.48 rows=309 width=23)
+                                                              Hash Cond: (s.s_nationkey = n.n_nationkey)
+                                                              ->  Parallel Seq Scan on supplier s  (cost=0.00..2724.24 rows=58824 width=27)
+                                                              ->  Hash  (cost=12.38..12.38 rows=1 width=4)
+                                                                    ->  Seq Scan on nation n  (cost=0.00..12.38 rows=1 width=4)
+                                                                          Filter: ((n_name)::text = 'SAUDI ARABIA'::text)
+                                            ->  Index Scan using lineitem_pkey on lineitem l3  (cost=0.56..192.73 rows=41 width=8)
+                                                  Index Cond: (l_orderkey = l1.l_orderkey)
+                                                  Filter: ((l_receiptdate > l_commitdate) AND (l_suppkey <> l1.l_suppkey))
+                                ->  Index Scan using lineitem_pkey on lineitem l2  (cost=0.56..192.42 rows=122 width=8)
+                                      Index Cond: (l_orderkey = l1.l_orderkey)
+                                      Filter: (l_suppkey <> l1.l_suppkey)
+                          ->  Index Scan using orders_pkey on orders o  (cost=0.43..7.17 rows=1 width=4)
+                                Index Cond: (o_orderkey = l1.l_orderkey)
+                                Filter: (o_orderstatus = 'F'::bpchar)
+JIT:
+  Functions: 44
+  Options: Inlining true, Optimization true, Expressions true, Deforming true","Limit  (cost=53529084.11..53529084.13 rows=10 width=44)
+  CTE _t5
+    ->  Seq Scan on lineitem lineitem_2  (cost=0.00..1735237.90 rows=19995251 width=20)
+          Filter: (l_commitdate < l_receiptdate)
+  ->  Sort  (cost=51793846.21..51793847.52 rows=526 width=44)
+        Sort Key: (count(_t3.anything_l_suppkey)) DESC NULLS LAST, (max((supplier.s_name)::text)) NULLS FIRST
+        ->  GroupAggregate  (cost=51787567.15..51793834.84 rows=526 width=44)
+              Group Key: supplier.s_suppkey
+              ->  Merge Left Join  (cost=51787567.15..51793825.64 rows=526 width=27)
+                    Merge Cond: (supplier.s_suppkey = _t3.anything_l_suppkey)
+                    ->  Nested Loop  (cost=0.29..6256.58 rows=526 width=23)
+                          Join Filter: (nation.n_nationkey = supplier.s_nationkey)
+                          ->  Index Scan using supplier_pkey on supplier  (cost=0.29..4744.20 rows=100000 width=27)
+                          ->  Materialize  (cost=0.00..12.38 rows=1 width=4)
+                                ->  Seq Scan on nation  (cost=0.00..12.38 rows=1 width=4)
+                                      Filter: ((n_name)::text = 'SAUDI ARABIA'::text)
+                    ->  Sort  (cost=51787566.86..51787567.30 rows=175 width=4)
+                          Sort Key: _t3.anything_l_suppkey
+                          ->  Hash Right Anti Join  (cost=51786422.22..51787560.34 rows=175 width=4)
+                                Hash Cond: ((_t6.l_linenumber = _t3.l_linenumber) AND (_t6.l_orderkey = _t3.l_orderkey) AND (_t6.l_orderkey = _t3.o_orderkey))
+                                ->  HashAggregate  (cost=20039210.82..20039610.82 rows=40000 width=8)
+                                      Group Key: _t6.l_linenumber, _t6.l_orderkey
+                                      ->  Hash Join  (cost=2063285.54..15981130.03 rows=811616158 width=8)
+                                            Hash Cond: (_t6.l_orderkey = lineitem.l_orderkey)
+                                            Join Filter: (_t6.l_suppkey <> lineitem.l_suppkey)
+                                            ->  CTE Scan on _t5 _t6  (cost=0.00..399905.02 rows=19995251 width=12)
+                                            ->  Hash  (cost=1735237.90..1735237.90 rows=19995251 width=8)
+                                                  ->  Seq Scan on lineitem  (cost=0.00..1735237.90 rows=19995251 width=8)
+                                                        Filter: (l_commitdate < l_receiptdate)
+                                ->  Hash  (cost=31747207.90..31747207.90 rows=200 width=16)
+                                      ->  Subquery Scan on _t3  (cost=31746705.90..31747207.90 rows=200 width=16)
+                                            ->  HashAggregate  (cost=31746705.90..31747205.90 rows=200 width=48)
+                                                  Group Key: _t5.l_linenumber, _t5.l_orderkey
+                                                  Filter: (max(orders.o_orderstatus) = 'F'::bpchar)
+                                                  ->  Hash Join  (cost=3960953.13..7398221.56 rows=2434848434 width=18)
+                                                        Hash Cond: (_t5.l_orderkey = orders.o_orderkey)
+                                                        Join Filter: (_t5.l_suppkey <> lineitem_1.l_suppkey)
+                                                        ->  CTE Scan on _t5  (cost=0.00..399905.02 rows=19995251 width=12)
+                                                        ->  Hash  (cost=2918231.23..2918231.23 rows=59985752 width=14)
+                                                              ->  Hash Join  (cost=648263.06..2918231.23 rows=59985752 width=14)
+                                                                    Hash Cond: (lineitem_1.l_orderkey = orders.o_orderkey)
+                                                                    ->  Seq Scan on lineitem lineitem_1  (cost=0.00..1585273.52 rows=59985752 width=8)
+                                                                    ->  Hash  (cost=402178.25..402178.25 rows=14999425 width=6)
+                                                                          ->  Seq Scan on orders  (cost=0.00..402178.25 rows=14999425 width=6)
+JIT:
+  Functions: 71
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
+21,22,TPCH,"SELECT
+    cntrycode,
+    COUNT(*) AS numcust,
+    SUM(c_acctbal) AS totacctbal
+FROM (
+    SELECT
+        SUBSTRING(c.c_phone FROM 1 FOR 2) AS cntrycode,
+        c.c_acctbal
+    FROM tpch.customer c
+    WHERE SUBSTRING(c.c_phone FROM 1 FOR 2) IN
+          ('13', '31', '23', '29', '30', '18', '17')
+      AND c.c_acctbal > (
+          SELECT AVG(c2.c_acctbal)
+          FROM tpch.customer c2
+          WHERE c2.c_acctbal > 0.00
+            AND SUBSTRING(c2.c_phone FROM 1 FOR 2) IN
+                ('13', '31', '23', '29', '30', '18', '17')
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM tpch.orders o
+          WHERE o.o_custkey = c.c_custkey
+      )
+) AS custsale
+GROUP BY cntrycode
+ORDER BY cntrycode;","is_selected_code = ISIN(cntry_code, (""13"", ""31"", ""23"", ""29"", ""30"", ""18"", ""17""))
+selected_customers = customers.CALCULATE(cntry_code=phone[:2]).WHERE(
+    is_selected_code
+)
+result = (
+    TPCH.CALCULATE(
+        global_avg_balance=AVG(
+            selected_customers.WHERE(account_balance > 0.0).account_balance
+        )
+    )
+    .customers.CALCULATE(cntry_code=phone[:2])
+    .WHERE(
+        is_selected_code & (account_balance > global_avg_balance) & HASNOT(orders)
+    )
+    .PARTITION(
+        name=""countries"",
+        by=cntry_code,
+    )
+    .CALCULATE(
+        CNTRYCODE=cntry_code,
+        NUMCUST=COUNT(customers),
+        TOTACCTBAL=SUM(customers.account_balance),
+    )
+    .ORDER_BY(CNTRYCODE.ASC())
+)","WITH _s0 AS (
+  SELECT
+    AVG(CAST(c_acctbal AS DECIMAL)) AS avg_c_acctbal
+  FROM tpch.customer
+  WHERE
+    SUBSTRING(c_phone FROM 1 FOR 2) IN ('13', '31', '23', '29', '30', '18', '17')
+    AND c_acctbal > 0.0
+), _u_0 AS (
+  SELECT
+    o_custkey AS _u_1
+  FROM tpch.orders
+  GROUP BY
+    1
+)
+SELECT
+  SUBSTRING(customer.c_phone FROM 1 FOR 2) AS CNTRYCODE,
+  COUNT(*) AS NUMCUST,
+  COALESCE(SUM(customer.c_acctbal), 0) AS TOTACCTBAL
+FROM _s0 AS _s0
+JOIN tpch.customer AS customer
+  ON SUBSTRING(customer.c_phone FROM 1 FOR 2) IN ('13', '31', '23', '29', '30', '18', '17')
+  AND _s0.avg_c_acctbal < customer.c_acctbal
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = customer.c_custkey
+WHERE
+  _u_0._u_1 IS NULL
+GROUP BY
+  1
+ORDER BY
+  1 NULLS FIRST",4.17244176999975,5.0036698640001305,"Finalize GroupAggregate  (cost=475551.43..476485.74 rows=7191 width=72)
+  Group Key: (SUBSTRING(c.c_phone FROM 1 FOR 2))
+  InitPlan 1 (returns $1)
+    ->  Finalize Aggregate  (cost=51639.90..51639.91 rows=1 width=32)
+          ->  Gather  (cost=51639.68..51639.89 rows=2 width=32)
+                Workers Planned: 2
+                ->  Partial Aggregate  (cost=50639.68..50639.69 rows=1 width=32)
+                      ->  Parallel Seq Scan on customer c2  (cost=0.00..50589.87 rows=19922 width=6)
+                            Filter: ((c_acctbal > 0.00) AND (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{13,31,23,29,30,18,17}'::text[])))
+  ->  Gather Merge  (cost=423911.52..424678.04 rows=5992 width=72)
+        Workers Planned: 2
+        Params Evaluated: $1
+        ->  Partial GroupAggregate  (cost=422911.49..422986.39 rows=2996 width=72)
+              Group Key: (SUBSTRING(c.c_phone FROM 1 FOR 2))
+              ->  Sort  (cost=422911.49..422918.98 rows=2996 width=38)
+                    Sort Key: (SUBSTRING(c.c_phone FROM 1 FOR 2))
+                    ->  Parallel Hash Right Anti Join  (cost=50681.02..422738.49 rows=2996 width=38)
+                          Hash Cond: (o.o_custkey = c.c_custkey)
+                          ->  Parallel Seq Scan on orders o  (cost=0.00..314681.60 rows=6249760 width=4)
+                          ->  Parallel Hash  (cost=50589.87..50589.87 rows=7292 width=26)
+                                ->  Parallel Seq Scan on customer c  (cost=0.00..50589.87 rows=7292 width=26)
+                                      Filter: ((c_acctbal > $1) AND (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{13,31,23,29,30,18,17}'::text[])))
+JIT:
+  Functions: 27
+  Options: Inlining false, Optimization false, Expressions true, Deforming true","GroupAggregate  (cost=1115509.10..1115727.88 rows=8751 width=72)
+  Group Key: (SUBSTRING(customer.c_phone FROM 1 FOR 2))
+  ->  Sort  (cost=1115509.10..1115530.98 rows=8751 width=38)
+        Sort Key: (SUBSTRING(customer.c_phone FROM 1 FOR 2)) NULLS FIRST
+        ->  Hash Right Anti Join  (cost=1088848.01..1114936.12 rows=8751 width=38)
+              Hash Cond: (orders.o_custkey = customer.c_custkey)
+              ->  Finalize HashAggregate  (cost=981055.15..1003703.83 rows=883851 width=4)
+                    Group Key: orders.o_custkey
+                    Planned Partitions: 16
+                    ->  Gather  (cost=651606.20..886041.16 rows=1767702 width=4)
+                          Workers Planned: 2
+                          ->  Partial HashAggregate  (cost=650606.20..708270.96 rows=883851 width=4)
+                                Group Key: orders.o_custkey
+                                Planned Partitions: 16
+                                ->  Parallel Seq Scan on orders  (cost=0.00..314681.60 rows=6249760 width=4)
+              ->  Hash  (cost=107574.09..107574.09 rows=17502 width=26)
+                    ->  Nested Loop  (cost=52639.90..107574.09 rows=17502 width=26)
+                          Join Filter: ((avg((customer_1.c_acctbal)::numeric)) < customer.c_acctbal)
+                          ->  Finalize Aggregate  (cost=51639.90..51639.91 rows=1 width=32)
+                                ->  Gather  (cost=51639.68..51639.89 rows=2 width=32)
+                                      Workers Planned: 2
+                                      ->  Partial Aggregate  (cost=50639.68..50639.69 rows=1 width=32)
+                                            ->  Parallel Seq Scan on customer customer_1  (cost=0.00..50589.87 rows=19922 width=6)
+                                                  Filter: ((c_acctbal > 0.0) AND (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{13,31,23,29,30,18,17}'::text[])))
+                          ->  Gather  (cost=1000.00..55277.84 rows=52507 width=26)
+                                Workers Planned: 2
+                                ->  Parallel Seq Scan on customer  (cost=0.00..49027.14 rows=21878 width=26)
+                                      Filter: (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{13,31,23,29,30,18,17}'::text[]))
+JIT:
+  Functions: 29
+  Options: Inlining true, Optimization true, Expressions true, Deforming true",SUCCESS
