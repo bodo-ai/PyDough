@@ -90,6 +90,11 @@ jobs:
             MYSQL_DB: test
             MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
             MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+            MONGO_HOST: mongo
+            MONGO_USER: "root_user"
+            MONGO_PASSWORD: "mongo_pwd"
+            CASSANDRA_HOST: cassandra
+            CASSANDRA_DC: datacenter1
         ports:
             - "8080:8080"
     env:
@@ -97,14 +102,14 @@ jobs:
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: pydough_test
       POSTGRES_PORT: 5432
-      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_HOST: postgres
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
       MYSQL_PORT: 3306
-      MYSQL_HOST: 127.0.0.1
-      MONGO_HOST: 127.0.0.1
+      MYSQL_HOST: mysql
+      MONGO_HOST: mongo
       MONGO_PORT: 27017
-      CASSANDRA_HOST: 127.0.0.1
+      CASSANDRA_HOST: cassandra
       CASSANDRA_PORT: 9042
 
     steps:
@@ -119,7 +124,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
-          version: "0.4.23"
+          version: "0.6.0"
 
       - name: Create virtual environment
         run: uv venv
