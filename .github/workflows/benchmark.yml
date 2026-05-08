@@ -66,26 +66,18 @@ jobs:
       - name: Create branch and commit metrics
         id: commit
         run: |
-          BRANCH="benchmark/metrics-$(date +'%Y-%m-%d-%H%M%S')"
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git checkout -b "$BRANCH"
-          git add benchmark                   # stages all generated metrics files
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update benchmark metrics $(date +'%Y-%m-%d')"
-          git push origin "$BRANCH"
-
       - name: Open Pull Request
-        if: steps.commit.outputs.branch != ''
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ steps.commit.outputs.branch }}
+          branch: "benchmark/metrics-${{ github.run_id }}"
           base: main
           title: "Benchmark metrics update — ${{ github.ref_name }}"
+          commit-message: "chore: update benchmark metrics"
+          add-paths: benchmark/**
           body: |
             Automated benchmark run completed successfully.
 
