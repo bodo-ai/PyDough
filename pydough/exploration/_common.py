@@ -119,6 +119,10 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
             return current.collection.name
         elif isinstance(current, ChildOperatorChildAccess):
             current = current.child_access
+        elif isinstance(current, PartitionBy) and hasattr(current, "child"):
+            # PartitionBy.ancestor_context goes directly to GlobalContext,
+            # bypassing the filtered collection.  Descend into child instead.
+            current = current.child
         else:
             nxt = getattr(current, "preceding_context", None)
             if nxt is None:

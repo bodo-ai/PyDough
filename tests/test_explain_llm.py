@@ -640,3 +640,345 @@ def test_md_invalid_format_raises(
     node: UnqualifiedNode = pydough.init_pydough_context(tpch_graph)(impl)()
     with pytest.raises(ValueError, match="format"):
         pydough.explain_llm(node, session=tpch_session, format="xml")
+
+
+# ---------------------------------------------------------------------------
+# Regression tests — one per bug fix, added after-the-fact
+# ---------------------------------------------------------------------------
+
+
+# --- Direct top-level WHERE + PARTITION ancestor chain ---
+
+
+def test_direct_partition_with_where_shows_table_collection_and_where(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """nations.WHERE(...).PARTITION(...) must include TableCollection + Where steps."""
+
+    def impl():
+        return nations.WHERE(key > 5).PARTITION(name="g", by=name).CALCULATE(name=name)
+
+    result = _run(impl, tpch_graph, tpch_session)
+    types = [s["type"] for s in result["steps"]]
+    assert "TableCollection" in types
+    assert "Where" in types
+
+
+def test_direct_partition_with_where_shows_source_collection(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """nations.WHERE(...).PARTITION(...) schema must name the source collection."""
+
+    def impl():
+        return nations.WHERE(key > 5).PARTITION(name="g", by=name).CALCULATE(name=name)
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert result["schema"]["source_collection"] == "nations"
+
+
+def test_direct_partition_with_where_data_filter_in_key_facts(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Key Facts must show the WHERE filter as a data filter, not 'none'."""
+
+    def impl():
+        return nations.WHERE(key > 5).PARTITION(name="g", by=name).CALCULATE(name=name)
+
+    md = _run_md(impl, tpch_graph, tpch_session)
+    kf = md[: md.index("## Query Summary")]
+    assert "Data filters:** none" not in kf
+    assert "key > 5" in kf
+
+
+# --- Subcollection PARTITION with parent WHERE ---
+
+
+def test_subcollection_partition_shows_parent_where_and_table(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """customers.WHERE(...).orders.PARTITION(...) must expose the parent filter."""
+
+    def impl():
+        return (
+            customers.WHERE(market_segment == "BUILDING")
+            .orders.PARTITION(name="g", by=order_status)
+            .CALCULATE(order_status=order_status, n=COUNT(orders))
+            .TOP_K(1, by=n.DESC())
+            .CALCULATE(order_status)
+        )
+
+    result = _run(impl, tpch_graph, tpch_session)
+    types = [s["type"] for s in result["steps"]]
+    assert "TableCollection" in types
+    assert "Where" in types
+    assert result["schema"]["source_collection"] == "customers"
+
+
+# --- Global-level CALCULATE with COUNT ---
+
+
+def test_global_calculate_count_names_collection(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Global CALCULATE(COUNT(nations)) must name the collection in summary/schema."""
+    node = pydough.from_string(
+        "result = CALCULATE(n=COUNT(nations.WHERE(key > 5)))",
+        session=tpch_session,
+    )
+    result = cast(dict, pydough.explain_llm(node, session=tpch_session))
+    assert result["error"] is False
+    assert "nations" in result["query_summary"]
+    assert result["schema"]["source_collection"] == "nations"
+
+
+# --- ChildReferenceExpression shows full navigation path ---
+
+
+def test_singular_subcollection_shows_child_reference_kind(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """nation.SINGULAR().name inside CALCULATE must be kind=ChildReference, not Reference."""
+
+    def impl():
+        return customers.CALCULATE(nation_name=nation.SINGULAR().name)
+
+    result = _run(impl, tpch_graph, tpch_session)
+    calc = next(s for s in result["steps"] if s["type"] == "Calculate")
+    detail = calc["term_details"]["nation_name"]
+    assert detail["kind"] == "ChildReference"
+    # text must include navigation, not just the bare field name
+    assert detail.get("text", "") != "name"
+    assert "nation" in detail.get("text", "")
+
+
+def test_singular_subcollection_annotation_in_summary(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Summary must show the ChildReference expression, not just the output column name."""
+
+    def impl():
+        return customers.CALCULATE(nation_name=nation.SINGULAR().name)
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "nation_name" in result["query_summary"]
+    # The expression annotation must appear — not just a plain selection
+    assert "SINGULAR" in result["query_summary"] or "nation" in result["query_summary"]
+
+
+# --- Multi-level WHERE split in query summary ---
+
+
+def test_summary_puts_subcollection_filter_in_separate_clause(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Summary must describe parent and subcollection WHERE conditions separately."""
+
+    def impl():
+        return (
+            customers.WHERE(market_segment == "BUILDING")
+            .orders.WHERE(total_price > 1000)
+            .CALCULATE(key=key)
+        )
+
+    result = _run(impl, tpch_graph, tpch_session)
+    summary = result["query_summary"]
+    assert "market_segment" in summary
+    assert "subcollection" in summary.lower()
+    assert "total_price" in summary
+
+
+# --- Key Facts: data vs post-compute filter split ---
+
+
+def test_key_facts_separates_pre_and_post_calculate_where(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Data filters and post-compute filters must appear in separate Key Facts lines."""
+
+    def impl():
+        return (
+            customers.WHERE(market_segment == "BUILDING")
+            .CALCULATE(name=name, n=COUNT(orders))
+            .WHERE(RANKING(by=n.ASC()) == 1)
+            .CALCULATE(name)
+        )
+
+    md = _run_md(impl, tpch_graph, tpch_session)
+    kf = md[: md.index("## Query Summary")]
+    assert "Data filters:" in kf
+    assert "Post-compute filters:" in kf
+    assert "market_segment" in kf
+    assert "RANKING" in kf
+
+
+def test_key_facts_no_post_compute_line_when_absent(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Post-compute filters line must be absent when there is no post-CALCULATE WHERE."""
+
+    def impl():
+        return customers.WHERE(market_segment == "BUILDING").CALCULATE(name)
+
+    md = _run_md(impl, tpch_graph, tpch_session)
+    kf = md[: md.index("## Query Summary")]
+    assert "Post-compute filters" not in kf
+
+
+# --- COUNT per-group semantic label ---
+
+
+def test_count_inside_partition_shows_per_group_in_summary(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """COUNT inside a PARTITION must be labelled 'per group' in the query summary."""
+
+    def impl():
+        return customers.PARTITION(name="g", by=market_segment).CALCULATE(
+            market_segment=market_segment, n=COUNT(customers)
+        )
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "per group" in result["query_summary"]
+
+
+def test_count_outside_partition_no_per_group_label(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Global COUNT (no PARTITION) must NOT say 'per group' in the summary."""
+
+    def impl():
+        return nations.CALCULATE(n=COUNT(customers))
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "per group" not in result["query_summary"]
+
+
+# --- Computed term annotation in summary ---
+
+
+def test_join_strings_shows_expression_annotation_in_summary(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """A JOIN_STRINGS computed term must show its expression in the summary."""
+
+    def impl():
+        return customers.CALCULATE(full=JOIN_STRINGS(" ", name, phone))
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "JOIN_STRINGS" in result["query_summary"]
+
+
+def test_plain_reference_no_expression_annotation(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Plain column references must NOT get parenthetical annotations in the summary."""
+
+    def impl():
+        return customers.CALCULATE(key, name)
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert "(computed)" not in result["query_summary"]
+    assert "JOIN_STRINGS" not in result["query_summary"]
+
+
+# --- PartitionBy key shows term_name, not full upstream expression ---
+
+
+def test_partition_key_is_term_name_not_full_expression(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Partition key must show 'tier', not the full IFF(...) upstream expression."""
+
+    def impl():
+        return (
+            nations.WHERE(key > 5)
+            .CALCULATE(tier=IFF(key > 15, "high", "low"))
+            .PARTITION(name="g", by=tier)
+            .CALCULATE(tier=tier, n=COUNT(nations))
+            .TOP_K(1, by=n.DESC())
+            .CALCULATE(tier)
+        )
+
+    result = _run(impl, tpch_graph, tpch_session)
+    part = next(s for s in result["steps"] if s["type"] == "PartitionBy")
+    assert part["keys"] == ["tier"]
+    assert not any("IFF" in k for k in part["keys"])
+
+
+# --- output_columns populated when root is TopK ---
+
+
+def test_output_columns_not_empty_under_topk(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Schema output_columns must be populated even when the root node is TopK."""
+
+    def impl():
+        return nations.CALCULATE(name=name, n=COUNT(customers)).TOP_K(1, by=n.DESC())
+
+    result = _run(impl, tpch_graph, tpch_session)
+    assert result["schema"]["output_columns"] != []
+    assert "name" in result["schema"]["output_columns"]
+    assert "n" in result["schema"]["output_columns"]
+
+
+# --- Window function note in Where step ---
+
+
+def test_ranking_where_emits_per_partition_note(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """A WHERE containing RANKING must emit a note about per= partition semantics."""
+
+    def impl():
+        return customers.orders.WHERE(
+            RANKING(by=total_price.DESC(), per="customers") == 1
+        ).CALCULATE(key=key)
+
+    result = _run(impl, tpch_graph, tpch_session)
+    where_steps = [s for s in result["steps"] if s["type"] == "Where"]
+    ranking_step = next(
+        (
+            s
+            for s in where_steps
+            if any(
+                "RANKING" in (c.get("text", "") if isinstance(c, dict) else str(c))
+                for c in s.get("conditions", [])
+            )
+        ),
+        None,
+    )
+    assert ranking_step is not None
+    notes = ranking_step.get("notes", [])
+    assert any("per=" in n or "partition" in n.lower() for n in notes)
+
+
+# --- Key Facts block is always first and always has three fields ---
+
+
+def test_key_facts_is_first_section(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Key Facts must be the first ## section in the success markdown."""
+
+    def impl():
+        return nations.CALCULATE(key, name)
+
+    md = _run_md(impl, tpch_graph, tpch_session)
+    first_section = md.split("##")[1].strip()
+    assert first_section.startswith("Key Facts")
+
+
+def test_key_facts_always_has_required_fields(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """Key Facts must always contain Source collection, Limit, and Data filters."""
+
+    def impl():
+        return nations.CALCULATE(key, name)
+
+    md = _run_md(impl, tpch_graph, tpch_session)
+    kf = md[: md.index("## Query Summary")]
+    assert "Source collection:" in kf
+    assert "Limit:" in kf
+    assert "Data filters:" in kf

@@ -449,12 +449,19 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     top = nodes[-1]
     seen_ids: set[int] = {id(n) for n in nodes}
     if isinstance(top, PartitionBy) and hasattr(top, "child"):
-        child_anc = getattr(top.child, "ancestor_context", None)
-        ancestor: PyDoughCollectionQDAG | None = (
-            child_anc
-            if child_anc is not None and not isinstance(child_anc, GlobalContext)
-            else getattr(top, "ancestor_context", None)
-        )
+        child = top.child
+        child_anc = getattr(child, "ancestor_context", None)
+        if child_anc is not None and not isinstance(child_anc, GlobalContext):
+            # Subcollection case: child.ancestor_context points to the
+            # filtered parent chain (e.g. customers.WHERE(...).orders).
+            ancestor: PyDoughCollectionQDAG | None = child_anc
+        elif not isinstance(child, GlobalContext):
+            # Direct top-level case: child IS the filtered collection node
+            # (e.g. Where(nations, key > 5)) whose preceding_context chain
+            # leads to the TableCollection.  Use child as the walk start.
+            ancestor = child
+        else:
+            ancestor = getattr(top, "ancestor_context", None)
     else:
         ancestor = getattr(top, "ancestor_context", None)
     while ancestor is not None:
