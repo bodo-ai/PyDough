@@ -786,25 +786,37 @@ def _render_md(result: dict) -> str:
     src = schema.get("source_collection")
     limit = schema.get("limit")
 
-    # Collect top-level filters: WHERE conditions before the first SubCollection
-    _top_filters: list[str] = []
+    # Split filters into two categories:
+    # - Data filters: WHERE conditions before the first Calculate (or SubCollection)
+    #   — these filter the raw data and correspond directly to evidence predicates
+    # - Post-compute filters: WHERE conditions after a Calculate
+    #   — these filter on computed values (e.g. RANKING, aggregation thresholds)
+    #   Merging them hides the real data filter from the judge.
+    _data_filters: list[str] = []
+    _post_filters: list[str] = []
+    _past_calc = False
     _past_sub = False
     for _s in steps:
         if _s["type"] in ("SubCollection", "Cross"):
             _past_sub = True
-        elif _s["type"] == "Where" and not _past_sub:
+        elif _s["type"] == "Calculate":
+            _past_calc = True
+        elif _s["type"] == "Where":
+            _target = _post_filters if (_past_calc or _past_sub) else _data_filters
             for _c in _s.get("conditions", []):
                 _txt = _c.get("text", str(_c)) if isinstance(_c, dict) else str(_c)
-                _top_filters.append(_txt)
+                _target.append(_txt)
 
     lines.append("## Key Facts")
     lines.append("")
     lines.append(f"- **Source collection:** {f'`{src}`' if src else '_(none)_'}")
     lines.append(f"- **Limit:** {limit if limit is not None else 'none'}")
-    if _top_filters:
-        lines.append("- **Filters:** " + " AND ".join(_top_filters))
+    if _data_filters:
+        lines.append("- **Data filters:** " + " AND ".join(_data_filters))
     else:
-        lines.append("- **Filters:** none")
+        lines.append("- **Data filters:** none")
+    if _post_filters:
+        lines.append("- **Post-compute filters:** " + " AND ".join(_post_filters))
     lines.append("")
 
     # ------------------------------------------------------------------ #
