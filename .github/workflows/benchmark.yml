@@ -91,7 +91,7 @@ jobs:
             --label "automated" \
             --body "Automated benchmark run completed successfully.
 
-      **Triggered by:** \`${{ github.event_name }}\`
-      **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            **Triggered by:** \`${{ github.event_name }}\`
+            **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-      Please review the updated metrics files before merging."
+            Please review the updated metrics files before merging."
