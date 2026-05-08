@@ -125,7 +125,7 @@ jobs:
         run: uv venv
 
       - name: Install dependencies
-        run: uv pip install -e ".[trino]" 
+        run: uv pip install -e ".[dev]" 
 
       - name: Wait for Trino to be ready
         run: |
@@ -133,6 +133,7 @@ jobs:
             curl -f http://localhost:8080/v1/info && break || sleep 5;
           done
           curl -f http://localhost:8080/v1/info && echo "Trino is running" || exit 1;
+      
       - name: Confirm Trino connector is installed
         run: uv run python -c "import trino; print('Trino connector installed')"
 
