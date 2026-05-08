@@ -295,6 +295,18 @@ def test_classify_sql_error():
     assert hint is not None
 
 
+def test_classify_collection_as_expression():
+    """'Expected an expression, but received a collection' → 'collection_as_expression'."""
+    e = PyDoughQDAGException(
+        "Expected an expression, but received a collection: "
+        "conditions.WHERE(...).procedures.CALCULATE(...)"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "collection_as_expression"
+    assert hint is not None
+    assert "CALCULATE" in hint or "scalar" in hint.lower()
+
+
 def test_classify_qdag_error_without_suggestion():
     """PyDoughQDAGException without 'Did you mean:' → 'qdag_error' with no hint."""
     e = PyDoughQDAGException("Cardinality mismatch: expected singular context")
@@ -322,6 +334,7 @@ def test_classify_all_types_return_dict_details():
         PyDoughSQLException("CROSS without lhs"),
         PyDoughSQLException("generic sql fail"),
         PyDoughQDAGException("no suggestion here"),
+        PyDoughQDAGException("Expected an expression, but received a collection: x"),
         RuntimeError("unexpected"),
     ]
     for e in exceptions:

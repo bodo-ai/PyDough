@@ -124,6 +124,11 @@ _HINT_MAP: dict[str, str | None] = {
         "CROSS requires a left-hand collection: "
         "use left_collection.CROSS(right), not CROSS(right) standalone."
     ),
+    "collection_as_expression": (
+        "A collection cannot be used as a CALCULATE term — only scalar "
+        "expressions are allowed. Navigate to a scalar field (e.g. "
+        "subcollection.SINGULAR().field) or split into separate queries."
+    ),
     "sql_error": "The query produced invalid SQL. Check the query structure.",
     "type_error": "Check that the argument types match what the function expects.",
     "generic": None,
@@ -167,6 +172,10 @@ def _classify_error(
     # ── Expression received where collection expected ───────────────────────
     if "Expected a collection, but received an expression" in msg:
         return "expression_not_collection", {}, _HINT_MAP["expression_not_collection"]
+
+    # ── Collection used where expression expected (e.g. as a CALCULATE term) ─
+    if "Expected an expression, but received a collection" in msg:
+        return "collection_as_expression", {}, _HINT_MAP["collection_as_expression"]
 
     # ── Python syntax error ─────────────────────────────────────────────────
     if isinstance(e, SyntaxError) or "Syntax error" in msg:
