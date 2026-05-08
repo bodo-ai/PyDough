@@ -79,8 +79,8 @@ jobs:
         options: >-
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
-          --health-start-period=120s
+          --health-retries=4
+          --health-start-period=150s
         env:
             POSTGRES_HOST: postgres
             POSTGRES_DB: "pydough_test"
