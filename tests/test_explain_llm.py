@@ -696,7 +696,8 @@ def test_direct_partition_with_where_data_filter_in_key_facts(
 def test_subcollection_partition_shows_parent_where_and_table(
     tpch_graph: GraphMetadata, tpch_session: PyDoughSession
 ):
-    """customers.WHERE(...).orders.PARTITION(...) must expose the parent filter."""
+    """customers.WHERE(...).orders.PARTITION(...) must expose the parent filter
+    AND the SubCollection hop — all three must appear in the steps."""
 
     def impl():
         return (
@@ -711,7 +712,30 @@ def test_subcollection_partition_shows_parent_where_and_table(
     types = [s["type"] for s in result["steps"]]
     assert "TableCollection" in types
     assert "Where" in types
+    assert "SubCollection" in types  # the orders hop must appear
+    sub = next(s for s in result["steps"] if s["type"] == "SubCollection")
+    assert sub["from_collection"] == "customers"
+    assert sub["to_collection"] == "orders"
     assert result["schema"]["source_collection"] == "customers"
+
+
+def test_deep_subcollection_partition_shows_all_hops(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
+    """customers.orders.lines.PARTITION(...) must show BOTH SubCollection hops."""
+
+    def impl():
+        return (
+            customers.WHERE(market_segment == "BUILDING")
+            .orders.lines.PARTITION(name="g", by=return_flag)
+            .CALCULATE(return_flag=return_flag)
+        )
+
+    result = _run(impl, tpch_graph, tpch_session)
+    sub_steps = [s for s in result["steps"] if s["type"] == "SubCollection"]
+    collections = [(s["from_collection"], s["to_collection"]) for s in sub_steps]
+    assert ("customers", "orders") in collections
+    assert ("orders", "lines") in collections
 
 
 # --- Global-level CALCULATE with COUNT ---

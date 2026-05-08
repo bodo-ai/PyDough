@@ -454,6 +454,11 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
         if child_anc is not None and not isinstance(child_anc, GlobalContext):
             # Subcollection case: child.ancestor_context points to the
             # filtered parent chain (e.g. customers.WHERE(...).orders).
+            # Add child itself first — it is the immediately-partitioned
+            # subcollection and would otherwise be skipped entirely.
+            if id(child) not in seen_ids:
+                nodes.append(child)
+                seen_ids.add(id(child))
             ancestor: PyDoughCollectionQDAG | None = child_anc
         elif not isinstance(child, GlobalContext):
             # Direct top-level case: child IS the filtered collection node
