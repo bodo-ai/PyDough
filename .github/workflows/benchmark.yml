@@ -57,7 +57,11 @@ jobs:
         run: uv pip install -e ".[postgres]"
 
       - name: Run benchmark
-        run: uv run python benchmark/executer.py
+        env:
+          RUN_TYPE: ${{ github.event_name == 'release' && 'R' || 'M' }}
+          RUN_ID: ${{ github.event_name == 'release' && github.event.release.tag_name || github.run_id }}
+        run: |
+          uv run python benchmark/executer.py
 
       - name: Dump Postgres logs on failure
         if: failure()

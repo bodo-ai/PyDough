@@ -6,7 +6,6 @@ executing the specified tests and collect all metrics.
 import os
 import time
 from datetime import date
-from importlib.metadata import version
 from pathlib import Path
 
 import pandas as pd
@@ -59,6 +58,7 @@ class Benchmarker:
         self._questions_path = questions_path
         self._filename = filename
         self._metadata_path = metadata_path
+        self._run_label = self.get_run_label()
 
     METRICS_COLUMNS: dict[str, str] = {
         "question_id": "int",
@@ -142,6 +142,29 @@ class Benchmarker:
         """
         return f"{self._metadata_path}.json"
 
+    @property
+    def run_label(self) -> str:
+        """
+        Label for the benchmark run
+        """
+        return self._run_label
+
+    def get_run_label(self) -> str:
+        """
+        Generate the label for this run
+        """
+        run_type = os.getenv("RUN_TYPE", "M")
+        run_id = os.getenv("RUN_ID", "manual")
+
+        today = date.today().strftime("%Y%m%d")
+
+        if run_type == "R":
+            # e.g. 20260508_R_v1.2.0
+            return f"{today}_R_{run_id}"
+        else:
+            # e.g. 20260508_M_25526200301
+            return f"{today}_M_{run_id}"
+
     def get_questions_df(self) -> DataFrame:
         """
         Returns the questions full path
@@ -203,10 +226,9 @@ class Benchmarker:
         Generates an csv file with all the results using
         'metrics/{date.today()}_{pydough_version}.csv' as the name of the file
         """
-        pydough_version: str = version("pydough")
 
         self.question_metrics.to_csv(
-            f"benchmark/metrics/{date.today()}_{pydough_version}.csv", index=True
+            f"benchmark/metrics/{self.run_label}.csv", index=True
         )
 
     def generate_benchmark_metrics(self, total_time_min: float) -> None:
@@ -214,7 +236,7 @@ class Benchmarker:
         Generates general metrics for the benchmark (AVG, Desviation, MIN, MAX)
         """
         new_row = {
-            "date": date.today(),
+            "run": self.run_label,
             "total_questions": len(self.question_metrics),
             "total_time_min": round(total_time_min, 2),
             "pyd_avg_time": round(self.question_metrics["pydough_exec_time"].mean(), 2),
