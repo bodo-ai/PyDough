@@ -1528,12 +1528,6 @@ def trino_conn_db_context(trino_docker_setup) -> DatabaseContext:
         timezone="UTC",
     )
 
-    # # Create a new catalog/schema that can be written to during testing
-    # cursor = connection.cursor()
-    # cursor.execute("CREATE CATALOG IF NOT EXISTS WRITE_CATALOG USING memory")
-    # cursor.execute("CREATE SCHEMA IF NOT EXISTS WRITE_CATALOG.WRITE_SCHEMA")
-    # cursor.commit()
-
     return load_database_context("trino", connection=connection)
 
 
