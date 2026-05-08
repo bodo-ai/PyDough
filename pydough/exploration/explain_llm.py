@@ -819,9 +819,17 @@ def _render_md(result: dict) -> str:
                 _txt = _c.get("text", str(_c)) if isinstance(_c, dict) else str(_c)
                 _target.append(_txt)
 
+    # Derive output collection from the last SubCollection step — when it
+    # differs from the source it signals the query navigated to a different
+    # domain, which the judge should verify matches the question.
+    _sub_steps = [s for s in steps if s["type"] == "SubCollection"]
+    _output_coll = _sub_steps[-1]["to_collection"] if _sub_steps else src
+
     lines.append("## Key Facts")
     lines.append("")
     lines.append(f"- **Source collection:** {f'`{src}`' if src else '_(none)_'}")
+    if _output_coll and _output_coll != src:
+        lines.append(f"- **Output collection:** `{_output_coll}`")
     lines.append(f"- **Limit:** {limit if limit is not None else 'none'}")
     if _data_filters:
         lines.append("- **Data filters:** " + " AND ".join(_data_filters))
