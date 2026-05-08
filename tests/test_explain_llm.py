@@ -17,6 +17,7 @@ import pytest
 import pydough
 from pydough.configs import PyDoughSession
 from pydough.errors import (
+    PyDoughMetadataException,
     PyDoughQDAGException,
     PyDoughSQLException,
     PyDoughSessionException,
@@ -295,6 +296,18 @@ def test_classify_sql_error():
     assert hint is not None
 
 
+def test_classify_plural_in_calculate():
+    """Plural expression in CALCULATE → 'plural_in_calculate' with a non-None hint."""
+    e = PyDoughQDAGException(
+        "Expected all terms in CALCULATE(...) to be singular, "
+        "but encountered a plural expression: JOIN_STRINGS(', ', procedures.description)"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "plural_in_calculate"
+    assert hint is not None
+    assert "singular" in hint.lower() or "SINGULAR" in hint
+
+
 def test_classify_collection_as_expression():
     """'Expected an expression, but received a collection' → 'collection_as_expression'."""
     e = PyDoughQDAGException(
@@ -305,6 +318,69 @@ def test_classify_collection_as_expression():
     assert error_type == "collection_as_expression"
     assert hint is not None
     assert "CALCULATE" in hint or "scalar" in hint.lower()
+
+
+def test_classify_bad_window_per():
+    """'per' string parsing error → 'bad_window_per' with a non-None hint."""
+    e = PyDoughUnqualifiedException(
+        "Error while parsing 'per' string of RANKING(by=key.DESC(), per='nations') "
+        "in context customers (unrecognized ancestor 'nations')"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "bad_window_per"
+    assert hint is not None
+    assert "per=" in hint
+
+
+def test_classify_downstream_conflict():
+    """Name ambiguity between current and ancestor context → 'downstream_conflict'."""
+    e = PyDoughQDAGException(
+        "Unclear whether 'key' refers to a term of the current context "
+        "or ancestor of collection nations.customers"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "downstream_conflict"
+    assert hint is not None
+
+
+def test_classify_invalid_operator_args():
+    """Wrong operator argument types → 'invalid_operator_args'."""
+    e = PyDoughQDAGException(
+        "Invalid operator invocation LOWER('key', 'extra'): expected 1 argument, got 2"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "invalid_operator_args"
+    assert hint is not None
+
+
+def test_classify_type_inference_fail():
+    """Return type inference failure also maps to 'invalid_operator_args'."""
+    e = PyDoughQDAGException(
+        "Unable to infer the return type of operator invocation CUSTOM_UDF(x, y): "
+        "incompatible argument types"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "invalid_operator_args"
+    assert hint is not None
+
+
+def test_classify_metadata_error():
+    """PyDoughMetadataException → 'metadata_error' with a non-None hint."""
+    e = PyDoughMetadataException("Collection 'nonexistent' not found in graph TPCH")
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "metadata_error"
+    assert hint is not None
+
+
+def test_classify_not_callable():
+    """PyDoughUnqualifiedException 'not callable' → 'not_callable' with a non-None hint."""
+    e = PyDoughUnqualifiedException(
+        "PyDough object 'nations.key' is not callable. "
+        "Did you mean to access an attribute or method?"
+    )
+    error_type, _, hint = _classify_error(e)
+    assert error_type == "not_callable"
+    assert hint is not None
 
 
 def test_classify_qdag_error_without_suggestion():
@@ -328,13 +404,28 @@ def test_classify_all_types_return_dict_details():
     exceptions = [
         SyntaxError("x"),
         PyDoughUnqualifiedException("answer variable 'result' not found"),
+        PyDoughUnqualifiedException(
+            "Error while parsing 'per' string of RANKING in context x (unrecognized ancestor)"
+        ),
+        PyDoughUnqualifiedException("PyDough object x is not callable."),
         PyDoughSessionException("no session"),
         PyDoughTypeException("bad type"),
         NotImplementedError("not supported"),
         PyDoughSQLException("CROSS without lhs"),
         PyDoughSQLException("generic sql fail"),
         PyDoughQDAGException("no suggestion here"),
+        PyDoughQDAGException(
+            "Unclear whether 'x' refers to a term of the current context or ancestor"
+        ),
+        PyDoughQDAGException("Invalid operator invocation FOO(x): bad args"),
+        PyDoughQDAGException(
+            "Unable to infer the return type of operator invocation FOO(x): error"
+        ),
         PyDoughQDAGException("Expected an expression, but received a collection: x"),
+        PyDoughQDAGException(
+            "Expected all terms to be singular, but encountered a plural expression: x"
+        ),
+        PyDoughMetadataException("collection not found"),
         RuntimeError("unexpected"),
     ]
     for e in exceptions:

@@ -129,6 +129,35 @@ _HINT_MAP: dict[str, str | None] = {
         "expressions are allowed. Navigate to a scalar field (e.g. "
         "subcollection.SINGULAR().field) or split into separate queries."
     ),
+    "plural_in_calculate": (
+        "CALCULATE terms must be singular (scalar) values. "
+        "The flagged expression returns multiple values per row. "
+        "Use SINGULAR() if the relationship is truly 1-to-1, "
+        "or restructure using PARTITION, COUNT, or separate queries."
+    ),
+    "bad_window_per": (
+        "The 'per=' argument to a window function (e.g. RANKING) is invalid. "
+        "'per=' must name an ancestor collection in the current context. "
+        "Check spelling and that the named collection is an ancestor, not a peer or child."
+    ),
+    "downstream_conflict": (
+        "A term name is ambiguous — it exists in both the current collection "
+        "and an ancestor. Rename one of the conflicting terms or qualify the "
+        "reference to remove the ambiguity."
+    ),
+    "invalid_operator_args": (
+        "Wrong argument types for this operator. "
+        "Check the expected input types and ensure the arguments match."
+    ),
+    "metadata_error": (
+        "A metadata error occurred. Check that the graph JSON is valid and "
+        "all referenced collections and relationships exist."
+    ),
+    "not_callable": (
+        "The PyDough object is not callable as a function. "
+        "It may be a field or collection name — access it as an attribute, "
+        "not a function call."
+    ),
     "sql_error": "The query produced invalid SQL. Check the query structure.",
     "type_error": "Check that the argument types match what the function expects.",
     "generic": None,
@@ -156,6 +185,12 @@ def _classify_error(
 
     msg = str(e)
 
+    # ── Not callable — must precede the "Did you mean" check because the
+    #    undefined_function_call error appends "Did you mean to access an
+    #    attribute or method?" which would otherwise be misclassified.
+    if isinstance(e, PyDoughUnqualifiedException) and "not callable" in msg.lower():
+        return "not_callable", {}, _HINT_MAP["not_callable"]
+
     # ── Unrecognized term with suggestions ──────────────────────────────────
     if "Did you mean" in msg:
         details: dict = {}
@@ -177,6 +212,10 @@ def _classify_error(
     if "Expected an expression, but received a collection" in msg:
         return "collection_as_expression", {}, _HINT_MAP["collection_as_expression"]
 
+    # ── Plural (multi-valued) expression in CALCULATE ────────────────────────
+    if "to be singular" in msg and "plural" in msg:
+        return "plural_in_calculate", {}, _HINT_MAP["plural_in_calculate"]
+
     # ── Python syntax error ─────────────────────────────────────────────────
     if isinstance(e, SyntaxError) or "Syntax error" in msg:
         details = {}
@@ -188,6 +227,10 @@ def _classify_error(
     if isinstance(e, PyDoughUnqualifiedException):
         if "answer" in msg.lower() or "variable" in msg.lower():
             return "answer_variable", {}, _HINT_MAP["answer_variable"]
+        if "per" in msg.lower() and "parsing" in msg.lower():
+            return "bad_window_per", {}, _HINT_MAP["bad_window_per"]
+        if "not callable" in msg.lower():
+            return "not_callable", {}, _HINT_MAP["not_callable"]
         return "generic", {}, None
 
     # ── Session / metadata not configured ───────────────────────────────────
@@ -208,9 +251,22 @@ def _classify_error(
             return "cross_without_lhs", {}, _HINT_MAP["cross_without_lhs"]
         return "sql_error", {}, _HINT_MAP["sql_error"]
 
-    # ── QDAGException without "Did you mean" ────────────────────────────────
+    # ── QDAGException — specific patterns before generic fallthrough ────────
     if isinstance(e, PyDoughQDAGException):
+        if "Unclear whether" in msg and "refers to a term" in msg:
+            return "downstream_conflict", {}, _HINT_MAP["downstream_conflict"]
+        if (
+            "Invalid operator invocation" in msg
+            or "Unable to infer the return type" in msg
+        ):
+            return "invalid_operator_args", {}, _HINT_MAP["invalid_operator_args"]
         return "qdag_error", {}, None
+
+    # ── Metadata errors ──────────────────────────────────────────────────────
+    from pydough.errors import PyDoughMetadataException
+
+    if isinstance(e, PyDoughMetadataException):
+        return "metadata_error", {}, _HINT_MAP["metadata_error"]
 
     return "generic", {}, None
 
