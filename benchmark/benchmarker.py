@@ -227,6 +227,9 @@ class Benchmarker:
         'metrics/{date.today()}_{pydough_version}.csv' as the name of the file
         """
 
+        if not Path("benchmark/metrics/").exists():
+            Path("benchmark/metrics").mkdir()
+
         self.question_metrics.to_csv(
             f"benchmark/metrics/{self.run_label}.csv", index=True
         )
