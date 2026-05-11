@@ -1,0 +1,101 @@
+name: Run Benchmark
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  workflow_call:
+    secrets:
+      POSTGRES_USER:
+        required: true
+      POSTGRES_PASSWORD:
+        required: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      
+      pull-requests: write 
+
+    env:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
+    services:
+      postgres:
+        image: bodoai1/pydough-benchmarker:latest
+        ports:
+          - 5433:5432
+        env:
+          POSTGRES_DB: benchmarker
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd "pg_isready -h localhost -U $POSTGRES_USER -d ${POSTGRES_DB}"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 30
+          --health-start-period 300s
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+ 
+      - name: Create virtual environment
+        run: uv venv
+ 
+      - name: Install dependencies
+        run: uv pip install -e ".[postgres]"
+
+      - name: Run benchmark
+        env:
+          RUN_TYPE: ${{ github.event_name == 'release' && 'R' || 'M' }}
+          RUN_ID: ${{ github.event_name == 'release' && github.event.release.tag_name || github.run_id }}
+        run: |
+          uv run python benchmark/executer.py
+
+      - name: Dump Postgres logs on failure
+        if: failure()
+        run: docker logs postgres
+
+      - name: Create branch, commit, and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="benchmark/metrics-$(date +'%Y-%m-%d-%H%M%S')"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add benchmark/metrics/*.csv benchmark/benchmark_metrics.csv
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit, skipping PR."
+            exit 0
+          fi
+
+          git commit -m "chore: update benchmark metrics $(date +'%Y-%m-%d')"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Benchmark metrics update — $(date +'%Y-%m-%d')" \
+            --label "benchmark" \
+            --label "automated" \
+            --body "Automated benchmark run completed successfully.
+
+            **Triggered by:** \`${{ github.event_name }}\`
+            **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Please review the updated metrics files before merging."
