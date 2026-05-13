@@ -4073,6 +4073,88 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = regions.CALCULATE(region_name=name, nation_names=ARRAY_COLLECT(nations.name)).ORDER_BY(region_name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nation_names": [
+                            ["ALGERIA", "ETHIOPIA", "KENYA", "MOROCCO", "MOZAMBIQUE"],
+                            ["ARGENTINA", "BRAZIL", "CANADA", "PERU", "UNITED STATES"],
+                            ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"],
+                            [
+                                "FRANCE",
+                                "GERMANY",
+                                "ROMANIA",
+                                "RUSSIA",
+                                "UNITED KINGDOM",
+                            ],
+                            ["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"],
+                        ],
+                    }
+                ),
+                "array_data_01",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="array_data_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = regions.CALCULATE(nation_names=ARRAY_COLLECT(nations.name))\n"
+                "result = array_data.EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name').ORDER_BY(region_name, nation_idx)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": ["AFRICA"] * 5
+                        + ["AMERICA"] * 5
+                        + ["ASIA"] * 5
+                        + ["EUROPE"] * 5
+                        + ["MIDDLE EAST"] * 5,
+                        "nation_idx": list(range(5)) * 5,
+                        "nation_name": [
+                            "ALGERIA",
+                            "ETHIOPIA",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "CHINA",
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "VIETNAM",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            "EGYPT",
+                            "IRAN",
+                            "IRAQ",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                    }
+                ),
+                "explode_01",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),

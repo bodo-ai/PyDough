@@ -1285,6 +1285,12 @@ class PyDoughPandasTest:
     If True, does not run the test as part of SQL testing.
     """
 
+    skipped_dialects: set[str] | None = None
+    """
+    If provided, contains the names of all dialects to skip when running the
+    test in SQL or E2E mode.
+    """
+
     fix_output_dialect: str = "sqlite"
     """
     Dialect name to update output
@@ -1384,6 +1390,14 @@ class PyDoughPandasTest:
         if self.skip_sql:
             pytest.skip(f"Skipping SQL text test for {self.test_name}")
 
+        if (
+            self.skipped_dialects is not None
+            and database.dialect.name in self.skipped_dialects
+        ):
+            pytest.skip(
+                f"Skipping SQL text test for {self.test_name} on {database.dialect.name} dialect"
+            )
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
 
@@ -1467,6 +1481,14 @@ class PyDoughPandasTest:
             `table_name_prefix`: Prefix to prepend to table names in to_table calls.
                 Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
+        if (
+            self.skipped_dialects is not None
+            and database.dialect.name in self.skipped_dialects
+        ):
+            pytest.skip(
+                f"Skipping E2E test for {self.test_name} on {database.dialect.name} dialect"
+            )
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
 
