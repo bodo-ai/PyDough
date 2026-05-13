@@ -76,11 +76,7 @@ jobs:
           - 9042:9042
       trino:
         image: bodoai1/pydough-trino:latest
-        options: >-
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=4
-          --health-start-period=150s
+        options: --no-healthcheck
         env:
             POSTGRES_HOST: postgres
             POSTGRES_DB: "pydough_test"
