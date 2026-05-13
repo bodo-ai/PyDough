@@ -982,7 +982,8 @@ def _render_md(result: dict) -> str:
         hint = result.get("hint")
         if hint:
             lines.append("")
-            lines.append(f"> {hint}")
+            lines.append(f"> **Constraint for next attempt:** {hint}")
+
         return "\n".join(lines)
 
     # ------------------------------------------------------------------ #
