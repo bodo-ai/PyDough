@@ -33,7 +33,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustname AS rest,
     ' ' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    -1 * CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -91,7 +91,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustemail AS rest,
     '.' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    -1 * CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -149,7 +149,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustphone AS rest,
     '-' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    -1 * CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -207,7 +207,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustpostalcode AS rest,
     '00' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    -1 * CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -265,7 +265,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustname AS rest,
     '@' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    -1 * CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -323,7 +323,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustname AS rest,
     '#$*' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    -1 * CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,

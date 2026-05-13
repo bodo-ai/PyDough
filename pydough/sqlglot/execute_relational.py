@@ -15,9 +15,11 @@ from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.dialects import Trino as TrinoDialect
 from sqlglot.dialects.dialect import rename_func
 from sqlglot.dialects.mysql import MySQL
 from sqlglot.dialects.oracle import Oracle
+from sqlglot.dialects.trino import Trino
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import (
     Alias,
@@ -552,6 +554,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             # The BodoSQL dialect is essentially a subset of the Snowflake SQL
             # dialect without many of the extraneous features.
             return SnowflakeDialect()
+        case DatabaseDialect.TRINO:
+            return TrinoDialect()
         case DatabaseDialect.MYSQL:
             return MySQLDialect()
         case DatabaseDialect.POSTGRES:
@@ -602,6 +606,15 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                 )
             )
 
+        case DatabaseDialect.TRINO:
+            # Replace the DAYOFWEEK override for the Trino generator with the
+            # default version, since PyDough handles the conversion logic
+            # correctly whereas the SQLGlot version gets confused with multiple
+            # rounds of parsing and unparsing.
+            Trino.Generator.TRANSFORMS[sqlglot_expressions.DayOfWeek] = lambda self, e: (
+                f"DAY_OF_WEEK({self.sql(e.this)})"
+            )
+
         case _:
             pass
 
@@ -629,6 +642,15 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                     ]
                 )
             )
+        case DatabaseDialect.TRINO:
+            # Replace the DAYOFWEEK override for the Trino generator with the
+            # default version, since PyDough handles the conversion logic
+            # correctly whereas the SQLGlot version gets confused with multiple
+            # rounds of parsing and unparsing.
+            Trino.Generator.TRANSFORMS[sqlglot_expressions.DayOfWeek] = (
+                lambda self, e: f"(({self.func('DAY_OF_WEEK', e.this)} % 7) + 1)",
+            )
+
         case _:
             pass
 

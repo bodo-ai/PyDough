@@ -193,6 +193,7 @@ class DatabaseDialect(Enum):
     ANSI = "ansi"
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
+    TRINO = "trino"
     MYSQL = "mysql"
     POSTGRES = "postgres"
     ORACLE = "oracle"
@@ -226,6 +227,13 @@ class DatabaseDialect(Enum):
                     temp_table=False,
                     temp_view=False,
                 )
+            case DatabaseDialect.TRINO:
+                return CreateCapabilities(
+                    replace_table=False,
+                    replace_view=False,
+                    temp_table=False,
+                    temp_view=False,
+                )
             case _:
                 return CreateCapabilities(
                     replace_table=False,
@@ -249,6 +257,31 @@ class DatabaseDialect(Enum):
             return DatabaseDialect.__members__[dialect]
         else:
             raise PyDoughSessionException(f"Unsupported dialect: {dialect}")
+
+    @property
+    def sqlglot_dialect(self) -> str | None:
+        """Get the corresponding SQLGlot dialect string for this DatabaseDialect.
+
+        Returns:
+            The SQLGlot dialect string.
+        """
+        match self:
+            case DatabaseDialect.ANSI:
+                return None
+            case DatabaseDialect.SQLITE:
+                return "sqlite"
+            case DatabaseDialect.SNOWFLAKE | DatabaseDialect.BODOSQL:
+                return "snowflake"
+            case DatabaseDialect.TRINO:
+                return "trino"
+            case DatabaseDialect.MYSQL:
+                return "mysql"
+            case DatabaseDialect.POSTGRES:
+                return "postgres"
+            case DatabaseDialect.ORACLE:
+                return "oracle"
+            case _:
+                raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
 
 
 @dataclass

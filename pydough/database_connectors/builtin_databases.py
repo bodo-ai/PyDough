@@ -22,6 +22,7 @@ __all__ = [
     "load_postgres_connection",
     "load_snowflake_connection",
     "load_sqlite_connection",
+    "load_trino_connection",
 ]
 
 
@@ -55,6 +56,9 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "snowflake":
             connection = load_snowflake_connection(**kwargs)
             dialect = DatabaseDialect.SNOWFLAKE
+        case "trino":
+            connection = load_trino_connection(**kwargs)
+            dialect = DatabaseDialect.TRINO
         case "mysql":
             connection = load_mysql_connection(**kwargs)
             dialect = DatabaseDialect.MYSQL
@@ -133,6 +137,46 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
         )
     # Create a Snowflake connection using the provided keyword arguments
     connection = snowflake.connector.connect(**kwargs)
+    return DatabaseConnection(connection)
+
+
+def load_trino_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads a Trino database connection. This is done by providing a
+    wrapper around the DB 2.0 connect API.
+
+    Args:
+        **kwargs: The keyword arguments which are expected to include either a
+        connection object for Trino or the required connection parameters:
+        - user: Trino username (str)
+        - host: Trino server host (str, default: "127.0.01"/"localhost")
+        - port: Trino server port (int, default: 8080)
+
+    Raises:
+        ImportError: If the Trino connector is not installed.
+        ValueError: If required connection parameters are missing.
+
+    Returns:
+        A DatabaseContext object for Trino.
+    """
+    try:
+        import trino
+    except ImportError:
+        raise ImportError(
+            "Trino connector is not installed. Please install it with `pip install trino`."
+        )
+
+    connection = kwargs.pop("connection", None)
+    if connection:
+        return DatabaseConnection(connection)
+    required_keys = ["user", "host", "port"]
+    if not all(key in kwargs for key in required_keys):
+        raise ValueError(
+            "Trino connection requires the following arguments: "
+            + ", ".join(required_keys)
+        )
+    # Create a Trino connection using the provided keyword arguments
+    connection = trino.dbapi.connect(**kwargs)
     return DatabaseConnection(connection)
 
 

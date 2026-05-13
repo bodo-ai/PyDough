@@ -254,7 +254,10 @@ class BaseTransformBindings:
             else:
                 fmt_string = operator.macro_text
             combined_string: str = fmt_string.format(*arg_strings)
-            return parse_one(combined_string)
+            return parse_one(
+                combined_string,
+                dialect=self._visitor._session.database.dialect.sqlglot_dialect,
+            )
         match operator:
             case pydop.NOT:
                 return sqlglot_expressions.Not(this=apply_parens(args[0]))
@@ -358,6 +361,28 @@ class BaseTransformBindings:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
                 )
+
+    def ensure_string(
+        self, expr: SQLGlotExpression, typ: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Ensure that the given expression is of string type, by converting it if
+        necessary. This is used for operators that require string arguments but
+        may be given non-string arguments.
+
+        Args:
+            `expr`: The SQLGlot expression to ensure is a string.
+            `typ`: The PyDough type of the expression, used to determine if
+            conversion is necessary.
+
+        Return:
+            A SQLGlot expression that is guaranteed to be of string type, either
+            by being the original expression (if it was already a string) or a
+            cast of the original expression to string.
+        """
+        if not isinstance(typ, StringType):
+            return sqlglot_expressions.Cast(this=expr, to="VARCHAR")
+        return expr
 
     def make_datetime_arg(self, expr: SQLGlotExpression) -> SQLGlotExpression:
         """

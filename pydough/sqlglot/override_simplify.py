@@ -130,6 +130,8 @@ def simplify(
         node = rewrite_coalesce_nullif(node)
         node = rewrite_sum_nullif(node)
         node = rewrite_coalesce_count(node)
+        node = rewrite_length_literal(node)
+        node = rewrite_division(node)
 
         if constant_propagation:
             node = propagate_constants(node, root)
@@ -152,6 +154,7 @@ def simplify(
 
         # PyDough Change: new post-order transformations
         node = rewrite_nullif_coalesce(node)
+        node = rewrite_length_literal(node)
 
         if root:
             expression.replace(node)
@@ -385,3 +388,88 @@ def rewrite_nullif_coalesce(expr: exp.Expression) -> exp.Expression:
         return exp.Nullif(this=lhs.args.get("this"), expression=rhs, copy=False)
     else:
         return expr
+
+
+def rewrite_length_literal(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite `LENGTH('literal')` to the length of the literal.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Length):
+        return expr
+
+    arg = expr.this
+    if isinstance(arg, exp.Literal) and arg.is_string:
+        return exp.Literal.number(len(arg.this))
+
+    return expr
+
+
+def rewrite_division(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite division expressions to fold constants and remove redundant
+    divisions. Examples:
+
+    - `x / 1` to `x`
+    - `0 / x` to `0`
+    - `x / x` to `1`
+    - `4 / 2` to `2`
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Div):
+        return expr
+
+    numerator = expr.args.get("this")
+    denominator = expr.args.get("expression")
+
+    if (
+        isinstance(denominator, exp.Literal)
+        and denominator.is_number
+        and float(denominator.this) == 0
+    ):
+        # Don't rewrite division by zero, as it may be handled differently in different databases
+        return expr
+
+    # `x / x`` -> `1``
+    if numerator == denominator:
+        return exp.Literal.number(1)
+
+    # `0 / x` -> `0`
+    if (
+        isinstance(numerator, exp.Literal)
+        and numerator.is_number
+        and float(numerator.this) == 0
+    ):
+        return exp.Literal.number(0)
+
+    # `x / 1` -> `x`
+    if (
+        isinstance(denominator, exp.Literal)
+        and denominator.is_number
+        and float(denominator.this) == 1
+    ):
+        return numerator
+
+    # Attempt to fold constants for cases like `4 / 2` -> `2`
+    if (
+        isinstance(numerator, exp.Literal)
+        and numerator.is_number
+        and isinstance(denominator, exp.Literal)
+        and denominator.is_number
+    ):
+        num_term = float(numerator.this)
+        denom_term = float(denominator.this)
+        if denom_term != 0 and num_term / denom_term == int(num_term / denom_term):
+            return exp.Literal.number(int(num_term / denom_term))
+
+    return expr
