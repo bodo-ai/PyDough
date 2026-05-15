@@ -97,6 +97,11 @@ class OracleTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="COLLECT", expressions=args)
+
     def convert_default_to(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:

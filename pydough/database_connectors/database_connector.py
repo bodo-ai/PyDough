@@ -65,6 +65,10 @@ class DatabaseConnection:
                 _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
             # At run-time check and run the fetch.
             if hasattr(self.cursor, "fetch_pandas_all"):
+                breakpoint()
+                # TODO: If type_code for self.cursor.description is 5/9/10 for
+                # the current column, use json.loads to parse it into the
+                # appropriate Python type.
                 return self.cursor.fetch_pandas_all()
             else:
                 # Assume sqlite3

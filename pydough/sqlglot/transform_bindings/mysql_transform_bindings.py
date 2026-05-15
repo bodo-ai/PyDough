@@ -88,6 +88,11 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="JSON_ARRAYAGG", expressions=args)
+
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:

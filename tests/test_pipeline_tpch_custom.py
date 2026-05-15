@@ -4073,7 +4073,7 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
-                "result = regions.CALCULATE(region_name=name, nation_names=ARRAY_COLLECT(nations.name)).ORDER_BY(region_name)",
+                "result = regions.CALCULATE(region_name=name, nation_names=LISTOF(nations.name)).ORDER_BY(region_name)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -4107,7 +4107,7 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
-                "array_data = regions.CALCULATE(nation_names=ARRAY_COLLECT(nations.name))\n"
+                "array_data = regions.CALCULATE(nation_names=LISTOF(nations.name))\n"
                 "result = array_data.EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name').ORDER_BY(region_name, nation_idx)",
                 "TPCH",
                 lambda: pd.DataFrame(

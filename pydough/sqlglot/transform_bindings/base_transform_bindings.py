@@ -262,6 +262,8 @@ class BaseTransformBindings:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
                 )
+            case pydop.LISTOF:
+                return self.convert_listof(args, types)
             case pydop.STARTSWITH:
                 return self.convert_startswith(args, types)
             case pydop.ENDSWITH:
@@ -377,6 +379,17 @@ class BaseTransformBindings:
         Converts a SUM function call to its SQLGlot equivalent.
         """
         return sqlglot_expressions.Sum.from_arg_list(args)
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a LISTOF function call to its SQLGlot equivalent. Some dialects
+        do not support this functionality.
+        """
+        raise self._visitor._session.error_builder.sql_call_dialect_unsupported(
+            pydop.LISTOF, self._visitor._session.database.dialect.name
+        )
 
     def convert_find(
         self,

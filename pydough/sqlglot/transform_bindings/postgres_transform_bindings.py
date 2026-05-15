@@ -66,6 +66,11 @@ class PostgresTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="ARRAY_AGG", expressions=args)
+
     def convert_sum(
         self, arg: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
