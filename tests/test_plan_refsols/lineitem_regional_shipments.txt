@@ -1,5 +1,5 @@
 ROOT(columns=[('rname', r_name), ('price', l_extendedprice)], orderings=[])
- JOIN(condition=t0.l_partkey == t1.ps_partkey & t0.l_suppkey == t1.ps_suppkey & t0.r_name == t1.r_name, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'l_extendedprice': t0.l_extendedprice, 'r_name': t0.r_name})
+ JOIN(condition=(t0.l_partkey == t1.ps_partkey) & (t0.l_suppkey == t1.ps_suppkey) & (t0.r_name == t1.r_name), type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'l_extendedprice': t0.l_extendedprice, 'r_name': t0.r_name})
   JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'l_extendedprice': t1.l_extendedprice, 'l_partkey': t1.l_partkey, 'l_suppkey': t1.l_suppkey, 'r_name': t0.r_name})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'o_orderkey': t1.o_orderkey, 'r_name': t0.r_name})
     JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'c_custkey': t1.c_custkey, 'r_name': t0.r_name})

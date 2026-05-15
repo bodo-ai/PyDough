@@ -1,0 +1,2 @@
+ROOT(columns=[('normal_strings', normal_strings), ('empty_string', empty_string), ('special_characters', special_characters)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='strings', shape=(5, 3), columns=['normal_strings', 'empty_string', 'special_characters']))

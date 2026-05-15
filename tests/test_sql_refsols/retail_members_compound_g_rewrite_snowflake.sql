@@ -2,7 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.retail.protected_loyalty_members
 WHERE
-  DAY(CAST(PTY_UNPROTECT(date_of_birth, 'deDOB') AS TIMESTAMP)) <= 13
-  AND DAY(CAST(PTY_UNPROTECT(date_of_birth, 'deDOB') AS TIMESTAMP)) > 3
-  AND MONTH(CAST(PTY_UNPROTECT(date_of_birth, 'deDOB') AS TIMESTAMP)) IN (1, 2, 5, 10, 12)
-  AND YEAR(CAST(PTY_UNPROTECT(date_of_birth, 'deDOB') AS TIMESTAMP)) IN (1960, 1970, 1980, 1990, 2000)
+  date_of_birth IN ('1671-07-20', '2830-05-15', '1615-07-24', '1330-12-30', '2238-04-21', '0816-01-07', '2121-12-17')

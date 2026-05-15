@@ -5,8 +5,8 @@ WHERE
   (
     DATE(c_birthday, '+472 days') IS NULL
     OR LOWER(c_fname) LIKE '%a'
-    OR LOWER(c_fname) LIKE '%e'
-    OR LOWER(c_fname) LIKE '%s'
+    OR c_fname IN ('ALICE', 'GRACE', 'LUKE', 'QUEENIE')
+    OR c_fname IN ('JAMES', 'NICHOLAS', 'THOMAS')
   )
   AND (
     DATE(c_birthday, '+472 days') IS NULL
@@ -15,25 +15,24 @@ WHERE
     ) IS NULL
   )
   AND (
-    DATE(c_birthday, '+472 days') IS NULL OR c_lname <> UPPER('lopez')
+    DATE(c_birthday, '+472 days') IS NULL OR c_lname <> 'LOPEZ'
   )
   AND (
     LOWER(c_fname) LIKE '%a'
-    OR LOWER(c_fname) LIKE '%e'
-    OR LOWER(c_fname) LIKE '%s'
-    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
+    OR c_fname IN ('ALICE', 'GRACE', 'LUKE', 'QUEENIE')
+    OR c_fname IN ('JAMES', 'NICHOLAS', 'THOMAS')
+    OR c_phone IN ('555-091-2345', '555-901-2345')
   )
   AND (
     NOT (
       SUBSTRING(c_addr, -1) || SUBSTRING(c_addr, 1, LENGTH(c_addr) - 1)
     ) IS NULL
-    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
+    OR c_phone IN ('555-091-2345', '555-901-2345')
   )
   AND (
     NOT DATE(c_birthday, '+472 days') IS NULL
-    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
+    OR c_phone IN ('555-091-2345', '555-901-2345')
   )
   AND (
-    REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
-    OR c_lname <> UPPER('lopez')
+    c_lname <> 'LOPEZ' OR c_phone IN ('555-091-2345', '555-901-2345')
   )

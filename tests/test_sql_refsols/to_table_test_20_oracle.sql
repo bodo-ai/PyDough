@@ -1,0 +1,5 @@
+SELECT
+  num
+FROM NUMS_T20
+WHERE
+  num > 2

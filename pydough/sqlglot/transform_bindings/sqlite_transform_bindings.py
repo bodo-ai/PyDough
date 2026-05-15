@@ -4,13 +4,18 @@ Definition of SQLGlot transformation bindings for the SQLite dialect.
 
 __all__ = ["SQLiteTransformBindings"]
 
+import math
 import sqlite3
+from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughSQLException
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.types import DatetimeType, NumericType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
@@ -65,6 +70,12 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 new_args.append(args[0])
             new_args.append(args[i])
         return sqlglot_expressions.Concat(expressions=new_args)
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def convert_extract_datetime(
         self,
@@ -583,3 +594,21 @@ class SQLiteTransformBindings(BaseTransformBindings):
         # CAST(X AS BIGINT) - CASE expr
         sub_expr = sqlglot_expressions.Sub(this=cast_int_expr, expression=case_expr)
         return sub_expr
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Literal.string(item)
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Literal.number("1e999")
+                    else:
+                        return sqlglot_expressions.Literal.number("-1e999")
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

@@ -1,6 +1,6 @@
 SELECT
   claim_id AS key,
-  PTY_UNPROTECT(patient_id, 'deAccount') AS patient_key,
+  PTY_UNPROTECT_ACCOUNT(patient_id) AS patient_key,
   PTY_UNPROTECT_DOB(claim_date) AS claim_date,
   PTY_UNPROTECT(provider_name, 'deName') AS provider_name,
   diagnosis_code,

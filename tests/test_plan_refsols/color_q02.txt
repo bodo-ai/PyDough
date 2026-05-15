@@ -1,0 +1,8 @@
+ROOT(columns=[('company_name', supname), ('color_name', colorname), ('color_hex', chex), ('ship_date', dos)], orderings=[(supname):asc_first])
+ JOIN(condition=t0.supid == t1.comid, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'chex': t1.chex, 'colorname': t1.colorname, 'dos': t1.dos, 'supname': t0.supname})
+  SCAN(table=SUPLS, columns={'supid': supid, 'supname': supname})
+  FILTER(condition=1:numeric == RANKING(args=[], partition=[comid], order=[(dos):asc_last, (sid):asc_last], allow_ties=False), columns={'chex': chex, 'colorname': colorname, 'comid': comid, 'dos': dos})
+   JOIN(condition=t0.colid == t1.identname, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'chex': t1.chex, 'colorname': t1.colorname, 'comid': t0.comid, 'dos': t0.dos, 'sid': t0.sid})
+    SCAN(table=SHPMNTS, columns={'colid': colid, 'comid': comid, 'dos': dos, 'sid': sid})
+    FILTER(condition=(LARGEST(r, g, b) <= (SMALLEST(r, g, b) + 10:numeric)) & (LARGEST(r, g, b) <= 200:numeric) & (SMALLEST(r, g, b) >= 100:numeric), columns={'chex': chex, 'colorname': colorname, 'identname': identname})
+     SCAN(table=CLRS, columns={'b': b, 'chex': chex, 'colorname': colorname, 'g': g, 'identname': identname, 'r': r})

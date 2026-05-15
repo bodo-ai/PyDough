@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS _
-)
 SELECT
   LEAST(20, 10) AS s1,
   LEAST(20, 20) AS s2,
@@ -14,7 +10,7 @@ SELECT
     CAST('2024-01-01 00:00:00' AS DATETIME),
     CAST('2023-01-01 00:00:00' AS DATETIME)
   ) AS s7,
-  LEAST('', 'alphabet soup', 'Hello World') AS s8,
+  LEAST('', 'alphabet soup' COLLATE utf8mb4_bin, 'Hello World' COLLATE utf8mb4_bin) AS s8,
   NULL AS s9,
   GREATEST(20, 10) AS l1,
   GREATEST(20, 20) AS l2,
@@ -27,6 +23,7 @@ SELECT
     CAST('2024-01-01 00:00:00' AS DATETIME),
     CAST('2023-01-01 00:00:00' AS DATETIME)
   ) AS l7,
-  GREATEST('', 'alphabet soup', 'Hello World') AS l8,
+  GREATEST('', 'alphabet soup' COLLATE utf8mb4_bin, 'Hello World' COLLATE utf8mb4_bin) AS l8,
   NULL AS l9
-FROM _q_0
+FROM (VALUES
+  ROW(NULL)) AS _q_0(_col_0)

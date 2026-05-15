@@ -7,15 +7,12 @@ SELECT
     'start of day'
   ) AS week,
   COUNT(*) AS num_notifs,
-  COALESCE(
-    SUM(
+  SUM(
+    (
       (
-        (
-          CAST(STRFTIME('%w', notifications.created_at) AS INTEGER) + 6
-        ) % 7
-      ) IN (5, 6)
-    ),
-    0
+        CAST(STRFTIME('%w', notifications.created_at) AS INTEGER) + 6
+      ) % 7
+    ) IN (5, 6)
   ) AS weekend_notifs
 FROM main.notifications AS notifications
 JOIN main.users AS users

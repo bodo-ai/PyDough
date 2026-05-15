@@ -1,0 +1,9 @@
+SELECT
+  COUNT(*) AS n
+FROM TPCH.SUPPLIER SUPPLIER
+JOIN TPCH.CUSTOMER CUSTOMER
+  ON CUSTOMER.c_custkey = SUPPLIER.s_suppkey
+  AND CUSTOMER.c_nationkey = 3
+  AND CUSTOMER.c_nationkey = SUPPLIER.s_nationkey
+WHERE
+  SUPPLIER.s_nationkey = 3

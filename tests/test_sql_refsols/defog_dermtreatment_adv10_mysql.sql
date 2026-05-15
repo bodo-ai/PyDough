@@ -2,8 +2,8 @@ WITH _s3 AS (
   SELECT
     treatments.drug_id,
     COUNT(*) AS n_rows
-  FROM main.treatments AS treatments
-  JOIN main.adverse_events AS adverse_events
+  FROM treatments AS treatments
+  JOIN adverse_events AS adverse_events
     ON STR_TO_DATE(
       CONCAT(
         YEAR(CAST(adverse_events.reported_dt AS DATETIME)),
@@ -29,7 +29,7 @@ SELECT
   drugs.drug_id,
   drugs.drug_name,
   _s3.n_rows AS num_adverse_events
-FROM main.drugs AS drugs
+FROM drugs AS drugs
 JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id
 ORDER BY

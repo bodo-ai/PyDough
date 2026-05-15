@@ -9,8 +9,8 @@ SELECT
     '%Y %c %e'
   ) AS month,
   COUNT(DISTINCT wallet_transactions_daily.sender_id) AS active_users
-FROM main.wallet_transactions_daily AS wallet_transactions_daily
-JOIN main.users AS users
+FROM ewallet.wallet_transactions_daily AS wallet_transactions_daily
+JOIN ewallet.users AS users
   ON users.status = 'active' AND users.uid = wallet_transactions_daily.sender_id
 WHERE
   EXTRACT(YEAR FROM CAST(wallet_transactions_daily.created_at AS DATETIME)) = 2023

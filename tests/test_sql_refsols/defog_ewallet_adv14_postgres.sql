@@ -1,5 +1,5 @@
 SELECT
-  CAST(COALESCE(SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END), 0) AS DOUBLE PRECISION) / COUNT(*) AS _expr0
+  CAST(COALESCE(SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END), 0) AS DOUBLE PRECISION) / NULLIF(COUNT(*), 0) AS _expr0
 FROM main.wallet_transactions_daily
 WHERE
   (

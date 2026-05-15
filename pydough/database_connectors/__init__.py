@@ -1,10 +1,12 @@
 __all__ = [
+    "CreateCapabilities",
     "DatabaseConnection",
     "DatabaseContext",
     "DatabaseDialect",
     "empty_connection",
     "load_database_context",
     "load_mysql_connection",
+    "load_oracle_connection",
     "load_postgres_connection",
     "load_snowflake_connection",
     "load_sqlite_connection",
@@ -13,9 +15,15 @@ __all__ = [
 from .builtin_databases import (
     load_database_context,
     load_mysql_connection,
+    load_oracle_connection,
     load_postgres_connection,
     load_snowflake_connection,
     load_sqlite_connection,
 )
-from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDialect
+from .database_connector import (
+    CreateCapabilities,
+    DatabaseConnection,
+    DatabaseContext,
+    DatabaseDialect,
+)
 from .empty_connection import empty_connection

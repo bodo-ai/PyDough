@@ -15,14 +15,23 @@ __all__ = [
 
 import re
 from enum import Enum
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import sqlglot.expressions as sqlglot_expressions
+from pandas import Series
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.errors import PyDoughSQLException
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
+from pydough.user_collections.range_collection import RangeGeneratedCollection
+
+if TYPE_CHECKING:
+    from pydough.sqlglot.transform_bindings.base_transform_bindings import (
+        BaseTransformBindings,
+    )
 
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
 """
@@ -386,3 +395,269 @@ def expand_std(
     return sqlglot_expressions.Pow(
         this=variance, expression=sqlglot_expressions.Literal.number(0.5)
     )
+
+
+def rename_user_collection(
+    known_collections: list[str],
+    current_name: str,
+) -> str:
+    """
+    Helper function to rename a user collection to avoid naming conflicts with other
+    collections in the same query.
+
+    Args:
+    `known_collections`: The list of known collection names that are user-generated.
+    `current_name`: The current name of the collection to potentially rename.
+
+    Returns:
+        A name for the collection that is unique among the known collections.
+    """
+    if current_name not in known_collections:
+        # If the current name is not in the list of known collections, it's used
+        # as it is.
+        known_collections.append(current_name)
+        return current_name
+    else:
+        # Otherwise, it's renamed by adding an index to the end of the name.
+        idx: int = known_collections.count(current_name) + 1
+        known_collections.append(current_name)
+        return f"{current_name}_{idx}"
+
+
+def create_constant_table(
+    table_name: str,
+    column_names: list[str],
+    rows: list[SQLGlotExpression],
+    transform_bindings: "BaseTransformBindings",
+) -> SQLGlotExpression:
+    """
+    Generate a SQL that represents a constant table using the given list of
+    columns and rows. The final SQLGlot expression corresponds to the SQL:
+    When transform_bindings.values_alias_column is `True`:
+    SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} ) AS {table_name}
+
+    otherwise:
+    SELECT {column_names} FROM ( VALUES {rows} ) AS table_name ({column_names})
+
+    Args:
+        `table_name`: The name of the table
+        `column_names`: List with all column names
+        `rows`: List of rows containg the data from the dataframe.
+        `transform_bindings`: The tranform bindings class that called this function
+
+    Returns:
+        The SQLGlot expression for the constant table.
+
+    Note: This function is used for MySQL and SQlite to generate range
+    collections. And used for MySQL, SQlite, Snowflake and Postgres to generate
+    dataframe collection.
+    """
+    assert column_names != []
+
+    table_quoted, name_normalized = normalize_column_name(table_name)
+    expr_table: SQLGlotExpression = sqlglot_expressions.Identifier(
+        this=name_normalized, quoted=table_quoted
+    )
+
+    # Normalize the column names, deleting quotes and keeping track of which
+    # column names were quoted to begin with.
+    normalized_column_names: list[tuple[bool, str]] = [
+        normalize_column_name(col) for col in column_names
+    ]
+
+    columns_list: list[SQLGlotExpression] = [
+        sqlglot_expressions.Identifier(this=column, quoted=quoted)
+        for quoted, column in normalized_column_names
+    ]
+
+    result: SQLGlotExpression
+
+    if len(rows) == 0:
+        # Example:
+        # column_list = ['X', 'Y'] and types = ['INT', 'VARCHAR']
+        # SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y WHERE FALSE
+        result = create_empty_constant_table(columns_list, ["INT"] * len(columns_list))
+    else:
+        # Create the VALUES expression
+        values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
+
+        table_alias = sqlglot_expressions.TableAlias(
+            this=expr_table, columns=columns_list
+        )
+
+        # Subquery with alias for the VALUES expression
+        aliased_values = sqlglot_expressions.Subquery(
+            this=values_expr, alias=table_alias
+        )
+
+        # List of columns to select
+        select_columns: list[SQLGlotExpression] = []
+
+        for idx, column in enumerate(columns_list):
+            # Sqlite referred by default its values' columns as column1, column2
+            # and so on. Aliases are used to rename those. Other dialects can
+            # rename their columns directly.
+            if transform_bindings.values_alias_column:
+                column_enum: str = f"column{idx + 1}"
+                select_columns.append(
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Column(this=column_enum), alias=column
+                    )
+                )
+            else:
+                # This is used for MySQL, Postgres and Snowflake
+                select_columns.append(sqlglot_expressions.Column(this=column))
+
+        result = sqlglot_expressions.Select(expressions=select_columns).from_(
+            aliased_values
+        )
+
+    return result
+
+
+def create_empty_constant_table(
+    column_list: list[SQLGlotExpression], types: list[str]
+) -> SQLGlotExpression:
+    """
+    Construct a SQLGlot expression representing an empty user-defined constant
+    table with specified columns and types.
+
+    For example, for column_list = ['X', 'Y'] and types = ['INT', 'VARCHAR'],
+    the resulting SQLGlot expression corresponds to the SQL:
+        SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y
+        WHERE FALSE
+
+    Args:
+        `column_list`: List of all the column names.
+        `types`: List of types for each column respectively.
+
+    Notes:
+        - The length of column_list and types must match.
+
+    Returns:
+        The SQLGlot expression for an empty user collection.
+    """
+
+    assert len(column_list) == len(types)
+
+    expressions: list[SQLGlotExpression] = []
+
+    for idx, column in enumerate(column_list):
+        expressions.append(
+            sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Null(),
+                    to=sqlglot_expressions.DataType.build(types[idx]),
+                ),
+                alias=column,
+            )
+        )
+
+    return sqlglot_expressions.Select(expressions=expressions).where(
+        sqlglot_expressions.Boolean(this=False)
+    )
+
+
+def is_empty_range(collection: RangeGeneratedCollection) -> bool:
+    """
+    Helper function to determine if a range collection is empty.
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+    Returns:
+        True if the range is empty, False otherwise.
+    """
+
+    # Determine if the range is empty. An empty range occurs when:
+    # - step > 0 and start >= end
+    # - step < 0 and start <= end
+    # - step == 0
+    return (
+        (collection.step > 0 and collection.start >= collection.end)
+        or (collection.step < 0 and collection.start <= collection.end)
+        or (collection.step == 0)
+    )
+
+
+def generate_range_rows(
+    collection: RangeGeneratedCollection,
+    transform_bindings: "BaseTransformBindings",
+) -> list[SQLGlotExpression]:
+    """
+    Helper function to generate the rows for a given range collection
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+        `transform_bindings`: The tranform bindings class that called this function
+
+    Returns:
+        List of sqlglot expressions for the range, empty if it is an empty range
+    """
+
+    if is_empty_range(collection):
+        return []
+
+    range_rows: list[SQLGlotExpression] = [
+        # [(i), ... ]
+        sqlglot_expressions.Tuple(expressions=[sqlglot_expressions.Literal.number(i)])
+        if transform_bindings.values_tuple
+        # [ROW(i), ... ]
+        else sqlglot_expressions.Anonymous(
+            this="ROW", expressions=[sqlglot_expressions.Literal.number(i)]
+        )
+        for i in range(collection.start, collection.end, collection.step)
+    ]
+
+    return range_rows
+
+
+def generate_dataframe_rows(
+    collection: DataframeGeneratedCollection,
+    transform_bindings: "BaseTransformBindings",
+) -> list[SQLGlotExpression]:
+    """
+    Helper function to generate the rows for a given dataframe collection
+
+    Args:
+        `collection`: The dataframe collection for generate the rows.
+        `transform_bindings`: The tranform bindings class that called this function
+
+    Returns:
+        List of sqlglot expressions for the dataframe.
+
+    SQL Example:
+        Using item[row].[column], it generates the follwing list.
+        If transform_bindings.values_tuple is True the list will look like
+        this:
+            list[(item1.1, item1.2, ...), (item2.1, item2.2, ...), ...]
+
+        otherwise it will look like:
+            list[ROW(item1.1, item1.2, ...), ROW(item2.1, item2.2, ...), ...]
+    """
+    dataframe_rows: list[SQLGlotExpression] = []
+
+    for i in range(len(collection.dataframe)):
+        # For each row
+        row: Series = collection.dataframe.iloc[i]
+
+        # Contain the items (data) in the expression
+        # Example: sqlglot.Literal.number(data) for a numeric type
+        expr_list: list[SQLGlotExpression] = []
+
+        for type_idx, item in enumerate(row):
+            expr_list.append(
+                transform_bindings.generate_dataframe_item_expression(
+                    item, collection.types[type_idx]
+                )
+            )
+
+        # Append the row with its items to the final result
+        dataframe_rows.append(
+            # [(i), ... ]
+            sqlglot_expressions.Tuple(expressions=expr_list)
+            if transform_bindings.values_tuple
+            # [ROW(i), ... ]
+            else sqlglot_expressions.Anonymous(this="ROW", expressions=expr_list)
+        )
+
+    return dataframe_rows

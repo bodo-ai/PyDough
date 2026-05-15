@@ -1,0 +1,19 @@
+WITH "_S1" AS (
+  SELECT
+    sbtxtickerid AS SBTXTICKERID,
+    COUNT(*) AS N_ROWS,
+    SUM(sbtxamount) AS SUM_SBTXAMOUNT
+  FROM MAIN.SBTRANSACTION
+  GROUP BY
+    sbtxtickerid
+)
+SELECT
+  SBTICKER.sbtickersymbol AS symbol,
+  COALESCE("_S1".N_ROWS, 0) AS num_transactions,
+  COALESCE("_S1".SUM_SBTXAMOUNT, 0) AS total_amount
+FROM MAIN.SBTICKER SBTICKER
+LEFT JOIN "_S1" "_S1"
+  ON SBTICKER.sbtickerid = "_S1".SBTXTICKERID
+ORDER BY
+  3 DESC NULLS LAST
+FETCH FIRST 10 ROWS ONLY

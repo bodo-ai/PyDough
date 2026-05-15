@@ -3,8 +3,8 @@ WITH _t1 AS (
     ANY_VALUE(cars.make) AS anything_make,
     ANY_VALUE(cars.model) AS anything_model,
     COUNT(sales.car_id) AS count_car_id
-  FROM main.cars AS cars
-  LEFT JOIN main.sales AS sales
+  FROM dealership.cars AS cars
+  LEFT JOIN dealership.sales AS sales
     ON cars._id = sales.car_id
   WHERE
     LOWER(cars.vin_number) LIKE '%m5%'

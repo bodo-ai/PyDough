@@ -6,7 +6,7 @@ WITH _s2 AS (
       LPAD(EXTRACT(MONTH FROM CAST(start_dt AS DATETIME)), 2, '0')
     ) AS treatment_month,
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
-  FROM main.treatments
+  FROM treatments
   WHERE
     start_dt < STR_TO_DATE(
       CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
@@ -29,8 +29,8 @@ WITH _s2 AS (
       LPAD(EXTRACT(MONTH FROM CAST(treatments.start_dt AS DATETIME)), 2, '0')
     ) AS treatment_month,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
-  FROM main.treatments AS treatments
-  JOIN main.drugs AS drugs
+  FROM treatments AS treatments
+  JOIN drugs AS drugs
     ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'biologic'
   WHERE
     treatments.start_dt < STR_TO_DATE(

@@ -6,23 +6,36 @@ __all__ = ["SnowflakeTransformBindings"]
 
 
 import math
+from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
+from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
-from .sqlglot_transform_utils import DateTimeUnit
+from .sqlglot_transform_utils import (
+    DateTimeUnit,
+)
 
 
 class SnowflakeTransformBindings(BaseTransformBindings):
     """
     Subclass of BaseTransformBindings for the Snowflake dialect.
     """
+
+    @property
+    def values_alias_column(self) -> bool:
+        return False
 
     PYDOP_TO_SNOWFLAKE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.STARTSWITH: "STARTSWITH",
@@ -72,6 +85,43 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        assert len(args) == 1
+        # Cast as integer directly rounds the argument instead of truncate the
+        # decimal part. For example INTEGER(-5.88) returns -6, not -5.
+        # In that case, for literals first cast to DOUBLE then truncate the
+        # decimal part.
+        if isinstance(args[0], sqlglot_expressions.Literal):
+            return sqlglot_expressions.Anonymous(
+                this="TRUNCATE",
+                expressions=[
+                    sqlglot_expressions.Cast(
+                        this=args[0], to=sqlglot_expressions.DataType.build("DOUBLE")
+                    )
+                ],
+            )
+        else:
+            return sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("BIGINT")
+            )
+
+    def convert_current_timestamp(self) -> SQLGlotExpression:
+        """
+        Create a SQLGlot expression to obtain the current timestamp removing the
+        timezone and not DST-aware specifically for Snowflake.
+        SQL:
+            CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMP_NTZ)
+        """
+        return sqlglot_expressions.Cast(
+            this=sqlglot_expressions.ConvertTimezone(
+                target_tz=sqlglot_expressions.Literal.string("UTC"),
+                timestamp=sqlglot_expressions.CurrentTimestamp(),
+            ),
+            to=sqlglot_expressions.DataType.build("TIMESTAMPNTZ"),
+        )
+
     def convert_extract_datetime(
         self,
         args: list[SQLGlotExpression],
@@ -95,6 +145,12 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                     this=unit.value.upper(), expressions=[dt_expr]
                 )
         return func_expr
+
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
 
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
@@ -178,6 +234,16 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             A SQLGlotExpression representing the user-generated range as table.
         """
 
+        name_quoted, name_normalized = normalize_column_name(collection.name)
+        name_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=name_normalized, quoted=name_quoted
+        )
+
+        column_quoted, column_normalized = normalize_column_name(collection.column_name)
+        column_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=column_normalized, quoted=column_quoted
+        )
+
         # Calculate the number of rows needed for the range (end-start)/step
         row_count: int = math.ceil(
             (collection.end - collection.start) / collection.step
@@ -193,9 +259,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                             this=sqlglot_expressions.Null(),
                             to=sqlglot_expressions.DataType.build("INTEGER"),
                         ),
-                        alias=sqlglot_expressions.Identifier(
-                            this=collection.column_name
-                        ),
+                        alias=column_identifier,
                     )
                 ],
             ).where(sqlglot_expressions.false())
@@ -236,9 +300,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 expressions=[
                     sqlglot_expressions.Alias(
                         this=final_expr,
-                        alias=sqlglot_expressions.Identifier(
-                            this=collection.column_name
-                        ),
+                        alias=column_identifier,
                     )
                 ]
             ).from_(
@@ -266,7 +328,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             # WITH table_name AS ( ...inner_select... )
             subquery: SQLGlotExpression = sqlglot_expressions.Subquery(
                 this=inner_select,
-                alias=sqlglot_expressions.Identifier(this=collection.name),
+                alias=name_identifier,
             )
 
             # 5. Outer SELECT that references the subquery
@@ -274,9 +336,36 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             query = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Column(
-                        this=collection.column_name, table=collection.name
+                        this=column_identifier, table=name_identifier
                     )
                 ]
             ).from_(subquery)
 
         return query
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Anonymous(
+                    this="TO_TIMESTAMP_NTZ",
+                    expressions=[sqlglot_expressions.Literal.string(item)],
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Anonymous(
+                            this="TO_DOUBLE",
+                            expressions=[sqlglot_expressions.Literal.string("INF")],
+                        )
+                    else:
+                        return sqlglot_expressions.Anonymous(
+                            this="TO_DOUBLE",
+                            expressions=[sqlglot_expressions.Literal.string("-INF")],
+                        )
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:
+                return sqlglot_expressions.Literal.string(str(item))

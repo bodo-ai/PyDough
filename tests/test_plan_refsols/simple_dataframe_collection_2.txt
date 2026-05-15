@@ -1,0 +1,2 @@
+ROOT(columns=[('signup_date', signup_date), ('user_id', user_id)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='users', shape=(4, 2), columns=['signup_date', 'user_id']))

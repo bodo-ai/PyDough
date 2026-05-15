@@ -1,0 +1,2 @@
+ROOT(columns=[('user_id', user_id), ('"`name""["', "`name""["), ('"space country"', "space country"), ('"CAST"', "CAST")], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='users', shape=(4, 4), columns=['user_id', '"`name""["', '"space country"', '"CAST"']))

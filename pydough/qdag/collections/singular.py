@@ -27,7 +27,7 @@ class Singular(AugmentingChildOperator):
 
     @property
     def standalone_string(self) -> str:
-        return "SINGULAR"
+        return "SINGULAR()"
 
     @property
     def tree_item_string(self) -> str:

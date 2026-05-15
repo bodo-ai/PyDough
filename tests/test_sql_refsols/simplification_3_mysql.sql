@@ -2,9 +2,9 @@ WITH _t2 AS (
   SELECT
     ABS(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) AS expr_13,
     ROW_NUMBER() OVER (ORDER BY CASE WHEN sbcustname COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, sbcustname COLLATE utf8mb4_bin) AS `rank`,
-    AVG(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER () AS ravg1,
+    AVG(CAST(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0)) AS DOUBLE)) OVER () AS ravg1,
     COALESCE(
-      AVG(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(CAST(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0)) AS DOUBLE)) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
     COUNT(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) OVER () AS rcnt1,
@@ -35,7 +35,7 @@ WITH _t2 AS (
     rsum1,
     rsum2,
     CASE
-      WHEN TRUNCATE(CAST(0.75 * COUNT(expr_13) OVER () AS FLOAT), 0) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
+      WHEN FLOOR(0.75 * COUNT(expr_13) OVER ()) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
       THEN expr_13
       ELSE NULL
     END AS expr_15,

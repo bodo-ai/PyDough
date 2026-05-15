@@ -2,11 +2,11 @@ WITH _s0 AS (
   SELECT
     city_name,
     region
-  FROM main.geographic
+  FROM restaurants.geographic
 ), _s1 AS (
   SELECT
     city_name
-  FROM main.restaurant
+  FROM restaurants.restaurant
 ), _u_0 AS (
   SELECT
     city_name AS _u_1
@@ -32,7 +32,7 @@ WITH _s0 AS (
     city_name,
     COUNT(rating) AS count_rating,
     SUM(rating) AS sum_rating
-  FROM main.restaurant
+  FROM restaurants.restaurant
   GROUP BY
     1
 ), _s7 AS (

@@ -234,7 +234,7 @@ from tests.testing_utilities import (
                 name=ReferenceInfo("name"),
                 okey=ChildReferenceExpressionInfo("key", 0),
             ),
-            "Expected all terms in CALCULATE(name=name, okey=customers.SINGULAR.orders.key) to be singular, but encountered a plural expression: customers.SINGULAR.orders.key",
+            "Expected all terms in CALCULATE(name=name, okey=customers.SINGULAR().orders.key) to be singular, but encountered a plural expression: customers.SINGULAR().orders.key",
             id="bad_plural_j",
         ),
     ],

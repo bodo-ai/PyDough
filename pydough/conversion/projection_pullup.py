@@ -719,12 +719,12 @@ class ProjectionPullupShuttle(RelationalShuttle):
 
     def visit_join(self, node: Join) -> RelationalNode:
         # For Join nodes, pull projections from the left input (also the right
-        # for INNER joins), then eject the non-column expressions
+        # for INNER or SEMI joins), then eject the non-column expressions
         # into a parent projection.
         new_node = self.generic_visit_inputs(node)
         assert isinstance(new_node, Join)
         pull_project_into_join(new_node, 0)
-        if new_node.join_type == JoinType.INNER:
+        if new_node.join_type in (JoinType.INNER, JoinType.SEMI):
             pull_project_into_join(new_node, 1)
         return pull_non_columns(new_node)
 

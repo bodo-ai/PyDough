@@ -1,5 +1,5 @@
 ROOT(columns=[('cast_', ```cast```), ('name', "`name""["), ('quote_', `= "QUOTE"`), ('_0_0_and', `0 = 0 and '`), ('as_', `as`)], orderings=[])
  JOIN(condition=t0."`name""[" == t1.id, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'"`name""["': t0."`name""[", "`0 = 0 and '`": t1.`0 = 0 and '`, '`= "QUOTE"`': t0.`= "QUOTE"`, '```cast```': t0.```cast```, '`as`': t1.`as`})
-  FILTER(condition="`name""[" == 7:numeric & `= "QUOTE"` == 4:numeric, columns={'"`name""["': "`name""[", '`= "QUOTE"`': `= "QUOTE"`, '```cast```': ```cast```})
+  FILTER(condition=("`name""[" == 7:numeric) & (`= "QUOTE"` == 4:numeric), columns={'"`name""["': "`name""[", '`= "QUOTE"`': `= "QUOTE"`, '```cast```': ```cast```})
    SCAN(table=keywords."""QUOTED TABLE_NAME""", columns={'"`name""["': "`name""[", '`= "QUOTE"`': `= "QUOTE"`, '```cast```': ```cast```})
   SCAN(table=keywords."lowercase_detail", columns={"`0 = 0 and '`": `0 = 0 and '`, '`as`': `as`, 'id': id})

@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   COUNT(*) AS num_customers
-FROM main.sbCustomer
+FROM broker.sbCustomer
 GROUP BY
   1
 ORDER BY

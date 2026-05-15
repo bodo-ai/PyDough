@@ -1,0 +1,25 @@
+WITH "_T" AS (
+  SELECT
+    o_custkey AS O_CUSTKEY,
+    o_totalprice AS O_TOTALPRICE,
+    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_orderdate DESC, o_orderkey) AS "_W"
+  FROM TPCH.ORDERS
+), "_S1" AS (
+  SELECT
+    O_CUSTKEY,
+    SUM(O_TOTALPRICE) AS SUM_O_TOTALPRICE
+  FROM "_T"
+  WHERE
+    "_W" <= 5
+  GROUP BY
+    O_CUSTKEY
+)
+SELECT
+  CUSTOMER.c_name AS name,
+  COALESCE("_S1".SUM_O_TOTALPRICE, 0) AS total_recent_value
+FROM TPCH.CUSTOMER CUSTOMER
+JOIN "_S1" "_S1"
+  ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
+ORDER BY
+  2 DESC NULLS LAST
+FETCH FIRST 3 ROWS ONLY

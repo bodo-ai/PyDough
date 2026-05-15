@@ -2,9 +2,12 @@ WITH _s1 AS (
   SELECT
     sbtxtickerid,
     COUNT(*) AS n_rows
-  FROM main.sbtransaction
+  FROM broker.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -10, CURRENT_TIMESTAMP()))
+    sbtxdatetime >= DATE_TRUNC(
+      'DAY',
+      DATEADD(DAY, -10, CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
     AND sbtxtype = 'buy'
   GROUP BY
     1
@@ -12,7 +15,7 @@ WITH _s1 AS (
 SELECT
   sbticker.sbtickersymbol AS symbol,
   COALESCE(_s1.n_rows, 0) AS tx_count
-FROM main.sbticker AS sbticker
+FROM broker.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY

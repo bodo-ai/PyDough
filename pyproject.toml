@@ -20,14 +20,14 @@ classifiers = [
 
 # Note: sqlite is included in the standard library, so it doesn't need to be listed here.
 # There is a bug in some unit tests when run with sqlglot>=26.8.0
-dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab"]
+dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab", "pyarrow>=22.0.0"]
 
 [project.urls]
 # TODO: Add homepage + documentation when docs are live.
 Repository = "https://github.com/bodo-ai/PyDough"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pre-commit",
     "pytest",
     "ruff==0.6.7",
@@ -37,13 +37,17 @@ dev-dependencies = [
     "pydough[mysql]",
     "pydough[postgres]",
     "pydough[server]",
+    "pydough[bodosql]",
+    "pydough[oracle]",
 ]
 
 [project.optional-dependencies]
-snowflake = ["snowflake-connector-python[pandas]"]
-mysql = ["mysql-connector-python"]
+snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
+mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
+bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0"]
+oracle = ["oracledb==3.4.2"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

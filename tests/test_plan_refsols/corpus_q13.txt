@@ -1,0 +1,5 @@
+ROOT(columns=[('act', ACT), ('avg_char_count', ROUND(anything_avg_length, 2:numeric)), ('n_above_avg', sum_expr_4), ('pct_above_avg', ROUND(((100:numeric * sum_expr_4) / n_rows), 2:numeric))], orderings=[(ACT):asc_first])
+ AGGREGATE(keys={'ACT': ACT}, aggregations={'anything_avg_length': ANYTHING(avg_length), 'n_rows': COUNT(), 'sum_expr_4': SUM(expr_4)})
+  PROJECT(columns={'ACT': ACT, 'avg_length': RELAVG(args=[LENGTH(LINEWORD)], partition=[ACT], order=[]), 'expr_4': IFF((LENGTH(LINEWORD) > RELAVG(args=[LENGTH(LINEWORD)], partition=[ACT], order=[])), 1:numeric, 0:numeric)})
+   FILTER(condition=PLAY == 'loves labours lost':string, columns={'ACT': ACT, 'LINEWORD': LINEWORD})
+    SCAN(table=SHAKE, columns={'ACT': ACT, 'LINEWORD': LINEWORD, 'PLAY': PLAY})

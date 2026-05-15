@@ -3,13 +3,13 @@ WITH _t1 AS (
     ANY_VALUE(cars.make) AS anything_make,
     ANY_VALUE(cars.model) AS anything_model,
     COUNT(sales.car_id) AS count_car_id
-  FROM main.cars AS cars
-  LEFT JOIN main.sales AS sales
-    ON cars._id = sales.car_id
+  FROM dealership.cars AS cars
+  LEFT JOIN dealership.sales AS sales
+    ON cars.id = sales.car_id
   WHERE
     CONTAINS(LOWER(cars.vin_number), 'm5')
   GROUP BY
-    cars._id
+    cars.id
 )
 SELECT
   anything_make AS make,

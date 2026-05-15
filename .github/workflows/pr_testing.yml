@@ -16,6 +16,10 @@ on:
         description: "Python 3.12"
         type: boolean
         default: true
+      py313:
+        description: "Python 3.13"
+        type: boolean
+        default: true
       run-all:
         description: "Run All Tests"
         type: boolean
@@ -26,6 +30,11 @@ on:
         type: boolean
         required: false
         default: true
+      run-dialects:
+        description: "Run All Dialect Tests"
+        type: boolean
+        required: false
+        default: false
       run-sf:
         description: "Run Snowflake Tests"
         type: boolean
@@ -40,6 +49,11 @@ on:
         description: "Run Postgres Tests"
         type: boolean
         required: false
+        default: false   
+      run-oracle:
+        description: "Run Oracle Tests"
+        type: boolean
+        required: false
         default: false        
       run-sf_masked:
         description: "Run Snowflake Masked Tests"
@@ -48,6 +62,11 @@ on:
         default: false
       run-s3:
         description: "Run S3 Datasets Tests"
+        type: boolean
+        required: false
+        default: false
+      run-bodosql:
+        description: "Run BodoSQL Tests"
         type: boolean
         required: false
         default: false
@@ -103,9 +122,12 @@ jobs:
             if [ "${{ inputs.py312 }}" == "true" ]; then
               versions+=("\"3.12\"")
             fi
+            if [ "${{ inputs.py313 }}" == "true" ]; then
+              versions+=("\"3.13\"")
+            fi
           else
             # For pull_request and other events, use all versions by default
-            versions=( "\"3.10\"" "\"3.11\"" "\"3.12\"" )
+            versions=( "\"3.10\"" "\"3.11\"" "\"3.12\"" "\"3.13\"" )
           fi
           # Join the array elements with commas and wrap in brackets to make valid JSON
           joined=$(IFS=, ; echo "[${versions[*]}]")
@@ -127,7 +149,7 @@ jobs:
       matrix:
         python-version: ${{ github.event_name == 'workflow_dispatch'
                         && fromJSON(needs.get-py-ver-matrix.outputs.matrix)
-                        || fromJSON('["3.10", "3.11", "3.12"]') }}
+                        || fromJSON('["3.10", "3.11", "3.12", "3.13"]') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -142,7 +164,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           # Install a specific version of uv.
-          version: "0.4.23"
+          version: "0.6.0"
 
       - name: Download TPCH DB
         run: ./demos/setup_tpch.sh ./tpch.db
@@ -151,15 +173,16 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3 or bodosql or oracle)" -rs
 
   run-defog-daily-update:
     name: Run DEFOG Daily Update
     needs: [get-msg]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-sf))
     uses: ./.github/workflows/defog_daily_update.yml
     secrets:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
@@ -171,8 +194,9 @@ jobs:
     needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-sf))
     uses: ./.github/workflows/sf_testing.yml
     secrets:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
@@ -181,15 +205,16 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-mysql-tests:
     name: MySQL Tests
     needs: [get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-mysql))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-mysql))
     uses: ./.github/workflows/mysql_testing.yml
     secrets:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
@@ -197,15 +222,16 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-postgres-tests:
     name: Postgres Tests
     needs: [get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run postgres]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-postgres))
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-postgres))
     uses: ./.github/workflows/postgres_testing.yml
     secrets:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -213,7 +239,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-sf-masked-tests:
     name: Masked Snowflake Tests
@@ -231,10 +257,11 @@ jobs:
       SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
       SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
       SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
+      PYDOUGH_MASK_SERVER_PATH: ${{ secrets.PYDOUGH_MASK_SERVER_PATH }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
 
   run-s3-tests:
     name: S3 datasets Tests
@@ -249,4 +276,34 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12"]' }}
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+
+  run-bodosql-tests:
+    name: BodoSQL Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run bodosql]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-bodosql))
+    uses: ./.github/workflows/bodosql_testing.yml
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+
+  run-oracle-tests:
+    name: Oracle Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run oracle]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-oracle))
+    uses: ./.github/workflows/oracle_testing.yml
+    secrets:
+      ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12", "3.13"]' }}

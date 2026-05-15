@@ -1,5 +1,5 @@
 SELECT
-  CAST(COALESCE(SUM(status = 'success'), 0) AS REAL) / COUNT(*) AS _expr0
+  CAST(COALESCE(SUM(status = 'success'), 0) AS REAL) / NULLIF(COUNT(*), 0) AS _expr0
 FROM main.wallet_transactions_daily
 WHERE
   (

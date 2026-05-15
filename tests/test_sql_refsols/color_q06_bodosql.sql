@@ -1,0 +1,16 @@
+WITH _t0 AS (
+  SELECT
+    dos,
+    COUNT(*) AS n_rows
+  FROM shpmnts
+  WHERE
+    dos <= CAST('2024-01-20' AS DATE) AND dos >= CAST('2024-01-15' AS DATE)
+  GROUP BY
+    1
+)
+SELECT
+  dos AS day,
+  SUM(n_rows) OVER (ORDER BY dos ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cum_ships
+FROM _t0
+ORDER BY
+  1 NULLS FIRST

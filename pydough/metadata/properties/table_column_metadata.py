@@ -40,10 +40,10 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         collection: CollectionMetadata,
         data_type: PyDoughType,
         column_name: str,
-        sample_values: list | None = None,
-        description: str | None = None,
-        synonyms: list[str] | None = None,
-        extra_semantic_info: dict | None = None,
+        sample_values: list | None,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
         super().__init__(
             name,
@@ -112,6 +112,10 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             collection,
             data_type,
             column_name,
+            None,
+            None,
+            None,
+            None,
         )
         # Parse the optional common semantic properties like the description.
         property.parse_optional_properties(property_json)

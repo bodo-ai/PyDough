@@ -1,2 +1,2 @@
-ROOT(columns=[('key', s_key), ('page_rank', ROUND(1.0:numeric / RELSIZE(args=[], partition=[], order=[]), 5:numeric))], orderings=[(s_key):asc_first])
+ROOT(columns=[('key', s_key), ('page_rank', ROUND((1.0:numeric / RELSIZE(args=[], partition=[], order=[])), 5:numeric))], orderings=[(s_key):asc_first])
  SCAN(table=main.SITES, columns={'s_key': s_key})

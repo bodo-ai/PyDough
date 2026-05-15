@@ -1,0 +1,30 @@
+SELECT
+  DATEADD(
+    DAY,
+    -1,
+    DATEADD(
+      MONTH,
+      5,
+      DATE_TRUNC('YEAR', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+    )
+  ) AS d1,
+  DATEADD(
+    HOUR,
+    24,
+    DATE_TRUNC('MONTH', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+  ) AS d2,
+  DATEADD(
+    SECOND,
+    2,
+    DATEADD(
+      MINUTE,
+      -150,
+      DATEADD(
+        HOUR,
+        12,
+        DATE_TRUNC('DAY', CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ))
+      )
+    )
+  ) AS d3
+FROM (VALUES
+  (NULL)) AS _q_0(_col_0)

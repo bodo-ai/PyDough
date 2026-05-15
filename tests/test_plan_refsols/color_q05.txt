@@ -1,0 +1,4 @@
+ROOT(columns=[('rainbow_color', first_word), ('n', n_rows)], orderings=[])
+ AGGREGATE(keys={'first_word': LOWER(GETPART(colorname, ' ':string, 1:numeric))}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(LOWER(GETPART(colorname, ' ':string, 1:numeric)), ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet']:array[unknown]), columns={'colorname': colorname})
+   SCAN(table=CLRS, columns={'colorname': colorname})

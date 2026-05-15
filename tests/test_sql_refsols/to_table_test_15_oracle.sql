@@ -1,0 +1,4 @@
+SELECT
+  "key",
+  name
+FROM TOP_NATIONS_T15

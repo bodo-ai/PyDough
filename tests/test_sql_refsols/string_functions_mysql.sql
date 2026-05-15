@@ -7,6 +7,7 @@ SELECT
   CUSTOMER.c_name LIKE '%sub%' AS contains_sub,
   CUSTOMER.c_name LIKE '%test%' AS matches_like,
   CONCAT_WS('::', CUSTOMER.c_name, NATION.n_name) AS joined_string,
+  NULL AS join_nulls,
   LPAD(CUSTOMER.c_name, 20, '*') AS lpad_name,
   RPAD(CUSTOMER.c_name, 20, '-') AS rpad_name,
   CASE

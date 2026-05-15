@@ -1,0 +1,18 @@
+WITH "_T1" AS (
+  SELECT
+    n_nationkey AS N_NATIONKEY,
+    n_regionkey AS N_REGIONKEY
+  FROM TPCH.NATION
+  WHERE
+    n_regionkey = 2
+)
+SELECT
+  COUNT(*) AS n
+FROM TPCH.SUPPLIER SUPPLIER
+JOIN "_T1" "_T1"
+  ON SUPPLIER.s_nationkey = "_T1".N_NATIONKEY
+JOIN "_T1" "_T2"
+  ON "_T1".N_REGIONKEY = "_T2".N_REGIONKEY
+JOIN TPCH.CUSTOMER CUSTOMER
+  ON CUSTOMER.c_custkey = SUPPLIER.s_suppkey
+  AND CUSTOMER.c_nationkey = "_T2".N_NATIONKEY

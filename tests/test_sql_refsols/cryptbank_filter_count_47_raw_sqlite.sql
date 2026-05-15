@@ -1,0 +1,5 @@
+SELECT
+  COUNT(*) AS n
+FROM crbnk.customers
+WHERE
+  NOT COALESCE(CAST(STRFTIME('%Y', DATE(c_birthday, '+472 days')) AS INTEGER), 1990) IN (1990, 1991)

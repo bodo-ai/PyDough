@@ -5,8 +5,12 @@ SELECT
     THEN COALESCE(SUM(wallet_transactions_daily.amount), 0)
     ELSE NULL
   END AS total_amount
-FROM main.wallet_transactions_daily AS wallet_transactions_daily
-JOIN main.users AS users
+FROM ewallet.wallet_transactions_daily AS wallet_transactions_daily
+JOIN ewallet.users AS users
   ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
 WHERE
-  DATEDIFF(DAY, CAST(wallet_transactions_daily.created_at AS DATETIME), CURRENT_TIMESTAMP()) <= 7
+  DATEDIFF(
+    DAY,
+    CAST(wallet_transactions_daily.created_at AS DATETIME),
+    CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
+  ) <= 7

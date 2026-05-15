@@ -40,7 +40,7 @@ SELECT
         ) / CHAR_LENGTH(' ') + 1 >= ABS(-1)
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', -1), ' ', 1)
         ELSE NULL
-      END
+      END COLLATE utf8mb4_bin
     )
   ) AS b,
   CASE

@@ -5,9 +5,12 @@ implementations of how to convert them to SQLGlot expressions
 
 __all__ = ["BaseTransformBindings"]
 
+import datetime
+import math
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.expressions import Concat
@@ -16,17 +19,32 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.errors import PyDoughSQLException
-from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
+from pydough.types import (
+    BooleanType,
+    DatetimeType,
+    NumericType,
+    PyDoughType,
+    StringType,
+)
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.user_collections.view_collection import ViewGeneratedCollection
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     current_ts_pattern,
+    generate_dataframe_rows,
+    generate_range_rows,
     offset_pattern,
     pad_helper,
     positive_index,
+    rename_user_collection,
     trunc_pattern,
 )
 
@@ -44,6 +62,7 @@ class BaseTransformBindings:
     def __init__(self, configs: PyDoughConfigs, visitor: "SQLGlotRelationalVisitor"):
         self._configs = configs
         self._visitor = visitor
+        self._known_collections: list[str] = []
 
     @property
     def configs(self) -> PyDoughConfigs:
@@ -86,6 +105,49 @@ class BaseTransformBindings:
             "Friday": 5,
             "Saturday": 6,
         }
+
+    @property
+    def values_tuple(self) -> bool:
+        """
+        This property determine if the rows in VALUES for `GeneratedCollection` are
+        surrounded by a Tuple() or ROW().
+
+        If `True` the rows are build with Tuple (used with some dialects).
+        Example:
+        {rows} = [(column1, column2, ...), (...), ... ]
+
+        If `False` the rows are build with ROW (required for MySQL)
+        Example:
+        {rows} = [ROW(column1, column2, ...), ROW(...), ...]
+        """
+        return True
+
+    @property
+    def values_alias_column(self) -> bool:
+        """
+        Determine if the columns in VALUES can be renamed directly or not.
+
+        If `True` the columns should be renamed with an alias (needed for SQlite).
+        Example:
+        SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} )
+        AS {table_name}
+
+        If `False` the columns can be rename directly
+        Example:
+        SELECT {column_names} FROM ( VALUES {rows} )
+        AS table_name ({column_names})
+
+        Note: {column_names} is a list[str] with the names of the columns
+        respectively.
+        """
+        return True
+
+    @property
+    def known_collections(self) -> list[str]:
+        """
+        The list of known collection names that are user-generated.
+        """
+        return self._known_collections
 
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
@@ -195,7 +257,7 @@ class BaseTransformBindings:
             return parse_one(combined_string)
         match operator:
             case pydop.NOT:
-                return sqlglot_expressions.Not(this=args[0])
+                return sqlglot_expressions.Not(this=apply_parens(args[0]))
             case pydop.NDISTINCT:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
@@ -366,7 +428,22 @@ class BaseTransformBindings:
         to_strip: SQLGlotExpression = args[0]
         strip_char_glot: SQLGlotExpression
         if len(args) == 1:
-            strip_char_glot = sqlglot_expressions.Literal.string("\n\t ")
+            strip_char_glot = sqlglot_expressions.Concat(
+                expressions=[
+                    sqlglot_expressions.Anonymous(
+                        this="CHAR",
+                        expressions=[sqlglot_expressions.Literal.number(10)],
+                    ),  # newline
+                    sqlglot_expressions.Anonymous(
+                        this="CHAR", expressions=[sqlglot_expressions.Literal.number(9)]
+                    ),  # tab
+                    sqlglot_expressions.Anonymous(
+                        this="CHAR",
+                        expressions=[sqlglot_expressions.Literal.number(13)],
+                    ),  # carriage return
+                    sqlglot_expressions.Literal.string(" "),
+                ]
+            )
         else:
             strip_char_glot = args[1]
         return sqlglot_expressions.Trim(
@@ -1307,6 +1384,50 @@ class BaseTransformBindings:
         assert len(args) == 1
         return sqlglot_expressions.Floor(this=args[0], expressions=args)
 
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        """
+        Special handling: insert cast calls for ansi casting of date/time
+        instead of relying on SQLGlot conversion functions. This is because
+        the default handling in SQLGlot without a dialect is to produce a
+        nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
+        specific dialect is responsible for translating into its own logic.
+        Rather than have that logic show up in the ANSI sql text, we will
+        instead create the CAST calls ourselves.
+
+        Args:
+            `arg`: literal expression being converted
+
+        Returns:
+            The SQLGlot expression for the given literal expression
+        """
+
+        if isinstance(arg.value, datetime.datetime):
+            date_time: datetime.datetime = arg.value
+
+            if date_time.tzinfo is not None:
+                raise PyDoughSQLException(
+                    "PyDough does not yet support datetime values with a timezone"
+                )
+
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.convert(date_time.isoformat(sep=" ")),
+                to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+            )
+
+        elif isinstance(arg.value, datetime.date):
+            date: datetime.date = arg.value
+
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                to=sqlglot_expressions.DataType.build("DATE"),
+            )
+
+        else:
+            return sqlglot_expressions.convert(arg.value)
+
     def convert_datediff(
         self,
         args: list[SQLGlotExpression],
@@ -2156,12 +2277,28 @@ class BaseTransformBindings:
         """
         return arg
 
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        """
+        Return a SQLGlot expression that represents a single-row, empty (NULL)
+        singleton.
+
+        Returns:
+            A SQLGlotExpression that selects from a one-row VALUES tuple
+            containing a single NULL.
+        """
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
+        )
+
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
     ) -> SQLGlotExpression:
         """
-        Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
+        Converts a user-generated collection (e.g., range, dataframe, or
+        [temporary] view/table) into a SQLGlot expression.
 
         Args:
             `collection`: The user-generated collection to convert.
@@ -2170,25 +2307,170 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the user-generated collection.
         """
 
+        if not isinstance(collection, ViewGeneratedCollection):
+            # For views/tables, don't rename because these are actual database
+            # table names, not generated aliases.
+            # Rename range/dataframe collection to ensure it is unique in the query,
+            # to avoid naming conflicts with other collections.
+            collection.name = rename_user_collection(
+                self.known_collections, collection.name
+            )
+
         match collection:
             case RangeGeneratedCollection():
                 return self.convert_user_generated_range(collection)
+            case DataframeGeneratedCollection():
+                return self.convert_user_generated_dataframe(collection)
+            case ViewGeneratedCollection():
+                return self.convert_user_generated_view(collection)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
                 )
 
     def convert_user_generated_range(
-        self,
-        collection: RangeGeneratedCollection,
+        self, collection: RangeGeneratedCollection
     ) -> SQLGlotExpression:
         """
-        Converts a user-generated range into a SQLGlot expression.
+        Converts a user-generated range collection to its SQLGlot
+        representation.
+
         Args:
-            `collection`: The user-generated range to convert.
+            `collection` : The user-generated range collection to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
-        raise NotImplementedError(
-            "range_collections are not supported for this dialect"
+        # Generate rows for the range, using Tuple.
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, self)
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, [collection.column_name], range_rows, self
         )
+
+        return result
+
+    def convert_user_generated_dataframe(
+        self, collection: DataframeGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated dataframe collection to its SQLGlot
+        representation.
+
+        Args:
+            `collection` : The user-generated dataframe collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated dataframe as table.
+        """
+
+        dataframe_rows: list[SQLGlotExpression] = generate_dataframe_rows(
+            collection,
+            self,
+        )
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name,
+            collection.columns,
+            dataframe_rows,
+            self,
+        )
+
+        return result
+
+    def convert_user_generated_view(
+        self, collection: ViewGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated view/table collection to its SQLGlot
+        representation. Since the view/table already exists in the database,
+        we just generate a SELECT from the view/table name.
+
+        Args:
+            `collection`: The user-generated view collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing a SELECT from the view/table.
+        """
+
+        # Create the table reference using the SQL name (write_path if set,
+        # otherwise name). Handles qualified names like "db.schema.table".
+        table_ref = sqlglot_expressions.to_table(collection.sql_name)
+
+        # Build SELECT col1, col2, ... FROM view_name
+        # We must explicitly select columns (not SELECT *) so that the
+        # column names are available for merging selects in the SQL generator
+        column_exprs = [
+            sqlglot_expressions.column(col_name) for col_name in collection.columns
+        ]
+        result: SQLGlotExpression = (
+            sqlglot_expressions.Select().select(*column_exprs).from_(table_ref)
+        )
+
+        return result
+
+    def generate_dataframe_item_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for given item and pydough type.
+
+        Args:
+            `item` : The actual value stored in the dataframe.
+            `item_type` : The mapped PydDough type for this item.
+
+        Returns:
+            A SQLGlotExpression representing the item and its value.
+
+        Note: This covers the standard representations
+        (None, NaN, BooleanType, StringType) meaning that this representation
+        works through all current dialects.
+        """
+
+        if item is None or pd.isna(item):
+            return sqlglot_expressions.Null()
+
+        match item_type:
+            case BooleanType():
+                return sqlglot_expressions.Boolean(this=bool(item))
+
+            case StringType():
+                return sqlglot_expressions.Literal.string(item)
+
+            case _:  # Specific dialect expression
+                return self.generate_dataframe_item_dialect_expression(item, item_type)
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for given item and pydough type.
+
+        Args:
+            `item` : The actual value stored in the dataframe.
+            `item_type` : The mapped PydDough type for this item.
+
+        Returns:
+            A SQLGlotExpression representing the item and its value.
+
+        Note: This covers the NOT standard representations
+        (Datetime, NumericType, UnknownType) meaning that the expression
+        changes in different dialects.
+        """
+
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    if item >= 0:
+                        return sqlglot_expressions.Literal.string("Infinity")
+                    else:
+                        return sqlglot_expressions.Literal.string("-Infinity")
+
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))

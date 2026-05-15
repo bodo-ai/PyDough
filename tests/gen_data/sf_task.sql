@@ -1,3 +1,12 @@
+-----------------------------------------------------------------
+-- 0. Create lock table to prevent concurrent procedure runs  --
+-----------------------------------------------------------------
+
+CREATE OR REPLACE TABLE DEFOG.BROKER.DAILY_UPDATE_LOCK (
+    lock_date DATE,
+    PRIMARY KEY (lock_date)
+);
+
 ------------------------------------
 -- 1. Create the stored procedure --
 ------------------------------------
@@ -8,6 +17,26 @@ LANGUAGE SQL
 AS
 $$
 BEGIN
+  ALTER SESSION SET TIMEZONE = 'UTC';
+
+  -- Atomically attempt to acquire today's lock.
+  -- MERGE is used because Snowflake does not enforce PRIMARY KEY constraints.
+  -- The MERGE acquires a table-level lock, so concurrent sessions are serialized:
+  -- the first one inserts (SQLROWCOUNT = 1) and proceeds; all others find the row
+  -- already present (SQLROWCOUNT = 0) and skip.
+  MERGE INTO DEFOG.BROKER.DAILY_UPDATE_LOCK AS target
+  USING (SELECT CURRENT_DATE() AS lock_date) AS source
+  ON target.lock_date = source.lock_date
+  WHEN NOT MATCHED THEN
+      INSERT (lock_date) VALUES (source.lock_date);
+
+  IF (SQLROWCOUNT = 0) THEN
+      ALTER SESSION SET TIMEZONE = 'America/Los_Angeles';
+      RETURN 'Update already completed today, skipping.';
+  END IF;
+
+  -- Clean up lock rows older than today (one row per past day, no longer needed).
+  DELETE FROM DEFOG.BROKER.DAILY_UPDATE_LOCK WHERE lock_date < CURRENT_DATE();
 
   DELETE FROM DEFOG.EWALLET.USERS;
   INSERT INTO DEFOG.EWALLET.USERS(uid, username, email, phone_number, created_at, user_type, status, country, address_billing, address_delivery, kyc_status) 
@@ -597,6 +626,18 @@ VALUES
 (20, 26, CURRENT_DATE - INTERVAL '5 months' + INTERVAL '7 days', 25, NULL, NULL, 15.0, NULL, NULL, 20.0, NULL, NULL, 75, NULL, NULL, 0.5, NULL, NULL),
 (21, 26, CURRENT_DATE - INTERVAL '1 month', 25, 18, 10, 15.0, 10.0, 5.0, 20.0, 17.0, 13.0, 75, 55, 35, 0.5, 1.5, 3.0);
 
+
+  -- Reset time session back to Pacific Time
+  ALTER SESSION SET TIMEZONE = 'America/Los_Angeles';
+  RETURN 'Update completed successfully.';
+
+EXCEPTION
+  WHEN OTHER THEN
+    -- Unexpected error: release the lock and reset timezone so the procedure
+    -- can be retried.
+    DELETE FROM DEFOG.BROKER.DAILY_UPDATE_LOCK WHERE lock_date = CURRENT_DATE();
+    ALTER SESSION SET TIMEZONE = 'America/Los_Angeles';
+    RAISE;
 END
 $$;
 
@@ -604,8 +645,8 @@ $$;
 -- 2. Create a task that calls the procedure everyday at midnight ET  --  
 ------------------------------------------------------------------------
 CREATE OR REPLACE TASK DEFOG.BROKER.UPDATE_DATA_TASK_MIDNIGHT
-  WAREHOUSE = "DEMO_WH"                
-  SCHEDULE = 'USING CRON 0 5 * * * UTC'
+  WAREHOUSE = "DEMO_WH"
+  SCHEDULE = 'USING CRON 0 0 * * * UTC'
 AS
   CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
 
@@ -626,7 +667,9 @@ GRANT EXECUTE TASK ON ACCOUNT TO ROLE SYSADMIN;
 -- Test procedure manually
 -- Test task manually
 ----------------------------------------------------
-CALL EFOG.BROKER.DEFOG_DAILY_UPDATE();
+-- To re-enforce manual run, make sure to delete lock
+DELETE FROM DEFOG.BROKER.DAILY_UPDATE_LOCK WHERE lock_date = CURRENT_DATE();
+CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
 EXECUTE TASK DEFOG.BROKER.UPDATE_DATA_TASK_MIDNIGHT;
 
 

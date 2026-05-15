@@ -1189,6 +1189,16 @@
         "synonyms": ["purchase record", "vehicle sale", "car purchase"]
       }
     ],
+    "functions": [
+      {
+        "name": "ADD_MONTHS",
+        "type": "sql macro",
+        "macro text": "{0} + INTERVAL {1} MONTH",
+        "description": "Adds a number of months to a date value in mysql",
+        "input signature": {"type": "fixed arguments", "value": ["datetime", "numeric"]},
+        "output signature": {"type": "constant", "value": "datetime"}
+      }
+    ],
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}

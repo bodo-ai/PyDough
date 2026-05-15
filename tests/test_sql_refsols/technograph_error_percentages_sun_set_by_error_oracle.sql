@@ -1,0 +1,25 @@
+WITH "_S5" AS (
+  SELECT
+    INCIDENTS.in_error_id AS IN_ERROR_ID,
+    COUNT(*) AS N_ROWS
+  FROM MAIN.INCIDENTS INCIDENTS
+  JOIN MAIN.DEVICES DEVICES
+    ON DEVICES.de_id = INCIDENTS.in_device_id
+  JOIN MAIN.PRODUCTS PRODUCTS
+    ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'
+  GROUP BY
+    INCIDENTS.in_error_id
+)
+SELECT
+  ERRORS.er_name AS error,
+  ROUND(
+    (
+      100.0 * COALESCE("_S5".N_ROWS, 0)
+    ) / SUM(COALESCE("_S5".N_ROWS, 0)) OVER (),
+    2
+  ) AS pct
+FROM MAIN.ERRORS ERRORS
+LEFT JOIN "_S5" "_S5"
+  ON ERRORS.er_id = "_S5".IN_ERROR_ID
+ORDER BY
+  2 DESC NULLS LAST

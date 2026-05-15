@@ -1,0 +1,4 @@
+ROOT(columns=[('day', dos), ('cum_ships', RELSUM(args=[n_rows], partition=[], order=[(dos):asc_last], cumulative=True))], orderings=[(dos):asc_first])
+ AGGREGATE(keys={'dos': dos}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=MONOTONIC(datetime.date(2024, 1, 15):datetime, dos, datetime.date(2024, 1, 20):datetime), columns={'dos': dos})
+   SCAN(table=SHPMNTS, columns={'dos': dos})

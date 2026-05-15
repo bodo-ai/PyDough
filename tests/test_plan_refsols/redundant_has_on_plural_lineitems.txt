@@ -1,0 +1,4 @@
+ROOT(columns=[('n', ndistinct_l_orderkey)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'ndistinct_l_orderkey': NDISTINCT(l_orderkey)})
+  FILTER(condition=l_quantity > 49:numeric, columns={'l_orderkey': l_orderkey})
+   SCAN(table=tpch.LINEITEM, columns={'l_orderkey': l_orderkey, 'l_quantity': l_quantity})

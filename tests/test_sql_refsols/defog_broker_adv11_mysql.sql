@@ -1,8 +1,8 @@
 WITH _u_0 AS (
   SELECT
     sbTransaction.sbtxcustid AS _u_1
-  FROM main.sbTransaction AS sbTransaction
-  JOIN main.sbTicker AS sbTicker
+  FROM broker.sbTransaction AS sbTransaction
+  JOIN broker.sbTicker AS sbTicker
     ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
     AND sbTicker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
   GROUP BY
@@ -10,7 +10,7 @@ WITH _u_0 AS (
 )
 SELECT
   COUNT(*) AS n_customers
-FROM main.sbCustomer AS sbCustomer
+FROM broker.sbCustomer AS sbCustomer
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = sbCustomer.sbcustid
 WHERE

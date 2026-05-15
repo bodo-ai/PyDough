@@ -6,9 +6,7 @@ explanations of PyDough metadata objects and unqualified nodes.
 __all__ = ["explain"]
 
 import pydough
-import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
-from pydough.errors import PyDoughQDAGException
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -26,27 +24,29 @@ from pydough.qdag import (
     BackReferenceExpression,
     Calculate,
     ChildOperator,
-    ExpressionFunctionCall,
     GlobalContext,
     OrderBy,
     PartitionBy,
     PartitionChild,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
-    PyDoughQDAG,
     Reference,
+    Singular,
     SubCollection,
     TableCollection,
     TopK,
     Where,
 )
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
+)
 from pydough.unqualified import (
+    UnqualifiedCross,
     UnqualifiedNode,
-    UnqualifiedRoot,
     display_raw,
-    qualify_node,
 )
 
+from ._common import extract_conditions, extract_terms, qualify_safely
 from .term import find_unqualified_root
 
 
@@ -273,33 +273,29 @@ def explain_unqualified(
         An explanation of `node`.
     """
     lines: list[str] = []
-    qualified_node: PyDoughQDAG | None = None
     session = pydough.active_session if session is None else session
     # Attempt to qualify the node, dumping an appropriate message if it could
-    # not be qualified
-    try:
-        root: UnqualifiedRoot | None = find_unqualified_root(node)
-        if root is not None:
-            qualified_node = qualify_node(node, session)
-        else:
-            # If the root is None, it means that the node was an expression
-            # without information about its context.
+    # not be qualified.
+    root: UnqualifiedNode | None = find_unqualified_root(node)
+    qualified_node, error = qualify_safely(node, session)
+    if error is not None:
+        if root is None:
+            # Rootless node that failed to qualify (e.g. bare expression
+            # LOWER(first_name) with no context).
             lines.append(
                 f"Cannot call pydough.explain on {display_raw(node)}.\n"
                 "Did you mean to use pydough.explain_term?"
             )
-    except PyDoughQDAGException as e:
-        # If the qualification failed, dump an appropriate message indicating
-        # why pydough_explain did not work on it.
-        if "Unrecognized term" in str(e):
+        elif "Unrecognized term" in str(error):
             lines.append(
-                f"{str(e)}\n"
+                f"{str(error)}\n"
                 "This could mean you accessed a property using a name that does not exist, or\n"
                 "that you need to place your PyDough code into a context for it to make sense.\n"
                 "Did you mean to use pydough.explain_term?"
             )
         else:
-            raise e
+            raise error
+        return "\n".join(lines)
 
     # If the qualification succeeded, dump info about the qualified node.
     if isinstance(qualified_node, PyDoughExpressionQDAG):
@@ -313,11 +309,8 @@ def explain_unqualified(
         if verbose:
             # Dump the structure of the collection
             lines.append("PyDough collection representing the following logic:")
-            if verbose:
-                for line in qualified_node.to_tree_string().splitlines():
-                    lines.append(f"  {line}")
-            else:
-                lines.append(f"  {qualified_node.to_string()}")
+            for line in qualified_node.to_tree_string().splitlines():
+                lines.append(f"  {line}")
             lines.append("")
 
         # Explain what the specific node does
@@ -332,21 +325,50 @@ def explain_unqualified(
                     "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed."
                 )
             case TableCollection():
-                collection_name = qualified_node.collection.name
-                lines.append(
-                    f"This node, specifically, accesses the collection {collection_name}.\n"
-                    f"Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
-                )
+                # UnqualifiedCross qualifies to TableCollection (identity is
+                # lost after qualification), so detect it via the original
+                # unqualified node.
+                if isinstance(node, UnqualifiedCross):
+                    left_desc = display_raw(node._parcel[0])
+                    right_desc = display_raw(node._parcel[1])
+                    lines.append(
+                        "This node is a CROSS join: every row of the left "
+                        "collection is paired with every row of the right "
+                        "collection."
+                    )
+                    lines.append(f"Left: {left_desc}")
+                    lines.append(f"Right: {right_desc}")
+                else:
+                    collection_name = qualified_node.collection.name
+                    lines.append(
+                        f"This node, specifically, accesses the collection {collection_name}.\n"
+                        f"Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
+                    )
             case SubCollection():
                 collection_name = qualified_node.subcollection_property.collection.name
                 property_name = qualified_node.subcollection_property.name
                 lines.append(
-                    f"This node, specifically, accesses the subcollection {collection_name}.{property_name}. Call pydough.explain(graph['{collection_name}']['{property_name}']) to learn more about this subcollection property."
+                    f"This node, specifically, accesses the subcollection "
+                    f"{collection_name}.{property_name}. Call "
+                    f"pydough.explain(graph['{collection_name}']"
+                    f"['{property_name}']) to learn more about this "
+                    "subcollection property."
                 )
             case PartitionChild():
                 lines.append(
                     f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."
                 )
+            case Singular():
+                lines.append(
+                    "This node applies the SINGULAR operator, asserting that the "
+                    "preceding collection is singular (1-to-1) with respect to the "
+                    "parent context."
+                )
+                lines.append(
+                    f"Collection made singular: {qualified_node.preceding_context.to_string()}"
+                )
+            case PyDoughUserGeneratedCollectionQDag():
+                lines.extend(qualified_node.collection.to_explanation(verbose))
             case ChildOperator():
                 if len(qualified_node.children):
                     lines.append(
@@ -389,17 +411,7 @@ def explain_unqualified(
                         lines.append(
                             "The main task of this node is to filter on the following conditions:"
                         )
-                        conditions: list[PyDoughExpressionQDAG] = []
-                        if (
-                            isinstance(qualified_node.condition, ExpressionFunctionCall)
-                            and qualified_node.condition.operator == pydop.BAN
-                        ):
-                            for arg in qualified_node.condition.args:
-                                assert isinstance(arg, PyDoughExpressionQDAG)
-                                conditions.append(arg)
-                        else:
-                            conditions.append(qualified_node.condition)
-                        for condition in conditions:
+                        for condition in extract_conditions(qualified_node.condition):
                             tree_string = condition.to_string(True)
                             regular_string = condition.to_string(False)
                             expr_string = tree_string
@@ -458,16 +470,7 @@ def explain_unqualified(
                 )
 
         # Dump the collection & expression terms of the collection
-        expr_names: list[str] = []
-        collection_names: list[str] = []
-        for name in qualified_node.all_terms:
-            term: PyDoughQDAG = qualified_node.get_term(name)
-            if isinstance(term, PyDoughExpressionQDAG):
-                expr_names.append(name)
-            else:
-                collection_names.append(name)
-        expr_names.sort()
-        collection_names.sort()
+        expr_names, collection_names = extract_terms(qualified_node)
 
         if len(expr_names) > 0:
             lines.append(

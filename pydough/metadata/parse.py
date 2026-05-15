@@ -2,9 +2,10 @@
 The logic used to parse PyDough metadata from a JSON file.
 """
 
-__all__ = ["parse_json_metadata_from_file"]
+__all__ = ["parse_json_metadata_from_file", "parse_metadata_from_list"]
 
 import json
+from typing import Any
 
 from pydough.errors import PyDoughMetadataException
 from pydough.errors.error_utils import (
@@ -30,6 +31,60 @@ from .properties import (
 )
 
 
+def parse_metadata(metadata_info: Any, graph_name: str) -> GraphMetadata | None:
+    """
+    Parses a list of JSON objects to find and construct a specific PyDough metadata graph.
+
+    This is a helper function that contains the core logic for iterating through
+    a list of graph metadata objects, looking and constructing
+    the appropriate GraphMetadata when a match is found.
+
+    Args:
+        `metadata_info`: an iterable collection of JSON objects representing
+        PyDough metadata graphs. Each object must contain a "name" field (string)
+        identifying the graph and a "version" field (string) specifying the
+        metadata version.
+        `graph_name`: the name of the graph from the metadata collection that is
+        being requested. This should match the "name" field of one of the objects.
+
+    Returns:
+        The metadata for the PyDough graph matching the requested name, including
+        all of the collections and properties defined within. Returns `None` if
+        no graph with the given name exists in the collection.
+
+    Raises:
+        `PyDoughMetadataException`: if any graph object in the collection is malformed
+        (e.g., missing required fields, incorrect types) or if the specified version
+        is not recognized.
+    """
+    graph: GraphMetadata | None = None
+    if isinstance(metadata_info, list):
+        for graph_json in metadata_info:
+            HasType(dict).verify(graph_json, "metadata for PyDough graph")
+            HasPropertyWith("name", is_string).verify(
+                graph_json, "metadata for PyDough graph"
+            )
+            name: str = extract_string(graph_json, "name", "metadata for PyDough graph")
+            if name == graph_name:
+                version: str = extract_string(
+                    graph_json, "version", "metadata for PyDough graph"
+                )
+                match version:
+                    case "V2":
+                        graph = parse_graph_v2(name, graph_json)
+                    case _:
+                        raise PyDoughMetadataException(
+                            f"Unrecognized PyDough metadata version: {version!r}"
+                        )
+    else:
+        raise PyDoughMetadataException(
+            "PyDough metadata is expected to be a JSON array containing JSON objects"
+            + f" representing metadata graphs, received: {metadata_info.__class__.__name__}."
+        )
+    # If graph was not found in the list then graph will be None at this point
+    return graph
+
+
 def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetadata:
     """
     Reads a JSON file to obtain a specific PyDough metadata graph.
@@ -50,33 +105,43 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
     """
     with open(file_path) as f:
         as_json = json.load(f)
-    if not isinstance(as_json, list):
+    graph: GraphMetadata | None = parse_metadata(as_json, graph_name)
+    if graph is None:
+        # If we reach this point, then the graph was not found in the file
         raise PyDoughMetadataException(
-            "PyDough metadata expected to be a JSON file containing a JSON "
-            + f"array of JSON objects representing metadata graphs, received: {as_json.__class__.__name__}."
+            f"PyDough metadata file located at {file_path!r} does not "
+            + f"contain a graph named {graph_name!r}"
         )
-    for graph_json in as_json:
-        HasType(dict).verify(graph_json, "metadata for PyDough graph")
-        HasPropertyWith("name", is_string).verify(
-            graph_json, "metadata for PyDough graph"
+    return graph
+
+
+def parse_metadata_from_list(metadata_info: Any, graph_name: str) -> GraphMetadata:
+    """
+    Parses a list of JSON objects to obtain a specific PyDough metadata graph.
+
+    Args:
+        `metadata_info`: a list of JSON objects representing PyDough metadata graphs.
+        Each object must contain a "name" field (string) identifying the graph
+        and a "version" field (string) specifying the metadata version.
+        `graph_name`: the name of the graph from the metadata list that is
+        being requested. This should match the "name" field of one of the objects.
+
+    Returns:
+        The metadata for the PyDough graph, including all of the collections
+        and properties defined within.
+
+    Raises:
+        `PyDoughMetadataException`: if any graph object in the list is malformed,
+        if the specified version is not recognized, or if no graph with the given
+        name exists in the list.
+    """
+    graph: GraphMetadata | None = parse_metadata(metadata_info, graph_name)
+    if graph is None:
+        # If we reach this point, then the graph was not found in the list
+        raise PyDoughMetadataException(
+            f"PyDough metadata graph {graph_name!r} not found in list"
         )
-        name: str = extract_string(graph_json, "name", "metadata for PyDough graph")
-        if name == graph_name:
-            version: str = extract_string(
-                graph_json, "version", "metadata for PyDough graph"
-            )
-            match version:
-                case "V2":
-                    return parse_graph_v2(name, graph_json)
-                case _:
-                    raise PyDoughMetadataException(
-                        f"Unrecognized PyDough metadata version: {version!r}"
-                    )
-    # If we reach this point, then the graph was not found in the file
-    raise PyDoughMetadataException(
-        f"PyDough metadata file located at {file_path!r} does not "
-        + f"contain a graph named {graph_name!r}"
-    )
+    return graph
 
 
 def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
@@ -98,13 +163,14 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
     """
     verified_analysis: list[dict] = []
     additional_definitions: list[str] = []
+    extra_semantic_info: dict = {}
     graph: GraphMetadata = GraphMetadata(
         graph_name,
         additional_definitions,
         verified_analysis,
         None,
         None,
-        {},
+        extra_semantic_info,
     )
 
     # Parse and extract the metadata for all of the collections in the graph.
@@ -140,6 +206,7 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
                 defn,
                 f"metadata for additional definitions inside {graph.error_name}",
             )
+            additional_definitions.append(defn)
     if "verified pydough analysis" in graph_json:
         verified_analysis_json: list = extract_array(
             graph_json, "verified pydough analysis", graph.error_name
@@ -156,6 +223,12 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             HasPropertyWith("code", is_string).verify(
                 verified_json, "metadata for verified pydough analysis"
             )
+            verified_analysis.append(verified_json)
+    if "extra semantic info" in graph_json:
+        extra_info_json: dict = extract_object(
+            graph_json, "extra semantic info", graph.error_name
+        )
+        extra_semantic_info.update(extra_info_json)
 
     # Add all of the UDF definitions to the graph.
     if "functions" in graph_json:

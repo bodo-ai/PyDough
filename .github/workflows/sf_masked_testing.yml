@@ -22,6 +22,8 @@ on:
         required: true
       SF_MASKED_ACCOUNT:
         required: true
+      PYDOUGH_MASK_SERVER_PATH:
+        required: true
 
 jobs:
   sf-tests:
@@ -39,6 +41,7 @@ jobs:
       SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
       SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
       SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
+      PYDOUGH_MASK_SERVER_PATH: ${{ secrets.PYDOUGH_MASK_SERVER_PATH }}
 
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +55,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
-          version: "0.4.23"
+          version: "0.6.0"
 
       - name: Create virtual environment
         # See note in sf_testing.yml about why we use `uv venv` here.

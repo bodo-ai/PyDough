@@ -1,16 +1,16 @@
 WITH _u_0 AS (
   SELECT
     patient_id AS _u_1
-  FROM main.treatments
+  FROM dermtreatment.treatments
   GROUP BY
     1
 ), _t1 AS (
   SELECT
     MIN(YEAR(CAST(treatments.start_dt AS TIMESTAMP))) AS min_year_start_dt
-  FROM main.patients AS patients
+  FROM dermtreatment.patients AS patients
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = patients.patient_id
-  LEFT JOIN main.treatments AS treatments
+  LEFT JOIN dermtreatment.treatments AS treatments
     ON patients.patient_id = treatments.patient_id
   WHERE
     NOT _u_0._u_1 IS NULL

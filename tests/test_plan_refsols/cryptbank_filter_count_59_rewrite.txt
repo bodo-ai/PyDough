@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(c_fname, ['CAROL', 'EMILY', 'ISABEL', 'LUKE', 'SOPHIA']:array[unknown]), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_fname': c_fname})

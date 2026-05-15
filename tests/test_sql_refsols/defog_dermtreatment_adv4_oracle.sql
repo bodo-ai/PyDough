@@ -1,0 +1,8 @@
+SELECT
+  COUNT(DISTINCT TREATMENTS.patient_id) AS patient_count
+FROM MAIN.TREATMENTS TREATMENTS
+JOIN MAIN.DIAGNOSES DIAGNOSES
+  ON DIAGNOSES.diag_id = TREATMENTS.diag_id
+  AND LOWER(DIAGNOSES.diag_name) = 'psoriasis vulgaris'
+JOIN MAIN.DRUGS DRUGS
+  ON DRUGS.drug_id = TREATMENTS.drug_id AND LOWER(DRUGS.drug_type) = 'biologic'

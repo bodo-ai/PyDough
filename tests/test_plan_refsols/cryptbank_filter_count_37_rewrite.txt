@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(a_balance, [46240000.0, 57760000.0]:array[unknown]), columns={})
+   SCAN(table=CRBNK.ACCOUNTS, columns={'a_balance': a_balance})

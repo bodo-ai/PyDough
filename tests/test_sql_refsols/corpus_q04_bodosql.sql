@@ -1,0 +1,9 @@
+SELECT
+  play,
+  COUNT(*) AS n_words
+FROM shake
+GROUP BY
+  1
+ORDER BY
+  2 DESC NULLS LAST
+LIMIT 5

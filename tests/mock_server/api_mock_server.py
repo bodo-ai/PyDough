@@ -8,6 +8,8 @@ This server provides endpoints to:
 Intended for use in unit and integration tests.
 """
 
+import base64
+
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
@@ -17,10 +19,12 @@ app: FastAPI = FastAPI()
 
 
 class EvaluateRequest(BaseModel):
-    column_reference: str
+    dataset_id: str
+    column_ref: dict[str, str]
     predicate: list[str | int | float | None | bool]
-    mode: str = "dynamic"
-    dry_run: bool = False
+    output_mode: str
+    mode: str
+    dry_run: bool
 
 
 class RequestPayload(BaseModel):
@@ -47,19 +51,70 @@ def batch_evaluate(
     request: Request, payload: RequestPayload, authorized: bool = Depends(verify_token)
 ):
     responses: list[dict] = []
+    successful_responses: int = 0
+    # Process each item in the batch
     for item in payload.items:
-        key = (item.column_reference, tuple(item.predicate))
-        materialization: dict = LOOKUP_TABLE.get(key, {})
-
-        response: dict = {
+        assert set(item.column_ref.keys()) == {
+            "kind",
+            "value",
+        }, f"Invalid column_reference format in mock: {item.column_ref!r}."
+        assert item.column_ref["kind"] == "fqn", "Only FQN kind is supported in mock."
+        key = (item.dataset_id, item.column_ref["value"], tuple(item.predicate))
+        table_result: tuple[str, list] | None = LOOKUP_TABLE.get(key, None)
+        out_item: dict = {
             "index": payload.items.index(item) + 1,
-            "result": "SUCCESS" if materialization != {} else "UNSUPPORTED",
-            "decision": {"strategy": "values", "reason": "mock"},
-            "predicate_hash": "hash1",
-            "encryption_mode": "clear",
-            "materialization": materialization,
         }
-        # Adding the index
-        responses.append(response)
+        if table_result is None:
+            # If the key is not found in the lookup table, return an error for
+            # this item of the batch.
+            out_item["result"] = "ERROR"
+        else:
+            # Otherwise, generate a successful response based on the lookup
+            # table.
+            output_case, output_list = table_result
+            out_item["SUCCESS"] = "SUCCESS"
+            out_item["response"] = {
+                "strategy": "early_stop",
+                "records": [
+                    {
+                        "mode": "cell_encrypted",
+                        "cell_encrypted": base64.b64encode(str(elem).encode("utf-8"))
+                        if isinstance(elem, str)
+                        else elem,
+                    }
+                    for elem in output_list
+                ],
+                "count": len(output_list),
+                "stats": {"execution_time_ms": 42},
+                "column_stats": None,
+                "next_cursor": None,
+                "metadata": {
+                    "requested_output_mode": "cell_encrypted",
+                    "actual_output_mode": "cell_encrypted",
+                    "available_output_modes": ["cell_encrypted"],
+                    "encryption_mode": None,
+                    "dynamic_operator": "IN",
+                },
+            }
+            if output_case == "NOT_IN":
+                out_item["response"]["metadata"]["representation"] = "NOT_IN"
+            # Don't include response in dry run case
+            if item.dry_run:
+                out_item["response"].pop("records")
+            successful_responses += 1
 
-    return {"result": "SUCCESS", "items": responses}
+        # Adding the new item to the batch output
+        responses.append(out_item)
+
+    # Determine overall result:
+    # - SUCCESS if all items succeeded
+    # - ERROR if all items failed
+    # - PARTIAL_FAILURE otherwise
+    result: str
+    if successful_responses == len(payload.items):
+        result = "SUCCESS"
+    elif successful_responses == 0:
+        result = "ERROR"
+    else:
+        result = "PARTIAL_FAILURE"
+    return {"result": result, "items": responses}

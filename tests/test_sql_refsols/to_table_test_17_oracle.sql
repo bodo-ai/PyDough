@@ -1,0 +1,4 @@
+SELECT
+  "key",
+  name
+FROM FIRST_NATION_T17

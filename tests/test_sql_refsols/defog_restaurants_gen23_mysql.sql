@@ -1,8 +1,8 @@
 SELECT
   restaurant.name,
   restaurant.food_type
-FROM main.location AS location
-JOIN main.restaurant AS restaurant
+FROM restaurants.location AS location
+JOIN restaurants.restaurant AS restaurant
   ON location.restaurant_id = restaurant.id
 WHERE
   LOWER(location.city_name) = 'san francisco'

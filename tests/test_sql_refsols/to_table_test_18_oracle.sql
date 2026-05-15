@@ -1,0 +1,6 @@
+SELECT
+  "key",
+  name
+FROM BEST_NATION_T18
+ORDER BY
+  1 NULLS FIRST

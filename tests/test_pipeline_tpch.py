@@ -7,6 +7,7 @@ from collections.abc import Callable
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata.graphs.graph_metadata import GraphMetadata
 from tests.testing_utilities import (
     graph_fetcher,
 )
@@ -41,6 +42,12 @@ def test_pipeline_until_sql_tpch(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
+    if (
+        tpch_pipeline_test_data.test_name == "dataframe_collection_inf"
+        and empty_context_database.dialect == DatabaseDialect.MYSQL
+    ):
+        pytest.skip("Skipping test as MySQL does not support Infinity values.")
+
     file_path: str = get_sql_test_filename(
         tpch_pipeline_test_data.test_name, empty_context_database.dialect
     )
@@ -52,13 +59,12 @@ def test_pipeline_until_sql_tpch(
 @pytest.mark.execute
 def test_pipeline_e2e_tpch(
     tpch_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    sqlite_tpch_db_context: DatabaseContext,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
 ):
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    tpch_pipeline_test_data.run_e2e_test(
-        get_sample_graph,
-        sqlite_tpch_db_context,
-    )
+
+    db_context, graph = all_dialects_tpch_db_context
+
+    tpch_pipeline_test_data.run_e2e_test(lambda _: graph, db_context, coerce_types=True)

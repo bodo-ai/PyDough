@@ -733,15 +733,15 @@ CREATE TABLE concomitant_meds (
 
 INSERT INTO doctors (doc_id, first_name, last_name, specialty, year_reg, med_school_name, loc_city, loc_state, loc_zip, bd_cert_num) 
 VALUES
-(1, 'John', 'Doe', 'dermatology', 2023, 'Johns Hopkins University', 'Baltimore', 'MD', '21201', 'ABC123'),
-(2, 'Jane', 'Smith', 'immunology', 2023, 'Harvard Medical School', 'Boston', 'MA', '02115', 'XYZ789'),
+(1, 'John', 'Doe', 'dermatology', CAST(strftime('%Y', 'now') AS INTEGER) - 2, 'Johns Hopkins University', 'Baltimore', 'MD', '21201', 'ABC123'),
+(2, 'Jane', 'Smith', 'immunology', CAST(strftime('%Y', 'now') AS INTEGER) - 2, 'Harvard Medical School', 'Boston', 'MA', '02115', 'XYZ789'),
 (3, 'David', 'Johnson', 'general', 1998, 'University of Pennsylvania', 'Philadelphia', 'PA', '19104', 'DEF456'),
 (4, 'Emily', 'Brown', 'dermatology', 2015, 'Stanford University', 'Palo Alto', 'CA', '94304', 'GHI012'),
 (5, 'Michael', 'Davis', 'immunology', 2008, 'Duke University', 'Durham', 'NC', '27708', 'JKL345'),
-(6, 'Sarah', 'Wilson', 'oncology', 2024, 'University of California, San Francisco', 'San Francisco', 'CA', '94143', 'MNO678'),
+(6, 'Sarah', 'Wilson', 'oncology', CAST(strftime('%Y', 'now') AS INTEGER) - 1, 'University of California, San Francisco', 'San Francisco', 'CA', '94143', 'MNO678'),
 (7, 'Robert', 'Taylor', 'dermatology', 2012, 'Yale University', 'New Haven', 'CT', '06510', 'PQR901'),
 (8, 'Laura', 'Martinez', 'immunology', 2006, 'University of Michigan', 'Ann Arbor', 'MI', '48109', 'STU234'),
-(9, 'Daniel', 'Garcia', 'general', 2022, 'University of Chicago', 'Chicago', 'IL', '60637', 'VWX567'),
+(9, 'Daniel', 'Garcia', 'general', CAST(strftime('%Y', 'now') AS INTEGER) - 3, 'University of Chicago', 'Chicago', 'IL', '60637', 'VWX567'),
 (10, 'Olivia', 'Anderson', 'dermatology', 2018, 'Columbia University', 'New York', 'NY', '10027', 'YZA890');
 
 INSERT INTO patients (patient_id, first_name, last_name, date_of_birth, date_of_registration, gender, email, phone, addr_street, addr_city, addr_state, addr_zip, ins_type, ins_policy_num, height_cm, weight_kg)

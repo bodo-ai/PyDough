@@ -16,11 +16,4 @@ JOIN crbnk.customers AS customers
 WHERE
   CAST(STRFTIME('%Y', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER) < 2020
   AND SQRT(accounts.a_balance) >= 5000
-  AND (
-    accounts.a_type = (
-      SUBSTRING('retirement', 2) || SUBSTRING('retirement', 1, 1)
-    )
-    OR accounts.a_type = (
-      SUBSTRING('savings', 2) || SUBSTRING('savings', 1, 1)
-    )
-  )
+  AND accounts.a_type IN ('avingss', 'etirementr')

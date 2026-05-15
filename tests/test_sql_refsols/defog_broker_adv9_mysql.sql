@@ -13,8 +13,8 @@ SELECT
       DAYOFWEEK(sbTransaction.sbtxdatetime) + 5
     ) % 7
   ) IN (5, 6)), 0) AS weekend_transactions
-FROM main.sbTransaction AS sbTransaction
-JOIN main.sbTicker AS sbTicker
+FROM broker.sbTransaction AS sbTransaction
+JOIN broker.sbTicker AS sbTicker
   ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
   AND sbTicker.sbtickertype = 'stock'
 WHERE

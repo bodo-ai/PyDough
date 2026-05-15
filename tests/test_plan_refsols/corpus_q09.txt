@@ -1,0 +1,7 @@
+ROOT(columns=[('play', PLAY), ('n', n_rows)], orderings=[(PLAY):asc_first])
+ AGGREGATE(keys={'PLAY': PLAY}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.Word == t1.LINEWORD, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'PLAY': t1.PLAY})
+   LIMIT(limit=50:numeric, columns={'Word': Word}, orderings=[(LENGTH(Definition)):desc_last, (Word):asc_first])
+    FILTER(condition=POS == 'n.':string, columns={'Definition': Definition, 'Word': Word})
+     SCAN(table=DICT, columns={'Definition': Definition, 'POS': POS, 'Word': Word})
+   SCAN(table=SHAKE, columns={'LINEWORD': LINEWORD, 'PLAY': PLAY})

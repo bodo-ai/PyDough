@@ -1,0 +1,6 @@
+SELECT
+  user_id,
+  user_name
+FROM USERS_T21
+ORDER BY
+  1 NULLS FIRST

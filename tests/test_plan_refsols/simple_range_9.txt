@@ -1,0 +1,2 @@
+ROOT(columns=[('"name space"', "name space")], orderings=[])
+ GENERATED_TABLE(RangeCollection('"quoted-name"', "name space"=range(0, 5)))

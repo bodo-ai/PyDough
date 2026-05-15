@@ -62,7 +62,19 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     if old_name == alias:
         return expr
     else:
+        # This is needed the first time when the name has quotes in it.
         quoted, alias = normalize_column_name(alias)
+
+        # When the expr is proccessed more than once the quoted value can be lost.
+        # In order to keep the initital quoted value through the pipeline
+        # this is needed.
+        if isinstance(expr, Identifier):
+            quoted = expr.quoted
+        elif isinstance(expr, SQLGlotAlias) and isinstance(
+            expr.args["alias"], Identifier
+        ):
+            quoted = expr.args["alias"].quoted
+
         return generate_glot_alias(expr, alias, quoted=quoted)
 
 

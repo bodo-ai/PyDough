@@ -1,0 +1,7 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=(t0.ACT == t1.Ccount) & (t0.LINEWORD == t1.Word), type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
+   FILTER(condition=(LENGTH(LINEWORD) == ACT) & (PLAY == 'cymbeline':string), columns={'ACT': ACT, 'LINEWORD': LINEWORD})
+    SCAN(table=SHAKE, columns={'ACT': ACT, 'LINEWORD': LINEWORD, 'PLAY': PLAY})
+   FILTER(condition=POS == 'n.':string, columns={'Ccount': Ccount, 'Word': Word})
+    SCAN(table=DICT, columns={'Ccount': Ccount, 'POS': POS, 'Word': Word})

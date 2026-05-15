@@ -1,9 +1,9 @@
 SELECT
-  `",` AS dbl_quote_dot,
-  `.` AS dot,
+  `",` AS `dbl_quote_dot`,
+  `.` AS `dot`,
   `.` + COALESCE(`FLOAT`, str, 1) AS addition,
-  `__col__` AS col,
-  `__col1__` AS col1,
+  `__col__` AS `col`,
+  `__col1__` AS `col1`,
   def AS def_,
   del AS __del__,
   `__init__`

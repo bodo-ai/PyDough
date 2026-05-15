@@ -4,7 +4,7 @@ WITH _t1 AS (
     c_mktsegment,
     c_name,
     CASE
-      WHEN TRUNCATE(CAST(0.8 * COUNT(c_acctbal) OVER () AS FLOAT), 0) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
+      WHEN FLOOR(0.8 * COUNT(c_acctbal) OVER ()) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
       THEN c_acctbal
       ELSE NULL
     END AS expr_30,

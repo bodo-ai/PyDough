@@ -2,8 +2,8 @@ WITH _t1 AS (
   SELECT
     ANY_VALUE(organization.continent) AS anything_continent,
     COUNT(author.oid) AS count_oid
-  FROM main.organization AS organization
-  LEFT JOIN main.author AS author
+  FROM academic.organization AS organization
+  LEFT JOIN academic.author AS author
     ON author.oid = organization.oid
   GROUP BY
     organization.oid

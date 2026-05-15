@@ -2,22 +2,22 @@ WITH _s1 AS (
   SELECT
     city_name,
     region
-  FROM main.geographic
+  FROM restaurants.geographic
 ), _s6 AS (
   SELECT DISTINCT
     _s1.region
-  FROM main.location AS location
+  FROM restaurants.location AS location
   LEFT JOIN _s1 AS _s1
     ON _s1.city_name = location.city_name
 ), _s7 AS (
   SELECT
     _s3.region,
-    SUM(IFF(NOT restaurant.rating IS NULL, 1, 0)) AS sum_expr,
+    COUNT_IF(NOT restaurant.rating IS NULL) AS sum_expr,
     SUM(restaurant.rating) AS sum_rating
-  FROM main.location AS location
+  FROM restaurants.location AS location
   LEFT JOIN _s1 AS _s3
     ON _s3.city_name = location.city_name
-  JOIN main.restaurant AS restaurant
+  JOIN restaurants.restaurant AS restaurant
     ON location.restaurant_id = restaurant.id
   GROUP BY
     1

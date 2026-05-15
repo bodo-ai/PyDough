@@ -1,0 +1,16 @@
+SELECT
+  USER_SESSIONS.user_id AS uid,
+  SUM(
+    (
+      CAST(USER_SESSIONS.session_end_ts AS DATE) - CAST(USER_SESSIONS.session_start_ts AS DATE)
+    ) * 86400
+  ) AS total_duration
+FROM MAIN.USERS USERS
+JOIN MAIN.USER_SESSIONS USER_SESSIONS
+  ON USERS.uid = USER_SESSIONS.user_id
+  AND USER_SESSIONS.session_end_ts < TO_DATE('2023-06-08', 'YYYY-MM-DD')
+  AND USER_SESSIONS.session_start_ts >= TO_DATE('2023-06-01', 'YYYY-MM-DD')
+GROUP BY
+  USER_SESSIONS.user_id
+ORDER BY
+  2 DESC NULLS LAST

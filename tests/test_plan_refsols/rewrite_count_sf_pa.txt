@@ -1,0 +1,6 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={})
+   SCAN(table=tpch.PARTSUPP, columns={'ps_partkey': ps_partkey})
+   FILTER(condition=p_brand == 'Brand#23':string, columns={'p_partkey': p_partkey})
+    SCAN(table=tpch.PART, columns={'p_brand': p_brand, 'p_partkey': p_partkey})

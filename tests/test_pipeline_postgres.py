@@ -34,6 +34,7 @@ from tests.testing_utilities import (
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
+from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
 
 
 @pytest.fixture(
@@ -373,23 +374,6 @@ def defog_postgres_test_data(
 
 @pytest.mark.postgres
 @pytest.mark.execute
-def test_pipeline_e2e_postgres_tpch(
-    tpch_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    postgres_conn_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H queries from the original code generation on Postgres.
-    """
-    tpch_pipeline_test_data.run_e2e_test(
-        get_sample_graph,
-        postgres_conn_db_context,
-        coerce_types=True,
-    )
-
-
-@pytest.mark.postgres
-@pytest.mark.execute
 def test_pipeline_e2e_postgres_tpch_16_params(
     tpch_postgres_params_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
@@ -516,7 +500,7 @@ def test_pipeline_e2e_postgres_tpch_simple_week(
 @pytest.mark.execute
 def test_pipeline_e2e_postgres_defog_custom(
     defog_postgres_test_data: PyDoughPandasTest,
-    defog_graphs: graph_fetcher,
+    get_postgres_defog_graphs: graph_fetcher,
     defog_config: PyDoughConfigs,
     postgres_conn_db_context: DatabaseContext,
 ):
@@ -524,7 +508,7 @@ def test_pipeline_e2e_postgres_defog_custom(
     Test executing the defog analytical queries with Postgres database.
     """
     defog_postgres_test_data.run_e2e_test(
-        defog_graphs,
+        get_postgres_defog_graphs,
         postgres_conn_db_context,
         config=defog_config,
         coerce_types=True,
@@ -535,7 +519,7 @@ def test_pipeline_e2e_postgres_defog_custom(
 @pytest.mark.execute
 def test_pipeline_e2e_postgres_defog(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,  # noqa: F811
-    defog_graphs: graph_fetcher,
+    get_postgres_defog_graphs: graph_fetcher,
     postgres_conn_db_context: DatabaseContext,
     defog_config: PyDoughConfigs,
     sqlite_defog_connection: DatabaseContext,
@@ -550,7 +534,7 @@ def test_pipeline_e2e_postgres_defog(
     the correct results.
     """
     defog_pipeline_test_data.run_e2e_test(
-        defog_graphs,
+        get_postgres_defog_graphs,
         postgres_conn_db_context,
         defog_config,
         reference_database=sqlite_defog_connection,

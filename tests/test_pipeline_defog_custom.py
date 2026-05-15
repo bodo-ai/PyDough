@@ -1054,6 +1054,7 @@ def get_day_of_week(
                         "stripped_alt_name2": ["Alex Rodriguez"],
                         "stripped_alt_name3": ["Alex Rodriguez"],
                         "stripped_alt_name4": ["Alex Rodriguez"],
+                        "stripped_alt_name5": ["Alex Rodriguez"],
                     }
                 ),
                 "strip",

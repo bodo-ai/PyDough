@@ -11,6 +11,11 @@ import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughQDAGException
+from pydough.pydough_operators.expression_operators import (
+    SqlAliasExpressionFunctionOperator,
+    SqlMacroExpressionFunctionOperator,
+    SqlWindowAliasExpressionFunctionOperator,
+)
 from pydough.qdag import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -20,14 +25,19 @@ from pydough.qdag import (
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Reference,
+    Singular,
+    WindowCall,
 )
 from pydough.unqualified import (
     UnqualifiedAccess,
     UnqualifiedCalculate,
+    UnqualifiedCross,
+    UnqualifiedGeneratedCollection,
     UnqualifiedNode,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
     UnqualifiedRoot,
+    UnqualifiedSingular,
     UnqualifiedTopK,
     UnqualifiedWhere,
     display_raw,
@@ -36,7 +46,7 @@ from pydough.unqualified import (
 )
 
 
-def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
+def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedNode | None:
     """
     Recursively searches for the ancestor unqualified root of an unqualified
     node.
@@ -46,9 +56,12 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
 
     Returns:
         The underlying root node if one can be found, otherwise None.
+        For UnqualifiedRoot and UnqualifiedGeneratedCollection, returns the
+        node itself. For chained nodes, walks the predecessor chain. Returns
+        None for bare expressions or other rootless nodes.
     """
     match node:
-        case UnqualifiedRoot():
+        case UnqualifiedRoot() | UnqualifiedGeneratedCollection():
             return node
         case (
             UnqualifiedAccess()
@@ -57,6 +70,8 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
             | UnqualifiedOrderBy()
             | UnqualifiedTopK()
             | UnqualifiedPartition()
+            | UnqualifiedCross()
+            | UnqualifiedSingular()
         ):
             predecessor: UnqualifiedNode = node._parcel[0]
             return find_unqualified_root(predecessor)
@@ -128,7 +143,7 @@ def explain_term(
     """
 
     lines: list[str] = []
-    root: UnqualifiedRoot | None = find_unqualified_root(node)
+    root: UnqualifiedNode | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
     if session is None:
         session = pydough.active_session
@@ -165,6 +180,12 @@ def explain_term(
                 lines.append(f"  {line}")
         else:
             lines.append(f"Collection: {qualified_node.to_string()}")
+        if isinstance(node, UnqualifiedCross):
+            lines.append(
+                f"Note: This collection is a CROSS product of"
+                f" '{display_raw(node._parcel[0])}'"
+                f" and '{display_raw(node._parcel[1])}'."
+            )
         lines.append("")
         if len(new_children) > 0:
             lines.append(
@@ -200,9 +221,9 @@ def explain_term(
                             case 1:
                                 back_idx_str = f"{expr.back_levels}st"
                             case 2:
-                                back_idx_str = f"{expr.back_levels}2nd"
+                                back_idx_str = f"{expr.back_levels}nd"
                             case 3:
-                                back_idx_str = f"{expr.back_levels}3rd"
+                                back_idx_str = f"{expr.back_levels}rd"
                             case _:
                                 back_idx_str = f"{expr.back_levels}th"
                         lines.append(
@@ -227,9 +248,94 @@ def explain_term(
                         )
                         break
                     case ExpressionFunctionCall():
-                        if isinstance(expr.operator, pydop.BinaryOperator):
+                        if isinstance(
+                            expr.operator,
+                            SqlAliasExpressionFunctionOperator,
+                        ):
+                            suffix = (
+                                ", aggregating them into a single value for each record of the collection"
+                                if expr.operator.is_aggregation
+                                else ""
+                            )
+                            lines.append(
+                                f"This expression calls the user-defined function '{expr.operator.function_name}' on the following arguments{suffix}:"
+                            )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            if expr.operator.description is not None:
+                                lines.append(
+                                    f"Description: {expr.operator.description}"
+                                )
+                            lines.append(
+                                f"This function is an alias for the SQL function '{expr.operator.sql_function_alias}'."
+                            )
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
+                        elif isinstance(
+                            expr.operator,
+                            SqlMacroExpressionFunctionOperator,
+                        ):
+                            suffix = (
+                                ", aggregating them into a single value for each record of the collection"
+                                if expr.operator.is_aggregation
+                                else ""
+                            )
+                            lines.append(
+                                f"This expression calls the user-defined function '{expr.operator.function_name}' on the following arguments{suffix}:"
+                            )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            if expr.operator.description is not None:
+                                lines.append(
+                                    f"Description: {expr.operator.description}"
+                                )
+                            lines.append(
+                                f"This function is defined by the SQL macro: '{expr.operator.macro_text}'."
+                            )
+                            if verbose:
+                                dummies = [
+                                    f"?{chr(ord('a') + i)}"
+                                    for i in range(len(expr.args))
+                                ]
+                                dummy_list = ", ".join(f"'{d}'" for d in dummies)
+                                expanded = expr.operator.macro_text.format(*dummies)
+                                lines.append(
+                                    f"Suppose this function were called on arguments"
+                                    f" that are translated to the following in SQL: {dummy_list}"
+                                )
+                                lines.append(
+                                    f"Then the final SQL text for this function call"
+                                    f" would be: '{expanded}'"
+                                )
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
+                        elif isinstance(expr.operator, pydop.BinaryOperator):
                             lines.append(
                                 f"This expression combines the following arguments with the '{expr.operator.function_name}' operator:"
+                            )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
                             )
                         elif (
                             expr.operator in (pydop.COUNT, pydop.NDISTINCT)
@@ -244,6 +350,16 @@ def explain_term(
                             lines.append(
                                 f"This expression counts how many {metric} of the following subcollection exist for each record of the collection:"
                             )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
                         elif (
                             expr.operator in (pydop.HAS, pydop.HASNOT)
                             and len(expr.args) == 1
@@ -255,6 +371,16 @@ def explain_term(
                             lines.append(
                                 f"This expression returns whether the collection {predicate} any records of the following subcollection:"
                             )
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                            )
                         else:
                             suffix = (
                                 ", aggregating them into a single value for each record of the collection"
@@ -264,12 +390,141 @@ def explain_term(
                             lines.append(
                                 f"This expression calls the function '{expr.operator.function_name}' on the following arguments{suffix}:"
                             )
-                        for arg in expr.args:
-                            assert isinstance(
-                                arg, (PyDoughCollectionQDAG, PyDoughExpressionQDAG)
+                            for arg in expr.args:
+                                assert isinstance(
+                                    arg,
+                                    (PyDoughCollectionQDAG, PyDoughExpressionQDAG),
+                                )
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                            lines.append(
+                                "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
                             )
-                            lines.append(f"  {arg.to_string()}")
+                        break
+                    case WindowCall():
+                        udf_window_op = (
+                            expr.window_operator
+                            if isinstance(
+                                expr.window_operator,
+                                SqlWindowAliasExpressionFunctionOperator,
+                            )
+                            else None
+                        )
+                        is_udf_window = udf_window_op is not None
+                        kind = "user-defined window" if is_udf_window else "window"
+                        func_name = expr.window_operator.function_name
+                        if expr.args:
+                            lines.append(
+                                f"This expression calls the {kind} function {func_name!r} with the following arguments:"
+                            )
+                            for arg in expr.args:
+                                lines.append(f"  {arg.to_string()}")
+                        else:
+                            lines.append(
+                                f"This expression calls the {kind} function {func_name!r}."
+                            )
                         lines.append("")
+                        if expr.collation_args:
+                            lines.append("Ordering (by):")
+                            for arg in expr.collation_args:
+                                lines.append(f"  {arg.to_string()}")
+                            lines.append("")
+                        if expr.levels is not None:
+                            lines.append(f"Partition levels (per): {expr.levels}")
+                            lines.append("")
+                        if expr.kwargs:
+                            lines.append("Additional options:")
+                            for k, v in expr.kwargs.items():
+                                match k:
+                                    case "cumulative":
+                                        desc = (
+                                            "The window frame spans from "
+                                            "the start of the partition to "
+                                            "the current row."
+                                            if v
+                                            else "No cumulative window frame is applied."
+                                        )
+                                        lines.append(f"  cumulative={v!r}: {desc}")
+                                    case "frame":
+                                        assert isinstance(v, tuple) and len(v) == 2
+                                        lower: int | None = v[0]
+                                        upper: int | None = v[1]
+
+                                        def _frame_bound(
+                                            b: int | None, start: bool
+                                        ) -> str:
+                                            if b is None:
+                                                return (
+                                                    "the start of the partition"
+                                                    if start
+                                                    else "the end of the partition"
+                                                )
+                                            if b == 0:
+                                                return "the current row"
+                                            direction = "before" if b < 0 else "after"
+                                            return f"{abs(b)} rows {direction} the current row"
+
+                                        lines.append(
+                                            f"  frame={v!r}: The window "
+                                            f"frame spans from "
+                                            f"{_frame_bound(lower, True)} "
+                                            f"to {_frame_bound(upper, False)}."
+                                        )
+                                    case "default":
+                                        lines.append(
+                                            f"  default={v!r}: Returns "
+                                            f"{v!r} when there are "
+                                            f"insufficient rows in the "
+                                            f"specified direction."
+                                        )
+                                    case "n_buckets":
+                                        lines.append(
+                                            f"  n_buckets={v!r}: The data "
+                                            f"is divided into {v} "
+                                            f"equal-sized buckets."
+                                        )
+                                    case "allow_ties":
+                                        desc = (
+                                            "Rows with equal ordering values "
+                                            "receive the same rank."
+                                            if v
+                                            else "Each row receives a unique rank."
+                                        )
+                                        lines.append(f"  allow_ties={v!r}: {desc}")
+                                    case "dense":
+                                        desc = (
+                                            "No gaps in ranking between tied "
+                                            "groups (uses DENSE_RANK semantics)."
+                                            if v
+                                            else "Gaps are left in ranking after "
+                                            "tied groups (uses RANK semantics)."
+                                        )
+                                        lines.append(f"  dense={v!r}: {desc}")
+                                    case _:
+                                        lines.append(f"  {k}: {v!r}")
+                            lines.append("")
+                        if udf_window_op is not None:
+                            if udf_window_op.description is not None:
+                                lines.append(
+                                    f"Description: {udf_window_op.description}"
+                                )
+                            lines.append(
+                                f"This function is an alias for the SQL window function '{udf_window_op.sql_function_alias}'."
+                            )
+                            order_str = (
+                                "requires"
+                                if udf_window_op.requires_order
+                                else "does not require"
+                            )
+                            frame_str = (
+                                "supports"
+                                if udf_window_op.allows_frame
+                                else "does not support"
+                            )
+                            lines.append(
+                                f"This window function {order_str} ordering and {frame_str} frame specifications."
+                            )
+                            lines.append("")
                         lines.append(
                             "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
                         )
@@ -302,15 +557,27 @@ def explain_term(
                     lines.append(f"  {line}")
             else:
                 lines.append(f"  {qualified_term.to_string()}")
+            if isinstance(qualified_term, Singular):
+                lines.append("")
+                lines.append(
+                    "This child uses the SINGULAR operator, declaring the"
+                    " following sub-collection as singular with respect to"
+                    " the collection:"
+                )
+                if verbose:
+                    for (
+                        line
+                    ) in qualified_term.preceding_context.to_tree_string().splitlines():
+                        lines.append(f"  {line}")
+                else:
+                    lines.append(f"  {qualified_term.preceding_context.to_string()}")
             if verbose:
                 lines.append("")
                 assert len(qualified_term.calc_terms) > 0, (
                     "Child collection has no expression terms"
                 )
                 chosen_term_name: str = min(qualified_term.calc_terms)
-                if qualified_term.starting_predecessor.is_singular(
-                    qualified_node.starting_predecessor
-                ):
+                if qualified_term.is_singular(qualified_node.starting_predecessor):
                     lines.append(
                         "This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression."
                     )
@@ -323,6 +590,13 @@ def explain_term(
                         "This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated."
                     )
                     lines.append("For example, the following are valid:")
+                    # TODO: when the collection is a CROSS, qualified_node.to_string()
+                    # renders as e.g. "TPCH.nations.TPCH.regions" instead of the
+                    # friendlier "TPCH.nations.CROSS(TPCH.regions)". Fixing this
+                    # properly requires propagating CROSS identity through the QDAG
+                    # and is deferred as a larger refactor.
+                    # Or finding a way to render the unqualified node that
+                    # looks nicer, like how QDAG looks
                     lines.append(
                         f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
                     )

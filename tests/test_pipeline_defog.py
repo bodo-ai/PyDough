@@ -3,7 +3,10 @@ Integration tests for the PyDough workflow on the defog.ai queries.
 """
 
 from collections.abc import Callable
+from contextlib import nullcontext
+from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
 from pydough import init_pydough_context, to_sql
@@ -754,11 +757,12 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_dealership_adv8,
                 "dealership_adv8",
                 order_sensitive=True,
+                # Pin today so the generated VALUES clause (6 month-start
+                # timestamps) stays deterministic. Reference files reflect
+                # the Oct 2025 – Mar 2026 window (today = 2026-04-01).
+                fixed_today=pd.Timestamp("2026-04-01"),
             ),
             id="dealership_adv8",
-            marks=pytest.mark.skip(
-                "TODO (gh #162): add user created collections support to PyDough"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -805,9 +809,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 order_sensitive=True,
             ),
             id="dealership_adv13",
-            marks=pytest.mark.skip(
-                "TODO (gh #162): add user created collections support to PyDough"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -2019,7 +2020,7 @@ def defog_pipeline_test_data(
 
 def test_defog_until_sql(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,
-    defog_graphs: graph_fetcher,
+    get_dialect_defog_graphs: Callable[[DatabaseDialect, str], GraphMetadata],
     empty_context_database: DatabaseContext,
     defog_config: PyDoughConfigs,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
@@ -2035,8 +2036,17 @@ def test_defog_until_sql(
     test_name: str = defog_pipeline_test_data.test_name
     file_name: str = f"defog_{test_name}"
     file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
-    graph: GraphMetadata = defog_graphs(graph_name)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    graph: GraphMetadata = get_dialect_defog_graphs(
+        empty_context_database.dialect, graph_name
+    )
+    fixed_today = defog_pipeline_test_data.fixed_today
+    ctx = (
+        patch.object(pd.Timestamp, "today", return_value=fixed_today)
+        if fixed_today is not None
+        else nullcontext()
+    )
+    with ctx:
+        unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     sql_text: str = to_sql(
         unqualified,
         metadata=graph,

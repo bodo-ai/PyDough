@@ -14,7 +14,7 @@ WITH sizes AS (
     AND CONTAINS(part.p_type, 'PLATED')
     AND part.p_size = sizes.part_size
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY part_size ORDER BY part.p_retailprice) = 1
+    ROW_NUMBER() OVER (PARTITION BY sizes.part_size ORDER BY part.p_retailprice) = 1
 )
 SELECT
   part_size,

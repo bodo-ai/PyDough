@@ -11,7 +11,7 @@ WITH _s0 AS (
     ) AS quarter,
     customer_id,
     SUM(sale_price) AS sum_sale_price
-  FROM main.sales
+  FROM dealership.sales
   WHERE
     EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
   GROUP BY
@@ -23,7 +23,7 @@ WITH _s0 AS (
     customers.state,
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price
   FROM _s0 AS _s0
-  JOIN main.customers AS customers
+  JOIN dealership.customers AS customers
     ON _s0.customer_id = customers._id
   GROUP BY
     1,

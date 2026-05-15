@@ -1,4 +1,4 @@
 ROOT(columns=[('REVENUE', DEFAULT_TO(sum_amt, 0:numeric))], orderings=[])
- AGGREGATE(keys={}, aggregations={'sum_amt': SUM(l_extendedprice * l_discount)})
-  FILTER(condition=l_discount <= 0.07:numeric & l_quantity < 24:numeric & l_shipdate < datetime.date(1995, 1, 1):datetime & l_discount >= 0.05:numeric & l_shipdate >= datetime.date(1994, 1, 1):datetime, columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice})
+ AGGREGATE(keys={}, aggregations={'sum_amt': SUM((l_extendedprice * l_discount))})
+  FILTER(condition=(l_discount <= 0.07:numeric) & (l_quantity < 24:numeric) & (l_shipdate < datetime.date(1995, 1, 1):datetime) & (l_discount >= 0.05:numeric) & (l_shipdate >= datetime.date(1994, 1, 1):datetime), columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice})
    SCAN(table=tpch.LINEITEM, columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice, 'l_quantity': l_quantity, 'l_shipdate': l_shipdate})

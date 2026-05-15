@@ -1,0 +1,10 @@
+SELECT
+  ADVERSE_EVENTS.description,
+  ADVERSE_EVENTS.treatment_id,
+  DRUGS.drug_id,
+  DRUGS.drug_name
+FROM MAIN.ADVERSE_EVENTS ADVERSE_EVENTS
+JOIN MAIN.TREATMENTS TREATMENTS
+  ON ADVERSE_EVENTS.treatment_id = TREATMENTS.treatment_id
+JOIN MAIN.DRUGS DRUGS
+  ON DRUGS.drug_id = TREATMENTS.drug_id AND DRUGS.drug_type = 'topical'

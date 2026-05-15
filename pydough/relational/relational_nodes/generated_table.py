@@ -27,6 +27,7 @@ class GeneratedTable(RelationalNode):
     def __init__(
         self,
         user_collection: PyDoughUserGeneratedCollection,
+        unique_sets: set[frozenset[str]] | None = None,
     ) -> None:
         columns: dict[str, RelationalExpression] = {
             col_name: ColumnReference(col_name, col_type)
@@ -34,6 +35,9 @@ class GeneratedTable(RelationalNode):
         }
         super().__init__(columns)
         self._collection = user_collection
+        self._unique_sets: set[frozenset[str]] = (
+            set() if unique_sets is None else unique_sets
+        )
 
     @property
     def inputs(self) -> list[RelationalNode]:
@@ -50,6 +54,14 @@ class GeneratedTable(RelationalNode):
         The user-generated collection that this generated table represents.
         """
         return self._collection
+
+    @property
+    def unique_sets(self) -> set[frozenset[str]]:
+        """
+        Returns a set of all sets of data columns of the generated table that
+        define a unique row, in terms of the original table columns.
+        """
+        return self._unique_sets
 
     def node_equals(self, other: RelationalNode) -> bool:
         return isinstance(other, GeneratedTable) and self.collection == other.collection
@@ -68,4 +80,4 @@ class GeneratedTable(RelationalNode):
         columns: dict[str, RelationalExpression],
         inputs: list[RelationalNode],
     ) -> RelationalNode:
-        return GeneratedTable(self.collection)
+        return GeneratedTable(self.collection, self.unique_sets)

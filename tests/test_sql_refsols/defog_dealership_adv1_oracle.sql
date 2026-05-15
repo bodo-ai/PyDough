@@ -1,0 +1,55 @@
+SELECT
+  TRUNC(
+    CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) - MOD((
+      TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
+    ), 7) AS DATE),
+    'DD'
+  ) AS payment_week,
+  COUNT(*) AS total_payments,
+  COALESCE(
+    SUM(
+      (
+        MOD((
+          TO_CHAR(PAYMENTS_RECEIVED.payment_date, 'D') + 5
+        ), 7)
+      ) IN (5, 6)
+    ),
+    0
+  ) AS weekend_payments
+FROM MAIN.PAYMENTS_RECEIVED PAYMENTS_RECEIVED
+JOIN MAIN.SALES SALES
+  ON PAYMENTS_RECEIVED.sale_id = SALES."_id" AND SALES.sale_price > 30000
+WHERE
+  FLOOR(
+    (
+      TRUNC(CAST(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'DD') + (
+        MOD((
+          TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
+        ), 7)
+      ) - (
+        MOD((
+          TO_CHAR(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE), 'D') + 5
+        ), 7)
+      )
+    ) / 7
+  ) <= 8
+  AND FLOOR(
+    (
+      TRUNC(CAST(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) AS DATE), 'DD') + (
+        MOD((
+          TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
+        ), 7)
+      ) - (
+        MOD((
+          TO_CHAR(CAST(SYS_EXTRACT_UTC(SYSTIMESTAMP) AS DATE), 'D') + 5
+        ), 7)
+      )
+    ) / 7
+  ) >= 1
+GROUP BY
+  TRUNC(
+    CAST(CAST(PAYMENTS_RECEIVED.payment_date AS DATE) - MOD((
+      TO_CHAR(CAST(PAYMENTS_RECEIVED.payment_date AS DATE), 'D') + 5
+    ), 7) AS DATE),
+    'DD'
+  )

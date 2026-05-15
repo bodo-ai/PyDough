@@ -1,0 +1,7 @@
+ROOT(columns=[('total_quatity', DEFAULT_TO(sum_quantity, 0:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_quantity': SUM(quantity)})
+  JOIN(condition=t0.product_id == t1.product_id, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'quantity': t0.quantity})
+   FILTER(condition=(channel_campaigns == 'Email':string) & (sale_date == datetime.date(2025, 6, 4):datetime) & discounted, columns={'product_id': product_id, 'quantity': quantity})
+    SCAN(table=ITEM, columns={'channel_campaigns': channel_campaigns, 'discounted': discounted, 'product_id': product_id, 'quantity': quantity, 'sale_date': sale_date})
+   FILTER(condition=category == 'Dresses':string, columns={'product_id': product_id})
+    SCAN(table=PROD, columns={'category': category, 'product_id': product_id})

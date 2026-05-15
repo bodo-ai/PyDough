@@ -1,7 +1,7 @@
 SELECT
   MIN(sbDailyPrice.sbdpclose) AS lowest_price
-FROM main.sbDailyPrice AS sbDailyPrice
-JOIN main.sbTicker AS sbTicker
+FROM broker.sbDailyPrice AS sbDailyPrice
+JOIN broker.sbTicker AS sbTicker
   ON sbDailyPrice.sbdptickerid = sbTicker.sbtickerid
   AND sbTicker.sbtickersymbol = 'VTI'
 WHERE

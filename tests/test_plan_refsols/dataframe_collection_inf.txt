@@ -1,0 +1,2 @@
+ROOT(columns=[('py_float', py_float), ('np_float64', np_float64), ('np_float32', np_float32)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='infinty', shape=(4, 3), columns=['py_float', 'np_float64', 'np_float32']))

@@ -2,7 +2,7 @@ SELECT
   payment_date,
   payment_method COLLATE utf8mb4_bin AS payment_method,
   COALESCE(SUM(payment_amount), 0) AS total_amount
-FROM main.payments_received
+FROM dealership.payments_received
 WHERE
   CAST((
     DATEDIFF(CURRENT_TIMESTAMP(), CAST(payment_date AS DATETIME)) + (

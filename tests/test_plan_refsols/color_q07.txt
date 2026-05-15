@@ -1,0 +1,7 @@
+ROOT(columns=[('company_name', supname), ('day', dos), ('n_orders', sum_n_rows), ('delta', sum_n_rows - PREV(args=[sum_n_rows], partition=[supname], order=[(dos):asc_last]))], orderings=[(supname):asc_first, (dos):asc_first])
+ AGGREGATE(keys={'dos': dos, 'supname': supname}, aggregations={'sum_n_rows': SUM(n_rows)})
+  JOIN(condition=t0.comid == t1.supid, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'dos': t0.dos, 'n_rows': t0.n_rows, 'supname': t1.supname})
+   AGGREGATE(keys={'comid': comid, 'dos': dos}, aggregations={'n_rows': COUNT()})
+    FILTER(condition=MONOTONIC(datetime.date(2025, 7, 1):datetime, dos, datetime.date(2025, 7, 4):datetime), columns={'comid': comid, 'dos': dos})
+     SCAN(table=SHPMNTS, columns={'comid': comid, 'dos': dos})
+   SCAN(table=SUPLS, columns={'supid': supid, 'supname': supname})

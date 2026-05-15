@@ -1,30 +1,21 @@
-WITH _u_0 AS (
-  SELECT
-    sbcustid AS _u_1
-  FROM main.sbcustomer
-  WHERE
-    LOWER(sbcustcountry) = 'usa'
-  GROUP BY
-    1
-)
 SELECT
   NULLIF(COUNT(*), 0) AS n_transactions,
   COALESCE(SUM(sbtransaction.sbtxamount), 0) AS total_amount
-FROM main.sbtransaction AS sbtransaction
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = sbtransaction.sbtxcustid
+FROM broker.sbtransaction AS sbtransaction
+JOIN broker.sbcustomer AS sbcustomer
+  ON LOWER(sbcustomer.sbcustcountry) = 'usa'
+  AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
 WHERE
-  NOT _u_0._u_1 IS NULL
-  AND sbtransaction.sbtxdatetime < DATE_TRUNC(
+  sbtransaction.sbtxdatetime < DATE_TRUNC(
     'DAY',
     DATEADD(
       DAY,
       (
         (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+          DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
         ) % 7
       ) * -1,
-      CURRENT_TIMESTAMP()
+      CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
     )
   )
   AND sbtransaction.sbtxdatetime >= DATEADD(
@@ -36,10 +27,10 @@ WHERE
         DAY,
         (
           (
-            DAYOFWEEK(CURRENT_TIMESTAMP()) + 6
+            DAYOFWEEK(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)) + 6
           ) % 7
         ) * -1,
-        CURRENT_TIMESTAMP()
+        CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ)
       )
     )
   )

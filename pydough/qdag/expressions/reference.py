@@ -62,6 +62,5 @@ class Reference(PyDoughExpressionQDAG):
         return (
             isinstance(other, Reference)
             and self.term_name == other.term_name
-            and self.collection.equals(other.collection)
             and self.pydough_type == other.pydough_type
         )

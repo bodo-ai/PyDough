@@ -4,19 +4,31 @@ Definition of SQLGlot transformation bindings for the MySQL dialect.
 
 __all__ = ["MySQLTransformBindings"]
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.errors.error_types import PyDoughSQLException
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.types import PyDoughType
+from pydough.types.datetime_type import DatetimeType
+from pydough.types.numeric_type import NumericType
 from pydough.types.string_type import StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     expand_std,
     expand_variance,
+    generate_range_rows,
 )
 
 
@@ -41,6 +53,14 @@ class MySQLTransformBindings(BaseTransformBindings):
             "Saturday": 7,
         }
 
+    @property
+    def values_tuple(self) -> bool:
+        return False
+
+    @property
+    def values_alias_column(self) -> bool:
+        return False
+
     PYDOP_TO_MYSQL_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
@@ -48,8 +68,6 @@ class MySQLTransformBindings(BaseTransformBindings):
         pydop.MINUTE: "MINUTE",
         pydop.SECOND: "SECOND",
         pydop.DAYNAME: "DAYNAME",
-        pydop.SMALLEST: "LEAST",
-        pydop.LARGEST: "GREATEST",
     }
 
     """
@@ -414,6 +432,12 @@ class MySQLTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         return expand_std(args=args, types=types, type=type)
 
+    def convert_literal_expression(
+        self,
+        arg: LiteralExpression,
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.convert(arg.value)
+
     def convert_datediff(
         self,
         args: list[SQLGlotExpression],
@@ -694,3 +718,77 @@ class MySQLTransformBindings(BaseTransformBindings):
                 expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
             )
         return arg
+
+    def convert_smallest_or_largest(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
+    ) -> SQLGlotExpression:
+        collated_args: list[SQLGlotExpression] = []
+        for arg in args[1:]:
+            if isinstance(types[args.index(arg)], StringType):
+                collated_args.append(
+                    sqlglot_expressions.Collate(
+                        this=arg,
+                        expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
+                    )
+                )
+            else:
+                collated_args.append(arg)
+        if largest:
+            return sqlglot_expressions.Greatest(this=args[0], expressions=collated_args)
+        else:
+            return sqlglot_expressions.Least(this=args[0], expressions=collated_args)
+
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(
+                sqlglot_expressions.values(
+                    [
+                        sqlglot_expressions.Anonymous(
+                            this="ROW",
+                            expressions=[sqlglot_expressions.convert((None,))],
+                        )
+                    ]
+                )
+            )
+        )
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range collection to its MySQL SQLGlot
+        representation. Using ROW constructs to represent each row.
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+        # Generate rows for the range, using ROW().
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, self)
+
+        result: SQLGlotExpression = create_constant_table(
+            collection.name, [collection.column_name], range_rows, self
+        )
+
+        return result
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        match item_type:
+            case DatetimeType():
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Literal.string(item),
+                    to=sqlglot_expressions.DataType.build("DATETIME"),
+                )
+
+            case NumericType():
+                if math.isinf(item):
+                    raise PyDoughSQLException("MySQL does not support Infinity values.")
+                return sqlglot_expressions.Literal.number(item)
+
+            case _:  # UnknownType
+                return sqlglot_expressions.Literal.string(str(item))
