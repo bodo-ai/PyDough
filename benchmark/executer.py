@@ -21,45 +21,45 @@ if username is None or password is None:
         "Environment variables POSTGRES_USER and POSTGRES_PASSWORD must be set."
     )
 
-# Wait for Postgres to be ready for 10 minutes max
-for i in range(600):
-    try:
-        conn = psycopg2.connect(
-            host=host,
-            port=port,
-            user=username,
-            password=password,
-            database=database,
-        )
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM tpch.lineitem;")
-        row = cur.fetchone()
-        if row and row[0] == 59986052:
-            conn.close()
-            break
-        else:
-            print(f"Waiting {i + 1}/600 seconds for data to be load...")
+if __name__ == "__main__":
+    # Wait for Postgres to be ready for 10 minutes max
+    for i in range(600):
+        try:
+            conn = psycopg2.connect(
+                host=host,
+                port=port,
+                user=username,
+                password=password,
+                database=database,
+            )
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tpch.lineitem;")
+            row = cur.fetchone()
+            if row and row[0] == 59986052:
+                conn.close()
+                break
+            else:
+                print(f"Waiting {i + 1}/600 seconds for data to be load...")
+                time.sleep(1)
+        except psycopg2.Error as e:
+            print(f"[{i + 1}/600] Waiting for Postgres/data: {e}")
             time.sleep(1)
-        break
-    except psycopg2.Error as e:
-        print(f"[{i + 1}/600] Waiting for Postgres/data: {e}")
-        time.sleep(1)
-else:
-    raise TimeoutError("Postgres did not become ready within 10 minutes.")
+    else:
+        raise TimeoutError("Postgres did not become ready within 10 minutes.")
 
-print("Postgres is ready. Starting benchmark...")
-postgres_conn: Connection = Connection(
-    db_name=database,
-    user=username,
-    password=password,
-    host=host,
-    port=port,
-)
+    print("Postgres is ready. Starting benchmark...")
+    postgres_conn: Connection = Connection(
+        db_name=database,
+        user=username,
+        password=password,
+        host=host,
+        port=port,
+    )
 
-benchmarker: Benchmarker = Benchmarker(
-    postgres_conn,
-    questions_path="./benchmark",
-    export_metrics=True,
-    metadata_path="./benchmark/benchmark_metadata",
-)
-benchmarker.measure()
+    benchmarker: Benchmarker = Benchmarker(
+        postgres_conn,
+        questions_path="./benchmark",
+        export_metrics=True,
+        metadata_path="./benchmark/benchmark_metadata",
+    )
+    benchmarker.measure()
