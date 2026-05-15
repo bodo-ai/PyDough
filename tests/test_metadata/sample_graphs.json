@@ -1626,6 +1626,15 @@
             "synonyms": ["device key", "device id"]
           },
           {
+            "name": "product_id",
+            "type": "table column",
+            "column name": "in_product_id",
+            "data type": "numeric",
+            "description": "The id of the product that the incident device is an instance of",
+            "sample values": [145131, 241850, 995917, 387218],
+            "synonyms": ["product key", "product id"]
+          },
+          {
             "name": "repair_country_id",
             "type": "table column",
             "column name": "in_repair_country_id",
@@ -1740,6 +1749,27 @@
         "singular": false,
         "always matches": true,
         "description": "All individual devices made from the product line",
+        "synonyms": ["instances", "units", "purchases"]
+      },
+      {
+        "name": "product",
+        "type": "simple join",
+        "parent collection": "incidents",
+        "child collection": "products",
+        "singular": true,
+        "always matches": true,
+        "keys": {"product_id": ["_id"]},
+        "description": "The product that the incident device is an instance of",
+        "synonyms": ["item", "model", "spec"]
+      },
+      {
+        "name": "incidents",
+        "type": "reverse",
+        "original parent": "incidents",
+        "original property": "product",
+        "singular": false,
+        "always matches": false,
+        "description": "All individual incidents related to a device from this product line",
         "synonyms": ["instances", "units", "purchases"]
       },
       {

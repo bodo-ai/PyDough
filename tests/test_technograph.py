@@ -620,6 +620,38 @@ result = (
             ),
             id="alternative_quarter_cum_ir_analysis",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .CALCULATE(
+        n_devices=COUNT(devices),
+        n_incident_devices=NDISTINCT(incidents.device_id),
+    )
+    .WHERE(ISIN(_id, [618070, 960138, 143712]))
+    .CALCULATE(
+        product_name=name,
+        lifetime_ir=ROUND(n_incident_devices / n_devices, 2),
+    )
+    .ORDER_BY(product_name.ASC())
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "product_names": [
+                            "EmeraldBolt-IV",
+                            "GoldCopper-Star",
+                            "RubyBolt-Unit",
+                        ],
+                        "lifetime_ir": [0.5, 0.06, 0.2],
+                    }
+                ),
+                "lifetime_products_ir_analysis",
+            ),
+            id="lifetime_products_ir_analysis",
+        ),
     ],
 )
 def technograph_pipeline_test_data(request) -> PyDoughPandasTest:

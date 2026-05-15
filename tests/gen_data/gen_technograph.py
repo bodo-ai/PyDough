@@ -808,6 +808,7 @@ def gen_technograph_records(cursor: sqlite3.Cursor) -> None:
         incident_record = (
             in_id,
             incident_info["device"],
+            incident_info["pr_id"],
             incident_info["repair_id"],
             incident_info["error_id"],
             incident_info["incident_ts"].to_pydatetime(),

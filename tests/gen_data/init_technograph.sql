@@ -39,6 +39,7 @@ CREATE TABLE USERS(
 CREATE TABLE INCIDENTS(
   in_id BIGINT NOT NULL PRIMARY KEY,
   in_device_id BIGINT NOT NULL,
+  in_product_id BIGINT NOT NULL,
   in_repair_country_id BIGINT NOT NULL,
   in_error_id BIGINT NOT NULL,
   in_error_report_ts TIMESTAMP NOT NULL,
