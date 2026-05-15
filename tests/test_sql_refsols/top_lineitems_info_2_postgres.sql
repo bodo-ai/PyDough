@@ -14,9 +14,11 @@ JOIN _s1 AS _s1
   ON _s1.ps_partkey = part.p_partkey
 CROSS JOIN tpch.nation AS nation
 JOIN tpch.supplier AS supplier
-  ON nation.n_nationkey = supplier.s_nationkey
+  ON _s1.ps_suppkey = supplier.s_suppkey AND nation.n_nationkey = supplier.s_nationkey
 JOIN _s1 AS _s7
-  ON _s7.ps_suppkey = supplier.s_suppkey
+  ON _s1.ps_suppkey = _s7.ps_suppkey
+  AND _s7.ps_partkey = part.p_partkey
+  AND _s7.ps_suppkey = supplier.s_suppkey
 JOIN tpch.lineitem AS lineitem
   ON _s1.ps_suppkey = lineitem.l_suppkey
   AND _s7.ps_partkey = lineitem.l_partkey

@@ -1,10 +1,18 @@
+WITH _t1 AS (
+  SELECT
+    n_nationkey,
+    n_regionkey
+  FROM tpch.nation
+  WHERE
+    n_regionkey = 2
+)
 SELECT
   COUNT(*) AS n
 FROM tpch.supplier AS supplier
-JOIN tpch.nation AS nation
-  ON nation.n_nationkey = supplier.s_nationkey
-JOIN tpch.nation AS nation_2
-  ON nation.n_regionkey = nation_2.n_regionkey AND nation_2.n_regionkey = 2
+JOIN _t1 AS _t1
+  ON _t1.n_nationkey = supplier.s_nationkey
+JOIN _t1 AS _t2
+  ON _t1.n_regionkey = _t2.n_regionkey
 JOIN tpch.customer AS customer
-  ON customer.c_custkey = supplier.s_suppkey
-  AND customer.c_nationkey = nation_2.n_nationkey
+  ON _t2.n_nationkey = customer.c_nationkey
+  AND customer.c_custkey = supplier.s_suppkey

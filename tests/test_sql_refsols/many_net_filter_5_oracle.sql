@@ -8,3 +8,5 @@ JOIN TPCH.NATION NATION_2
 JOIN TPCH.CUSTOMER CUSTOMER
   ON CUSTOMER.c_custkey = SUPPLIER.s_suppkey
   AND CUSTOMER.c_nationkey = NATION_2.n_nationkey
+WHERE
+  SUPPLIER.s_nationkey = 5

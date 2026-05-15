@@ -2,9 +2,13 @@ SELECT
   COUNT(*) AS n
 FROM TPCH.SUPPLIER SUPPLIER
 JOIN TPCH.NATION NATION
-  ON NATION.n_nationkey = SUPPLIER.s_nationkey AND NATION.n_regionkey < 3
+  ON NATION.n_nationkey = SUPPLIER.s_nationkey
+  AND NATION.n_regionkey < 3
+  AND NATION.n_regionkey > 0
 JOIN TPCH.NATION NATION_2
-  ON NATION.n_regionkey = NATION_2.n_regionkey AND NATION_2.n_regionkey > 0
+  ON NATION.n_regionkey = NATION_2.n_regionkey
+  AND NATION_2.n_regionkey > 0
+  AND NOT NATION_2.n_nationkey IN (1, 4, 7, 10, 13, 16, 19, 22)
 JOIN TPCH.CUSTOMER CUSTOMER
   ON CUSTOMER.c_custkey = SUPPLIER.s_suppkey
   AND CUSTOMER.c_nationkey = NATION_2.n_nationkey

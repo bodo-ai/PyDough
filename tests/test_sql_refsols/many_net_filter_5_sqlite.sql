@@ -8,3 +8,5 @@ JOIN tpch.nation AS nation_2
 JOIN tpch.customer AS customer
   ON customer.c_custkey = supplier.s_suppkey
   AND customer.c_nationkey = nation_2.n_nationkey
+WHERE
+  supplier.s_nationkey = 5
