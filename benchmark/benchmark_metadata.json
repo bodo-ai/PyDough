@@ -866,5 +866,4111 @@
       "notable characteristics": "Highly normalized schema with multiple tables and relationships, designed to represent a wholesale supplier's business environment",
       "data description": "Contains information about orders. Every order has one or more lineitems, each representing the purchase and shipment of a specific part from a specific supplier. Each order is placed by a customer, and both customers and suppliers belong to nations which in turn belong to regions. Additionally, there are supply records indicating every combination of a supplier and the parts they supply."
     }
+  },
+  {
+    "name": "tpcds",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "call_center",
+        "type": "simple table",
+        "table path": "tpcds.call_center",
+        "unique properties": ["cc_call_center_sk"],
+        "properties": [
+          {
+            "name": "cc_call_center_sk",
+            "type": "table column",
+            "column name": "cc_call_center_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_call_center_id",
+            "type": "table column",
+            "column name": "cc_call_center_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_rec_start_date",
+            "type": "table column",
+            "column name": "cc_rec_start_date",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_rec_end_date",
+            "type": "table column",
+            "column name": "cc_rec_end_date",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_closed_date_sk",
+            "type": "table column",
+            "column name": "cc_closed_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_open_date_sk",
+            "type": "table column",
+            "column name": "cc_open_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_name",
+            "type": "table column",
+            "column name": "cc_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_class",
+            "type": "table column",
+            "column name": "cc_class",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_employees",
+            "type": "table column",
+            "column name": "cc_employees",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_sq_ft",
+            "type": "table column",
+            "column name": "cc_sq_ft",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_hours",
+            "type": "table column",
+            "column name": "cc_hours",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_manager",
+            "type": "table column",
+            "column name": "cc_manager",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_mkt_id",
+            "type": "table column",
+            "column name": "cc_mkt_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_mkt_class",
+            "type": "table column",
+            "column name": "cc_mkt_class",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_mkt_desc",
+            "type": "table column",
+            "column name": "cc_mkt_desc",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_market_manager",
+            "type": "table column",
+            "column name": "cc_market_manager",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_division",
+            "type": "table column",
+            "column name": "cc_division",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_division_name",
+            "type": "table column",
+            "column name": "cc_division_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_company",
+            "type": "table column",
+            "column name": "cc_company",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_company_name",
+            "type": "table column",
+            "column name": "cc_company_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_street_number",
+            "type": "table column",
+            "column name": "cc_street_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_street_name",
+            "type": "table column",
+            "column name": "cc_street_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_street_type",
+            "type": "table column",
+            "column name": "cc_street_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_suite_number",
+            "type": "table column",
+            "column name": "cc_suite_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_city",
+            "type": "table column",
+            "column name": "cc_city",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_county",
+            "type": "table column",
+            "column name": "cc_county",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_state",
+            "type": "table column",
+            "column name": "cc_state",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_zip",
+            "type": "table column",
+            "column name": "cc_zip",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_country",
+            "type": "table column",
+            "column name": "cc_country",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_gmt_offset",
+            "type": "table column",
+            "column name": "cc_gmt_offset",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cc_tax_percentage",
+            "type": "table column",
+            "column name": "cc_tax_percentage",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "catalog_page",
+        "type": "simple table",
+        "table path": "tpcds.catalog_page",
+        "unique properties": ["cp_catalog_page_sk"],
+        "properties": [
+          {
+            "name": "cp_catalog_page_sk",
+            "type": "table column",
+            "column name": "cp_catalog_page_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_catalog_page_id",
+            "type": "table column",
+            "column name": "cp_catalog_page_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_start_date_sk",
+            "type": "table column",
+            "column name": "cp_start_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_end_date_sk",
+            "type": "table column",
+            "column name": "cp_end_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_department",
+            "type": "table column",
+            "column name": "cp_department",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_catalog_number",
+            "type": "table column",
+            "column name": "cp_catalog_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_catalog_page_number",
+            "type": "table column",
+            "column name": "cp_catalog_page_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_description",
+            "type": "table column",
+            "column name": "cp_description",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cp_type",
+            "type": "table column",
+            "column name": "cp_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "catalog_returns",
+        "type": "simple table",
+        "table path": "tpcds.catalog_returns",
+        "unique properties": ["cr_returned_date_sk"],
+        "properties": [
+          {
+            "name": "cr_returned_date_sk",
+            "type": "table column",
+            "column name": "cr_returned_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_returned_time_sk",
+            "type": "table column",
+            "column name": "cr_returned_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_item_sk",
+            "type": "table column",
+            "column name": "cr_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_refunded_customer_sk",
+            "type": "table column",
+            "column name": "cr_refunded_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_refunded_cdemo_sk",
+            "type": "table column",
+            "column name": "cr_refunded_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_refunded_hdemo_sk",
+            "type": "table column",
+            "column name": "cr_refunded_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_refunded_addr_sk",
+            "type": "table column",
+            "column name": "cr_refunded_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_returning_customer_sk",
+            "type": "table column",
+            "column name": "cr_returning_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_returning_cdemo_sk",
+            "type": "table column",
+            "column name": "cr_returning_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_returning_hdemo_sk",
+            "type": "table column",
+            "column name": "cr_returning_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_returning_addr_sk",
+            "type": "table column",
+            "column name": "cr_returning_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_call_center_sk",
+            "type": "table column",
+            "column name": "cr_call_center_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_catalog_page_sk",
+            "type": "table column",
+            "column name": "cr_catalog_page_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_ship_mode_sk",
+            "type": "table column",
+            "column name": "cr_ship_mode_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_warehouse_sk",
+            "type": "table column",
+            "column name": "cr_warehouse_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_reason_sk",
+            "type": "table column",
+            "column name": "cr_reason_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_order_number",
+            "type": "table column",
+            "column name": "cr_order_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_return_quantity",
+            "type": "table column",
+            "column name": "cr_return_quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_return_amount",
+            "type": "table column",
+            "column name": "cr_return_amount",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_return_tax",
+            "type": "table column",
+            "column name": "cr_return_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_return_amt_inc_tax",
+            "type": "table column",
+            "column name": "cr_return_amt_inc_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_fee",
+            "type": "table column",
+            "column name": "cr_fee",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_return_ship_cost",
+            "type": "table column",
+            "column name": "cr_return_ship_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_refunded_cash",
+            "type": "table column",
+            "column name": "cr_refunded_cash",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_reversed_charge",
+            "type": "table column",
+            "column name": "cr_reversed_charge",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_store_credit",
+            "type": "table column",
+            "column name": "cr_store_credit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cr_net_loss",
+            "type": "table column",
+            "column name": "cr_net_loss",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "catalog_sales",
+        "type": "simple table",
+        "table path": "tpcds.catalog_sales",
+        "unique properties": ["cs_sold_date_sk"],
+        "properties": [
+          {
+            "name": "cs_sold_date_sk",
+            "type": "table column",
+            "column name": "cs_sold_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_sold_time_sk",
+            "type": "table column",
+            "column name": "cs_sold_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ship_date_sk",
+            "type": "table column",
+            "column name": "cs_ship_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_bill_customer_sk",
+            "type": "table column",
+            "column name": "cs_bill_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_bill_cdemo_sk",
+            "type": "table column",
+            "column name": "cs_bill_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_bill_hdemo_sk",
+            "type": "table column",
+            "column name": "cs_bill_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_bill_addr_sk",
+            "type": "table column",
+            "column name": "cs_bill_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ship_customer_sk",
+            "type": "table column",
+            "column name": "cs_ship_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ship_cdemo_sk",
+            "type": "table column",
+            "column name": "cs_ship_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ship_hdemo_sk",
+            "type": "table column",
+            "column name": "cs_ship_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ship_addr_sk",
+            "type": "table column",
+            "column name": "cs_ship_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_call_center_sk",
+            "type": "table column",
+            "column name": "cs_call_center_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_catalog_page_sk",
+            "type": "table column",
+            "column name": "cs_catalog_page_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ship_mode_sk",
+            "type": "table column",
+            "column name": "cs_ship_mode_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_warehouse_sk",
+            "type": "table column",
+            "column name": "cs_warehouse_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_item_sk",
+            "type": "table column",
+            "column name": "cs_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_promo_sk",
+            "type": "table column",
+            "column name": "cs_promo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_order_number",
+            "type": "table column",
+            "column name": "cs_order_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_quantity",
+            "type": "table column",
+            "column name": "cs_quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_wholesale_cost",
+            "type": "table column",
+            "column name": "cs_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_list_price",
+            "type": "table column",
+            "column name": "cs_list_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_sales_price",
+            "type": "table column",
+            "column name": "cs_sales_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ext_discount_amt",
+            "type": "table column",
+            "column name": "cs_ext_discount_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ext_sales_price",
+            "type": "table column",
+            "column name": "cs_ext_sales_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ext_wholesale_cost",
+            "type": "table column",
+            "column name": "cs_ext_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ext_list_price",
+            "type": "table column",
+            "column name": "cs_ext_list_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ext_tax",
+            "type": "table column",
+            "column name": "cs_ext_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_coupon_amt",
+            "type": "table column",
+            "column name": "cs_coupon_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_ext_ship_cost",
+            "type": "table column",
+            "column name": "cs_ext_ship_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_net_paid",
+            "type": "table column",
+            "column name": "cs_net_paid",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_net_paid_inc_tax",
+            "type": "table column",
+            "column name": "cs_net_paid_inc_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_net_paid_inc_ship",
+            "type": "table column",
+            "column name": "cs_net_paid_inc_ship",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_net_paid_inc_ship_tax",
+            "type": "table column",
+            "column name": "cs_net_paid_inc_ship_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cs_net_profit",
+            "type": "table column",
+            "column name": "cs_net_profit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "customer",
+        "type": "simple table",
+        "table path": "tpcds.customer",
+        "unique properties": [
+          "c_customer_sk",
+          "c_customer_id"
+        ],
+        "properties": [
+          {
+            "name": "c_customer_sk",
+            "type": "table column",
+            "column name": "c_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_customer_id",
+            "type": "table column",
+            "column name": "c_customer_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_current_cdemo_sk",
+            "type": "table column",
+            "column name": "c_current_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_current_hdemo_sk",
+            "type": "table column",
+            "column name": "c_current_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_current_addr_sk",
+            "type": "table column",
+            "column name": "c_current_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_first_shipto_date_sk",
+            "type": "table column",
+            "column name": "c_first_shipto_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_first_sales_date_sk",
+            "type": "table column",
+            "column name": "c_first_sales_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_salutation",
+            "type": "table column",
+            "column name": "c_salutation",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_first_name",
+            "type": "table column",
+            "column name": "c_first_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_last_name",
+            "type": "table column",
+            "column name": "c_last_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_preferred_cust_flag",
+            "type": "table column",
+            "column name": "c_preferred_cust_flag",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_birth_day",
+            "type": "table column",
+            "column name": "c_birth_day",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_birth_month",
+            "type": "table column",
+            "column name": "c_birth_month",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_birth_year",
+            "type": "table column",
+            "column name": "c_birth_year",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_birth_country",
+            "type": "table column",
+            "column name": "c_birth_country",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_login",
+            "type": "table column",
+            "column name": "c_login",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_email_address",
+            "type": "table column",
+            "column name": "c_email_address",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "c_last_review_date_sk",
+            "type": "table column",
+            "column name": "c_last_review_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "customer_address",
+        "type": "simple table",
+        "table path": "tpcds.customer_address",
+        "unique properties": [
+            "ca_address_sk",
+            "ca_address_id"
+        ],
+        "properties": [
+          {
+            "name": "ca_address_sk",
+            "type": "table column",
+            "column name": "ca_address_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_address_id",
+            "type": "table column",
+            "column name": "ca_address_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_street_number",
+            "type": "table column",
+            "column name": "ca_street_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_street_name",
+            "type": "table column",
+            "column name": "ca_street_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_street_type",
+            "type": "table column",
+            "column name": "ca_street_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_suite_number",
+            "type": "table column",
+            "column name": "ca_suite_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_city",
+            "type": "table column",
+            "column name": "ca_city",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_county",
+            "type": "table column",
+            "column name": "ca_county",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_state",
+            "type": "table column",
+            "column name": "ca_state",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_zip",
+            "type": "table column",
+            "column name": "ca_zip",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_country",
+            "type": "table column",
+            "column name": "ca_country",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_gmt_offset",
+            "type": "table column",
+            "column name": "ca_gmt_offset",
+            "data type": "NUMERIC(5, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ca_location_type",
+            "type": "table column",
+            "column name": "ca_location_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "customer_demographics",
+        "type": "simple table",
+        "table path": "tpcds.customer_demographics",
+        "unique properties": [
+          "cd_demo_sk"
+        ],
+        "properties": [
+          {
+            "name": "cd_demo_sk",
+            "type": "table column",
+            "column name": "cd_demo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_gender",
+            "type": "table column",
+            "column name": "cd_gender",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_marital_status",
+            "type": "table column",
+            "column name": "cd_marital_status",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_education_status",
+            "type": "table column",
+            "column name": "cd_education_status",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_purchase_estimate",
+            "type": "table column",
+            "column name": "cd_purchase_estimate",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_credit_rating",
+            "type": "table column",
+            "column name": "cd_credit_rating",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_dep_count",
+            "type": "table column",
+            "column name": "cd_dep_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_dep_employed_count",
+            "type": "table column",
+            "column name": "cd_dep_employed_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cd_dep_college_count",
+            "type": "table column",
+            "column name": "cd_dep_college_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "date_dim",
+        "type": "simple table",
+        "table path": "tpcds.date_dim",
+        "unique properties": [
+          "d_date_sk",
+          "d_date_id"
+        ],
+        "properties": [
+          {
+            "name": "d_date_sk",
+            "type": "table column",
+            "column name": "d_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_date_id",
+            "type": "table column",
+            "column name": "d_date_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_date",
+            "type": "table column",
+            "column name": "d_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_month_seq",
+            "type": "table column",
+            "column name": "d_month_seq",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_week_seq",
+            "type": "table column",
+            "column name": "d_week_seq",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_quarter_seq",
+            "type": "table column",
+            "column name": "d_quarter_seq",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_year",
+            "type": "table column",
+            "column name": "d_year",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_dow",
+            "type": "table column",
+            "column name": "d_dow",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_moy",
+            "type": "table column",
+            "column name": "d_moy",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_dom",
+            "type": "table column",
+            "column name": "d_dom",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_qoy",
+            "type": "table column",
+            "column name": "d_qoy",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_fy_year",
+            "type": "table column",
+            "column name": "d_fy_year",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_fy_quarter_seq",
+            "type": "table column",
+            "column name": "d_fy_quarter_seq",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_fy_week_seq",
+            "type": "table column",
+            "column name": "d_fy_week_seq",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_day_name",
+            "type": "table column",
+            "column name": "d_day_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_quarter_name",
+            "type": "table column",
+            "column name": "d_quarter_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_holiday",
+            "type": "table column",
+            "column name": "d_holiday",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_weekend",
+            "type": "table column",
+            "column name": "d_weekend",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_following_holiday",
+            "type": "table column",
+            "column name": "d_following_holiday",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_first_dom",
+            "type": "table column",
+            "column name": "d_first_dom",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_last_dom",
+            "type": "table column",
+            "column name": "d_last_dom",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_same_day_ly",
+            "type": "table column",
+            "column name": "d_same_day_ly",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_same_day_lq",
+            "type": "table column",
+            "column name": "d_same_day_lq",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_current_day",
+            "type": "table column",
+            "column name": "d_current_day",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_current_week",
+            "type": "table column",
+            "column name": "d_current_week",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_current_month",
+            "type": "table column",
+            "column name": "d_current_month",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_current_quarter",
+            "type": "table column",
+            "column name": "d_current_quarter",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "d_current_year",
+            "type": "table column",
+            "column name": "d_current_year",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "household_demographics",
+        "type": "simple table",
+        "table path": "tpcds.household_demographics",
+        "unique properties": [
+          "hd_demo_sk",
+          "hd_income_band_sk"
+        ],
+        "properties": [
+          {
+            "name": "hd_demo_sk",
+            "type": "table column",
+            "column name": "hd_demo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "hd_income_band_sk",
+            "type": "table column",
+            "column name": "hd_income_band_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "hd_buy_potential",
+            "type": "table column",
+            "column name": "hd_buy_potential",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "hd_dep_count",
+            "type": "table column",
+            "column name": "hd_dep_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "hd_vehicle_count",
+            "type": "table column",
+            "column name": "hd_vehicle_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "income_band",
+        "type": "simple table",
+        "table path": "tpcds.income_band",
+        "unique properties": [
+          "ib_income_band_sk"
+        ],
+        "properties": [
+          {
+            "name": "ib_income_band_sk",
+            "type": "table column",
+            "column name": "ib_income_band_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ib_lower_bound",
+            "type": "table column",
+            "column name": "ib_lower_bound",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ib_upper_bound",
+            "type": "table column",
+            "column name": "ib_upper_bound",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "inventory",
+        "type": "simple table",
+        "table path": "tpcds.inventory",
+        "unique properties": [
+          [
+            "inv_date_sk",
+            "inv_item_sk",
+            "inv_warehouse_sk"
+          ]
+        ],
+        "properties": [
+          {
+            "name": "inv_date_sk",
+            "type": "table column",
+            "column name": "inv_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "inv_item_sk",
+            "type": "table column",
+            "column name": "inv_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "inv_warehouse_sk",
+            "type": "table column",
+            "column name": "inv_warehouse_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "inv_quantity_on_hand",
+            "type": "table column",
+            "column name": "inv_quantity_on_hand",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "item",
+        "type": "simple table",
+        "table path": "tpcds.item",
+        "unique properties": ["i_item_sk"],
+        "properties": [
+          {
+            "name": "i_item_sk",
+            "type": "table column",
+            "column name": "i_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_item_id",
+            "type": "table column",
+            "column name": "i_item_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_rec_start_date",
+            "type": "table column",
+            "column name": "i_rec_start_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_rec_end_date",
+            "type": "table column",
+            "column name": "i_rec_end_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_item_desc",
+            "type": "table column",
+            "column name": "i_item_desc",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_current_price",
+            "type": "table column",
+            "column name": "i_current_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_wholesale_cost",
+            "type": "table column",
+            "column name": "i_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_brand_id",
+            "type": "table column",
+            "column name": "i_brand_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_brand",
+            "type": "table column",
+            "column name": "i_brand",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_class_id",
+            "type": "table column",
+            "column name": "i_class_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_class",
+            "type": "table column",
+            "column name": "i_class",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_category_id",
+            "type": "table column",
+            "column name": "i_category_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_category",
+            "type": "table column",
+            "column name": "i_category",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_manufact_id",
+            "type": "table column",
+            "column name": "i_manufact_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_manufact",
+            "type": "table column",
+            "column name": "i_manufact",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_size",
+            "type": "table column",
+            "column name": "i_size",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_formulation",
+            "type": "table column",
+            "column name": "i_formulation",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_color",
+            "type": "table column",
+            "column name": "i_color",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_units",
+            "type": "table column",
+            "column name": "i_units",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_container",
+            "type": "table column",
+            "column name": "i_container",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_manager_id",
+            "type": "table column",
+            "column name": "i_manager_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "i_product_name",
+            "type": "table column",
+            "column name": "i_product_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "promotion",
+        "type": "simple table",
+        "table path": "tpcds.promotion",
+        "unique properties": ["p_promo_sk"],
+        "properties": [
+          {
+            "name": "p_promo_sk",
+            "type": "table column",
+            "column name": "p_promo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_promo_id",
+            "type": "table column",
+            "column name": "p_promo_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_start_date_sk",
+            "type": "table column",
+            "column name": "p_start_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_end_date_sk",
+            "type": "table column",
+            "column name": "p_end_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_item_sk",
+            "type": "table column",
+            "column name": "p_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_cost",
+            "type": "table column",
+            "column name": "p_cost",
+            "data type": "NUMERIC(15, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_response_target",
+            "type": "table column",
+            "column name": "p_response_target",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_promo_name",
+            "type": "table column",
+            "column name": "p_promo_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_dmail",
+            "type": "table column",
+            "column name": "p_channel_dmail",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_email",
+            "type": "table column",
+            "column name": "p_channel_email",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_catalog",
+            "type": "table column",
+            "column name": "p_channel_catalog",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_tv",
+            "type": "table column",
+            "column name": "p_channel_tv",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_radio",
+            "type": "table column",
+            "column name": "p_channel_radio",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_press",
+            "type": "table column",
+            "column name": "p_channel_press",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_event",
+            "type": "table column",
+            "column name": "p_channel_event",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_demo",
+            "type": "table column",
+            "column name": "p_channel_demo",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_channel_details",
+            "type": "table column",
+            "column name": "p_channel_details",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_purpose",
+            "type": "table column",
+            "column name": "p_purpose",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "p_discount_active",
+            "type": "table column",
+            "column name": "p_discount_active",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "reason",
+        "type": "simple table",
+        "table path": "tpcds.reason",
+        "unique properties": ["r_reason_sk"],
+        "properties": [
+          {
+            "name": "r_reason_sk",
+            "type": "table column",
+            "column name": "r_reason_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "r_reason_id",
+            "type": "table column",
+            "column name": "r_reason_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "r_reason_desc",
+            "type": "table column",
+            "column name": "r_reason_desc",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "ship_mode",
+        "type": "simple table",
+        "table path": "tpcds.ship_mode",
+        "unique properties": [
+          "sm_ship_mode_sk"
+        ],
+        "properties": [
+          {
+            "name": "sm_ship_mode_sk",
+            "type": "table column",
+            "column name": "sm_ship_mode_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sm_ship_mode_id",
+            "type": "table column",
+            "column name": "sm_ship_mode_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sm_type",
+            "type": "table column",
+            "column name": "sm_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sm_code",
+            "type": "table column",
+            "column name": "sm_code",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sm_carrier",
+            "type": "table column",
+            "column name": "sm_carrier",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sm_contract",
+            "type": "table column",
+            "column name": "sm_contract",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "store",
+        "type": "simple table",
+        "table path": "tpcds.store",
+        "unique properties": ["s_store_sk"],
+        "properties": [
+          {
+            "name": "s_store_sk",
+            "type": "table column",
+            "column name": "s_store_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_store_id",
+            "type": "table column",
+            "column name": "s_store_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_rec_start_date",
+            "type": "table column",
+            "column name": "s_rec_start_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_rec_end_date",
+            "type": "table column",
+            "column name": "s_rec_end_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_closed_date_sk",
+            "type": "table column",
+            "column name": "s_closed_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_store_name",
+            "type": "table column",
+            "column name": "s_store_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_number_employees",
+            "type": "table column",
+            "column name": "s_number_employees",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_floor_space",
+            "type": "table column",
+            "column name": "s_floor_space",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_hours",
+            "type": "table column",
+            "column name": "s_hours",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_manager",
+            "type": "table column",
+            "column name": "s_manager",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_market_id",
+            "type": "table column",
+            "column name": "s_market_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_geography_class",
+            "type": "table column",
+            "column name": "s_geography_class",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_market_desc",
+            "type": "table column",
+            "column name": "s_market_desc",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_market_manager",
+            "type": "table column",
+            "column name": "s_market_manager",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_division_id",
+            "type": "table column",
+            "column name": "s_division_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_division_name",
+            "type": "table column",
+            "column name": "s_division_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_company_id",
+            "type": "table column",
+            "column name": "s_company_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_company_name",
+            "type": "table column",
+            "column name": "s_company_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_street_number",
+            "type": "table column",
+            "column name": "s_street_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_street_name",
+            "type": "table column",
+            "column name": "s_street_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_street_type",
+            "type": "table column",
+            "column name": "s_street_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_suite_number",
+            "type": "table column",
+            "column name": "s_suite_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_city",
+            "type": "table column",
+            "column name": "s_city",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_county",
+            "type": "table column",
+            "column name": "s_county",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_state",
+            "type": "table column",
+            "column name": "s_state",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_zip",
+            "type": "table column",
+            "column name": "s_zip",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_country",
+            "type": "table column",
+            "column name": "s_country",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_gmt_offset",
+            "type": "table column",
+            "column name": "s_gmt_offset",
+            "data type": "NUMERIC(5, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "s_tax_percentage",
+            "type": "table column",
+            "column name": "s_tax_percentage",
+            "data type": "NUMERIC(5, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "store_returns",
+        "type": "simple table",
+        "table path": "tpcds.store_returns",
+        "unique properties": [
+          [["sr_item_sk", "sr_ticket_number"]]
+        ],
+        "properties": [
+          {
+            "name": "sr_returned_date_sk",
+            "type": "table column",
+            "column name": "sr_returned_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_return_time_sk",
+            "type": "table column",
+            "column name": "sr_return_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_item_sk",
+            "type": "table column",
+            "column name": "sr_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_customer_sk",
+            "type": "table column",
+            "column name": "sr_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_cdemo_sk",
+            "type": "table column",
+            "column name": "sr_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_hdemo_sk",
+            "type": "table column",
+            "column name": "sr_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_addr_sk",
+            "type": "table column",
+            "column name": "sr_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_store_sk",
+            "type": "table column",
+            "column name": "sr_store_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_reason_sk",
+            "type": "table column",
+            "column name": "sr_reason_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_ticket_number",
+            "type": "table column",
+            "column name": "sr_ticket_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_return_quantity",
+            "type": "table column",
+            "column name": "sr_return_quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_return_amt",
+            "type": "table column",
+            "column name": "sr_return_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_return_tax",
+            "type": "table column",
+            "column name": "sr_return_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_return_amt_inc_tax",
+            "type": "table column",
+            "column name": "sr_return_amt_inc_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_fee",
+            "type": "table column",
+            "column name": "sr_fee",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_return_ship_cost",
+            "type": "table column",
+            "column name": "sr_return_ship_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_refunded_cash",
+            "type": "table column",
+            "column name": "sr_refunded_cash",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_reversed_charge",
+            "type": "table column",
+            "column name": "sr_reversed_charge",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_store_credit",
+            "type": "table column",
+            "column name": "sr_store_credit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sr_net_loss",
+            "type": "table column",
+            "column name": "sr_net_loss",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "store_sales",
+        "type": "simple table",
+        "table path": "tpcds.store_sales",
+        "unique properties": ["ss_item_sk"],
+        "properties": [
+          {
+            "name": "ss_sold_date_sk",
+            "type": "table column",
+            "column name": "ss_sold_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_sold_time_sk",
+            "type": "table column",
+            "column name": "ss_sold_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_item_sk",
+            "type": "table column",
+            "column name": "ss_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_customer_sk",
+            "type": "table column",
+            "column name": "ss_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_cdemo_sk",
+            "type": "table column",
+            "column name": "ss_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_hdemo_sk",
+            "type": "table column",
+            "column name": "ss_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_addr_sk",
+            "type": "table column",
+            "column name": "ss_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_store_sk",
+            "type": "table column",
+            "column name": "ss_store_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_promo_sk",
+            "type": "table column",
+            "column name": "ss_promo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_ticket_number",
+            "type": "table column",
+            "column name": "ss_ticket_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_quantity",
+            "type": "table column",
+            "column name": "ss_quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_wholesale_cost",
+            "type": "table column",
+            "column name": "ss_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_list_price",
+            "type": "table column",
+            "column name": "ss_list_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_sales_price",
+            "type": "table column",
+            "column name": "ss_sales_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_ext_discount_amt",
+            "type": "table column",
+            "column name": "ss_ext_discount_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_ext_sales_price",
+            "type": "table column",
+            "column name": "ss_ext_sales_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_ext_wholesale_cost",
+            "type": "table column",
+            "column name": "ss_ext_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_ext_list_price",
+            "type": "table column",
+            "column name": "ss_ext_list_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_ext_tax",
+            "type": "table column",
+            "column name": "ss_ext_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_coupon_amt",
+            "type": "table column",
+            "column name": "ss_coupon_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_net_paid",
+            "type": "table column",
+            "column name": "ss_net_paid",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_net_paid_inc_tax",
+            "type": "table column",
+            "column name": "ss_net_paid_inc_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ss_net_profit",
+            "type": "table column",
+            "column name": "ss_net_profit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "time_dim",
+        "type": "simple table",
+        "table path": "tpcds.time_dim",
+        "unique properties": ["t_time_sk"],
+        "properties": [
+          {
+            "name": "t_time_sk",
+            "type": "table column",
+            "column name": "t_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_time_id",
+            "type": "table column",
+            "column name": "t_time_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_time",
+            "type": "table column",
+            "column name": "t_time",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_hour",
+            "type": "table column",
+            "column name": "t_hour",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_minute",
+            "type": "table column",
+            "column name": "t_minute",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_second",
+            "type": "table column",
+            "column name": "t_second",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_am_pm",
+            "type": "table column",
+            "column name": "t_am_pm",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_shift",
+            "type": "table column",
+            "column name": "t_shift",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_sub_shift",
+            "type": "table column",
+            "column name": "t_sub_shift",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "t_meal_time",
+            "type": "table column",
+            "column name": "t_meal_time",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "warehouse",
+        "type": "simple table",
+        "table path": "tpcds.warehouse",
+        "unique properties": [
+          "w_warehouse_sk"
+        ],
+        "properties": [
+          {
+            "name": "w_warehouse_sk",
+            "type": "table column",
+            "column name": "w_warehouse_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_warehouse_id",
+            "type": "table column",
+            "column name": "w_warehouse_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_warehouse_name",
+            "type": "table column",
+            "column name": "w_warehouse_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_warehouse_sq_ft",
+            "type": "table column",
+            "column name": "w_warehouse_sq_ft",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_street_number",
+            "type": "table column",
+            "column name": "w_street_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_street_name",
+            "type": "table column",
+            "column name": "w_street_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_street_type",
+            "type": "table column",
+            "column name": "w_street_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_suite_number",
+            "type": "table column",
+            "column name": "w_suite_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_city",
+            "type": "table column",
+            "column name": "w_city",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_county",
+            "type": "table column",
+            "column name": "w_county",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_state",
+            "type": "table column",
+            "column name": "w_state",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_zip",
+            "type": "table column",
+            "column name": "w_zip",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_country",
+            "type": "table column",
+            "column name": "w_country",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "w_gmt_offset",
+            "type": "table column",
+            "column name": "w_gmt_offset",
+            "data type": "NUMERIC(5, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "web_page",
+        "type": "simple table",
+        "table path": "tpcds.web_page",
+        "unique properties": [
+          "wp_web_page_sk"
+        ],
+        "properties": [
+          {
+            "name": "wp_web_page_sk",
+            "type": "table column",
+            "column name": "wp_web_page_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_web_page_id",
+            "type": "table column",
+            "column name": "wp_web_page_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_rec_start_date",
+            "type": "table column",
+            "column name": "wp_rec_start_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_rec_end_date",
+            "type": "table column",
+            "column name": "wp_rec_end_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_creation_date_sk",
+            "type": "table column",
+            "column name": "wp_creation_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_access_date_sk",
+            "type": "table column",
+            "column name": "wp_access_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_autogen_flag",
+            "type": "table column",
+            "column name": "wp_autogen_flag",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_customer_sk",
+            "type": "table column",
+            "column name": "wp_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_url",
+            "type": "table column",
+            "column name": "wp_url",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_type",
+            "type": "table column",
+            "column name": "wp_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_char_count",
+            "type": "table column",
+            "column name": "wp_char_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_link_count",
+            "type": "table column",
+            "column name": "wp_link_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_image_count",
+            "type": "table column",
+            "column name": "wp_image_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wp_max_ad_count",
+            "type": "table column",
+            "column name": "wp_max_ad_count",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "web_returns",
+        "type": "simple table",
+        "table path": "tpcds.web_returns",
+        "unique properties": ["wr_item_sk"],
+        "properties": [
+          {
+            "name": "wr_returned_date_sk",
+            "type": "table column",
+            "column name": "wr_returned_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_returned_time_sk",
+            "type": "table column",
+            "column name": "wr_returned_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_item_sk",
+            "type": "table column",
+            "column name": "wr_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_refunded_customer_sk",
+            "type": "table column",
+            "column name": "wr_refunded_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_refunded_cdemo_sk",
+            "type": "table column",
+            "column name": "wr_refunded_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_refunded_hdemo_sk",
+            "type": "table column",
+            "column name": "wr_refunded_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_refunded_addr_sk",
+            "type": "table column",
+            "column name": "wr_refunded_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_returning_customer_sk",
+            "type": "table column",
+            "column name": "wr_returning_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_returning_cdemo_sk",
+            "type": "table column",
+            "column name": "wr_returning_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_returning_hdemo_sk",
+            "type": "table column",
+            "column name": "wr_returning_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_returning_addr_sk",
+            "type": "table column",
+            "column name": "wr_returning_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_web_page_sk",
+            "type": "table column",
+            "column name": "wr_web_page_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_reason_sk",
+            "type": "table column",
+            "column name": "wr_reason_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_order_number",
+            "type": "table column",
+            "column name": "wr_order_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_return_quantity",
+            "type": "table column",
+            "column name": "wr_return_quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_return_amt",
+            "type": "table column",
+            "column name": "wr_return_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_return_tax",
+            "type": "table column",
+            "column name": "wr_return_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_return_amt_inc_tax",
+            "type": "table column",
+            "column name": "wr_return_amt_inc_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_fee",
+            "type": "table column",
+            "column name": "wr_fee",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_return_ship_cost",
+            "type": "table column",
+            "column name": "wr_return_ship_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_refunded_cash",
+            "type": "table column",
+            "column name": "wr_refunded_cash",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_reversed_charge",
+            "type": "table column",
+            "column name": "wr_reversed_charge",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_account_credit",
+            "type": "table column",
+            "column name": "wr_account_credit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "wr_net_loss",
+            "type": "table column",
+            "column name": "wr_net_loss",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "web_sales",
+        "type": "simple table",
+        "table path": "tpcds.web_sales",
+        "unique properties": [
+          "ws_item_sk"
+        ],
+        "properties": [
+          {
+            "name": "ws_sold_date_sk",
+            "type": "table column",
+            "column name": "ws_sold_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_sold_time_sk",
+            "type": "table column",
+            "column name": "ws_sold_time_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ship_date_sk",
+            "type": "table column",
+            "column name": "ws_ship_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_item_sk",
+            "type": "table column",
+            "column name": "ws_item_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_bill_customer_sk",
+            "type": "table column",
+            "column name": "ws_bill_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_bill_cdemo_sk",
+            "type": "table column",
+            "column name": "ws_bill_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_bill_hdemo_sk",
+            "type": "table column",
+            "column name": "ws_bill_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_bill_addr_sk",
+            "type": "table column",
+            "column name": "ws_bill_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ship_customer_sk",
+            "type": "table column",
+            "column name": "ws_ship_customer_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ship_cdemo_sk",
+            "type": "table column",
+            "column name": "ws_ship_cdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ship_hdemo_sk",
+            "type": "table column",
+            "column name": "ws_ship_hdemo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ship_addr_sk",
+            "type": "table column",
+            "column name": "ws_ship_addr_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_web_page_sk",
+            "type": "table column",
+            "column name": "ws_web_page_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_web_site_sk",
+            "type": "table column",
+            "column name": "ws_web_site_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ship_mode_sk",
+            "type": "table column",
+            "column name": "ws_ship_mode_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_warehouse_sk",
+            "type": "table column",
+            "column name": "ws_warehouse_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_promo_sk",
+            "type": "table column",
+            "column name": "ws_promo_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_order_number",
+            "type": "table column",
+            "column name": "ws_order_number",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_quantity",
+            "type": "table column",
+            "column name": "ws_quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_wholesale_cost",
+            "type": "table column",
+            "column name": "ws_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_list_price",
+            "type": "table column",
+            "column name": "ws_list_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_sales_price",
+            "type": "table column",
+            "column name": "ws_sales_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ext_discount_amt",
+            "type": "table column",
+            "column name": "ws_ext_discount_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ext_sales_price",
+            "type": "table column",
+            "column name": "ws_ext_sales_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ext_wholesale_cost",
+            "type": "table column",
+            "column name": "ws_ext_wholesale_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ext_list_price",
+            "type": "table column",
+            "column name": "ws_ext_list_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ext_tax",
+            "type": "table column",
+            "column name": "ws_ext_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_coupon_amt",
+            "type": "table column",
+            "column name": "ws_coupon_amt",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_ext_ship_cost",
+            "type": "table column",
+            "column name": "ws_ext_ship_cost",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_net_paid",
+            "type": "table column",
+            "column name": "ws_net_paid",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_net_paid_inc_tax",
+            "type": "table column",
+            "column name": "ws_net_paid_inc_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_net_paid_inc_ship",
+            "type": "table column",
+            "column name": "ws_net_paid_inc_ship",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_net_paid_inc_ship_tax",
+            "type": "table column",
+            "column name": "ws_net_paid_inc_ship_tax",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ws_net_profit",
+            "type": "table column",
+            "column name": "ws_net_profit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "web_site",
+        "type": "simple table",
+        "table path": "tpcds.web_site",
+        "unique properties": [
+          "web_site_sk"
+        ],
+        "properties": [
+          {
+            "name": "web_site_sk",
+            "type": "table column",
+            "column name": "web_site_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_site_id",
+            "type": "table column",
+            "column name": "web_site_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_rec_start_date",
+            "type": "table column",
+            "column name": "web_rec_start_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_rec_end_date",
+            "type": "table column",
+            "column name": "web_rec_end_date",
+            "date type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_name",
+            "type": "table column",
+            "column name": "web_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_open_date_sk",
+            "type": "table column",
+            "column name": "web_open_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_close_date_sk",
+            "type": "table column",
+            "column name": "web_close_date_sk",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_class",
+            "type": "table column",
+            "column name": "web_class",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_manager",
+            "type": "table column",
+            "column name": "web_manager",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_mkt_id",
+            "type": "table column",
+            "column name": "web_mkt_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_mkt_class",
+            "type": "table column",
+            "column name": "web_mkt_class",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_mkt_desc",
+            "type": "table column",
+            "column name": "web_mkt_desc",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_market_manager",
+            "type": "table column",
+            "column name": "web_market_manager",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_company_id",
+            "type": "table column",
+            "column name": "web_company_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_company_name",
+            "type": "table column",
+            "column name": "web_company_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_street_number",
+            "type": "table column",
+            "column name": "web_street_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_street_name",
+            "type": "table column",
+            "column name": "web_street_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_street_type",
+            "type": "table column",
+            "column name": "web_street_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_suite_number",
+            "type": "table column",
+            "column name": "web_suite_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_city",
+            "type": "table column",
+            "column name": "web_city",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_county",
+            "type": "table column",
+            "column name": "web_county",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_state",
+            "type": "table column",
+            "column name": "web_state",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_zip",
+            "type": "table column",
+            "column name": "web_zip",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_country",
+            "type": "table column",
+            "column name": "web_country",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_gmt_offset",
+            "type": "table column",
+            "column name": "web_gmt_offset",
+            "data type": "NUMERIC(5, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "web_tax_percentage",
+            "type": "table column",
+            "column name": "web_tax_percentage",
+            "data type": "NUMERIC(5, 2)",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      }
+    ],
+    "relationships": []
   }
 ]
