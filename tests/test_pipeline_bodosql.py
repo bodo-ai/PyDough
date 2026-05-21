@@ -12,6 +12,8 @@ import pandas as pd
 import pytest
 import datetime
 import logging
+
+pytest.importorskip("bodo")
 import bodo
 from io import StringIO
 from bodo.spawn.utils import set_global_config
