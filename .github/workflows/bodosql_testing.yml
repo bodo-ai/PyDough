@@ -44,7 +44,7 @@ jobs:
         # bodo (via the bodosql extra) requires pyarrow>=23. The override lets
         # uv bypass the base constraint for this environment.
         run: |
-          echo "pyarrow>=23" > /tmp/pyarrow-override.txt
+          echo "pyarrow>=23,<23.1" > /tmp/pyarrow-override.txt
           uv pip install -e ".[bodosql]" --override /tmp/pyarrow-override.txt
           PYARROW_LIB=$(uv run --no-sync python -c "import pyarrow; print(':'.join(pyarrow.get_library_dirs()))")
           echo "LD_LIBRARY_PATH=${PYARROW_LIB}:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
