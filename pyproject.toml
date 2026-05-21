@@ -39,9 +39,6 @@ dev = [
     "pydough[server]",
     "pydough[oracle]",
 ]
-bodosql-dev = [
-    "pydough[bodosql]",
-]
 
 [project.optional-dependencies]
 snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
