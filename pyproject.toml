@@ -37,8 +37,10 @@ dev = [
     "pydough[mysql]",
     "pydough[postgres]",
     "pydough[server]",
-    "pydough[bodosql]",
     "pydough[oracle]",
+]
+bodosql-dev = [
+    "pydough[bodosql]",
 ]
 
 [project.optional-dependencies]
