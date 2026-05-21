@@ -38,6 +38,7 @@ dev = [
     "pydough[postgres]",
     "pydough[server]",
     "pydough[oracle]",
+    "pydough[bodosql]",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +48,9 @@ postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
 bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0"]
 oracle = ["oracledb==3.4.2"]
+
+[tool.uv]
+override-dependencies = ["pyarrow>=22"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
