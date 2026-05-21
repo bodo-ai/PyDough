@@ -52,11 +52,11 @@ bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0
 oracle = ["oracledb==3.4.2"]
 
 # TODO: Remove this override once the LLM package supports pyarrow>=23.
-# The base dependency pins pyarrow==22 for LLM compatibility, but the bodosql
-# extra requires pyarrow>=23 (via bodo). This override lets uv resolve both
-# in the same lock file without a conflict.
+# The base dependency pins pyarrow==22 for LLM compatibility, but bodo
+# (via the bodosql extra) requires exactly pyarrow>=23,<23.1. Using >=22
+# would let uv pick pyarrow 24+ which breaks bodo, so we pin to 23.0.x here.
 [tool.uv]
-override-dependencies = ["pyarrow>=22"]
+override-dependencies = ["pyarrow>=23,<23.1"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
