@@ -44,14 +44,13 @@ jobs:
           PYARROW_LIB=$(uv run --no-sync python -c "import pyarrow; print(':'.join(pyarrow.get_library_dirs()))")
           echo "LD_LIBRARY_PATH=${PYARROW_LIB}:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
 
-      - name: Debug Arrow library location
-        run: find .venv -name "libarrow*" 2>/dev/null || echo "libarrow not found in venv"
-
       - name: Confirm BodoSQL and related dependencies are installed
+        # TODO: remove --no-sync once the LLM package supports pyarrow>=23.
         run: uv run --no-sync python -c "import bodo; import bodosql; import pyarrow; import pyiceberg; print(bodo.__version__, bodosql.__version__, pyarrow.__version__, pyiceberg.__version__)"
 
       - name: Download TPCH DB
         run: ./demos/setup_tpch.sh ./tpch.db
 
       - name: Run BodoSQL Tests
+        # TODO: remove --no-sync once the LLM package supports pyarrow>=23.
         run: uv run --no-sync pytest -m bodosql tests/ -rs
