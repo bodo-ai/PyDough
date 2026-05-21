@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "pyarrow>=23" > /tmp/pyarrow-override.txt
           uv pip install -e ".[bodosql]" --override /tmp/pyarrow-override.txt
-          PYARROW_LIB=$(uv run --no-sync python -c "import os, pyarrow; print(os.path.dirname(pyarrow.__file__))")
+          PYARROW_LIB=$(uv run --no-sync python -c "import pyarrow; print(':'.join(pyarrow.get_library_dirs()))")
           echo "LD_LIBRARY_PATH=${PYARROW_LIB}:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
 
       - name: Confirm BodoSQL and related dependencies are installed
