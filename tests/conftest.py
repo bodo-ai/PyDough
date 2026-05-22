@@ -1240,7 +1240,7 @@ def get_trino_defog_graphs() -> graph_fetcher:
 MONGO_DOCKER_CONTAINER = "mongo_tpch_test"
 MONGO_DOCKER_IMAGE = "bodoai1/pydough-mongo-tpch:latest"
 MONGO_HOST = "127.0.0.1"
-MONGO_PORT = 27019
+MONGO_PORT = 27017
 MONGO_DB = "tpch"
 
 
