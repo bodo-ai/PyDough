@@ -11,6 +11,7 @@ __all__ = [
     "DatabaseDialect",
 ]
 
+import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Union, cast
@@ -65,11 +66,14 @@ class DatabaseConnection:
                 _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
             # At run-time check and run the fetch.
             if hasattr(self.cursor, "fetch_pandas_all"):
-                breakpoint()
-                # TODO: If type_code for self.cursor.description is 5/9/10 for
-                # the current column, use json.loads to parse it into the
-                # appropriate Python type.
-                return self.cursor.fetch_pandas_all()
+                pd_table: pd.DataFrame = self.cursor.fetch_pandas_all()
+                # For each column returned with types 5/9/10 (Snowflake's type
+                # codes for array/object/variant), parse the JSON string into
+                # the appropriate Python type using json.loads.
+                for idx, dtype in enumerate(self.cursor.description):
+                    if dtype[1] in (5, 9, 10):
+                        pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
+                return pd_table
             else:
                 # Assume sqlite3
                 column_names: list[str] = [

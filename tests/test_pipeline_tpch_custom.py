@@ -4087,7 +4087,7 @@ from .testing_utilities import (
                         "nation_names": [
                             ["ALGERIA", "ETHIOPIA", "KENYA", "MOROCCO", "MOZAMBIQUE"],
                             ["ARGENTINA", "BRAZIL", "CANADA", "PERU", "UNITED STATES"],
-                            ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"],
+                            ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"],
                             [
                                 "FRANCE",
                                 "GERMANY",
