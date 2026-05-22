@@ -1315,7 +1315,7 @@ def mongo_docker_setup() -> None:
 CASSANDRA_DOCKER_CONTAINER = "cassandra_tpch_test"
 CASSANDRA_DOCKER_IMAGE = "bodoai1/pydough-cassandra-tpch:latest"
 CASSANDRA_HOST = "127.0.0.1"
-CASSANDRA_PORT = 9044
+CASSANDRA_PORT = 9042
 CASSANDRA_KEYSPACE = "tpch"
 
 
