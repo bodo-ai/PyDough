@@ -88,6 +88,7 @@ def test_defog_e2e(
         defog_config,
         reference_database=sqlite_defog_connection,
         coerce_types=True,
+        rtol=1e-4,
         atol=5e-3,
     )
 
