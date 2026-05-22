@@ -88,7 +88,7 @@ jobs:
             POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
             MYSQL_HOST: mysql
-            MYSQL_DB: test
+            MYSQL_DB: tpch
             MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
             MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
             MONGO_HOST: mongo
