@@ -1780,12 +1780,14 @@ def optimize_relational_tree(
     root = confirm_root(pullup_projections(root))
 
     # Pull filters above joins before pushing them down as far as possible
-    print()
-    print(root.to_tree_string())
+    # print()
+    # print(root.to_tree_string())
     root = confirm_root(pull_filters(root, session))
-    print()
-    print(root.to_tree_string())
+    # print()
+    # print(root.to_tree_string())
     root = confirm_root(push_filters(root, session))
+    # print()
+    # print(root.to_tree_string())
 
     # Merge adjacent projections, unless it would result in excessive duplicate
     # subexpression computations.

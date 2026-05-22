@@ -645,7 +645,7 @@ result = (
                             "GoldCopper-Star",
                             "RubyBolt-Unit",
                         ],
-                        "lifetime_ir": [0.5, 0.06, 0.2],
+                        "lifetime_ir": [0.06, 0.2, 0.5],
                     }
                 ),
                 "lifetime_products_ir_analysis",

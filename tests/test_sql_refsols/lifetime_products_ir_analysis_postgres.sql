@@ -6,6 +6,7 @@ WITH _s2 AS (
   FROM main.products AS products
   JOIN main.devices AS devices
     ON devices.de_product_id = products.pr_id
+    AND devices.de_product_id IN (618070, 960138, 143712)
   WHERE
     products.pr_id IN (618070, 960138, 143712)
   GROUP BY

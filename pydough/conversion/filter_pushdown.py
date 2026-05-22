@@ -208,9 +208,9 @@ class FilterPushdownShuttle(RelationalShuttle):
         inferred_filters: set[RelationalExpression] = set()
 
         # Cannot infer any extra filters for ANTI joins, or for LEFT joins
-        # pushing into the right-hand side.
+        # pushing into the left-hand side.
         if join.join_type == JoinType.ANTI or (
-            join.join_type == JoinType.LEFT and input_idx == 1
+            join.join_type == JoinType.LEFT and input_idx == 0
         ):
             return inferred_filters
 
@@ -307,6 +307,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         # join, try to transform them into filters on this side via the same
         # substitution.
         if len(key_remapping) > 0 and len(transposed_conds) > 0:
+            # TODO: enhance to include non-equality filters as well.
             self.add_transitive_filters(
                 join, input_idx, transposed_conds, key_remapping, inferred_filters
             )
