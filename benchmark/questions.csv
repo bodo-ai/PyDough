@@ -1033,23 +1033,23 @@ FROM (
 ) AS custsale
 GROUP BY cntrycode
 ORDER BY cntrycode;"
-TPCDS,Q1, "Find customers who have returned items more than 20% more often than the average customer returns for a
-store in a given state for a given year", "result = (store_returns.WHERE(
-    (store.state == "TN") & (returned_date.year == 2000)
+TPCDS,Q1,"Find customers who have returned items more than 20% more often than the average customer returns for a
+store in a given state for a given year","result = (store_returns.WHERE(
+    (store.state == ""TN"") & (returned_date.year == 2000)
 ).PARTITION(
-    name="store_customer_groups",
+    name=""store_customer_groups"",
     by=(customer_key, store_key)
 ).CALCULATE(
     customer_total=SUM(store_returns.amount)
 ).PARTITION(
-    name="store_groups", by=store_key
+    name=""store_groups"", by=store_key
 ).CALCULATE(
     store_avg=1.2 * AVG(store_customer_groups.customer_total)
 ).store_customer_groups.WHERE(
     customer_total > store_avg
 ).store_returns.customer.CALCULATE(
     c_customer_id=_id
-).TOP_K(10, by=c_customer_id))", "WITH customer_total_return AS (
+).TOP_K(10, by=c_customer_id))","WITH customer_total_return AS (
     SELECT
         sr_customer_sk  AS ctr_customer_sk,
         sr_store_sk     AS ctr_store_sk,
@@ -1073,20 +1073,20 @@ JOIN store_avg       ON ctr1.ctr_store_sk = store_avg.ctr_store_sk
 WHERE ctr1.ctr_total_return > store_avg.avg_return_threshold
 ORDER BY c_customer_id
 LIMIT 10;"
-TPCHDS, Q2, "Report the increase of weekly web and catalog sales from one year to the next year for each week. That is,
-compute the increase of Monday, Tuesday, ... Sunday sales from one year to the following.", "ct_sales = dates.CALCULATE(day_name).catalog_sales_by_sold_date
+TPCHDS,Q2,"Report the increase of weekly web and catalog sales from one year to the next year for each week. That is,
+compute the increase of Monday, Tuesday, ... Sunday sales from one year to the following.","ct_sales = dates.CALCULATE(day_name).catalog_sales_by_sold_date
 wb_sales = dates.CALCULATE(day_name).web_sales_by_sold_date
 
 week_breakdown = dates.WHERE(MONOTONIC(2000, year, 2003)).PARTITION(
-    name="week", by=(week_seq)
+    name=""week"", by=(week_seq)
 ).CALCULATE(
-    sunday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Sunday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Sunday")),
-    monday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Monday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Monday")),
-    tuesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Tuesday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Tuesday")),
-    wednesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Wednesday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Wednesday")),
-    thursday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Thursday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Thursday")),
-    friday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Friday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Friday")),
-    saturday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == "Saturday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == "Saturday"))
+    sunday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Sunday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Sunday"")),
+    monday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Monday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Monday"")),
+    tuesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Tuesday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Tuesday"")),
+    wednesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Wednesday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Wednesday"")),
+    thursday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Thursday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Thursday"")),
+    friday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Friday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Friday"")),
+    saturday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Saturday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Saturday""))
 )
 
 week_breakdown_2001 = week_breakdown.WHERE(HAS(dates.WHERE(year == 2001))).CALCULATE(
@@ -1120,7 +1120,7 @@ result = week_breakdown_2001.CROSS(week_breakdown_2002).WHERE(week_seq_2002 == (
     thursday_ratio=ROUND(thursday_amount_2001 / KEEP_IF(thursday_amount_2002, thursday_amount_2002 != 0), 2),
     friday_ratio=ROUND(friday_amount_2001 / KEEP_IF(friday_amount_2002, friday_amount_2002 != 0), 2),
     saturday_ratio=ROUND(saturday_amount_2001 / KEEP_IF(saturday_amount_2002, saturday_amount_2002 != 0), 2)
-)", "WITH wscs AS (
+)","WITH wscs AS (
     SELECT sold_date_sk, sales_price
     FROM (
         SELECT ws_sold_date_sk AS sold_date_sk, ws_ext_sales_price AS sales_price
@@ -1176,8 +1176,8 @@ JOIN (
     WHERE d_year = 2001 + 1
 ) z ON d_week_seq1 = d_week_seq2 - 53
 ORDER BY d_week_seq1;"
-TPCDS, Q3, "Report the total extended sales price per item brand of a specific manufacturer for all sales in a specific month
-of the year", "result = items.WHERE(
+TPCDS,Q3,"Report the total extended sales price per item brand of a specific manufacturer for all sales in a specific month
+of the year","result = items.WHERE(
     (manufacturer_id == 128)
 ).CALCULATE(brand_id, brand).store_sales.WHERE(sold_date.month_of_year == 11).CALCULATE(
     sold_year=sold_date.year,
@@ -1185,13 +1185,13 @@ of the year", "result = items.WHERE(
     brand=brand,
     extended_price=ext_sales_price
 ).PARTITION(
-    name="year", by=(sold_year, brand_id, brand)
+    name=""year"", by=(sold_year, brand_id, brand)
 ).CALCULATE(
     sold_year,
     brand_id,
     brand,
     sum_agg=SUM(store_sales.extended_price)
-).TOP_K(100, by=(sold_year, sum_agg.DESC(), brand_id))", "SELECT
+).TOP_K(100, by=(sold_year, sum_agg.DESC(), brand_id))","SELECT
     dt.d_year,
     item.i_brand_id  AS brand_id,
     item.i_brand     AS brand,
