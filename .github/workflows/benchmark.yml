@@ -67,7 +67,7 @@ jobs:
         if: failure()
         run: docker logs postgres
 
-     - name: Create branch, commit, and open PR
+      - name: Create branch, commit, and open PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -79,7 +79,7 @@ jobs:
 
           git fetch origin main
           git checkout -B "$BRANCH" origin/main
-          
+
           git add benchmark/metrics/*.csv benchmark/benchmark_metrics.csv
 
           if git diff --cached --quiet; then
@@ -87,7 +87,6 @@ jobs:
             exit 0
           fi
 
-          # Trigger source
           EVENT="${{ github.event_name }}"
           REF="${{ github.ref }}"
           REF_NAME="${{ github.ref_name }}"
@@ -116,10 +115,10 @@ jobs:
             --label "automated" \
             --body "Automated benchmark run completed successfully.
 
-            **Generated from:** $SOURCE_TYPE  
-            **Source:** $SOURCE_DESC  
+          **Generated from:** $SOURCE_TYPE  
+          **Source:** $SOURCE_DESC  
 
-            **Triggered by:** \`${EVENT}\`  
-            **Workflow run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          **Triggered by:** \`${EVENT}\`  
+          **Workflow run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            Please review the updated metrics files before merging."
+          Please review the updated metrics files before merging."
