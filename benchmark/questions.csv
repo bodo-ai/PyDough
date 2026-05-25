@@ -1073,7 +1073,7 @@ JOIN store_avg       ON ctr1.ctr_store_sk = store_avg.ctr_store_sk
 WHERE ctr1.ctr_total_return > store_avg.avg_return_threshold
 ORDER BY c_customer_id
 LIMIT 10;"
-TPCHDS,Q2,"Report the increase of weekly web and catalog sales from one year to the next year for each week. That is,
+TPCDS,Q2,"Report the increase of weekly web and catalog sales from one year to the next year for each week. That is,
 compute the increase of Monday, Tuesday, ... Sunday sales from one year to the following.","ct_sales = dates.CALCULATE(day_name).catalog_sales_by_sold_date
 wb_sales = dates.CALCULATE(day_name).web_sales_by_sold_date
 
@@ -1082,7 +1082,7 @@ week_breakdown = dates.WHERE(MONOTONIC(2000, year, 2003)).PARTITION(
 ).CALCULATE(
     sunday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Sunday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Sunday"")),
     monday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Monday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Monday"")),
-    tuesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Tuesday")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Tuesday"")),
+    tuesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Tuesday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Tuesday"")),
     wednesday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Wednesday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Wednesday"")),
     thursday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Thursday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Thursday"")),
     friday_amount=SUM(KEEP_IF(ct_sales.ext_sales_price, ct_sales.day_name == ""Friday"")) + SUM(KEEP_IF(wb_sales.ext_sales_price, wb_sales.day_name == ""Friday"")),
