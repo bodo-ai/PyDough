@@ -8,7 +8,9 @@ The Benchmarker collects performance data by executing PyDough DSL code against 
 
 ## Automated Runs
 
-The benchmarker runs automatically on every PyDough DSL release via GitHub Actions. Results are committed as a new PR containing a timestamped CSV file. The workflow can also be triggered manually.
+The benchmarker runs automatically on every PyDough DSL release via GitHub Actions. Results are committed as a new PR containing a timestamped CSV file. The workflow can also be triggered manually on GitHub or using the `[run benchmark]` flag on a message commit.
+
+The generated `.csv` file has the format described in `Metrics` section. A new file and PR will be created on every run.
 
 ---
 
@@ -74,7 +76,8 @@ benchmarker.measure()
 
 ## Metrics
 
-Each question produces one row in the metrics DataFrame, written to a CSV named `{date}_{pydough_version}.csv`.
+Each question produces one row in the metrics DataFrame, written to a CSV named `{date}_{R/M}_{pydough_version/run_id}.csv`.
+Where `R` means that the benchmark run was trigger by a new release and `M` that was triggered manually.
 
 | Column | Type | Description |
 |---|---|---|
