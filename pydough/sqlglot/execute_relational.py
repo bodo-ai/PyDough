@@ -647,8 +647,8 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             # default version, since PyDough handles the conversion logic
             # correctly whereas the SQLGlot version gets confused with multiple
             # rounds of parsing and unparsing.
-            Trino.Generator.TRANSFORMS[sqlglot_expressions.DayOfWeek] = (
-                lambda self, e: f"(({self.func('DAY_OF_WEEK', e.this)} % 7) + 1)",
+            Trino.Generator.TRANSFORMS[sqlglot_expressions.DayOfWeek] = lambda self, e: (
+                f"(({self.func('DAY_OF_WEEK', e.this)} % 7) + 1)"
             )
 
         case _:

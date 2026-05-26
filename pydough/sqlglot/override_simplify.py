@@ -467,9 +467,12 @@ def rewrite_division(expr: exp.Expression) -> exp.Expression:
         and isinstance(denominator, exp.Literal)
         and denominator.is_number
     ):
-        num_term = float(numerator.this)
-        denom_term = float(denominator.this)
-        if denom_term != 0 and num_term / denom_term == int(num_term / denom_term):
-            return exp.Literal.number(int(num_term / denom_term))
+        num_raw = float(numerator.this)
+        denom_raw = float(denominator.this)
+        if num_raw == round(num_raw) and denom_raw == round(denom_raw):
+            num_term = round(num_raw)
+            denom_term = round(denom_raw)
+            if denom_term != 0 and num_term % denom_term == 0:
+                return exp.Literal.number(num_term // denom_term)
 
     return expr

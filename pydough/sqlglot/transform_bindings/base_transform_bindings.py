@@ -381,7 +381,9 @@ class BaseTransformBindings:
             cast of the original expression to string.
         """
         if not isinstance(typ, StringType):
-            return sqlglot_expressions.Cast(this=expr, to="VARCHAR")
+            return sqlglot_expressions.Cast(
+                this=expr, to=sqlglot_expressions.DataType.build("VARCHAR")
+            )
         return expr
 
     def make_datetime_arg(self, expr: SQLGlotExpression) -> SQLGlotExpression:
@@ -396,7 +398,7 @@ class BaseTransformBindings:
         return expr
 
     def convert_sum(
-        self, args: SQLGlotExpression, types: list[PyDoughType]
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
         Converts a SUM function call to its SQLGlot equivalent.

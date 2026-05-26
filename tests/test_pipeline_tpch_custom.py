@@ -6605,6 +6605,8 @@ def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
 def get_table_prefix_for_dialect(dialect: DatabaseDialect) -> str:
     """Return the appropriate table name prefix for the given database dialect."""
     match dialect:
+        # For Snowflake, use cross-database write
+        # (read from SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
         case DatabaseDialect.SNOWFLAKE:
             return SNOWFLAKE_TABLE_PREFIX
         case DatabaseDialect.TRINO:

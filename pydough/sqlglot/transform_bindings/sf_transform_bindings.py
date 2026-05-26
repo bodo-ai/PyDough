@@ -67,7 +67,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         return super().convert_call_to_sqlglot(operator, args, types)
 
     def convert_sum(
-        self, arg: SQLGlotExpression, types: list[PyDoughType]
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
         Converts a SUM function call to its SQLGlot equivalent.
@@ -80,10 +80,10 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         match types[0]:
             # If the argument is of BooleanType, it uses COUNT_IF to count true values.
             case BooleanType():
-                return sqlglot_expressions.CountIf(this=arg[0])
+                return sqlglot_expressions.CountIf(this=args[0])
             case _:
                 # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=arg[0])
+                return sqlglot_expressions.Sum(this=args[0])
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
