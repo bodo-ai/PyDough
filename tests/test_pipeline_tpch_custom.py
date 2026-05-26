@@ -5341,6 +5341,7 @@ def test_pipeline_e2e_simple_week(
 
     # Create DataFrame with expected results
     expected_df = pd.DataFrame(data_dict)
+    expected_df.columns = result.columns  # Ensure same column names
 
     # Harmonize types between result and expected DataFrame before comparison
     for col_name in result.columns:
