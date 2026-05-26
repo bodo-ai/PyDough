@@ -49,8 +49,8 @@ jobs:
         env:
           # Set environment variables for MongoDB container
           MONGO_HOST: 127.0.0.1
-          MONGO_USER: "root_user"
-          MONGO_PASSWORD: "mongo_pwd"
+          MONGO_USER: ${{ secrets.MONGO_USER }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           FILTER_TABLES: true
           TPCH_TABLES: region,supplier
           DEFOG_TABLES: sbCustomer,salespersons,payments_received,doctors,diagnoses,concomitant_meds,merchants,wallet_user_balance_daily,user_sessions,cite,domain_author,domain_keyword,keyword,publication_keyword,location
@@ -92,8 +92,8 @@ jobs:
             MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
             MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
             MONGO_HOST: mongo
-            MONGO_USER: "root_user"
-            MONGO_PASSWORD: "mongo_pwd"
+            MONGO_USER: ${{ secrets.MONGO_USER }}
+            MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
             CASSANDRA_HOST: cassandra
             CASSANDRA_DC: "datacenter1"
         ports:
