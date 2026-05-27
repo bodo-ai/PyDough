@@ -161,8 +161,8 @@ class Benchmarker:
         Returns:
             The label for this run, in the format {date}_{run_type}_{run_id}
         """
-        run_type = os.getenv("RUN_TYPE", "M")
-        run_id = os.getenv("RUN_ID", "manual")
+        run_type: str = os.getenv("RUN_TYPE", "M")
+        run_id: str = os.getenv("RUN_ID", str(int(time.time())))
 
         today = date.today().strftime("%Y%m%d")
 
@@ -319,6 +319,8 @@ class Benchmarker:
         Args:
             total_time_min: Total time of the benchmark in minutes
         """
+        previous_run_label: str | None = None
+
         new_row = {
             "run": self.run_label,
             "total_questions": len(self.question_metrics),
@@ -333,6 +335,7 @@ class Benchmarker:
 
         if Path("benchmark/benchmark_metrics.csv").exists():
             existing_df = pd.read_csv("benchmark/benchmark_metrics.csv")
+            previous_run_label = existing_df.at[existing_df.index[-1], "run"]
 
             combined_df = pd.concat(
                 [existing_df, new_df],
@@ -343,6 +346,80 @@ class Benchmarker:
             combined_df = new_df
 
         combined_df.to_csv("benchmark/benchmark_metrics.csv", index=False)
+
+        self.generate_comparison_file(previous_run_label)
+
+    def generate_comparison_file(self, previous_run_label: str | None) -> None:
+        """
+        Generates a comparison file (csv file) between the current run and the previous one
+        if there is any.
+
+        Args:
+            `previous_run`: the run_label of the previous run, must match the
+            name of the file on benchmark/metrics folder.
+
+        """
+
+        if (
+            not previous_run_label
+            or not Path(f"benchmark/metrics/{previous_run_label}.csv").exists()
+        ):
+            # Not doing comparison
+            return
+
+        current_run: DataFrame = pd.read_csv(f"benchmark/metrics/{self.run_label}.csv")
+        previous_run: DataFrame = pd.read_csv(
+            f"benchmark/metrics/{previous_run_label}.csv"
+        )
+
+        # Comparing results
+        merged_df = current_run.merge(
+            previous_run,
+            on="question_id",
+            suffixes=("_current", "_previous"),
+            how="outer",
+        )
+
+        merged_df["improvement_pct"] = (
+            (
+                merged_df["pydough_exec_time_previous"]
+                - merged_df["pydough_exec_time_current"]
+            )
+            / merged_df["pydough_exec_time_previous"]
+        ) * 100
+
+        def status(row):
+            if pd.isna(row["pydough_exec_time_previous"]):
+                return "new"
+            if pd.isna(row["pydough_exec_time_current"]):
+                return "removed"
+            if row["improvement_pct"] > 0:
+                return "improved"
+            if row["improvement_pct"] < 0:
+                return "regressed"
+            return "no_change"
+
+        merged_df["status"] = merged_df.apply(status, axis=1)
+
+        merged_df["improvement_pct"] = merged_df["improvement_pct"].map(
+            lambda x: f"{round(x, 3)}%" if pd.notna(x) else ""
+        )
+
+        comparison: DataFrame = merged_df[
+            [
+                "question_id",
+                "pydough_exec_time_previous",
+                "pydough_exec_time_current",
+                "improvement_pct",
+                "status",
+            ]
+        ]
+
+        if not Path("benchmark/comparisons/").exists():
+            Path("benchmark/comparisons").mkdir()
+
+        output_path = f"benchmark/comparisons/comparison_{self.run_label}_vs_{previous_run_label}.csv"
+        comparison.to_csv(output_path, index=False)
 
     def measure(self) -> None:
         """
