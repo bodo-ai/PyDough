@@ -35,7 +35,7 @@ SELECT
         END
       )
     ) / COUNT(*),
-    2
+    1
   ) AS p
 FROM _t2
 WHERE

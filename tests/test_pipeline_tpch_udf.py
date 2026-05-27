@@ -109,7 +109,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             PyDoughPandasTest(
                 sqlite_udf_nested,
                 "TPCH_SQLITE_UDFS",
-                lambda: pd.DataFrame({"p": [19.21]}),
+                lambda: pd.DataFrame({"p": [19.2]}),
                 "sqlite_udf_nested",
             ),
             id="sqlite_udf_nested",
