@@ -1293,8 +1293,8 @@ def mongo_docker_setup() -> None:
             client = MongoClient(
                 host=MONGO_HOST,
                 port=MONGO_PORT,
-                username="root_user",
-                password="mongo_pwd",
+                username=os.getenv("MONGO_USER"),
+                password=os.getenv("MONGO_PASSWORD"),
                 serverSelectionTimeoutMS=1000,
             )
             client.admin.command("ping")
