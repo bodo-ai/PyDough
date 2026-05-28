@@ -1494,7 +1494,7 @@ def trino_docker_setup(
     for i in range(180):
         try:
             conn = trino.dbapi.connect(
-                host="127.0.0.1",
+                host=TRINO_HOST,
                 port=TRINO_PORT,
                 user=TRINO_USER,
             )
