@@ -86,7 +86,7 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
     if "database" not in kwargs:
         raise PyDoughSessionException("SQLite connection requires a database path.")
     connection: sqlite3.Connection = sqlite3.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, DatabaseDialect.SQLITE)
 
 
 def load_snowflake_connection(**kwargs) -> DatabaseConnection:
@@ -118,7 +118,7 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
     connection: snowflake.connector.connection.SnowflakeConnection
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in DatabaseConnection
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.SNOWFLAKE)
     # Snowflake connection requires specific parameters:
     # user, password, account.
     # Raise an error if any of these are missing.
@@ -133,7 +133,7 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
         )
     # Create a Snowflake connection using the provided keyword arguments
     connection = snowflake.connector.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, DatabaseDialect.SNOWFLAKE)
 
 
 def load_mysql_connection(**kwargs) -> DatabaseConnection:
@@ -178,7 +178,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.MYSQL)
 
     # MySQL connection requires specific parameters:
     # user, password, database.
@@ -213,7 +213,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     while attempt <= attempts:
         try:
             connection = mysql.connector.connect(**kwargs)
-            return DatabaseConnection(connection)
+            return DatabaseConnection(connection, DatabaseDialect.MYSQL)
 
         except (OSError, mysql.connector.Error) as err:
             if attempt >= attempts:
@@ -269,7 +269,7 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.POSTGRES)
 
     # Postgres connection requires specific parameters:
     # user, password, dbname.
@@ -303,7 +303,7 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
     while attempt <= attempts:
         try:
             connection = psycopg2.connect(**kwargs)
-            return DatabaseConnection(connection)
+            return DatabaseConnection(connection, DatabaseDialect.POSTGRES)
 
         except (OSError, psycopg2.Error) as err:
             if attempt >= attempts:
@@ -357,7 +357,7 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
         assert isinstance(connection, oracledb.Connection)
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.ORACLE)
 
     # Oracle connection requires specific parameters:
     # user, password, host and service_name.
@@ -395,7 +395,7 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
     while attempt <= attempts:
         try:
             connection = oracledb.connect(**kwargs)
-            return DatabaseConnection(connection)
+            return DatabaseConnection(connection, DatabaseDialect.ORACLE)
 
         except (OSError, oracledb.Error) as err:
             if attempt >= attempts:

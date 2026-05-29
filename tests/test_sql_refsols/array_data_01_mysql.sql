@@ -1,6 +1,6 @@
 SELECT
   REGION.r_name COLLATE utf8mb4_bin AS region_name,
-  JSON_ARRAYAGG(NATION.n_name) AS nation_names
+  JSON_ARRAYAGG(NATION.n_name ORDER BY NATION.n_name) AS nation_names
 FROM tpch.REGION AS REGION
 JOIN tpch.NATION AS NATION
   ON NATION.n_regionkey = REGION.r_regionkey

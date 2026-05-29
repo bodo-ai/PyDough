@@ -544,7 +544,7 @@ def sqlite_people_jobs() -> DatabaseConnection:
         )
     """
     sqlite3_empty_connection: DatabaseConnection = DatabaseConnection(
-        sqlite3.connect(":memory:")
+        sqlite3.connect(":memory:"), DatabaseDialect.SQLITE
     )
     cursor: sqlite3.Cursor = sqlite3_empty_connection.connection.cursor()
     cursor.execute(create_table_1)
@@ -605,7 +605,10 @@ def sqlite_tpch_db_context(sqlite_tpch_db) -> DatabaseContext:
     """
     Return a DatabaseContext for the SQLite TPCH database.
     """
-    return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(sqlite_tpch_db, DatabaseDialect.SQLITE),
+        DatabaseDialect.SQLITE,
+    )
 
 
 @pytest.fixture
@@ -752,7 +755,9 @@ def sqlite_defog_connection() -> DatabaseContext:
     subprocess.run("cd tests/gen_data; bash setup_defog.sh", shell=True)
     path: str = os.path.join(base_dir, "tests/gen_data/defog.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(scope="session")
@@ -769,7 +774,9 @@ def sqlite_epoch_connection() -> DatabaseContext:
     )
     path: str = os.path.join(base_dir, "tests/gen_data/epoch.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(scope="session")
@@ -793,7 +800,9 @@ def sqlite_technograph_connection() -> DatabaseContext:
     gen_technograph_records(cursor)
 
     # Return the database context.
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(
@@ -829,7 +838,9 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     path: str = os.path.join(base_dir, "tests/gen_data/cryptbank.db")
     connection: sqlite3.Connection = sqlite3.connect(":memory:")
     connection.execute(f"attach database '{path}' as CRBNK")
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(scope="session")
@@ -865,7 +876,10 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
         connection = sqlite3.connect(":memory:")
         connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
 
-        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+        return DatabaseContext(
+            DatabaseConnection(connection, DatabaseDialect.SQLITE),
+            DatabaseDialect.SQLITE,
+        )
 
     return _impl
 
@@ -1047,7 +1061,10 @@ def sqlite_s3_datasets_connection(
         file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
         connection = sqlite3.connect(file_path)
 
-        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+        return DatabaseContext(
+            DatabaseConnection(connection, DatabaseDialect.SQLITE),
+            DatabaseDialect.SQLITE,
+        )
 
     return _impl
 
@@ -1684,7 +1701,8 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         # database context in the result.
         gen_pagerank_records(connection, nodes, edges)
         result[name] = DatabaseContext(
-            DatabaseConnection(connection), DatabaseDialect.SQLITE
+            DatabaseConnection(connection, DatabaseDialect.SQLITE),
+            DatabaseDialect.SQLITE,
         )
     return result
 
