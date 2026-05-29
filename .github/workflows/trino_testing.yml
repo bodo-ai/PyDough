@@ -16,6 +16,10 @@ on:
         required: true
       POSTGRES_PASSWORD:
         required: true
+      MONGO_USER:
+        required: true
+      MONGO_PASSWORD:
+        required: true
 
 jobs:
   trino-test:
