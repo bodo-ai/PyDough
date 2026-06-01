@@ -19,7 +19,7 @@ WITH _s1 AS (
 )
 SELECT
   ROUND(
-    CAST((
+    (
       100.0 * SUM(
         CASE
           WHEN CASE
@@ -28,14 +28,14 @@ SELECT
             WHEN c_mktsegment = 'MACHINERY'
             THEN ABS(min_bal - c_acctbal) <= 500
             WHEN c_mktsegment = 'HOUSEHOLD'
-            THEN CAST(STRFTIME('%j', min_o_orderdate) AS INTEGER) = '366'
+            THEN CAST(STRFTIME('%j', CAST(min_o_orderdate AS TIMESTAMP)) AS INTEGER) = '366'
             ELSE FALSE
           END
           THEN 1
         END
       )
-    ) AS REAL) / COUNT(*),
-    2
+    ) / COUNT(*),
+    1
   ) AS p
 FROM _t2
 WHERE
