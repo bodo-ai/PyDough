@@ -2093,21 +2093,12 @@ def impl_defog_dermtreatment_adv5():
     ).CALCULATE(number_of_new_patients=COUNT(patients))
 
     # Step 3: Calculate NPI (increase compared to previous year)
-    return (
-        new_patients_by_year.CALCULATE(
-            npi=number_of_new_patients
-            - DEFAULT_TO(
-                PREV(number_of_new_patients, by=first_treatment_year.ASC()),
-                number_of_new_patients,
-            ),
-        )
-        .CALCULATE(
-            year=STRING(first_treatment_year),
-            number_of_new_patients=number_of_new_patients,
-            npi=KEEP_IF(npi, npi != 0),
-        )
-        .ORDER_BY(year.ASC())
-    )
+    return new_patients_by_year.CALCULATE(
+        year=STRING(first_treatment_year),
+        number_of_new_patients=number_of_new_patients,
+        npi=number_of_new_patients
+        - PREV(number_of_new_patients, by=first_treatment_year.ASC()),
+    ).ORDER_BY(year.ASC())
 
 
 def impl_defog_dermtreatment_adv6():

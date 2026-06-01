@@ -394,7 +394,13 @@ SELECT
           WHEN LENGTH(sbcuststate) = 0
           THEN 0
           ELSE CAST(CAST((
-            LENGTH(sbcuststate) - LENGTH(REPLACE(sbcuststate, sbcuststate, ''))
+            LENGTH(sbcuststate) - LENGTH(
+              CASE
+                WHEN sbcuststate = ''
+                THEN sbcuststate
+                ELSE REPLACE(sbcuststate, sbcuststate, '')
+              END
+            )
           ) AS DOUBLE) / LENGTH(sbcuststate) AS BIGINT)
         END + -1
       ) > CAST(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE) AS BIGINT)
@@ -404,7 +410,13 @@ SELECT
           WHEN LENGTH(sbcuststate) = 0
           THEN 0
           ELSE CAST(CAST((
-            LENGTH(sbcuststate) - LENGTH(REPLACE(sbcuststate, sbcuststate, ''))
+            LENGTH(sbcuststate) - LENGTH(
+              CASE
+                WHEN sbcuststate = ''
+                THEN sbcuststate
+                ELSE REPLACE(sbcuststate, sbcuststate, '')
+              END
+            )
           ) AS DOUBLE) / LENGTH(sbcuststate) AS BIGINT)
         END + 1
       ) < CAST(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE) AS BIGINT)
@@ -417,7 +429,13 @@ SELECT
           WHEN LENGTH(sbcuststate) = 0
           THEN 0
           ELSE CAST(CAST((
-            LENGTH(sbcuststate) - LENGTH(REPLACE(sbcuststate, sbcuststate, ''))
+            LENGTH(sbcuststate) - LENGTH(
+              CASE
+                WHEN sbcuststate = ''
+                THEN sbcuststate
+                ELSE REPLACE(sbcuststate, sbcuststate, '')
+              END
+            )
           ) AS DOUBLE) / LENGTH(sbcuststate) AS BIGINT)
         END + CAST(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE) AS BIGINT) + 2
       )
