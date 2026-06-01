@@ -1400,6 +1400,7 @@ Here is a list of reference links for the format strings of different databases:
 - [Snowflake](https://docs.snowflake.com/en/sql-reference/functions-conversion#label-date-time-format-conversion)
 - [MySQL](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-format)
 - [Postgres](https://www.postgresql.org/docs/current/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE)
+- [Trino](https://trino.io/docs/current/functions/datetime.html#mysql-date-functions)
 
 
 <!-- TOC --><a name="integer"></a>
