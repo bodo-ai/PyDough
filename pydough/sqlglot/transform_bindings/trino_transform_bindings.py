@@ -408,10 +408,7 @@ class TrinoTransformBindings(BaseTransformBindings):
         # input if the delimiter is an empty string, unless it is also a
         # literal that is not an empty string.
         result: SQLGlotExpression = super().convert_replace(args, types)
-        if (
-            not isinstance(delim_arg, sqlglot_expressions.Literal)
-            and delim_arg.is_string
-        ):
+        if not isinstance(delim_arg, sqlglot_expressions.Literal):
             result = (
                 sqlglot_expressions.Case()
                 .when(
@@ -428,7 +425,10 @@ class TrinoTransformBindings(BaseTransformBindings):
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        # First cast to a DOUBLE, then to an INTEGER, for safety.
+        # First cast to a DOUBLE, then to an INTEGER, for safety. Going directly
+        # to INTEGER can cause issues in Trino if the argument is a string that
+        # cannot be implicitly cast to an integer, even if it can be cast to a
+        # double.
         return sqlglot_expressions.Cast(
             this=sqlglot_expressions.Cast(
                 this=args[0], to=sqlglot_expressions.DataType(this="DOUBLE")
@@ -439,6 +439,7 @@ class TrinoTransformBindings(BaseTransformBindings):
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType
     ) -> SQLGlotExpression:
+        # Same as the base case, except ±Infinity is generated differently.
         if isinstance(item_type, NumericType) and math.isinf(item):
             if item >= 0:
                 return sqlglot_expressions.Cast(

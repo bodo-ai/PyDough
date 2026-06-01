@@ -149,8 +149,8 @@ def load_trino_connection(**kwargs) -> DatabaseConnection:
         **kwargs: The keyword arguments which are expected to include either a
         connection object for Trino or the required connection parameters:
         - user: Trino username (str)
-        - host: Trino server host (str, default: "127.0.01"/"localhost")
-        - port: Trino server port (int, default: 8080)
+        - host: Trino server host (str)
+        - port: Trino server port (int)
 
     Raises:
         ImportError: If the Trino connector is not installed.

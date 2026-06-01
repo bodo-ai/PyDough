@@ -469,16 +469,13 @@ def rewrite_division(expr: exp.Expression) -> exp.Expression:
     # Attempt to fold constants for cases like `4 / 2` -> `2`
     if (
         isinstance(numerator, exp.Literal)
-        and numerator.is_number
+        and numerator.is_int
         and isinstance(denominator, exp.Literal)
-        and denominator.is_number
+        and denominator.is_int
     ):
-        num_raw = float(numerator.this)
-        denom_raw = float(denominator.this)
-        if num_raw == round(num_raw) and denom_raw == round(denom_raw):
-            num_term = round(num_raw)
-            denom_term = round(denom_raw)
-            if denom_term != 0 and num_term % denom_term == 0:
-                return exp.Literal.number(num_term // denom_term)
+        num_term: int = numerator.this
+        denom_term: int = denominator.this
+        if denom_term != 0 and num_term % denom_term == 0:
+            return exp.Literal.number(num_term // denom_term)
 
     return expr
