@@ -233,6 +233,7 @@ def custom_datasets_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
+@pytest.mark.custom_datasets
 def test_pipeline_until_relational_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_custom_datasets_graph: graph_fetcher,
@@ -249,6 +250,7 @@ def test_pipeline_until_relational_custom_datasets(
     )
 
 
+@pytest.mark.custom_datasets
 def test_pipeline_until_sql_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_custom_datasets_graph: graph_fetcher,
@@ -271,6 +273,7 @@ def test_pipeline_until_sql_custom_datasets(
     )
 
 
+@pytest.mark.custom_datasets
 @pytest.mark.execute
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
