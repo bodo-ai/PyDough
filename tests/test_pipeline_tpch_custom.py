@@ -7,7 +7,7 @@ import dataclasses
 import logging
 import re
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 import numpy as np
@@ -4114,8 +4114,135 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['idx'])",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2, 3, 4],
+                        "arr_s": [["A"], [], ["B", "C"], ["D", "E", None, "F"]],
+                        "arr_i": [[10], [], [20, 30], [40, 50, None, 60]],
+                    }
+                ),
+                "array_data_02",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "idx": [1, 2, 3, 4],
+                            "arr_s": [["A"], [], ["B", "C"], ["D", "E", None, "F"]],
+                            "arr_i": [[10], [], [20, 30], [40, 50, None, 60]],
+                        }
+                    )
+                },
+            ),
+            id="array_data_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['idx'])",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2, 3, 4],
+                        "arr_f": [
+                            [1.1],
+                            [],
+                            [-2.3, 0.0],
+                            [3.14, None, float("nan"), float("inf"), float("-inf")],
+                        ],
+                    }
+                ),
+                "array_data_02",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "idx": [1, 2, 3, 4],
+                            "arr_f": [
+                                [1.1],
+                                [],
+                                [-2.3, 0.0],
+                                [3.14, None, float("nan"), float("inf"), float("-inf")],
+                            ],
+                        }
+                    )
+                },
+            ),
+            id="array_data_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['idx'])",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2, 3, 4],
+                        "arr_d": [
+                            [datetime(2020, 1, 1, 0, 0, 0)],
+                            [],
+                            [
+                                datetime(2021, 6, 15, 0, 0, 0),
+                                datetime(2022, 12, 31, 0, 0, 0),
+                            ],
+                            [
+                                datetime(1999, 7, 4, 0, 0, 0),
+                                None,
+                                datetime(2000, 1, 1, 0, 0, 0),
+                            ],
+                        ],
+                        "arr_t": [
+                            [pd.Timestamp("2020-01-01 12:00:00")],
+                            [],
+                            [pd.Timestamp("2021-06-15"), pd.Timestamp("2022-12-31")],
+                            [
+                                pd.Timestamp("1999-07-04 23:15:00"),
+                                None,
+                                pd.Timestamp("2000-01-01"),
+                            ],
+                        ],
+                    }
+                ),
+                "array_data_04",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "idx": [1, 2, 3, 4],
+                            "arr_d": [
+                                [date(2020, 1, 1)],
+                                [],
+                                [date(2021, 6, 15), date(2022, 12, 31)],
+                                [date(1999, 7, 4), None, date(2000, 1, 1)],
+                            ],
+                            "arr_t": [
+                                [pd.Timestamp("2020-01-01 12:00:00")],
+                                [],
+                                [
+                                    pd.Timestamp("2021-06-15"),
+                                    pd.Timestamp("2022-12-31"),
+                                ],
+                                [
+                                    pd.Timestamp("1999-07-04 23:15:00"),
+                                    None,
+                                    pd.Timestamp("2000-01-01"),
+                                ],
+                            ],
+                        }
+                    )
+                },
+            ),
+            id="array_data_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "array_data = regions.CALCULATE(nation_names=LISTOF(nations.name))\n"
-                "result = array_data.EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name').ORDER_BY(region_name, nation_idx)",
+                "result = ("
+                "  array_data"
+                "  .EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name', keep=True, filtering=False, is_distinct=True)"
+                "  .ORDER_BY(region_name, nation_idx)",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -4124,11 +4251,38 @@ from .testing_utilities import (
                         + ["ASIA"] * 5
                         + ["EUROPE"] * 5
                         + ["MIDDLE EAST"] * 5,
+                        "nation_names": [
+                            [["ALGERIA", "ETHIOPIA", "KENYA", "MOROCCO", "MOZAMBIQUE"]]
+                            * 5
+                            + [
+                                [
+                                    "ARGENTINA",
+                                    "BRAZIL",
+                                    "CANADA",
+                                    "PERU",
+                                    "UNITED STATES",
+                                ]
+                            ]
+                            * 5
+                            + [["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"]] * 5
+                            + [
+                                [
+                                    "FRANCE",
+                                    "GERMANY",
+                                    "ROMANIA",
+                                    "RUSSIA",
+                                    "UNITED KINGDOM",
+                                ]
+                            ]
+                            * 5
+                            + [["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"]] * 5,
+                        ],
                         "nation_idx": list(range(5)) * 5,
                         "nation_name": [
                             "ALGERIA",
                             "ETHIOPIA",
                             "KENYA",
+                            "MOROCCO",
                             "MOROCCO",
                             "MOZAMBIQUE",
                             "ARGENTINA",

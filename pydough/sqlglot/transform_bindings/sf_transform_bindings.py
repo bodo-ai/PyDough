@@ -90,6 +90,11 @@ class SnowflakeTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         return sqlglot_expressions.ArrayAgg(this=args[0])
 
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="ARRAY_CONSTRUCT", expressions=items)
+
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:

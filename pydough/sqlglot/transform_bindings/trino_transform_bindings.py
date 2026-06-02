@@ -131,6 +131,11 @@ class TrinoTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         return sqlglot_expressions.ArrayAgg(this=args[0])
 
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Array(expressions=items)
+
     def convert_datediff(
         self,
         args: list[SQLGlotExpression],

@@ -71,6 +71,16 @@ class PostgresTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         return sqlglot_expressions.Anonymous(this="ARRAY_AGG", expressions=args)
 
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        if len(items) == 0:
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.Array(expressions=[]),
+                to=sqlglot_expressions.DataType.build("TEXT[]", dialect="postgres"),
+            )
+        return sqlglot_expressions.Array(expressions=items)
+
     def convert_sum(
         self, arg: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
