@@ -100,7 +100,7 @@ class OracleTransformBindings(BaseTransformBindings):
     def convert_listof(
         self, args: SQLGlotExpression, types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        return sqlglot_expressions.Anonymous(this="COLLECT", expressions=args)
+        return sqlglot_expressions.Anonymous(this="JSON_ARRAYAGG", expressions=args)
 
     def convert_default_to(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

@@ -4107,6 +4107,7 @@ from .testing_utilities import (
                 ),
                 "array_data_01",
                 order_sensitive=True,
+                ignore_array_order=True,
                 skipped_dialects={"ANSI", "SQLITE"},
             ),
             id="array_data_01",

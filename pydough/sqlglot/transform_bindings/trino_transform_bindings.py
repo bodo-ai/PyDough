@@ -126,6 +126,11 @@ class TrinoTransformBindings(BaseTransformBindings):
                 )
         return func_expr
 
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.ArrayAgg(this=args[0])
+
     def convert_datediff(
         self,
         args: list[SQLGlotExpression],

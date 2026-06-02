@@ -1293,6 +1293,12 @@ class PyDoughPandasTest:
     test in SQL or E2E mode.
     """
 
+    ignore_array_order: bool = False
+    """
+    If True, when comparing results, ignores order of elements within array
+    columns.
+    """
+
     fix_output_dialect: str = "sqlite"
     """
     Dialect name to update output
@@ -1561,6 +1567,17 @@ class PyDoughPandasTest:
             for col_name in result.columns:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
+                )
+
+        # Internally sort any array columns so there is no ambiguity in ordering
+        # within arrays caused by how different dialects group array values.
+        if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
+            for col in result.columns:
+                result[col] = result[col].apply(
+                    lambda x: sorted(x) if isinstance(x, list) else x
+                )
+                refsol[col] = refsol[col].apply(
+                    lambda x: sorted(x) if isinstance(x, list) else x
                 )
 
         # Perform the comparison between the result and the reference solution

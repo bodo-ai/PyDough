@@ -1,6 +1,6 @@
 SELECT
   REGION.r_name AS region_name,
-  COLLECT(NATION.n_name) AS nation_names
+  JSON_ARRAYAGG(NATION.n_name) AS nation_names
 FROM TPCH.REGION REGION
 JOIN TPCH.NATION NATION
   ON NATION.n_regionkey = REGION.r_regionkey

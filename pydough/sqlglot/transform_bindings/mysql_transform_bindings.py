@@ -91,13 +91,7 @@ class MySQLTransformBindings(BaseTransformBindings):
     def convert_listof(
         self, args: SQLGlotExpression, types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        order_exp = sqlglot_expressions.Order(
-            this=args[0],
-            expressions=[sqlglot_expressions.Ordered(this=args[0], nulls_first=True)],
-        )
-        return sqlglot_expressions.Anonymous(
-            this="JSON_ARRAYAGG", expressions=[order_exp]
-        )
+        return sqlglot_expressions.Anonymous(this="JSON_ARRAYAGG", expressions=args)
 
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

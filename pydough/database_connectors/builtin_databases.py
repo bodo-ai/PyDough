@@ -168,7 +168,7 @@ def load_trino_connection(**kwargs) -> DatabaseConnection:
 
     connection = kwargs.pop("connection", None)
     if connection:
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, dialect=DatabaseDialect.TRINO)
     required_keys = ["user", "host", "port"]
     if not all(key in kwargs for key in required_keys):
         raise ValueError(
@@ -177,7 +177,7 @@ def load_trino_connection(**kwargs) -> DatabaseConnection:
         )
     # Create a Trino connection using the provided keyword arguments
     connection = trino.dbapi.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, dialect=DatabaseDialect.TRINO)
 
 
 def load_mysql_connection(**kwargs) -> DatabaseConnection:
