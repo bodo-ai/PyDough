@@ -8,6 +8,7 @@ import math
 from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot import parse_one
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
@@ -15,7 +16,7 @@ from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
-from pydough.types import PyDoughType
+from pydough.types import PyDoughType, StringType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
@@ -75,10 +76,23 @@ class PostgresTransformBindings(BaseTransformBindings):
         self, items: list[SQLGlotExpression], inner_type: PyDoughType
     ) -> SQLGlotExpression:
         if len(items) == 0:
-            return sqlglot_expressions.Cast(
-                this=sqlglot_expressions.Array(expressions=[]),
-                to=sqlglot_expressions.DataType.build("TEXT[]", dialect="postgres"),
-            )
+            # Convoluted way to generate empty array literal in Postgres using
+            # SQLGlot, to work around Postgres's typing rules.
+            inner_term: str
+            match inner_type:
+                case BooleanType():
+                    inner_term = "true"
+                case StringType():
+                    inner_term = "''"
+                case NumericType():
+                    inner_term = "0"
+                case DatetimeType():
+                    inner_term = "CAST('1970-01-01' AS TIMESTAMP)"
+                case _:
+                    raise ValueError(
+                        f"Cannot support empty array of type {inner_type} in Postgres."
+                    )
+            return parse_one(f"(ARRAY[{inner_term}])[1:0]")
         return sqlglot_expressions.Array(expressions=items)
 
     def convert_sum(

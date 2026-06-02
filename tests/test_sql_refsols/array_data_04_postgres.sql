@@ -8,7 +8,15 @@ FROM (VALUES
     ARRAY[CAST('2020-01-01' AS TIMESTAMP)],
     ARRAY[CAST('2020-01-01 12:00:00' AS TIMESTAMP)]
   ),
-  (2, ARRAY[], ARRAY[]),
+  (
+    2,
+    (
+      ARRAY[CAST('1970-01-01' AS TIMESTAMP)]
+    )[1 : 0],
+    (
+      ARRAY[CAST('1970-01-01' AS TIMESTAMP)]
+    )[1 : 0]
+  ),
   (
     3,
     ARRAY[CAST('2021-06-15' AS TIMESTAMP), CAST('2022-12-31' AS TIMESTAMP)],
