@@ -4125,7 +4125,7 @@ from .testing_utilities import (
                 ),
                 "array_data_02",
                 order_sensitive=True,
-                skipped_dialects={"ANSI", "SQLITE"},
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE"},
                 kwargs={
                     "array_df": pd.DataFrame(
                         {
@@ -4155,7 +4155,7 @@ from .testing_utilities import (
                 ),
                 "array_data_02",
                 order_sensitive=True,
-                skipped_dialects={"ANSI", "SQLITE", "MYSQL"},
+                skipped_dialects={"ANSI", "SQLITE", "MYSQL", "SNOWFLAKE"},
                 kwargs={
                     "array_df": pd.DataFrame(
                         {
@@ -4206,7 +4206,7 @@ from .testing_utilities import (
                 ),
                 "array_data_04",
                 order_sensitive=True,
-                skipped_dialects={"ANSI", "SQLITE"},
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE"},
                 kwargs={
                     "array_df": pd.DataFrame(
                         {

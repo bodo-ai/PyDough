@@ -1853,6 +1853,23 @@ def harmonize_types(column_a, column_b):
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
 
+    # For array types, harmonize the inner arrays
+    if (
+        pd.api.types.is_object_dtype(column_a)
+        and pd.api.types.is_object_dtype(column_b)
+        and any(isinstance(col, list) for col in column_a)
+        and any(isinstance(col, list) for col in column_b)
+    ):
+        for i in range(len(column_a)):
+            if isinstance(column_a[i], list) and isinstance(column_b[i], list):
+                column_a[i], column_b[i] = harmonize_types(
+                    pd.Series(column_a[i]), pd.Series(column_b[i])
+                )
+                # After harmonizing types, convert back to list for comparison,
+                # but ensure that NAT is converted to None.
+                column_a[i] = [None if pd.isna(x) else x for x in column_a[i].tolist()]
+                column_b[i] = [None if pd.isna(x) else x for x in column_b[i].tolist()]
+
     return column_a, column_b
 
 
