@@ -5,6 +5,7 @@ __all__ = [
     "DatabaseDialect",
     "empty_connection",
     "load_database_context",
+    "load_databricks_connection",
     "load_mysql_connection",
     "load_oracle_connection",
     "load_postgres_connection",
@@ -14,6 +15,7 @@ __all__ = [
 
 from .builtin_databases import (
     load_database_context,
+    load_databricks_connection,
     load_mysql_connection,
     load_oracle_connection,
     load_postgres_connection,

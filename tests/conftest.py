@@ -217,6 +217,14 @@ def sf_sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def databricks_sample_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the Databricks sample graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/databricks_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
 def udf_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the UDF graphs.
@@ -391,6 +399,27 @@ def get_sf_defog_graphs() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
+def get_databricks_sample_graph(
+    databricks_sample_graph_path: str,
+    valid_sample_graph_names: set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    Databricks graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=databricks_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def get_udf_graph(
     udf_graph_path: str, valid_udf_graph_names: set[str]
 ) -> graph_fetcher:
@@ -502,6 +531,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
         pytest.param(DatabaseDialect.ORACLE, id="oracle"),
+        pytest.param(DatabaseDialect.DATABRICKS, id="databricks"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -643,12 +673,18 @@ def sqlite_tpch_session(
             id="oracle",
             marks=[pytest.mark.oracle],
         ),
+        pytest.param(
+            "databricks",
+            id="databricks",
+            marks=[pytest.mark.databricks],
+        ),
     ],
 )
 def all_dialects_tpch_db_context(
     request,
     get_sample_graph: graph_fetcher,
     get_sf_sample_graph: graph_fetcher,
+    get_databricks_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     General fixture providing TPCH database context and graph metadata
@@ -677,6 +713,12 @@ def all_dialects_tpch_db_context(
         case "oracle":
             db_context = request.getfixturevalue("oracle_conn_db_context")
             return db_context("tpch"), get_sample_graph("TPCH")
+        case "databricks":
+            db_context = request.getfixturevalue("databricks_conn_db_context")
+            return (
+                db_context("tpch_s3_pq", "TPCH_SF1"),
+                get_databricks_sample_graph("TPCH"),
+            )
 
         # TODO: Add bodosql later
 
@@ -1074,9 +1116,9 @@ def is_snowflake_env_set() -> bool:
 @pytest.fixture(scope="session")
 def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     """
-    This fixture is used to connect to the Snowflake TPCH database using
+    This fixture is used to connect to the Snowflake database using
     a connection object.
-    Return a DatabaseContext for the Snowflake TPCH database.
+    Return a DatabaseContext for the Snowflake database.
     """
 
     @cache
@@ -1154,6 +1196,78 @@ def sf_params_tpch_db_context() -> DatabaseContext:
         warehouse=warehouse,
         database=sf_tpch_db,
         schema=sf_tpch_schema,
+    )
+
+
+DATABRICK_ENVS = ["DATABRICKS_HOST", "DATABRICKS_HTTP_PATH", "DATABRICKS_TOKEN"]
+"""
+    Databricks environment variables required for connection.
+    DATABRICKS_HOST: The host for the Databricks cluster.
+    DATABRICKS_HTTP_PATH: The HTTP path for the Databricks cluster.
+    DATABRICKS_TOKEN: The authentication token for the Databricks cluster.
+"""
+
+
+def is_databricks_env_set() -> bool:
+    """
+    Check if the Databricks environment variables are set.
+
+    Returns:
+        bool: True if all required Databricks environment variables are set, False otherwise.
+    """
+    return all(os.getenv(env) for env in DATABRICK_ENVS)
+
+
+@pytest.fixture(scope="session")
+def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
+    """
+    This fixture is used to connect to the Databricks TPCH database using
+    a connection object.
+    Return a DatabaseContext for the Databricks TPCH database.
+    """
+
+    @cache
+    def _impl(catalog_name: str, schema_name: str) -> DatabaseContext:
+        if not is_databricks_env_set():
+            pytest.skip("Skipping Databricks tests: environment variables not set.")
+        from databricks import sql
+
+        host = os.getenv("DATABRICKS_HOST")
+        http_path = os.getenv("DATABRICKS_HTTP_PATH")
+        token = os.getenv("DATABRICKS_TOKEN")
+        connection: sql.client.Connection = sql.connect(
+            server_hostname=host,
+            http_path=http_path,
+            access_token=token,
+            catalog=catalog_name,
+            schema=schema_name,
+        )
+        return load_database_context("databricks", connection=connection)
+
+    return _impl
+
+
+@pytest.fixture
+def databricks_params_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the Databricks TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Databricks TPCH database.
+    """
+    if not is_databricks_env_set():
+        pytest.skip("Skipping Databricks tests: environment variables not set.")
+    databricks_tpch_catalog = "tpch_s3_pq"
+    databricks_tpch_schema = "TPCH_SF1"
+    host = os.getenv("DATABRICKS_HOST")
+    http_path = os.getenv("DATABRICKS_HTTP_PATH")
+    token = os.getenv("DATABRICKS_TOKEN")
+    return load_database_context(
+        "databricks",
+        server_hostname=host,
+        http_path=http_path,
+        access_token=token,
+        catalog=databricks_tpch_catalog,
+        schema=databricks_tpch_schema,
     )
 
 

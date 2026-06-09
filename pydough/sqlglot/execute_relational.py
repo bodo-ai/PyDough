@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one, transforms
+from sqlglot.dialects import Databricks as DatabricksDialect
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Oracle as OracleDialect
@@ -558,6 +559,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return PostgresDialect()
         case DatabaseDialect.ORACLE:
             return OracleDialect()
+        case DatabaseDialect.DATABRICKS:
+            return DatabricksDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
@@ -602,6 +605,21 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                 )
             )
 
+        case DatabaseDialect.DATABRICKS:
+            # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
+            # which is necessary later when optimizing. Without it, HAS()/HASNOT()
+            # emit plain JOINs that inflate COUNT results or invert NOT EXISTS logic.
+            DatabricksDialect.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.unnest_to_explode,
+                        transforms.any_to_exists,
+                        transforms.eliminate_semi_and_anti_joins,
+                    ]
+                )
+            )
+
         case _:
             pass
 
@@ -626,6 +644,16 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                     [
                         transforms.eliminate_distinct_on,
                         transforms.eliminate_qualify,
+                    ]
+                )
+            )
+        case DatabaseDialect.DATABRICKS:
+            DatabricksDialect.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.unnest_to_explode,
+                        transforms.any_to_exists,
                     ]
                 )
             )

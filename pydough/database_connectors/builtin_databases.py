@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 __all__ = [
     "load_bodosql_context",
     "load_database_context",
+    "load_databricks_connection",
     "load_mysql_connection",
     "load_oracle_connection",
     "load_postgres_connection",
@@ -67,6 +68,9 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "bodosql":
             connection = load_bodosql_context(**kwargs)
             dialect = DatabaseDialect.BODOSQL
+        case "databricks":
+            connection = load_databricks_connection(**kwargs)
+            dialect = DatabaseDialect.DATABRICKS
         case _:
             raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
@@ -407,6 +411,29 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
             attempt += 1
 
     raise ValueError(f"Failed to connect to Oracle after {attempts} attempts")
+
+
+def load_databricks_connection(**kwargs) -> DatabaseConnection:
+    try:
+        from databricks import sql
+    except ImportError:
+        raise ImportError(
+            "Databricks connector is not installed. Please install it with"
+            " `pip install databricks-sql-connector`."
+        )
+
+    if connection := kwargs.pop("connection", None):
+        return DatabaseConnection(connection)
+
+    required_keys = ["server_hostname", "http_path", "access_token"]
+    if not all(key in kwargs for key in required_keys):
+        raise ValueError(
+            "Databricks connection requires the following arguments: "
+            + ", ".join(required_keys)
+        )
+
+    connection = sql.connect(**kwargs)
+    return DatabaseConnection(connection)
 
 
 def load_bodosql_context(**kwargs) -> "BodoSQLContext":
