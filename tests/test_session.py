@@ -417,13 +417,14 @@ def test_division_by_zero_e2e(
         division_e2e_test_func
     )()
 
-    # DATABASE mode: Snowflake/Postgres/Oracle/BodoSQL throw errors, SQLite/MySQL return NULL
+    # DATABASE mode: Snowflake/Postgres/Oracle/BodoSQL/Databricks throw errors, SQLite/MySQL return NULL
     if division_by_zero_config == DivisionByZeroBehavior.DATABASE:
         if db_context.dialect in (
             DatabaseDialect.SNOWFLAKE,
             DatabaseDialect.POSTGRES,
             DatabaseDialect.ORACLE,
             DatabaseDialect.BODOSQL,
+            DatabaseDialect.DATABRICKS,
         ):
             with pytest.raises(
                 PyDoughSQLException,

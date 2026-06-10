@@ -41,6 +41,7 @@ from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
     simple_int_float_string_cast,
     string_format_specifiers_bodosql,
+    string_format_specifiers_databricks,
     string_format_specifiers_mysql,
     string_format_specifiers_oracle,
     string_format_specifiers_postgres,
@@ -423,6 +424,22 @@ def get_databricks_sample_graph(
         return pydough.parse_json_metadata_from_file(
             file_path=databricks_sample_graph_path, graph_name=name
         )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_databricks_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Databricks.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/databricks_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
 
@@ -1242,16 +1259,24 @@ def is_databricks_env_set() -> bool:
 @pytest.fixture(scope="session")
 def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     """
-    This fixture is used to connect to the Databricks TPCH database using
-    a connection object.
-    Return a DatabaseContext for the Databricks TPCH database.
+    Connects to a Databricks catalog/schema and returns a DatabaseContext.
+
+    Before returning, runs the DEFOG daily data refresh if the data is stale
+    (no lock row for today in defog.broker.daily_update_lock), mirroring the
+    inline refresh check in sf_conn_db_context for Snowflake. The lock table
+    uses a fully-qualified name so the check works regardless of which catalog
+    the connection targets.
     """
 
     @cache
     def _impl(catalog_name: str, schema_name: str) -> DatabaseContext:
         if not is_databricks_env_set():
             pytest.skip("Skipping Databricks tests: environment variables not set.")
+        from pathlib import Path
+
         from databricks import sql
+
+        from tests.gen_data.databricks_task import run_with_cursor
 
         host = os.getenv("DATABRICKS_HOST")
         http_path = os.getenv("DATABRICKS_HTTP_PATH")
@@ -1263,6 +1288,11 @@ def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
             catalog=catalog_name,
             schema=schema_name,
         )
+
+        sf_task_path = Path(__file__).parent / "gen_data" / "sf_task.sql"
+        with connection.cursor() as cur:
+            run_with_cursor(cur, sf_task_path=sf_task_path)
+
         return load_database_context("databricks", connection=connection)
 
     return _impl
@@ -3035,6 +3065,31 @@ def tpch_custom_test_data_dialect_replacements(
                             "d18": ["30"],  # MI
                             "d19": ["45"],  # SS
                             "d20": ["P.M."],  # AM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.DATABRICKS:
+                return PyDoughPandasTest(
+                    string_format_specifiers_databricks,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # yyyy
+                            "d2": ["23"],  # yy
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # MMM
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # dd
+                            "d7": ["Sat"],  # EEE
+                            "d8": ["Saturday"],  # EEEE
+                            "d9": ["14"],  # HH
+                            "d10": ["02"],  # hh
+                            "d11": ["30"],  # mm
+                            "d12": ["45"],  # ss
+                            "d13": ["PM"],  # a
+                            "d14": [".000000"],  # .SSSSSS
+                            "d15": ["Z"],  # XXX (UTC)
                         }
                     ),
                     "string_format_specifiers",

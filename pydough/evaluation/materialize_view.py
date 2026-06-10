@@ -89,6 +89,16 @@ def _generate_create_ddl(
             "The view will be created as TEMPORARY."
         )
 
+    if temp and not as_view and db_dialect == DatabaseDialect.DATABRICKS:
+        # Databricks does not support CREATE TEMPORARY TABLE, but does
+        # support CREATE TEMPORARY VIEW. Fall back to a temporary view.
+        as_view = True
+        object_type = "VIEW"
+        warnings.warn(
+            "Databricks does not support creating temporary tables. "
+            "The object will be created as a TEMPORARY VIEW instead."
+        )
+
     if temp:
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
         if not allowed:

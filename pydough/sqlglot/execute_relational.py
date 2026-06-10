@@ -203,6 +203,13 @@ def apply_sqlglot_optimizer(
     # Rewrite sqlglot AST to simplify expressions.
     glot_expr = simplify(glot_expr, dialect=dialect)
 
+    # Databricks rejects QUALIFY clauses that contain aggregate functions
+    # referencing columns outside the GROUP BY, even when that exact
+    # aggregate is already computed (and grouped) in the SELECT clause.
+    # Replace such aggregates with a reference to the matching SELECT alias.
+    if isinstance(dialect, DatabricksDialect):
+        collapse_qualify_aggregates(glot_expr)
+
     # Fix column names in the top-level SELECT expressions.
     # The optimizer changes the cases of column names, so we need to
     # match the alias in the relational tree.
@@ -225,6 +232,36 @@ def apply_sqlglot_optimizer(
     quote_oracle_identifiers(glot_expr, dialect)
 
     return glot_expr
+
+
+def collapse_qualify_aggregates(glot_expr: SQLGlotExpression) -> None:
+    """
+    Replace aggregate function calls inside a QUALIFY clause with a
+    reference to the matching SELECT alias, when that exact aggregate
+    expression is already computed in the SELECT clause.
+
+    Databricks' QUALIFY clause does not allow aggregate functions that
+    reference columns outside the GROUP BY, even when the same aggregate
+    expression is grouped and aliased in the SELECT clause, so the inlined
+    aggregate must be replaced with the alias reference.
+
+    Args:
+        `glot_expr`: The SQLGlot expression to transform in-place.
+    """
+    for scope in traverse_scope(glot_expr):
+        expression = scope.expression
+        qualify_clause = expression.args.get("qualify")
+        if qualify_clause is None:
+            continue
+        alias_for_expr: dict[SQLGlotExpression, str] = {
+            projection.this: projection.alias
+            for projection in expression.selects
+            if isinstance(projection, Alias)
+        }
+        for agg in list(qualify_clause.find_all(sqlglot_expressions.AggFunc)):
+            alias = alias_for_expr.get(agg)
+            if alias is not None:
+                agg.replace(sqlglot_expressions.column(alias))
 
 
 def replace_keys_with_indices(

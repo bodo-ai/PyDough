@@ -4,11 +4,14 @@ Definition of SQLGlot transformation bindings for the Databricks dialect.
 
 __all__ = ["DatabricksTransformBindings"]
 
+import math
+from typing import Any
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.types import PyDoughType
+from pydough.types import NumericType, PyDoughType
 from pydough.types.boolean_type import BooleanType
 
 from .base_transform_bindings import BaseTransformBindings
@@ -35,7 +38,6 @@ class DatabricksTransformBindings(BaseTransformBindings):
         pydop.SIGN: "SIGN",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
-        pydop.GETPART: "SPLIT_PART",
     }
     """
     Mapping of PyDough operators to equivalent Snowflake SQL function names
@@ -48,6 +50,28 @@ class DatabricksTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
+        if operator is pydop.GETPART:
+            # Unlike PyDough (and Snowflake's SPLIT_PART), Databricks'
+            # SPLIT_PART raises INVALID_INDEX_OF_ZERO when the index is 0
+            # instead of treating it as 1, so remap a 0 index to 1.
+            assert len(args) == 3
+            index_arg: SQLGlotExpression = args[2]
+            index_expr: SQLGlotExpression = sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=sqlglot_expressions.EQ(
+                            this=index_arg,
+                            expression=sqlglot_expressions.Literal.number(0),
+                        ),
+                        true=sqlglot_expressions.Literal.number(1),
+                    )
+                ],
+                default=index_arg,
+            )
+            return sqlglot_expressions.Anonymous(
+                this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
+            )
+
         if operator in self.PYDOP_TO_DATABRICKS_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_DATABRICKS_FUNC[operator], expressions=args
@@ -73,6 +97,36 @@ class DatabricksTransformBindings(BaseTransformBindings):
             case _:
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
+
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Databricks raises CAST_INVALID_INPUT when casting a string literal
+        # containing a decimal value (e.g. '4.3') directly to BIGINT, even
+        # though casting the equivalent numeric literal (4.3) works fine.
+        # Cast to DOUBLE first, then to BIGINT, to handle both cases.
+        return sqlglot_expressions.Cast(
+            this=sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("DOUBLE")
+            ),
+            to=sqlglot_expressions.DataType.build("BIGINT"),
+        )
+
+    def generate_dataframe_item_dialect_expression(
+        self, item: Any, item_type: PyDoughType
+    ) -> SQLGlotExpression:
+        # Same as the base case, except ±Infinity is generated as a CAST to
+        # DOUBLE rather than a bare string literal. Databricks' VALUES clause
+        # requires every row to have the same type for a given column, so a
+        # plain 'Infinity' string literal alongside numeric literals (e.g.
+        # 1.5) raises INCOMPATIBLE_TYPES_IN_INLINE_TABLE.
+        if isinstance(item_type, NumericType) and math.isinf(item):
+            sign = "" if item >= 0 else "-"
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.Literal.string(f"{sign}Infinity"),
+                to=sqlglot_expressions.DataType.build("DOUBLE"),
+            )
+        return super().generate_dataframe_item_dialect_expression(item, item_type)
 
     def _to_start_of_week(self, d: SQLGlotExpression) -> SQLGlotExpression:
         """
@@ -100,7 +154,37 @@ class DatabricksTransformBindings(BaseTransformBindings):
 
         if unit == DTU.WEEK:
             return self._to_start_of_week(base)
+        if unit == DTU.DAY:
+            # sqlglot renders DateTrunc(unit='day') as TRUNC(expr, 'DAY')
+            # for Databricks, but Databricks' TRUNC only supports
+            # YEAR/MONTH/QUARTER formats (not DAY), giving incorrect
+            # results. Use TimestampTrunc, which renders to
+            # DATE_TRUNC('DAY', expr) and works correctly.
+            return sqlglot_expressions.TimestampTrunc(
+                this=self.make_datetime_arg(base),
+                unit=sqlglot_expressions.Var(this=unit.value),
+            )
         return super().apply_datetime_truncation(base, unit)
+
+    def apply_datetime_offset(
+        self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
+    ) -> SQLGlotExpression:
+        # Databricks `DATE_ADD`/`DATE_SUB` only operate on day granularity,
+        # silently dropping the unit for sub-day units (HOUR/MINUTE/SECOND)
+        # and treating the amount as a number of days. Use interval
+        # arithmetic instead, which Databricks supports directly.
+        if unit in (DateTimeUnit.HOUR, DateTimeUnit.MINUTE, DateTimeUnit.SECOND):
+            if amt == 0:
+                return base
+            interval: SQLGlotExpression = sqlglot_expressions.Interval(
+                this=sqlglot_expressions.convert(abs(amt)),
+                unit=sqlglot_expressions.Var(this=unit.value.upper()),
+            )
+            if amt > 0:
+                return sqlglot_expressions.Add(this=base, expression=interval)
+            else:
+                return sqlglot_expressions.Sub(this=base, expression=interval)
+        return super().apply_datetime_offset(base, amt, unit)
 
     def _day_diff(
         self, x: SQLGlotExpression, y: SQLGlotExpression

@@ -6804,7 +6804,15 @@ def test_pipeline_to_table_ddl(
     expected_create_statement = "CREATE"
 
     table_or_view = " VIEW" if as_view else " TABLE"
-    # SQLite, PostgreSQL, MySQL, Trino, and Oracle do not support REPLACE TABLE
+
+    # Databricks does not support temporary tables, only temporary views,
+    # so to_table() falls back to creating a TEMPORARY VIEW when temp=True
+    # and as_view=False.
+    if db_context.dialect == DatabaseDialect.DATABRICKS and temp and not as_view:
+        table_or_view = " VIEW"
+
+    # SQLite, PostgreSQL, MySQL, Trino, Oracle, and Databricks do not support
+    # REPLACE TABLE.
     # Also, SQLite/Trino do not support REPLACE VIEW too but other dialects too.
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
@@ -6818,6 +6826,7 @@ def test_pipeline_to_table_ddl(
                 DatabaseDialect.MYSQL,
                 DatabaseDialect.ORACLE,
                 DatabaseDialect.TRINO,
+                DatabaseDialect.DATABRICKS,
             }
         ) or (
             table_or_view == " VIEW"

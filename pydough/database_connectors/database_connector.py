@@ -289,6 +289,8 @@ class DatabaseDialect(Enum):
                 return "postgres"
             case DatabaseDialect.ORACLE:
                 return "oracle"
+            case DatabaseDialect.DATABRICKS:
+                return "databricks"
             case _:
                 raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
 
