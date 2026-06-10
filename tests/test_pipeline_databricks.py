@@ -419,9 +419,15 @@ def test_defog_e2e(
     )
 
 
-# @pytest.mark.skip(
-#     "Databricks does not support two words in quotes"
-# )
+@pytest.mark.skip(
+    reason=(
+        "This is the 'keywords' edge-case dataset"
+        "and custom_datasets_graphs.json mixes "
+        "Postgres-style double-quote and Spark-style backtick identifier "
+        "escaping (e.g. quoted_table_name.name) that is not valid for the "
+        "Databricks dialect. "
+    )
+)
 @pytest.mark.custom_datasets
 @pytest.mark.databricks
 @pytest.mark.execute
