@@ -54,7 +54,7 @@ jobs:
         run: uv pip install -e ".[databricks]"
 
       - name: Confirm Databricks connector is installed
-        run: uv run python -c "import databricks; print(databricks.__version__)"
+        run: uv run python -c "import databricks; print('Databricks connector installed')"
 
       - name: Run Databricks Tests
         run: uv run pytest -m databricks tests/ -rs
