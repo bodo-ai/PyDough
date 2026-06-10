@@ -348,6 +348,8 @@ Below is a list of all supported values for the database name:
 
 - `postgres`: uses a Postgres database. [See here](https://www.psycopg.org/docs/) for details on the connection API and what keyword arguments can be passed in.
 
+- `trino`: uses a Postgres database. [See here](https://github.com/trinodb/trino-python-client) for details on the connection API and what keyword arguments can be passed in.
+
 - `oracle`: uses an Oracle database. [See here](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) for details on the connection API and what keyword arguments can be passed in.
 
 - `databricks`: uses a Databricks database. [See here](https://docs.databricks.com/dev-tools/python-sql-connector.html) for details on the connection API and what keyword arguments can be passed in.
@@ -375,6 +377,7 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `postgres` | `psycopg2-binary`  |
 | `oracle` | `python-oracledb`  |
 | `databricks` | `databricks-sql-connector`  |
+| `trino` | `trino`  |
 | `bodosql`    | Depends on the catalog being used |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
@@ -450,6 +453,28 @@ You can find a full example of using MySQL database with PyDough in [this usage 
     pydough.active_session.connect_database("postgres", connection=postgres_conn)
   ```
 You can find a full example of using Postgres database with PyDough in [this usage guide](./../demos/notebooks/PG_TPCH.ipynb).
+
+
+- Postgres: You can connect to a postgres database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("trino", 
+        host=TRINO_HOST,
+        port=TRINO_PORT,
+        user=TRINO_USER,
+    )
+  ```
+  Example with a connection object
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    trino_conn: trino.dbapi.Connection = trino.dbapi.connect(
+        host=TRINO_HOST,
+        port=TRINO_PORT,
+        user=TRINO_USER,
+    )
+    pydough.active_session.connect_database("trino", connection=trino_conn)
+  ```
+You can find a full example of using Trino database with PyDough in [this usage guide](./../demos/notebooks/Trino_TPCH.ipynb).
 
 - Oracle: You can connect to an Oracle database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py

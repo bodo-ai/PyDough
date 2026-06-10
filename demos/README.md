@@ -28,4 +28,9 @@ Once the introduction notebook is complete, you can explore the other notebooks:
 - [MySQL_TPCH.ipynb](notebooks/MySQL_TPCH.ipynb) demonstrates how to connect a MySQL database with PyDough.
 - [PG_TPCH.ipynb](notebooks/PG_TPCH.ipynb) demonstrates how to connect a Postgres database with PyDough.
 - [Oracle_TPCH.ipynb](notebooks/Oracle_TPCH.ipynb) demonstrates how to connect an Oracle database with PyDough.
+<<<<<<< HEAD
 - [Databricks_TPCH.ipynb](notebooks/Databricks_TPCH.ipynb) demonstrates how to connect a Databricks database with PyDough.
+=======
+- [Trino_TPCH.ipynb](notebooks/Trino_TPCH.ipynb) demonstrates how to connect a Trino database with PyDough.
+
+>>>>>>> c1b25dc93bf8d4e55717df08134fe9c9ca30f682

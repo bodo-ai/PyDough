@@ -162,6 +162,31 @@ To run **Postgres CI tests**, add the flag `[run postgres]` to your commit messa
         export POSTGRES_PASSWORD="your_password"
     ```
 
+
+## Running Trino Tests on CI
+To run **Trino CI tests**, add the flag `[run trino]` to your commit message.
+
+**Running Trino tests locally:**
+
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+
+2. Complete all the steps for running Postgres and MySQL locally (since these dialects are used in the testing of Trino).
+
+2. Install the Trino Connector for Python, as well as extra dependencies for cassandra and mongo (since these other databases are also used in the testing of Trino)
+    ```bash
+    pip install trino
+    pip install pymongo
+    pip install cassandra-driver
+    ```
+    
+3. Add extra environment variables (besides MySQL/Postgres) for the extra databases used to test Trino:
+    ```bash
+        export MONGO_USER="your_username"
+        export MONGO_PASSWORD="your_password"
+    ```
+
+
 ## Runtime Dependencies
 
 PyDough requires having the following Python modules installed to use

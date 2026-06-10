@@ -10,19 +10,19 @@ WITH _t1 AS (
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) = 1992
 )
 SELECT
-  ROUND(CAST((
+  ROUND((
     100.0 * SUM(CASE WHEN expr_5 THEN 1 END)
-  ) AS REAL) / COUNT(*), 4) AS pct_e1,
-  ROUND(CAST((
+  ) / COUNT(*), 4) AS pct_e1,
+  ROUND((
     100.0 * SUM(CASE WHEN expr_6 THEN 1 END)
-  ) AS REAL) / COUNT(*), 4) AS pct_e10,
-  ROUND(CAST((
+  ) / COUNT(*), 4) AS pct_e10,
+  ROUND((
     100.0 * SUM(CASE WHEN expr_7 THEN 1 END)
-  ) AS REAL) / COUNT(*), 4) AS pct_e100,
-  ROUND(CAST((
+  ) / COUNT(*), 4) AS pct_e100,
+  ROUND((
     100.0 * SUM(CASE WHEN expr_8 THEN 1 END)
-  ) AS REAL) / COUNT(*), 4) AS pct_e1000,
-  ROUND(CAST((
+  ) / COUNT(*), 4) AS pct_e1000,
+  ROUND((
     100.0 * SUM(CASE WHEN expr_9 THEN 1 END)
-  ) AS REAL) / COUNT(*), 4) AS pct_e10000
+  ) / COUNT(*), 4) AS pct_e10000
 FROM _t1
