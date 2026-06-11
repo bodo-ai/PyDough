@@ -245,6 +245,12 @@ def collapse_qualify_aggregates(glot_expr: SQLGlotExpression) -> None:
     expression is grouped and aliased in the SELECT clause, so the inlined
     aggregate must be replaced with the alias reference.
 
+    Note: this only matches aggregates that appear as an *aliased*
+    projection (`Alias`) in the SELECT clause, since PyDough always aliases
+    its top-level SELECT projections. An aggregate in QUALIFY with no
+    matching aliased projection in SELECT is left untouched, and will
+    surface as a Databricks-side error rather than a PyDough-level one.
+
     Args:
         `glot_expr`: The SQLGlot expression to transform in-place.
     """

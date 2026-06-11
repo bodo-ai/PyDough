@@ -558,31 +558,6 @@ CREATE TABLE IF NOT EXISTS {_LOCK_TABLE} (
 """
 
 
-def _acquire_lock(cursor) -> bool:
-    """
-    Attempt to acquire today's lock row.  Returns True if the lock was
-    successfully acquired (first run today), False if already locked.
-
-    Uses a MERGE so the check-and-insert is atomic on a Delta table.
-    After the MERGE we verify the outcome with a SELECT.
-    """
-    cursor.execute(
-        f"""
-        MERGE INTO {_LOCK_TABLE} AS target
-        USING (SELECT CURRENT_DATE() AS lock_date) AS source
-        ON target.lock_date = source.lock_date
-        WHEN NOT MATCHED THEN INSERT (lock_date) VALUES (source.lock_date)
-        """
-    )
-    # Verify the row now exists (handles both "just inserted" and "already existed")
-    cursor.execute(
-        f"SELECT COUNT(*) FROM {_LOCK_TABLE} WHERE lock_date = CURRENT_DATE()"
-    )
-    return (
-        cursor.fetchone()[0] == 1
-    )  # True = exactly one row → we own it if we just ran MERGE
-
-
 def _release_lock(cursor) -> None:
     cursor.execute(f"DELETE FROM {_LOCK_TABLE} WHERE lock_date = CURRENT_DATE()")
 

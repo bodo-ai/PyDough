@@ -1266,10 +1266,15 @@ def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     inline refresh check in sf_conn_db_context for Snowflake. The lock table
     uses a fully-qualified name so the check works regardless of which catalog
     the connection targets.
+
+    The DEFOG setup/refresh is run at most once per session (cached via
+    `_ensure_defog_refreshed`), separately from opening per-(catalog, schema)
+    connections, so requesting multiple defog graphs (e.g. Broker, Ewallet,
+    Dealership, ...) doesn't re-run `setup_tables` for every schema.
     """
 
     @cache
-    def _impl(catalog_name: str, schema_name: str) -> DatabaseContext:
+    def _ensure_defog_refreshed() -> None:
         if not is_databricks_env_set():
             pytest.skip("Skipping Databricks tests: environment variables not set.")
         from pathlib import Path
@@ -1285,13 +1290,32 @@ def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
             server_hostname=host,
             http_path=http_path,
             access_token=token,
-            catalog=catalog_name,
-            schema=schema_name,
         )
 
         sf_task_path = Path(__file__).parent / "gen_data" / "sf_task.sql"
         with connection.cursor() as cur:
             run_with_cursor(cur, sf_task_path=sf_task_path)
+        connection.close()
+
+    @cache
+    def _impl(catalog_name: str, schema_name: str) -> DatabaseContext:
+        if not is_databricks_env_set():
+            pytest.skip("Skipping Databricks tests: environment variables not set.")
+        from databricks import sql
+
+        if catalog_name == "defog":
+            _ensure_defog_refreshed()
+
+        host = os.getenv("DATABRICKS_HOST")
+        http_path = os.getenv("DATABRICKS_HTTP_PATH")
+        token = os.getenv("DATABRICKS_TOKEN")
+        connection: sql.client.Connection = sql.connect(
+            server_hostname=host,
+            http_path=http_path,
+            access_token=token,
+            catalog=catalog_name,
+            schema=schema_name,
+        )
 
         return load_database_context("databricks", connection=connection)
 

@@ -231,6 +231,14 @@ class DatabaseDialect(Enum):
             case DatabaseDialect.DATABRICKS:
                 # Databricks does not support CREATE OR REPLACE TABLE,
                 # but does support CREATE OR REPLACE VIEW and temporary views.
+                # NOTE: temp_table=False is paired with the temp table -> temp
+                # view fallback in materialize_view._generate_create_ddl. If
+                # that fallback is ever removed, temp_table=False will then
+                # cause temp table requests to raise PyDoughSessionException
+                # instead, which is fine; but if temp_table is changed to
+                # True without removing the fallback, the fallback would
+                # silently override it and temp tables would still become
+                # temp views.
                 return CreateCapabilities(
                     replace_table=False,
                     temp_table=False,

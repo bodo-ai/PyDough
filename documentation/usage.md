@@ -513,20 +513,20 @@ literals. This ensures consistent behavior across DATE expressions. But sub-seco
 - Databricks: You can connect to a Databricks database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
     pydough.active_session.load_metadata_graph("../../tests/test_metadata/databricks_sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("databricks", 
-          host=databricks_host,
-          http_path=databricks_http_path,
-          token=databricks_token
+    pydough.active_session.connect_database("databricks",
+        server_hostname=databricks_host,
+        http_path=databricks_http_path,
+        access_token=databricks_token
     )
   ```
   Example with a connection object
   ```py
     from databricks import sql
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/databricks_sample_graphs.json", "TPCH")
     databricks_conn = sql.connect(
-        host=databricks_host,
+        server_hostname=databricks_host,
         http_path=databricks_http_path,
-        token=databricks_token
+        access_token=databricks_token
     )
     pydough.active_session.connect_database("databricks", connection=databricks_conn)
   ```

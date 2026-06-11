@@ -16,18 +16,35 @@ on:
         required: true
 
 jobs:
-  sf-tests:
+  defog-refresh:
+    name: Refresh DEFOG data (Databricks)
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.6.0"
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[databricks]"
+
+      - name: Run DEFOG refresh if stale (locked by date)
+        run: uv run python -m tests.gen_data.databricks_task
+
+  databricks-tests:
     name: Databricks Tests (Python ${{ matrix.python-version }})
+    needs: defog-refresh
     runs-on: ubuntu-latest
     strategy:
-      # Run sequentially: unlike MySQL/Postgres (isolated per-job docker
-      # containers) or Snowflake (atomic CREATE OR REPLACE TABLE), Databricks
-      # jobs share one remote catalog/schema AND must use a non-atomic
-      # DROP IF EXISTS + CREATE TABLE for to_table(replace=True) since
-      # CREATE OR REPLACE TABLE isn't supported. Running the matrix in
-      # parallel lets one job's CREATE land in another job's DROP/CREATE
-      # gap, causing TABLE_OR_VIEW_ALREADY_EXISTS.
-      max-parallel: 1
       matrix:
         python-version: ${{ fromJSON(inputs.python-versions) }}
 
@@ -62,7 +79,7 @@ jobs:
         run: uv pip install -e ".[databricks]"
 
       - name: Confirm Databricks connector is installed
-        run: uv run python -c "import databricks; print('Databricks connector installed')"
+        run: uv run python -c "import databricks.sql; print('Databricks connector installed')"
 
       - name: Run Databricks Tests
         run: uv run pytest -m databricks tests/ -rs

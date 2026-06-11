@@ -80,23 +80,23 @@ class DatabricksTransformBindings(BaseTransformBindings):
         return super().convert_call_to_sqlglot(operator, args, types)
 
     def convert_sum(
-        self, arg: SQLGlotExpression, types: list[PyDoughType]
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
         Converts a SUM function call to its SQLGlot equivalent.
         This method checks the type of the argument to determine whether to use
         COUNT_IF (for BooleanType) or SUM (for other types).
         Arguments:
-            `arg` : The argument to the SUM function.
+            `args` : The arguments to the SUM function.
             `types` : The types of the arguments.
         """
         match types[0]:
             # If the argument is of BooleanType, it uses COUNT_IF to count true values.
             case BooleanType():
-                return sqlglot_expressions.CountIf(this=arg[0])
+                return sqlglot_expressions.CountIf(this=args[0])
             case _:
                 # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=arg[0])
+                return sqlglot_expressions.Sum(this=args[0])
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -255,7 +255,6 @@ class DatabricksTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
-
         assert len(args) == 3
         # Check if unit is a string.
         if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):

@@ -458,6 +458,25 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
 
 
 def load_databricks_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads a Databricks database connection.
+    If a connection object is provided in the keyword arguments,
+    it will be used directly. Otherwise, the connection will be created
+    using the provided keyword arguments.
+    Args:
+        **kwargs:
+            The Databricks connection or its connection parameters.
+            This includes the required parameters for connecting to Databricks,
+            such as `server_hostname`, `http_path`, and `access_token`.
+            Optional parameters like `catalog` and `schema` can also be
+            provided.
+    Raises:
+        ImportError: If the Databricks connector is not installed.
+        ValueError: If required connection parameters are missing.
+
+    Returns:
+        DatabaseConnection: A database connection object for Databricks.
+    """
     try:
         from databricks import sql
     except ImportError:

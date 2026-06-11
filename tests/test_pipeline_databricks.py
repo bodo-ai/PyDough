@@ -6,14 +6,9 @@ Integration tests for the PyDough workflow using Databricks.
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
-from collections.abc import Callable
 import pandas as pd
 import pytest
-import datetime
-from tests.test_pipeline_defog_custom import get_start_of_week, get_day_of_week
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import UnqualifiedNode
-from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q16_output,
@@ -26,19 +21,15 @@ from tests.test_pydough_functions.simple_pydough_functions import week_offset
 
 from tests.testing_utilities import (
     graph_fetcher,
-    harmonize_types,
     PyDoughSQLComparisonTest,
 )
 
-from .conftest import tpch_custom_test_data_dialect_replacements
 
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data
 from .test_pipeline_defog import defog_pipeline_test_data
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
-
 from .testing_utilities import PyDoughPandasTest
-from pydough import init_pydough_context, to_df, to_sql
 
 
 @pytest.fixture(
