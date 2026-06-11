@@ -1255,7 +1255,7 @@
         "name": "catalog_returns",
         "type": "simple table",
         "table path": "tpcds.catalog_returns",
-        "unique properties": ["item_key"],
+        "unique properties": [["item_key", "order_number"]],
         "properties": [
           {
             "name": "returned_date_key",
@@ -6557,6 +6557,27 @@
         "singular": true,
         "always matches": false,
         "description": "The warehouse that fulfilled a catalog sale",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "catalog_returns",
+        "parent collection": "catalog_sales",
+        "child collection": "catalog_returns",
+        "singular": false,
+        "always matches": false,
+        "keys": {"order_number": ["order_number"]},
+        "description": "The return records with the same order number for a catalog sale line item",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "catalog_sales",
+        "original parent": "catalog_sales",
+        "original property": "catalog_returns",
+        "singular": false,
+        "always matches": true,
+        "description": "The original catalog sales that was returned",
         "synonyms": []
       },
       {

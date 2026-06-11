@@ -32,6 +32,7 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         options: >-
+          --shm-size=256m
           --health-cmd "pg_isready -h localhost -U $POSTGRES_USER -d ${POSTGRES_DB}"
           --health-interval 15s
           --health-timeout 10s
@@ -80,7 +81,7 @@ jobs:
           git fetch origin main
           git checkout -B "$BRANCH" origin/main
 
-          git add benchmark/metrics/*.csv benchmark/benchmark_metrics.csv
+          git add benchmark/metrics/*.csv benchmark/comparisons/*.csv  benchmark/benchmark_metrics.csv
 
           if git diff --cached --quiet; then
             echo "No changes to commit, skipping PR."
