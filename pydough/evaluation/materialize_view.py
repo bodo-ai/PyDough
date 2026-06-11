@@ -98,19 +98,20 @@ def _generate_create_ddl(
         # support CREATE TEMPORARY VIEW. Fall back to a temporary view.
         as_view = True
         object_type = "VIEW"
-        message = (
+        warnings.warn(
             "Databricks does not support creating temporary tables. "
             "The object will be created as a TEMPORARY VIEW instead."
         )
-        if "." in name:
-            # Databricks temporary view names must not be qualified with a
-            # catalog/schema, unlike persistent objects.
-            name = name.rsplit(".", 1)[-1]
-            message += (
-                f" Its name has been unqualified to '{name}', as required "
-                "for temporary views on Databricks."
-            )
-        warnings.warn(message)
+
+    if temp and as_view and db_dialect == DatabaseDialect.DATABRICKS and "." in name:
+        # Databricks temporary view names must not be qualified with a
+        # catalog/schema, unlike persistent objects.
+        old_name = name
+        name = name.rsplit(".", 1)[-1]
+        warnings.warn(
+            f"Databricks temporary views require unqualified names. "
+            f"'{old_name}' has been unqualified to '{name}'."
+        )
 
     if temp:
         allowed = create_caps.temp_view if as_view else create_caps.temp_table
