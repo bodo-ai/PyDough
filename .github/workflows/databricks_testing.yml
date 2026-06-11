@@ -20,6 +20,14 @@ jobs:
     name: Databricks Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      # Run sequentially: unlike MySQL/Postgres (isolated per-job docker
+      # containers) or Snowflake (atomic CREATE OR REPLACE TABLE), Databricks
+      # jobs share one remote catalog/schema AND must use a non-atomic
+      # DROP IF EXISTS + CREATE TABLE for to_table(replace=True) since
+      # CREATE OR REPLACE TABLE isn't supported. Running the matrix in
+      # parallel lets one job's CREATE land in another job's DROP/CREATE
+      # gap, causing TABLE_OR_VIEW_ALREADY_EXISTS.
+      max-parallel: 1
       matrix:
         python-version: ${{ fromJSON(inputs.python-versions) }}
 
