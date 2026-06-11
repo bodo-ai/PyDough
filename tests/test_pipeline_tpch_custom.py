@@ -4153,7 +4153,7 @@ from .testing_utilities import (
                         ],
                     }
                 ),
-                "array_data_02",
+                "array_data_03",
                 order_sensitive=True,
                 skipped_dialects={"ANSI", "SQLITE", "MYSQL", "SNOWFLAKE"},
                 kwargs={

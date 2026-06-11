@@ -102,6 +102,23 @@ class OracleTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         return sqlglot_expressions.Anonymous(this="JSON_ARRAYAGG", expressions=args)
 
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        func: str
+        match inner_type:
+            case StringType():
+                func = "SYS.ODCIVARCHAR2LIST"
+            case NumericType():
+                func = "SYS.ODCINUMBERLIST"
+            case DatetimeType():
+                func = "SYS.ODCIDATELIST"
+            case _:
+                raise ValueError(
+                    f"Cannot support constant array of type {inner_type} in Oracle."
+                )
+        return sqlglot_expressions.Anonymous(this=func, expressions=items)
+
     def convert_default_to(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:

@@ -1,11 +1,9 @@
 SELECT
   tbl.idx,
-  tbl.arr_f
+  tbl.arr_s,
+  tbl.arr_i
 FROM (VALUES
-  (1, ARRAY[1.1]),
-  (2, ARRAY[]),
-  (3, ARRAY[-2.3, 0.0]),
-  (
-    4,
-    ARRAY[3.14, NULL, NULL, CAST('Infinity' AS DOUBLE), CAST('-Infinity' AS DOUBLE)]
-  )) AS tbl(idx, arr_f)
+  (1, ARRAY['A'], ARRAY[10]),
+  (2, ARRAY[], ARRAY[]),
+  (3, ARRAY['B', 'C'], ARRAY[20, 30]),
+  (4, ARRAY['D', 'E', NULL, 'F'], ARRAY[40, 50, NULL, 60])) AS tbl(idx, arr_s, arr_i)
