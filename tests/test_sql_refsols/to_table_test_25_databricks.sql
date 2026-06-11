@@ -4,7 +4,7 @@ WITH _t0 AS (
     nation.n_nationkey,
     regions_t25.rkey,
     regions_t25.rname
-  FROM regions_t25 AS regions_t25
+  FROM e2e_tests_db.to_table_pyXXX.regions_t25 AS regions_t25
   JOIN tpch_s3_pq.tpch_sf1.nation AS nation
     ON nation.n_regionkey = regions_t25.rkey
   QUALIFY

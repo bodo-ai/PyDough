@@ -1429,6 +1429,11 @@ class PyDoughPandasTest:
             call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
 
+        # Normalize the Python-version-specific Databricks schema name
+        # (e.g. `to_table_py313`) to a fixed placeholder, so reference files
+        # are not tied to the Python version used to generate them.
+        sql_text = re.sub(r"to_table_py3\d\d", "to_table_pyXXX", sql_text)
+
         # Either update the reference solution, or compare the generated sql
         # text against it.
         if update:

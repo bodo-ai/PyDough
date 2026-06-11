@@ -56,7 +56,7 @@ def _generate_create_ddl(
     replace: bool,
     temp: bool,
     db_dialect: DatabaseDialect,
-) -> tuple[list[str], bool]:
+) -> tuple[list[str], bool, str]:
     """
     Generate the CREATE DDL statement(s) for a view or table.
 
@@ -69,9 +69,13 @@ def _generate_create_ddl(
         db_dialect: The database dialect to generate the DDL for
 
     Returns:
-        A tuple of (ddl_statements, actual_temp) where:
+        A tuple of (ddl_statements, actual_temp, actual_name) where:
         - ddl_statements is a list of DDL strings to execute in order
-        - actual_temp is the final temp value (may differ from input due to dialect limitations)
+        - actual_temp is the final temp value (may differ from input due to
+          dialect limitations)
+        - actual_name is the name actually used in the CREATE statement (may
+          differ from the input due to dialect limitations, e.g. Databricks
+          temporary views must be unqualified)
     """
     create_caps: CreateCapabilities = db_dialect.create_capabilities
     object_type = "VIEW" if as_view else "TABLE"
@@ -133,7 +137,7 @@ def _generate_create_ddl(
 
     ddl_statements.append(f"{create} {name} AS {sql}")
 
-    return ddl_statements, temp
+    return ddl_statements, temp, name
 
 
 def _compute_unique_columns(
@@ -291,7 +295,7 @@ def to_table(
     # Step 3: Generate and execute DDL to create view/table.
     # Use write_path as the SQL name if provided, otherwise fall back to name.
     sql_name: str = write_path if write_path is not None else name
-    ddl_statements, actual_temp = _generate_create_ddl(
+    ddl_statements, actual_temp, actual_sql_name = _generate_create_ddl(
         sql_name, sql, as_view, replace, temp, session.database.dialect
     )
     pyd_logger = None
@@ -306,7 +310,10 @@ def to_table(
         session.database.connection.execute_ddl(ddl_stmt)
 
     # Step 4: Create ViewGeneratedCollection with the inferred schema
-    # Use actual_temp which may differ from the input temp due to dialect limitations
+    # Use actual_temp/actual_sql_name, which may differ from the requested
+    # temp/write_path due to dialect limitations (e.g. Databricks temporary
+    # views must be unqualified), so later references match what was
+    # actually created.
     view_collection = ViewGeneratedCollection(
         name=name,
         columns=column_names,
@@ -315,7 +322,7 @@ def to_table(
         is_replace=replace,
         is_temp=actual_temp,
         unique_columns=unique_columns,
-        write_path=write_path,
+        write_path=actual_sql_name if actual_sql_name != name else None,
     )
 
     # Step 5: Wrap in UnqualifiedGeneratedCollection so it can be used in
