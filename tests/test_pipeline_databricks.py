@@ -28,7 +28,6 @@ from tests.testing_utilities import (
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data
 from .test_pipeline_defog import defog_pipeline_test_data
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
-from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
 from .testing_utilities import PyDoughPandasTest
 
 

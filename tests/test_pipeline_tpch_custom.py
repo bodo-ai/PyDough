@@ -6587,17 +6587,9 @@ TRINO_TABLE_PREFIX = "memory.default."
 
 # For Databricks, the connection's default catalog/schema is the read-only
 # tpch_s3_pq.TPCH_SF1 (external S3 location), so write to a separate
-# managed catalog/schema instead, mirroring Snowflake's E2E_TESTS_DB.PUBLIC.
-#
-# Unlike Snowflake (atomic CREATE OR REPLACE TABLE) or MySQL/Postgres
-# (isolated per-job docker containers), Databricks to_table tests share one
-# remote catalog/schema and use a non-atomic DROP IF EXISTS + CREATE TABLE
-# for replace=True (CREATE OR REPLACE TABLE isn't supported). Running the
-# Python-version matrix in parallel would let one job's CREATE land in
-# another job's DROP/CREATE gap (TABLE_OR_VIEW_ALREADY_EXISTS). To allow
-# the matrix to run in parallel, each Python version gets its own schema
-# (e.g. "py310") so the jobs never touch the same table names.
-# NOTE: You'll need t ocreate a new schema for each new Python version
+# managed catalog/schema instead. Each Python version gets its own schema
+# so the parallel CI matrix jobs don't race on the same table names
+# NOTE: You'll need to create a new schema for each new Python version,
 # e.g. CREATE SCHEMA IF NOT EXISTS e2e_tests_db.to_table_py310;
 DATABRICKS_TEST_SCHEMA = f"to_table_py{sys.version_info.major}{sys.version_info.minor}"
 DATABRICKS_TABLE_PREFIX = f"e2e_tests_db.{DATABRICKS_TEST_SCHEMA}."

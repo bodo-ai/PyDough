@@ -1273,25 +1273,29 @@ def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     Dealership, ...) doesn't re-run `setup_tables` for every schema.
     """
 
+    def _connect(catalog_name: str | None = None, schema_name: str | None = None):
+        from databricks import sql
+
+        kwargs: dict[str, str | None] = {}
+        if catalog_name is not None:
+            kwargs["catalog"] = catalog_name
+            kwargs["schema"] = schema_name
+        return sql.connect(
+            server_hostname=os.getenv("DATABRICKS_HOST"),
+            http_path=os.getenv("DATABRICKS_HTTP_PATH"),
+            access_token=os.getenv("DATABRICKS_TOKEN"),
+            **kwargs,
+        )
+
     @cache
     def _ensure_defog_refreshed() -> None:
-        if not is_databricks_env_set():
-            pytest.skip("Skipping Databricks tests: environment variables not set.")
         from pathlib import Path
-
-        from databricks import sql
 
         from tests.gen_data.databricks_task import run_with_cursor
 
-        host = os.getenv("DATABRICKS_HOST")
-        http_path = os.getenv("DATABRICKS_HTTP_PATH")
-        token = os.getenv("DATABRICKS_TOKEN")
-        connection: sql.client.Connection = sql.connect(
-            server_hostname=host,
-            http_path=http_path,
-            access_token=token,
-        )
-
+        # No catalog and schema specified since this is for refreshing
+        # different tables that rely on current date.
+        connection = _connect()
         sf_task_path = Path(__file__).parent / "gen_data" / "sf_task.sql"
         with connection.cursor() as cur:
             run_with_cursor(cur, sf_task_path=sf_task_path)
@@ -1301,22 +1305,11 @@ def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     def _impl(catalog_name: str, schema_name: str) -> DatabaseContext:
         if not is_databricks_env_set():
             pytest.skip("Skipping Databricks tests: environment variables not set.")
-        from databricks import sql
 
         if catalog_name == "defog":
             _ensure_defog_refreshed()
 
-        host = os.getenv("DATABRICKS_HOST")
-        http_path = os.getenv("DATABRICKS_HTTP_PATH")
-        token = os.getenv("DATABRICKS_TOKEN")
-        connection: sql.client.Connection = sql.connect(
-            server_hostname=host,
-            http_path=http_path,
-            access_token=token,
-            catalog=catalog_name,
-            schema=schema_name,
-        )
-
+        connection = _connect(catalog_name, schema_name)
         return load_database_context("databricks", connection=connection)
 
     return _impl
