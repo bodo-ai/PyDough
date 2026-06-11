@@ -245,11 +245,15 @@ def collapse_qualify_aggregates(glot_expr: SQLGlotExpression) -> None:
     expression is grouped and aliased in the SELECT clause, so the inlined
     aggregate must be replaced with the alias reference.
 
-    Note: this only matches aggregates that appear as an *aliased*
-    projection (`Alias`) in the SELECT clause, since PyDough always aliases
-    its top-level SELECT projections. An aggregate in QUALIFY with no
-    matching aliased projection in SELECT raises an AssertionError, since
-    that should not be possible given how PyDough generates SQL.
+    Window aggregates (e.g. `AVG(...) OVER (...)`) are left untouched, since
+    Databricks allows those in QUALIFY regardless of GROUP BY.
+
+    Note: this only matches non-window aggregates that appear as an
+    *aliased* projection (`Alias`) in the SELECT clause, since PyDough always
+    aliases its top-level SELECT projections. A non-window aggregate in
+    QUALIFY with no matching aliased projection in SELECT raises an
+    AssertionError, since that should not be possible given how PyDough
+    generates SQL.
 
     Args:
         `glot_expr`: The SQLGlot expression to transform in-place.
@@ -265,6 +269,8 @@ def collapse_qualify_aggregates(glot_expr: SQLGlotExpression) -> None:
             if isinstance(projection, Alias)
         }
         for agg in list(qualify_clause.find_all(sqlglot_expressions.AggFunc)):
+            if isinstance(agg.parent, sqlglot_expressions.Window):
+                continue
             alias = alias_for_expr.get(agg)
             assert alias is not None, (
                 f"Aggregate {agg.sql()} in QUALIFY has no matching aliased "
