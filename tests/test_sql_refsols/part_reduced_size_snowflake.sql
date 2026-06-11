@@ -15,7 +15,7 @@ SELECT
   lineitem.l_discount AS discount,
   TO_CHAR(CAST(lineitem.l_receiptdate AS TIMESTAMP), 'DD-mm-yyyy') AS date_dmy,
   TO_CHAR(CAST(lineitem.l_receiptdate AS TIMESTAMP), 'mm/DD') AS date_md,
-  TO_CHAR(CAST(lineitem.l_receiptdate AS TIMESTAMP), 'hh24:mi%p') AS am_pm
+  TO_CHAR(CAST(lineitem.l_receiptdate AS TIMESTAMP), 'hh24:miAM') AS am_pm
 FROM _s0 AS _s0
 JOIN tpch.lineitem AS lineitem
   ON _s0.p_partkey = lineitem.l_partkey
