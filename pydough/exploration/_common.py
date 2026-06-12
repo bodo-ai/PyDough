@@ -584,10 +584,17 @@ def generate_step_notes(
 
 def _cond_texts(where_step: dict) -> list[str]:
     """Extracts condition text strings from a Where step dict."""
-    return [
-        cond.get("text", str(cond)) if isinstance(cond, dict) else str(cond)
-        for cond in where_step.get("conditions", [])
-    ]
+
+    def _text(cond: object) -> str:
+        if not isinstance(cond, dict):
+            return str(cond)
+        if "text" in cond:
+            return cond["text"]
+        if cond.get("kind") == "Reference":
+            return cond.get("term_name", str(cond))
+        return str(cond)
+
+    return [_text(cond) for cond in where_step.get("conditions", [])]
 
 
 def generate_query_summary(steps: list[dict]) -> str:
@@ -711,7 +718,11 @@ def generate_query_summary(steps: list[dict]) -> str:
                     ref_terms.append(f"{_n} (computed)")
         agg_terms: list[str] = []
 
-        has_partition = any(s["type"] == "PartitionBy" for s in steps)
+        first_calc_idx = next(
+            (i for i, s in enumerate(steps) if s["type"] == "Calculate"),
+            len(steps),
+        )
+        has_partition = any(s["type"] == "PartitionBy" for s in steps[:first_calc_idx])
         for s in steps:
             if s["type"] != "Calculate":
                 continue

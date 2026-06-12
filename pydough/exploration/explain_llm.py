@@ -695,10 +695,17 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
                 step = _build_global_context_step(node, order)
             case TableCollection():
                 step = _build_table_collection_step(node, order)
-                # CROSS introduces both collections' expression terms
                 if _is_cross(node):
-                    context_introducing_terms = step["debug"]["available_terms"][
-                        "expressions"
+                    # Only the right-side (newly introduced) terms are relevant
+                    # for the unscoped-aggregation warning.  The merged set
+                    # includes left-side names that are always absent from
+                    # post-CROSS filters, causing false positives.
+                    left_exprs, _ = extract_terms(node.ancestor_context)
+                    left_set = set(left_exprs)
+                    context_introducing_terms = [
+                        t
+                        for t in step["debug"]["available_terms"]["expressions"]
+                        if t not in left_set
                     ]
             case SubCollection():
                 step = _build_sub_collection_step(node, order)
@@ -992,7 +999,7 @@ def _render_md(result: dict) -> str:
     limit = schema.get("limit")
 
     # Split filters into two categories:
-    # - Data filters: WHERE conditions before the first Calculate (or SubCollection)
+    # - Data filters: WHERE conditions before the first Calculate
     #   — these filter the raw data and correspond directly to evidence predicates
     # - Post-compute filters: WHERE conditions after a Calculate
     #   — these filter on computed values (e.g. RANKING, aggregation thresholds)
@@ -1000,14 +1007,11 @@ def _render_md(result: dict) -> str:
     _data_filters: list[str] = []
     _post_filters: list[str] = []
     _past_calc = False
-    _past_sub = False
     for _s in steps:
-        if _s["type"] in ("SubCollection", "Cross"):
-            _past_sub = True
-        elif _s["type"] == "Calculate":
+        if _s["type"] == "Calculate":
             _past_calc = True
         elif _s["type"] == "Where":
-            _target = _post_filters if (_past_calc or _past_sub) else _data_filters
+            _target = _post_filters if _past_calc else _data_filters
             _target.extend(_cond_texts(_s))
 
     # Derive output collection from the last SubCollection step — when it
