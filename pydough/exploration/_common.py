@@ -3,7 +3,6 @@ Shared helpers used by both `explain` and `explain_llm`.
 """
 
 __all__ = [
-    "_resolve_collection_arg",
     "describe_expression",
     "describe_subcollection_arg",
     "extract_conditions",
@@ -13,6 +12,8 @@ __all__ = [
     "generate_step_notes",
     "qualify_safely",
 ]
+
+import re
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
@@ -559,12 +560,15 @@ def generate_step_notes(
                         )
                     elif context_introducing_terms:
                         # Warn only when context-introducing terms exist but
-                        # none appear in this arg's filters.
+                        # none appear in this arg's filters.  Use token-based
+                        # matching to avoid false negatives from substrings
+                        # (e.g. "key" inside "account_key").
                         filters_text = " ".join(arg.get("filters", []))
+                        filter_tokens = set(re.split(r"\W+", filters_text))
                         missing = [
                             t
                             for t in context_introducing_terms
-                            if t not in filters_text
+                            if t not in filter_tokens
                         ]
                         if missing:
                             notes.append(
@@ -576,6 +580,14 @@ def generate_step_notes(
                             )
 
     return notes
+
+
+def _cond_texts(where_step: dict) -> list[str]:
+    """Extracts condition text strings from a Where step dict."""
+    return [
+        cond.get("text", str(cond)) if isinstance(cond, dict) else str(cond)
+        for cond in where_step.get("conditions", [])
+    ]
 
 
 def generate_query_summary(steps: list[dict]) -> str:
@@ -648,14 +660,6 @@ def generate_query_summary(steps: list[dict]) -> str:
     # SubCollection belong to the root collection; conditions after belong to
     # a deeper subcollection and must be described separately so the judge
     # understands they filter a different level of the data.
-    def _cond_texts(where_step: dict) -> list[str]:
-        out: list[str] = []
-        for cond in where_step.get("conditions", []):
-            out.append(
-                cond.get("text", str(cond)) if isinstance(cond, dict) else str(cond)
-            )
-        return out
-
     top_conds: list[str] = []
     sub_conds: list[str] = []
     past_first_sub = False
@@ -746,22 +750,15 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     topk_step = next((s for s in steps if s["type"] == "TopK"), None)
     order_step = next((s for s in steps if s["type"] == "OrderBy"), None)
+    sort_step = topk_step or order_step
 
-    if topk_step:
-        collation = topk_step.get("collation", [])
-        if collation:
-            by_str = ", ".join(
-                f"{c['text']} {c['direction'].lower()}" for c in collation
-            )
-            parts.append(f"keeping the top {topk_step['limit']} rows by {by_str}")
-        else:
-            parts.append(f"keeping the top {topk_step['limit']} rows")
-    elif order_step:
-        collation = order_step.get("collation", [])
-        if collation:
-            by_str = ", ".join(
-                f"{c['text']} {c['direction'].lower()}" for c in collation
-            )
+    if sort_step:
+        collation = sort_step.get("collation", [])
+        by_str = ", ".join(f"{c['text']} {c['direction'].lower()}" for c in collation)
+        if topk_step:
+            suffix = f" by {by_str}" if by_str else ""
+            parts.append(f"keeping the top {sort_step['limit']} rows{suffix}")
+        elif by_str:
             parts.append(f"ordered by {by_str}")
 
     # ------------------------------------------------------------------ #

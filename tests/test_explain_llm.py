@@ -190,25 +190,20 @@ def test_error_md_shows_hint_as_blockquote(
     def impl():
         return nations.WHERE(naem == "ASIA")
 
+    result = _run(impl, tpch_graph, tpch_session)
     md = _run_md(impl, tpch_graph, tpch_session)
-    assert result["error"] if (result := _run(impl, tpch_graph, tpch_session)) else True
+    assert result["error"] is True
     assert "> " in md  # blockquote marker
 
 
-def test_error_md_no_hint_blockquote_for_generic(
-    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
-):
+def test_error_md_no_hint_blockquote_for_generic():
     """Generic errors with no hint produce no blockquote in markdown."""
+    from pydough.exploration.explain_llm import _error_payload, _render_md
 
-    def impl():
-        # This should produce a qdag_error without "Did you mean"
-        return nations.WHERE(typo_field == "ASIA")
-
-    result = _run(impl, tpch_graph, tpch_session)
-    md = _run_md(impl, tpch_graph, tpch_session)
-    # If hint is None, no blockquote in the error section
-    if result["hint"] is None:
-        assert "> " not in md
+    result = _error_payload(RuntimeError("something unexpected"))
+    md = _render_md(result)
+    assert result["hint"] is None
+    assert "> " not in md
 
 
 def test_error_type_is_stable_string(

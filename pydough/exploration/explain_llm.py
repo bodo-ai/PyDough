@@ -87,6 +87,7 @@ from pydough.qdag.collections.user_collection_qdag import (
 from pydough.unqualified import UnqualifiedNode
 
 from ._common import (
+    _cond_texts,
     _is_cross,
     _resolve_collection_arg,
     describe_expression,
@@ -229,8 +230,6 @@ def _classify_error(
             return "answer_variable", {}, _HINT_MAP["answer_variable"]
         if "per" in msg.lower() and "parsing" in msg.lower():
             return "bad_window_per", {}, _HINT_MAP["bad_window_per"]
-        if "not callable" in msg.lower():
-            return "not_callable", {}, _HINT_MAP["not_callable"]
         return "generic", {}, None
 
     # ── Session / metadata not configured ───────────────────────────────────
@@ -282,8 +281,8 @@ def _error_payload(
     """
     if isinstance(e, str):
         message = e
-        details_: dict[str, object] = {}
-        error_type, details, hint = "generic", details_, None
+        details: dict[str, object]
+        error_type, details, hint = "generic", {}, None
     else:
         message = str(e)
         error_type, details, hint = _classify_error(e)
@@ -459,6 +458,14 @@ def _build_calculate_step(node: Calculate, order: int) -> dict:
     }
 
 
+def _collation_entry(col) -> dict:
+    return {
+        "text": col.expr.to_string(),
+        "direction": "ASC" if col.asc else "DESC",
+        "nulls": "LAST" if col.na_last else "FIRST",
+    }
+
+
 def _build_order_by_step(node: OrderBy, order: int) -> dict:
     """
     Sorts the collection by one or more collation keys.
@@ -467,14 +474,7 @@ def _build_order_by_step(node: OrderBy, order: int) -> dict:
     (``"FIRST"``/``"LAST"``).  TopK is a subclass of OrderBy so the same
     builder handles both; ``limit`` is included only for TopK.
     """
-    collation = [
-        {
-            "text": col.expr.to_string(),
-            "direction": "ASC" if col.asc else "DESC",
-            "nulls": "LAST" if col.na_last else "FIRST",
-        }
-        for col in node.collation
-    ]
+    collation = [_collation_entry(col) for col in node.collation]
     expr_names, coll_names = extract_terms(node)
     step: dict = {
         "order": order,
@@ -736,9 +736,12 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
 
         step["notes"] = generate_step_notes(node, step, context_introducing_terms)
 
-        # Reset context_introducing_terms after a non-CROSS, non-Partition step
-        # so warnings only fire for the immediately following Calculate.
-        if not isinstance(node, (TableCollection, PartitionBy)):
+        # Reset context_introducing_terms except on steps that are
+        # transparent to cross-product scoping.  Where is transparent —
+        # a filter between a CROSS and CALCULATE doesn't change which
+        # collections the cross-product introduced, so the scoping warning
+        # should still fire for the subsequent Calculate.
+        if step["type"] not in ("Cross", "PartitionBy", "Where"):
             context_introducing_terms = []
 
         steps.append(step)
@@ -779,15 +782,21 @@ def _build_schema(root: PyDoughCollectionQDAG) -> dict:
     while calc_for_cols is not None and not isinstance(calc_for_cols, Calculate):
         calc_for_cols = getattr(calc_for_cols, "preceding_context", None)
     output_columns = (
-        sorted(calc_for_cols.calc_terms) if calc_for_cols is not None else []
+        sorted(
+            calc_for_cols.calc_terms,
+            key=lambda name: calc_for_cols.get_expression_position(name),
+        )
+        if calc_for_cols is not None
+        else []
     )
     column_types: dict[str, str] = {}
-    for name in output_columns:
-        try:
-            expr = (calc_for_cols or root).get_expr(name)
-            column_types[name] = expr.pydough_type.json_string
-        except Exception:
-            column_types[name] = "unknown"
+    if calc_for_cols is not None:
+        for name in output_columns:
+            try:
+                expr = calc_for_cols.get_expr(name)
+                column_types[name] = expr.pydough_type.json_string
+            except Exception:
+                column_types[name] = "unknown"
 
     # Walk the QDAG chain once to find ordering / limit.
     ordering: list[dict] = []
@@ -795,25 +804,11 @@ def _build_schema(root: PyDoughCollectionQDAG) -> dict:
     current: PyDoughCollectionQDAG | None = root
     while current is not None:
         if isinstance(current, TopK):
-            ordering = [
-                {
-                    "text": col.expr.to_string(),
-                    "direction": "ASC" if col.asc else "DESC",
-                    "nulls": "LAST" if col.na_last else "FIRST",
-                }
-                for col in current.collation
-            ]
+            ordering = [_collation_entry(col) for col in current.collation]
             limit = current.records_to_keep
             break
         if isinstance(current, OrderBy):
-            ordering = [
-                {
-                    "text": col.expr.to_string(),
-                    "direction": "ASC" if col.asc else "DESC",
-                    "nulls": "LAST" if col.na_last else "FIRST",
-                }
-                for col in current.collation
-            ]
+            ordering = [_collation_entry(col) for col in current.collation]
             break
         current = getattr(current, "preceding_context", None)
 
@@ -1013,9 +1008,7 @@ def _render_md(result: dict) -> str:
             _past_calc = True
         elif _s["type"] == "Where":
             _target = _post_filters if (_past_calc or _past_sub) else _data_filters
-            for _c in _s.get("conditions", []):
-                _txt = _c.get("text", str(_c)) if isinstance(_c, dict) else str(_c)
-                _target.append(_txt)
+            _target.extend(_cond_texts(_s))
 
     # Derive output collection from the last SubCollection step — when it
     # differs from the source it signals the query navigated to a different
