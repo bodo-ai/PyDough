@@ -2802,7 +2802,7 @@ time period across all items. Order the output by customer data.
 Qualification Substitution Parameters:
 YEAR.01 = 2002
 STATE.01 = GA","customer_access = CROSS(customers).WHERE(
-    (return_customer_sk==key)
+    (returning_customer_key==key)
 ).SINGULAR()
 result = web_returns.WHERE(
     HAS(returned_date)
