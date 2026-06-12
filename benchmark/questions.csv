@@ -2844,7 +2844,22 @@ result = web_returns.WHERE(
     ctr_total_return=c_total_return
 ).WHERE(
     (customer_access.current_address.state == 'GA')
-).TOP_K(100, by=(c_customer_id))","WITH customer_total_return AS (
+).TOP_K(100, by=(
+        c_customer_id,
+        c_salutation,
+        c_first_name,
+        c_last_name,
+        c_preferred_cust_flag,
+        c_birth_day,
+        c_birth_month,
+        c_birth_year,
+        c_birth_country,
+        c_login,
+        c_email_address,
+        c_last_review_date_sk,
+        ctr_total_return
+    )
+)","WITH customer_total_return AS (
     SELECT
         wr.wr_returning_customer_sk AS ctr_customer_sk,
         ca.ca_state                 AS ctr_state,
