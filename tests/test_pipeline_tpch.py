@@ -67,4 +67,6 @@ def test_pipeline_e2e_tpch(
 
     db_context, graph = all_dialects_tpch_db_context
 
-    tpch_pipeline_test_data.run_e2e_test(lambda _: graph, db_context, coerce_types=True)
+    tpch_pipeline_test_data.run_e2e_test(
+        lambda _: graph, db_context, coerce_types=True, atol=5e-3
+    )

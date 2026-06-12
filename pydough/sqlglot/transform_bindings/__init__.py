@@ -10,6 +10,7 @@ __all__ = [
     "PostgresTransformBindings",
     "SQLiteTransformBindings",
     "SnowflakeTransformBindings",
+    "TrinoTransformBindings",
     "bindings_from_dialect",
 ]
 
@@ -25,6 +26,7 @@ from .oracle_transform_bindings import OracleTransformBindings
 from .postgres_transform_bindings import PostgresTransformBindings
 from .sf_transform_bindings import SnowflakeTransformBindings
 from .sqlite_transform_bindings import SQLiteTransformBindings
+from .trino_transform_bindings import TrinoTransformBindings
 
 if TYPE_CHECKING:
     from pydough.sqlglot.sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -54,6 +56,8 @@ def bindings_from_dialect(
             return SQLiteTransformBindings(configs, visitor)
         case DatabaseDialect.SNOWFLAKE:
             return SnowflakeTransformBindings(configs, visitor)
+        case DatabaseDialect.TRINO:
+            return TrinoTransformBindings(configs, visitor)
         case DatabaseDialect.BODOSQL:
             return BodoSQLTransformBindings(configs, visitor)
         case DatabaseDialect.MYSQL:
