@@ -1208,6 +1208,17 @@ class OracleTransformBindings(BaseTransformBindings):
                     ),
                 )
 
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        format_datetime(date, 'MMM')
+        """
+        assert len(args) == 1
+        date = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.ToChar(this=date, format=month_format)
+
     def oracle_format(self, fmt: str) -> str:
         """
         Translate a Python-style `strftime` format string to Oracle.

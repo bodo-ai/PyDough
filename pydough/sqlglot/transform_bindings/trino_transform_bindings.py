@@ -243,6 +243,19 @@ class TrinoTransformBindings(BaseTransformBindings):
         )
         return result
 
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        format_datetime(date, 'MMM')
+        """
+        assert len(args) == 1
+        date = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("MMM")
+        return sqlglot_expressions.Anonymous(
+            this="format_datetime", expressions=[date, month_format]
+        )
+
     def convert_join_strings(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:

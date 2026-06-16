@@ -344,6 +344,17 @@ class PostgresTransformBindings(BaseTransformBindings):
         else:
             return super().apply_datetime_truncation(base, unit)
 
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        to_char(date, 'Mon')
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.TimeToStr(this=date, format=month_format)
+
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
