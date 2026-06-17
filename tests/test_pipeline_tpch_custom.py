@@ -4241,8 +4241,9 @@ from .testing_utilities import (
                 "array_data = regions.CALCULATE(nation_names=LISTOF(nations.name))\n"
                 "result = ("
                 "  array_data"
-                "  .EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name', keep=True, filtering=False, is_distinct=True)"
-                "  .ORDER_BY(region_name, nation_idx)",
+                "  .EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name', version='array', keep=True, filtering=False, is_distinct=True)"
+                "  .ORDER_BY(region_name, nation_idx)"
+                ")",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
@@ -4310,9 +4311,48 @@ from .testing_utilities import (
                 ),
                 "explode_01",
                 order_sensitive=True,
-                skipped_dialects={"ANSI", "SQLITE"},
+                skipped_dialects={"ANSI", "SQLITE", "MYSQL"},
             ),
             id="explode_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
+                "result = ("
+                "  array_data"
+                "  .EXPLODE(arr, index_name='arr_idx', value_name='arr_val', version='array', keep=True, filtering=True, is_distinct=True)"
+                "  .ORDER_BY(key, arr_idx)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": ["A", "C", "C", "C", "C", "D", "D"],
+                        "arr": [
+                            [1],
+                            [2, 3, None, 4],
+                            [2, 3, None, 4],
+                            [2, 3, None, 4],
+                            [2, 3, None, 4],
+                            [5, 6],
+                            [5, 6],
+                        ],
+                        "arr_idx": [1, 1, 2, 3, 4, 1, 2],
+                        "nation_name": [1, 2, 3, None, 4, 5, 6],
+                    }
+                ),
+                "explode_02",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "key": ["A", "B", "C", "D"],
+                            "arr": [[1], [], [2, 3, None, 4], [5, 6]],
+                        }
+                    )
+                },
+            ),
+            id="explode_02",
         ),
         pytest.param(
             PyDoughPandasTest(

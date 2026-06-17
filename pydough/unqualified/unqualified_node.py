@@ -435,6 +435,81 @@ class UnqualifiedNode(ABC):
 
         return UnqualifiedBest(self, by, per, allow_ties, n_best)
 
+    def EXPLODE(
+        self,
+        data: "UnqualifiedNode",
+        value_name: str,
+        index_name: str | None = None,
+        version: str = "array",
+        delimiter: str | None = None,
+        keep: bool = False,
+        filtering: bool = True,
+        is_distinct: bool = False,
+    ):
+        """
+        Method used to create an EXPLODE node, transforming the existing
+        collection by exploding each row into multiple rows based on the values
+        in an array column, or from splitting a string column on a delimiter.
+
+        Args:
+            `data`: the array or string column to explode.
+            `value_name`: the name of the column representing the exploded
+            values.
+            `index_name` (optional): the name of the column representing the
+            index of each exploded value within its original array or string.
+            If None, no such column will be created. This must be provided when
+            `is_distinct` is False. Default is None.
+            `version` (optional): the version of explode to use. Must be one of "array"
+            or "string". "array" should be used when exploding an array column,
+            and "string" should be used when exploding a string column by a
+            delimiter. Default is "array".
+            `delimiter` (optional): the delimiter to use when exploding a string column.
+            This must be provided when `version` is "string" and must be None
+            when `version` is "array".
+            `keep`: whether to keep the `data` column in the output alongside
+            the exploded values. If False, only the exploded values will be
+            kept. Default is False.
+            `filtering` (optional): if True, indicates that the explode
+            operation can result in not every row from the original being
+            included in the output, i.e. if some of the rows from `data` are
+            empty arrays. Default is True.
+            `is_distinct` (optional): if True, indicates that each value within
+            `data` is unique within that row of the original data. If so, then
+            the index column is no longer mandatory since the values of the
+            exploded data can be used to co-identify unique rows. Default is
+            False.
+        """
+        match version:
+            case "array":
+                if delimiter is not None:
+                    raise PyDoughUnqualifiedException(
+                        "Cannot provide a delimiter when version is 'array'"
+                    )
+            case "string":
+                if delimiter is None:
+                    raise PyDoughUnqualifiedException(
+                        "Must provide a delimiter when version is 'string'"
+                    )
+            case _:
+                raise PyDoughUnqualifiedException(
+                    f"Unrecognized version for EXPLODE: {version!r}"
+                )
+        if index_name is None and not is_distinct:
+            raise PyDoughUnqualifiedException(
+                "Must provide index_name when is_distinct is False"
+            )
+        return UnqualifiedExplode(
+            self,
+            data,
+            value_name,
+            index_name,
+            version,
+            delimiter,
+            keep,
+            filtering,
+            is_distinct,
+        )
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -792,10 +867,45 @@ class UnqualifiedGeneratedCollection(UnqualifiedNode):
     def __init__(self, user_collection: PyDoughUserGeneratedCollection):
         self._parcel: tuple[PyDoughUserGeneratedCollection] = (user_collection,)
 
-    @property
-    def user_collection(self) -> PyDoughUserGeneratedCollection:
-        """The wrapped user-generated collection."""
-        return self._parcel[0]
+
+class UnqualifiedExplode(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to an EXPLODE clause.
+    """
+
+    def __init__(
+        self,
+        predecessor: UnqualifiedNode,
+        data: UnqualifiedNode,
+        value_name: str,
+        index_name: str | None,
+        version: str,
+        delimiter: str | None,
+        keep: bool,
+        filtering: bool,
+        is_distinct: bool,
+    ):
+        self._parcel: tuple[
+            UnqualifiedNode,
+            UnqualifiedNode,
+            str,
+            str | None,
+            str,
+            str | None,
+            bool,
+            bool,
+            bool,
+        ] = (
+            predecessor,
+            data,
+            value_name,
+            index_name,
+            version,
+            delimiter,
+            keep,
+            filtering,
+            is_distinct,
+        )
 
 
 def display_raw(unqualified: UnqualifiedNode) -> str:
@@ -900,6 +1010,19 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             result += f"name={unqualified._parcel[0].name!r}, "
             result += f"columns=[{', '.join(unqualified._parcel[0].columns)}],"
             result += f"data={unqualified._parcel[0].to_string()}"
+            return result + ")"
+        case UnqualifiedExplode():
+            result = f"{display_raw(unqualified._parcel[0])}.EXPLODE("
+            result += display_raw(unqualified._parcel[1])
+            result += f", value_name={unqualified._parcel[2]!r}"
+            if unqualified._parcel[3] is not None:
+                result += f", index_name={unqualified._parcel[3]!r}"
+            result += f", version={unqualified._parcel[4]!r}"
+            if unqualified._parcel[4] == "string":
+                result += f", delimiter={unqualified._parcel[5]!r}"
+            result += f", keep={unqualified._parcel[6]}"
+            result += f", filtering={unqualified._parcel[7]}"
+            result += f", is_distinct={unqualified._parcel[8]}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(
