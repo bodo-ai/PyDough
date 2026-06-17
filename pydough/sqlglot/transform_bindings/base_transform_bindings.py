@@ -1815,7 +1815,7 @@ class BaseTransformBindings:
         # If January
         if_mar: SQLGlotExpression = build_if_month_expression(3, "Mar")
         # If January
-        if_abr: SQLGlotExpression = build_if_month_expression(4, "Abr")
+        if_abr: SQLGlotExpression = build_if_month_expression(4, "Apr")
         # If January
         if_may: SQLGlotExpression = build_if_month_expression(5, "May")
         # If January
