@@ -218,17 +218,30 @@ class OracleTransformBindings(BaseTransformBindings):
             this=quotient, to=sqlglot_expressions.DataType.build("BIGINT")
         )
 
-        # CASE when LENGTH(X) IS NULL OR LENGTH(Y) IS NULL THEN 0 else casted
+        # CASE when LENGTH(X) IS NULL OR LENGTH(X) == 0 OR LENGTH(Y) IS NULL OR LENGTH(Y) == 0 THEN 0 else casted
         answer: SQLGlotExpression = (
             sqlglot_expressions.Case()
             .when(
                 sqlglot_expressions.Or(
-                    this=sqlglot_expressions.Is(
-                        this=len_string,
-                        expression=sqlglot_expressions.Null(),
+                    this=sqlglot_expressions.Or(
+                        this=sqlglot_expressions.Is(
+                            this=len_string,
+                            expression=sqlglot_expressions.Null(),
+                        ),
+                        expression=sqlglot_expressions.EQ(
+                            this=len_string,
+                            expression=sqlglot_expressions.Literal.number(0),
+                        ),
                     ),
-                    expression=sqlglot_expressions.Is(
-                        this=len_substring_count, expression=sqlglot_expressions.Null()
+                    expression=sqlglot_expressions.Or(
+                        this=sqlglot_expressions.Is(
+                            this=len_substring_count,
+                            expression=sqlglot_expressions.Null(),
+                        ),
+                        expression=sqlglot_expressions.EQ(
+                            this=len_substring_count,
+                            expression=sqlglot_expressions.Literal.number(0),
+                        ),
                     ),
                 ),
                 sqlglot_expressions.Literal.number(0),
