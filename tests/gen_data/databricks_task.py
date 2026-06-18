@@ -59,45 +59,52 @@ _INTERVAL_UNIT_MAP: dict[str, str] = {
 }
 
 
-def _replace_interval(m: re.Match) -> str:
-    num = m.group(1)
-    unit = _INTERVAL_UNIT_MAP.get(m.group(2).lower(), m.group(2).upper())
+def _replace_interval(m: re.Match[str]) -> str:
+    """
+    re.sub callback: convert INTERVAL 'N unit' → INTERVAL N UNIT.
+    Args:
+            m: regex match with group(1)=number, group(2)=unit
+    Returns:
+            replacement string, e.g. "INTERVAL 7 DAY"
+    """
+    num: str = m.group(1)
+    unit: str = _INTERVAL_UNIT_MAP.get(m.group(2).lower(), m.group(2).upper())
     return f"INTERVAL {num} {unit}"
 
 
-# Snowflake's TO_CHAR (as used in sf_task.sql) takes MySQL-style "%"
-# format codes; Databricks' DATE_FORMAT expects Java SimpleDateFormat
-# pattern letters.
-_TO_CHAR_FORMAT_MAP: dict[str, str] = {
-    "Y": "yyyy",
-    "y": "yy",
-    "m": "MM",
-    "c": "M",
-    "d": "dd",
-    "e": "d",
-    "H": "HH",
-    "k": "H",
-    "h": "hh",
-    "I": "hh",
-    "i": "mm",
-    "s": "ss",
-    "S": "ss",
-    "p": "a",
-    "M": "MMMM",
-    "b": "MMM",
-    "a": "EEE",
-    "W": "EEEE",
-    "j": "DDD",
-    "f": "SSSSSS",
-    "%": "%",
+# Snowflake's TO_CHAR uses Snowflake format codes (YYYY, MM, DD, HH24, MI,
+# SS …); Databricks' DATE_FORMAT expects Java SimpleDateFormat pattern letters.
+# Alternation order: longest token first so e.g. HH24 matches before HH.
+_SF_FORMAT_RE = re.compile(
+    r"HH24|HH12|MONTH|SSSSS|YYYY|MON|DAY|DY|HH|MI|SS|YY|MM|DD|AM|PM",
+    re.IGNORECASE,
+)
+_SF_TO_JAVA: dict[str, str] = {
+    "HH24": "HH",
+    "HH12": "hh",
+    "MONTH": "MMMM",
+    "SSSSS": "SSS",
+    "YYYY": "yyyy",
+    "MON": "MMM",
+    "DAY": "EEEE",
+    "DY": "EEE",
+    "HH": "HH",
+    "MI": "mm",
+    "SS": "ss",
+    "YY": "yy",
+    "MM": "MM",
+    "DD": "dd",
+    "AM": "a",
+    "PM": "a",
 }
 
 
 def _convert_date_format_string(fmt: str) -> str:
-    """Convert a MySQL-style '%Y%m%d ...' format string to Databricks'
-    Java-pattern equivalent (e.g. 'yyyyMMdd ...')."""
-    return re.sub(
-        r"%(.)", lambda m: _TO_CHAR_FORMAT_MAP.get(m.group(1), m.group(1)), fmt
+    """Convert a Snowflake TO_CHAR format string to Databricks' Java
+    SimpleDateFormat equivalent (e.g. 'YYYYMMDD HH24:MI:SS' →
+    'yyyyMMdd HH:mm:ss')."""
+    return _SF_FORMAT_RE.sub(
+        lambda m: _SF_TO_JAVA.get(m.group(0).upper(), m.group(0)), fmt
     )
 
 
@@ -105,23 +112,27 @@ def _convert_to_char_calls(sql: str) -> str:
     """
     Replace each TO_CHAR(expr, '%fmt') call with DATE_FORMAT(expr, 'fmt')
     using Databricks-compatible pattern letters.
+    Args:
+        sql: SQL text possibly containing TO_CHAR calls.
+    Returns:
+        SQL text with TO_CHAR calls replaced by DATE_FORMAT and format strings
     """
-    pattern = re.compile(r"TO_CHAR\s*\(", re.IGNORECASE)
+    pattern: re.Pattern[str] = re.compile(r"TO_CHAR\s*\(", re.IGNORECASE)
     result: list[str] = []
-    pos = 0
+    pos: int = 0
     while True:
-        m = pattern.search(sql, pos)
+        m: re.Match[str] | None = pattern.search(sql, pos)
         if not m:
             result.append(sql[pos:])
             break
         result.append(sql[pos : m.start()])
 
         # Find the matching closing paren, tracking nesting and strings.
-        depth = 1
-        j = m.end()
-        in_string = False
+        depth: int = 1
+        j: int = m.end()
+        in_string: bool = False
         while j < len(sql) and depth > 0:
-            ch = sql[j]
+            ch: str = sql[j]
             if ch == "'" and not in_string:
                 in_string = True
             elif ch == "'" and in_string:
@@ -135,13 +146,13 @@ def _convert_to_char_calls(sql: str) -> str:
                 depth -= 1
             j += 1
 
-        call_args = sql[m.end() : j - 1]
-        args = _split_top_level(call_args, ",")
-        fmt_match = (
+        call_args: str = sql[m.end() : j - 1]
+        args: list[str] = _split_top_level(call_args, ",")
+        fmt_match: re.Match[str] | None = (
             re.match(r"^\s*'(.*)'\s*$", args[1], re.DOTALL) if len(args) == 2 else None
         )
         if fmt_match:
-            new_fmt = _convert_date_format_string(fmt_match.group(1))
+            new_fmt: str = _convert_date_format_string(fmt_match.group(1))
             result.append(f"DATE_FORMAT({args[0].strip()}, '{new_fmt}')")
         else:
             result.append(f"DATE_FORMAT({call_args})")
@@ -159,6 +170,10 @@ def adapt_for_databricks(sql: str) -> str:
     - EXTRACT(EPOCH FROM …) →  UNIX_TIMESTAMP(…)
     - TO_CHAR(…)            →  DATE_FORMAT(…)
     - DEFOG.SCHEMA.TABLE    →  defog.schema.table
+    Args:
+        sql: A SQL statement or fragment, e.g. from sf_task.sql.
+    Returns:
+        The input SQL with the above transformations applied.
     """
     # PostgreSQL-style timestamp cast
     sql = re.sub(r"'([^']+)'::timestamp", r"TIMESTAMP '\1'", sql)
@@ -180,7 +195,7 @@ def adapt_for_databricks(sql: str) -> str:
         flags=re.IGNORECASE,
     )
 
-    # TO_CHAR(expr, '%Y%m%d ...') → DATE_FORMAT(expr, 'yyyyMMdd ...')
+    # TO_CHAR(expr, 'YYYYMMDD ...') → DATE_FORMAT(expr, 'yyyyMMdd ...')
     sql = _convert_to_char_calls(sql)
 
     # DEFOG.SCHEMA.TABLE → defog.schema.table
@@ -210,7 +225,7 @@ def _split_top_level(text: str, sep: str) -> list[str]:
     """
     parts: list[str] = []
     buf: list[str] = []
-    depth = 0
+    depth: int = 0
     in_string = False
     i = 0
     while i < len(text):
@@ -372,32 +387,32 @@ def extract_dml_statements(sf_task_path: Path) -> list[str]:
     Parse sf_task.sql and return the DELETE + INSERT statements that live
     inside the stored-procedure body, adapted for Databricks SQL syntax.
     """
-    content = sf_task_path.read_text()
+    content: str = sf_task_path.read_text()
 
     # The DML lives between the first BEGIN and the "Reset time session" comment.
-    begin = re.search(r"\bBEGIN\b", content)
-    end = re.search(r"--\s*Reset time session back", content)
+    begin: re.Match[str] | None = re.search(r"\bBEGIN\b", content)
+    end: re.Match[str] | None = re.search(r"--\s*Reset time session back", content)
     if not begin or not end:
         raise RuntimeError(
             "Could not locate procedure body in sf_task.sql. "
             "Expected a BEGIN marker and a '-- Reset time session back' comment."
         )
 
-    body = content[begin.end() : end.start()]
-    stmts = _split_on_semicolons(body)
+    body: str = content[begin.end() : end.start()]
+    stmts: list[str] = _split_on_semicolons(body)
 
     dml: list[str] = []
     for stmt in stmts:
         # Strip leading blank lines and comment-only lines (e.g. "--" separator
         # banners or explanatory comments) before checking the statement type,
         # so DELETE/INSERT statements preceded by such lines aren't dropped.
-        lines = stmt.lstrip().splitlines()
-        i = 0
+        lines: list[str] = stmt.lstrip().splitlines()
+        i: int = 0
         while i < len(lines) and (
             lines[i].strip() == "" or lines[i].strip().startswith("--")
         ):
             i += 1
-        stripped = "\n".join(lines[i:]).lstrip()
+        stripped: str = "\n".join(lines[i:]).lstrip()
         if re.match(r"(DELETE\s+FROM|INSERT\s+INTO)", stripped, re.IGNORECASE):
             dml.append(adapt_for_databricks(stripped))
 
@@ -489,21 +504,23 @@ def extract_and_adapt_ddl(init_defog_sf_path: Path) -> list[str]:
     Skips edge-case test tables (reserved-word names, special characters, etc.)
     that are in init_defog_sf.sql but not used by sf_task.sql.
     """
-    sf_task_path = init_defog_sf_path.with_name("sf_task.sql")
-    refreshed_tables = (
+    sf_task_path: Path = init_defog_sf_path.with_name("sf_task.sql")
+    refreshed_tables: set[str] = (
         _extract_refreshed_tables(sf_task_path) if sf_task_path.exists() else set()
     )
 
-    content = init_defog_sf_path.read_text()
-    stmts = _split_on_semicolons(content)
+    content: str = init_defog_sf_path.read_text()
+    stmts: list[str] = _split_on_semicolons(content)
 
     current_schema: str | None = None
     result: list[str] = []
     for stmt in stmts:
-        stripped = stmt.strip()
+        stripped: str = stmt.strip()
         # Use re.search (not re.match) because statements may start with
         # comment blocks before the actual SQL keyword.
-        schema_match = re.search(r"CREATE\s+SCHEMA\s+(\w+)", stripped, re.IGNORECASE)
+        schema_match: re.Match[str] | None = re.search(
+            r"CREATE\s+SCHEMA\s+(\w+)", stripped, re.IGNORECASE
+        )
         if schema_match:
             current_schema = schema_match.group(1).lower()
             # A missing semicolon after CREATE SCHEMA can leave a CREATE
@@ -512,11 +529,13 @@ def extract_and_adapt_ddl(init_defog_sf_path: Path) -> list[str]:
             stripped = stripped[schema_match.end() :].strip()
             if not stripped:
                 continue
-        table_match = current_schema in _DEFOG_SCHEMAS and re.search(
-            r"CREATE\s+TABLE\s+(\w+)", stripped, re.IGNORECASE
+        table_match: re.Match[str] | None = (
+            re.search(r"CREATE\s+TABLE\s+(\w+)", stripped, re.IGNORECASE)
+            if current_schema in _DEFOG_SCHEMAS
+            else None
         )
         if table_match:
-            table_name = table_match.group(1).lower()
+            table_name: str = table_match.group(1).lower()
             if not refreshed_tables or table_name in refreshed_tables:
                 result.append(_adapt_create_table(stripped, current_schema))
 

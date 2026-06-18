@@ -3,7 +3,9 @@ SELECT
   DATEADD(
     DAY,
     -(
-      DAYOFWEEK(TO_DATE(CAST(sbtxdatetime AS TIMESTAMP))) - 1
+      (
+        DAYOFWEEK(TO_DATE(CAST(sbtxdatetime AS TIMESTAMP))) + -1
+      ) % 7
     ),
     CAST(CAST(sbtxdatetime AS TIMESTAMP) AS DATE)
   ) AS sow,
@@ -24,7 +26,9 @@ SELECT
     THEN 'Saturday'
   END AS dayname,
   (
-    DAYOFWEEK(TO_DATE(sbtxdatetime)) - 1
+    (
+      DAYOFWEEK(TO_DATE(sbtxdatetime)) + -1
+    ) % 7
   ) + 1 AS dayofweek
 FROM main.sbtransaction
 WHERE

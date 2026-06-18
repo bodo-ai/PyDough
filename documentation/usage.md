@@ -673,10 +673,16 @@ Different databases have different capabilities for CREATE statements:
 | PostgreSQL | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
 | MySQL      | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
 | Oracle     | No (uses DROP + CREATE)| No         | Yes                    | No        |
+| Trino      | No (uses DROP + CREATE)| No         | Yes                    | No        |
+| Databricks  | No (uses DROP + CREATE)| No (uses CREATE VIEW)         | Yes                    | No        |
 
 **Note:** SQLite does not support creating persistent views that reference attached databases. When creating a view without `temp=True` on SQLite, PyDough will automatically create a temporary view and issue a warning.
 
 **Note:** TEMPORARY views are not supported on Snowflake, MySQL, and PostgreSQL. Attempting to create a temp view on these databases will raise an error.
+
+**Note:** Databricks does not support CREATE TEMPORARY TABLE. When attempting to create it, PyDough will fallback to create view and issue a warning.
+
+**Note:** Databricks temporary view names must not be qualified with a catalog/schema, unlike persistent objects.
 
 #### Example 1: Basic Table Materialization
 

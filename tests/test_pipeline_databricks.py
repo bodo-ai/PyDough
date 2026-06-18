@@ -80,13 +80,14 @@ def defog_databricks_test_data(
     Modify reference solution data for some Defog queries.
     Return an instance of PyDoughPandasTest containing the modified data.
     """
-    # Adjust the 3rd-to-last data point because Snowflake and SQLite
+    # Adjust the 3rd-to-last data point because Databricks handle date
+    # arithmetic differently.
     # handle "+1 month" differently:
-    # - Snowflake: if the next month overflows, it returns the end of next month
+    # - Databricks: if the next month overflows, it returns the end of next month
     # - SQLite: adds 30 days, which may move into the following month
     #
     # Example: "2023-01-30 + 1 month"
-    #   SQLite: 2023-03-02 vs. Snowflake: 2023-02-28
+    #   SQLite: 2023-03-02 vs. Databricks: 2023-02-28
     if defog_custom_pipeline_test_data.test_name == "week_offset":
         return PyDoughPandasTest(
             week_offset,
@@ -372,7 +373,7 @@ def test_pipeline_databricks_e2e_defog_custom(
     databricks_conn_db_context: DatabaseContext,
 ):
     """
-    Test executing the defog analytical queries with Snowflake database.
+    Test executing the defog analytical queries with Databricks database.
     """
     defog_databricks_test_data.run_e2e_test(
         get_databricks_defog_graphs,
@@ -384,7 +385,7 @@ def test_pipeline_databricks_e2e_defog_custom(
 
 @pytest.mark.databricks
 @pytest.mark.execute
-def test_defog_e2e(
+def test_pipeline_e2e_databricks_defog(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,
     get_databricks_defog_graphs: graph_fetcher,
     databricks_conn_db_context: DatabaseContext,

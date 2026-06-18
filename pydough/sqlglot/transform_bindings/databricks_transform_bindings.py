@@ -11,13 +11,12 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.configs import DayOfWeek
 from pydough.types import NumericType, PyDoughType
 from pydough.types.boolean_type import BooleanType
 
 from .base_transform_bindings import BaseTransformBindings
-from .sqlglot_transform_utils import (
-    DateTimeUnit,
-)
+from .sqlglot_transform_utils import DateTimeUnit, apply_parens
 
 
 class DatabricksTransformBindings(BaseTransformBindings):
@@ -44,34 +43,36 @@ class DatabricksTransformBindings(BaseTransformBindings):
     These are used to generate anonymous function calls in SQLGlot
     """
 
+    def convert_get_part(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Unlike PyDough (and Snowflake's SPLIT_PART), Databricks'
+        # SPLIT_PART raises INVALID_INDEX_OF_ZERO when the index is 0
+        # instead of treating it as 1, so remap a 0 index to 1.
+        assert len(args) == 3
+        index_arg: SQLGlotExpression = args[2]
+        index_expr: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=index_arg,
+                        expression=sqlglot_expressions.Literal.number(0),
+                    ),
+                    true=sqlglot_expressions.Literal.number(1),
+                )
+            ],
+            default=index_arg,
+        )
+        return sqlglot_expressions.Anonymous(
+            this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
+        )
+
     def convert_call_to_sqlglot(
         self,
         operator: pydop.PyDoughExpressionOperator,
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
-        if operator is pydop.GETPART:
-            # Unlike PyDough (and Snowflake's SPLIT_PART), Databricks'
-            # SPLIT_PART raises INVALID_INDEX_OF_ZERO when the index is 0
-            # instead of treating it as 1, so remap a 0 index to 1.
-            assert len(args) == 3
-            index_arg: SQLGlotExpression = args[2]
-            index_expr: SQLGlotExpression = sqlglot_expressions.Case(
-                ifs=[
-                    sqlglot_expressions.If(
-                        this=sqlglot_expressions.EQ(
-                            this=index_arg,
-                            expression=sqlglot_expressions.Literal.number(0),
-                        ),
-                        true=sqlglot_expressions.Literal.number(1),
-                    )
-                ],
-                default=index_arg,
-            )
-            return sqlglot_expressions.Anonymous(
-                this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
-            )
-
         if operator in self.PYDOP_TO_DATABRICKS_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_DATABRICKS_FUNC[operator], expressions=args
@@ -138,7 +139,7 @@ class DatabricksTransformBindings(BaseTransformBindings):
         dialect offset (1-based DAYOFWEEK normalized to 0-based via our
         dialect_day_of_week override) and the configured start-of-week day.
         """
-        offset = self.days_from_start_of_week(d)
+        offset: SQLGlotExpression = self.days_from_start_of_week(d)
         return sqlglot_expressions.Anonymous(
             this="DATE_ADD",
             expressions=[
@@ -150,11 +151,9 @@ class DatabricksTransformBindings(BaseTransformBindings):
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: "DateTimeUnit"
     ) -> SQLGlotExpression:
-        from .sqlglot_transform_utils import DateTimeUnit as DTU
-
-        if unit == DTU.WEEK:
+        if unit == DateTimeUnit.WEEK:
             return self._to_start_of_week(base)
-        if unit == DTU.DAY:
+        if unit == DateTimeUnit.DAY:
             # sqlglot renders DateTrunc(unit='day') as TRUNC(expr, 'DAY')
             # for Databricks, but Databricks' TRUNC only supports
             # YEAR/MONTH/QUARTER formats (not DAY), giving incorrect
@@ -255,29 +254,40 @@ class DatabricksTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
+        """
+        Databricks' built-in DATEDIFF(unit, x, y) produces incorrect results
+        for most units, so each unit is handled explicitly:
+
+        - YEAR:    YEAR(y) - YEAR(x)
+        - MONTH:   (YEAR(y)-YEAR(x))*12 + MONTH(y)-MONTH(x)
+        - WEEK:    DATEDIFF(start_of_week(y), start_of_week(x)) / 7, cast to
+                   BIGINT, to align with the configured start-of-week day.
+        - DAY:     DATEDIFF(DATE(y), DATE(x)) — strips the time component
+                   first, since Databricks truncates fractional days.
+        - HOUR:    day_diff * 24 + HOUR(y) - HOUR(x)
+        - MINUTE:  hour_diff * 60 + MINUTE(y) - MINUTE(x)
+        - SECOND:  minute_diff * 60 + SECOND(y) - SECOND(x)
+        - QUARTER: (YEAR(y)-YEAR(x))*4 + QUARTER(y)-QUARTER(x)
+        """
         assert len(args) == 3
         # Check if unit is a string.
         if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
             raise ValueError(
                 f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
             )
-        date1 = self.make_datetime_arg(args[1])
-        date2 = self.make_datetime_arg(args[2])
+        date1: SQLGlotExpression = self.make_datetime_arg(args[1])
+        date2: SQLGlotExpression = self.make_datetime_arg(args[2])
 
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
         if unit is None:
             raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
         if unit == DateTimeUnit.YEAR:
-            # Databricks DATEDIFF(YEAR, x, y) counts complete year intervals,
-            # use: YEAR(y) - YEAR(x).
             return sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Year(this=date2),
                 expression=sqlglot_expressions.Year(this=date1),
             )
         if unit == DateTimeUnit.MONTH:
-            # Databricks DATEDIFF(MONTH, x, y) counts complete month intervals,
-            # use:(YEAR(y)-YEAR(x))*12 + MONTH(y)-MONTH(x).
-            year_diff = sqlglot_expressions.Sub(
+            year_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Year(this=date2),
                 expression=sqlglot_expressions.Year(this=date1),
             )
@@ -292,29 +302,15 @@ class DatabricksTransformBindings(BaseTransformBindings):
                 ),
             )
         if unit == DateTimeUnit.DAY:
-            # Databricks DATEDIFF(DAY, x_ts, y_ts) includes the fractional day
-            # from any time component and truncates, giving the wrong answer when
-            # the start is not at midnight.
-            # use date-only difference: DATEDIFF(DATE(y), DATE(x)).
             return self._day_diff(date1, date2)
         if unit == DateTimeUnit.HOUR:
-            # Databricks DATEDIFF(HOUR, x_ts, y_ts) includes fractional hours.
-            # use: day_diff * 24 + HOUR(y) - HOUR(x).
             return self._hour_diff(date1, date2)
         if unit == DateTimeUnit.MINUTE:
-            # use: hour_diff * 60 + MINUTE(y) - MINUTE(x).
             return self._minute_diff(date1, date2)
         if unit == DateTimeUnit.SECOND:
-            # use: minute_diff * 60 + SECOND(y) - SECOND(x).
             return self._second_diff(date1, date2)
         if unit == DateTimeUnit.WEEK:
-            # Databricks DATEDIFF(WEEK, x, y) counts complete 7-day intervals
-            # (truncated toward zero), make sure to align to the start of the week
-            # configuration.
-            # boundaries: DATEDIFF(start_of_week(y), start_of_week(x)) / 7.
-            # Databricks DAYOFWEEK returns 1=Sunday...7=Saturday, so subtracting
-            # 1 gives the 0-based day offset back to the previous Sunday.
-            day_diff = sqlglot_expressions.Anonymous(
+            day_diff: SQLGlotExpression = sqlglot_expressions.Anonymous(
                 this="DATEDIFF",
                 expressions=[
                     self._to_start_of_week(date2),
@@ -329,16 +325,14 @@ class DatabricksTransformBindings(BaseTransformBindings):
                 to=sqlglot_expressions.DataType.build("BIGINT"),
             )
         if unit == DateTimeUnit.QUARTER:
-            # Databricks DATEDIFF(QUARTER, x, y) counts complete quarter intervals,
-            # use: (YEAR(y)-YEAR(x))*4 + QUARTER(y)-QUARTER(x).
             year_diff = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Year(this=date2),
                 expression=sqlglot_expressions.Year(this=date1),
             )
-            quarter_y = sqlglot_expressions.Anonymous(
+            quarter_y: SQLGlotExpression = sqlglot_expressions.Anonymous(
                 this="QUARTER", expressions=[date2]
             )
-            quarter_x = sqlglot_expressions.Anonymous(
+            quarter_x: SQLGlotExpression = sqlglot_expressions.Anonymous(
                 this="QUARTER", expressions=[date1]
             )
             return sqlglot_expressions.Add(
@@ -352,13 +346,42 @@ class DatabricksTransformBindings(BaseTransformBindings):
             )
         return super().convert_datediff(args, types)
 
+    @property
+    def dialect_start_of_week(self) -> DayOfWeek:
+        # Databricks DAYOFWEEK() is 1-based starting from Sunday.
+        return DayOfWeek.SUNDAY
+
+    @property
+    def dialect_dow_mapping(self) -> dict[str, int]:
+        # Databricks DAYOFWEEK() returns 1=Sunday...7=Saturday.
+        return {
+            "Sunday": 1,
+            "Monday": 2,
+            "Tuesday": 3,
+            "Wednesday": 4,
+            "Thursday": 5,
+            "Friday": 6,
+            "Saturday": 7,
+        }
+
     def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         """
         Databricks DAYOFWEEK() returns 1=Sunday...7=Saturday.
         https://docs.databricks.com/aws/en/sql/language-manual/functions/dayofweek
-        Subtract 1 to normalize to 0=Sunday...6=Saturday.
         """
-        return sqlglot_expressions.Sub(
-            this=sqlglot_expressions.DayOfWeek(this=base),
-            expression=sqlglot_expressions.Literal.number(1),
+        return sqlglot_expressions.DayOfWeek(this=base)
+
+    def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        # Databricks DAYOFWEEK is 1-based, so subtract 1 before applying the
+        # configured start-of-week offset (same pattern as Trino).
+        offset: int = (-self.start_of_week_offset) % 7
+        dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
+        return sqlglot_expressions.Mod(
+            this=apply_parens(
+                sqlglot_expressions.Add(
+                    this=apply_parens(dow_expr),
+                    expression=sqlglot_expressions.Literal.number(offset - 1),
+                )
+            ),
+            expression=sqlglot_expressions.Literal.number(7),
         )

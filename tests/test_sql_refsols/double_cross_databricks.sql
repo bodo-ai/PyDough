@@ -14,14 +14,18 @@ WITH _t3 AS (
         DATEADD(
           DAY,
           -(
-            DAYOFWEEK(TO_DATE(_s0.min_o_orderdate)) - 1
+            (
+              DAYOFWEEK(TO_DATE(_s0.min_o_orderdate)) + -1
+            ) % 7
           ),
           CAST(_s0.min_o_orderdate AS DATE)
         ),
         DATEADD(
           DAY,
           -(
-            DAYOFWEEK(TO_DATE(orders.o_orderdate)) - 1
+            (
+              DAYOFWEEK(TO_DATE(orders.o_orderdate)) + -1
+            ) % 7
           ),
           CAST(orders.o_orderdate AS DATE)
         )
@@ -35,14 +39,18 @@ WITH _t3 AS (
       DATEADD(
         DAY,
         -(
-          DAYOFWEEK(TO_DATE(_s0.min_o_orderdate)) - 1
+          (
+            DAYOFWEEK(TO_DATE(_s0.min_o_orderdate)) + -1
+          ) % 7
         ),
         CAST(_s0.min_o_orderdate AS DATE)
       ),
       DATEADD(
         DAY,
         -(
-          DAYOFWEEK(TO_DATE(orders.o_orderdate)) - 1
+          (
+            DAYOFWEEK(TO_DATE(orders.o_orderdate)) + -1
+          ) % 7
         ),
         CAST(orders.o_orderdate AS DATE)
       )
@@ -63,14 +71,18 @@ WITH _t3 AS (
         DATEADD(
           DAY,
           -(
-            DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) - 1
+            (
+              DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) + -1
+            ) % 7
           ),
           CAST(_s3.min_o_orderdate AS DATE)
         ),
         DATEADD(
           DAY,
           -(
-            DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) - 1
+            (
+              DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) + -1
+            ) % 7
           ),
           CAST(lineitem.l_receiptdate AS DATE)
         )
@@ -87,14 +99,18 @@ WITH _t3 AS (
       DATEADD(
         DAY,
         -(
-          DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) - 1
+          (
+            DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) + -1
+          ) % 7
         ),
         CAST(_s3.min_o_orderdate AS DATE)
       ),
       DATEADD(
         DAY,
         -(
-          DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) - 1
+          (
+            DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) + -1
+          ) % 7
         ),
         CAST(lineitem.l_receiptdate AS DATE)
       )
@@ -105,14 +121,18 @@ WITH _t3 AS (
       DATEADD(
         DAY,
         -(
-          DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) - 1
+          (
+            DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) + -1
+          ) % 7
         ),
         CAST(_s3.min_o_orderdate AS DATE)
       ),
       DATEADD(
         DAY,
         -(
-          DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) - 1
+          (
+            DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) + -1
+          ) % 7
         ),
         CAST(lineitem.l_receiptdate AS DATE)
       )

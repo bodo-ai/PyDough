@@ -40,6 +40,11 @@ if TYPE_CHECKING:
     OracleConn: TypeAlias = oracledb.connection
     OracleCursor: TypeAlias = oracledb.cursor
 
+    import trino.dbapi
+
+    TrinoConn: TypeAlias = trino.dbapi.Connection
+    TrinoCursor: TypeAlias = trino.dbapi.Cursor
+
     import databricks.sql
 
     DatabricksConn: TypeAlias = databricks.sql.client.Connection
@@ -61,6 +66,7 @@ if TYPE_CHECKING:
         | PostgresConn
         | OracleConn
         | DatabricksConn
+        | TrinoConn
     )  # type: ignore
     DBCursor: TypeAlias = (
         SQLiteCursor
@@ -69,6 +75,7 @@ if TYPE_CHECKING:
         | PostgresCursor
         | OracleCursor
         | DatabricksCursor
+        | TrinoCursor
     )  # type: ignore
 
     import bodosql
@@ -90,6 +97,8 @@ else:
     OracleCursor: TypeAlias = Any
     DatabricksConn: TypeAlias = Any
     DatabricksCursor: TypeAlias = Any
+    TrinoConn: TypeAlias = Any
+    TrinoCursor: TypeAlias = Any
     BodoSQLContext: TypeAlias = Any
 
 # This allows us to use these type aliases in the rest of the code
@@ -110,6 +119,8 @@ __all__ = [
     "SQLiteCursor",
     "SnowflakeConn",
     "SnowflakeCursor",
+    "TrinoConn",
+    "TrinoCursor",
 ]
 # The type aliases are used to provide a consistent interface for database connections
 # and cursors across different database backends, allowing for easier

@@ -27,19 +27,25 @@ SELECT
     DATEADD(
       DAY,
       -(
-        DAYOFWEEK(TO_DATE(CAST('1992-01-01' AS TIMESTAMP))) - 1
+        (
+          DAYOFWEEK(TO_DATE(CAST('1992-01-01' AS TIMESTAMP))) + -1
+        ) % 7
       ),
       CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE)
     ),
     DATEADD(
       DAY,
       -(
-        DAYOFWEEK(TO_DATE(CAST('1992-01-01 12:30:45' AS TIMESTAMP))) - 1
+        (
+          DAYOFWEEK(TO_DATE(CAST('1992-01-01 12:30:45' AS TIMESTAMP))) + -1
+        ) % 7
       ),
       CAST(CAST('1992-01-01 12:30:45' AS TIMESTAMP) AS DATE)
     )
   ) / 7 AS BIGINT) AS dd_dt_str,
-  DAYOFWEEK(TO_DATE(o_orderdate)) - 1 AS dow_col,
+  (
+    DAYOFWEEK(TO_DATE(o_orderdate)) + -1
+  ) % 7 AS dow_col,
   3 AS dow_str1,
   4 AS dow_str2,
   5 AS dow_str3,
