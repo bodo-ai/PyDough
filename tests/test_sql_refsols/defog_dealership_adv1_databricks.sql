@@ -3,7 +3,7 @@ SELECT
     DAY,
     -(
       (
-        DAYOFWEEK(TO_DATE(CAST(payments_received.payment_date AS TIMESTAMP))) - 1 + 6
+        DAYOFWEEK(TO_DATE(CAST(payments_received.payment_date AS TIMESTAMP))) + 5
       ) % 7
     ),
     CAST(CAST(payments_received.payment_date AS TIMESTAMP) AS DATE)
@@ -12,7 +12,7 @@ SELECT
   COUNT_IF(
     (
       (
-        DAYOFWEEK(TO_DATE(payments_received.payment_date)) - 1 + 6
+        DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
       ) % 7
     ) IN (5, 6)
   ) AS weekend_payments
@@ -26,7 +26,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(payments_received.payment_date)) - 1 + 6
+          DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
         ) % 7
       ),
       CAST(payments_received.payment_date AS DATE)
@@ -35,7 +35,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) - 1 + 6
+          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
         ) % 7
       ),
       CAST(CURRENT_TIMESTAMP() AS DATE)
@@ -47,7 +47,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(payments_received.payment_date)) - 1 + 6
+          DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
         ) % 7
       ),
       CAST(payments_received.payment_date AS DATE)
@@ -56,7 +56,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) - 1 + 6
+          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
         ) % 7
       ),
       CAST(CURRENT_TIMESTAMP() AS DATE)

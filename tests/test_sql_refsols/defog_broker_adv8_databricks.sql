@@ -10,7 +10,7 @@ WHERE
     DAY,
     -(
       (
-        DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) - 1 + 6
+        DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
       ) % 7
     ),
     CAST(CURRENT_TIMESTAMP() AS DATE)
@@ -22,7 +22,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) - 1 + 6
+          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
         ) % 7
       ),
       CAST(CURRENT_TIMESTAMP() AS DATE)

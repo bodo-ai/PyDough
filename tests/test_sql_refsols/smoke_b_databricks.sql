@@ -26,7 +26,9 @@ SELECT
       THEN 'Saturday'
     END,
     (
-      DAYOFWEEK(TO_DATE(o_orderdate)) - 1
+      (
+        DAYOFWEEK(TO_DATE(o_orderdate)) + -1
+      ) % 7
     )
   ) AS b,
   DATEADD(DAY, -13, DATEADD(MONTH, 6, TRUNC(CAST(o_orderdate AS TIMESTAMP), 'YEAR'))) AS c,
@@ -47,13 +49,21 @@ SELECT
     DATEADD(
       DAY,
       -(
-        DAYOFWEEK(TO_DATE(CAST('1993-05-25 12:45:36' AS TIMESTAMP))) - 1
+        (
+          DAYOFWEEK(TO_DATE(CAST('1993-05-25 12:45:36' AS TIMESTAMP))) + -1
+        ) % 7
       ),
       CAST(CAST('1993-05-25 12:45:36' AS TIMESTAMP) AS DATE)
     ),
-    DATEADD(DAY, -(
-      DAYOFWEEK(TO_DATE(o_orderdate)) - 1
-    ), CAST(o_orderdate AS DATE))
+    DATEADD(
+      DAY,
+      -(
+        (
+          DAYOFWEEK(TO_DATE(o_orderdate)) + -1
+        ) % 7
+      ),
+      CAST(o_orderdate AS DATE)
+    )
   ) / 7 AS BIGINT) AS l,
   DATEDIFF(
     DAY,
@@ -84,7 +94,9 @@ SELECT
   DATEADD(
     DAY,
     -(
-      DAYOFWEEK(TO_DATE(CAST(o_orderdate AS TIMESTAMP))) - 1
+      (
+        DAYOFWEEK(TO_DATE(CAST(o_orderdate AS TIMESTAMP))) + -1
+      ) % 7
     ),
     CAST(CAST(o_orderdate AS TIMESTAMP) AS DATE)
   ) AS q

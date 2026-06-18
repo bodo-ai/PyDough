@@ -17,7 +17,7 @@ SELECT
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(CAST(sbtxdatetime AS TIMESTAMP))) - 1 + 6
+          DAYOFWEEK(TO_DATE(CAST(sbtxdatetime AS TIMESTAMP))) + 5
         ) % 7
       ),
       CAST(CAST(sbtxdatetime AS TIMESTAMP) AS DATE)

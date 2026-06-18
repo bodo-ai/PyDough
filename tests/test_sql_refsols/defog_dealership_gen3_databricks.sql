@@ -10,7 +10,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(payment_date)) - 1 + 6
+          DAYOFWEEK(TO_DATE(payment_date)) + 5
         ) % 7
       ),
       CAST(payment_date AS DATE)
@@ -19,7 +19,7 @@ WHERE
       DAY,
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) - 1 + 6
+          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
         ) % 7
       ),
       CAST(CURRENT_TIMESTAMP() AS DATE)
