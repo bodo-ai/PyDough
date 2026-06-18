@@ -247,7 +247,17 @@ class TrinoTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
         format_datetime(date, 'MMM')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
         """
         assert len(args) == 1
         date = self.make_datetime_arg(args[0])

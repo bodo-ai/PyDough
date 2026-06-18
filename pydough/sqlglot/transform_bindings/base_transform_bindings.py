@@ -1778,7 +1778,9 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        Creates a SQLGlot expression for `MONTHNAME(X)`.
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        CASE MONTH(d) WHEN 1 THEN 'Jan' WHEN 2 THEN 'FEB' ...
 
         Args:
             `args`: The operands to `MONTHNAME`, after they were

@@ -219,6 +219,11 @@ class OracleTransformBindings(BaseTransformBindings):
         )
 
         # CASE when LENGTH(X) IS NULL OR LENGTH(X) == 0 OR LENGTH(Y) IS NULL OR LENGTH(Y) == 0 THEN 0 else casted
+
+        # SimplificationShuttle simplifies LENGTH('') -> 0. Also, Oracle treats
+        # `LENGTH('') is NULL -> True` and `0 is null -> False`.
+        # Adding "OR LENGTH(arg) == 0" for both args avoids the final sql to have
+        # division by zero when literal empty strings are used for STRCOUNT()
         answer: SQLGlotExpression = (
             sqlglot_expressions.Case()
             .when(
@@ -1225,7 +1230,17 @@ class OracleTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
         format_datetime(date, 'MMM')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
         """
         assert len(args) == 1
         date = self.make_datetime_arg(args[0])
