@@ -40,6 +40,16 @@ if TYPE_CHECKING:
     OracleConn: TypeAlias = oracledb.connection
     OracleCursor: TypeAlias = oracledb.cursor
 
+    import trino.dbapi
+
+    TrinoConn: TypeAlias = trino.dbapi.Connection
+    TrinoCursor: TypeAlias = trino.dbapi.Cursor
+
+    import databricks.sql
+
+    DatabricksConn: TypeAlias = databricks.sql.client.Connection
+    DatabricksCursor: TypeAlias = databricks.sql.client.Cursor
+
     # TBD: Placeholder lines to add other dialects.
     # 1. Replace with actual dialect module
     # import dialect1_module
@@ -50,10 +60,22 @@ if TYPE_CHECKING:
 
     # 4. Define the type aliases for database connections and cursors
     DBConnection: TypeAlias = (
-        SQLiteConn | SnowflakeConn | MySQLConn | PostgresConn | OracleConn
+        SQLiteConn
+        | SnowflakeConn
+        | MySQLConn
+        | PostgresConn
+        | OracleConn
+        | DatabricksConn
+        | TrinoConn
     )  # type: ignore
     DBCursor: TypeAlias = (
-        SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgresCursor | OracleCursor
+        SQLiteCursor
+        | SnowflakeCursor
+        | MySQLCursor
+        | PostgresCursor
+        | OracleCursor
+        | DatabricksCursor
+        | TrinoCursor
     )  # type: ignore
 
     import bodosql
@@ -73,6 +95,10 @@ else:
     PostgresCursor: TypeAlias = Any
     OracleConn: TypeAlias = Any
     OracleCursor: TypeAlias = Any
+    DatabricksConn: TypeAlias = Any
+    DatabricksCursor: TypeAlias = Any
+    TrinoConn: TypeAlias = Any
+    TrinoCursor: TypeAlias = Any
     BodoSQLContext: TypeAlias = Any
 
 # This allows us to use these type aliases in the rest of the code
@@ -81,6 +107,8 @@ __all__ = [
     "BodoSQLContext",
     "DBConnection",
     "DBCursor",
+    "DatabricksConn",
+    "DatabricksCursor",
     "MySQLConn",
     "MySQLCursor",
     "OracleConn",
@@ -91,6 +119,8 @@ __all__ = [
     "SQLiteCursor",
     "SnowflakeConn",
     "SnowflakeCursor",
+    "TrinoConn",
+    "TrinoCursor",
 ]
 # The type aliases are used to provide a consistent interface for database connections
 # and cursors across different database backends, allowing for easier

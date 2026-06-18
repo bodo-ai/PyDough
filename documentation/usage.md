@@ -352,6 +352,8 @@ Below is a list of all supported values for the database name:
 
 - `oracle`: uses an Oracle database. [See here](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) for details on the connection API and what keyword arguments can be passed in.
 
+- `databricks`: uses a Databricks database. [See here](https://docs.databricks.com/dev-tools/python-sql-connector.html) for details on the connection API and what keyword arguments can be passed in.
+
 - `bodosql`: uses a BodoSQL context. [See here](https://docs.bodo.ai/latest/api_docs/sql/bodosqlcontext/) for details on the BodoSQL context and [here](https://docs.bodo.ai/latest/api_docs/sql/database_catalogs/) for details on the various kinds of catalogs that can be connected to a BodoSQL context.
 
 
@@ -374,6 +376,7 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `snowflake` | `snowflake-connector-python[pandas]`  |
 | `postgres` | `psycopg2-binary`  |
 | `oracle` | `python-oracledb`  |
+| `databricks` | `databricks-sql-connector`  |
 | `trino` | `trino`  |
 | `bodosql`    | Depends on the catalog being used |
 
@@ -506,6 +509,28 @@ double quotes inside column/table names executing SQL with such characters will 
 
 **Note**: PyDough intentionally uses `TO_DATE` instead of `TO_TIMESTAMP` for datetime
 literals. This ensures consistent behavior across DATE expressions. But sub-second precision (microseconds) is silently truncated.
+
+- Databricks: You can connect to a Databricks database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/databricks_sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("databricks",
+        server_hostname=databricks_host,
+        http_path=databricks_http_path,
+        access_token=databricks_token
+    )
+  ```
+  Example with a connection object
+  ```py
+    from databricks import sql
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/databricks_sample_graphs.json", "TPCH")
+    databricks_conn = sql.connect(
+        server_hostname=databricks_host,
+        http_path=databricks_http_path,
+        access_token=databricks_token
+    )
+    pydough.active_session.connect_database("databricks", connection=databricks_conn)
+  ```
+You can find a full example of using a Databricks database with PyDough in [this usage guide](./../demos/notebooks/Databricks_TPCH.ipynb).
 
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
@@ -648,10 +673,16 @@ Different databases have different capabilities for CREATE statements:
 | PostgreSQL | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
 | MySQL      | No (uses DROP + CREATE)| Yes        | Yes                    | No        |
 | Oracle     | No (uses DROP + CREATE)| No         | Yes                    | No        |
+| Trino      | No (uses DROP + CREATE)| No         | Yes                    | No        |
+| Databricks  | No (uses DROP + CREATE)| No (uses CREATE VIEW)         | Yes                    | No        |
 
 **Note:** SQLite does not support creating persistent views that reference attached databases. When creating a view without `temp=True` on SQLite, PyDough will automatically create a temporary view and issue a warning.
 
 **Note:** TEMPORARY views are not supported on Snowflake, MySQL, and PostgreSQL. Attempting to create a temp view on these databases will raise an error.
+
+**Note:** Databricks does not support CREATE TEMPORARY TABLE. When attempting to create it, PyDough will fallback to create view and issue a warning.
+
+**Note:** Databricks temporary view names must not be qualified with a catalog/schema, unlike persistent objects.
 
 #### Example 1: Basic Table Materialization
 
