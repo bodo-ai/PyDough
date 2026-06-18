@@ -41,6 +41,7 @@ from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
     simple_int_float_string_cast,
     string_format_specifiers_bodosql,
+    string_format_specifiers_databricks,
     string_format_specifiers_mysql,
     string_format_specifiers_oracle,
     string_format_specifiers_postgres,
@@ -214,6 +215,14 @@ def sf_sample_graph_path() -> str:
     Tuple of the path to the JSON file containing the Snowflake sample graphs.
     """
     return f"{os.path.dirname(__file__)}/test_metadata/snowflake_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
+def databricks_sample_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the Databricks sample graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/databricks_sample_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -399,6 +408,43 @@ def get_sf_defog_graphs() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
+def get_databricks_sample_graph(
+    databricks_sample_graph_path: str,
+    valid_sample_graph_names: set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    Databricks graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=databricks_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_databricks_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Databricks.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/databricks_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def get_udf_graph(
     udf_graph_path: str, valid_udf_graph_names: set[str]
 ) -> graph_fetcher:
@@ -511,6 +557,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
         pytest.param(DatabaseDialect.ORACLE, id="oracle"),
+        pytest.param(DatabaseDialect.DATABRICKS, id="databricks"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -657,12 +704,18 @@ def sqlite_tpch_session(
             id="oracle",
             marks=[pytest.mark.oracle],
         ),
+        pytest.param(
+            "databricks",
+            id="databricks",
+            marks=[pytest.mark.databricks],
+        ),
     ],
 )
 def all_dialects_tpch_db_context(
     request,
     get_sample_graph: graph_fetcher,
     get_sf_sample_graph: graph_fetcher,
+    get_databricks_sample_graph: graph_fetcher,
     get_trino_graphs: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
@@ -695,6 +748,12 @@ def all_dialects_tpch_db_context(
         case "oracle":
             db_context = request.getfixturevalue("oracle_conn_db_context")
             return db_context("tpch"), get_sample_graph("TPCH")
+        case "databricks":
+            db_context = request.getfixturevalue("databricks_conn_db_context")
+            return (
+                db_context("tpch_s3_pq", "TPCH_SF1"),
+                get_databricks_sample_graph("TPCH"),
+            )
 
         # TODO: Add bodosql later
 
@@ -1095,9 +1154,9 @@ def is_snowflake_env_set() -> bool:
 @pytest.fixture(scope="session")
 def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     """
-    This fixture is used to connect to the Snowflake TPCH database using
+    This fixture is used to connect to the Snowflake database using
     a connection object.
-    Return a DatabaseContext for the Snowflake TPCH database.
+    Return a DatabaseContext for the Snowflake database.
     """
 
     @cache
@@ -1175,6 +1234,108 @@ def sf_params_tpch_db_context() -> DatabaseContext:
         warehouse=warehouse,
         database=sf_tpch_db,
         schema=sf_tpch_schema,
+    )
+
+
+DATABRICK_ENVS = ["DATABRICKS_HOST", "DATABRICKS_HTTP_PATH", "DATABRICKS_TOKEN"]
+"""
+    Databricks environment variables required for connection.
+    DATABRICKS_HOST: The host for the Databricks cluster.
+    DATABRICKS_HTTP_PATH: The HTTP path for the Databricks cluster.
+    DATABRICKS_TOKEN: The authentication token for the Databricks cluster.
+"""
+
+
+def is_databricks_env_set() -> bool:
+    """
+    Check if the Databricks environment variables are set.
+
+    Returns:
+        bool: True if all required Databricks environment variables are set, False otherwise.
+    """
+    return all(os.getenv(env) for env in DATABRICK_ENVS)
+
+
+@pytest.fixture(scope="session")
+def databricks_conn_db_context() -> Callable[[str, str], DatabaseContext]:
+    """
+    Connects to a Databricks catalog/schema and returns a DatabaseContext.
+
+    Before returning, runs the DEFOG daily data refresh if the data is stale
+    (no lock row for today in defog.broker.daily_update_lock), mirroring the
+    inline refresh check in sf_conn_db_context for Snowflake. The lock table
+    uses a fully-qualified name so the check works regardless of which catalog
+    the connection targets.
+
+    The DEFOG setup/refresh is run at most once per session (cached via
+    `_ensure_defog_refreshed`), separately from opening per-(catalog, schema)
+    connections, so requesting multiple defog graphs (e.g. Broker, Ewallet,
+    Dealership, ...) doesn't re-run `setup_tables` for every schema.
+    """
+
+    def _connect(catalog_name: str | None = None, schema_name: str | None = None):
+        from databricks import sql
+
+        kwargs: dict[str, str | None] = {}
+        if catalog_name is not None:
+            kwargs["catalog"] = catalog_name
+            kwargs["schema"] = schema_name
+        return sql.connect(
+            server_hostname=os.getenv("DATABRICKS_HOST"),
+            http_path=os.getenv("DATABRICKS_HTTP_PATH"),
+            access_token=os.getenv("DATABRICKS_TOKEN"),
+            **kwargs,
+        )
+
+    @cache
+    def _ensure_defog_refreshed() -> None:
+        from pathlib import Path
+
+        from tests.gen_data.databricks_task import run_with_cursor
+
+        # No catalog and schema specified since this is for refreshing
+        # different tables that rely on current date.
+        connection = _connect()
+        sf_task_path = Path(__file__).parent / "gen_data" / "sf_task.sql"
+        with connection.cursor() as cur:
+            run_with_cursor(cur, sf_task_path=sf_task_path)
+        connection.close()
+
+    @cache
+    def _impl(catalog_name: str, schema_name: str) -> DatabaseContext:
+        if not is_databricks_env_set():
+            pytest.skip("Skipping Databricks tests: environment variables not set.")
+
+        if catalog_name == "defog":
+            _ensure_defog_refreshed()
+
+        connection = _connect(catalog_name, schema_name)
+        return load_database_context("databricks", connection=connection)
+
+    return _impl
+
+
+@pytest.fixture
+def databricks_params_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the Databricks TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Databricks TPCH database.
+    """
+    if not is_databricks_env_set():
+        pytest.skip("Skipping Databricks tests: environment variables not set.")
+    databricks_tpch_catalog = "tpch_s3_pq"
+    databricks_tpch_schema = "TPCH_SF1"
+    host = os.getenv("DATABRICKS_HOST")
+    http_path = os.getenv("DATABRICKS_HTTP_PATH")
+    token = os.getenv("DATABRICKS_TOKEN")
+    return load_database_context(
+        "databricks",
+        server_hostname=host,
+        http_path=http_path,
+        access_token=token,
+        catalog=databricks_tpch_catalog,
+        schema=databricks_tpch_schema,
     )
 
 
@@ -2921,6 +3082,31 @@ def tpch_custom_test_data_dialect_replacements(
                             "d18": ["30"],  # MI
                             "d19": ["45"],  # SS
                             "d20": ["P.M."],  # AM
+                        }
+                    ),
+                    "string_format_specifiers",
+                )
+            case DatabaseDialect.DATABRICKS:
+                return PyDoughPandasTest(
+                    string_format_specifiers_databricks,
+                    "TPCH",
+                    lambda: pd.DataFrame(
+                        {
+                            "d1": ["2023"],  # yyyy
+                            "d2": ["23"],  # yy
+                            "d3": ["07"],  # MM
+                            "d4": ["Jul"],  # MMM
+                            "d5": ["July"],  # MMMM
+                            "d6": ["15"],  # dd
+                            "d7": ["Sat"],  # EEE
+                            "d8": ["Saturday"],  # EEEE
+                            "d9": ["14"],  # HH
+                            "d10": ["02"],  # hh
+                            "d11": ["30"],  # mm
+                            "d12": ["45"],  # ss
+                            "d13": ["PM"],  # a
+                            "d14": [".000000"],  # .SSSSSS
+                            "d15": ["Z"],  # XXX (UTC)
                         }
                     ),
                     "string_format_specifiers",
