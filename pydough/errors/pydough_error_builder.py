@@ -255,6 +255,21 @@ class PyDoughErrorBuilder:
             f"Failed to convert expression {call.to_string(True)} to SQL: {error}"
         )
 
+    def sql_call_dialect_unsupported(
+        self, operator: "PyDoughOperator", dialect: str
+    ) -> PyDoughException:
+        """
+        Creates an exception for when a SQL dialect does not allow converting
+        a certain feature to SQL.
+
+        Args:
+            `operator`: The function operator that is not supported.
+            `dialect`: The SQL dialect in which the feature is not supported.
+        """
+        return PyDoughSQLException(
+            f"Cannot convert function {operator} to SQL using dialect {dialect}"
+        )
+
     def undefined_function_call(
         self, node: "UnqualifiedNode", *args, **kwargs
     ) -> PyDoughException:

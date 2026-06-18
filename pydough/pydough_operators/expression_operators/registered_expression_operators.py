@@ -42,6 +42,7 @@ __all__ = [
     "LEQ",
     "LET",
     "LIKE",
+    "LISTOF",
     "LOWER",
     "LPAD",
     "MAX",
@@ -166,6 +167,9 @@ MEDIAN = ExpressionFunctionOperator(
 )
 QUANTILE = ExpressionFunctionOperator(
     "QUANTILE", True, RequireNumArgs(2), ConstantType(NumericType())
+)
+LISTOF = ExpressionFunctionOperator(
+    "LISTOF", True, RequireNumArgs(1), SelectArgumentType(0)
 )
 POWER = ExpressionFunctionOperator(
     "POWER", False, RequireNumArgs(2), ConstantType(NumericType())

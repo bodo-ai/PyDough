@@ -23,11 +23,13 @@ from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.types import (
+    ArrayType,
     BooleanType,
     DatetimeType,
     NumericType,
     PyDoughType,
     StringType,
+    UnknownType,
 )
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -265,6 +267,8 @@ class BaseTransformBindings:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
                 )
+            case pydop.LISTOF:
+                return self.convert_listof(args, types)
             case pydop.STARTSWITH:
                 return self.convert_startswith(args, types)
             case pydop.ENDSWITH:
@@ -404,6 +408,17 @@ class BaseTransformBindings:
         Converts a SUM function call to its SQLGlot equivalent.
         """
         return sqlglot_expressions.Sum.from_arg_list(args)
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a LISTOF function call to its SQLGlot equivalent. Some dialects
+        do not support this functionality.
+        """
+        raise self._visitor._session.error_builder.sql_call_dialect_unsupported(
+            pydop.LISTOF, self._visitor._session.database.dialect.name
+        )
 
     def convert_find(
         self,
@@ -2451,6 +2466,16 @@ class BaseTransformBindings:
         (None, NaN, BooleanType, StringType) meaning that this representation
         works through all current dialects.
         """
+        if isinstance(item, list):
+            inner_type: PyDoughType
+            if isinstance(item_type, ArrayType):
+                inner_type = item_type.elem_type
+            else:
+                inner_type = UnknownType()
+            inner_items: list[SQLGlotExpression] = [
+                self.generate_dataframe_item_expression(i, inner_type) for i in item
+            ]
+            return self.generate_dataframe_array_expression(inner_items, inner_type)
 
         if item is None or pd.isna(item):
             return sqlglot_expressions.Null()
@@ -2464,6 +2489,22 @@ class BaseTransformBindings:
 
             case _:  # Specific dialect expression
                 return self.generate_dataframe_item_dialect_expression(item, item_type)
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for an array of items with given pydough type.
+
+        Args:
+            `items` : The list of SQLGlotExpressions representing the items in the array.
+            `inner_type` : The mapped PydDough type for the items in the array.
+        Returns:
+            A SQLGlotExpression representing the array of items.
+        """
+        raise NotImplementedError(
+            f"Array types are not currently supported in dialect {self._visitor._expr_visitor._dialect.name}."
+        )
 
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType

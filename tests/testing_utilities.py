@@ -1287,6 +1287,18 @@ class PyDoughPandasTest:
     If True, does not run the test as part of SQL testing.
     """
 
+    skipped_dialects: set[str] | None = None
+    """
+    If provided, contains the names of all dialects to skip when running the
+    test in SQL or E2E mode.
+    """
+
+    ignore_array_order: bool = False
+    """
+    If True, when comparing results, ignores order of elements within array
+    columns.
+    """
+
     fix_output_dialect: str = "sqlite"
     """
     Dialect name to update output
@@ -1386,6 +1398,14 @@ class PyDoughPandasTest:
         if self.skip_sql:
             pytest.skip(f"Skipping SQL text test for {self.test_name}")
 
+        if (
+            self.skipped_dialects is not None
+            and database.dialect.name in self.skipped_dialects
+        ):
+            pytest.skip(
+                f"Skipping SQL text test for {self.test_name} on {database.dialect.name} dialect"
+            )
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
 
@@ -1473,6 +1493,14 @@ class PyDoughPandasTest:
             `table_name_prefix`: Prefix to prepend to table names in to_table calls.
                 Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
+        if (
+            self.skipped_dialects is not None
+            and database.dialect.name in self.skipped_dialects
+        ):
+            pytest.skip(
+                f"Skipping E2E test for {self.test_name} on {database.dialect.name} dialect"
+            )
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
 
@@ -1539,6 +1567,17 @@ class PyDoughPandasTest:
             for col_name in result.columns:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
+                )
+
+        # Internally sort any array columns so there is no ambiguity in ordering
+        # within arrays caused by how different dialects group array values.
+        if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
+            for col in result.columns:
+                result[col] = result[col].apply(
+                    lambda x: sorted(x) if isinstance(x, list) else x
+                )
+                refsol[col] = refsol[col].apply(
+                    lambda x: sorted(x) if isinstance(x, list) else x
                 )
 
         # Perform the comparison between the result and the reference solution
@@ -1813,6 +1852,23 @@ def harmonize_types(column_a, column_b):
         and any(isinstance(elem, datetime.date) for elem in column_a)
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
+
+    # For array types, harmonize the inner arrays
+    if (
+        pd.api.types.is_object_dtype(column_a)
+        and pd.api.types.is_object_dtype(column_b)
+        and any(isinstance(col, list) for col in column_a)
+        and any(isinstance(col, list) for col in column_b)
+    ):
+        for i in range(len(column_a)):
+            if isinstance(column_a[i], list) and isinstance(column_b[i], list):
+                column_a[i], column_b[i] = harmonize_types(
+                    pd.Series(column_a[i]), pd.Series(column_b[i])
+                )
+                # After harmonizing types, convert back to list for comparison,
+                # but ensure that NAT is converted to None.
+                column_a[i] = [None if pd.isna(x) else x for x in column_a[i].tolist()]
+                column_b[i] = [None if pd.isna(x) else x for x in column_b[i].tolist()]
 
     return column_a, column_b
 

@@ -11,6 +11,7 @@ __all__ = [
     "DatabaseDialect",
 ]
 
+import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Union, cast
@@ -36,10 +37,12 @@ class DatabaseConnection:
     # with Python.
     _connection: DBConnection
     _cursor: DBCursor | None
+    _dialect: "DatabaseDialect"
 
-    def __init__(self, connection: DBConnection) -> None:
+    def __init__(self, connection: DBConnection, dialect: "DatabaseDialect") -> None:
         self._connection = connection
         self._cursor = None
+        self._dialect = dialect
 
     def execute_query_df(self, sql: str) -> pd.DataFrame:
         """Create a cursor object using the connection and execute the query,
@@ -63,9 +66,40 @@ class DatabaseConnection:
             # check at run-time if the cursor has the method.
             if TYPE_CHECKING:
                 _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
+
+            # Identify which columns must be coerced from strings into native
+            # types using json.loads based on the cursor description.
+            semi_structured_cols: set[int] = set()
+            match self._dialect:
+                case DatabaseDialect.SNOWFLAKE:
+                    # Snowflake returns array/object/variant types as JSON
+                    # strings (types 5/9/10), so we need to parse those back
+                    # into Python types.
+                    semi_structured_cols.update(
+                        {
+                            idx
+                            for idx, desc in enumerate(self.cursor.description)
+                            if desc[1] in (5, 9, 10)
+                        }
+                    )
+                case DatabaseDialect.MYSQL:
+                    # Snowflake returns JSON data (type 245) as strings, so we
+                    # need to parse those back into Python types.
+                    semi_structured_cols.update(
+                        {
+                            idx
+                            for idx, desc in enumerate(self.cursor.description)
+                            if desc[1] == 245
+                        }
+                    )
+                case _:
+                    pass
             # At run-time check and run the fetch.
             if hasattr(self.cursor, "fetch_pandas_all"):
-                return self.cursor.fetch_pandas_all()
+                pd_table: pd.DataFrame = self.cursor.fetch_pandas_all()
+                for idx in semi_structured_cols:
+                    pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
+                return pd_table
             else:
                 # Assume sqlite3
                 column_names: list[str] = [
@@ -74,7 +108,10 @@ class DatabaseConnection:
                 # TODO: (gh #174) Cache the cursor?
                 # TODO: (gh #175) enable typed DataFrames.
                 data = self.cursor.fetchall()
-                return pd.DataFrame(data, columns=column_names)
+                pd_table = pd.DataFrame(data, columns=column_names)
+                for idx in semi_structured_cols:
+                    pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
+                return pd_table
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise pydough.active_session.error_builder.sql_runtime_failure(
