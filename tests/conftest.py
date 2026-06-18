@@ -2291,7 +2291,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
             # SECOND, start of year, start of quarter, start of month, start of
             # week, start of day, start of hour, start of minute, ±years,
             # ±quarters, ±months, ±weeks, ±days, ±hours, ±minutes, ±seconds,
-            # DAYNAME, DATEDIFF (year, month, day, week, hour, minute, second),
+            # DAYNAME, MONTHNAME, DATEDIFF (year, month, day, week, hour, minute, second),
             # DAYOFWEEK, JOIN_STRINGS.
             PyDoughPandasTest(
                 "result = orders.WHERE("
@@ -2317,6 +2317,7 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 " o=DATEDIFF('minutes', '1993-05-25 12:45:36', order_date),"
                 " p=DATEDIFF('seconds', '1993-05-25 12:45:36', order_date),"
                 " q=DATETIME(order_date, 'start of week'),"
+                " r=JOIN_STRINGS(':', MONTHNAME(order_date), MONTHNAME(DATETIME(order_date, '+3 months')), MONTHNAME(DATETIME(order_date, '-2 MONTH'))),"
                 ").TOP_K(5, by=key.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2368,6 +2369,13 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                             "1998-02-15",
                             "1993-06-06",
                             "1992-10-18",
+                        ],
+                        "r": [
+                            "Jun:Sep:Apr",
+                            "May:Aug:Mar",
+                            "Feb:May:Dec",
+                            "Jun:Sep:Apr",
+                            "Oct:Jan:Aug",
                         ],
                     }
                 ),

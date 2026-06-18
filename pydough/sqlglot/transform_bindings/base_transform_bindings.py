@@ -1787,66 +1787,42 @@ class BaseTransformBindings:
 
         Returns:
             The SQLGlot expression matching the functionality of `MONTHNAME`.
-
-
         """
 
         assert len(args) == 1
+        month_mapping: list[tuple[int, str]] = [
+            (1, "Jan"),
+            (2, "Feb"),
+            (3, "Mar"),
+            (4, "Apr"),
+            (5, "May"),
+            (6, "Jun"),
+            (7, "Jul"),
+            (8, "Aug"),
+            (9, "Sep"),
+            (10, "Oct"),
+            (11, "Nov"),
+            (12, "Dec"),
+        ]
 
         month_expr: SQLGlotExpression = self.convert_extract_datetime(
             args, types, DateTimeUnit.MONTH
         )
 
-        def build_if_month_expression(
-            month_number: int, month_name: str
-        ) -> SQLGlotExpression:
-            return sqlglot_expressions.If(
-                this=sqlglot_expressions.EQ(
-                    this=month_expr,
-                    expression=sqlglot_expressions.Literal.number(month_number),
-                ),
-                true=sqlglot_expressions.Literal.string(month_name),
-            )
+        result: SQLGlotExpression = sqlglot_expressions.Case()
+        for month_number, month_name in month_mapping:
+            if month_number == 12:
+                result = result.else_(sqlglot_expressions.Literal.string(month_name))
+            else:
+                result = result.when(
+                    sqlglot_expressions.EQ(
+                        this=month_expr,
+                        expression=sqlglot_expressions.Literal.number(month_number),
+                    ),
+                    sqlglot_expressions.Literal.string(month_name),
+                )
 
-        # If January
-        if_jan: SQLGlotExpression = build_if_month_expression(1, "Jan")
-        # If January
-        if_feb: SQLGlotExpression = build_if_month_expression(2, "Feb")
-        # If January
-        if_mar: SQLGlotExpression = build_if_month_expression(3, "Mar")
-        # If January
-        if_abr: SQLGlotExpression = build_if_month_expression(4, "Apr")
-        # If January
-        if_may: SQLGlotExpression = build_if_month_expression(5, "May")
-        # If January
-        if_jun: SQLGlotExpression = build_if_month_expression(6, "Jun")
-        # If January
-        if_jul: SQLGlotExpression = build_if_month_expression(7, "Jul")
-        # If January
-        if_aug: SQLGlotExpression = build_if_month_expression(8, "Aug")
-        # If January
-        if_sep: SQLGlotExpression = build_if_month_expression(9, "Sep")
-        # If January
-        if_oct: SQLGlotExpression = build_if_month_expression(10, "Oct")
-        # If January
-        if_nov: SQLGlotExpression = build_if_month_expression(11, "Nov")
-
-        return sqlglot_expressions.Case(
-            ifs=[
-                if_jan,
-                if_feb,
-                if_mar,
-                if_abr,
-                if_may,
-                if_jun,
-                if_jul,
-                if_aug,
-                if_sep,
-                if_oct,
-                if_nov,
-            ],
-            default=sqlglot_expressions.Literal.string("Dec"),
-        )
+        return result
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

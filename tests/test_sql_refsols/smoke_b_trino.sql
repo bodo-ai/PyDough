@@ -102,7 +102,13 @@ SELECT
       ) * -1,
       CAST(o_orderdate AS TIMESTAMP)
     )
-  ) AS q
+  ) AS q,
+  CONCAT_WS(
+    ':',
+    FORMAT_DATETIME(CAST(o_orderdate AS TIMESTAMP), 'MMM'),
+    FORMAT_DATETIME(DATE_ADD('MONTH', 3, CAST(o_orderdate AS TIMESTAMP)), 'MMM'),
+    FORMAT_DATETIME(DATE_ADD('MONTH', -2, CAST(o_orderdate AS TIMESTAMP)), 'MMM')
+  ) AS r
 FROM tpch.orders
 WHERE
   STARTS_WITH(o_orderpriority, '3') AND o_clerk LIKE '%5' AND o_comment LIKE '%fo%'
