@@ -31,41 +31,23 @@ from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .testing_utilities import PyDoughPandasTest
 
 
-@pytest.fixture(
-    params=[
-        pytest.param(
-            PyDoughPandasTest(
-                impl_tpch_q16,
-                "TPCH",
-                tpch_q16_output,
-                "tpch_q16_params",
-            ),
-            id="tpch_q16_params",
-        ),
-    ],
-)
-def databricks_params_tpch_q16_data(request) -> PyDoughPandasTest:
-    """
-    Test data for e2e tests for the TPC-H query 16. Returns an instance of
-    PyDoughPandasTest containing information about the test.
-    """
-    return request.param
-
-
 @pytest.mark.databricks
 @pytest.mark.execute
 def test_pipeline_e2e_tpch_databricks_params(
-    databricks_params_tpch_q16_data: PyDoughPandasTest,
     get_databricks_sample_graph: graph_fetcher,
     databricks_params_tpch_db_context: DatabaseContext,
 ):
     """
-    Test executing the TPC-H queries from the original code generation,
-    with Databricks as the executing database.
-    Using the  `server_hostname`, `http_path`, `access_token`, `catalog`,
-    and `schema` as keyword arguments to the DatabaseContext.
+    Test executing TPC-H query 16 end-to-end with Databricks, connecting via
+    keyword arguments (server_hostname, http_path, access_token, catalog,
+    schema) rather than a pre-built connection object.
     """
-    databricks_params_tpch_q16_data.run_e2e_test(
+    PyDoughPandasTest(
+        impl_tpch_q16,
+        "TPCH",
+        tpch_q16_output,
+        "tpch_q16_params",
+    ).run_e2e_test(
         get_databricks_sample_graph,
         databricks_params_tpch_db_context,
         coerce_types=True,
