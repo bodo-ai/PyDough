@@ -6,12 +6,15 @@ SELECT
     'DD'
   ) AS payment_week,
   COUNT(*) AS total_payments,
-  COUNT_IF(
-    (
-      MOD((
-        TO_CHAR(PAYMENTS_RECEIVED.payment_date, 'D') + 5
-      ), 7)
-    ) IN (5, 6)
+  COALESCE(
+    SUM(
+      (
+        MOD((
+          TO_CHAR(PAYMENTS_RECEIVED.payment_date, 'D') + 5
+        ), 7)
+      ) IN (5, 6)
+    ),
+    0
   ) AS weekend_payments
 FROM MAIN.PAYMENTS_RECEIVED PAYMENTS_RECEIVED
 JOIN MAIN.SALES SALES

@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   100 * (
-    COUNT_IF(sbcuststatus = 'active') / COUNT(*)
+    COALESCE(SUM(sbcuststatus = 'active'), 0) / COUNT(*)
   ) AS ar
 FROM broker.sbCustomer
 WHERE

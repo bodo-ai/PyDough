@@ -8,7 +8,7 @@ SELECT
     ) DAY
   ) AS DATE) AS week,
   COUNT(*) AS num_notifs,
-  COUNT_IF((
+  SUM((
     (
       DAYOFWEEK(notifications.created_at) + 5
     ) % 7

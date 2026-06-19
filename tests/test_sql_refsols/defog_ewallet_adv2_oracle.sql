@@ -6,7 +6,7 @@ SELECT
     'DD'
   ) AS week,
   COUNT(*) AS num_notifs,
-  COUNT_IF((
+  SUM((
     MOD((
       TO_CHAR(NOTIFICATIONS.created_at, 'D') + 5
     ), 7)
