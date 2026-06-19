@@ -762,6 +762,77 @@ def all_dialects_tpch_db_context(
     return db_context, get_sample_graph("TPCH")
 
 
+@pytest.fixture(
+    params=[
+        pytest.param(
+            "snowflake",
+            id="snowflake",
+            marks=[pytest.mark.snowflake],
+        ),
+        pytest.param(
+            "trino",
+            id="trino",
+            marks=[pytest.mark.trino],
+        ),
+        pytest.param(
+            "mysql",
+            id="mysql",
+            marks=[pytest.mark.mysql],
+        ),
+        pytest.param(
+            "postgres",
+            id="postgres",
+            marks=[pytest.mark.postgres],
+        ),
+        pytest.param(
+            "oracle",
+            id="oracle",
+            marks=[pytest.mark.oracle],
+        ),
+        pytest.param(
+            "databricks",
+            id="databricks",
+            marks=[pytest.mark.databricks],
+        ),
+    ],
+)
+def all_dialects_params_tpch_db_context(
+    request,
+    get_sample_graph: graph_fetcher,
+    get_sf_sample_graph: graph_fetcher,
+    get_databricks_sample_graph: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
+) -> tuple[DatabaseContext, GraphMetadata]:
+    """
+    Fixture providing a params-based TPCH database context and graph metadata
+    for each supported dialect. Each dialect connects via keyword arguments
+    (e.g. host, port, user, password) rather than a pre-built connection object.
+
+    Returns:
+        A tuple of (DatabaseContext, GraphMetadata) for the TPCH graph.
+    """
+    match request.param:
+        case "snowflake":
+            db_context = request.getfixturevalue("sf_params_tpch_db_context")
+            return db_context, get_sf_sample_graph("TPCH")
+        case "trino":
+            db_context = request.getfixturevalue("trino_params_tpch_db_context")
+            return db_context, get_trino_graphs("TPCH")
+        case "mysql":
+            db_context = request.getfixturevalue("mysql_params_tpch_db_context")
+            return db_context, get_sample_graph("TPCH")
+        case "postgres":
+            db_context = request.getfixturevalue("postgres_params_tpch_db_context")
+            return db_context, get_sample_graph("TPCH")
+        case "oracle":
+            db_context = request.getfixturevalue("oracle_params_tpch_db_context")
+            return db_context, get_sample_graph("TPCH")
+        case "databricks":
+            db_context = request.getfixturevalue("databricks_params_tpch_db_context")
+            return db_context, get_databricks_sample_graph("TPCH")
+    raise AssertionError(f"Unhandled dialect: {request.param!r}")
+
+
 @pytest.fixture(scope="session")
 def defog_graphs() -> graph_fetcher:
     """

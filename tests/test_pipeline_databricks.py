@@ -31,29 +31,6 @@ from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .testing_utilities import PyDoughPandasTest
 
 
-@pytest.mark.databricks
-@pytest.mark.execute
-def test_pipeline_e2e_tpch_databricks_params(
-    get_databricks_sample_graph: graph_fetcher,
-    databricks_params_tpch_db_context: DatabaseContext,
-):
-    """
-    Test executing TPC-H query 16 end-to-end with Databricks, connecting via
-    keyword arguments (server_hostname, http_path, access_token, catalog,
-    schema) rather than a pre-built connection object.
-    """
-    PyDoughPandasTest(
-        impl_tpch_q16,
-        "TPCH",
-        tpch_q16_output,
-        "tpch_q16_params",
-    ).run_e2e_test(
-        get_databricks_sample_graph,
-        databricks_params_tpch_db_context,
-        coerce_types=True,
-    )
-
-
 @pytest.fixture
 def defog_databricks_test_data(
     defog_custom_pipeline_test_data: PyDoughPandasTest,

@@ -12,12 +12,6 @@ from pydough.database_connectors import DatabaseContext
 from tests.test_pydough_functions.simple_pydough_functions import (
     week_offset,
 )
-from tests.test_pydough_functions.tpch_outputs import (
-    tpch_q16_output,
-)
-from tests.test_pydough_functions.tpch_test_functions import (
-    impl_tpch_q16,
-)
 from tests.testing_utilities import (
     PyDoughPandasTest,
     PyDoughSQLComparisonTest,
@@ -28,27 +22,6 @@ from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
 from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
-
-
-@pytest.fixture(
-    params=[
-        pytest.param(
-            PyDoughPandasTest(
-                impl_tpch_q16,
-                "TPCH",
-                tpch_q16_output,
-                "tpch_q16_params",
-            ),
-            id="tpch_q16_params",
-        ),
-    ],
-)
-def tpch_oracle_params_test_data(request) -> PyDoughPandasTest:
-    """
-    Test data for e2e tests for the TPC-H query 16. Returns an instance of
-    PyDoughPandasTest containing information about the test.
-    """
-    return request.param
 
 
 @pytest.fixture
@@ -333,24 +306,6 @@ def defog_custom_oracle_test_data(
         )
 
     return defog_custom_pipeline_test_data
-
-
-@pytest.mark.oracle
-@pytest.mark.execute
-def test_pipeline_e2e_oracle_tpch_16_params(
-    tpch_oracle_params_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    oracle_params_tpch_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H 16 from the original code generation,
-    with oracle as the executing database.
-    Using the  `user`, `password`, `database`, and `host`
-    as keyword arguments to the DatabaseContext.
-    """
-    tpch_oracle_params_test_data.run_e2e_test(
-        get_sample_graph, oracle_params_tpch_db_context, coerce_types=True
-    )
 
 
 @pytest.mark.oracle
