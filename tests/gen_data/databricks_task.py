@@ -175,7 +175,7 @@ def adapt_for_databricks(sql: str) -> str:
     Returns:
         The input SQL with the above transformations applied.
     """
-    # PostgreSQL-style timestamp cast
+    # Snowflake-style timestamp cast
     sql = re.sub(r"'([^']+)'::timestamp", r"TIMESTAMP '\1'", sql)
 
     # INTERVAL 'N unit' → INTERVAL N UNIT

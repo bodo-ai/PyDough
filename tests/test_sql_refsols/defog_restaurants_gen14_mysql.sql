@@ -1,5 +1,5 @@
 SELECT
-  SUM(LOWER(food_type) = 'vegan') / NULLIF(SUM(LOWER(food_type) <> 'vegan'), 0) AS ratio
+  COUNT_IF(LOWER(food_type) = 'vegan') / NULLIF(COUNT_IF(LOWER(food_type) <> 'vegan'), 0) AS ratio
 FROM restaurants.restaurant
 WHERE
   LOWER(city_name) = 'san francisco'

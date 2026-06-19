@@ -16,7 +16,6 @@ from pydough.relational.relational_expressions.literal_expression import (
 )
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
-from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -65,25 +64,6 @@ class PostgresTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
-
-    def convert_sum(
-        self, arg: list[SQLGlotExpression], types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        """
-        Converts a SUM function call to its SQLGlot equivalent.
-        This method checks the type of the argument to determine whether to use
-        COUNT_IF (for BooleanType) or SUM (for other types).
-        Arguments:
-            arg (SQLGlotExpression): The argument to the SUM function.
-            types (list[PyDoughType]): The types of the arguments.
-        """
-        match types[0]:
-            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
-            case BooleanType():
-                return sqlglot_expressions.CountIf(this=arg[0])
-            case _:
-                # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=arg[0])
 
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

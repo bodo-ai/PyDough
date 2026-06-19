@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     sbtxcustid AS sbTxCustId,
     COUNT(*) AS n_rows,
-    SUM(sbtxstatus = 'success') AS sum_expr
+    COUNT_IF(sbtxstatus = 'success') AS sum_expr
   FROM broker.sbTransaction
   GROUP BY
     1

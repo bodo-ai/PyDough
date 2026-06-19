@@ -11,7 +11,7 @@ SELECT
   CASE
     WHEN COUNT(*) > 0
     THEN (
-      100.0 * SUM(LOWER(USERS.u_gender) = 'f')
+      100.0 * COUNT_IF(LOWER(USERS.u_gender) = 'f')
     ) / COUNT(*)
     ELSE 0.0
   END AS percentage_of_female_users

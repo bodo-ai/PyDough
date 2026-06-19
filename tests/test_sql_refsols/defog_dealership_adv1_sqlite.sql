@@ -9,11 +9,15 @@ SELECT
   COUNT(*) AS total_payments,
   COALESCE(
     SUM(
-      (
+      IIF(
         (
-          CAST(STRFTIME('%w', payments_received.payment_date) AS INTEGER) + 6
-        ) % 7
-      ) IN (5, 6)
+          (
+            CAST(STRFTIME('%w', payments_received.payment_date) AS INTEGER) + 6
+          ) % 7
+        ) IN (5, 6),
+        1,
+        0
+      )
     ),
     0
   ) AS weekend_payments

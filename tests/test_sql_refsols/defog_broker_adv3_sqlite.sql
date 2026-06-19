@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     sbtxcustid,
     COUNT(*) AS n_rows,
-    SUM(sbtxstatus = 'success') AS sum_expr
+    SUM(IIF(sbtxstatus = 'success', 1, 0)) AS sum_expr
   FROM main.sbtransaction
   GROUP BY
     1

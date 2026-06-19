@@ -6,14 +6,11 @@ SELECT
     'DD'
   ) AS week,
   COUNT(*) AS num_transactions,
-  COALESCE(
-    SUM((
-      MOD((
-        TO_CHAR(SBTRANSACTION.sbtxdatetime, 'D') + 5
-      ), 7)
-    ) IN (5, 6)),
-    0
-  ) AS weekend_transactions
+  COUNT_IF((
+    MOD((
+      TO_CHAR(SBTRANSACTION.sbtxdatetime, 'D') + 5
+    ), 7)
+  ) IN (5, 6)) AS weekend_transactions
 FROM MAIN.SBTRANSACTION SBTRANSACTION
 JOIN MAIN.SBTICKER SBTICKER
   ON SBTICKER.sbtickerid = SBTRANSACTION.sbtxtickerid

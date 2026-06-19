@@ -6,7 +6,7 @@ SELECT
   ) OVER (PARTITION BY CAST(CAST(sbTransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
   ROUND(
     (
-      100.0 * SUM(sbTicker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+      100.0 * COUNT_IF(sbTicker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
     ) / COUNT(*) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS pct_apple_txns,

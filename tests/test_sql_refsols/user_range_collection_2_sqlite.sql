@@ -1,12 +1,12 @@
 WITH _s3 AS (
   SELECT
     a_2.column1 AS x,
-    SUM(CAST(b.column1 AS TEXT) LIKE (
+    SUM(IIF(CAST(b.column1 AS TEXT) LIKE (
       '%' || CAST(a_2.column1 AS TEXT)
-    )) AS sum_expr,
-    SUM(CAST(b.column1 AS TEXT) LIKE (
+    ), 1, 0)) AS sum_expr,
+    SUM(IIF(CAST(b.column1 AS TEXT) LIKE (
       CAST(a_2.column1 AS TEXT) || '%'
-    )) AS sum_expr_5
+    ), 1, 0)) AS sum_expr_5
   FROM (VALUES
     (0),
     (1),

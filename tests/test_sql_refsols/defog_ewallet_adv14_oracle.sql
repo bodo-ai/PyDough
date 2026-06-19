@@ -1,5 +1,5 @@
 SELECT
-  COALESCE(SUM(status = 'success'), 0) / NULLIF(COUNT(*), 0) AS "_expr0"
+  COUNT_IF(status = 'success') / NULLIF(COUNT(*), 0) AS "_expr0"
 FROM MAIN.WALLET_TRANSACTIONS_DAILY
 WHERE
   (

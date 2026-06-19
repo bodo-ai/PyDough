@@ -2,7 +2,7 @@ WITH "_T1" AS (
   SELECT
     sbtxcustid AS SBTXCUSTID,
     COUNT(*) AS N_ROWS,
-    SUM(sbtxstatus = 'success') AS SUM_EXPR
+    COUNT_IF(sbtxstatus = 'success') AS SUM_EXPR
   FROM MAIN.SBTRANSACTION
   GROUP BY
     sbtxcustid

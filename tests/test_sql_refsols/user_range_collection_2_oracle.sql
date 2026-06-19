@@ -1,10 +1,10 @@
 WITH "_S3" AS (
   SELECT
     A_2.X,
-    SUM(TO_CHAR(B.Y) LIKE (
+    COUNT_IF(TO_CHAR(B.Y) LIKE (
       CONCAT('%', TO_CHAR(A_2.X))
     )) AS SUM_EXPR,
-    SUM(TO_CHAR(B.Y) LIKE (
+    COUNT_IF(TO_CHAR(B.Y) LIKE (
       CONCAT(TO_CHAR(A_2.X), '%')
     )) AS SUM_EXPR_5
   FROM (VALUES
