@@ -53,7 +53,7 @@ trino = ["trino"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
-bodosql = ["bodo>=2026.6", "bodosql>=2026.6", "pyiceberg[pyiceberg-core]==0.10.0"]
+bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0"]
 oracle = ["oracledb==3.4.2"]
 databricks = ["databricks-sql-connector==4.2.6"]
 
