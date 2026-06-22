@@ -13,7 +13,7 @@ import pytest
 import datetime
 import logging
 
-# TODO: Remove this skip guard once the LLM package supports pyarrow>=23 and
+# TODO: Remove this skip guard once the LLM package supports pyarrow>=24 and
 # bodo can be included in the standard dev environment without conflict.
 pytest.importorskip("bodo")
 import bodo

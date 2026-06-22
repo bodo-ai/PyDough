@@ -262,6 +262,12 @@ def test_pipeline_until_sql_custom_datasets(
     Tests the conversion of the PyDough queries on the custom datasets into
     SQL text.
     """
+    # Skip SQL generation tests for Databricks since the quotes are restricted
+    # in unity catalog.
+    if empty_context_database.dialect == DatabaseDialect.DATABRICKS:
+        pytest.skip(
+            "Custom dataset SQL generation not tested for Databricks because of quote restrictions in unity catalog."
+        )
     file_path: str = get_sql_test_filename(
         custom_datasets_test_data.test_name, empty_context_database.dialect
     )
