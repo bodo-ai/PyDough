@@ -403,8 +403,9 @@ class BaseTransformBindings:
         """
         Converts a SUM function call to its SQLGlot equivalent.
         Uses COUNT_IF for BooleanType arguments; SUM otherwise. Dialects
-        without native COUNT_IF support will have SQLGlot transpile it to
-        SUM(CASE WHEN expr THEN 1 ELSE 0 END) automatically.
+        without native COUNT_IF support have SQLGlot transpile it to an
+        equivalent expression (e.g. SUM(IIF(expr, 1, 0)) for SQLite,
+        SUM(CASE WHEN expr THEN 1 ELSE 0 END) for Postgres).
         """
         match types[0]:
             case BooleanType():
