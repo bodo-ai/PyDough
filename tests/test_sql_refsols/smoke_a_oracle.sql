@@ -66,7 +66,7 @@ SELECT
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CASE
-    WHEN LENGTH(p_name) IS NULL
+    WHEN LENGTH(p_name) = 0 OR LENGTH(p_name) IS NULL
     THEN 0
     ELSE CAST((
       LENGTH(p_name) - NVL(LENGTH(REPLACE(p_name, 'o', '')), 0)
