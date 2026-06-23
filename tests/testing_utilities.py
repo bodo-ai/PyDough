@@ -25,6 +25,8 @@ __all__ = [
     "TopKInfo",
     "WhereInfo",
     "extract_batch_requests_from_logs",
+    "get_day_of_week",
+    "get_start_of_week",
     "graph_fetcher",
     "map_over_dict_values",
     "temp_env_override",
@@ -46,7 +48,7 @@ import pytest
 import pydough
 import pydough.pydough_operators as pydop
 from pydough import init_pydough_context, to_df, to_sql, to_table
-from pydough.configs import PyDoughConfigs, PyDoughSession
+from pydough.configs import DayOfWeek, PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.errors import PyDoughTestingException
@@ -1427,6 +1429,11 @@ class PyDoughPandasTest:
             call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
 
+        # Normalize the Python-version-specific Databricks schema name
+        # (e.g. `to_table_py313`) to a fixed placeholder, so reference files
+        # are not tied to the Python version used to generate them.
+        sql_text = re.sub(r"to_table_py3\d\d", "to_table_pyXXX", sql_text)
+
         # Either update the reference solution, or compare the generated sql
         # text against it.
         if update:
@@ -1448,6 +1455,8 @@ class PyDoughPandasTest:
         coerce_types: bool = False,
         mask_server: MaskServerInfo | None = None,
         max_rows: int | None = None,
+        rtol: float = 1.0e-5,
+        atol: float = 1.0e-5,
         table_name_prefix: str = "",
     ):
         """
@@ -1464,6 +1473,8 @@ class PyDoughPandasTest:
             `coerce_types`: If True, coerces the types of the result and reference
             solution DataFrames to ensure compatibility.
             `max_rows`: The maximum number of rows to return from the query.
+            `rtol`: The relative tolerance for numerical comparisons.
+            `atol`: The absolute tolerance for numerical comparisons.
             `table_name_prefix`: Prefix to prepend to table names in to_table calls.
                 Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
@@ -1537,7 +1548,12 @@ class PyDoughPandasTest:
 
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(
-            result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
+            result,
+            refsol,
+            check_dtype=(not coerce_types),
+            check_exact=False,
+            rtol=rtol,
+            atol=atol,
         )
 
     def run_e2e_test_to_table(
@@ -1597,13 +1613,21 @@ class PyDoughPandasTest:
         )
         # to_table returns an UnqualifiedGeneratedCollection wrapping a ViewGeneratedCollection
         from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+        from pydough.user_collections.view_collection import ViewGeneratedCollection
 
         assert isinstance(collection, UnqualifiedGeneratedCollection), (
             "to_table did not return an UnqualifiedGeneratedCollection as expected"
         )
         # Access the inner PyDoughUserGeneratedCollection to get columns
         inner_collection = collection.user_collection
-        verify_table_created_correctly(database, table_name, inner_collection.columns)
+        assert isinstance(inner_collection, ViewGeneratedCollection), (
+            "to_table did not return a ViewGeneratedCollection as expected"
+        )
+        # Use sql_name (the actual created path) rather than table_name,
+        # since dialects like Databricks may unqualify temp view names.
+        verify_table_created_correctly(
+            database, inner_collection.sql_name, inner_collection.columns
+        )
 
 
 def verify_table_created_correctly(
@@ -1903,3 +1927,45 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
         "Malformed log: batch request did not have expected number of entries."
     )
     return result
+
+
+# Helper functions for week calculations
+def get_start_of_week(dt: pd.Timestamp | str, start_of_week: DayOfWeek):
+    """
+    Calculate the start of week date for a given datetime
+    Args:
+        dt : The datetime to find the start of week for
+        start_of_week: Enum value representing which day is considered
+                        the start of the week (e.g., DayOfWeek.MONDAY)
+
+    Returns:
+        The start of the week for the given datetime
+    """
+    # Convert to pandas datetime if not already
+    dt_ts: pd.Timestamp = pd.to_datetime(dt)
+    # Get the day of week (0-6, where 0 is Monday)
+    weekday: int = dt_ts.weekday()
+    # Calculate days to subtract to get to start of week
+    days_to_subtract: int = (weekday - start_of_week.pandas_dow) % 7
+    # Get start of week and set to midnight
+    sow: pd.Timestamp = dt_ts - pd.Timedelta(days=days_to_subtract)
+    # Return only year, month, day
+    return pd.Timestamp(sow.year, sow.month, sow.day)
+
+
+def get_day_of_week(
+    dt: pd.Timestamp, start_of_week: DayOfWeek, start_week_as_zero: bool
+):
+    """
+    Calculate day of week (0-based or 1-based depending on configuration)
+    Args:
+        dt: The datetime to get the day of week for
+        start_of_week: Enum value representing which day is considered
+                        the start of the week (e.g., DayOfWeek.MONDAY)
+        start_week_as_zero: Whether to start counting from 0 or 1
+    """
+    # Get days since start of week
+    start_of_week_date: pd.Timestamp = get_start_of_week(dt, start_of_week)
+    days_since_start: int = (dt - start_of_week_date).days
+    # Adjust based on whether we start counting from 0 or 1
+    return days_since_start if start_week_as_zero else days_since_start + 1

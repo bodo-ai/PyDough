@@ -193,10 +193,12 @@ class DatabaseDialect(Enum):
     ANSI = "ansi"
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
+    TRINO = "trino"
     MYSQL = "mysql"
     POSTGRES = "postgres"
     ORACLE = "oracle"
     BODOSQL = "bodosql"
+    DATABRICKS = "databricks"
 
     @property
     def create_capabilities(self) -> CreateCapabilities:
@@ -226,6 +228,24 @@ class DatabaseDialect(Enum):
                     temp_table=False,
                     temp_view=False,
                 )
+            case DatabaseDialect.DATABRICKS:
+                # Databricks does not support CREATE OR REPLACE TABLE,
+                # but does support CREATE OR REPLACE VIEW and temporary views.
+                # NOTE: temp_table=False relies on the temp table -> temp view
+                # fallback in materialize_view._generate_create_ddl; keep them
+                # in sync if either changes.
+                return CreateCapabilities(
+                    replace_table=False,
+                    temp_table=False,
+                    temp_view=True,
+                )
+            case DatabaseDialect.TRINO:
+                return CreateCapabilities(
+                    replace_table=False,
+                    replace_view=False,
+                    temp_table=False,
+                    temp_view=False,
+                )
             case _:
                 return CreateCapabilities(
                     replace_table=False,
@@ -249,6 +269,33 @@ class DatabaseDialect(Enum):
             return DatabaseDialect.__members__[dialect]
         else:
             raise PyDoughSessionException(f"Unsupported dialect: {dialect}")
+
+    @property
+    def sqlglot_dialect(self) -> str | None:
+        """Get the corresponding SQLGlot dialect string for this DatabaseDialect.
+
+        Returns:
+            The SQLGlot dialect string.
+        """
+        match self:
+            case DatabaseDialect.ANSI:
+                return None
+            case DatabaseDialect.SQLITE:
+                return "sqlite"
+            case DatabaseDialect.SNOWFLAKE | DatabaseDialect.BODOSQL:
+                return "snowflake"
+            case DatabaseDialect.TRINO:
+                return "trino"
+            case DatabaseDialect.MYSQL:
+                return "mysql"
+            case DatabaseDialect.POSTGRES:
+                return "postgres"
+            case DatabaseDialect.ORACLE:
+                return "oracle"
+            case DatabaseDialect.DATABRICKS:
+                return "databricks"
+            case _:
+                raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
 
 
 @dataclass

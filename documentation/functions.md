@@ -677,6 +677,16 @@ The `DAYNAME` function returns the name of the day of the week for a given date/
 Orders.CALCULATE(day_name = DAYNAME(order_date))
 ```
 
+<!-- TOC --><a name="monthname"></a>
+
+### MONTHNAME
+The `MONTHNAME` function returns the name of the month of the year for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string, corresponding the 3-letter abbreviation of the month name. This returns one of the following: `"Jan"`, `"Feb"`, `"Mar"`, `"Apr"`, `"May"`, `"Jun"`, `"Jul"`, `"Aug"`, `"Sep"`, `"Oct"`, `"Nov"` or `"Dec"`.
+
+```py
+# Retuns the 3-letter abbrivation of the month for the order date
+Orders.CALCULATE(day_name = MONTHNAME(order_date))
+```
+
 <!-- TOC --><a name="conditional-functions"></a>
 
 ## Conditional Functions
@@ -778,7 +788,7 @@ customers.CALCULATE(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places. The Python builtin `round()` function can also be used to accomplish the same thing. 
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places (to match the Python builtin `round()` function). The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
@@ -789,15 +799,6 @@ Parts.CALCULATE(rounded_price = round(retail_price, 1))
 Parts.CALCULATE(rounded_price = ROUND(retail_price))
 # The below statement is equivalent to above.
 Parts.CALCULATE(rounded_price = ROUND(retail_price,0))
-```
-
-Note: The default precision for builtin `round` method is 0, to be in alignment with the Python implementation. The PyDough `ROUND` function requires the precision to be specified.
-
-```py
-# This is legal.
-Parts.CALCULATE(rounded_price = round(retail_price))
-# This is illegal as precision is not specified.
-Parts.CALCULATE(rounded_price = ROUND(retail_price))
 ```
 
 <!-- TOC --><a name="power"></a>
@@ -1409,6 +1410,7 @@ Here is a list of reference links for the format strings of different databases:
 - [Snowflake](https://docs.snowflake.com/en/sql-reference/functions-conversion#label-date-time-format-conversion)
 - [MySQL](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-format)
 - [Postgres](https://www.postgresql.org/docs/current/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE)
+- [Trino](https://trino.io/docs/current/functions/datetime.html#mysql-date-functions)
 
 
 <!-- TOC --><a name="integer"></a>

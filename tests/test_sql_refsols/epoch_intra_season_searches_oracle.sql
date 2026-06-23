@@ -40,8 +40,8 @@ WITH "_S0" AS (
   LEFT JOIN "_S9" "_S9"
     ON SEARCHES.search_id = "_S9".SEARCH_ID AND "_S0".S_NAME = "_S9".S_NAME
   GROUP BY
-    SEARCHES.search_id,
-    "_S0".S_NAME
+    "_S0".S_NAME,
+    SEARCHES.search_id
 ), "_S16" AS (
   SELECT
     S_NAME,

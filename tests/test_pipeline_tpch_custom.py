@@ -6,8 +6,9 @@ dataset.
 import dataclasses
 import logging
 import re
+import sys
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 import numpy as np
@@ -15,6 +16,8 @@ import pandas as pd
 import pytest
 
 import pydough
+from pydough import init_pydough_context, to_df
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.errors import PyDoughException
@@ -164,6 +167,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_smallest_or_largest,
     simple_var_std,
     simple_var_std_with_nulls,
+    simple_week_sampler_tpch,
     singular1,
     singular2,
     singular3,
@@ -249,7 +253,10 @@ from tests.test_pydough_functions.user_collections import (
 from .conftest import tpch_custom_test_data_dialect_replacements
 from .testing_utilities import (
     PyDoughPandasTest,
+    get_day_of_week,
+    get_start_of_week,
     graph_fetcher,
+    harmonize_types,
     run_e2e_error_test,
 )
 
@@ -5060,6 +5067,147 @@ from .testing_utilities import (
             ),
             id="dataframe_collection_correlation",
         ),
+        # base case (should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(selected_orders))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [36049]}),
+                "rewrite_count_semi",
+            ),
+            id="rewrite_count_semi",
+        ),
+        # (should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "customers_china = customers.WHERE((nation.region.name == 'ASIA') & (nation.name == 'CHINA'))\n"
+                "result = TPCH.CALCULATE(n=COUNT(customers_china))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [6024]}),
+                "rewrite_count_complex_lhs",
+            ),
+            id="rewrite_count_complex_lhs",
+        ),
+        # LEFT->RIGHT=PLURAL_FILTER, RIGHT->LEFT=SINGULAR_FILTER (should not rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_europe = nations.WHERE(region.name == 'EUROPE')\n"
+                "building_customers = customers.WHERE(market_segment == 'BUILDING')\n"
+                "result = TPCH.CALCULATE(n=COUNT(nations_europe.WHERE(HAS(building_customers))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [5]}),
+                "rewrite_count_pf_sf",
+            ),
+            id="rewrite_count_pf_sf",
+        ),
+        # LEFT->RIGHT=PLURAL_FILTER, RIGHT->LEFT=SINGULAR_ACCESS(should rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "customers_selected = customers.WHERE((market_segment == 'AUTOMOBILE') & (account_balance < -975))\n"
+                "result = TPCH.CALCULATE(n=COUNT(nations.WHERE(HAS(customers_selected))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [23]}),
+                "rewrite_count_pf_sa",
+            ),
+            id="rewrite_count_pf_sa",
+        ),
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_FILTER (should not rewrite)
+        # LHS matches at most one RHS row, RHS matches multiple LHS rows (some filters)
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_segmented = customer.WHERE((market_segment == 'AUTOMOBILE'))\n"
+                "orders_selected = orders.WHERE((order_status == 'F'))\n"
+                "result = TPCH.CALCULATE(n=COUNT(orders_selected.WHERE(HAS(customer_segmented))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [145055]}),
+                "rewrite_count_sf_pf",
+            ),
+            id="rewrite_count_sf_pf",
+        ),
+        # LEFT->RIGHT=SINGULAR_FILTER, RIGHT->LEFT=PLURAL_ACCESS (should not rewrite)
+        pytest.param(
+            PyDoughPandasTest(
+                "parts_selected = part.WHERE(brand == 'Brand#23')\n"
+                "result = TPCH.CALCULATE(n=COUNT(supply_records.WHERE(HAS(parts_selected))))",
+                "TPCH",
+                lambda: pd.DataFrame({"n": [31480]}),
+                "rewrite_count_sf_pa",
+            ),
+            id="rewrite_count_sf_pa",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = customers.CALCULATE(c_key=key).orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(min_k=MIN(selected_orders.c_key), max_k=MAX(selected_orders.c_key), n=COUNT(selected_orders))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_k": [2], "max_k": [149998], "n": [45877]}),
+                "rewrite_min_inner",
+            ),
+            id="rewrite_min_inner",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((order_priority == '1-URGENT') & (YEAR(order_date) == 1994))\n"
+                "result = TPCH.CALCULATE(min_k=MIN(customers.WHERE(HAS(selected_orders)).key))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_k": [2]}),
+                "rewrite_min_inner_rhs",
+            ),
+            id="rewrite_min_inner_rhs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE((clerk == 'Clerk#000000470') & (total_price == 252004.18))\n"
+                "result = TPCH.CALCULATE(any_customer=ANYTHING(customers.WHERE(HAS(selected_orders)).name))",
+                "TPCH",
+                lambda: pd.DataFrame({"any_customer": ["Customer#000039136"]}),
+                "rewrite_any_inner_rhs",
+            ),
+            id="rewrite_any_inner_rhs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "nations_with_i = nations.WHERE(STARTSWITH(name, 'I'))\n"
+                "result = TPCH.CALCULATE(min_region=MIN(regions.WHERE(HAS(nations_with_i)).key))",
+                "TPCH",
+                lambda: pd.DataFrame({"min_region": [2]}),
+                "rewrite_min_region",
+            ),
+            id="rewrite_min_region",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE(YEAR(order_date) == 1998).TOP_K(5, by=customer_key)\n"
+                "result = selected_orders.CALCULATE(\n"
+                "   order_date,\n"
+                "   month_name_str=MONTHNAME('1995-10-26'),\n"
+                "   month_name_col=MONTHNAME(order_date),\n"
+                "   month_col_added=MONTHNAME(DATETIME(order_date, '+3 months')),\n"
+                "   month_str_subs=MONTHNAME(DATETIME('1995-10-26', '-5 MONTH')),\n"
+                "   month_now=MONTHNAME('now'),\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_date": [
+                            "1998-05-16",
+                            "1998-07-24",
+                            "1998-02-18",
+                            "1998-02-04",
+                            "1998-01-01",
+                        ],
+                        "month_name_str": ["Oct", "Oct", "Oct", "Oct", "Oct"],
+                        "month_name_col": ["May", "Jul", "Feb", "Feb", "Jan"],
+                        "month_col_added": ["Aug", "Oct", "May", "May", "Apr"],
+                        "month_str_subs": ["May", "May", "May", "May", "May"],
+                        "month_now": [datetime.now().strftime("%b")] * 5,
+                    }
+                ),
+                "monthname_function_1",
+            ),
+            id="monthname_function_1",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -5143,8 +5291,97 @@ def test_pipeline_e2e_tpch_custom(
     )
 
     tpch_custom_pipeline_test_data.run_e2e_test(
-        lambda _: graph, db_context, coerce_types=True
+        lambda _: graph,
+        db_context,
+        coerce_types=True,
+        atol=5e-3,
     )
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_simple_week(
+    get_sample_graph: graph_fetcher,
+    all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+    week_handling_config: PyDoughConfigs,
+):
+    """
+    Test executing simple_week_sampler_tpch using with different week
+    configurations, comparing against expected results. Run with each of the
+    different dialect supported.
+    """
+    database, metadata = all_dialects_tpch_db_context
+    root: UnqualifiedNode = init_pydough_context(metadata)(simple_week_sampler_tpch)()
+    result: pd.DataFrame = to_df(
+        root,
+        metadata=metadata,
+        database=database,
+        config=week_handling_config,
+    )
+
+    # Generate expected DataFrame based on week_handling_config
+    start_of_week = week_handling_config.start_of_week
+    start_week_as_zero = week_handling_config.start_week_as_zero
+
+    x_dt = pd.Timestamp(2025, 3, 10, 11, 0, 0)
+    y_dt = pd.Timestamp(2025, 3, 14, 11, 0, 0)
+    y_dt2 = pd.Timestamp(2025, 3, 15, 11, 0, 0)
+    y_dt3 = pd.Timestamp(2025, 3, 16, 11, 0, 0)
+    y_dt4 = pd.Timestamp(2025, 3, 17, 11, 0, 0)
+    y_dt5 = pd.Timestamp(2025, 3, 18, 11, 0, 0)
+    y_dt6 = pd.Timestamp(2025, 3, 19, 11, 0, 0)
+    y_dt7 = pd.Timestamp(2025, 3, 20, 11, 0, 0)
+    y_dt8 = pd.Timestamp(2025, 3, 21, 11, 0, 0)
+
+    # Calculate weeks difference
+    x_sow = get_start_of_week(x_dt, start_of_week)
+    y_sow = get_start_of_week(y_dt, start_of_week)
+    weeks_diff = (y_sow - x_sow).days // 7
+
+    # Create lists to store calculated values
+    dates = [y_dt, y_dt2, y_dt3, y_dt4, y_dt5, y_dt6, y_dt7, y_dt8]
+    sows = []
+    daynames = []
+    dayofweeks = []
+
+    # Calculate values for each date in a loop
+    for dt in dates:
+        # Calculate start of week
+        sow = get_start_of_week(dt, start_of_week).strftime("%Y-%m-%d")
+        sows.append(sow)
+
+        # Get day name
+        dayname = dt.day_name()
+        daynames.append(dayname)
+
+        # Calculate day of week
+        dayofweek = get_day_of_week(dt, start_of_week, start_week_as_zero)
+        dayofweeks.append(dayofweek)
+
+    # Create dictionary for DataFrame
+    data_dict = {"weeks_diff": [weeks_diff]}
+
+    # Add start of week columns
+    for i in range(len(dates)):
+        data_dict[f"sow{i + 1}"] = [sows[i]]
+
+    # Add day name columns
+    for i in range(len(dates)):
+        data_dict[f"dayname{i + 1}"] = [daynames[i]]
+
+    # Add day of week columns
+    for i in range(len(dates)):
+        data_dict[f"dayofweek{i + 1}"] = [dayofweeks[i]]
+
+    # Create DataFrame with expected results
+    expected_df = pd.DataFrame(data_dict)
+    expected_df.columns = result.columns  # Ensure same column names
+
+    # Harmonize types between result and expected DataFrame before comparison
+    for col_name in result.columns:
+        result[col_name], expected_df[col_name] = harmonize_types(
+            result[col_name], expected_df[col_name]
+        )
+    pd.testing.assert_frame_equal(result, expected_df)
 
 
 @pytest.mark.execute
@@ -6377,6 +6614,18 @@ def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
 # SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
 SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 
+# For Trino, write to the in-memory connector
+TRINO_TABLE_PREFIX = "memory.default."
+
+# For Databricks, the connection's default catalog/schema is the read-only
+# tpch_s3_pq.TPCH_SF1 (external S3 location), so write to a separate
+# managed catalog/schema instead. Each Python version gets its own schema
+# so the parallel CI matrix jobs don't race on the same table names
+# NOTE: You'll need to create a new schema for each new Python version,
+# e.g. CREATE SCHEMA IF NOT EXISTS e2e_tests_db.to_table_py310;
+DATABRICKS_TEST_SCHEMA = f"to_table_py{sys.version_info.major}{sys.version_info.minor}"
+DATABRICKS_TABLE_PREFIX = f"e2e_tests_db.{DATABRICKS_TEST_SCHEMA}."
+
 
 def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
     """Return a copy of test_data with temp=True removed from the PyDough string.
@@ -6395,6 +6644,21 @@ def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
     )
 
 
+def get_table_prefix_for_dialect(dialect: DatabaseDialect) -> str:
+    """Return the appropriate table name prefix for the given database dialect."""
+    match dialect:
+        # For Snowflake, use cross-database write
+        # (read from SNOWFLAKE_SAMPLE_DATA, write to E2E_TESTS_DB.PUBLIC)
+        case DatabaseDialect.SNOWFLAKE:
+            return SNOWFLAKE_TABLE_PREFIX
+        case DatabaseDialect.TRINO:
+            return TRINO_TABLE_PREFIX
+        case DatabaseDialect.DATABRICKS:
+            return DATABRICKS_TABLE_PREFIX
+        case _:
+            return ""
+
+
 @pytest.mark.execute
 def test_pipeline_tpch_e2e_to_table_all_dialects(
     tpch_custom_pipeline_to_table_test_data: PyDoughPandasTest,
@@ -6410,16 +6674,10 @@ def test_pipeline_tpch_e2e_to_table_all_dialects(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
-    # write to E2E_TESTS_DB.PUBLIC)
-    table_prefix = (
-        SNOWFLAKE_TABLE_PREFIX
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
-        else ""
-    )
+    table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
-    if db_context.dialect == DatabaseDialect.ORACLE:
+    if db_context.dialect in (DatabaseDialect.ORACLE, DatabaseDialect.TRINO):
         test_data = _strip_temp_for_oracle(test_data)
 
     test_data.run_e2e_test(
@@ -6447,16 +6705,10 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
-    # write to E2E_TESTS_DB.PUBLIC)
-    table_prefix = (
-        SNOWFLAKE_TABLE_PREFIX
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
-        else ""
-    )
+    table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
-    if db_context.dialect == DatabaseDialect.ORACLE:
+    if db_context.dialect in (DatabaseDialect.ORACLE, DatabaseDialect.TRINO):
         test_data = _strip_temp_for_oracle(test_data)
 
     sql_file_path: str = get_sql_test_filename(
@@ -6538,13 +6790,7 @@ def test_pipeline_to_table_ddl(
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
-    # For Snowflake, use cross-database write (read from SNOWFLAKE_SAMPLE_DATA,
-    # write to E2E_TESTS_DB.PUBLIC)
-    table_prefix = (
-        SNOWFLAKE_TABLE_PREFIX
-        if db_context.dialect == DatabaseDialect.SNOWFLAKE
-        else ""
-    )
+    table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     # TEMP VIEWS (not tables) are not supported for Snowflake, MySQL, Postgres, and Oracle.
     # So run and catch PyDoughException that indicates temp view is not supported, and skip the rest of the test in that case.
@@ -6557,6 +6803,7 @@ def test_pipeline_to_table_ddl(
             DatabaseDialect.MYSQL,
             DatabaseDialect.POSTGRES,
             DatabaseDialect.ORACLE,
+            DatabaseDialect.TRINO,
         }
     ):
         with pytest.raises(
@@ -6571,8 +6818,12 @@ def test_pipeline_to_table_ddl(
                 table_name_prefix=table_prefix,
             )
         return
-    # TEMP TABLES are not supported for Oracle.
-    if temp and not as_view and db_context.dialect == DatabaseDialect.ORACLE:
+    # TEMP TABLES are not supported for Oracle/Trino.
+    if (
+        temp
+        and not as_view
+        and db_context.dialect in {DatabaseDialect.ORACLE, DatabaseDialect.TRINO}
+    ):
         with pytest.raises(
             PyDoughException, match="TEMPORARY TABLE is not supported for"
         ):
@@ -6597,8 +6848,16 @@ def test_pipeline_to_table_ddl(
     expected_create_statement = "CREATE"
 
     table_or_view = " VIEW" if as_view else " TABLE"
-    # SQLite, PostgreSQL, MySQL, and Oracle do not support REPLACE TABLE
-    # Also, SQLite does not support REPLACE VIEW too but other dialects too.
+
+    # Databricks does not support temporary tables, only temporary views,
+    # so to_table() falls back to creating a TEMPORARY VIEW when temp=True
+    # and as_view=False.
+    if db_context.dialect == DatabaseDialect.DATABRICKS and temp and not as_view:
+        table_or_view = " VIEW"
+
+    # SQLite, PostgreSQL, MySQL, Trino, Oracle, and Databricks do not support
+    # REPLACE TABLE.
+    # Also, SQLite/Trino do not support REPLACE VIEW too but other dialects too.
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
     if replace:
@@ -6610,12 +6869,15 @@ def test_pipeline_to_table_ddl(
                 DatabaseDialect.POSTGRES,
                 DatabaseDialect.MYSQL,
                 DatabaseDialect.ORACLE,
+                DatabaseDialect.TRINO,
+                DatabaseDialect.DATABRICKS,
             }
         ) or (
             table_or_view == " VIEW"
             and db_context.dialect
             in {
                 DatabaseDialect.SQLITE,
+                DatabaseDialect.TRINO,
             }
         ):
             expected_create_statement = rf"DROP.*{table_or_view} IF EXISTS.*{re.escape(expected_create_statement)}"

@@ -12,6 +12,7 @@ ensure that we don't affect other tests, or that in the teardown step
 we replace the active session with a new default session.
 """
 
+import math
 from collections.abc import Callable
 
 import pandas as pd
@@ -416,13 +417,14 @@ def test_division_by_zero_e2e(
         division_e2e_test_func
     )()
 
-    # DATABASE mode: Snowflake/Postgres/Oracle/BodoSQL throw errors, SQLite/MySQL return NULL
+    # DATABASE mode: Snowflake/Postgres/Oracle/BodoSQL/Databricks throw errors, SQLite/MySQL return NULL
     if division_by_zero_config == DivisionByZeroBehavior.DATABASE:
         if db_context.dialect in (
             DatabaseDialect.SNOWFLAKE,
             DatabaseDialect.POSTGRES,
             DatabaseDialect.ORACLE,
             DatabaseDialect.BODOSQL,
+            DatabaseDialect.DATABRICKS,
         ):
             with pytest.raises(
                 PyDoughSQLException,
@@ -451,10 +453,17 @@ def test_division_by_zero_e2e(
     )
 
     # Determine expected result based on config
-    if division_by_zero_config == DivisionByZeroBehavior.ZERO:
-        expected_df = pd.DataFrame({col_name: [0.0]})
-    else:
-        # DATABASE (for sqlite/mysql) and NULL both return NULL
-        expected_df = pd.DataFrame({col_name: [None]})
+    match division_by_zero_config:
+        case DivisionByZeroBehavior.ZERO:
+            expected_df = pd.DataFrame({col_name: [0.0]})
+        case DivisionByZeroBehavior.NULL:
+            expected_df = pd.DataFrame({col_name: [None]})
+        case DivisionByZeroBehavior.DATABASE:
+            if db_context.dialect == DatabaseDialect.TRINO:
+                # Trino returns INFINITY for division by zero
+                expected_df = pd.DataFrame({col_name: [math.inf]})
+            else:
+                # Other dialects that reach this far return NULL
+                expected_df = pd.DataFrame({col_name: [None]})
 
     pd.testing.assert_frame_equal(output, expected_df, check_dtype=False)

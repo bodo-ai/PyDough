@@ -5,7 +5,7 @@ WITH _s1 AS (
   FROM tpch.part
 ), _t0 AS (
   SELECT DISTINCT
-    orders.o_orderkey AS key,
+    orders.o_orderkey,
     lineitem.l_linenumber,
     lineitem.l_orderkey
   FROM tpch.lineitem AS lineitem

@@ -16,7 +16,7 @@ SELECT
   CASE
     WHEN a_key = 0
     THEN 0
-    ELSE CASE WHEN a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(a_key, 1 + INSTR(a_key, '-'), CAST(LENGTH(a_key) AS REAL) / 2) AS INTEGER)
+    ELSE CASE WHEN a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(a_key, 1 + INSTR(a_key, '-'), LENGTH(a_key) / 2) AS INTEGER)
   END AS key,
   SQRT(a_balance) AS balance
 FROM _t

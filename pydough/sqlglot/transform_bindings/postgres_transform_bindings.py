@@ -237,7 +237,7 @@ class PostgresTransformBindings(BaseTransformBindings):
 
                 dow1 = self.convert_dayofweek([date1], [types[1]])
                 dow2 = self.convert_dayofweek([date2], [types[2]])
-                divion = sqlglot_expressions.Div(
+                division = sqlglot_expressions.Div(
                     this=apply_parens(
                         sqlglot_expressions.Add(
                             this=raw_delta,
@@ -250,7 +250,7 @@ class PostgresTransformBindings(BaseTransformBindings):
                 )
 
                 return sqlglot_expressions.Cast(
-                    this=divion, to=sqlglot_expressions.DataType.build("BIGINT")
+                    this=division, to=sqlglot_expressions.DataType.build("BIGINT")
                 )
 
             case DateTimeUnit.DAY:
@@ -291,7 +291,7 @@ class PostgresTransformBindings(BaseTransformBindings):
                     expression=apply_parens(sub_dates),
                 )
 
-                division: SQLGlotExpression = sqlglot_expressions.Div(
+                division = sqlglot_expressions.Div(
                     this=extract_epoch,
                     expression=sqlglot_expressions.Literal.number(division_literal),
                 )
@@ -343,6 +343,27 @@ class PostgresTransformBindings(BaseTransformBindings):
 
         else:
             return super().apply_datetime_truncation(base, unit)
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        to_char(date, 'Mon')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.TimeToStr(this=date, format=month_format)
 
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

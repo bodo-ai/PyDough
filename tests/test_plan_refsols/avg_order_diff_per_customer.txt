@@ -1,5 +1,5 @@
 ROOT(columns=[('name', anything_c_name), ('avg_diff', avg_day_diff)], orderings=[(avg_day_diff):desc_last], limit=5:numeric)
- AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'anything_c_name': ANYTHING(c_name), 'avg_day_diff': AVG(day_diff)})
+ AGGREGATE(keys={'c_custkey': o_custkey}, aggregations={'anything_c_name': ANYTHING(c_name), 'avg_day_diff': AVG(day_diff)})
   PROJECT(columns={'c_name': c_name, 'day_diff': DATEDIFF('days':string, PREV(args=[o_orderdate], partition=[o_custkey], order=[(o_orderdate):asc_last]), o_orderdate), 'o_custkey': o_custkey})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_name': t0.c_name, 'o_custkey': t1.o_custkey, 'o_orderdate': t1.o_orderdate})
     JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey, 'c_name': t0.c_name})

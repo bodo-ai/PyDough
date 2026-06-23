@@ -51,6 +51,7 @@ __all__ = [
     "MOD",
     "MONOTONIC",
     "MONTH",
+    "MONTHNAME",
     "MUL",
     "NDISTINCT",
     "NEQ",
@@ -220,6 +221,9 @@ DAYOFWEEK = ExpressionFunctionOperator(
 )
 DAYNAME = ExpressionFunctionOperator(
     "DAYNAME", False, RequireNumArgs(1), ConstantType(StringType())
+)
+MONTHNAME = ExpressionFunctionOperator(
+    "MONTHNAME", False, RequireNumArgs(1), ConstantType(StringType())
 )
 HOUR = ExpressionFunctionOperator(
     "HOUR", False, RequireNumArgs(1), ConstantType(NumericType())
