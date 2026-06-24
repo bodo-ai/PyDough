@@ -61,6 +61,7 @@ import re as _re
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
+from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag import (
     Calculate,
     ChildReferenceExpression,
@@ -163,6 +164,13 @@ _HINT_MAP: dict[str, str | None] = {
     "type_error": "Check that the argument types match what the function expects.",
     "generic": None,
 }
+"""
+Maps each `error_type` tag to a plain-English hint string that can be passed 
+to the LLM to help it understand the error and provide actionable guidance 
+to fix it.Keys match the `error_type` values returned by `_classify_error`.
+A `None` value means no specific hint is available for that category; 
+the LLM receives only the raw message.
+"""
 
 
 def _classify_error(
@@ -175,6 +183,14 @@ def _classify_error(
     structured fields extracted from the message (e.g. the wrong term name
     and the list of suggestions).  ``hint`` is the actionable guidance string
     for the LLM — ``None`` when no specific hint is available.
+
+    Args:
+        `e`: the exception to classify.
+
+    Returns:
+        A 3-tuple ``(error_type, details, hint)`` where ``error_type`` is a
+        stable string tag, ``details`` is a dict of structured fields, and
+        ``hint`` is an actionable guidance string or ``None``.
     """
     from pydough.errors import (
         PyDoughQDAGException,
@@ -184,7 +200,14 @@ def _classify_error(
         PyDoughUnqualifiedException,
     )
 
-    msg = str(e)
+    msg: str = str(e)
+
+    # NOTE: The checks below match against substrings of exception messages.
+    # This is intentionally pragmatic — the PyDough error classes do not yet
+    # expose structured attributes for each error condition, so substring
+    # matching is the only stable signal available without changing those
+    # classes.  If the error messages change in future, update the patterns
+    # here and add a test that exercises each branch of _classify_error.
 
     # ── Not callable — must precede the "Did you mean" check because the
     #    undefined_function_call error appends "Did you mean to access an
@@ -196,11 +219,13 @@ def _classify_error(
     if "Did you mean" in msg:
         details: dict = {}
         # Extract the wrong term: "Unrecognized term of ...: 'TERM'."
-        term_match = _re.search(r":\s*'([^']+)'", msg)
+        term_match: _re.Match[str] | None = _re.search(r":\s*'([^']+)'", msg)
         if term_match:
             details["term"] = term_match.group(1)
         # Extract suggestions: "Did you mean: a, b, c?"
-        sugg_match = _re.search(r"Did you mean:\s*([^?]+)\?", msg)
+        sugg_match: _re.Match[str] | None = _re.search(
+            r"Did you mean:\s*([^?]+)\?", msg
+        )
         if sugg_match:
             details["suggestions"] = [s.strip() for s in sugg_match.group(1).split(",")]
         return "unrecognized_term", details, _HINT_MAP["unrecognized_term"]
@@ -278,6 +303,15 @@ def _error_payload(
 
     The payload always has a stable shape so the markdown renderer and any
     programmatic consumer can handle every error the same way.
+
+    Args:
+        `e`: the exception to convert, or a plain string message when the
+          error is detected before an exception is raised (e.g. expression
+          received where a collection was expected).
+
+    Returns:
+        A dict with keys ``"error"``, ``"error_type"``, ``"message"``,
+        ``"details"``, ``"hint"``, ``"steps"``, and ``"schema"``.
     """
     if isinstance(e, str):
         message = e
@@ -311,6 +345,13 @@ def _build_global_context_step(node: GlobalContext, order: int) -> dict:
     all top-level collections.  There are no calc_terms here; available
     expressions come from inherited terms (if this is a CROSS intermediate
     GlobalContext they'll be populated, but for the true root it's empty).
+
+    Args:
+        `node`: the ``GlobalContext`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="GlobalContext"``.
     """
     expr_names, coll_names = extract_terms(node)
     return {
@@ -333,15 +374,25 @@ def _build_table_collection_step(node: TableCollection, order: int) -> dict:
     CROSS joins also produce a TableCollection but with a nested intermediate
     GlobalContext as their ancestor (see ``_is_cross``).  When detected, the
     step type becomes ``"Cross"`` and both collection names are recorded.
+
+    Args:
+        `node`: the ``TableCollection`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="TableCollection"`` for a plain access, or
+        ``type="Cross"`` when the node was produced by a CROSS join.
     """
     expr_names, coll_names = extract_terms(node)
-    debug = {"available_terms": {"expressions": expr_names, "collections": coll_names}}
+    debug: dict = {
+        "available_terms": {"expressions": expr_names, "collections": coll_names}
+    }
 
     if _is_cross(node):
         assert node.ancestor_context is not None
         assert node.ancestor_context.ancestor_context is not None
-        left_name = node.ancestor_context.ancestor_context.name
-        right_name = node.collection.name
+        left_name: str = node.ancestor_context.ancestor_context.name
+        right_name: str = node.collection.name
         return {
             "order": order,
             "type": "Cross",
@@ -354,7 +405,7 @@ def _build_table_collection_step(node: TableCollection, order: int) -> dict:
             "debug": debug,
         }
 
-    collection_name = node.collection.name
+    collection_name: str = node.collection.name
     return {
         "order": order,
         "type": "TableCollection",
@@ -370,8 +421,16 @@ def _build_sub_collection_step(node: SubCollection, order: int) -> dict:
 
     The property name (e.g. ``"orders"``) and the collections it connects are
     recorded.  The caller can use these to understand relationship navigation.
+
+    Args:
+        `node`: the ``SubCollection`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="SubCollection"``, including ``property``,
+        ``from_collection``, and ``to_collection``.
     """
-    prop = node.subcollection_property
+    prop: SubcollectionRelationshipMetadata = node.subcollection_property
     expr_names, coll_names = extract_terms(node)
     return {
         "order": order,
@@ -402,6 +461,14 @@ def _build_where_step(node: Where, order: int) -> dict:
     plain string, so the judge can inspect operator, left, and right operands
     without parsing.  ``condition_summary`` is kept as a plain string for quick
     human reading.
+
+    Args:
+        `node`: the ``Where`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="Where"``, including ``conditions`` (list of
+        structured dicts) and ``condition_summary`` (plain string).
     """
     raw_conditions = extract_conditions(node.condition)
     conditions = [describe_expression(c) for c in raw_conditions]
@@ -433,12 +500,20 @@ def _build_calculate_step(node: Calculate, order: int) -> dict:
     ``term_details`` maps each new term name to its ``describe_expression``
     dict.  Terms are sorted by their declared position so the order is stable
     and matches the user's CALCULATE(...) call.
+
+    Args:
+        `node`: the ``Calculate`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="Calculate"``, including ``terms`` (ordered
+        list of names) and ``term_details`` (name → expression dict).
     """
-    sorted_terms = sorted(
+    sorted_terms: list[str] = sorted(
         node.calc_terms,
         key=lambda name: node.get_expression_position(name),
     )
-    term_details = {
+    term_details: dict[str, dict] = {
         name: describe_expression(node.get_expr(name), parent=node)
         for name in sorted_terms
     }
@@ -459,6 +534,17 @@ def _build_calculate_step(node: Calculate, order: int) -> dict:
 
 
 def _collation_entry(col) -> dict:
+    """
+    Converts a single collation key into a structured dict.
+
+    Args:
+        `col`: a collation key object with ``expr``, ``asc``, and ``na_last``
+          attributes (as produced by the ``OrderBy``/``TopK`` QDAG nodes).
+
+    Returns:
+        A dict with ``"text"``, ``"direction"`` (``"ASC"``/``"DESC"``), and
+        ``"nulls"`` (``"FIRST"``/``"LAST"``).
+    """
     return {
         "text": col.expr.to_string(),
         "direction": "ASC" if col.asc else "DESC",
@@ -473,8 +559,16 @@ def _build_order_by_step(node: OrderBy, order: int) -> dict:
     Each key records direction (``"ASC"``/``"DESC"``) and null placement
     (``"FIRST"``/``"LAST"``).  TopK is a subclass of OrderBy so the same
     builder handles both; ``limit`` is included only for TopK.
+
+    Args:
+        `node`: the ``OrderBy`` (or ``TopK``) QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="TopK"`` or ``type="OrderBy"``, including
+        ``collation`` and (for ``TopK``) ``limit``.
     """
-    collation = [_collation_entry(col) for col in node.collation]
+    collation: list[dict] = [_collation_entry(col) for col in node.collation]
     expr_names, coll_names = extract_terms(node)
     step: dict = {
         "order": order,
@@ -504,8 +598,16 @@ def _build_partition_by_step(node: PartitionBy, order: int) -> dict:
     ``keys`` are the partitioning field names; ``child_name`` is the name of
     the subcollection holding the per-partition rows (accessible inside
     aggregations).
+
+    Args:
+        `node`: the ``PartitionBy`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="PartitionBy"``, including ``keys``,
+        ``child_name``, and ``child_available_terms``.
     """
-    keys = [
+    keys: list[str] = [
         k.expr.term_name
         if isinstance(k.expr, (Reference, ChildReferenceExpression))
         else k.expr.to_string()
@@ -535,6 +637,13 @@ def _build_partition_by_step(node: PartitionBy, order: int) -> dict:
 def _build_partition_child_step(node: PartitionChild, order: int) -> dict:
     """
     Accesses the unpartitioned child data inside a PARTITION context.
+
+    Args:
+        `node`: the ``PartitionChild`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="PartitionChild"`` and ``child_name``.
     """
     expr_names, coll_names = extract_terms(node)
     return {
@@ -557,6 +666,14 @@ def _build_partition_child_step(node: PartitionChild, order: int) -> dict:
 def _build_singular_step(node: Singular, order: int) -> dict:
     """
     Asserts that the preceding collection is 1-to-1 with its parent context.
+
+    Args:
+        `node`: the ``Singular`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="Singular"`` and ``preceding`` (the
+        ``to_string()`` of the node being asserted singular).
     """
     expr_names, coll_names = extract_terms(node)
     return {
@@ -581,6 +698,13 @@ def _build_user_generated_step(
 ) -> dict:
     """
     Accesses a user-generated collection (e.g. a ``to_table()`` view).
+
+    Args:
+        `node`: the ``PyDoughUserGeneratedCollectionQDag`` QDAG node.
+        `order`: 1-based position of this step in the execution chain.
+
+    Returns:
+        A step dict with ``type="UserGeneratedCollection"`` and ``name``.
     """
     expr_names, coll_names = extract_terms(node)
     return {
@@ -638,7 +762,7 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     # GlobalContext, bypassing the collection being partitioned.  The real
     # pre-partition chain (e.g. customers.WHERE(...).orders) is accessible via
     # child.ancestor_context instead.
-    top = nodes[-1]
+    top: PyDoughCollectionQDAG = nodes[-1]
     seen_ids: set[int] = {id(n) for n in nodes}
     if isinstance(top, PartitionBy) and hasattr(top, "child"):
         child = top.child
@@ -788,7 +912,7 @@ def _build_schema(root: PyDoughCollectionQDAG) -> dict:
     calc_for_cols: PyDoughCollectionQDAG | None = root
     while calc_for_cols is not None and not isinstance(calc_for_cols, Calculate):
         calc_for_cols = getattr(calc_for_cols, "preceding_context", None)
-    output_columns = (
+    output_columns: list[str] = (
         sorted(
             calc_for_cols.calc_terms,
             key=lambda name: calc_for_cols.get_expression_position(name),
@@ -822,7 +946,7 @@ def _build_schema(root: PyDoughCollectionQDAG) -> dict:
     # find_source_collection returns None for global-level CALCULATEs; fall
     # back to inspecting aggregation args across the QDAG chain so the schema
     # still names the collection(s) being accessed.
-    source = find_source_collection(root)
+    source: str | None = find_source_collection(root)
     if source is None:
         cur: PyDoughCollectionQDAG | None = root
         while cur is not None and source is None:
@@ -867,6 +991,12 @@ def _expr_display(detail: dict) -> str:
 
     ``Reference`` dicts have no ``text`` field (removed in Phase 2), so we
     fall back to ``term_name``.  All other kinds carry a ``text`` field.
+
+    Args:
+        `detail`: a ``describe_expression`` dict (must have at least ``"kind"``).
+
+    Returns:
+        A short human-readable string for the expression.
     """
     if detail.get("kind") == "Reference":
         return detail.get("term_name", "?")
@@ -874,7 +1004,16 @@ def _expr_display(detail: dict) -> str:
 
 
 def _render_step_body(step: dict) -> list[str]:
-    """Returns the type-specific body lines for a single step dict."""
+    """
+    Returns the type-specific body lines for a single step dict.
+
+    Args:
+        `step`: a step dict produced by one of the ``_build_*_step`` functions.
+
+    Returns:
+        A list of markdown bullet-list lines (may be empty for steps with no
+        type-specific fields to display).
+    """
     lines: list[str] = []
     stype = step["type"]
 
@@ -989,11 +1128,11 @@ def _render_md(result: dict) -> str:
         return "\n".join(lines)
 
     # ------------------------------------------------------------------ #
-    # Key Facts — quick-reference block at the top so the judge sees the  #
+    # Key Facts — quick-reference block at the top so the LLM sees the  #
     # most checkable facts before reading any steps.                      #
     # ------------------------------------------------------------------ #
-    schema = result["schema"]
-    steps = result["steps"]
+    schema: dict = result["schema"]
+    steps: list[dict] = result["steps"]
 
     src = schema.get("source_collection")
     limit = schema.get("limit")
@@ -1148,6 +1287,7 @@ def explain_llm(
 
     # --- qualification -------------------------------------------------------
     qualified, error = qualify_safely(data, session)
+    result: dict = {"error": True, "message": "", "steps": [], "schema": None}
     if error is not None:
         result = _error_payload(error)
         return _render_md(result) if format == "md" else result

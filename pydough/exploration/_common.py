@@ -126,7 +126,9 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
             # customers.WHERE(...).orders).  Get that chain via child instead.
             current = current.child
         else:
-            nxt = getattr(current, "preceding_context", None)
+            nxt: PyDoughCollectionQDAG | None = getattr(
+                current, "preceding_context", None
+            )
             if nxt is None:
                 # At a ChildAccess (SubCollection etc.) — cross into the
                 # ancestor_context chain to find the parent collection.
@@ -245,7 +247,7 @@ def describe_subcollection_arg(
     # Non-empty access_path → row-level scoping via relationship navigation.
     implicit_scope_note: str | None = None
     if access_path:
-        path_str = " → ".join(f"'{p}'" for p in access_path)
+        path_str: str = " → ".join(f"'{p}'" for p in access_path)
         implicit_scope_note = (
             f"Aggregating '{name}' which is accessed via relationship "
             f"navigation ({path_str}). Row-level scoping to the parent row "
@@ -275,7 +277,7 @@ def _resolve_collection_arg(
 
     Args:
         `arg`: the collection arg from an ``ExpressionFunctionCall``.
-        `parent`: the parent ``Calculate`` (or other child operator) that owns
+        `parent`: the parent ``CALCULATE`` (or other child operator) that owns
           the children list.  May be ``None`` if not available.
 
     Returns:
@@ -288,7 +290,7 @@ def _resolve_collection_arg(
         and hasattr(parent, "children")
         and arg.child_idx < len(parent.children)
     ):
-        child = parent.children[arg.child_idx]
+        child: PyDoughCollectionQDAG = parent.children[arg.child_idx]
         if isinstance(child, ChildOperatorChildAccess):
             return child.child_access
     # ChildReferenceCollection always carries the underlying collection via
@@ -372,7 +374,9 @@ def describe_expression(
                 and len(expr.args) == 1
                 and isinstance(expr.args[0], PyDoughCollectionQDAG)
             ):
-                resolved = _resolve_collection_arg(expr.args[0], parent)
+                resolved: PyDoughCollectionQDAG = _resolve_collection_arg(
+                    expr.args[0], parent
+                )
                 return {
                     "kind": "Aggregation",
                     "text": text,
@@ -625,9 +629,13 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     # 1. Subject                                                           #
     # ------------------------------------------------------------------ #
-    cross_step = next((s for s in steps if s["type"] == "Cross"), None)
-    table_step = next((s for s in steps if s["type"] == "TableCollection"), None)
-    user_step = next((s for s in steps if s["type"] == "UserGeneratedCollection"), None)
+    cross_step: dict | None = next((s for s in steps if s["type"] == "Cross"), None)
+    table_step: dict | None = next(
+        (s for s in steps if s["type"] == "TableCollection"), None
+    )
+    user_step: dict | None = next(
+        (s for s in steps if s["type"] == "UserGeneratedCollection"), None
+    )
 
     if cross_step:
         parts.append(
@@ -647,10 +655,10 @@ def generate_query_summary(steps: list[dict]) -> str:
             if s["type"] != "Calculate":
                 continue
             for tname in s.get("terms", []):
-                detail = s.get("term_details", {}).get(tname, {})
+                detail: dict = s.get("term_details", {}).get(tname, {})
                 if detail.get("kind") == "Aggregation":
                     for arg_d in detail.get("args", []):
-                        cname = arg_d.get("name")
+                        cname: str | None = arg_d.get("name")
                         if cname and cname != "unknown" and cname not in agg_colls:
                             agg_colls.append(cname)
         if agg_colls:
@@ -670,7 +678,7 @@ def generate_query_summary(steps: list[dict]) -> str:
     # understands they filter a different level of the data.
     top_conds: list[str] = []
     sub_conds: list[str] = []
-    past_first_sub = False
+    past_first_sub: bool = False
     for s in steps:
         if s["type"] in ("SubCollection", "Cross"):
             past_first_sub = True
@@ -687,9 +695,11 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     # 3. Partition                                                         #
     # ------------------------------------------------------------------ #
-    partition_step = next((s for s in steps if s["type"] == "PartitionBy"), None)
+    partition_step: dict | None = next(
+        (s for s in steps if s["type"] == "PartitionBy"), None
+    )
     if partition_step:
-        keys_str = ", ".join(partition_step.get("keys", []))
+        keys_str: str = ", ".join(partition_step.get("keys", []))
         parts.append(f"partitioned by {keys_str}")
 
     # ------------------------------------------------------------------ #
@@ -699,7 +709,9 @@ def generate_query_summary(steps: list[dict]) -> str:
     # descriptions from ALL Calculate steps — chained patterns like
     # .CALCULATE(n=COUNT(...)).TOP_K(...).CALCULATE(col) put the aggregation
     # in an earlier step, not the final one.
-    calc_step = next((s for s in reversed(steps) if s["type"] == "Calculate"), None)
+    calc_step: dict | None = next(
+        (s for s in reversed(steps) if s["type"] == "Calculate"), None
+    )
     if calc_step:
         # Annotate computed (non-Reference, non-Aggregation) terms with their
         # expression so the judge can see e.g. "full_name (JOIN_STRINGS(...))"
@@ -719,11 +731,13 @@ def generate_query_summary(steps: list[dict]) -> str:
                     ref_terms.append(f"{_n} (computed)")
         agg_terms: list[str] = []
 
-        first_calc_idx = next(
+        first_calc_idx: int = next(
             (i for i, s in enumerate(steps) if s["type"] == "Calculate"),
             len(steps),
         )
-        has_partition = any(s["type"] == "PartitionBy" for s in steps[:first_calc_idx])
+        has_partition: bool = any(
+            s["type"] == "PartitionBy" for s in steps[:first_calc_idx]
+        )
         for s in steps:
             if s["type"] != "Calculate":
                 continue
@@ -731,8 +745,8 @@ def generate_query_summary(steps: list[dict]) -> str:
                 detail = s.get("term_details", {}).get(name, {})
                 if detail.get("kind") != "Aggregation":
                     continue
-                fn = detail.get("function", "AGG").lower()
-                arg_name = (detail.get("args") or [{}])[0].get("name", "?")
+                fn: str = detail.get("function", "AGG").lower()
+                arg_name: str = (detail.get("args") or [{}])[0].get("name", "?")
                 # Use explicit semantic labels so the judge can distinguish
                 # "counting records per group" (COUNT inside PARTITION) from
                 # "counting all records" (global COUNT) and from
@@ -760,15 +774,17 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     # 5. Limit / Order                                                     #
     # ------------------------------------------------------------------ #
-    topk_step = next((s for s in steps if s["type"] == "TopK"), None)
-    order_step = next((s for s in steps if s["type"] == "OrderBy"), None)
-    sort_step = topk_step or order_step
+    topk_step: dict | None = next((s for s in steps if s["type"] == "TopK"), None)
+    order_step: dict | None = next((s for s in steps if s["type"] == "OrderBy"), None)
+    sort_step: dict | None = topk_step or order_step
 
     if sort_step:
-        collation = sort_step.get("collation", [])
-        by_str = ", ".join(f"{c['text']} {c['direction'].lower()}" for c in collation)
+        collation: list[dict] = sort_step.get("collation", [])
+        by_str: str = ", ".join(
+            f"{c['text']} {c['direction'].lower()}" for c in collation
+        )
         if topk_step:
-            suffix = f" by {by_str}" if by_str else ""
+            suffix: str = f" by {by_str}" if by_str else ""
             parts.append(f"keeping the top {sort_step['limit']} rows{suffix}")
         elif by_str:
             parts.append(f"ordered by {by_str}")
@@ -779,7 +795,7 @@ def generate_query_summary(steps: list[dict]) -> str:
     if not parts:
         return "No operations detected."
 
-    summary = parts[0]
+    summary: str = parts[0]
     for p in parts[1:]:
         summary += ", " + p
     return summary.rstrip(".") + "."

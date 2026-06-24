@@ -1396,7 +1396,7 @@ Each entry in `steps` represents one operation in execution order (earliest firs
 * `notes` — list of strings; always present, may be empty
 
 The `schema` section (when `"error"` is `False`) includes:
-* `source_collection` — the root table name, or `null` for graph-level expressions
+* `source_collection` — the root collection name, or `null` for graph-level expressions
 * `available_expressions` — expression names in scope at the final step
 * `output_columns` — explicitly computed column names (only non-empty when the expression ends with `CALCULATE`)
 * `column_types` — map of column name → PyDough type string (e.g. `"string"`, `"numeric"`)
@@ -1417,7 +1417,8 @@ pydough.explain_llm(result)
   "query_summary": "Accesses 'nations', filtered to rows where region.name == 'ASIA', selecting key, name.",
   "steps": [
     {
-      "order": 1, "type": "GlobalContext",
+      "order": 1, 
+      "type": "GlobalContext",
       "description": "Entry point: the graph-level context.",
       "debug": {"available_terms": {"expressions": [], "collections": ["customers", "nations", "regions", "..."]}},
       "notes": []
