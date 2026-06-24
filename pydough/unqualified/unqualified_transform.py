@@ -519,8 +519,8 @@ def from_string(
         else:
             # Just set the metadata on the existing session
             pydough.active_session.metadata = metadata
-        # Passing the execution_context to globals allowing python functions
-        # access the execution context from the function's scope
+        # Passing execution_context as globals, this allows defined python functions
+        # inside the source access the environment and the metadata
         exec(compile_ast, execution_context, execution_context)
     finally:
         if session is not None:
