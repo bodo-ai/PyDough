@@ -233,6 +233,27 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             # For other units, use base implementation
             return super().convert_datediff(args, types)
 
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        TO_VARCHAR(my_date, 'Mon')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.ToChar(this=date, format=month_format)
+
     def convert_user_generated_range(
         self, collection: RangeGeneratedCollection
     ) -> SQLGlotExpression:

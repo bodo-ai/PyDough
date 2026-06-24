@@ -106,6 +106,7 @@ These functions must be called on singular data as a function.
             - **Seconds**: `"seconds"`, `"second"`, `"s"`.
 - `DAYOFWEEK`: returns the day of the week of a datetime in integer form. The config `start_of_week` determines which day is considered the first day of the week. The config `start_week_as_zero` determines whether the week starts at 0 or 1.
 - `DAYNAME`: returns the name of the day of the week of a week day represented as an integer. The config `start_of_week` determines which day is considered the first day of the week. The config `start_week_as_zero` determines whether the week starts at 0 or 1.
+- `MONTHNAME`: returns the 3-letters abbreviation of the month for the given date/timestamp.
 
 ##### Conditional Functions
 

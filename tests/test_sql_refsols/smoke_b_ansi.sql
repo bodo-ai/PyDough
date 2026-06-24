@@ -45,7 +45,85 @@ SELECT
   DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS TIMESTAMP), HOUR) AS n,
   DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS TIMESTAMP), MINUTE) AS o,
   DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS TIMESTAMP), SECOND) AS p,
-  DATE_TRUNC('WEEK', CAST(o_orderdate AS TIMESTAMP)) AS q
+  DATE_TRUNC('WEEK', CAST(o_orderdate AS TIMESTAMP)) AS q,
+  CONCAT_WS(
+    ':',
+    CASE
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 1
+      THEN 'Jan'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 2
+      THEN 'Feb'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 3
+      THEN 'Mar'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 4
+      THEN 'Apr'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 5
+      THEN 'May'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 6
+      THEN 'Jun'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 7
+      THEN 'Jul'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 8
+      THEN 'Aug'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 9
+      THEN 'Sep'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 10
+      THEN 'Oct'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END,
+    CASE
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 1
+      THEN 'Jan'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 2
+      THEN 'Feb'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 3
+      THEN 'Mar'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 4
+      THEN 'Apr'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 5
+      THEN 'May'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 6
+      THEN 'Jun'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 7
+      THEN 'Jul'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 8
+      THEN 'Aug'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 9
+      THEN 'Sep'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 10
+      THEN 'Oct'
+      WHEN EXTRACT(MONTH FROM DATE_ADD(CAST(o_orderdate AS TIMESTAMP), 3, 'MONTH')) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END,
+    CASE
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 1
+      THEN 'Jan'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 2
+      THEN 'Feb'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 3
+      THEN 'Mar'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 4
+      THEN 'Apr'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 5
+      THEN 'May'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 6
+      THEN 'Jun'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 7
+      THEN 'Jul'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 8
+      THEN 'Aug'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 9
+      THEN 'Sep'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 10
+      THEN 'Oct'
+      WHEN EXTRACT(MONTH FROM DATE_SUB(CAST(o_orderdate AS TIMESTAMP), 2, MONTH)) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END
+  ) AS r
 FROM tpch.orders
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

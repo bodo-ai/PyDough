@@ -677,6 +677,16 @@ The `DAYNAME` function returns the name of the day of the week for a given date/
 Orders.CALCULATE(day_name = DAYNAME(order_date))
 ```
 
+<!-- TOC --><a name="monthname"></a>
+
+### MONTHNAME
+The `MONTHNAME` function returns the name of the month of the year for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string, corresponding the 3-letter abbreviation of the month name. This returns one of the following: `"Jan"`, `"Feb"`, `"Mar"`, `"Apr"`, `"May"`, `"Jun"`, `"Jul"`, `"Aug"`, `"Sep"`, `"Oct"`, `"Nov"` or `"Dec"`.
+
+```py
+# Retuns the 3-letter abbrivation of the month for the order date
+Orders.CALCULATE(day_name = MONTHNAME(order_date))
+```
+
 <!-- TOC --><a name="conditional-functions"></a>
 
 ## Conditional Functions
