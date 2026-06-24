@@ -1,0 +1,166 @@
+{
+  "pydough": "result = nations.WHERE(key > 5).PARTITION(name='g', by=name).CALCULATE(name=name)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'nations', filtered to rows where key > 5, partitioned by name, selecting name.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'nations' collection.",
+        "collection": "nations",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "key > 5",
+            "operator": ">",
+            "left": {
+              "kind": "Reference",
+              "term_name": "key"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "5",
+              "value": 5,
+              "data_type": "numeric"
+            }
+          }
+        ],
+        "condition_summary": "key > 5",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "PartitionBy",
+        "description": "Partitions the collection by ['name'].",
+        "keys": [
+          "name"
+        ],
+        "child_name": "nations",
+        "child_available_terms": {
+          "expressions": [
+            "comment",
+            "key",
+            "name",
+            "region_key"
+          ],
+          "collections": [
+            "customers",
+            "region",
+            "suppliers"
+          ]
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "name"
+            ],
+            "collections": [
+              "nations"
+            ]
+          }
+        },
+        "notes": [
+          "The partition key(s) ['name'] are available inside child scope 'nations' but not outside it."
+        ]
+      },
+      {
+        "order": 5,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "name"
+        ],
+        "term_details": {
+          "name": {
+            "kind": "Reference",
+            "term_name": "name"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "name"
+            ],
+            "collections": [
+              "nations"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "nations",
+      "available_expressions": [
+        "name"
+      ],
+      "output_columns": [
+        "name"
+      ],
+      "column_types": {
+        "name": "string"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "nations_where_partition.md"
+}

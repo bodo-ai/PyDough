@@ -1,0 +1,281 @@
+{
+  "pydough": "result = customers.WHERE(market_segment == 'BUILDING').orders.PARTITION(name='g', by=order_status).CALCULATE(order_status=order_status, n=COUNT(orders)).TOP_K(1, by=n.DESC()).CALCULATE(order_status)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'customers', filtered to rows where market_segment == 'BUILDING', partitioned by order_status, selecting order_status and computing counting orders records per group as 'n', keeping the top 1 rows by n desc.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'customers' collection.",
+        "collection": "customers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "market_segment == 'BUILDING'",
+            "operator": "==",
+            "left": {
+              "kind": "Reference",
+              "term_name": "market_segment"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "'BUILDING'",
+              "value": "BUILDING",
+              "data_type": "string"
+            }
+          }
+        ],
+        "condition_summary": "market_segment == 'BUILDING'",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "SubCollection",
+        "description": "Traverses the 'orders' relationship from 'customers' to 'orders'.",
+        "property": "orders",
+        "from_collection": "customers",
+        "to_collection": "orders",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "clerk",
+              "comment",
+              "customer_key",
+              "key",
+              "order_date",
+              "order_priority",
+              "order_status",
+              "ship_priority",
+              "total_price"
+            ],
+            "collections": [
+              "customer",
+              "lines"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 5,
+        "type": "PartitionBy",
+        "description": "Partitions the collection by ['order_status'].",
+        "keys": [
+          "order_status"
+        ],
+        "child_name": "orders",
+        "child_available_terms": {
+          "expressions": [
+            "clerk",
+            "comment",
+            "customer_key",
+            "key",
+            "order_date",
+            "order_priority",
+            "order_status",
+            "ship_priority",
+            "total_price"
+          ],
+          "collections": [
+            "customer",
+            "lines"
+          ]
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "order_status"
+            ],
+            "collections": [
+              "orders"
+            ]
+          }
+        },
+        "notes": [
+          "The partition key(s) ['order_status'] are available inside child scope 'orders' but not outside it."
+        ]
+      },
+      {
+        "order": 6,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "order_status",
+          "n"
+        ],
+        "term_details": {
+          "order_status": {
+            "kind": "Reference",
+            "term_name": "order_status"
+          },
+          "n": {
+            "kind": "Aggregation",
+            "text": "COUNT(orders)",
+            "function": "COUNT",
+            "args": [
+              {
+                "name": "orders",
+                "access_path": [
+                  "orders"
+                ],
+                "filters": [],
+                "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path."
+              }
+            ]
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n",
+              "order_status"
+            ],
+            "collections": [
+              "orders"
+            ]
+          }
+        },
+        "notes": [
+          "Note: 'n' aggregates 'orders' \u2014 scoping is implicit via 'orders' relationship navigation, not an explicit filter."
+        ]
+      },
+      {
+        "order": 7,
+        "type": "TopK",
+        "description": "Sorts the collection and keeps the top 1 records.",
+        "collation": [
+          {
+            "text": "n",
+            "direction": "DESC",
+            "nulls": "LAST"
+          }
+        ],
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n",
+              "order_status"
+            ],
+            "collections": [
+              "orders"
+            ]
+          }
+        },
+        "limit": 1,
+        "notes": []
+      },
+      {
+        "order": 8,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "order_status"
+        ],
+        "term_details": {
+          "order_status": {
+            "kind": "Reference",
+            "term_name": "order_status"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n",
+              "order_status"
+            ],
+            "collections": [
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "customers",
+      "available_expressions": [
+        "n",
+        "order_status"
+      ],
+      "output_columns": [
+        "order_status"
+      ],
+      "column_types": {
+        "order_status": "string"
+      },
+      "ordering": [
+        {
+          "text": "n",
+          "direction": "DESC",
+          "nulls": "LAST"
+        }
+      ],
+      "limit": 1
+    }
+  },
+  "explain_output_md": "customers_where_orders_partition.md"
+}

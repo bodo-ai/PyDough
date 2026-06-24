@@ -1,0 +1,252 @@
+{
+  "pydough": "result = customers.WHERE(market_segment == 'BUILDING').CALCULATE(name=name, n=COUNT(orders)).WHERE(RANKING(by=n.ASC()) == 1).CALCULATE(name)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'customers', filtered to rows where market_segment == 'BUILDING' and RANKING(by=(n.ASC(na_pos='first'))) == 1, selecting name and computing counting orders records as 'n'.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'customers' collection.",
+        "collection": "customers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "market_segment == 'BUILDING'",
+            "operator": "==",
+            "left": {
+              "kind": "Reference",
+              "term_name": "market_segment"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "'BUILDING'",
+              "value": "BUILDING",
+              "data_type": "string"
+            }
+          }
+        ],
+        "condition_summary": "market_segment == 'BUILDING'",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "name",
+          "n"
+        ],
+        "term_details": {
+          "name": {
+            "kind": "Reference",
+            "term_name": "name"
+          },
+          "n": {
+            "kind": "Aggregation",
+            "text": "COUNT(orders)",
+            "function": "COUNT",
+            "args": [
+              {
+                "name": "orders",
+                "access_path": [
+                  "orders"
+                ],
+                "filters": [],
+                "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path."
+              }
+            ]
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "n",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": [
+          "Note: 'n' aggregates 'orders' \u2014 scoping is implicit via 'orders' relationship navigation, not an explicit filter."
+        ]
+      },
+      {
+        "order": 5,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "RANKING(by=(n.ASC(na_pos='first'))) == 1",
+            "operator": "==",
+            "left": {
+              "kind": "WindowCall",
+              "text": "RANKING(by=(n.ASC(na_pos='first')))",
+              "function": "RANKING"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "1",
+              "value": 1,
+              "data_type": "numeric"
+            }
+          }
+        ],
+        "condition_summary": "RANKING(by=(n.ASC(na_pos='first'))) == 1",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "n",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": [
+          "Note: this step uses a window function (e.g. RANKING, PERCENTILE). PyDough window functions commonly use 'per=' to rank within partitions of an ancestor collection rather than globally. The partition scope is resolved at SQL generation time and is NOT shown in the expression text \u2014 check the source code for a 'per=' argument before assuming this is a global rank."
+        ]
+      },
+      {
+        "order": 6,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "name"
+        ],
+        "term_details": {
+          "name": {
+            "kind": "Reference",
+            "term_name": "name"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "n",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "customers",
+      "available_expressions": [
+        "account_balance",
+        "address",
+        "comment",
+        "key",
+        "market_segment",
+        "n",
+        "name",
+        "nation_key",
+        "phone"
+      ],
+      "output_columns": [
+        "name"
+      ],
+      "column_types": {
+        "name": "string"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "customers_pre_post_calculate_where.md"
+}

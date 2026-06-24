@@ -1,0 +1,151 @@
+{
+  "pydough": "result = customers.PARTITION(name='g', by=market_segment).CALCULATE(market_segment=market_segment, n=COUNT(customers))",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'customers', partitioned by market_segment, selecting market_segment and computing counting customers records per group as 'n'.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'customers' collection.",
+        "collection": "customers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "PartitionBy",
+        "description": "Partitions the collection by ['market_segment'].",
+        "keys": [
+          "market_segment"
+        ],
+        "child_name": "customers",
+        "child_available_terms": {
+          "expressions": [
+            "account_balance",
+            "address",
+            "comment",
+            "key",
+            "market_segment",
+            "name",
+            "nation_key",
+            "phone"
+          ],
+          "collections": [
+            "nation",
+            "orders"
+          ]
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "market_segment"
+            ],
+            "collections": [
+              "customers"
+            ]
+          }
+        },
+        "notes": [
+          "The partition key(s) ['market_segment'] are available inside child scope 'customers' but not outside it."
+        ]
+      },
+      {
+        "order": 4,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "market_segment",
+          "n"
+        ],
+        "term_details": {
+          "market_segment": {
+            "kind": "Reference",
+            "term_name": "market_segment"
+          },
+          "n": {
+            "kind": "Aggregation",
+            "text": "COUNT(customers)",
+            "function": "COUNT",
+            "args": [
+              {
+                "name": "customers",
+                "access_path": [],
+                "filters": [],
+                "implicit_scope_note": null
+              }
+            ]
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "market_segment",
+              "n"
+            ],
+            "collections": [
+              "customers"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "customers",
+      "available_expressions": [
+        "market_segment",
+        "n"
+      ],
+      "output_columns": [
+        "market_segment",
+        "n"
+      ],
+      "column_types": {
+        "market_segment": "string",
+        "n": "numeric"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "customers_partition_by_segment.md"
+}

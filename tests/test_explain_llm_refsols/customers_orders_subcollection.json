@@ -1,0 +1,182 @@
+{
+  "pydough": "result = customers.WHERE(market_segment == 'BUILDING').orders.CALCULATE(key=key)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'customers', filtered to rows where market_segment == 'BUILDING', selecting key.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'customers' collection.",
+        "collection": "customers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "market_segment == 'BUILDING'",
+            "operator": "==",
+            "left": {
+              "kind": "Reference",
+              "term_name": "market_segment"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "'BUILDING'",
+              "value": "BUILDING",
+              "data_type": "string"
+            }
+          }
+        ],
+        "condition_summary": "market_segment == 'BUILDING'",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "SubCollection",
+        "description": "Traverses the 'orders' relationship from 'customers' to 'orders'.",
+        "property": "orders",
+        "from_collection": "customers",
+        "to_collection": "orders",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "clerk",
+              "comment",
+              "customer_key",
+              "key",
+              "order_date",
+              "order_priority",
+              "order_status",
+              "ship_priority",
+              "total_price"
+            ],
+            "collections": [
+              "customer",
+              "lines"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 5,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "key"
+        ],
+        "term_details": {
+          "key": {
+            "kind": "Reference",
+            "term_name": "key"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "clerk",
+              "comment",
+              "customer_key",
+              "key",
+              "order_date",
+              "order_priority",
+              "order_status",
+              "ship_priority",
+              "total_price"
+            ],
+            "collections": [
+              "customer",
+              "lines"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "customers",
+      "available_expressions": [
+        "clerk",
+        "comment",
+        "customer_key",
+        "key",
+        "order_date",
+        "order_priority",
+        "order_status",
+        "ship_priority",
+        "total_price"
+      ],
+      "output_columns": [
+        "key"
+      ],
+      "column_types": {
+        "key": "numeric"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "customers_orders_subcollection.md"
+}

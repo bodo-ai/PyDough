@@ -1,0 +1,101 @@
+{
+  "pydough": "result = nations.TOP_K(5, by=name.ASC())",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'nations', keeping the top 5 rows by name asc.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'nations' collection.",
+        "collection": "nations",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "TopK",
+        "description": "Sorts the collection and keeps the top 5 records.",
+        "collation": [
+          {
+            "text": "name",
+            "direction": "ASC",
+            "nulls": "FIRST"
+          }
+        ],
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "limit": 5,
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "nations",
+      "available_expressions": [
+        "comment",
+        "key",
+        "name",
+        "region_key"
+      ],
+      "output_columns": [],
+      "column_types": {},
+      "ordering": [
+        {
+          "text": "name",
+          "direction": "ASC",
+          "nulls": "FIRST"
+        }
+      ],
+      "limit": 5
+    }
+  },
+  "explain_output_md": "nations_topk.md"
+}

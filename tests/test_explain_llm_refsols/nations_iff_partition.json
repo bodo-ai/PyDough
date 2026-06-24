@@ -1,0 +1,275 @@
+{
+  "pydough": "result = nations.WHERE(key > 5).CALCULATE(tier=IFF(key > 15, 'high', 'low')).PARTITION(name='g', by=tier).CALCULATE(tier=tier, n=COUNT(nations)).TOP_K(1, by=n.DESC()).CALCULATE(tier)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'nations', filtered to rows where key > 5, partitioned by tier, selecting tier and computing counting nations records as 'n', keeping the top 1 rows by n desc.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'nations' collection.",
+        "collection": "nations",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "key > 5",
+            "operator": ">",
+            "left": {
+              "kind": "Reference",
+              "term_name": "key"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "5",
+              "value": 5,
+              "data_type": "numeric"
+            }
+          }
+        ],
+        "condition_summary": "key > 5",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "tier"
+        ],
+        "term_details": {
+          "tier": {
+            "kind": "FunctionCall",
+            "text": "IFF(key > 15, 'high', 'low')",
+            "function": "IFF",
+            "is_aggregation": false
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key",
+              "tier"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 5,
+        "type": "PartitionBy",
+        "description": "Partitions the collection by ['tier'].",
+        "keys": [
+          "tier"
+        ],
+        "child_name": "nations",
+        "child_available_terms": {
+          "expressions": [
+            "comment",
+            "key",
+            "name",
+            "region_key",
+            "tier"
+          ],
+          "collections": [
+            "customers",
+            "region",
+            "suppliers"
+          ]
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "tier"
+            ],
+            "collections": [
+              "nations"
+            ]
+          }
+        },
+        "notes": [
+          "The partition key(s) ['tier'] are available inside child scope 'nations' but not outside it."
+        ]
+      },
+      {
+        "order": 6,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "tier",
+          "n"
+        ],
+        "term_details": {
+          "tier": {
+            "kind": "Reference",
+            "term_name": "tier"
+          },
+          "n": {
+            "kind": "Aggregation",
+            "text": "COUNT(nations)",
+            "function": "COUNT",
+            "args": [
+              {
+                "name": "nations",
+                "access_path": [],
+                "filters": [
+                  "key > 5"
+                ],
+                "implicit_scope_note": null
+              }
+            ]
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n",
+              "tier"
+            ],
+            "collections": [
+              "nations"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 7,
+        "type": "TopK",
+        "description": "Sorts the collection and keeps the top 1 records.",
+        "collation": [
+          {
+            "text": "n",
+            "direction": "DESC",
+            "nulls": "LAST"
+          }
+        ],
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n",
+              "tier"
+            ],
+            "collections": [
+              "nations"
+            ]
+          }
+        },
+        "limit": 1,
+        "notes": []
+      },
+      {
+        "order": 8,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "tier"
+        ],
+        "term_details": {
+          "tier": {
+            "kind": "Reference",
+            "term_name": "tier"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n",
+              "tier"
+            ],
+            "collections": [
+              "nations"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "nations",
+      "available_expressions": [
+        "n",
+        "tier"
+      ],
+      "output_columns": [
+        "tier"
+      ],
+      "column_types": {
+        "tier": "string"
+      },
+      "ordering": [
+        {
+          "text": "n",
+          "direction": "DESC",
+          "nulls": "LAST"
+        }
+      ],
+      "limit": 1
+    }
+  },
+  "explain_output_md": "nations_iff_partition.md"
+}
