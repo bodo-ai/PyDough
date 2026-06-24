@@ -53,14 +53,19 @@ sections — easier for an LLM judge to read than raw JSON.
 
 __all__ = ["explain_llm"]
 
-# ---------------------------------------------------------------------------
-# Error classification and payload
-# ---------------------------------------------------------------------------
 import re as _re
 
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
+from pydough.errors import (
+    PyDoughMetadataException,
+    PyDoughQDAGException,
+    PyDoughSessionException,
+    PyDoughSQLException,
+    PyDoughTypeException,
+    PyDoughUnqualifiedException,
+)
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag import (
     Calculate,
@@ -192,14 +197,6 @@ def _classify_error(
         stable string tag, ``details`` is a dict of structured fields, and
         ``hint`` is an actionable guidance string or ``None``.
     """
-    from pydough.errors import (
-        PyDoughQDAGException,
-        PyDoughSessionException,
-        PyDoughSQLException,
-        PyDoughTypeException,
-        PyDoughUnqualifiedException,
-    )
-
     msg: str = str(e)
 
     # NOTE: The checks below match against substrings of exception messages.
@@ -287,8 +284,6 @@ def _classify_error(
         return "qdag_error", {}, None
 
     # ── Metadata errors ──────────────────────────────────────────────────────
-    from pydough.errors import PyDoughMetadataException
-
     if isinstance(e, PyDoughMetadataException):
         return "metadata_error", {}, _HINT_MAP["metadata_error"]
 
@@ -470,9 +465,9 @@ def _build_where_step(node: Where, order: int) -> dict:
         A step dict with ``type="Where"``, including ``conditions`` (list of
         structured dicts) and ``condition_summary`` (plain string).
     """
-    raw_conditions = extract_conditions(node.condition)
-    conditions = [describe_expression(c) for c in raw_conditions]
-    summary = (
+    raw_conditions: list[PyDoughExpressionQDAG] = extract_conditions(node.condition)
+    conditions: list[dict] = [describe_expression(c) for c in raw_conditions]
+    summary: str = (
         raw_conditions[0].to_string()
         if len(raw_conditions) == 1
         else " & ".join(c.to_string() for c in raw_conditions)
@@ -731,6 +726,27 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     Walks the qualified QDAG chain backward via ``preceding_context``, builds
     a step dict for each node, then reverses the list so step 1 is the
     earliest operation (GlobalContext or TableCollection).
+
+    **Ordering for complex queries** — the QDAG has two kinds of links:
+
+    * ``preceding_context``: the immediately-preceding operation on the same
+      collection level (e.g. ``Calculate → Where → TableCollection``).
+    * ``ancestor_context``: the parent-level node when a ``SubCollection`` or
+      ``PartitionBy`` crosses into an outer collection chain.
+
+    Walk 1 follows ``preceding_context`` from ``root`` to collect the main
+    chain.  Walk 2 then descends into each ``ancestor_context`` and also
+    follows its ``preceding_context`` chain, so nodes like ``WHERE`` clauses
+    on the parent collection appear before the ``SubCollection`` hop in the
+    final step list.
+
+    For ``PartitionBy``, ``ancestor_context`` jumps to ``GlobalContext``
+    directly, so Walk 2 uses ``child.ancestor_context`` to reach the real
+    pre-partition chain instead.
+
+    Multi-layer partitioning (``PARTITION`` inside ``PARTITION``) is handled
+    recursively because each ``PartitionBy`` node's ``ancestor_context`` chain
+    is walked in turn.  The depth of nesting is bounded by the query structure.
 
     ``context_introducing_terms`` tracks expression names introduced by the
     most recent CROSS or PartitionBy step.  These are reset each time such a

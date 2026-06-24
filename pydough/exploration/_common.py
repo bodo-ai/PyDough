@@ -33,6 +33,7 @@ from pydough.qdag import (
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
+    OrderBy,
     PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
@@ -492,6 +493,25 @@ def generate_step_notes(
     """
     notes: list[str] = []
 
+    # Walk an expression tree checking for any WindowCall node.  Defined here
+    # so it is reusable across all case branches below.
+    def _has_window(expr: PyDoughExpressionQDAG) -> bool:
+        if isinstance(expr, WindowCall):
+            return True
+        for arg in getattr(expr, "args", []) or []:
+            if isinstance(arg, PyDoughExpressionQDAG) and _has_window(arg):
+                return True
+        return False
+
+    _WINDOW_NOTE = (
+        "Note: this step uses a window function (e.g. RANKING, PERCENTILE). "
+        "PyDough window functions commonly use 'per=' to rank within partitions "
+        "of an ancestor collection rather than globally. The partition scope is "
+        "resolved at SQL generation time and is NOT shown in the expression text "
+        "— check the source code for a 'per=' argument before assuming this is "
+        "a global rank."
+    )
+
     match node:
         case Singular():
             notes.append(
@@ -515,30 +535,8 @@ def generate_step_notes(
             )
 
         case Where():
-            # Detect window functions (RANKING, PERCENTILE, etc.) in the
-            # condition.  Their `per=` partition argument is resolved to SQL
-            # PARTITION BY during compilation and is NOT stored on the
-            # WindowCall QDAG node, so it cannot be shown in the condition
-            # text above.  Alert the judge so it doesn't mis-read a
-            # per-partition rank as a global rank.
-            def _has_window(expr: PyDoughExpressionQDAG) -> bool:
-                if isinstance(expr, WindowCall):
-                    return True
-                for arg in getattr(expr, "args", []) or []:
-                    if isinstance(arg, PyDoughExpressionQDAG) and _has_window(arg):
-                        return True
-                return False
-
             if _has_window(node.condition):
-                notes.append(
-                    "Note: this condition uses a window function (e.g. RANKING, "
-                    "PERCENTILE). PyDough window functions commonly use 'per=' to "
-                    "rank within partitions of an ancestor collection rather than "
-                    "globally. The partition scope is resolved at SQL generation "
-                    "time and is NOT shown in the condition text — check the "
-                    "source code for a 'per=' argument before assuming this is a "
-                    "global rank."
-                )
+                notes.append(_WINDOW_NOTE)
 
         case PartitionBy():
             keys = step.get("keys", [])
@@ -550,39 +548,69 @@ def generate_step_notes(
 
         case Calculate():
             for term_name, detail in step.get("term_details", {}).items():
-                if detail.get("kind") != "Aggregation":
-                    continue
-                for arg in detail.get("args", []):
-                    implicit_note = arg.get("implicit_scope_note")
-                    if implicit_note is not None:
-                        # Correct pattern: scoping is via relationship nav.
-                        access_path = arg.get("access_path", [])
-                        nav_root = access_path[0] if access_path else arg["name"]
-                        notes.append(
-                            f"Note: '{term_name}' aggregates '{arg['name']}'"
-                            f" \u2014 scoping is implicit via '{nav_root}' "
-                            f"relationship navigation, not an explicit filter."
-                        )
-                    elif context_introducing_terms:
-                        # Warn only when context-introducing terms exist but
-                        # none appear in this arg's filters.  Use token-based
-                        # matching to avoid false negatives from substrings
-                        # (e.g. "key" inside "account_key").
-                        filters_text = " ".join(arg.get("filters", []))
-                        filter_tokens = set(re.split(r"\W+", filters_text))
-                        missing = [
-                            t
-                            for t in context_introducing_terms
-                            if t not in filter_tokens
-                        ]
-                        if missing:
+                kind = detail.get("kind")
+                if kind == "Aggregation":
+                    for arg in detail.get("args", []):
+                        implicit_note = arg.get("implicit_scope_note")
+                        if implicit_note is not None:
+                            # Correct pattern: scoping is via relationship nav.
+                            access_path = arg.get("access_path", [])
+                            nav_root = access_path[0] if access_path else arg["name"]
                             notes.append(
-                                f"Warning: '{term_name}' aggregates "
-                                f"'{arg['name']}' without filtering on "
-                                f"context-introducing term(s) {missing}. "
-                                f"This may produce unintended cross-product "
-                                f"results."
+                                f"Note: '{term_name}' aggregates '{arg['name']}'"
+                                f" \u2014 scoping is implicit via '{nav_root}' "
+                                f"relationship navigation, not an explicit filter."
                             )
+                        elif context_introducing_terms:
+                            # Warn only when context-introducing terms exist but
+                            # none appear in this arg's filters.  Use token-based
+                            # matching to avoid false negatives from substrings
+                            # (e.g. "key" inside "account_key").
+                            filters_text = " ".join(arg.get("filters", []))
+                            filter_tokens = set(re.split(r"\W+", filters_text))
+                            missing = [
+                                t
+                                for t in context_introducing_terms
+                                if t not in filter_tokens
+                            ]
+                            if missing:
+                                notes.append(
+                                    f"Warning: '{term_name}' aggregates "
+                                    f"'{arg['name']}' without filtering on "
+                                    f"context-introducing term(s) {missing}. "
+                                    f"This may produce unintended cross-product "
+                                    f"results."
+                                )
+                elif kind == "ChildReference":
+                    # Singular subcollection reference (e.g. region.name inside
+                    # nations.CALCULATE).  Row-level scoping via the relationship
+                    # is implicit \u2014 alert the judge so it doesn't confuse this
+                    # with a global or unscoped reference.
+                    text = detail.get("text", term_name)
+                    notes.append(
+                        f"Note: '{term_name}' accesses '{text}' via implicit "
+                        f"singular relationship navigation \u2014 scoping to the "
+                        f"parent row is enforced by the relationship, not by an "
+                        f"explicit filter."
+                    )
+                elif kind == "WindowCall":
+                    notes.append(_WINDOW_NOTE)
+                else:
+                    # Check for window functions nested inside other expression
+                    # kinds (e.g. a window function inside a BinaryOp term).
+                    try:
+                        expr = node.get_expr(term_name)
+                        if _has_window(expr):
+                            notes.append(_WINDOW_NOTE)
+                    except Exception:
+                        pass
+
+        case OrderBy():
+            # Covers both OrderBy and its TopK subclass.
+            for col in node.collation:
+                if _has_window(col.expr):
+                    notes.append(_WINDOW_NOTE)
+                    break
 
     return notes
 

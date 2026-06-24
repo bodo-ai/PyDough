@@ -27,45 +27,49 @@ from pydough.errors import (
 from pydough.exploration.explain_llm import _classify_error
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
-from tests.testing_utilities import graph_fetcher
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _run(
+def _run_explain_json(
     impl: Callable[[], UnqualifiedNode],
     graph: GraphMetadata,
     session: PyDoughSession,
 ) -> dict:
-    """Qualify ``impl`` under ``graph`` and call ``explain_llm``."""
+    """
+    Qualify ``impl`` under ``graph`` and return the ``explain_llm`` JSON dict.
+
+    Args:
+        `impl`: a zero-argument callable that returns an ``UnqualifiedNode``
+          when invoked inside the PyDough graph context.
+        `graph`: the graph metadata to load into the PyDough context.
+        `session`: the session used for qualification in ``explain_llm``.
+
+    Returns:
+        The JSON-serialisable dict produced by ``pydough.explain_llm``.
+    """
     node: UnqualifiedNode = pydough.init_pydough_context(graph)(impl)()
     return cast(dict, pydough.explain_llm(node, session=session))
 
 
-def _step(result: dict, order: int) -> dict:
-    """Return the step with the given 1-based order."""
+def _get_step_by_order(result: dict, order: int) -> dict:
+    """
+    Return the step dict with the given 1-based ``order`` from an
+    ``explain_llm`` result.
+
+    Args:
+        `result`: the JSON dict returned by ``_run`` or ``pydough.explain_llm``.
+        `order`: the 1-based step position to retrieve.
+
+    Returns:
+        The step dict whose ``"order"`` field equals ``order``.
+
+    Raises:
+        ``StopIteration`` if no step with the given order exists.
+    """
     return next(s for s in result["steps"] if s["order"] == order)
-
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def tpch_session(get_sample_graph: graph_fetcher) -> PyDoughSession:
-    """A PyDoughSession loaded with the TPCH graph (no DB connection needed)."""
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    session = PyDoughSession()
-    session.metadata = graph
-    return session
-
-
-@pytest.fixture
-def tpch_graph(get_sample_graph: graph_fetcher) -> GraphMetadata:
-    return get_sample_graph("TPCH")
 
 
 # ---------------------------------------------------------------------------
@@ -79,7 +83,7 @@ def test_success_shape(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
 
     assert result["error"] is False
     assert isinstance(result["query_summary"], str) and result["query_summary"]
@@ -99,7 +103,7 @@ def test_error_shape(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
     def impl():
         return nations.WHERE(typo_field == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
 
     assert result["error"] is True
     assert isinstance(result["message"], str) and result["message"]
@@ -120,7 +124,7 @@ def test_error_payload_has_all_structured_fields(
     def impl():
         return nations.WHERE(typo_field == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "error_type" in result
     assert "details" in result
     assert "hint" in result
@@ -135,7 +139,7 @@ def test_error_type_unrecognized_term(
     def impl():
         return nations.WHERE(naem == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert result["error_type"] == "unrecognized_term"
 
 
@@ -147,7 +151,7 @@ def test_error_details_unrecognized_term(
     def impl():
         return nations.WHERE(naem == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "term" in result["details"]
     assert result["details"]["term"] == "naem"
     assert "suggestions" in result["details"]
@@ -164,7 +168,7 @@ def test_error_hint_unrecognized_term(
     def impl():
         return nations.WHERE(naem == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert result["hint"] is not None
     assert isinstance(result["hint"], str) and result["hint"]
 
@@ -177,7 +181,7 @@ def test_error_type_expression_not_collection(
     def impl():
         return nations.key
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert result["error_type"] == "expression_not_collection"
     assert result["hint"] is not None
 
@@ -190,8 +194,8 @@ def test_error_md_shows_hint_as_blockquote(
     def impl():
         return nations.WHERE(naem == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
-    md = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
     assert result["error"] is True
     assert "> " in md  # blockquote marker
 
@@ -214,7 +218,7 @@ def test_error_type_is_stable_string(
     def impl():
         return nations.WHERE(naem == "ASIA")
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert isinstance(result["error_type"], str) and result["error_type"]
 
 
@@ -444,7 +448,7 @@ def test_step_order_simple(tpch_graph: GraphMetadata, tpch_session: PyDoughSessi
     def impl():
         return nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     types = [s["type"] for s in result["steps"]]
 
     assert types[0] == "GlobalContext"
@@ -464,7 +468,7 @@ def test_every_step_has_notes_key(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     for step in result["steps"]:
         assert "notes" in step
         assert isinstance(step["notes"], list)
@@ -479,7 +483,7 @@ def test_every_step_has_debug_available_terms(
     def impl():
         return nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     for step in result["steps"]:
         at = step["debug"]["available_terms"]
         assert isinstance(at["expressions"], list)
@@ -491,14 +495,16 @@ def test_every_step_has_debug_available_terms(
 # ---------------------------------------------------------------------------
 
 
-def test_global_context_step(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
+def test_global_context_get_step_by_order(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
     """GlobalContext step exposes top-level collections, no expressions."""
 
     def impl():
         return nations.CALCULATE(key)
 
-    result = _run(impl, tpch_graph, tpch_session)
-    gc = _step(result, 1)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
+    gc = _get_step_by_order(result, 1)
 
     assert gc["type"] == "GlobalContext"
     assert "nations" in gc["debug"]["available_terms"]["collections"]
@@ -510,13 +516,15 @@ def test_global_context_step(tpch_graph: GraphMetadata, tpch_session: PyDoughSes
 # ---------------------------------------------------------------------------
 
 
-def test_table_collection_step(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
+def test_table_collection_get_step_by_order(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
     """TableCollection step records the collection name and its scalar terms."""
 
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     tc = next(s for s in result["steps"] if s["type"] == "TableCollection")
 
     assert tc["collection"] == "nations"
@@ -537,7 +545,7 @@ def test_where_step_single_condition(
     def impl():
         return nations.WHERE(key > 5)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     where = next(s for s in result["steps"] if s["type"] == "Where")
 
     assert len(where["conditions"]) == 1
@@ -556,7 +564,7 @@ def test_where_step_and_conditions_split(
     def impl():
         return nations.WHERE((key > 5) & (key < 20))
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     where = next(s for s in result["steps"] if s["type"] == "Where")
 
     assert len(where["conditions"]) == 2
@@ -572,7 +580,7 @@ def test_where_condition_structured(
     def impl():
         return nations.WHERE(key > 5)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     where = next(s for s in result["steps"] if s["type"] == "Where")
     cond = where["conditions"][0]
 
@@ -601,7 +609,7 @@ def test_calculate_term_details(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     calc = next(s for s in result["steps"] if s["type"] == "Calculate")
 
     assert set(calc["terms"]) == {"key", "name"}
@@ -623,7 +631,7 @@ def test_calculate_aggregation_implicit_scope_note(
     def impl():
         return customers.CALCULATE(key, n_orders=COUNT(orders))
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     calc = next(s for s in result["steps"] if s["type"] == "Calculate")
 
     n_orders = calc["term_details"]["n_orders"]
@@ -652,7 +660,7 @@ def test_cross_step_type_and_note(
     def impl():
         return nations.CROSS(regions)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     cross = next(s for s in result["steps"] if s["type"] == "Cross")
 
     assert cross["left"] == "nations"
@@ -667,26 +675,30 @@ def test_cross_step_type_and_note(
 # ---------------------------------------------------------------------------
 
 
-def test_order_by_step(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
+def test_order_by_get_step_by_order(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
     """ORDER_BY produces an OrderBy step with collation details."""
 
     def impl():
         return nations.ORDER_BY(name.ASC())
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     ob = next(s for s in result["steps"] if s["type"] == "OrderBy")
 
     assert len(ob["collation"]) == 1
     assert ob["collation"][0]["direction"] == "ASC"
 
 
-def test_topk_step(tpch_graph: GraphMetadata, tpch_session: PyDoughSession):
+def test_topk_get_step_by_order(
+    tpch_graph: GraphMetadata, tpch_session: PyDoughSession
+):
     """TOP_K produces a TopK step with a limit field."""
 
     def impl():
         return nations.TOP_K(5, by=name.ASC())
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     topk = next(s for s in result["steps"] if s["type"] == "TopK")
 
     assert topk["limit"] == 5
@@ -704,7 +716,7 @@ def test_schema_output_columns(tpch_graph: GraphMetadata, tpch_session: PyDoughS
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     schema = result["schema"]
 
     assert set(schema["output_columns"]) == {"key", "name"}
@@ -718,7 +730,7 @@ def test_schema_column_types(tpch_graph: GraphMetadata, tpch_session: PyDoughSes
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     schema = result["schema"]
 
     assert set(schema["column_types"].keys()) == set(schema["output_columns"])
@@ -734,7 +746,7 @@ def test_schema_no_output_columns_without_calculate(
     def impl():
         return nations.WHERE(key > 5)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert result["schema"]["output_columns"] == []
 
 
@@ -746,7 +758,7 @@ def test_schema_ordering_and_limit(
     def impl():
         return nations.TOP_K(5, by=name.ASC())
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     schema = result["schema"]
 
     assert schema["limit"] == 5
@@ -762,7 +774,7 @@ def test_schema_no_ordering_without_sort(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     schema = result["schema"]
 
     assert schema["ordering"] == []
@@ -780,7 +792,7 @@ def test_query_summary_present(tpch_graph: GraphMetadata, tpch_session: PyDoughS
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert isinstance(result["query_summary"], str)
     assert result["query_summary"]
 
@@ -793,7 +805,7 @@ def test_query_summary_contains_collection(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "nations" in result["query_summary"]
 
 
@@ -805,7 +817,7 @@ def test_query_summary_contains_filter(
     def impl():
         return nations.WHERE(key > 5).CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "filtered" in result["query_summary"].lower()
 
 
@@ -817,7 +829,7 @@ def test_query_summary_contains_aggregation(
     def impl():
         return nations.CALCULATE(key, n_customers=COUNT(customers))
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     summary = result["query_summary"].lower()
     assert "count" in summary
     assert "n_customers" in summary
@@ -829,7 +841,7 @@ def test_query_summary_topk(tpch_graph: GraphMetadata, tpch_session: PyDoughSess
     def impl():
         return nations.TOP_K(5, by=name.ASC())
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "5" in result["query_summary"]
 
 
@@ -838,12 +850,23 @@ def test_query_summary_topk(tpch_graph: GraphMetadata, tpch_session: PyDoughSess
 # ---------------------------------------------------------------------------
 
 
-def _run_md(
+def _run_explain_md(
     impl: Callable[[], UnqualifiedNode],
     graph: GraphMetadata,
     session: PyDoughSession,
 ) -> str:
-    """Qualify ``impl`` under ``graph`` and call ``explain_llm(format='md')``."""
+    """
+    Qualify ``impl`` under ``graph`` and return the ``explain_llm`` markdown string.
+
+    Args:
+        `impl`: a zero-argument callable that returns an ``UnqualifiedNode``
+          when invoked inside the PyDough graph context.
+        `graph`: the graph metadata to load into the PyDough context.
+        `session`: the session used for qualification in ``explain_llm``.
+
+    Returns:
+        The markdown string produced by ``pydough.explain_llm(format="md")``.
+    """
     node: UnqualifiedNode = pydough.init_pydough_context(graph)(impl)()
     return pydough.explain_llm(node, session=session, format="md")
 
@@ -856,7 +879,7 @@ def test_md_success_returns_string(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert isinstance(result, str)
 
 
@@ -868,7 +891,7 @@ def test_md_error_returns_string(
     def impl():
         return nations.WHERE(typo_field == "ASIA")
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert isinstance(result, str)
 
 
@@ -878,7 +901,7 @@ def test_md_success_sections(tpch_graph: GraphMetadata, tpch_session: PyDoughSes
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert "## Query Summary" in result
     assert "## Steps" in result
     assert "## Schema" in result
@@ -890,7 +913,7 @@ def test_md_error_section(tpch_graph: GraphMetadata, tpch_session: PyDoughSessio
     def impl():
         return nations.WHERE(typo_field == "ASIA")
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert result.startswith("## Error")
     # No Steps or Schema sections in an error payload
     assert "## Steps" not in result
@@ -905,7 +928,7 @@ def test_md_contains_collection_name(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert "nations" in result
 
 
@@ -917,8 +940,8 @@ def test_md_contains_query_summary(
     def impl():
         return nations.CALCULATE(key, name)
 
-    md = _run_md(impl, tpch_graph, tpch_session)
-    json_result = _run(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
+    json_result = _run_explain_json(impl, tpch_graph, tpch_session)
     # The same deterministic summary must appear verbatim in the markdown.
     assert json_result["query_summary"] in md
 
@@ -931,7 +954,7 @@ def test_md_where_condition_visible(
     def impl():
         return nations.WHERE(key > 5).CALCULATE(key, name)
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert "Condition" in result
 
 
@@ -943,7 +966,7 @@ def test_md_schema_output_columns(
     def impl():
         return nations.CALCULATE(key, name)
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert "Output columns" in result
     assert "key" in result
     assert "name" in result
@@ -955,7 +978,7 @@ def test_md_topk_limit_visible(tpch_graph: GraphMetadata, tpch_session: PyDoughS
     def impl():
         return nations.TOP_K(5, by=name.ASC())
 
-    result = _run_md(impl, tpch_graph, tpch_session)
+    result = _run_explain_md(impl, tpch_graph, tpch_session)
     assert "5" in result
     assert "Limit" in result
 
@@ -990,7 +1013,7 @@ def test_direct_partition_with_where_shows_table_collection_and_where(
     def impl():
         return nations.WHERE(key > 5).PARTITION(name="g", by=name).CALCULATE(name=name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     types = [s["type"] for s in result["steps"]]
     assert "TableCollection" in types
     assert "Where" in types
@@ -1004,7 +1027,7 @@ def test_direct_partition_with_where_shows_source_collection(
     def impl():
         return nations.WHERE(key > 5).PARTITION(name="g", by=name).CALCULATE(name=name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert result["schema"]["source_collection"] == "nations"
 
 
@@ -1016,7 +1039,7 @@ def test_direct_partition_with_where_data_filter_in_key_facts(
     def impl():
         return nations.WHERE(key > 5).PARTITION(name="g", by=name).CALCULATE(name=name)
 
-    md = _run_md(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
     kf = md[: md.index("## Query Summary")]
     assert "Data filters:** none" not in kf
     assert "key > 5" in kf
@@ -1040,7 +1063,7 @@ def test_subcollection_partition_shows_parent_where_and_table(
             .CALCULATE(order_status)
         )
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     types = [s["type"] for s in result["steps"]]
     assert "TableCollection" in types
     assert "Where" in types
@@ -1063,7 +1086,7 @@ def test_deep_subcollection_partition_shows_all_hops(
             .CALCULATE(return_flag=return_flag)
         )
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     sub_steps = [s for s in result["steps"] if s["type"] == "SubCollection"]
     collections = [(s["from_collection"], s["to_collection"]) for s in sub_steps]
     assert ("customers", "orders") in collections
@@ -1098,7 +1121,7 @@ def test_singular_subcollection_shows_child_reference_kind(
     def impl():
         return customers.CALCULATE(nation_name=nation.SINGULAR().name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     calc = next(s for s in result["steps"] if s["type"] == "Calculate")
     detail = calc["term_details"]["nation_name"]
     assert detail["kind"] == "ChildReference"
@@ -1115,7 +1138,7 @@ def test_singular_subcollection_annotation_in_summary(
     def impl():
         return customers.CALCULATE(nation_name=nation.SINGULAR().name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "nation_name" in result["query_summary"]
     # The expression annotation must appear — not just a plain selection
     assert "SINGULAR" in result["query_summary"] or "nation" in result["query_summary"]
@@ -1136,7 +1159,7 @@ def test_summary_puts_subcollection_filter_in_separate_clause(
             .CALCULATE(key=key)
         )
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     summary = result["query_summary"]
     assert "market_segment" in summary
     assert "subcollection" in summary.lower()
@@ -1159,7 +1182,7 @@ def test_key_facts_separates_pre_and_post_calculate_where(
             .CALCULATE(name)
         )
 
-    md = _run_md(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
     kf = md[: md.index("## Query Summary")]
     assert "Data filters:" in kf
     assert "Post-compute filters:" in kf
@@ -1175,7 +1198,7 @@ def test_key_facts_no_post_compute_line_when_absent(
     def impl():
         return customers.WHERE(market_segment == "BUILDING").CALCULATE(name)
 
-    md = _run_md(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
     kf = md[: md.index("## Query Summary")]
     assert "Post-compute filters" not in kf
 
@@ -1193,7 +1216,7 @@ def test_count_inside_partition_shows_per_group_in_summary(
             market_segment=market_segment, n=COUNT(customers)
         )
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "per group" in result["query_summary"]
 
 
@@ -1205,7 +1228,7 @@ def test_count_outside_partition_no_per_group_label(
     def impl():
         return nations.CALCULATE(n=COUNT(customers))
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "per group" not in result["query_summary"]
 
 
@@ -1220,7 +1243,7 @@ def test_join_strings_shows_expression_annotation_in_summary(
     def impl():
         return customers.CALCULATE(full=JOIN_STRINGS(" ", name, phone))
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "JOIN_STRINGS" in result["query_summary"]
 
 
@@ -1232,7 +1255,7 @@ def test_plain_reference_no_expression_annotation(
     def impl():
         return customers.CALCULATE(key, name)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert "(computed)" not in result["query_summary"]
     assert "JOIN_STRINGS" not in result["query_summary"]
 
@@ -1255,7 +1278,7 @@ def test_partition_key_is_term_name_not_full_expression(
             .CALCULATE(tier)
         )
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     part = next(s for s in result["steps"] if s["type"] == "PartitionBy")
     assert part["keys"] == ["tier"]
     assert not any("IFF" in k for k in part["keys"])
@@ -1272,7 +1295,7 @@ def test_output_columns_not_empty_under_topk(
     def impl():
         return nations.CALCULATE(name=name, n=COUNT(customers)).TOP_K(1, by=n.DESC())
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     assert result["schema"]["output_columns"] != []
     assert "name" in result["schema"]["output_columns"]
     assert "n" in result["schema"]["output_columns"]
@@ -1291,7 +1314,7 @@ def test_ranking_where_emits_per_partition_note(
             RANKING(by=total_price.DESC(), per="customers") == 1
         ).CALCULATE(key=key)
 
-    result = _run(impl, tpch_graph, tpch_session)
+    result = _run_explain_json(impl, tpch_graph, tpch_session)
     where_steps = [s for s in result["steps"] if s["type"] == "Where"]
     ranking_step = next(
         (
@@ -1320,7 +1343,7 @@ def test_key_facts_is_first_section(
     def impl():
         return nations.CALCULATE(key, name)
 
-    md = _run_md(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
     first_section = md.split("##")[1].strip()
     assert first_section.startswith("Key Facts")
 
@@ -1333,7 +1356,7 @@ def test_key_facts_always_has_required_fields(
     def impl():
         return nations.CALCULATE(key, name)
 
-    md = _run_md(impl, tpch_graph, tpch_session)
+    md = _run_explain_md(impl, tpch_graph, tpch_session)
     kf = md[: md.index("## Query Summary")]
     assert "Source collection:" in kf
     assert "Limit:" in kf
