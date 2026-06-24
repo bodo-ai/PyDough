@@ -18,6 +18,10 @@ from tests.testing_utilities import harmonize_types
 
 
 class Connection:
+    """
+    Database connection class for Postgres
+    """
+
     def __init__(
         self,
         db_name: str,
@@ -90,7 +94,10 @@ class Benchmarker:
 
     @property
     def connection(self) -> Connection:
-        """Independent connection to the database"""
+        """
+        Single independent connection for one specific database engine
+        e.g Postgres, MySQL
+        """
         return self._connection
 
     @connection.setter
@@ -314,7 +321,7 @@ class Benchmarker:
 
     def generate_benchmark_metrics(self, total_time_min: float) -> None:
         """
-        Generates general metrics for the benchmark (AVG, Desviation, MIN, MAX)
+        Generates general metrics for the benchmark (AVG, MIN, MAX)
 
         Args:
             total_time_min: Total time of the benchmark in minutes
@@ -326,7 +333,6 @@ class Benchmarker:
             "total_questions": len(self.question_metrics),
             "total_time_min": round(total_time_min, 2),
             "pyd_avg_time": round(self.question_metrics["pydough_exec_time"].mean(), 2),
-            "pyd_std_time": round(self.question_metrics["pydough_exec_time"].std(), 2),
             "pyd_min_time": round(self.question_metrics["pydough_exec_time"].min(), 2),
             "pyd_max_time": round(self.question_metrics["pydough_exec_time"].max(), 2),
         }
@@ -539,5 +545,5 @@ class Benchmarker:
             self.generate_metrics_file()
             self.generate_benchmark_metrics((time.perf_counter() - start_measure) / 60)
 
-        # clossing the connection
+        # closing the connection
         self.connection.conn.close()

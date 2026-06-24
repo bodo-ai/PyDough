@@ -107,7 +107,7 @@ jobs:
             SHORT_DESC="from $REF_NAME@$SHA"
           fi
 
-          COMMIT_MSG="chore: update benchmark metrics ($SHORT_DESC)"
+          COMMIT_MSG="chore: update benchmark metrics ($SHORT_DESC) [run ci]"
 
           git commit -m "$COMMIT_MSG"
           git push origin "$BRANCH"

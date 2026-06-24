@@ -123,4 +123,40 @@ Exports the collected metrics to a CSV file named `{date.today()}_{pydough_versi
 | Benchmark | Queries | Status |
 |---|---|---|
 | TPC-H (Scale Factor 10) | 22 | Available |
-| TPC-DS (Scale Factor 10) | 99 | Added incrementally |
+| TPC-DS (Scale Factor 10) | 23/99 | Added incrementally |
+
+### TPC-DS Query Coverage
+
+| Query | Status | Comments |
+|---|---|---|
+| Q1 | Implemented | |
+| Q2 | Implemented | |
+| Q3 | Implemented | |
+| Q4 | Skipped | |
+| Q5 | Skipped | |
+| Q6 | Implemented | |
+| Q7 | Implemented | |
+| Q8 | Implemented | |
+| Q9 | Implemented | |
+| Q10 | Implemented | |
+| Q11 | Implemented | |
+| Q12 | Implemented | |
+| Q13 | Implemented | |
+| Q14 | Skipped | Multiple queries |
+| Q15 | Implemented | |
+| Q16 | Not Ready | Pydough returning wrong result |
+| Q17 | Skipped | No result returned |
+| Q18 | Implemented | |
+| Q19 | Implemented | |
+| Q20 | Implemented | |
+| Q21 | Implemented | |
+| Q22 | Implemented | Ground truth changed |
+| Q23 | Skipped | Multiple queries |
+| Q24 | Skipped | Multiple queries |
+| Q25 | Skipped | Ground truth returns no result |
+| Q26 | Implemented | |
+| Q27 | Implemented | Ground truth updated |
+| Q28 | Implemented | |
+| Q29 | Implemented | |
+| Q30 | Implemented | |
+| Q31 | Implemented | |
