@@ -676,40 +676,27 @@ def sqlite_tpch_session(
     return empty_sqlite_tpch_session
 
 
+_DIALECT_PARAMS = [
+    pytest.param("snowflake", id="snowflake", marks=[pytest.mark.snowflake]),
+    pytest.param("trino", id="trino", marks=[pytest.mark.trino]),
+    pytest.param("mysql", id="mysql", marks=[pytest.mark.mysql]),
+    pytest.param("postgres", id="postgres", marks=[pytest.mark.postgres]),
+    pytest.param("oracle", id="oracle", marks=[pytest.mark.oracle]),
+    pytest.param("databricks", id="databricks", marks=[pytest.mark.databricks]),
+]
+"""
+A list of supported database dialects for the TPCH test suite that are 
+available for testing both with pre-built connection objects and 
+with keyword argument-based connection parameters. 
+Hence, why sqlite is not included in this list. As it doesn't have 
+a params-based connection fixture.
+Each dialect is represented as a pytest parameter with an associated ID and 
+optional marks for test selection.
+"""
+
+
 @pytest.fixture(
-    params=[
-        pytest.param("sqlite", id="sqlite"),
-        pytest.param(
-            "snowflake",
-            id="snowflake",
-            marks=[pytest.mark.snowflake],
-        ),
-        pytest.param(
-            "trino",
-            id="trino",
-            marks=[pytest.mark.trino],
-        ),
-        pytest.param(
-            "mysql",
-            id="mysql",
-            marks=[pytest.mark.mysql],
-        ),
-        pytest.param(
-            "postgres",
-            id="postgres",
-            marks=[pytest.mark.postgres],
-        ),
-        pytest.param(
-            "oracle",
-            id="oracle",
-            marks=[pytest.mark.oracle],
-        ),
-        pytest.param(
-            "databricks",
-            id="databricks",
-            marks=[pytest.mark.databricks],
-        ),
-    ],
+    params=[pytest.param("sqlite", id="sqlite")] + _DIALECT_PARAMS,
 )
 def all_dialects_tpch_db_context(
     request,
@@ -762,40 +749,7 @@ def all_dialects_tpch_db_context(
     return db_context, get_sample_graph("TPCH")
 
 
-@pytest.fixture(
-    params=[
-        pytest.param(
-            "snowflake",
-            id="snowflake",
-            marks=[pytest.mark.snowflake],
-        ),
-        pytest.param(
-            "trino",
-            id="trino",
-            marks=[pytest.mark.trino],
-        ),
-        pytest.param(
-            "mysql",
-            id="mysql",
-            marks=[pytest.mark.mysql],
-        ),
-        pytest.param(
-            "postgres",
-            id="postgres",
-            marks=[pytest.mark.postgres],
-        ),
-        pytest.param(
-            "oracle",
-            id="oracle",
-            marks=[pytest.mark.oracle],
-        ),
-        pytest.param(
-            "databricks",
-            id="databricks",
-            marks=[pytest.mark.databricks],
-        ),
-    ],
-)
+@pytest.fixture(params=_DIALECT_PARAMS)
 def all_dialects_params_tpch_db_context(
     request,
     get_sample_graph: graph_fetcher,
