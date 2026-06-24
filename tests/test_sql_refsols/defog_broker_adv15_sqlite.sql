@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   100 * (
-    CAST(COALESCE(SUM(sbcuststatus = 'active'), 0) AS REAL) / COUNT(*)
+    CAST(COALESCE(SUM(IIF(sbcuststatus = 'active', 1, 0)), 0) AS REAL) / COUNT(*)
   ) AS ar
 FROM main.sbcustomer
 WHERE

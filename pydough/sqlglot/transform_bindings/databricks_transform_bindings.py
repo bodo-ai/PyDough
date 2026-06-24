@@ -13,7 +13,6 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek
 from pydough.types import NumericType, PyDoughType
-from pydough.types.boolean_type import BooleanType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit, apply_parens
@@ -79,25 +78,6 @@ class DatabricksTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
-
-    def convert_sum(
-        self, args: list[SQLGlotExpression], types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        """
-        Converts a SUM function call to its SQLGlot equivalent.
-        This method checks the type of the argument to determine whether to use
-        COUNT_IF (for BooleanType) or SUM (for other types).
-        Arguments:
-            `args` : The arguments to the SUM function.
-            `types` : The types of the arguments.
-        """
-        match types[0]:
-            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
-            case BooleanType():
-                return sqlglot_expressions.CountIf(this=args[0])
-            case _:
-                # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=args[0])
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

@@ -47,6 +47,8 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         "snowflake",
         "oracle",
         "bodosql",
+        "databricks",
+        "trino",
     }
     connection: DatabaseConnection | BodoSQLContext
     dialect: DatabaseDialect
