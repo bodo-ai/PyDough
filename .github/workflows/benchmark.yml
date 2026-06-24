@@ -127,3 +127,7 @@ jobs:
           **Workflow run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
           Please review the updated metrics files before merging."
+      
+          gh workflow run "PR Testing" \
+            --ref "$BRANCH" \
+            -f run-python=true
