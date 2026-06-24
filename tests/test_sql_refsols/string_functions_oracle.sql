@@ -18,7 +18,7 @@ SELECT
   REPLACE(CUSTOMER.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
   CASE
-    WHEN LENGTH(CUSTOMER.c_name) IS NULL
+    WHEN LENGTH(CUSTOMER.c_name) = 0 OR LENGTH(CUSTOMER.c_name) IS NULL
     THEN 0
     ELSE CAST((
       LENGTH(CUSTOMER.c_name) - NVL(LENGTH(REPLACE(CUSTOMER.c_name, 'e', '')), 0)

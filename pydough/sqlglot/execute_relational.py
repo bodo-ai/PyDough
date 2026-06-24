@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one, transforms
+from sqlglot.dialects import Databricks as DatabricksDialect
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Oracle as OracleDialect
@@ -202,6 +203,13 @@ def apply_sqlglot_optimizer(
     # Rewrite sqlglot AST to simplify expressions.
     glot_expr = simplify(glot_expr, dialect=dialect)
 
+    # Databricks rejects QUALIFY clauses that contain aggregate functions
+    # referencing columns outside the GROUP BY, even when that exact
+    # aggregate is already computed (and grouped) in the SELECT clause.
+    # Replace such aggregates with a reference to the matching SELECT alias.
+    if isinstance(dialect, DatabricksDialect):
+        collapse_qualify_aggregates(glot_expr)
+
     # Fix column names in the top-level SELECT expressions.
     # The optimizer changes the cases of column names, so we need to
     # match the alias in the relational tree.
@@ -224,6 +232,51 @@ def apply_sqlglot_optimizer(
     quote_oracle_identifiers(glot_expr, dialect)
 
     return glot_expr
+
+
+def collapse_qualify_aggregates(glot_expr: SQLGlotExpression) -> None:
+    """
+    Replace aggregate function calls inside a QUALIFY clause with a
+    reference to the matching SELECT alias, when that exact aggregate
+    expression is already computed in the SELECT clause.
+
+    Databricks' QUALIFY clause does not allow aggregate functions that
+    reference columns outside the GROUP BY, even when the same aggregate
+    expression is grouped and aliased in the SELECT clause, so the inlined
+    aggregate must be replaced with the alias reference.
+
+    Window aggregates (e.g. `AVG(...) OVER (...)`) are left untouched, since
+    Databricks allows those in QUALIFY regardless of GROUP BY.
+
+    Note: this only matches non-window aggregates that appear as an
+    *aliased* projection (`Alias`) in the SELECT clause, since PyDough always
+    aliases its top-level SELECT projections. A non-window aggregate in
+    QUALIFY with no matching aliased projection in SELECT raises an
+    AssertionError, since that should not be possible given how PyDough
+    generates SQL.
+
+    Args:
+        `glot_expr`: The SQLGlot expression to transform in-place.
+    """
+    for scope in traverse_scope(glot_expr):
+        expression = scope.expression
+        qualify_clause = expression.args.get("qualify")
+        if qualify_clause is None:
+            continue
+        alias_for_expr: dict[SQLGlotExpression, str] = {
+            projection.this: projection.alias
+            for projection in expression.selects
+            if isinstance(projection, Alias)
+        }
+        for agg in list(qualify_clause.find_all(sqlglot_expressions.AggFunc)):
+            if isinstance(agg.parent, sqlglot_expressions.Window):
+                continue
+            alias = alias_for_expr.get(agg)
+            assert alias is not None, (
+                f"Aggregate {agg.sql()} in QUALIFY has no matching aliased "
+                "projection in SELECT to collapse to."
+            )
+            agg.replace(sqlglot_expressions.column(alias))
 
 
 def replace_keys_with_indices(
@@ -562,6 +615,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return PostgresDialect()
         case DatabaseDialect.ORACLE:
             return OracleDialect()
+        case DatabaseDialect.DATABRICKS:
+            return DatabricksDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
@@ -606,6 +661,20 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                 )
             )
 
+        case DatabaseDialect.DATABRICKS:
+            # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
+            # which is necessary later when optimizing. Without it, HAS()/HASNOT()
+            # emit plain JOINs that inflate COUNT results or invert NOT EXISTS logic.
+            DatabricksDialect.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.unnest_to_explode,
+                        transforms.any_to_exists,
+                        transforms.eliminate_semi_and_anti_joins,
+                    ]
+                )
+            )
         case DatabaseDialect.TRINO:
             # Replace the DAYOFWEEK override for the Trino generator with the
             # default version, since PyDough handles the conversion logic
@@ -639,6 +708,16 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                     [
                         transforms.eliminate_distinct_on,
                         transforms.eliminate_qualify,
+                    ]
+                )
+            )
+        case DatabaseDialect.DATABRICKS:
+            DatabricksDialect.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_distinct_on,
+                        transforms.unnest_to_explode,
+                        transforms.any_to_exists,
                     ]
                 )
             )

@@ -198,6 +198,7 @@ class DatabaseDialect(Enum):
     POSTGRES = "postgres"
     ORACLE = "oracle"
     BODOSQL = "bodosql"
+    DATABRICKS = "databricks"
 
     @property
     def create_capabilities(self) -> CreateCapabilities:
@@ -226,6 +227,17 @@ class DatabaseDialect(Enum):
                     replace_table=False,
                     temp_table=False,
                     temp_view=False,
+                )
+            case DatabaseDialect.DATABRICKS:
+                # Databricks does not support CREATE OR REPLACE TABLE,
+                # but does support CREATE OR REPLACE VIEW and temporary views.
+                # NOTE: temp_table=False relies on the temp table -> temp view
+                # fallback in materialize_view._generate_create_ddl; keep them
+                # in sync if either changes.
+                return CreateCapabilities(
+                    replace_table=False,
+                    temp_table=False,
+                    temp_view=True,
                 )
             case DatabaseDialect.TRINO:
                 return CreateCapabilities(
@@ -280,6 +292,8 @@ class DatabaseDialect(Enum):
                 return "postgres"
             case DatabaseDialect.ORACLE:
                 return "oracle"
+            case DatabaseDialect.DATABRICKS:
+                return "databricks"
             case _:
                 raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
 

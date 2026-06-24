@@ -608,6 +608,27 @@ class MySQLTransformBindings(BaseTransformBindings):
             expression=sqlglot_expressions.Literal.number(7),
         )
 
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        DATE_FORMAT(base, '%b')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("%b")
+        return sqlglot_expressions.TimeToStr(this=date, format=month_format)
+
     def convert_strip(
         self,
         args: list[SQLGlotExpression],

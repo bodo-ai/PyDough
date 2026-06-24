@@ -37,6 +37,19 @@ class SnowflakeTransformBindings(BaseTransformBindings):
     def values_alias_column(self) -> bool:
         return False
 
+    SNOWFLAKE_STRFTIME_OVERRIDES: dict[str, str] = {
+        "%p": "AM",  # AM / PM marker
+    }
+    """
+    Mapping of Python `strftime`-style directives to Snowflake format
+    elements that SQLGlot's Snowflake `TIME_MAPPING` does not translate
+    (e.g. SQLGlot has no entry for `%p`, so it is left as-is in the format
+    string passed to `TO_CHAR`, which Snowflake does not recognize). These
+    replacements are applied before the format string is handed to SQLGlot's
+    `TimeToStr`, so SQLGlot's own translation of the remaining directives
+    (e.g. `%H`, `%M`) is unaffected.
+    """
+
     PYDOP_TO_SNOWFLAKE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.STARTSWITH: "STARTSWITH",
         pydop.ENDSWITH: "ENDSWITH",
@@ -84,6 +97,24 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             case _:
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=args[0])
+
+    def convert_string(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `STRING(X)`/`STRING(X, format)`.
+
+        For the 2-argument form, the format string is preprocessed to
+        replace directives in `SNOWFLAKE_STRFTIME_OVERRIDES` (e.g. `%p`)
+        with their Snowflake format-element equivalents, since SQLGlot's
+        Snowflake `TIME_MAPPING` does not translate them.
+        """
+        if len(args) == 2 and isinstance(args[1], sqlglot_expressions.Literal):
+            fmt: str = args[1].this
+            for k, v in self.SNOWFLAKE_STRFTIME_OVERRIDES.items():
+                fmt = fmt.replace(k, v)
+            args = [args[0], sqlglot_expressions.Literal.string(fmt)]
+        return super().convert_string(args, types)
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -221,6 +252,27 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         else:
             # For other units, use base implementation
             return super().convert_datediff(args, types)
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        TO_VARCHAR(my_date, 'Mon')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.ToChar(this=date, format=month_format)
 
     def convert_user_generated_range(
         self, collection: RangeGeneratedCollection

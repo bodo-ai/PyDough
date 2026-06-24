@@ -1429,6 +1429,11 @@ class PyDoughPandasTest:
             call_kwargs["mask_server"] = mask_server
         sql_text: str = to_sql(root, **call_kwargs)
 
+        # Normalize the Python-version-specific Databricks schema name
+        # (e.g. `to_table_py313`) to a fixed placeholder, so reference files
+        # are not tied to the Python version used to generate them.
+        sql_text = re.sub(r"to_table_py3\d\d", "to_table_pyXXX", sql_text)
+
         # Either update the reference solution, or compare the generated sql
         # text against it.
         if update:
@@ -1608,13 +1613,21 @@ class PyDoughPandasTest:
         )
         # to_table returns an UnqualifiedGeneratedCollection wrapping a ViewGeneratedCollection
         from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+        from pydough.user_collections.view_collection import ViewGeneratedCollection
 
         assert isinstance(collection, UnqualifiedGeneratedCollection), (
             "to_table did not return an UnqualifiedGeneratedCollection as expected"
         )
         # Access the inner PyDoughUserGeneratedCollection to get columns
         inner_collection = collection.user_collection
-        verify_table_created_correctly(database, table_name, inner_collection.columns)
+        assert isinstance(inner_collection, ViewGeneratedCollection), (
+            "to_table did not return a ViewGeneratedCollection as expected"
+        )
+        # Use sql_name (the actual created path) rather than table_name,
+        # since dialects like Databricks may unqualify temp view names.
+        verify_table_created_correctly(
+            database, inner_collection.sql_name, inner_collection.columns
+        )
 
 
 def verify_table_created_correctly(

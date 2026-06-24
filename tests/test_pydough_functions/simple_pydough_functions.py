@@ -2905,6 +2905,45 @@ def string_format_specifiers_oracle():
     )
 
 
+def string_format_specifiers_databricks():
+    # String format specifiers for date/time with a static datetime
+    # Works for Databricks (Spark SQL DATE_FORMAT)
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # four-digit year
+        d1=STRING(static_date, "yyyy"),
+        # last two digits of the year
+        d2=STRING(static_date, "yy"),
+        # two-digit month (01–12)
+        d3=STRING(static_date, "MM"),
+        # abbreviated month name
+        d4=STRING(static_date, "MMM"),
+        # full month name
+        d5=STRING(static_date, "MMMM"),
+        # two-digit day of month (01–31)
+        d6=STRING(static_date, "dd"),
+        # abbreviated day of week
+        d7=STRING(static_date, "EEE"),
+        # full day of week
+        d8=STRING(static_date, "EEEE"),
+        # hour in 24-hour format (00–23)
+        d9=STRING(static_date, "HH"),
+        # hour in 12-hour format (01–12)
+        d10=STRING(static_date, "hh"),
+        # minute (00–59)
+        d11=STRING(static_date, "mm"),
+        # second (00–59)
+        d12=STRING(static_date, "ss"),
+        # meridian indicator
+        d13=STRING(static_date, "a"),
+        # fractional seconds (microseconds)
+        d14=STRING(static_date, ".SSSSSS"),
+        # timezone offset
+        d15=STRING(static_date, "XXX"),
+    )
+
+
 def string_format_specifiers_bodosql():
     # String format specifiers for date/time with a static datetime
     # Works for BodoSQL

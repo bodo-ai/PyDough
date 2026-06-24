@@ -32,25 +32,25 @@ jobs:
 
       - name: Install dependencies
         # TODO: Remove the LD_LIBRARY_PATH step once the LLM package supports
-        # pyarrow>=23. The [tool.uv] override in pyproject.toml already allows
+        # pyarrow>=24. The [tool.uv] override in pyproject.toml already allows
         # uv sync to resolve pyarrow to 23.0.x for this environment. The
         # LD_LIBRARY_PATH step is needed because bodo looks for libarrow.so.2300
         # at runtime but it isn't on the default library search path.
         run: uv sync
 
       - name: Set Arrow library path for bodo
-        # TODO: Remove once the LLM package supports pyarrow>=23.
+        # TODO: Remove once the LLM package supports pyarrow>=24.
         run: |
           PYARROW_LIB=$(uv run --no-sync python -c "import pyarrow; print(':'.join(pyarrow.get_library_dirs()))")
           echo "LD_LIBRARY_PATH=${PYARROW_LIB}:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
 
       - name: Confirm BodoSQL and related dependencies are installed
-        # TODO: remove --no-sync once the LLM package supports pyarrow>=23.
+        # TODO: remove --no-sync once the LLM package supports pyarrow>=24.
         run: uv run --no-sync python -c "import bodo; import bodosql; import pyarrow; import pyiceberg; print(bodo.__version__, bodosql.__version__, pyarrow.__version__, pyiceberg.__version__)"
 
       - name: Download TPCH DB
         run: ./demos/setup_tpch.sh ./tpch.db
 
       - name: Run BodoSQL Tests
-        # TODO: remove --no-sync once the LLM package supports pyarrow>=23.
+        # TODO: remove --no-sync once the LLM package supports pyarrow>=24.
         run: uv run --no-sync pytest -m bodosql tests/ -rs

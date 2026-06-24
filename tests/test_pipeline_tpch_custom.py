@@ -6,8 +6,9 @@ dataset.
 import dataclasses
 import logging
 import re
+import sys
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 import numpy as np
@@ -5175,6 +5176,38 @@ from .testing_utilities import (
             ),
             id="rewrite_min_region",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE(YEAR(order_date) == 1998).TOP_K(5, by=customer_key)\n"
+                "result = selected_orders.CALCULATE(\n"
+                "   order_date,\n"
+                "   month_name_str=MONTHNAME('1995-10-26'),\n"
+                "   month_name_col=MONTHNAME(order_date),\n"
+                "   month_col_added=MONTHNAME(DATETIME(order_date, '+3 months')),\n"
+                "   month_str_subs=MONTHNAME(DATETIME('1995-10-26', '-5 MONTH')),\n"
+                "   month_now=MONTHNAME('now'),\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_date": [
+                            "1998-05-16",
+                            "1998-07-24",
+                            "1998-02-18",
+                            "1998-02-04",
+                            "1998-01-01",
+                        ],
+                        "month_name_str": ["Oct", "Oct", "Oct", "Oct", "Oct"],
+                        "month_name_col": ["May", "Jul", "Feb", "Feb", "Jan"],
+                        "month_col_added": ["Aug", "Oct", "May", "May", "Apr"],
+                        "month_str_subs": ["May", "May", "May", "May", "May"],
+                        "month_now": [datetime.now().strftime("%b")] * 5,
+                    }
+                ),
+                "monthname_function_1",
+            ),
+            id="monthname_function_1",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -6584,6 +6617,15 @@ SNOWFLAKE_TABLE_PREFIX = "E2E_TESTS_DB.PUBLIC."
 # For Trino, write to the in-memory connector
 TRINO_TABLE_PREFIX = "memory.default."
 
+# For Databricks, the connection's default catalog/schema is the read-only
+# tpch_s3_pq.TPCH_SF1 (external S3 location), so write to a separate
+# managed catalog/schema instead. Each Python version gets its own schema
+# so the parallel CI matrix jobs don't race on the same table names
+# NOTE: You'll need to create a new schema for each new Python version,
+# e.g. CREATE SCHEMA IF NOT EXISTS e2e_tests_db.to_table_py310;
+DATABRICKS_TEST_SCHEMA = f"to_table_py{sys.version_info.major}{sys.version_info.minor}"
+DATABRICKS_TABLE_PREFIX = f"e2e_tests_db.{DATABRICKS_TEST_SCHEMA}."
+
 
 def _strip_temp_for_oracle(test_data: PyDoughPandasTest) -> PyDoughPandasTest:
     """Return a copy of test_data with temp=True removed from the PyDough string.
@@ -6611,6 +6653,8 @@ def get_table_prefix_for_dialect(dialect: DatabaseDialect) -> str:
             return SNOWFLAKE_TABLE_PREFIX
         case DatabaseDialect.TRINO:
             return TRINO_TABLE_PREFIX
+        case DatabaseDialect.DATABRICKS:
+            return DATABRICKS_TABLE_PREFIX
         case _:
             return ""
 
@@ -6804,7 +6848,15 @@ def test_pipeline_to_table_ddl(
     expected_create_statement = "CREATE"
 
     table_or_view = " VIEW" if as_view else " TABLE"
-    # SQLite, PostgreSQL, MySQL, Trino, and Oracle do not support REPLACE TABLE
+
+    # Databricks does not support temporary tables, only temporary views,
+    # so to_table() falls back to creating a TEMPORARY VIEW when temp=True
+    # and as_view=False.
+    if db_context.dialect == DatabaseDialect.DATABRICKS and temp and not as_view:
+        table_or_view = " VIEW"
+
+    # SQLite, PostgreSQL, MySQL, Trino, Oracle, and Databricks do not support
+    # REPLACE TABLE.
     # Also, SQLite/Trino do not support REPLACE VIEW too but other dialects too.
     # So table/view will be dropped first if replace and the other conditions
     # are met. In this case, look for DROP then CREATE statements in the logs.
@@ -6818,6 +6870,7 @@ def test_pipeline_to_table_ddl(
                 DatabaseDialect.MYSQL,
                 DatabaseDialect.ORACLE,
                 DatabaseDialect.TRINO,
+                DatabaseDialect.DATABRICKS,
             }
         ) or (
             table_or_view == " VIEW"
