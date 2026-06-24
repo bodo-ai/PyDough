@@ -41,45 +41,6 @@ from .testing_utilities import PyDoughPandasTest
 from pydough import init_pydough_context, to_df, to_sql
 
 
-@pytest.fixture(
-    params=[
-        pytest.param(
-            PyDoughPandasTest(
-                impl_tpch_q16,
-                "TPCH",
-                tpch_q16_output,
-                "tpch_q16_params",
-            ),
-            id="tpch_q16_params",
-        ),
-    ],
-)
-def snowflake_params_tpch_q16_data(request) -> PyDoughPandasTest:
-    """
-    Test data for e2e tests for the TPC-H query 16. Returns an instance of
-    PyDoughPandasTest containing information about the test.
-    """
-    return request.param
-
-
-@pytest.mark.snowflake
-@pytest.mark.execute
-def test_pipeline_e2e_tpch_sf_params(
-    snowflake_params_tpch_q16_data: PyDoughPandasTest,
-    get_sf_sample_graph: graph_fetcher,
-    sf_params_tpch_db_context: DatabaseContext,
-):
-    """
-    Test executing the TPC-H queries from the original code generation,
-    with Snowflake as the executing database.
-    Using the  `user`, `password`, `account`, `database`, `schema`, and `warehouse`
-    as keyword arguments to the DatabaseContext.
-    """
-    snowflake_params_tpch_q16_data.run_e2e_test(
-        get_sf_sample_graph, sf_params_tpch_db_context, coerce_types=True
-    )
-
-
 @pytest.fixture
 def defog_sf_test_data(
     defog_custom_pipeline_test_data: PyDoughPandasTest,

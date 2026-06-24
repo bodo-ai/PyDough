@@ -88,6 +88,16 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
+    def convert_sum(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a SUM function call to its SQLGlot equivalent.
+        Overrides the base to always emit SUM directly, since SQLGlot does
+        not transpile CountIf to a valid expression for MySQL.
+        """
+        return sqlglot_expressions.Sum.from_arg_list(args)
+
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:

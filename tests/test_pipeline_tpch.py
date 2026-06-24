@@ -8,6 +8,8 @@ import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata.graphs.graph_metadata import GraphMetadata
+from tests.test_pydough_functions.tpch_outputs import tpch_q16_output
+from tests.test_pydough_functions.tpch_test_functions import impl_tpch_q16
 from tests.testing_utilities import (
     graph_fetcher,
 )
@@ -70,3 +72,20 @@ def test_pipeline_e2e_tpch(
     tpch_pipeline_test_data.run_e2e_test(
         lambda _: graph, db_context, coerce_types=True, atol=5e-3
     )
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_tpch_params(
+    all_dialects_params_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+):
+    """
+    Test executing TPC-H query 16 against each dialect's params-based connector
+    (keyword arguments instead of a pre-built connection object).
+    """
+    db_context, graph = all_dialects_params_tpch_db_context
+    PyDoughPandasTest(
+        impl_tpch_q16,
+        "TPCH",
+        tpch_q16_output,
+        "tpch_q16_params",
+    ).run_e2e_test(lambda _: graph, db_context, coerce_types=True, atol=5e-3)
