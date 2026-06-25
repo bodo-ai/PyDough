@@ -282,121 +282,177 @@ def test_md_invalid_format_raises(tpch_session: PyDoughSession) -> None:
 #
 #   <name>.md    — full explain_llm markdown output stored as actual markdown
 #
-# To add a new scenario: append to _REFSOL_SCENARIOS below, then run:
+# To add a new scenario: add a pytest.param to refsol_scenario below, then run:
 #   PYDOUGH_UPDATE_TESTS=1 uv run pytest tests/test_explain_llm.py -k refsol
 
 _REFSOL_DIR = Path(__file__).parent / "test_explain_llm_refsols"
 
-# Scenarios are defined here so pytest can collect them before any reference
-# files are generated.  Running with PYDOUGH_UPDATE_TESTS=1 creates or
-# overwrites the per-scenario files.
-_REFSOL_SCENARIOS: list[tuple[str, str]] = [
-    ("nations_calculate", "result = nations.CALCULATE(key, name)"),
-    (
-        "nations_where_calculate",
-        "result = nations.WHERE(key > 5).CALCULATE(key, name)",
-    ),
-    (
-        "nations_where_only",
-        "result = nations.WHERE(key > 5)",
-    ),
-    (
-        "nations_where_and_conditions",
-        "result = nations.WHERE((key > 5) & (key < 20))",
-    ),
-    (
-        "nations_order_by",
-        "result = nations.ORDER_BY(name.ASC())",
-    ),
-    (
-        "customers_count_orders",
-        "result = customers.CALCULATE(key, n_orders=COUNT(orders))",
-    ),
-    (
-        "nations_count_customers",
-        "result = nations.CALCULATE(n=COUNT(customers))",
-    ),
-    ("nations_cross_regions", "result = nations.CROSS(regions)"),
-    ("nations_topk", "result = nations.TOP_K(5, by=name.ASC())"),
-    (
-        "nations_calculate_topk",
-        "result = nations.CALCULATE(name=name, n=COUNT(customers)).TOP_K(1, by=n.DESC())",
-    ),
-    (
-        "customers_partition_by_segment",
-        "result = customers.PARTITION(name='g', by=market_segment)"
-        ".CALCULATE(market_segment=market_segment, n=COUNT(customers))",
-    ),
-    (
-        "customers_orders_subcollection",
-        "result = customers.WHERE(market_segment == 'BUILDING')"
-        ".orders.CALCULATE(key=key)",
-    ),
-    (
-        "customers_where_orders_where",
-        "result = customers.WHERE(market_segment == 'BUILDING')"
-        ".orders.WHERE(total_price > 1000).CALCULATE(key=key)",
-    ),
-    (
-        "customers_singular_nation_name",
-        "result = customers.CALCULATE(nation_name=nation.SINGULAR().name)",
-    ),
-    (
-        "customers_join_strings",
-        "result = customers.CALCULATE(full=JOIN_STRINGS(' ', name, phone))",
-    ),
-    (
-        "customers_pre_post_calculate_where",
-        "result = customers.WHERE(market_segment == 'BUILDING')"
-        ".CALCULATE(name=name, n=COUNT(orders))"
-        ".WHERE(RANKING(by=n.ASC()) == 1).CALCULATE(name)",
-    ),
-    (
-        "customers_orders_ranking_where",
-        "result = customers.orders.WHERE(RANKING(by=total_price.DESC(), per='customers') == 1)"
-        ".CALCULATE(key=key)",
-    ),
-    (
-        "nations_where_partition",
-        "result = nations.WHERE(key > 5).PARTITION(name='g', by=name).CALCULATE(name=name)",
-    ),
-    (
-        "nations_iff_partition",
-        "result = nations.WHERE(key > 5)"
-        ".CALCULATE(tier=IFF(key > 15, 'high', 'low'))"
-        ".PARTITION(name='g', by=tier)"
-        ".CALCULATE(tier=tier, n=COUNT(nations))"
-        ".TOP_K(1, by=n.DESC()).CALCULATE(tier)",
-    ),
-    (
-        "customers_where_orders_partition",
-        "result = customers.WHERE(market_segment == 'BUILDING')"
-        ".orders.PARTITION(name='g', by=order_status)"
-        ".CALCULATE(order_status=order_status, n=COUNT(orders))"
-        ".TOP_K(1, by=n.DESC()).CALCULATE(order_status)",
-    ),
-    (
-        "customers_orders_lines_partition",
-        "result = customers.WHERE(market_segment == 'BUILDING')"
-        ".orders.lines.PARTITION(name='g', by=return_flag)"
-        ".CALCULATE(return_flag=return_flag)",
-    ),
-    (
-        "global_count_nations_where",
-        "result = CALCULATE(n=COUNT(nations.WHERE(key > 5)))",
-    ),
-    ("error_unrecognized_term", "result = nations.WHERE(naem == 'ASIA')"),
-    ("error_expression_not_collection", "result = nations.key"),
-]
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            ("nations_calculate", "result = nations.CALCULATE(key, name)"),
+            id="nations_calculate",
+        ),
+        pytest.param(
+            (
+                "nations_where_calculate",
+                "result = nations.WHERE(key > 5).CALCULATE(key, name)",
+            ),
+            id="nations_where_calculate",
+        ),
+        pytest.param(
+            ("nations_where_only", "result = nations.WHERE(key > 5)"),
+            id="nations_where_only",
+        ),
+        pytest.param(
+            (
+                "nations_where_and_conditions",
+                "result = nations.WHERE((key > 5) & (key < 20))",
+            ),
+            id="nations_where_and_conditions",
+        ),
+        pytest.param(
+            ("nations_order_by", "result = nations.ORDER_BY(name.ASC())"),
+            id="nations_order_by",
+        ),
+        pytest.param(
+            (
+                "customers_count_orders",
+                "result = customers.CALCULATE(key, n_orders=COUNT(orders))",
+            ),
+            id="customers_count_orders",
+        ),
+        pytest.param(
+            (
+                "nations_count_customers",
+                "result = nations.CALCULATE(n=COUNT(customers))",
+            ),
+            id="nations_count_customers",
+        ),
+        pytest.param(
+            ("nations_cross_regions", "result = nations.CROSS(regions)"),
+            id="nations_cross_regions",
+        ),
+        pytest.param(
+            ("nations_topk", "result = nations.TOP_K(5, by=name.ASC())"),
+            id="nations_topk",
+        ),
+        pytest.param(
+            (
+                "nations_calculate_topk",
+                "result = nations.CALCULATE(name=name, n=COUNT(customers)).TOP_K(1, by=n.DESC())",
+            ),
+            id="nations_calculate_topk",
+        ),
+        pytest.param(
+            (
+                "customers_partition_by_segment",
+                "result = customers.PARTITION(name='g', by=market_segment).CALCULATE(market_segment=market_segment, n=COUNT(customers))",
+            ),
+            id="customers_partition_by_segment",
+        ),
+        pytest.param(
+            (
+                "customers_orders_subcollection",
+                "result = customers.WHERE(market_segment == 'BUILDING').orders.CALCULATE(key=key)",
+            ),
+            id="customers_orders_subcollection",
+        ),
+        pytest.param(
+            (
+                "customers_where_orders_where",
+                "result = customers.WHERE(market_segment == 'BUILDING').orders.WHERE(total_price > 1000).CALCULATE(key=key)",
+            ),
+            id="customers_where_orders_where",
+        ),
+        pytest.param(
+            (
+                "customers_singular_nation_name",
+                "result = customers.CALCULATE(nation_name=nation.SINGULAR().name)",
+            ),
+            id="customers_singular_nation_name",
+        ),
+        pytest.param(
+            (
+                "customers_join_strings",
+                "result = customers.CALCULATE(full=JOIN_STRINGS(' ', name, phone))",
+            ),
+            id="customers_join_strings",
+        ),
+        pytest.param(
+            (
+                "customers_pre_post_calculate_where",
+                "result = customers.WHERE(market_segment == 'BUILDING').CALCULATE(name=name, n=COUNT(orders)).WHERE(RANKING(by=n.ASC()) == 1).CALCULATE(name)",
+            ),
+            id="customers_pre_post_calculate_where",
+        ),
+        pytest.param(
+            (
+                "customers_orders_ranking_where",
+                "result = customers.orders.WHERE(RANKING(by=total_price.DESC(), per='customers') == 1).CALCULATE(key=key)",
+            ),
+            id="customers_orders_ranking_where",
+        ),
+        pytest.param(
+            (
+                "nations_where_partition",
+                "result = nations.WHERE(key > 5).PARTITION(name='g', by=name).CALCULATE(name=name)",
+            ),
+            id="nations_where_partition",
+        ),
+        pytest.param(
+            (
+                "nations_iff_partition",
+                "result = nations.WHERE(key > 5).CALCULATE(tier=IFF(key > 15, 'high', 'low')).PARTITION(name='g', by=tier).CALCULATE(tier=tier, n=COUNT(nations)).TOP_K(1, by=n.DESC()).CALCULATE(tier)",
+            ),
+            id="nations_iff_partition",
+        ),
+        pytest.param(
+            (
+                "customers_where_orders_partition",
+                "result = customers.WHERE(market_segment == 'BUILDING').orders.PARTITION(name='g', by=order_status).CALCULATE(order_status=order_status, n=COUNT(orders)).TOP_K(1, by=n.DESC()).CALCULATE(order_status)",
+            ),
+            id="customers_where_orders_partition",
+        ),
+        pytest.param(
+            (
+                "customers_orders_lines_partition",
+                "result = customers.WHERE(market_segment == 'BUILDING').orders.lines.PARTITION(name='g', by=return_flag).CALCULATE(return_flag=return_flag)",
+            ),
+            id="customers_orders_lines_partition",
+        ),
+        pytest.param(
+            (
+                "global_count_nations_where",
+                "result = CALCULATE(n=COUNT(nations.WHERE(key > 5)))",
+            ),
+            id="global_count_nations_where",
+        ),
+        pytest.param(
+            ("error_unrecognized_term", "result = nations.WHERE(naem == 'ASIA')"),
+            id="error_unrecognized_term",
+        ),
+        pytest.param(
+            ("error_expression_not_collection", "result = nations.key"),
+            id="error_expression_not_collection",
+        ),
+    ]
+)
+def refsol_scenario(request) -> tuple[str, str]:
+    """
+    Parametrized fixture that yields ``(name, code)`` for each scenario.
+
+    Returns:
+        A ``(name, code)`` tuple where ``name`` is also the stem of the
+        per-scenario reference files in ``_REFSOL_DIR``.
+    """
+    return request.param
 
 
 def _run_explain_json_str(code: str, session: PyDoughSession) -> dict:
     """
     Evaluates a PyDough code string and returns the ``explain_llm`` JSON dict.
-
-    Uses ``pydough.from_string`` so the code can reference graph collections
-    by name without a separate graph argument.  The code must assign its result
-    to a variable named ``result``.
 
     Args:
         `code`: a PyDough code string of the form ``result = <expression>``.
@@ -424,20 +480,8 @@ def _run_explain_md_str(code: str, session: PyDoughSession) -> str:
     return cast(str, pydough.explain_llm(node, session=session, format="md"))
 
 
-@pytest.fixture(params=[pytest.param(name, id=name) for name, _ in _REFSOL_SCENARIOS])
-def refsol_name(request) -> str:
-    """
-    Parametrized fixture that yields the name of each reference scenario.
-
-    Returns:
-        The scenario name string, used as both the pytest ID and the stem of
-        the per-scenario reference files in ``_REFSOL_DIR``.
-    """
-    return request.param
-
-
 def test_explain_llm_refsol_json(
-    refsol_name: str,
+    refsol_scenario: tuple[str, str],
     tpch_session: PyDoughSession,
     update_tests: bool,
 ) -> None:
@@ -450,31 +494,31 @@ def test_explain_llm_refsol_json(
     path to the sibling markdown file.
 
     Args:
-        `refsol_name`: the scenario name, also the file stem.
+        `refsol_scenario`: ``(name, code)`` tuple for the scenario.
         `tpch_session`: the PyDough session used for evaluation.
         `update_tests`: when ``True``, writes rather than compares.
     """
-    code = next(c for n, c in _REFSOL_SCENARIOS if n == refsol_name)
+    name, code = refsol_scenario
     result = _run_explain_json_str(code, tpch_session)
-    json_path = _REFSOL_DIR / f"{refsol_name}.json"
+    json_path = _REFSOL_DIR / f"{name}.json"
     if update_tests:
         _REFSOL_DIR.mkdir(exist_ok=True)
         entry = {
             "pydough": code,
             "explain_output": result,
-            "explain_output_md": f"{refsol_name}.md",
+            "explain_output_md": f"{name}.md",
         }
         json_path.write_text(json.dumps(entry, indent=2) + "\n")
     else:
         entry = json.loads(json_path.read_text())
         assert result == entry["explain_output"], (
-            f"explain_llm JSON for '{refsol_name}' differs from the reference "
+            f"explain_llm JSON for '{name}' differs from the reference "
             f"file. Re-run with PYDOUGH_UPDATE_TESTS=1 to regenerate."
         )
 
 
 def test_explain_llm_refsol_md(
-    refsol_name: str,
+    refsol_scenario: tuple[str, str],
     tpch_session: PyDoughSession,
     update_tests: bool,
 ) -> None:
@@ -486,16 +530,16 @@ def test_explain_llm_refsol_md(
     current output.
 
     Args:
-        `refsol_name`: the scenario name, also the file stem.
+        `refsol_scenario`: ``(name, code)`` tuple for the scenario.
         `tpch_session`: the PyDough session used for evaluation.
         `update_tests`: when ``True``, writes rather than compares.
     """
-    code = next(c for n, c in _REFSOL_SCENARIOS if n == refsol_name)
+    name, code = refsol_scenario
     result = _run_explain_md_str(code, tpch_session)
-    json_path = _REFSOL_DIR / f"{refsol_name}.json"
+    json_path = _REFSOL_DIR / f"{name}.json"
     if update_tests:
         _REFSOL_DIR.mkdir(exist_ok=True)
-        md_filename = f"{refsol_name}.md"
+        md_filename = f"{name}.md"
         md_path = _REFSOL_DIR / md_filename
         md_path.write_text(result + "\n")
         # Keep the JSON file's md pointer in sync if it already exists.
@@ -508,6 +552,6 @@ def test_explain_llm_refsol_md(
         md_path = _REFSOL_DIR / entry["explain_output_md"]
         expected = md_path.read_text().rstrip("\n")
         assert result == expected, (
-            f"explain_llm markdown for '{refsol_name}' differs from the "
+            f"explain_llm markdown for '{name}' differs from the "
             f"reference file. Re-run with PYDOUGH_UPDATE_TESTS=1 to regenerate."
         )
