@@ -39,6 +39,7 @@ from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
+    function_sampler,
     simple_int_float_string_cast,
     string_format_specifiers_bodosql,
     string_format_specifiers_databricks,
@@ -46,6 +47,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     string_format_specifiers_oracle,
     string_format_specifiers_postgres,
     string_format_specifiers_snowflake,
+    supplier_pct_national_qty,
 )
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
@@ -558,6 +560,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
         pytest.param(DatabaseDialect.ORACLE, id="oracle"),
         pytest.param(DatabaseDialect.DATABRICKS, id="databricks"),
+        pytest.param(DatabaseDialect.DUCKDB, id="duckdb"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -683,6 +686,7 @@ _DIALECT_PARAMS = [
     pytest.param("postgres", id="postgres", marks=[pytest.mark.postgres]),
     pytest.param("oracle", id="oracle", marks=[pytest.mark.oracle]),
     pytest.param("databricks", id="databricks", marks=[pytest.mark.databricks]),
+    pytest.param("duckdb", id="duckdb", marks=[pytest.mark.duckdb]),
 ]
 """
 A list of supported database dialects for the TPCH test suite that are 
@@ -704,6 +708,7 @@ def all_dialects_tpch_db_context(
     get_sf_sample_graph: graph_fetcher,
     get_databricks_sample_graph: graph_fetcher,
     get_trino_graphs: graph_fetcher,
+    get_duckdb_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     General fixture providing TPCH database context and graph metadata
@@ -741,6 +746,9 @@ def all_dialects_tpch_db_context(
                 db_context("tpch_s3_pq", "TPCH_SF1"),
                 get_databricks_sample_graph("TPCH"),
             )
+        case "duckdb":
+            db_context = request.getfixturevalue("duckdb_tpch_db_context")
+            return db_context, get_duckdb_sample_graph("TPCH")
 
         # TODO: Add bodosql later
 
@@ -756,6 +764,7 @@ def all_dialects_params_tpch_db_context(
     get_sf_sample_graph: graph_fetcher,
     get_databricks_sample_graph: graph_fetcher,
     get_trino_graphs: graph_fetcher,
+    get_duckdb_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     Fixture providing a params-based TPCH database context and graph metadata
@@ -784,6 +793,9 @@ def all_dialects_params_tpch_db_context(
         case "databricks":
             db_context = request.getfixturevalue("databricks_params_tpch_db_context")
             return db_context, get_databricks_sample_graph("TPCH")
+        case "duckdb":
+            db_context = request.getfixturevalue("duckdb_params_tpch_db_context")
+            return db_context, get_duckdb_sample_graph("TPCH")
     raise AssertionError(f"Unhandled dialect: {request.param!r}")
 
 
@@ -1361,6 +1373,69 @@ def databricks_params_tpch_db_context() -> DatabaseContext:
         access_token=token,
         catalog=databricks_tpch_catalog,
         schema=databricks_tpch_schema,
+    )
+
+
+@pytest.fixture(scope="session")
+def duckdb_sample_graph_path() -> str:
+    # DuckDB schema is `main` so can use tpch_demo_graph.json directly.
+    return f"{os.path.dirname(__file__)}/../demos/metadata/tpch_demo_graph.json"
+
+
+@pytest.fixture(scope="session")
+def get_duckdb_sample_graph(
+    duckdb_sample_graph_path: str,
+    valid_sample_graph_names: set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    DuckDB graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=duckdb_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def duckdb_tpch_db():
+    import duckdb
+
+    conn = duckdb.connect(database=":memory:")
+    # Load the TPCH data into DuckDB connection.
+    conn.execute("INSTALL tpch; LOAD tpch; CALL dbgen(sf=1);")
+    return conn
+
+
+@pytest.fixture(scope="session")
+def duckdb_tpch_db_context(duckdb_tpch_db) -> DatabaseContext:
+    """This fixture is used to connect to the DuckDB TPCH database.
+
+    Returns:
+        DatabaseContext: The DuckDB TPCH database context.
+    """
+    return DatabaseContext(DatabaseConnection(duckdb_tpch_db), DatabaseDialect.DUCKDB)
+
+
+@pytest.fixture(scope="session")
+def duckdb_params_tpch_db_context() -> DatabaseContext:
+    """This fixture is used to connect to the DuckDB database using
+    parameters instead of a connection object.
+
+    Returns:
+        DatabaseContext: The DuckDB TPCH database context.
+    """
+    return load_database_context(
+        "duckdb",
+        database=":memory:",
+        read_only=True,
+        config={"threads": 4, "memory_limit": "8GB"},
     )
 
 
@@ -3253,6 +3328,88 @@ def tpch_custom_test_data_dialect_replacements(
             ),
             "simple_dataframe_collection_3",
         )
+
+    # DuckDB's built-in dbgen generates different random-text fields (address,
+    # comment) than the standard TPC-H dbgen used to produce the tpch.db
+    # SQLite fixture and the Snowflake/Postgres/MySQL cloud datasets. Tests that
+    # filter on `comment` or sort by `address` therefore need DuckDB-specific
+    # expected values. Deterministic fields (phone, acctbal, nationkey, etc.)
+    # are identical across all datasets.
+    if test.test_name == "function_sampler" and dialect == DatabaseDialect.DUCKDB:
+        return PyDoughPandasTest(
+            function_sampler,
+            "TPCH",
+            lambda: pd.DataFrame(
+                {
+                    "a": [
+                        "AMERICA-PERU-27",
+                        "AMERICA-PERU-37",
+                        "ASIA-CHINA-71",
+                        "EUROPE-RUSSIA-95",
+                        "EUROPE-UNITED KINGDOM-16",
+                        "AMERICA-ARGENTINA-16",
+                        "EUROPE-RUSSIA-84",
+                        "EUROPE-ROMANIA-75",
+                        "EUROPE-ROMANIA-90",
+                        "AMERICA-ARGENTINA-32",
+                    ],
+                    "b": [52.4, 82.1, 21.8, 59.7, 65.5, 29.5, 43.2, 64.8, 26.7, 90.4],
+                    "c": [
+                        None,
+                        None,
+                        None,
+                        "Customer#000050195",
+                        "Customer#000070316",
+                        None,
+                        "Customer#000047084",
+                        None,
+                        None,
+                        None,
+                    ],
+                    "d": [0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+                    "e": [1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+                    "f": [52.0, 82.0, 22.0, 60.0, 65.0, 30.0, 43.0, 65.0, 27.0, 90.0],
+                }
+            ),
+            "function_sampler",
+        )
+
+    if (
+        test.test_name == "supplier_pct_national_qty"
+        and dialect == DatabaseDialect.DUCKDB
+    ):
+        return PyDoughPandasTest(
+            supplier_pct_national_qty,
+            "TPCH",
+            lambda: pd.DataFrame(
+                {
+                    "supplier_name": [
+                        "Supplier#000004988",
+                        "Supplier#000000193",
+                        "Supplier#000005284",
+                        "Supplier#000003027",
+                        "Supplier#000004494",
+                    ],
+                    "nation_name": [
+                        "KENYA",
+                        "ETHIOPIA",
+                        "MOROCCO",
+                        "ALGERIA",
+                        "ALGERIA",
+                    ],
+                    "supplier_quantity": [13, 37, 20, 23, 17],
+                    "national_qty_pct": [
+                        100.0,
+                        100.0,
+                        68.96551724137932,
+                        57.5,
+                        42.5,
+                    ],
+                }
+            ),
+            "supplier_pct_national_qty",
+        )
+
     return test
 
 

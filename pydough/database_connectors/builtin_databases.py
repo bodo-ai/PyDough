@@ -18,6 +18,7 @@ __all__ = [
     "load_bodosql_context",
     "load_database_context",
     "load_databricks_connection",
+    "load_duckdb_connection",
     "load_mysql_connection",
     "load_oracle_connection",
     "load_postgres_connection",
@@ -77,6 +78,9 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "databricks":
             connection = load_databricks_connection(**kwargs)
             dialect = DatabaseDialect.DATABRICKS
+        case "duckdb":
+            connection = load_duckdb_connection(**kwargs)
+            dialect = DatabaseDialect.DUCKDB
         case _:
             raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
@@ -498,6 +502,35 @@ def load_databricks_connection(**kwargs) -> DatabaseConnection:
         )
 
     connection = sql.connect(**kwargs)
+    return DatabaseConnection(connection)
+
+
+def load_duckdb_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads a DuckDB database connection. This is done by providing a wrapper
+    around the DB 2.0 connect API.
+
+    Args:
+        **kwargs: Either a DuckDB connection object (as `connection=<object>`)
+            or database name (as `database=<path>`).
+            - database: DuckDB database file path (str)
+            If not provided, it defaults to an in-memory database.
+            All arguments must be accepted using the supported connect API
+            for the dialect.
+    """
+    try:
+        import duckdb
+    except ImportError:
+        raise ImportError(
+            "DuckDB connector is not installed. Please install it with"
+            " `pip install duckdb`."
+        )
+
+    if connection := kwargs.pop("connection", None):
+        return DatabaseConnection(connection)
+
+    database = kwargs.pop("database", ":memory:")
+    connection = duckdb.connect(database=database, **kwargs)
     return DatabaseConnection(connection)
 
 

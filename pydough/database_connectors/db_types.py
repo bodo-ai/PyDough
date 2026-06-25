@@ -50,6 +50,11 @@ if TYPE_CHECKING:
     DatabricksConn: TypeAlias = databricks.sql.client.Connection
     DatabricksCursor: TypeAlias = databricks.sql.client.Cursor
 
+    import duckdb
+
+    DuckDBConn: TypeAlias = duckdb.Connection
+    DuckDBCursor: TypeAlias = duckdb.Cursor
+
     # TBD: Placeholder lines to add other dialects.
     # 1. Replace with actual dialect module
     # import dialect1_module
@@ -67,6 +72,7 @@ if TYPE_CHECKING:
         | OracleConn
         | DatabricksConn
         | TrinoConn
+        | DuckDBConn
     )  # type: ignore
     DBCursor: TypeAlias = (
         SQLiteCursor
@@ -76,6 +82,7 @@ if TYPE_CHECKING:
         | OracleCursor
         | DatabricksCursor
         | TrinoCursor
+        | DuckDBCursor
     )  # type: ignore
 
     import bodosql
@@ -99,6 +106,8 @@ else:
     DatabricksCursor: TypeAlias = Any
     TrinoConn: TypeAlias = Any
     TrinoCursor: TypeAlias = Any
+    DuckDBConn: TypeAlias = Any
+    DuckDBCursor: TypeAlias = Any
     BodoSQLContext: TypeAlias = Any
 
 # This allows us to use these type aliases in the rest of the code
@@ -109,6 +118,8 @@ __all__ = [
     "DBCursor",
     "DatabricksConn",
     "DatabricksCursor",
+    "DuckDBConn",
+    "DuckDBCursor",
     "MySQLConn",
     "MySQLCursor",
     "OracleConn",

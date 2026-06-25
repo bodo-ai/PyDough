@@ -43,6 +43,7 @@ dev = [
     "pydough[bodosql]",
     "pydough[oracle]",
     "pydough[databricks]",
+    "pydough[duckdb]",
     "pymongo",
     "cassandra-driver",
 ]
@@ -56,6 +57,7 @@ server = ["fastapi", "httpx", "uvicorn"]
 bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0"]
 oracle = ["oracledb==3.4.2"]
 databricks = ["databricks-sql-connector==4.2.6"]
+duckdb = ["duckdb"]
 
 # TODO: Remove this override once the LLM package supports pyarrow>=24.
 # The base dependency pins pyarrow==22 for LLM compatibility, but bodo

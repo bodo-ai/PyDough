@@ -38,7 +38,7 @@ class DatabricksTransformBindings(BaseTransformBindings):
         pydop.LARGEST: "GREATEST",
     }
     """
-    Mapping of PyDough operators to equivalent Snowflake SQL function names
+    Mapping of PyDough operators to equivalent Databricks SQL function names
     These are used to generate anonymous function calls in SQLGlot
     """
 

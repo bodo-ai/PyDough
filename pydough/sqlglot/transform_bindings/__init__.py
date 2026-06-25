@@ -7,6 +7,7 @@ __all__ = [
     "BaseTransformBindings",
     "BodoSQLTransformBindings",
     "DatabricksTransformBindings",
+    "DuckDBTransformBindings",
     "MySQLTransformBindings",
     "OracleTransformBindings",
     "PostgresTransformBindings",
@@ -24,6 +25,7 @@ from pydough.database_connectors import DatabaseDialect
 from .base_transform_bindings import BaseTransformBindings
 from .bodosql_transform_bindings import BodoSQLTransformBindings
 from .databricks_transform_bindings import DatabricksTransformBindings
+from .duckdb_transform_bindings import DuckDBTransformBindings
 from .mysql_transform_bindings import MySQLTransformBindings
 from .oracle_transform_bindings import OracleTransformBindings
 from .postgres_transform_bindings import PostgresTransformBindings
@@ -71,5 +73,7 @@ def bindings_from_dialect(
             return OracleTransformBindings(configs, visitor)
         case DatabaseDialect.DATABRICKS:
             return DatabricksTransformBindings(configs, visitor)
+        case DatabaseDialect.DUCKDB:
+            return DuckDBTransformBindings(configs, visitor)
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")

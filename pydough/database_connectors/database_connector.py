@@ -54,7 +54,6 @@ class DatabaseConnection:
         Returns:
             list[pt.Any]: A list of rows returned by the query.
         """
-        self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
 
@@ -80,8 +79,6 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, True
             ) from e
-        finally:
-            self.cursor.close()
 
     def execute_ddl(self, sql: str) -> None:
         """Create a cursor object using the connection and execute the DDL query.
@@ -89,7 +86,6 @@ class DatabaseConnection:
         Args:
             `sql`: The DDL SQL query to execute.
         """
-        self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
             # Consume any results to avoid MySQL "Unread result found" error
@@ -103,8 +99,6 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, False
             ) from e
-        finally:
-            self.cursor.close()
 
     def get_table_columns(self, table_name: str) -> list[str]:
         """Get the columns of a table.
@@ -114,7 +108,6 @@ class DatabaseConnection:
         Returns:
             A list of column names in the table.
         """
-        self._cursor = self._connection.cursor()
         try:
             # WHERE 1=0 returns no rows but populates cursor.description
             # with column metadata on all supported dialects.
@@ -133,8 +126,6 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 f"Failed to get column names for table {table_name}", e, False
             ) from e
-        finally:
-            self.cursor.close()
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
@@ -152,12 +143,37 @@ class DatabaseConnection:
 
     @property
     def cursor(self) -> DBCursor:
-        """Get the database cursor.
+        """Get the database cursor, creating it on first access.
+
+        A single cursor is created per connection and reused for all
+        operations. This ensures that objects created by execute_ddl
+        (including TEMPORARY TABLEs and VIEWs) remain visible to
+        execute_query_df and get_table_columns within the same session.
+        For databases like DuckDB where cursor() returns an independent
+        connection, this guarantees all operations share one context.
 
         Returns:
             DBCursor: The database cursor PyDough is managing.
         """
+        if self._cursor is None:
+            self._cursor = self._connection.cursor()
         return self._cursor
+
+    def close(self) -> None:
+        """Close the cursor and the underlying connection.
+
+        Should be called when the session is done to release resources.
+        """
+        if self._cursor is not None:
+            try:
+                self._cursor.close()
+            except Exception:
+                pass
+            self._cursor = None
+        try:
+            self._connection.close()
+        except Exception:
+            pass
 
 
 @dataclass(frozen=True)
@@ -199,6 +215,7 @@ class DatabaseDialect(Enum):
     ORACLE = "oracle"
     BODOSQL = "bodosql"
     DATABRICKS = "databricks"
+    DUCKDB = "duckdb"
 
     @property
     def create_capabilities(self) -> CreateCapabilities:
@@ -245,6 +262,13 @@ class DatabaseDialect(Enum):
                     replace_view=False,
                     temp_table=False,
                     temp_view=False,
+                )
+            case DatabaseDialect.DUCKDB:
+                return CreateCapabilities(
+                    replace_table=True,
+                    replace_view=True,
+                    temp_table=True,
+                    temp_view=True,
                 )
             case _:
                 return CreateCapabilities(
@@ -294,6 +318,8 @@ class DatabaseDialect(Enum):
                 return "oracle"
             case DatabaseDialect.DATABRICKS:
                 return "databricks"
+            case DatabaseDialect.DUCKDB:
+                return "duckdb"
             case _:
                 raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
 
