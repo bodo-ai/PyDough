@@ -17,6 +17,7 @@ jobs:
     permissions:
       contents: write      
       pull-requests: write 
+      actions: write
 
     env:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
