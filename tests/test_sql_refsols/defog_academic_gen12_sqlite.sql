@@ -1,3 +1,3 @@
 SELECT
-  CAST(SUM(NOT cid IS NULL) AS REAL) / NULLIF(SUM(NOT jid IS NULL), 0) AS ratio
+  CAST(SUM(IIF(NOT cid IS NULL, 1, 0)) AS REAL) / NULLIF(SUM(IIF(NOT jid IS NULL, 1, 0)), 0) AS ratio
 FROM main.publication

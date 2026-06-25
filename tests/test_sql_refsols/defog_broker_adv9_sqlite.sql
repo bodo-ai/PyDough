@@ -9,11 +9,15 @@ SELECT
   COUNT(*) AS num_transactions,
   COALESCE(
     SUM(
-      (
+      IIF(
         (
-          CAST(STRFTIME('%w', sbtransaction.sbtxdatetime) AS INTEGER) + 6
-        ) % 7
-      ) IN (5, 6)
+          (
+            CAST(STRFTIME('%w', sbtransaction.sbtxdatetime) AS INTEGER) + 6
+          ) % 7
+        ) IN (5, 6),
+        1,
+        0
+      )
     ),
     0
   ) AS weekend_transactions

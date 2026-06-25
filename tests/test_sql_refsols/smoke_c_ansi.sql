@@ -13,8 +13,8 @@ SELECT
   FLOOR(STDDEV_POP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)) AS l,
   ROUND(STDDEV(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END), 4) AS m,
   ROUND(AVG(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0)), 2) AS n,
-  SUM(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS o,
-  SUM(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p,
+  COUNT_IF(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS o,
+  COUNT_IF(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p,
   PERCENTILE_DISC(0.2) WITHIN GROUP (ORDER BY
     c_acctbal NULLS LAST) AS q,
   MEDIAN(c_acctbal) AS r
