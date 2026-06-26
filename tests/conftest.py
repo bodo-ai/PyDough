@@ -39,7 +39,6 @@ from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
-    function_sampler,
     simple_int_float_string_cast,
     string_format_specifiers_bodosql,
     string_format_specifiers_databricks,
@@ -47,7 +46,6 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     string_format_specifiers_oracle,
     string_format_specifiers_postgres,
     string_format_specifiers_snowflake,
-    supplier_pct_national_qty,
 )
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
@@ -764,7 +762,6 @@ def all_dialects_params_tpch_db_context(
     get_sf_sample_graph: graph_fetcher,
     get_databricks_sample_graph: graph_fetcher,
     get_trino_graphs: graph_fetcher,
-    get_duckdb_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     Fixture providing a params-based TPCH database context and graph metadata
@@ -794,8 +791,7 @@ def all_dialects_params_tpch_db_context(
             db_context = request.getfixturevalue("databricks_params_tpch_db_context")
             return db_context, get_databricks_sample_graph("TPCH")
         case "duckdb":
-            db_context = request.getfixturevalue("duckdb_params_tpch_db_context")
-            return db_context, get_duckdb_sample_graph("TPCH")
+            pytest.skip("DuckDB does not have data available for this test.")
     raise AssertionError(f"Unhandled dialect: {request.param!r}")
 
 
@@ -1404,12 +1400,100 @@ def get_duckdb_sample_graph(
 
 
 @pytest.fixture(scope="session")
-def duckdb_tpch_db():
+def duckdb_tpch_db(sqlite_tpch_db_path: str):
+    """
+    Create a DuckDB in-memory database loaded with the same TPC-H data as the
+    SQLite fixture (tpch.db).
+
+    NOTE: We intentionally load from the shared SQLite tpch.db rather than
+    using DuckDB's built-in ``dbgen(sf=1)``.  DuckDB's embedded dbgen
+    generates different random-text fields (``address``, ``comment``) than the
+    standard TPC-H dbgen used to produce tpch.db and the cloud datasets
+    (Snowflake, Postgres, MySQL).  Loading from tpch.db keeps the data
+    identical across all dialects so that no test needs dialect-specific
+    expected values solely because of random-text differences.
+
+    We use DuckDB's SQLite scanner (``sqlite_all_varchar=true``) so all
+    columns arrive as VARCHAR, then explicitly CAST every column to its
+    correct DuckDB type.  This is necessary because tpch.db declares several
+    decimal columns (e.g. C_ACCTBAL) as INTEGER in its SQLite schema — valid
+    under SQLite's dynamic typing, but rejected by DuckDB's strict scanner
+    when it finds a float stored in an INTEGER-declared column.
+    """
     import duckdb
 
+    # Full per-table CREATE … AS SELECT with explicit casts.
+    # tpch.db stores table and column names in uppercase; DuckDB is
+    # case-insensitive so PyDough metadata using lowercase names still works.
+    _TABLE_SELECTS = {
+        "NATION": (
+            "CAST(N_NATIONKEY AS BIGINT) AS N_NATIONKEY, N_NAME, "
+            "CAST(N_REGIONKEY AS BIGINT) AS N_REGIONKEY, N_COMMENT"
+        ),
+        "REGION": ("CAST(R_REGIONKEY AS BIGINT) AS R_REGIONKEY, R_NAME, R_COMMENT"),
+        "PART": (
+            "CAST(P_PARTKEY AS BIGINT) AS P_PARTKEY, P_NAME, P_MFGR, "
+            "P_BRAND, P_TYPE, CAST(P_SIZE AS BIGINT) AS P_SIZE, "
+            "P_CONTAINER, CAST(P_RETAILPRICE AS DOUBLE) AS P_RETAILPRICE, "
+            "P_COMMENT"
+        ),
+        "SUPPLIER": (
+            "CAST(S_SUPPKEY AS BIGINT) AS S_SUPPKEY, S_NAME, S_ADDRESS, "
+            "CAST(S_NATIONKEY AS BIGINT) AS S_NATIONKEY, S_PHONE, "
+            "CAST(S_ACCTBAL AS DOUBLE) AS S_ACCTBAL, S_COMMENT"
+        ),
+        "CUSTOMER": (
+            "CAST(C_CUSTKEY AS BIGINT) AS C_CUSTKEY, C_NAME, C_ADDRESS, "
+            "CAST(C_NATIONKEY AS BIGINT) AS C_NATIONKEY, C_PHONE, "
+            "CAST(C_ACCTBAL AS DOUBLE) AS C_ACCTBAL, "
+            "C_MKTSEGMENT, C_COMMENT"
+        ),
+        "ORDERS": (
+            "CAST(O_ORDERKEY AS BIGINT) AS O_ORDERKEY, "
+            "CAST(O_CUSTKEY AS BIGINT) AS O_CUSTKEY, O_ORDERSTATUS, "
+            "CAST(O_TOTALPRICE AS DOUBLE) AS O_TOTALPRICE, "
+            "CAST(O_ORDERDATE AS DATE) AS O_ORDERDATE, "
+            "O_ORDERPRIORITY, O_CLERK, "
+            "CAST(O_SHIPPRIORITY AS BIGINT) AS O_SHIPPRIORITY, O_COMMENT"
+        ),
+        "PARTSUPP": (
+            "CAST(PS_PARTKEY AS BIGINT) AS PS_PARTKEY, "
+            "CAST(PS_SUPPKEY AS BIGINT) AS PS_SUPPKEY, "
+            "CAST(PS_AVAILQTY AS BIGINT) AS PS_AVAILQTY, "
+            "CAST(PS_SUPPLYCOST AS DOUBLE) AS PS_SUPPLYCOST, PS_COMMENT"
+        ),
+        "LINEITEM": (
+            "CAST(L_ORDERKEY AS BIGINT) AS L_ORDERKEY, "
+            "CAST(L_PARTKEY AS BIGINT) AS L_PARTKEY, "
+            "CAST(L_SUPPKEY AS BIGINT) AS L_SUPPKEY, "
+            "CAST(L_LINENUMBER AS BIGINT) AS L_LINENUMBER, "
+            "CAST(L_QUANTITY AS DOUBLE) AS L_QUANTITY, "
+            "CAST(L_EXTENDEDPRICE AS DOUBLE) AS L_EXTENDEDPRICE, "
+            "CAST(L_DISCOUNT AS DOUBLE) AS L_DISCOUNT, "
+            "CAST(L_TAX AS DOUBLE) AS L_TAX, "
+            "L_RETURNFLAG, L_LINESTATUS, "
+            "CAST(L_SHIPDATE AS DATE) AS L_SHIPDATE, "
+            "CAST(L_COMMITDATE AS DATE) AS L_COMMITDATE, "
+            "CAST(L_RECEIPTDATE AS DATE) AS L_RECEIPTDATE, "
+            "L_SHIPINSTRUCT, L_SHIPMODE, L_COMMENT"
+        ),
+    }
+
     conn = duckdb.connect(database=":memory:")
-    # Load the TPCH data into DuckDB connection.
-    conn.execute("INSTALL tpch; LOAD tpch; CALL dbgen(sf=1);")
+    conn.execute("INSTALL sqlite; LOAD sqlite;")
+    # Read all SQLite columns as VARCHAR so the scanner never hits a
+    # type-mismatch on the misdeclared decimal columns.
+    conn.execute("SET sqlite_all_varchar=true;")
+    conn.execute(f"ATTACH '{sqlite_tpch_db_path}' AS _tpch_src (TYPE sqlite);")
+    for tbl, cols in _TABLE_SELECTS.items():
+        conn.execute(f"CREATE TABLE {tbl} AS SELECT {cols} FROM _tpch_src.{tbl};")
+    conn.execute("DETACH _tpch_src;")
+    # TPC-H Q15 recomputes the same SUM in two separate CTEs and compares
+    # them with equality.  DuckDB's parallel aggregation can produce slightly
+    # different floating-point results depending on thread ordering, causing
+    # non-deterministic failures.  Single-threaded mode keeps results
+    # deterministic for all tests.
+    conn.execute("SET threads=1;")
     return conn
 
 
@@ -1421,22 +1505,6 @@ def duckdb_tpch_db_context(duckdb_tpch_db) -> DatabaseContext:
         DatabaseContext: The DuckDB TPCH database context.
     """
     return DatabaseContext(DatabaseConnection(duckdb_tpch_db), DatabaseDialect.DUCKDB)
-
-
-@pytest.fixture(scope="session")
-def duckdb_params_tpch_db_context() -> DatabaseContext:
-    """This fixture is used to connect to the DuckDB database using
-    parameters instead of a connection object.
-
-    Returns:
-        DatabaseContext: The DuckDB TPCH database context.
-    """
-    return load_database_context(
-        "duckdb",
-        database=":memory:",
-        read_only=True,
-        config={"threads": 4, "memory_limit": "8GB"},
-    )
 
 
 def is_ci():
@@ -3327,87 +3395,6 @@ def tpch_custom_test_data_dialect_replacements(
                 }
             ),
             "simple_dataframe_collection_3",
-        )
-
-    # DuckDB's built-in dbgen generates different random-text fields (address,
-    # comment) than the standard TPC-H dbgen used to produce the tpch.db
-    # SQLite fixture and the Snowflake/Postgres/MySQL cloud datasets. Tests that
-    # filter on `comment` or sort by `address` therefore need DuckDB-specific
-    # expected values. Deterministic fields (phone, acctbal, nationkey, etc.)
-    # are identical across all datasets.
-    if test.test_name == "function_sampler" and dialect == DatabaseDialect.DUCKDB:
-        return PyDoughPandasTest(
-            function_sampler,
-            "TPCH",
-            lambda: pd.DataFrame(
-                {
-                    "a": [
-                        "AMERICA-PERU-27",
-                        "AMERICA-PERU-37",
-                        "ASIA-CHINA-71",
-                        "EUROPE-RUSSIA-95",
-                        "EUROPE-UNITED KINGDOM-16",
-                        "AMERICA-ARGENTINA-16",
-                        "EUROPE-RUSSIA-84",
-                        "EUROPE-ROMANIA-75",
-                        "EUROPE-ROMANIA-90",
-                        "AMERICA-ARGENTINA-32",
-                    ],
-                    "b": [52.4, 82.1, 21.8, 59.7, 65.5, 29.5, 43.2, 64.8, 26.7, 90.4],
-                    "c": [
-                        None,
-                        None,
-                        None,
-                        "Customer#000050195",
-                        "Customer#000070316",
-                        None,
-                        "Customer#000047084",
-                        None,
-                        None,
-                        None,
-                    ],
-                    "d": [0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-                    "e": [1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
-                    "f": [52.0, 82.0, 22.0, 60.0, 65.0, 30.0, 43.0, 65.0, 27.0, 90.0],
-                }
-            ),
-            "function_sampler",
-        )
-
-    if (
-        test.test_name == "supplier_pct_national_qty"
-        and dialect == DatabaseDialect.DUCKDB
-    ):
-        return PyDoughPandasTest(
-            supplier_pct_national_qty,
-            "TPCH",
-            lambda: pd.DataFrame(
-                {
-                    "supplier_name": [
-                        "Supplier#000004988",
-                        "Supplier#000000193",
-                        "Supplier#000005284",
-                        "Supplier#000003027",
-                        "Supplier#000004494",
-                    ],
-                    "nation_name": [
-                        "KENYA",
-                        "ETHIOPIA",
-                        "MOROCCO",
-                        "ALGERIA",
-                        "ALGERIA",
-                    ],
-                    "supplier_quantity": [13, 37, 20, 23, 17],
-                    "national_qty_pct": [
-                        100.0,
-                        100.0,
-                        68.96551724137932,
-                        57.5,
-                        42.5,
-                    ],
-                }
-            ),
-            "supplier_pct_national_qty",
         )
 
     return test

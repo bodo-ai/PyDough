@@ -26,21 +26,6 @@ class DuckDBTransformBindings(BaseTransformBindings):
     def values_alias_column(self) -> bool:
         return False
 
-    # PYDOP_TO_DUCKDB_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
-    #     pydop.STARTSWITH: "STARTSWITH",
-    #     pydop.ENDSWITH: "ENDSWITH",
-    #     pydop.CONTAINS: "CONTAINS",
-    #     pydop.LPAD: "LPAD",
-    #     pydop.RPAD: "RPAD",
-    #     pydop.SIGN: "SIGN",
-    #     pydop.SMALLEST: "LEAST",
-    #     pydop.LARGEST: "GREATEST",
-    # }
-    # """
-    # Mapping of PyDough operators to equivalent DuckDB SQL function names
-    # These are used to generate anonymous function calls in SQLGlot
-    # """
-
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -78,8 +63,8 @@ class DuckDBTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         # Cast to DOUBLE first to handle string literals like '4.3' that can't
         # be cast directly to BIGINT. Then apply TRUNC before the final BIGINT
-        # cast because DuckDB rounds on CAST(DOUBLE→BIGINT) rather than
-        # truncating (e.g. CAST(-5.7 AS BIGINT) → -6, not -5).
+        # cast because DuckDB rounds on CAST(DOUBLE->BIGINT) rather than
+        # truncating (e.g. CAST(-5.7 AS BIGINT) -> -6, not -5).
         return sqlglot_expressions.Cast(
             this=sqlglot_expressions.Anonymous(
                 this="TRUNC",
@@ -112,7 +97,7 @@ class DuckDBTransformBindings(BaseTransformBindings):
     def convert_current_timestamp(self) -> SQLGlotExpression:
         """
         Create a SQLGlot expression to obtain the current timestamp removing the
-        timezone and not DST-aware specifically for Snowflake.
+        timezone information to match UTC behavior.
         SQL:
             CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMP_NTZ)
         """

@@ -1,0 +1,132 @@
+SELECT
+  o_orderkey AS key,
+  CONCAT_WS(
+    '_',
+    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)),
+    EXTRACT(QUARTER FROM CAST(o_orderdate AS TIMESTAMP)),
+    EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)),
+    EXTRACT(DAY FROM CAST(o_orderdate AS TIMESTAMP))
+  ) AS a,
+  CONCAT_WS(
+    ':',
+    CASE
+      WHEN DAYOFWEEK(o_orderdate) = 0
+      THEN 'Sunday'
+      WHEN DAYOFWEEK(o_orderdate) = 1
+      THEN 'Monday'
+      WHEN DAYOFWEEK(o_orderdate) = 2
+      THEN 'Tuesday'
+      WHEN DAYOFWEEK(o_orderdate) = 3
+      THEN 'Wednesday'
+      WHEN DAYOFWEEK(o_orderdate) = 4
+      THEN 'Thursday'
+      WHEN DAYOFWEEK(o_orderdate) = 5
+      THEN 'Friday'
+      WHEN DAYOFWEEK(o_orderdate) = 6
+      THEN 'Saturday'
+    END,
+    DAYOFWEEK(o_orderdate)
+  ) AS b,
+  DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)) + INTERVAL '6' MONTH - INTERVAL '13' DAY AS c,
+  DATE_TRUNC('QUARTER', CAST(o_orderdate AS TIMESTAMP)) + INTERVAL '1' YEAR + INTERVAL '25' HOUR AS d,
+  CAST('2025-01-01 12:35:00' AS TIMESTAMP) AS e,
+  CAST('2025-07-22 12:00:00' AS TIMESTAMP) AS f,
+  CAST('2025-01-01' AS DATE) AS g,
+  CONCAT_WS(';', 12, 20, 6) AS h,
+  DATE_DIFF('YEAR', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS i,
+  DATE_DIFF('QUARTER', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS j,
+  DATE_DIFF('MONTH', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS k,
+  CAST(DATE_DIFF(
+    'DAY',
+    CAST(CAST('1993-05-25 12:45:36' AS TIMESTAMP) AS DATE) - CAST(DAYOFWEEK(CAST('1993-05-25 12:45:36' AS TIMESTAMP)) AS INT),
+    CAST(o_orderdate AS DATE) - CAST(DAYOFWEEK(o_orderdate) AS INT)
+  ) / 7 AS BIGINT) AS l,
+  DATE_DIFF('DAY', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS m,
+  DATE_DIFF('HOUR', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS n,
+  DATE_DIFF('MINUTE', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS o,
+  DATE_DIFF('SECOND', CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS TIMESTAMP)) AS p,
+  CAST(CAST(o_orderdate AS TIMESTAMP) AS DATE) - CAST(DAYOFWEEK(CAST(o_orderdate AS TIMESTAMP)) AS INT) AS q,
+  CONCAT_WS(
+    ':',
+    CASE
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 1
+      THEN 'Jan'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 2
+      THEN 'Feb'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 3
+      THEN 'Mar'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 4
+      THEN 'Apr'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 5
+      THEN 'May'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 6
+      THEN 'Jun'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 7
+      THEN 'Jul'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 8
+      THEN 'Aug'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 9
+      THEN 'Sep'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 10
+      THEN 'Oct'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END,
+    CASE
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 1
+      THEN 'Jan'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 2
+      THEN 'Feb'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 3
+      THEN 'Mar'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 4
+      THEN 'Apr'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 5
+      THEN 'May'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 6
+      THEN 'Jun'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 7
+      THEN 'Jul'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 8
+      THEN 'Aug'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 9
+      THEN 'Sep'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 10
+      THEN 'Oct'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3' MONTH) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END,
+    CASE
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 1
+      THEN 'Jan'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 2
+      THEN 'Feb'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 3
+      THEN 'Mar'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 4
+      THEN 'Apr'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 5
+      THEN 'May'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 6
+      THEN 'Jun'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 7
+      THEN 'Jul'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 8
+      THEN 'Aug'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 9
+      THEN 'Sep'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 10
+      THEN 'Oct'
+      WHEN EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2' MONTH) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END
+  ) AS r
+FROM tpch.orders
+WHERE
+  o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'
+ORDER BY
+  1 NULLS FIRST
+LIMIT 5
