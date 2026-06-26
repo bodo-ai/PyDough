@@ -11,7 +11,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.types import NumericType, PyDoughType
+from pydough.types import NumericType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit, apply_parens
@@ -29,10 +29,46 @@ class DuckDBTransformBindings(BaseTransformBindings):
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        # Unlike PyDough (and Snowflake's SPLIT_PART), Databricks'
-        # SPLIT_PART raises INVALID_INDEX_OF_ZERO when the index is 0
-        # instead of treating it as 1, so remap a 0 index to 1.
+        # DuckDB's SPLIT_PART with an empty delimiter splits character by
+        # character, but PyDough semantics treat an empty delimiter as "no
+        # split": exactly one part (the whole string). k=0/1/-1 all resolve
+        # to that part; all other k values return NULL.
+        # The base-class recursive CTE cannot be used because DuckDB hoists
+        # correlated CTEs to the top level, losing the outer column reference.
         assert len(args) == 3
+        if (
+            isinstance(args[1], sqlglot_expressions.Literal)
+            and args[1].is_string
+            and args[1].this == ""
+        ):
+            # Remap k=0 → 1; then ABS(k)=1 means it's within the single part.
+            idx: SQLGlotExpression = args[2]
+            remapped: SQLGlotExpression = sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=sqlglot_expressions.EQ(
+                            this=idx,
+                            expression=sqlglot_expressions.Literal.number(0),
+                        ),
+                        true=sqlglot_expressions.Literal.number(1),
+                    )
+                ],
+                default=idx,
+            )
+            return sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=sqlglot_expressions.EQ(
+                            this=sqlglot_expressions.Anonymous(
+                                this="ABS", expressions=[remapped]
+                            ),
+                            expression=sqlglot_expressions.Literal.number(1),
+                        ),
+                        true=args[0],
+                    )
+                ],
+                default=sqlglot_expressions.Null(),
+            )
         index_arg: SQLGlotExpression = args[2]
         index_expr: SQLGlotExpression = sqlglot_expressions.Case(
             ifs=[
@@ -77,6 +113,32 @@ class DuckDBTransformBindings(BaseTransformBindings):
             ),
             to=sqlglot_expressions.DataType.build("BIGINT"),
         )
+
+    def _cast_to_varchar(self, expr: SQLGlotExpression) -> SQLGlotExpression:
+        return sqlglot_expressions.Cast(
+            this=expr,
+            to=sqlglot_expressions.DataType.build("VARCHAR"),
+        )
+
+    def convert_lpad(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # DuckDB's LENGTH() only accepts VARCHAR; EXTRACT/MONTH returns BIGINT.
+        # Cast the first argument to VARCHAR before the base implementation
+        # computes LENGTH(args[0]).
+        if not isinstance(types[0], StringType):
+            args = [self._cast_to_varchar(args[0]), *args[1:]]
+            types = [StringType(), *types[1:]]
+        return super().convert_lpad(args, types)
+
+    def convert_rpad(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Same as convert_lpad: DuckDB requires VARCHAR for LENGTH().
+        if not isinstance(types[0], StringType):
+            args = [self._cast_to_varchar(args[0]), *args[1:]]
+            types = [StringType(), *types[1:]]
+        return super().convert_rpad(args, types)
 
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType

@@ -9,7 +9,6 @@ on:
         required: true
 
 jobs:
-  # TODO: Defog data generation
   duckdb-tests:
     name: DuckDB Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -40,6 +39,9 @@ jobs:
 
       - name: Confirm DuckDB connector is installed
         run: uv run python -c "import duckdb; print('DuckDB connector installed')"
+
+      - name: Download TPCH DB
+        run: ./demos/setup_tpch.sh ./tpch.db
 
       - name: Run DuckDB Tests
         run: uv run pytest -m duckdb tests/ -rs

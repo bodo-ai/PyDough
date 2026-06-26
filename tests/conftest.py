@@ -1507,6 +1507,59 @@ def duckdb_tpch_db_context(duckdb_tpch_db) -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(duckdb_tpch_db), DatabaseDialect.DUCKDB)
 
 
+@pytest.fixture(scope="session")
+def duckdb_defog_connection():
+    """
+    Fixture used to connect to the DuckDB defog database.
+
+    All six defog graphs (Broker, Dealership, DermTreatment, Ewallet,
+    Academic, Restaurants) share the same in-memory connection
+
+    We build the SQLite defog.db first (via setup_defog.sh), then read all
+    tables from it using DuckDB's SQLite scanner.  Unlike the TPC-H fixture,
+    no explicit CAST overrides are needed: the defog schema uses proper
+    REAL/NUMERIC/DATE/TIMESTAMP declarations that the scanner maps correctly
+    to DuckDB types without any type-mismatch errors.
+    """
+    import duckdb
+
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    subprocess.run("cd tests/gen_data; bash setup_defog.sh", shell=True, check=True)
+    defog_db_path: str = os.path.join(base_dir, "tests/gen_data/defog.db")
+    conn: duckdb.DuckDBPyConnection = duckdb.connect(":memory:")
+    conn.execute("INSTALL sqlite; LOAD sqlite;")
+    conn.execute(f"ATTACH '{defog_db_path}' AS _defog_src (TYPE sqlite);")
+    tables = conn.execute(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_catalog = '_defog_src';"
+    ).fetchall()
+    for (table,) in tables:
+        conn.execute(f"CREATE TABLE {table} AS SELECT * FROM _defog_src.{table};")
+    conn.execute("DETACH _defog_src;")
+    return DatabaseContext(DatabaseConnection(conn), DatabaseDialect.DUCKDB)
+
+
+@pytest.fixture(scope="session")
+def get_duckdb_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in DuckDB.
+
+    DuckDB's in-memory default schema is ``main``, which matches the table
+    paths already defined in ``duckdb_defog_graphs.json``. The DuckDB-specific
+    file overrides dialect-incompatible macros (e.g. ADD_MONTHS) from the
+    base SQLite ``defog_graphs.json``.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/duckdb_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
 def is_ci():
     """
     Detect if running inside CI (GitHub Actions sets this env var).
