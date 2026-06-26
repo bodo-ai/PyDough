@@ -10,7 +10,6 @@ from typing import Any
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-import pydough.pydough_operators as pydop
 from pydough.types import NumericType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
@@ -86,14 +85,6 @@ class DuckDBTransformBindings(BaseTransformBindings):
             this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
         )
 
-    def convert_call_to_sqlglot(
-        self,
-        operator: pydop.PyDoughExpressionOperator,
-        args: list[SQLGlotExpression],
-        types: list[PyDoughType],
-    ) -> SQLGlotExpression:
-        return super().convert_call_to_sqlglot(operator, args, types)
-
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -161,7 +152,7 @@ class DuckDBTransformBindings(BaseTransformBindings):
         Create a SQLGlot expression to obtain the current timestamp removing the
         timezone information to match UTC behavior.
         SQL:
-            CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMP_NTZ)
+            CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS TIMESTAMP)
         """
         return sqlglot_expressions.Cast(
             this=sqlglot_expressions.ConvertTimezone(

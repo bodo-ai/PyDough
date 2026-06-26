@@ -37,8 +37,8 @@ jobs:
       - name: Install dependencies
         run: uv pip install -e ".[databricks]"
 
-      - name: Run DEFOG refresh if stale (locked by date)
-        run: uv run python -m tests.gen_data.databricks_task
+      - name: Run DEFOG refresh
+        run: uv run python -m tests.gen_data.databricks_task --force
 
   databricks-tests:
     name: Databricks Tests (Python ${{ matrix.python-version }})

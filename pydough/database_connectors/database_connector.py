@@ -13,7 +13,7 @@ __all__ = [
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Union, cast
+from typing import Union
 
 import pandas as pd
 
@@ -21,7 +21,7 @@ import pydough
 from pydough.errors import PyDoughSessionException
 from pydough.logger import get_logger
 
-from .db_types import BodoSQLContext, DBConnection, DBCursor, SnowflakeCursor
+from .db_types import BodoSQLContext, DBConnection, DBCursor
 
 
 class DatabaseConnection:
@@ -57,14 +57,17 @@ class DatabaseConnection:
         try:
             self.cursor.execute(sql)
 
-            # This is only for MyPy to pass and know about fetch_pandas_all()
-            # NOTE: Code does not run in type checking mode, so we need to
-            # check at run-time if the cursor has the method.
-            if TYPE_CHECKING:
-                _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
-            # At run-time check and run the fetch.
+            # DBCursor is typed to the DB API 2.0 spec, which does not include
+            # dialect-specific fetch methods. We guard with hasattr() at
+            # runtime and suppress the attr-defined error so MyPy does not
+            # require type checking for all dialects. This is safe because
+            # we only call the dialect-specific methods at runtime.
             if hasattr(self.cursor, "fetch_pandas_all"):
-                return self.cursor.fetch_pandas_all()
+                # Snowflake
+                return self.cursor.fetch_pandas_all()  # type: ignore[attr-defined]
+            elif hasattr(self.cursor, "fetchdf"):
+                # DuckDB
+                return self.cursor.fetchdf()  # type: ignore[attr-defined]
             else:
                 # Assume sqlite3
                 column_names: list[str] = [

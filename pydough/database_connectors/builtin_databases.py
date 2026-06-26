@@ -50,6 +50,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         "bodosql",
         "databricks",
         "trino",
+        "duckdb",
     }
     connection: DatabaseConnection | BodoSQLContext
     dialect: DatabaseDialect

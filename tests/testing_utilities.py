@@ -1827,6 +1827,17 @@ def harmonize_types(column_a, column_b):
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
 
+    # datetime64 with different resolutions
+    # (e.g. DuckDB returns us, pandas defaults to ns).
+    # Normalize both to microseconds to avoid factor-of-1000 mismatches.
+    if pd.api.types.is_datetime64_any_dtype(
+        column_a
+    ) and pd.api.types.is_datetime64_any_dtype(column_b):
+        if column_a.dtype != column_b.dtype:
+            column_a = column_a.astype("datetime64[us]")
+            column_b = column_b.astype("datetime64[us]")
+        return column_a, column_b
+
     return column_a, column_b
 
 
