@@ -40,20 +40,8 @@ class DuckDBTransformBindings(BaseTransformBindings):
             and args[1].is_string
             and args[1].this == ""
         ):
-            # Remap k=0 → 1; then ABS(k)=1 means it's within the single part.
-            idx: SQLGlotExpression = args[2]
-            remapped: SQLGlotExpression = sqlglot_expressions.Case(
-                ifs=[
-                    sqlglot_expressions.If(
-                        this=sqlglot_expressions.EQ(
-                            this=idx,
-                            expression=sqlglot_expressions.Literal.number(0),
-                        ),
-                        true=sqlglot_expressions.Literal.number(1),
-                    )
-                ],
-                default=idx,
-            )
+            # Remap k=0 to 1; then ABS(k)=1 means it's within the single part.
+            remapped: SQLGlotExpression = self._remap_zero_to_one(args[2])
             return sqlglot_expressions.Case(
                 ifs=[
                     sqlglot_expressions.If(
@@ -68,21 +56,9 @@ class DuckDBTransformBindings(BaseTransformBindings):
                 ],
                 default=sqlglot_expressions.Null(),
             )
-        index_arg: SQLGlotExpression = args[2]
-        index_expr: SQLGlotExpression = sqlglot_expressions.Case(
-            ifs=[
-                sqlglot_expressions.If(
-                    this=sqlglot_expressions.EQ(
-                        this=index_arg,
-                        expression=sqlglot_expressions.Literal.number(0),
-                    ),
-                    true=sqlglot_expressions.Literal.number(1),
-                )
-            ],
-            default=index_arg,
-        )
         return sqlglot_expressions.Anonymous(
-            this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
+            this="SPLIT_PART",
+            expressions=[args[0], args[1], self._remap_zero_to_one(args[2])],
         )
 
     def convert_integer(
@@ -105,40 +81,34 @@ class DuckDBTransformBindings(BaseTransformBindings):
             to=sqlglot_expressions.DataType.build("BIGINT"),
         )
 
-    def _cast_to_varchar(self, expr: SQLGlotExpression) -> SQLGlotExpression:
-        return sqlglot_expressions.Cast(
-            this=expr,
-            to=sqlglot_expressions.DataType.build("VARCHAR"),
-        )
-
     def convert_lpad(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         # DuckDB's LENGTH() only accepts VARCHAR; EXTRACT/MONTH returns BIGINT.
         # Cast the first argument to VARCHAR before the base implementation
         # computes LENGTH(args[0]).
-        if not isinstance(types[0], StringType):
-            args = [self._cast_to_varchar(args[0]), *args[1:]]
-            types = [StringType(), *types[1:]]
-        return super().convert_lpad(args, types)
+        return super().convert_lpad(
+            [self.ensure_string(args[0], types[0]), *args[1:]],
+            [StringType(), *types[1:]],
+        )
 
     def convert_rpad(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         # Same as convert_lpad: DuckDB requires VARCHAR for LENGTH().
-        if not isinstance(types[0], StringType):
-            args = [self._cast_to_varchar(args[0]), *args[1:]]
-            types = [StringType(), *types[1:]]
-        return super().convert_rpad(args, types)
+        return super().convert_rpad(
+            [self.ensure_string(args[0], types[0]), *args[1:]],
+            [StringType(), *types[1:]],
+        )
 
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType
     ) -> SQLGlotExpression:
         # Same as the base case, except ±Infinity is generated as a CAST to
-        # DOUBLE rather than a bare string literal. Databricks' VALUES clause
+        # DOUBLE rather than a bare string literal. DuckDB's VALUES clause
         # requires every row to have the same type for a given column, so a
         # plain 'Infinity' string literal alongside numeric literals (e.g.
-        # 1.5) raises INCOMPATIBLE_TYPES_IN_INLINE_TABLE.
+        # 1.5) raises a type-mismatch error.
         if isinstance(item_type, NumericType) and math.isinf(item):
             sign = "" if item >= 0 else "-"
             return sqlglot_expressions.Cast(

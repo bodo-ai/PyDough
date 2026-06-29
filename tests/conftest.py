@@ -1399,6 +1399,67 @@ def get_duckdb_sample_graph(
     return impl
 
 
+# Full per-table SELECT column lists for loading TPC-H data from SQLite into DuckDB.
+# tpch.db stores table and column names in uppercase; DuckDB is case-insensitive
+# so PyDough metadata using lowercase names still works.
+# Explicit CASTs are needed because tpch.db declares decimal columns (e.g. C_ACCTBAL)
+# as INTEGER in its SQLite schema — valid under SQLite's dynamic typing, but
+# rejected by DuckDB's strict scanner when it finds a float in an INTEGER column.
+_DUCKDB_TPCH_TABLE_SELECTS: dict[str, str] = {
+    "NATION": (
+        "CAST(N_NATIONKEY AS BIGINT) AS N_NATIONKEY, N_NAME, "
+        "CAST(N_REGIONKEY AS BIGINT) AS N_REGIONKEY, N_COMMENT"
+    ),
+    "REGION": ("CAST(R_REGIONKEY AS BIGINT) AS R_REGIONKEY, R_NAME, R_COMMENT"),
+    "PART": (
+        "CAST(P_PARTKEY AS BIGINT) AS P_PARTKEY, P_NAME, P_MFGR, "
+        "P_BRAND, P_TYPE, CAST(P_SIZE AS BIGINT) AS P_SIZE, "
+        "P_CONTAINER, CAST(P_RETAILPRICE AS DOUBLE) AS P_RETAILPRICE, "
+        "P_COMMENT"
+    ),
+    "SUPPLIER": (
+        "CAST(S_SUPPKEY AS BIGINT) AS S_SUPPKEY, S_NAME, S_ADDRESS, "
+        "CAST(S_NATIONKEY AS BIGINT) AS S_NATIONKEY, S_PHONE, "
+        "CAST(S_ACCTBAL AS DOUBLE) AS S_ACCTBAL, S_COMMENT"
+    ),
+    "CUSTOMER": (
+        "CAST(C_CUSTKEY AS BIGINT) AS C_CUSTKEY, C_NAME, C_ADDRESS, "
+        "CAST(C_NATIONKEY AS BIGINT) AS C_NATIONKEY, C_PHONE, "
+        "CAST(C_ACCTBAL AS DOUBLE) AS C_ACCTBAL, "
+        "C_MKTSEGMENT, C_COMMENT"
+    ),
+    "ORDERS": (
+        "CAST(O_ORDERKEY AS BIGINT) AS O_ORDERKEY, "
+        "CAST(O_CUSTKEY AS BIGINT) AS O_CUSTKEY, O_ORDERSTATUS, "
+        "CAST(O_TOTALPRICE AS DOUBLE) AS O_TOTALPRICE, "
+        "CAST(O_ORDERDATE AS DATE) AS O_ORDERDATE, "
+        "O_ORDERPRIORITY, O_CLERK, "
+        "CAST(O_SHIPPRIORITY AS BIGINT) AS O_SHIPPRIORITY, O_COMMENT"
+    ),
+    "PARTSUPP": (
+        "CAST(PS_PARTKEY AS BIGINT) AS PS_PARTKEY, "
+        "CAST(PS_SUPPKEY AS BIGINT) AS PS_SUPPKEY, "
+        "CAST(PS_AVAILQTY AS BIGINT) AS PS_AVAILQTY, "
+        "CAST(PS_SUPPLYCOST AS DOUBLE) AS PS_SUPPLYCOST, PS_COMMENT"
+    ),
+    "LINEITEM": (
+        "CAST(L_ORDERKEY AS BIGINT) AS L_ORDERKEY, "
+        "CAST(L_PARTKEY AS BIGINT) AS L_PARTKEY, "
+        "CAST(L_SUPPKEY AS BIGINT) AS L_SUPPKEY, "
+        "CAST(L_LINENUMBER AS BIGINT) AS L_LINENUMBER, "
+        "CAST(L_QUANTITY AS DOUBLE) AS L_QUANTITY, "
+        "CAST(L_EXTENDEDPRICE AS DOUBLE) AS L_EXTENDEDPRICE, "
+        "CAST(L_DISCOUNT AS DOUBLE) AS L_DISCOUNT, "
+        "CAST(L_TAX AS DOUBLE) AS L_TAX, "
+        "L_RETURNFLAG, L_LINESTATUS, "
+        "CAST(L_SHIPDATE AS DATE) AS L_SHIPDATE, "
+        "CAST(L_COMMITDATE AS DATE) AS L_COMMITDATE, "
+        "CAST(L_RECEIPTDATE AS DATE) AS L_RECEIPTDATE, "
+        "L_SHIPINSTRUCT, L_SHIPMODE, L_COMMENT"
+    ),
+}
+
+
 @pytest.fixture(scope="session")
 def duckdb_tpch_db(sqlite_tpch_db_path: str):
     """
@@ -1415,69 +1476,9 @@ def duckdb_tpch_db(sqlite_tpch_db_path: str):
 
     We use DuckDB's SQLite scanner (``sqlite_all_varchar=true``) so all
     columns arrive as VARCHAR, then explicitly CAST every column to its
-    correct DuckDB type.  This is necessary because tpch.db declares several
-    decimal columns (e.g. C_ACCTBAL) as INTEGER in its SQLite schema — valid
-    under SQLite's dynamic typing, but rejected by DuckDB's strict scanner
-    when it finds a float stored in an INTEGER-declared column.
+    correct DuckDB type.  See ``_DUCKDB_TPCH_TABLE_SELECTS`` for the casts.
     """
     import duckdb
-
-    # Full per-table CREATE … AS SELECT with explicit casts.
-    # tpch.db stores table and column names in uppercase; DuckDB is
-    # case-insensitive so PyDough metadata using lowercase names still works.
-    _TABLE_SELECTS = {
-        "NATION": (
-            "CAST(N_NATIONKEY AS BIGINT) AS N_NATIONKEY, N_NAME, "
-            "CAST(N_REGIONKEY AS BIGINT) AS N_REGIONKEY, N_COMMENT"
-        ),
-        "REGION": ("CAST(R_REGIONKEY AS BIGINT) AS R_REGIONKEY, R_NAME, R_COMMENT"),
-        "PART": (
-            "CAST(P_PARTKEY AS BIGINT) AS P_PARTKEY, P_NAME, P_MFGR, "
-            "P_BRAND, P_TYPE, CAST(P_SIZE AS BIGINT) AS P_SIZE, "
-            "P_CONTAINER, CAST(P_RETAILPRICE AS DOUBLE) AS P_RETAILPRICE, "
-            "P_COMMENT"
-        ),
-        "SUPPLIER": (
-            "CAST(S_SUPPKEY AS BIGINT) AS S_SUPPKEY, S_NAME, S_ADDRESS, "
-            "CAST(S_NATIONKEY AS BIGINT) AS S_NATIONKEY, S_PHONE, "
-            "CAST(S_ACCTBAL AS DOUBLE) AS S_ACCTBAL, S_COMMENT"
-        ),
-        "CUSTOMER": (
-            "CAST(C_CUSTKEY AS BIGINT) AS C_CUSTKEY, C_NAME, C_ADDRESS, "
-            "CAST(C_NATIONKEY AS BIGINT) AS C_NATIONKEY, C_PHONE, "
-            "CAST(C_ACCTBAL AS DOUBLE) AS C_ACCTBAL, "
-            "C_MKTSEGMENT, C_COMMENT"
-        ),
-        "ORDERS": (
-            "CAST(O_ORDERKEY AS BIGINT) AS O_ORDERKEY, "
-            "CAST(O_CUSTKEY AS BIGINT) AS O_CUSTKEY, O_ORDERSTATUS, "
-            "CAST(O_TOTALPRICE AS DOUBLE) AS O_TOTALPRICE, "
-            "CAST(O_ORDERDATE AS DATE) AS O_ORDERDATE, "
-            "O_ORDERPRIORITY, O_CLERK, "
-            "CAST(O_SHIPPRIORITY AS BIGINT) AS O_SHIPPRIORITY, O_COMMENT"
-        ),
-        "PARTSUPP": (
-            "CAST(PS_PARTKEY AS BIGINT) AS PS_PARTKEY, "
-            "CAST(PS_SUPPKEY AS BIGINT) AS PS_SUPPKEY, "
-            "CAST(PS_AVAILQTY AS BIGINT) AS PS_AVAILQTY, "
-            "CAST(PS_SUPPLYCOST AS DOUBLE) AS PS_SUPPLYCOST, PS_COMMENT"
-        ),
-        "LINEITEM": (
-            "CAST(L_ORDERKEY AS BIGINT) AS L_ORDERKEY, "
-            "CAST(L_PARTKEY AS BIGINT) AS L_PARTKEY, "
-            "CAST(L_SUPPKEY AS BIGINT) AS L_SUPPKEY, "
-            "CAST(L_LINENUMBER AS BIGINT) AS L_LINENUMBER, "
-            "CAST(L_QUANTITY AS DOUBLE) AS L_QUANTITY, "
-            "CAST(L_EXTENDEDPRICE AS DOUBLE) AS L_EXTENDEDPRICE, "
-            "CAST(L_DISCOUNT AS DOUBLE) AS L_DISCOUNT, "
-            "CAST(L_TAX AS DOUBLE) AS L_TAX, "
-            "L_RETURNFLAG, L_LINESTATUS, "
-            "CAST(L_SHIPDATE AS DATE) AS L_SHIPDATE, "
-            "CAST(L_COMMITDATE AS DATE) AS L_COMMITDATE, "
-            "CAST(L_RECEIPTDATE AS DATE) AS L_RECEIPTDATE, "
-            "L_SHIPINSTRUCT, L_SHIPMODE, L_COMMENT"
-        ),
-    }
 
     conn = duckdb.connect(database=":memory:")
     conn.execute("INSTALL sqlite; LOAD sqlite;")
@@ -1485,7 +1486,7 @@ def duckdb_tpch_db(sqlite_tpch_db_path: str):
     # type-mismatch on the misdeclared decimal columns.
     conn.execute("SET sqlite_all_varchar=true;")
     conn.execute(f"ATTACH '{sqlite_tpch_db_path}' AS _tpch_src (TYPE sqlite);")
-    for tbl, cols in _TABLE_SELECTS.items():
+    for tbl, cols in _DUCKDB_TPCH_TABLE_SELECTS.items():
         conn.execute(f"CREATE TABLE {tbl} AS SELECT {cols} FROM _tpch_src.{tbl};")
     conn.execute("DETACH _tpch_src;")
     # TPC-H Q15 recomputes the same SUM in two separate CTEs and compares

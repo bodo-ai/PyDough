@@ -1827,15 +1827,22 @@ def harmonize_types(column_a, column_b):
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
 
-    # datetime64 with different resolutions
-    # (e.g. DuckDB returns us, pandas defaults to ns).
-    # Normalize both to microseconds to avoid factor-of-1000 mismatches.
+    # datetime64 with different resolutions or timezone awareness.
+    # e.g. DuckDB returns us, Databricks returns tz-aware UTC,
+    # Pandas defaults to ns.
+    # Normalize column_a to match the expected dtype (column_b).
     if pd.api.types.is_datetime64_any_dtype(
         column_a
     ) and pd.api.types.is_datetime64_any_dtype(column_b):
         if column_a.dtype != column_b.dtype:
-            column_a = column_a.astype("datetime64[us]")
-            column_b = column_b.astype("datetime64[us]")
+            # Strip tz from column_a when column_b is tz-naive, then cast
+            # to the target resolution in one chained step.
+            if (
+                getattr(column_a.dtype, "tz", None) is not None
+                and getattr(column_b.dtype, "tz", None) is None
+            ):
+                column_a = column_a.dt.tz_convert("UTC").dt.tz_localize(None)
+            column_a = column_a.astype(column_b.dtype)
         return column_a, column_b
 
     return column_a, column_b
