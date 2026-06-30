@@ -23,6 +23,9 @@ class DuckDBTransformBindings(BaseTransformBindings):
 
     @property
     def values_alias_column(self) -> bool:
+        # DuckDB supports the standard AS t(col1, col2) named-column syntax on
+        # VALUES subqueries, so per-column SELECT aliases are not needed.
+        # The base-class True path exists for SQLite, which lacks this syntax.
         return False
 
     def convert_get_part(

@@ -682,6 +682,8 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
             # which is necessary later when optimizing. Without it, HAS()/HASNOT()
             # emit plain JOINs that inflate COUNT results or invert NOT EXISTS logic.
+            # Note: eliminate_qualify is intentionally absent — DuckDB natively
+            # supports QUALIFY and does not need it rewritten to a subquery.
             DuckDBDialect.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
                 transforms.preprocess(
                     [
@@ -736,6 +738,10 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                 )
             )
         case DatabaseDialect.DUCKDB:
+            # DuckDB has no Select TRANSFORM by default; delete the one added in
+            # change_sqlglot_dialect_configuration rather than restoring a prior
+            # value. The guard handles reset being called without a preceding
+            # change (e.g. in SQL-only tests that never call change).
             if sqlglot_expressions.Select in DuckDBDialect.Generator.TRANSFORMS:
                 del DuckDBDialect.Generator.TRANSFORMS[sqlglot_expressions.Select]
         case DatabaseDialect.TRINO:
