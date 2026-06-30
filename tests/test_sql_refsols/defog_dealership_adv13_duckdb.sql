@@ -7,7 +7,9 @@ WITH _s1 AS (
     1
 ), _t0 AS (
   SELECT
-    CAST(CAST(_s1.start_month AS DATE) + CAST(months.n || ' months' AS TIME) AS TIMESTAMP) AS dt,
+    _s1.start_month + INTERVAL (
+      months.n
+    ) MONTH AS dt,
     SUM(CASE WHEN months.n > 0 THEN 0 ELSE COALESCE(_s1.sum_payment_amount, 0) END) AS sum_payment
   FROM (VALUES
     (0),
@@ -23,7 +25,9 @@ WITH _s1 AS (
     (10),
     (11)) AS months(n)
   JOIN _s1 AS _s1
-    ON CAST(CAST(_s1.start_month AS DATE) + CAST(months.n || ' months' AS TIME) AS TIMESTAMP) <= DATE_TRUNC('MONTH', CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS TIMESTAMP)) + INTERVAL '1' HOUR
+    ON (
+      _s1.start_month + INTERVAL (months.n) MONTH
+    ) <= DATE_TRUNC('MONTH', CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS TIMESTAMP)) + INTERVAL '1' HOUR
   GROUP BY
     1
 )

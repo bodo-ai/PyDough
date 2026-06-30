@@ -1,6 +1,6 @@
 SELECT
   name
-FROM main.restaurant
+FROM defog.restaurants.restaurant
 ORDER BY
   rating DESC,
   1 DESC

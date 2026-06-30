@@ -1,5 +1,5 @@
 SELECT
   title
-FROM main.publication
+FROM defog.academic.publication
 ORDER BY
   1

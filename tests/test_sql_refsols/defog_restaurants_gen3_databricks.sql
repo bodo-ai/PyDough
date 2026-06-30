@@ -1,7 +1,7 @@
 SELECT
   food_type,
   AVG(rating) AS avg_rating
-FROM main.restaurant
+FROM defog.restaurants.restaurant
 GROUP BY
   1
 ORDER BY

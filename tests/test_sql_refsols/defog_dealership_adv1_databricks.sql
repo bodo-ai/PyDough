@@ -19,9 +19,9 @@ SELECT
     ),
     0
   ) AS weekend_payments
-FROM main.payments_received AS payments_received
-JOIN main.sales AS sales
-  ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
+FROM defog.dealership.payments_received AS payments_received
+JOIN defog.dealership.sales AS sales
+  ON payments_received.sale_id = sales.id AND sales.sale_price > 30000
 WHERE
   CAST(DATEDIFF(
     DAY,

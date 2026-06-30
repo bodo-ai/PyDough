@@ -7,6 +7,6 @@ SELECT
       ) * 60 + EXTRACT(MINUTE FROM CAST(session_end_ts AS TIMESTAMP)) - EXTRACT(MINUTE FROM CAST(session_start_ts AS TIMESTAMP))
     ) * 60 + EXTRACT(SECOND FROM CAST(session_end_ts AS TIMESTAMP)) - EXTRACT(SECOND FROM CAST(session_start_ts AS TIMESTAMP))
   ) AS avg_session_duration_seconds
-FROM main.user_sessions
+FROM defog.ewallet.user_sessions
 GROUP BY
   1

@@ -13,8 +13,8 @@ WITH _t0 AS (
       THEN wallet_merchant_balance_daily.balance
       ELSE NULL
     END AS expr_1
-  FROM main.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
-  JOIN main.merchants AS merchants
+  FROM defog.ewallet.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
+  JOIN defog.ewallet.merchants AS merchants
     ON CONTAINS(LOWER(merchants.category), 'retail')
     AND merchants.mid = wallet_merchant_balance_daily.merchant_id
     AND merchants.status = 'active'

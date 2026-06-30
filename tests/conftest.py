@@ -817,6 +817,8 @@ def get_dialect_defog_graphs(
     get_sf_defog_graphs: graph_fetcher,
     get_trino_graphs: graph_fetcher,
     get_postgres_defog_graphs: graph_fetcher,
+    get_databricks_defog_graphs: graph_fetcher,
+    get_duckdb_defog_graphs: graph_fetcher,
 ) -> Callable[[DatabaseDialect, str], GraphMetadata]:
     """
     Returns the graphs for the defog database based on the dialect
@@ -833,6 +835,10 @@ def get_dialect_defog_graphs(
                 return get_trino_graphs(name)
             case DatabaseDialect.POSTGRES:
                 return get_postgres_defog_graphs(name)
+            case DatabaseDialect.DATABRICKS:
+                return get_databricks_defog_graphs(name)
+            case DatabaseDialect.DUCKDB:
+                return get_duckdb_defog_graphs(name)
             case _:
                 # Use the base graph
                 return defog_graphs(name)
