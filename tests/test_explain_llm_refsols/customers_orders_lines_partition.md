@@ -45,9 +45,10 @@ Traverses the 'lines' relationship from 'orders' to 'lines'.
 Partitions the collection by ['return_flag'].
 
 - Keys: `return_flag`
+- Partition name: `g`
 - Child name: `lines`
 
-> The partition key(s) ['return_flag'] are available inside child scope 'lines' but not outside it.
+> The partition key(s) ['return_flag'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'lines'; aggregating over it (e.g. COUNT('lines')) operates on the rows within that group.
 
 ### Step 7 — Calculate
 

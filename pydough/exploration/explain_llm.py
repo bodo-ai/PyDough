@@ -91,6 +91,8 @@ from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.unqualified import UnqualifiedNode
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from ._common import (
     _cond_texts,
@@ -615,6 +617,7 @@ def _build_partition_by_step(node: PartitionBy, order: int) -> dict:
         "type": "PartitionBy",
         "description": f"Partitions the collection by {keys}.",
         "keys": keys,
+        "name": node.name,
         "child_name": node.child.name,
         "child_available_terms": {
             "expressions": child_expr_names,
@@ -692,7 +695,15 @@ def _build_user_generated_step(
     node: PyDoughUserGeneratedCollectionQDag, order: int
 ) -> dict:
     """
-    Accesses a user-generated collection (e.g. a ``to_table()`` view).
+    Accesses a user-generated collection (range, DataFrame, or view).
+
+    Emits kind-specific fields so callers can distinguish the data source:
+
+    - ``RangeGeneratedCollection``: ``kind="range"``, ``column``, ``start``,
+      ``end``, ``step``.
+    - ``DataframeGeneratedCollection``: ``kind="dataframe"``, ``row_count``,
+      ``columns``.
+    - Other (e.g. ``ViewGeneratedCollection``): no extra fields.
 
     Args:
         `node`: the ``PyDoughUserGeneratedCollectionQDag`` QDAG node.
@@ -702,11 +713,42 @@ def _build_user_generated_step(
         A step dict with ``type="UserGeneratedCollection"`` and ``name``.
     """
     expr_names, coll_names = extract_terms(node)
+    collection = node.collection
+    extra: dict = {}
+
+    if isinstance(collection, RangeGeneratedCollection):
+        description = (
+            f"Accesses user-generated range collection '{node.name}' "
+            f"(range({collection.start}, {collection.end}), "
+            f"column '{collection.column_name}')."
+        )
+        extra = {
+            "kind": "range",
+            "column": collection.column_name,
+            "start": collection.start,
+            "end": collection.end,
+            "step": collection.step,
+        }
+    elif isinstance(collection, DataframeGeneratedCollection):
+        col_names = [c for c, _ in collection.column_names_and_types]
+        description = (
+            f"Accesses user-generated DataFrame collection '{node.name}' "
+            f"({len(collection)} row(s), columns: {', '.join(col_names)})."
+        )
+        extra = {
+            "kind": "dataframe",
+            "row_count": len(collection),
+            "columns": col_names,
+        }
+    else:
+        description = f"Accesses user-generated collection '{node.name}'."
+
     return {
         "order": order,
         "type": "UserGeneratedCollection",
-        "description": f"Accesses user-generated collection '{node.name}'.",
+        "description": description,
         "name": node.name,
+        **extra,
         "debug": {
             "available_terms": {
                 "expressions": expr_names,
@@ -1099,6 +1141,7 @@ def _render_step_body(step: dict) -> list[str]:
     elif stype == "PartitionBy":
         keys = step.get("keys", [])
         lines.append("- Keys: " + ", ".join(f"`{k}`" for k in keys))
+        lines.append(f"- Partition name: `{step['name']}`")
         lines.append(f"- Child name: `{step['child_name']}`")
 
     elif stype == "PartitionChild":
@@ -1109,6 +1152,22 @@ def _render_step_body(step: dict) -> list[str]:
 
     elif stype == "UserGeneratedCollection":
         lines.append(f"- Name: `{step['name']}`")
+        kind = step.get("kind")
+        if kind == "range":
+            col = step.get("column", "?")
+            start = step.get("start", "?")
+            end = step.get("end", "?")
+            step_val = step.get("step", 1)
+            step_str = f", step={step_val}" if step_val != 1 else ""
+            lines.append(
+                f"- Range: `range({start}, {end}{step_str})` in column `{col}`"
+            )
+        elif kind == "dataframe":
+            row_count = step.get("row_count", "?")
+            cols = step.get("columns", [])
+            lines.append(f"- Rows: {row_count}")
+            if cols:
+                lines.append("- Columns: " + ", ".join(f"`{c}`" for c in cols))
 
     return lines
 

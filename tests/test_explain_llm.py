@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 from typing import cast
 
+import pandas as pd
 import pytest
 
 import pydough
@@ -325,10 +326,24 @@ _REFSOL_DIR = Path(__file__).parent / "test_explain_llm_refsols"
         ),
         pytest.param(
             (
+                "customers_count_max_orders",
+                "result = customers.CALCULATE(key, n_orders=COUNT(orders), max_price=MAX(orders.total_price))",
+            ),
+            id="customers_count_max_orders",
+        ),
+        pytest.param(
+            (
                 "nations_count_customers",
                 "result = nations.CALCULATE(n=COUNT(customers))",
             ),
             id="nations_count_customers",
+        ),
+        pytest.param(
+            (
+                "nations_two_child_counts",
+                "result = nations.CALCULATE(name, n_customers=COUNT(customers), n_suppliers=COUNT(suppliers))",
+            ),
+            id="nations_two_child_counts",
         ),
         pytest.param(
             ("nations_cross_regions", "result = nations.CROSS(regions)"),
@@ -372,6 +387,13 @@ _REFSOL_DIR = Path(__file__).parent / "test_explain_llm_refsols"
                 "result = customers.CALCULATE(nation_name=nation.SINGULAR().name)",
             ),
             id="customers_singular_nation_name",
+        ),
+        pytest.param(
+            (
+                "customers_singular_best_order",
+                "result = customers.CALCULATE(best_order_price=orders.WHERE(RANKING(by=total_price.DESC()) == 1).SINGULAR().total_price)",
+            ),
+            id="customers_singular_best_order",
         ),
         pytest.param(
             (
@@ -424,10 +446,204 @@ _REFSOL_DIR = Path(__file__).parent / "test_explain_llm_refsols"
         ),
         pytest.param(
             (
+                "orders_partition_count_max",
+                "result = customers.orders.PARTITION(name='g', by=order_status).CALCULATE(order_status=order_status, n=COUNT(orders), max_price=MAX(orders.total_price))",
+            ),
+            id="orders_partition_count_max",
+        ),
+        # Partition of already-aggregated data: partition key is a computed field (n_orders),
+        # not a raw column. Covers "partitioning a partition" intent from reviewer feedback.
+        pytest.param(
+            (
+                "customers_partition_by_computed_key",
+                "result = customers.CALCULATE(n_orders=COUNT(orders)).PARTITION(name='g', by=n_orders).CALCULATE(n_orders, n_customers=COUNT(customers))",
+            ),
+            id="customers_partition_by_computed_key",
+        ),
+        # Partition then window function on the partition groups: RANKING applied after
+        # PARTITION + CALCULATE, ranking the groups themselves. Covers "partition then
+        # step back into unpartitioned data via window functions" from reviewer feedback.
+        pytest.param(
+            (
+                "orders_partition_then_rank_groups",
+                "result = customers.orders.PARTITION(name='g', by=order_status).CALCULATE(order_status, n=COUNT(orders)).WHERE(RANKING(by=n.DESC()) == 1).CALCULATE(order_status)",
+            ),
+            id="orders_partition_then_rank_groups",
+        ),
+        pytest.param(
+            (
                 "global_count_nations_where",
                 "result = CALCULATE(n=COUNT(nations.WHERE(key > 5)))",
             ),
             id="global_count_nations_where",
+        ),
+        pytest.param(
+            (
+                "global_count_complex_customers",
+                "result = CALCULATE(n=COUNT(customers.WHERE((nation.region.name == 'EUROPE') & HAS(orders.WHERE(YEAR(order_date) == 1994)))))",
+            ),
+            id="global_count_complex_customers",
+        ),
+        pytest.param(
+            (
+                "nations_best_no_per",
+                "result = nations.BEST(by=key.ASC())",
+            ),
+            id="nations_best_no_per",
+        ),
+        pytest.param(
+            (
+                "orders_best_per_customers",
+                "result = customers.orders.BEST(by=total_price.DESC(), per='customers').CALCULATE(key=key)",
+            ),
+            id="orders_best_per_customers",
+        ),
+        pytest.param(
+            (
+                "cross_both_sides_filtered",
+                "result = customers.WHERE(market_segment == 'BUILDING').CROSS(suppliers.WHERE(account_balance > 0)).WHERE(account_balance > 1000)",
+            ),
+            id="cross_both_sides_filtered",
+        ),
+        pytest.param(
+            (
+                "nations_cross_in_calculate",
+                "result = nations.CALCULATE(name, n=COUNT(customers.CROSS(suppliers)))",
+            ),
+            id="nations_cross_in_calculate",
+        ),
+        # ---------------------------------------------------------------
+        # User-generated collections (range_collection / dataframe_collection)
+        # Note: user-generated collections cannot be used as to_table targets.
+        # ---------------------------------------------------------------
+        # range — basic project
+        pytest.param(
+            (
+                "range_calculate",
+                "result = pydough.range_collection('nums', 'n', 1, 6).CALCULATE(n)",
+            ),
+            id="range_calculate",
+        ),
+        # range — filter then project
+        pytest.param(
+            (
+                "range_where_calculate",
+                "result = pydough.range_collection('nums', 'n', 0, 10).WHERE(n > 5).CALCULATE(n)",
+            ),
+            id="range_where_calculate",
+        ),
+        # range — filter then sort
+        pytest.param(
+            (
+                "range_where_order_by",
+                "result = pydough.range_collection('nums', 'n', 0, 20).WHERE(n > 10).ORDER_BY(n.DESC())",
+            ),
+            id="range_where_order_by",
+        ),
+        # range — TOP_K limiting
+        pytest.param(
+            (
+                "range_top_k",
+                "result = pydough.range_collection('nums', 'n', 1, 11).TOP_K(3, by=n.ASC())",
+            ),
+            id="range_top_k",
+        ),
+        # range — BEST (desugars to RANKING WHERE)
+        pytest.param(
+            (
+                "range_best",
+                "result = pydough.range_collection('nums', 'n', 1, 11).BEST(by=n.ASC())",
+            ),
+            id="range_best",
+        ),
+        # range — PARTITION then CALCULATE showing partition groups
+        pytest.param(
+            (
+                "range_partition",
+                "result = pydough.range_collection('nums', 'n', 0, 3).PARTITION(name='g', by=n).CALCULATE(n, count=COUNT(nums))",
+            ),
+            id="range_partition",
+        ),
+        # range — CROSS with a graph collection (range on left, nations on right)
+        pytest.param(
+            (
+                "range_cross_nations",
+                "result = pydough.range_collection('r', 'n', 1, 4).CROSS(nations).CALCULATE(name)",
+            ),
+            id="range_cross_nations",
+        ),
+        # range — used as aggregate argument inside a graph CALCULATE
+        pytest.param(
+            (
+                "nations_count_range",
+                "result = nations.CALCULATE(name, n=COUNT(pydough.range_collection('r', 'num', 1, 4)))",
+            ),
+            id="nations_count_range",
+        ),
+        # dataframe — basic project
+        pytest.param(
+            (
+                "dataframe_calculate",
+                "result = pydough.dataframe_collection('scores', my_df, ['row_id']).CALCULATE(row_id, score)",
+                {
+                    "my_df": pd.DataFrame(
+                        {"row_id": [1, 2, 3, 4, 5], "score": [10, 30, 20, 50, 40]}
+                    )
+                },
+            ),
+            id="dataframe_calculate",
+        ),
+        # dataframe — filter then project
+        pytest.param(
+            (
+                "dataframe_where_calculate",
+                "result = pydough.dataframe_collection('scores', my_df, ['row_id']).WHERE(score > 3).CALCULATE(row_id, score)",
+                {
+                    "my_df": pd.DataFrame(
+                        {"row_id": [1, 2, 3, 4, 5], "score": [1, 2, 3, 4, 5]}
+                    )
+                },
+            ),
+            id="dataframe_where_calculate",
+        ),
+        # dataframe — sort descending
+        pytest.param(
+            (
+                "dataframe_order_by",
+                "result = pydough.dataframe_collection('scores', my_df, ['row_id']).ORDER_BY(score.DESC())",
+                {
+                    "my_df": pd.DataFrame(
+                        {"row_id": [1, 2, 3, 4, 5], "score": [10, 30, 20, 50, 40]}
+                    )
+                },
+            ),
+            id="dataframe_order_by",
+        ),
+        # dataframe — TOP_K limiting
+        pytest.param(
+            (
+                "dataframe_top_k",
+                "result = pydough.dataframe_collection('scores', my_df, ['row_id']).TOP_K(3, by=score.DESC())",
+                {
+                    "my_df": pd.DataFrame(
+                        {"row_id": [1, 2, 3, 4, 5], "score": [10, 30, 20, 50, 40]}
+                    )
+                },
+            ),
+            id="dataframe_top_k",
+        ),
+        # dataframe — CROSS with a graph collection (df on left, nations on right)
+        pytest.param(
+            (
+                "dataframe_cross_nations",
+                "result = pydough.dataframe_collection('scores', my_df, ['row_id']).CROSS(nations).CALCULATE(name)",
+                {
+                    "my_df": pd.DataFrame(
+                        {"row_id": [1, 2, 3, 4, 5], "score": [10, 30, 20, 50, 40]}
+                    )
+                },
+            ),
+            id="dataframe_cross_nations",
         ),
         pytest.param(
             ("error_unrecognized_term", "result = nations.WHERE(naem == 'ASIA')"),
@@ -439,119 +655,62 @@ _REFSOL_DIR = Path(__file__).parent / "test_explain_llm_refsols"
         ),
     ]
 )
-def refsol_scenario(request) -> tuple[str, str]:
+def refsol_scenario(request) -> tuple:
     """
-    Parametrized fixture that yields ``(name, code)`` for each scenario.
+    Parametrized fixture that yields ``(name, code)`` or
+    ``(name, code, env)`` for each scenario.
 
     Returns:
-        A ``(name, code)`` tuple where ``name`` is also the stem of the
-        per-scenario reference files in ``_REFSOL_DIR``.
+        A tuple whose first two elements are the scenario name and PyDough
+        code string. An optional third element is an ``environment`` dict
+        passed to ``pydough.from_string`` (used for user-generated
+        collection scenarios that need a pre-built DataFrame in scope).
     """
     return request.param
 
 
-def _run_explain_json_str(code: str, session: PyDoughSession) -> dict:
-    """
-    Evaluates a PyDough code string and returns the ``explain_llm`` JSON dict.
-
-    Args:
-        `code`: a PyDough code string of the form ``result = <expression>``.
-        `session`: the PyDough session used for graph context and qualification.
-
-    Returns:
-        The JSON-serialisable dict produced by ``pydough.explain_llm``.
-    """
-    node: UnqualifiedNode = pydough.from_string(code, session=session)
-    return cast(dict, pydough.explain_llm(node, session=session))
-
-
-def _run_explain_md_str(code: str, session: PyDoughSession) -> str:
-    """
-    Evaluates a PyDough code string and returns the ``explain_llm`` markdown.
-
-    Args:
-        `code`: a PyDough code string of the form ``result = <expression>``.
-        `session`: the PyDough session used for graph context and qualification.
-
-    Returns:
-        The markdown string produced by ``pydough.explain_llm(format="md")``.
-    """
-    node: UnqualifiedNode = pydough.from_string(code, session=session)
-    return cast(str, pydough.explain_llm(node, session=session, format="md"))
-
-
-def test_explain_llm_refsol_json(
-    refsol_scenario: tuple[str, str],
+def test_explain_llm_refsol(
+    refsol_scenario: tuple,
     tpch_session: PyDoughSession,
     update_tests: bool,
 ) -> None:
     """
-    Full JSON output matches the ``explain_output`` field in the per-scenario
-    JSON reference file.
+    Full JSON and markdown outputs match the per-scenario reference files.
 
-    When ``update_tests`` is ``True``, overwrites the reference file with the
-    current output, co-locating the PyDough code, the JSON output, and the
-    path to the sibling markdown file.
+    When ``update_tests`` is ``True``, overwrites both reference files with the
+    current output.
 
     Args:
-        `refsol_scenario`: ``(name, code)`` tuple for the scenario.
+        `refsol_scenario`: ``(name, code)`` or ``(name, code, env)`` tuple.
         `tpch_session`: the PyDough session used for evaluation.
         `update_tests`: when ``True``, writes rather than compares.
     """
-    name, code = refsol_scenario
-    result = _run_explain_json_str(code, tpch_session)
+    name, code, *extra = refsol_scenario
+    env = extra[0] if extra else None
+    node: UnqualifiedNode = pydough.from_string(
+        code, session=tpch_session, environment=env
+    )
+    json_result = cast(dict, pydough.explain_llm(node, session=tpch_session))
+    md_result = cast(str, pydough.explain_llm(node, session=tpch_session, format="md"))
     json_path = _REFSOL_DIR / f"{name}.json"
+    md_path = _REFSOL_DIR / f"{name}.md"
     if update_tests:
         _REFSOL_DIR.mkdir(exist_ok=True)
         entry = {
             "pydough": code,
-            "explain_output": result,
+            "explain_output": json_result,
             "explain_output_md": f"{name}.md",
         }
         json_path.write_text(json.dumps(entry, indent=2) + "\n")
+        md_path.write_text(md_result + "\n")
     else:
         entry = json.loads(json_path.read_text())
-        assert result == entry["explain_output"], (
+        assert json_result == entry["explain_output"], (
             f"explain_llm JSON for '{name}' differs from the reference "
             f"file. Re-run with PYDOUGH_UPDATE_TESTS=1 to regenerate."
         )
-
-
-def test_explain_llm_refsol_md(
-    refsol_scenario: tuple[str, str],
-    tpch_session: PyDoughSession,
-    update_tests: bool,
-) -> None:
-    """
-    Full markdown output matches the sibling ``.md`` reference file whose path
-    is recorded in the per-scenario JSON file under ``"explain_output_md"``.
-
-    When ``update_tests`` is ``True``, overwrites the markdown file with the
-    current output.
-
-    Args:
-        `refsol_scenario`: ``(name, code)`` tuple for the scenario.
-        `tpch_session`: the PyDough session used for evaluation.
-        `update_tests`: when ``True``, writes rather than compares.
-    """
-    name, code = refsol_scenario
-    result = _run_explain_md_str(code, tpch_session)
-    json_path = _REFSOL_DIR / f"{name}.json"
-    if update_tests:
-        _REFSOL_DIR.mkdir(exist_ok=True)
-        md_filename = f"{name}.md"
-        md_path = _REFSOL_DIR / md_filename
-        md_path.write_text(result + "\n")
-        # Keep the JSON file's md pointer in sync if it already exists.
-        if json_path.exists():
-            entry = json.loads(json_path.read_text())
-            entry["explain_output_md"] = md_filename
-            json_path.write_text(json.dumps(entry, indent=2) + "\n")
-    else:
-        entry = json.loads(json_path.read_text())
-        md_path = _REFSOL_DIR / entry["explain_output_md"]
-        expected = md_path.read_text().rstrip("\n")
-        assert result == expected, (
+        expected_md = md_path.read_text().rstrip("\n")
+        assert md_result == expected_md, (
             f"explain_llm markdown for '{name}' differs from the "
             f"reference file. Re-run with PYDOUGH_UPDATE_TESTS=1 to regenerate."
         )

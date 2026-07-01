@@ -32,9 +32,10 @@ Filters rows to those matching the given conditions.
 Partitions the collection by ['name'].
 
 - Keys: `name`
+- Partition name: `g`
 - Child name: `nations`
 
-> The partition key(s) ['name'] are available inside child scope 'nations' but not outside it.
+> The partition key(s) ['name'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'nations'; aggregating over it (e.g. COUNT('nations')) operates on the rows within that group.
 
 ### Step 5 — Calculate
 

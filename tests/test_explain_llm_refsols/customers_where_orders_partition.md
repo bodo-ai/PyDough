@@ -39,9 +39,10 @@ Traverses the 'orders' relationship from 'customers' to 'orders'.
 Partitions the collection by ['order_status'].
 
 - Keys: `order_status`
+- Partition name: `g`
 - Child name: `orders`
 
-> The partition key(s) ['order_status'] are available inside child scope 'orders' but not outside it.
+> The partition key(s) ['order_status'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'orders'; aggregating over it (e.g. COUNT('orders')) operates on the rows within that group.
 
 ### Step 6 — Calculate
 

@@ -57,6 +57,7 @@
         "keys": [
           "market_segment"
         ],
+        "name": "g",
         "child_name": "customers",
         "child_available_terms": {
           "expressions": [
@@ -85,7 +86,7 @@
           }
         },
         "notes": [
-          "The partition key(s) ['market_segment'] are available inside child scope 'customers' but not outside it."
+          "The partition key(s) ['market_segment'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'customers'; aggregating over it (e.g. COUNT('customers')) operates on the rows within that group."
         ]
       },
       {

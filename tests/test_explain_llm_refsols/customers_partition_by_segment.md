@@ -26,9 +26,10 @@ Accesses the 'customers' collection.
 Partitions the collection by ['market_segment'].
 
 - Keys: `market_segment`
+- Partition name: `g`
 - Child name: `customers`
 
-> The partition key(s) ['market_segment'] are available inside child scope 'customers' but not outside it.
+> The partition key(s) ['market_segment'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'customers'; aggregating over it (e.g. COUNT('customers')) operates on the rows within that group.
 
 ### Step 4 — Calculate
 

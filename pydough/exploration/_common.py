@@ -45,6 +45,9 @@ from pydough.qdag import (
     Where,
     WindowCall,
 )
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
+)
 from pydough.unqualified import UnqualifiedNode, qualify_node
 
 
@@ -119,6 +122,8 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
         visited.add(id(current))
         if isinstance(current, TableCollection):
             return current.collection.name
+        elif isinstance(current, PyDoughUserGeneratedCollectionQDag):
+            return current.name
         elif isinstance(current, ChildOperatorChildAccess):
             current = current.child_access
         elif isinstance(current, PartitionBy) and hasattr(current, "child"):
@@ -239,11 +244,18 @@ def describe_subcollection_arg(
             current = getattr(current, "preceding_context", None)
 
     # Use the first hop as the display name; fall back to the source table.
-    name: str = (
-        access_path[0]
-        if access_path
-        else (find_source_collection(collection) or "unknown")
-    )
+    # For cross-origin collections, show "left × right" so the cartesian
+    # product semantics are not lost by reporting only the right side.
+    if access_path:
+        name: str = access_path[0]
+    elif isinstance(collection, TableCollection) and _is_cross(collection):
+        assert collection.ancestor_context is not None
+        assert collection.ancestor_context.ancestor_context is not None
+        _left = collection.ancestor_context.ancestor_context.name
+        _right = collection.collection.name
+        name = f"{_left} × {_right}"
+    else:
+        name = find_source_collection(collection) or "unknown"
 
     # Non-empty access_path → row-level scoping via relationship navigation.
     implicit_scope_note: str | None = None
@@ -378,9 +390,23 @@ def describe_expression(
                 resolved: PyDoughCollectionQDAG = _resolve_collection_arg(
                     expr.args[0], parent
                 )
+                # User-generated collections produce an internal QDAG repr in
+                # to_string() that is not human-readable; use a clean form.
+                # Cross-origin collections embed the graph namespace in
+                # to_string(); use "COUNT(left × right)" instead.
+                if isinstance(resolved, PyDoughUserGeneratedCollectionQDag):
+                    display_text = f"{op.function_name}({resolved.name})"
+                elif isinstance(resolved, TableCollection) and _is_cross(resolved):
+                    assert resolved.ancestor_context is not None
+                    assert resolved.ancestor_context.ancestor_context is not None
+                    _left = resolved.ancestor_context.ancestor_context.name
+                    _right = resolved.collection.name
+                    display_text = f"{op.function_name}({_left} × {_right})"
+                else:
+                    display_text = text
                 return {
                     "kind": "Aggregation",
-                    "text": text,
+                    "text": display_text,
                     "function": op.function_name,
                     "args": [describe_subcollection_arg(resolved)],
                 }
@@ -530,8 +556,10 @@ def generate_step_notes(
             right_name = node.collection.name
             notes.append(
                 f"Each row now represents a unique combination of "
-                f"'{left_name}' \u00d7 '{right_name}' \u2014 both their "
-                f"terms are available downstream."
+                f"'{left_name}' \u00d7 '{right_name}'. After CROSS, only "
+                f"'{right_name}' terms are directly accessible as "
+                f"expressions; '{left_name}' terms were available before "
+                f"the CROSS."
             )
 
         case Where():
@@ -542,8 +570,11 @@ def generate_step_notes(
             keys = step.get("keys", [])
             child_name = step.get("child_name", "")
             notes.append(
-                f"The partition key(s) {keys} are available inside child "
-                f"scope '{child_name}' but not outside it."
+                f"The partition key(s) {keys} identify each group and are "
+                f"accessible at the group level. Row-level data is accessible "
+                f"via the child collection '{child_name}'; aggregating over it "
+                f"(e.g. COUNT('{child_name}')) operates on the rows within "
+                f"that group."
             )
 
         case Calculate():

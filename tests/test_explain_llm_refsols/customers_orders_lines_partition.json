@@ -164,6 +164,7 @@
         "keys": [
           "return_flag"
         ],
+        "name": "g",
         "child_name": "lines",
         "child_available_terms": {
           "expressions": [
@@ -202,7 +203,7 @@
           }
         },
         "notes": [
-          "The partition key(s) ['return_flag'] are available inside child scope 'lines' but not outside it."
+          "The partition key(s) ['return_flag'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'lines'; aggregating over it (e.g. COUNT('lines')) operates on the rows within that group."
         ]
       },
       {

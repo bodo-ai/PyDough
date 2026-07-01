@@ -44,7 +44,7 @@
           }
         },
         "notes": [
-          "Each row now represents a unique combination of 'nations' \u00d7 'regions' \u2014 both their terms are available downstream."
+          "Each row now represents a unique combination of 'nations' \u00d7 'regions'. After CROSS, only 'regions' terms are directly accessible as expressions; 'nations' terms were available before the CROSS."
         ]
       }
     ],

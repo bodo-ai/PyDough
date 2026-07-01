@@ -39,9 +39,10 @@ Adds computed expressions to the collection.
 Partitions the collection by ['tier'].
 
 - Keys: `tier`
+- Partition name: `g`
 - Child name: `nations`
 
-> The partition key(s) ['tier'] are available inside child scope 'nations' but not outside it.
+> The partition key(s) ['tier'] identify each group and are accessible at the group level. Row-level data is accessible via the child collection 'nations'; aggregating over it (e.g. COUNT('nations')) operates on the rows within that group.
 
 ### Step 6 — Calculate
 

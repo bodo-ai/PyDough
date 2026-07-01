@@ -22,7 +22,7 @@ CROSS join: every row of 'nations' paired with every row of 'regions'.
 - Left: `nations`
 - Right: `regions`
 
-> Each row now represents a unique combination of 'nations' × 'regions' — both their terms are available downstream.
+> Each row now represents a unique combination of 'nations' × 'regions'. After CROSS, only 'regions' terms are directly accessible as expressions; 'nations' terms were available before the CROSS.
 
 ## Schema
 
