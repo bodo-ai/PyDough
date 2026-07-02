@@ -558,6 +558,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
         pytest.param(DatabaseDialect.ORACLE, id="oracle"),
         pytest.param(DatabaseDialect.DATABRICKS, id="databricks"),
+        pytest.param(DatabaseDialect.DUCKDB, id="duckdb"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -683,6 +684,7 @@ _DIALECT_PARAMS = [
     pytest.param("postgres", id="postgres", marks=[pytest.mark.postgres]),
     pytest.param("oracle", id="oracle", marks=[pytest.mark.oracle]),
     pytest.param("databricks", id="databricks", marks=[pytest.mark.databricks]),
+    pytest.param("duckdb", id="duckdb", marks=[pytest.mark.duckdb]),
 ]
 """
 A list of supported database dialects for the TPCH test suite that are 
@@ -704,6 +706,7 @@ def all_dialects_tpch_db_context(
     get_sf_sample_graph: graph_fetcher,
     get_databricks_sample_graph: graph_fetcher,
     get_trino_graphs: graph_fetcher,
+    get_duckdb_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     General fixture providing TPCH database context and graph metadata
@@ -741,6 +744,9 @@ def all_dialects_tpch_db_context(
                 db_context("tpch_s3_pq", "TPCH_SF1"),
                 get_databricks_sample_graph("TPCH"),
             )
+        case "duckdb":
+            db_context = request.getfixturevalue("duckdb_tpch_db_context")
+            return db_context, get_duckdb_sample_graph("TPCH")
 
         # TODO: Add bodosql later
 
@@ -784,6 +790,8 @@ def all_dialects_params_tpch_db_context(
         case "databricks":
             db_context = request.getfixturevalue("databricks_params_tpch_db_context")
             return db_context, get_databricks_sample_graph("TPCH")
+        case "duckdb":
+            pytest.skip("DuckDB does not have data available for this test.")
     raise AssertionError(f"Unhandled dialect: {request.param!r}")
 
 
@@ -809,6 +817,8 @@ def get_dialect_defog_graphs(
     get_sf_defog_graphs: graph_fetcher,
     get_trino_graphs: graph_fetcher,
     get_postgres_defog_graphs: graph_fetcher,
+    get_databricks_defog_graphs: graph_fetcher,
+    get_duckdb_defog_graphs: graph_fetcher,
 ) -> Callable[[DatabaseDialect, str], GraphMetadata]:
     """
     Returns the graphs for the defog database based on the dialect
@@ -825,6 +835,10 @@ def get_dialect_defog_graphs(
                 return get_trino_graphs(name)
             case DatabaseDialect.POSTGRES:
                 return get_postgres_defog_graphs(name)
+            case DatabaseDialect.DATABRICKS:
+                return get_databricks_defog_graphs(name)
+            case DatabaseDialect.DUCKDB:
+                return get_duckdb_defog_graphs(name)
             case _:
                 # Use the base graph
                 return defog_graphs(name)
@@ -1362,6 +1376,195 @@ def databricks_params_tpch_db_context() -> DatabaseContext:
         catalog=databricks_tpch_catalog,
         schema=databricks_tpch_schema,
     )
+
+
+@pytest.fixture(scope="session")
+def duckdb_sample_graph_path() -> str:
+    # DuckDB schema is `main` so can use tpch_demo_graph.json directly.
+    return f"{os.path.dirname(__file__)}/../demos/metadata/tpch_demo_graph.json"
+
+
+@pytest.fixture(scope="session")
+def get_duckdb_sample_graph(
+    duckdb_sample_graph_path: str,
+    valid_sample_graph_names: set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    DuckDB graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=duckdb_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+# Full per-table SELECT column lists for loading TPC-H data from SQLite into DuckDB.
+# tpch.db stores table and column names in uppercase; DuckDB is case-insensitive
+# so PyDough metadata using lowercase names still works.
+# Explicit CASTs are needed because tpch.db declares decimal columns (e.g. C_ACCTBAL)
+# as INTEGER in its SQLite schema — valid under SQLite's dynamic typing, but
+# rejected by DuckDB's strict scanner when it finds a float in an INTEGER column.
+_DUCKDB_TPCH_TABLE_SELECTS: dict[str, str] = {
+    "NATION": (
+        "CAST(N_NATIONKEY AS BIGINT) AS N_NATIONKEY, N_NAME, "
+        "CAST(N_REGIONKEY AS BIGINT) AS N_REGIONKEY, N_COMMENT"
+    ),
+    "REGION": ("CAST(R_REGIONKEY AS BIGINT) AS R_REGIONKEY, R_NAME, R_COMMENT"),
+    "PART": (
+        "CAST(P_PARTKEY AS BIGINT) AS P_PARTKEY, P_NAME, P_MFGR, "
+        "P_BRAND, P_TYPE, CAST(P_SIZE AS BIGINT) AS P_SIZE, "
+        "P_CONTAINER, CAST(P_RETAILPRICE AS DOUBLE) AS P_RETAILPRICE, "
+        "P_COMMENT"
+    ),
+    "SUPPLIER": (
+        "CAST(S_SUPPKEY AS BIGINT) AS S_SUPPKEY, S_NAME, S_ADDRESS, "
+        "CAST(S_NATIONKEY AS BIGINT) AS S_NATIONKEY, S_PHONE, "
+        "CAST(S_ACCTBAL AS DOUBLE) AS S_ACCTBAL, S_COMMENT"
+    ),
+    "CUSTOMER": (
+        "CAST(C_CUSTKEY AS BIGINT) AS C_CUSTKEY, C_NAME, C_ADDRESS, "
+        "CAST(C_NATIONKEY AS BIGINT) AS C_NATIONKEY, C_PHONE, "
+        "CAST(C_ACCTBAL AS DOUBLE) AS C_ACCTBAL, "
+        "C_MKTSEGMENT, C_COMMENT"
+    ),
+    "ORDERS": (
+        "CAST(O_ORDERKEY AS BIGINT) AS O_ORDERKEY, "
+        "CAST(O_CUSTKEY AS BIGINT) AS O_CUSTKEY, O_ORDERSTATUS, "
+        "CAST(O_TOTALPRICE AS DOUBLE) AS O_TOTALPRICE, "
+        "CAST(O_ORDERDATE AS DATE) AS O_ORDERDATE, "
+        "O_ORDERPRIORITY, O_CLERK, "
+        "CAST(O_SHIPPRIORITY AS BIGINT) AS O_SHIPPRIORITY, O_COMMENT"
+    ),
+    "PARTSUPP": (
+        "CAST(PS_PARTKEY AS BIGINT) AS PS_PARTKEY, "
+        "CAST(PS_SUPPKEY AS BIGINT) AS PS_SUPPKEY, "
+        "CAST(PS_AVAILQTY AS BIGINT) AS PS_AVAILQTY, "
+        "CAST(PS_SUPPLYCOST AS DOUBLE) AS PS_SUPPLYCOST, PS_COMMENT"
+    ),
+    "LINEITEM": (
+        "CAST(L_ORDERKEY AS BIGINT) AS L_ORDERKEY, "
+        "CAST(L_PARTKEY AS BIGINT) AS L_PARTKEY, "
+        "CAST(L_SUPPKEY AS BIGINT) AS L_SUPPKEY, "
+        "CAST(L_LINENUMBER AS BIGINT) AS L_LINENUMBER, "
+        "CAST(L_QUANTITY AS DOUBLE) AS L_QUANTITY, "
+        "CAST(L_EXTENDEDPRICE AS DOUBLE) AS L_EXTENDEDPRICE, "
+        "CAST(L_DISCOUNT AS DOUBLE) AS L_DISCOUNT, "
+        "CAST(L_TAX AS DOUBLE) AS L_TAX, "
+        "L_RETURNFLAG, L_LINESTATUS, "
+        "CAST(L_SHIPDATE AS DATE) AS L_SHIPDATE, "
+        "CAST(L_COMMITDATE AS DATE) AS L_COMMITDATE, "
+        "CAST(L_RECEIPTDATE AS DATE) AS L_RECEIPTDATE, "
+        "L_SHIPINSTRUCT, L_SHIPMODE, L_COMMENT"
+    ),
+}
+
+
+@pytest.fixture(scope="session")
+def duckdb_tpch_db(sqlite_tpch_db_path: str):
+    """
+    Create a DuckDB in-memory database loaded with the same TPC-H data as the
+    SQLite fixture (tpch.db).
+
+    NOTE: We intentionally load from the shared SQLite tpch.db rather than
+    using DuckDB's built-in ``dbgen(sf=1)``.  DuckDB's embedded dbgen
+    generates different random-text fields (``address``, ``comment``) than the
+    standard TPC-H dbgen used to produce tpch.db and the cloud datasets
+    (Snowflake, Postgres, MySQL).  Loading from tpch.db keeps the data
+    identical across all dialects so that no test needs dialect-specific
+    expected values solely because of random-text differences.
+
+    We use DuckDB's SQLite scanner (``sqlite_all_varchar=true``) so all
+    columns arrive as VARCHAR, then explicitly CAST every column to its
+    correct DuckDB type.  See ``_DUCKDB_TPCH_TABLE_SELECTS`` for the casts.
+    """
+    import duckdb
+
+    conn = duckdb.connect(database=":memory:")
+    conn.execute("INSTALL sqlite; LOAD sqlite;")
+    # Read all SQLite columns as VARCHAR so the scanner never hits a
+    # type-mismatch on the misdeclared decimal columns.
+    conn.execute("SET sqlite_all_varchar=true;")
+    conn.execute(f"ATTACH '{sqlite_tpch_db_path}' AS _tpch_src (TYPE sqlite);")
+    for tbl, cols in _DUCKDB_TPCH_TABLE_SELECTS.items():
+        conn.execute(f"CREATE TABLE {tbl} AS SELECT {cols} FROM _tpch_src.{tbl};")
+    conn.execute("DETACH _tpch_src;")
+    # TPC-H Q15 recomputes the same SUM in two separate CTEs and compares
+    # them with equality.  DuckDB's parallel aggregation can produce slightly
+    # different floating-point results depending on thread ordering, causing
+    # non-deterministic failures.  Single-threaded mode keeps results
+    # deterministic for all tests.
+    conn.execute("SET threads=1;")
+    return conn
+
+
+@pytest.fixture(scope="session")
+def duckdb_tpch_db_context(duckdb_tpch_db) -> DatabaseContext:
+    """This fixture is used to connect to the DuckDB TPCH database.
+
+    Returns:
+        DatabaseContext: The DuckDB TPCH database context.
+    """
+    return DatabaseContext(DatabaseConnection(duckdb_tpch_db), DatabaseDialect.DUCKDB)
+
+
+@pytest.fixture(scope="session")
+def duckdb_defog_connection():
+    """
+    Fixture used to connect to the DuckDB defog database.
+
+    All six defog graphs (Broker, Dealership, DermTreatment, Ewallet,
+    Academic, Restaurants) share the same in-memory connection
+
+    We build the SQLite defog.db first (via setup_defog.sh), then read all
+    tables from it using DuckDB's SQLite scanner.  Unlike the TPC-H fixture,
+    no explicit CAST overrides are needed: the defog schema uses proper
+    REAL/NUMERIC/DATE/TIMESTAMP declarations that the scanner maps correctly
+    to DuckDB types without any type-mismatch errors.
+    """
+    import duckdb
+
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    subprocess.run("cd tests/gen_data; bash setup_defog.sh", shell=True, check=True)
+    defog_db_path: str = os.path.join(base_dir, "tests/gen_data/defog.db")
+    conn: duckdb.DuckDBPyConnection = duckdb.connect(":memory:")
+    conn.execute("INSTALL sqlite; LOAD sqlite;")
+    conn.execute(f"ATTACH '{defog_db_path}' AS _defog_src (TYPE sqlite);")
+    tables = conn.execute(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_catalog = '_defog_src';"
+    ).fetchall()
+    for (table,) in tables:
+        conn.execute(f"CREATE TABLE {table} AS SELECT * FROM _defog_src.{table};")
+    conn.execute("DETACH _defog_src;")
+    return DatabaseContext(DatabaseConnection(conn), DatabaseDialect.DUCKDB)
+
+
+@pytest.fixture(scope="session")
+def get_duckdb_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in DuckDB.
+
+    DuckDB's in-memory default schema is ``main``, which matches the table
+    paths already defined in ``duckdb_defog_graphs.json``. The DuckDB-specific
+    file overrides dialect-incompatible macros (e.g. ADD_MONTHS) from the
+    base SQLite ``defog_graphs.json``.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/duckdb_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
 
 
 def is_ci():
@@ -3253,6 +3456,7 @@ def tpch_custom_test_data_dialect_replacements(
             ),
             "simple_dataframe_collection_3",
         )
+
     return test
 
 

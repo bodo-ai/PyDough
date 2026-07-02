@@ -388,6 +388,33 @@ class BaseTransformBindings:
             )
         return expr
 
+    def _remap_zero_to_one(self, idx: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Remap a 0-based index to 1-based for SQL's SPLIT_PART.
+        PyDough treats index 0 as "first part"; while some SQL dialects treat
+        index 1 as "first part".
+        This function converts a 0-based index to 1-based by returning 1
+        if the input index is 0, and returning the input index otherwise.
+        Args:
+            `idx`: The SQLGlot expression representing the index to remap.
+        Returns:
+            A SQLGlot expression that evaluates to 1 if `idx` is 0, or `idx`
+            otherwise. This is equivalent to the SQL expression
+            `CASE WHEN idx = 0 THEN 1 ELSE idx END`
+        """
+        return sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=idx,
+                        expression=sqlglot_expressions.Literal.number(0),
+                    ),
+                    true=sqlglot_expressions.Literal.number(1),
+                )
+            ],
+            default=idx,
+        )
+
     def make_datetime_arg(self, expr: SQLGlotExpression) -> SQLGlotExpression:
         """
         Converts a SQLGlot expression to a datetime argument, if needed, including:

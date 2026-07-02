@@ -185,7 +185,48 @@ To run **Trino CI tests**, add the flag `[run trino]` to your commit message.
         export MONGO_USER="your_username"
         export MONGO_PASSWORD="your_password"
     ```
+## Running Oracle Tests on CI
+To run **Oracle CI tests**, add the flag `[run oracle]` to your commit message.
 
+**Running Oracle tests locally:**
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+2. Install the Oracle Connector for Python
+    ```bash
+    pip install oracledb
+    ```
+3. Set your Oracle credentials as environment variables:
+    ```bash
+        export ORACLE_PASSWORD="your_password"
+    ``` 
+## Running Databricks Tests on CI
+To run **Databricks CI tests**, add the flag `[run databricks]` to your commit message.
+
+**Running Databricks tests locally:**
+
+1. Install the Databricks Connector for Python with Pandas support
+    ```bash
+    pip install databricks-sql-connector"
+    ```
+
+2. Set your Databricks credentials as environment variables:
+    ```bash
+        export DATABRICKS_HOST="databricks_instance"
+        export DATABRICKS_HTTP_PATH="server_http_path"
+        export DATABRICKS_TOKEN="databricks_token"
+    ```
+
+## Running DuckDB Tests on CI
+To run **DuckDB CI tests**, add the flag `[run duckdb]` to your commit message.
+
+** Running DuckDB tests locally:**
+1. Install the DuckDB Connector for Python with Pandas support
+    ```bash
+    pip install duckdb
+    ```
+2. DuckDB does not require any additional environment variables to be set up for testing.
+
+3. DuckDB TPC-H and Defog tests require the `tpch.db` and `defog.db` files to be located in the `tests` directory. Please refer to the sqlite setup instructions above for more information on how to set up these files.
 
 ## Runtime Dependencies
 

@@ -2,12 +2,12 @@ WITH _s1 AS (
   SELECT
     TRUNC(CAST(payment_date AS TIMESTAMP), 'MONTH') AS start_month,
     SUM(payment_amount) AS sum_payment_amount
-  FROM main.payments_received
+  FROM defog.dealership.payments_received
   GROUP BY
     1
 ), _t0 AS (
   SELECT
-    DATETIME(_s1.start_month, months.n || ' months') AS dt,
+    DATEADD(MONTH, months.n, _s1.start_month) AS dt,
     SUM(IF(months.n > 0, 0, COALESCE(_s1.sum_payment_amount, 0))) AS sum_payment
   FROM VALUES
     (0),
@@ -25,7 +25,7 @@ WITH _s1 AS (
   JOIN _s1 AS _s1
     ON (
       TRUNC(CURRENT_TIMESTAMP(), 'MONTH') + INTERVAL '1' HOUR
-    ) >= DATETIME(_s1.start_month, months.n || ' months')
+    ) >= DATEADD(MONTH, months.n, _s1.start_month)
   GROUP BY
     1
 )

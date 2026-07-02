@@ -1,5 +1,5 @@
 SELECT
   name
-FROM main.restaurant
+FROM defog.restaurants.restaurant
 WHERE
   LOWER(food_type) = 'italian'

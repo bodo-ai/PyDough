@@ -1,11 +1,14 @@
 SELECT
   DATE_TRUNC('WEEK', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) AS week,
   COUNT(*) AS num_transactions,
-  COUNT_IF((
-    (
-      DAY_OF_WEEK(sbtransaction.sbtxdatetime) + 6
-    ) % 7
-  ) IN (5, 6)) AS weekend_transactions
+  COALESCE(
+    COUNT_IF((
+      (
+        DAY_OF_WEEK(sbtransaction.sbtxdatetime) + 6
+      ) % 7
+    ) IN (5, 6)),
+    0
+  ) AS weekend_transactions
 FROM main.sbtransaction AS sbtransaction
 JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid

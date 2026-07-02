@@ -3,11 +3,11 @@ WITH _s3 AS (
     TRUNC(CAST(sales.sale_date AS TIMESTAMP), 'MONTH') AS sale_month,
     COUNT(*) AS n_rows,
     SUM(sales.sale_price) AS sum_sale_price
-  FROM main.sales AS sales
-  JOIN main.salespersons AS salespersons
+  FROM defog.dealership.sales AS sales
+  JOIN defog.dealership.salespersons AS salespersons
     ON EXTRACT(YEAR FROM CAST(salespersons.hire_date AS TIMESTAMP)) <= 2023
     AND EXTRACT(YEAR FROM CAST(salespersons.hire_date AS TIMESTAMP)) >= 2022
-    AND sales.salesperson_id = salespersons._id
+    AND sales.salesperson_id = salespersons.id
   GROUP BY
     1
 )

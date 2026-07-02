@@ -12,11 +12,14 @@ SELECT
     )
   ) AS week,
   COUNT(*) AS num_transactions,
-  COUNT_IF((
-    (
-      DAYOFWEEK(sbtransaction.sbtxdatetime) + 6
-    ) % 7
-  ) IN (5, 6)) AS weekend_transactions
+  COALESCE(
+    COUNT_IF((
+      (
+        DAYOFWEEK(sbtransaction.sbtxdatetime) + 6
+      ) % 7
+    ) IN (5, 6)),
+    0
+  ) AS weekend_transactions
 FROM broker.sbtransaction AS sbtransaction
 JOIN broker.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
