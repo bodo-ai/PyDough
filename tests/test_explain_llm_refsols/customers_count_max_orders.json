@@ -1,0 +1,143 @@
+{
+  "pydough": "result = customers.CALCULATE(key, n_orders=COUNT(orders), max_price=MAX(orders.total_price))",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'customers', selecting key, max_price (MAX(orders.total_price)) and computing counting orders records as 'n_orders'.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'customers' collection.",
+        "collection": "customers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "key",
+          "n_orders",
+          "max_price"
+        ],
+        "term_details": {
+          "key": {
+            "kind": "Reference",
+            "term_name": "key"
+          },
+          "n_orders": {
+            "kind": "Aggregation",
+            "text": "COUNT(orders)",
+            "function": "COUNT",
+            "args": [
+              {
+                "name": "orders",
+                "access_path": [
+                  "orders"
+                ],
+                "filters": [],
+                "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path."
+              }
+            ]
+          },
+          "max_price": {
+            "kind": "FunctionCall",
+            "text": "MAX(orders.total_price)",
+            "function": "MAX",
+            "is_aggregation": true
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "max_price",
+              "n_orders",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": [
+          "Note: 'n_orders' aggregates 'orders' \u2014 scoping is implicit via 'orders' relationship navigation, not an explicit filter."
+        ]
+      }
+    ],
+    "schema": {
+      "source_collection": "customers",
+      "available_expressions": [
+        "account_balance",
+        "address",
+        "comment",
+        "key",
+        "market_segment",
+        "max_price",
+        "n_orders",
+        "name",
+        "nation_key",
+        "phone"
+      ],
+      "output_columns": [
+        "key",
+        "n_orders",
+        "max_price"
+      ],
+      "column_types": {
+        "key": "numeric",
+        "n_orders": "numeric",
+        "max_price": "numeric"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "customers_count_max_orders.md"
+}

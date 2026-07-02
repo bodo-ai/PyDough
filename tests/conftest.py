@@ -371,6 +371,20 @@ def get_sample_graph(
 
 
 @pytest.fixture(scope="session")
+def tpch_graph(get_sample_graph: graph_fetcher) -> GraphMetadata:
+    """The TPCH graph metadata, loaded once per test session."""
+    return get_sample_graph("TPCH")
+
+
+@pytest.fixture(scope="session")
+def tpch_session(tpch_graph: GraphMetadata) -> PyDoughSession:
+    """A PyDoughSession loaded with the TPCH graph (no DB connection needed)."""
+    session = PyDoughSession()
+    session.metadata = tpch_graph
+    return session
+
+
+@pytest.fixture(scope="session")
 def get_sf_sample_graph(
     sf_sample_graph_path: str,
     valid_sample_graph_names: set[str],

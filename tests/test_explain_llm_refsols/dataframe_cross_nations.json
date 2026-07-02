@@ -1,0 +1,103 @@
+{
+  "pydough": "result = pydough.dataframe_collection('scores', my_df, ['row_id']).CROSS(nations).CALCULATE(name)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Pairs every 'scores' row with every 'nations' row, selecting name.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "Cross",
+        "description": "CROSS join: every row of 'scores' paired with every row of 'nations'.",
+        "left": "scores",
+        "right": "nations",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": [
+          "Each row now represents a unique combination of 'scores' \u00d7 'nations'. After CROSS, only 'nations' terms are directly accessible as expressions; 'scores' terms were available before the CROSS."
+        ]
+      },
+      {
+        "order": 3,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "name"
+        ],
+        "term_details": {
+          "name": {
+            "kind": "Reference",
+            "term_name": "name"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "nations",
+      "available_expressions": [
+        "comment",
+        "key",
+        "name",
+        "region_key"
+      ],
+      "output_columns": [
+        "name"
+      ],
+      "column_types": {
+        "name": "string"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "dataframe_cross_nations.md"
+}
