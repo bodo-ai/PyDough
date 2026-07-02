@@ -1411,6 +1411,9 @@ Here is a list of reference links for the format strings of different databases:
 - [MySQL](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-format)
 - [Postgres](https://www.postgresql.org/docs/current/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE)
 - [Trino](https://trino.io/docs/current/functions/datetime.html#mysql-date-functions)
+- [Oracle](https://docs.oracle.com/en/database/oracle/oracle-database/23/sqlrf/TO_CHAR-datetime.html#GUID-0D3A1B7C-9F2E-4A5B-BD8C-6F0D1A3E5B9A)
+- [Databricks](https://docs.databricks.com/aws/en/sql/language-manual/functions/date_format)
+- [DuckDB](https://duckdb.org/docs/current/sql/functions/dateformat)
 
 
 <!-- TOC --><a name="integer"></a>

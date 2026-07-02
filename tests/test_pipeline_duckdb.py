@@ -346,9 +346,9 @@ def test_pipeline_e2e_duckdb_defog(
     sqlite_defog_connection: DatabaseContext,
 ) -> None:
     """
-    Test executing the defog analytical questions on the sqlite database,
+    Test executing the defog analytical questions on DuckDB database and,
     comparing against the result of running the reference SQL query text on the
-    same database connector. Run on the defog.ai queries.
+    sqlite database connector.
     NOTE: passing SQLite connection as reference database so that refsol
     is executed using SQLite.
     This is needed because refsol uses SQLite SQL syntax to obtain
