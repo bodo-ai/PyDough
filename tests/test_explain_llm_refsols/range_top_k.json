@@ -1,0 +1,89 @@
+{
+  "pydough": "result = pydough.range_collection('nums', 'n', 1, 11).TOP_K(3, by=n.ASC())",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses user-generated collection 'nums', keeping the top 3 rows by n asc.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "UserGeneratedCollection",
+        "description": "Accesses user-generated range collection 'nums' (range(1, 11), column 'n').",
+        "name": "nums",
+        "kind": "range",
+        "column": "n",
+        "start": 1,
+        "end": 11,
+        "step": 1,
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n"
+            ],
+            "collections": []
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "TopK",
+        "description": "Sorts the collection and keeps the top 3 records.",
+        "collation": [
+          {
+            "text": "n",
+            "direction": "ASC",
+            "nulls": "FIRST"
+          }
+        ],
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n"
+            ],
+            "collections": []
+          }
+        },
+        "limit": 3,
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "nums",
+      "available_expressions": [
+        "n"
+      ],
+      "output_columns": [],
+      "column_types": {},
+      "ordering": [
+        {
+          "text": "n",
+          "direction": "ASC",
+          "nulls": "FIRST"
+        }
+      ],
+      "limit": 3
+    }
+  },
+  "explain_output_md": "range_top_k.md"
+}

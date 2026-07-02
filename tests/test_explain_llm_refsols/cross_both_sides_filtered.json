@@ -1,0 +1,159 @@
+{
+  "pydough": "result = customers.WHERE(market_segment == 'BUILDING').CROSS(suppliers.WHERE(account_balance > 0)).WHERE(account_balance > 1000)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Pairs every 'customers' row with every 'suppliers' row, then subcollection filtered to rows where account_balance > 0 and account_balance > 1000.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "Cross",
+        "description": "CROSS join: every row of 'customers' paired with every row of 'suppliers'.",
+        "left": "customers",
+        "right": "suppliers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "lines",
+              "nation",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": [
+          "Each row now represents a unique combination of 'customers' \u00d7 'suppliers'. After CROSS, only 'suppliers' terms are directly accessible as expressions; 'customers' terms were available before the CROSS."
+        ]
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "account_balance > 0",
+            "operator": ">",
+            "left": {
+              "kind": "Reference",
+              "term_name": "account_balance"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "0",
+              "value": 0,
+              "data_type": "numeric"
+            }
+          }
+        ],
+        "condition_summary": "account_balance > 0",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "lines",
+              "nation",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "account_balance > 1000",
+            "operator": ">",
+            "left": {
+              "kind": "Reference",
+              "term_name": "account_balance"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "1000",
+              "value": 1000,
+              "data_type": "numeric"
+            }
+          }
+        ],
+        "condition_summary": "account_balance > 1000",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "lines",
+              "nation",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "suppliers",
+      "available_expressions": [
+        "account_balance",
+        "address",
+        "comment",
+        "key",
+        "name",
+        "nation_key",
+        "phone"
+      ],
+      "output_columns": [],
+      "column_types": {},
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "cross_both_sides_filtered.md"
+}

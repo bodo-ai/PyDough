@@ -1,0 +1,118 @@
+{
+  "pydough": "result = nations.CALCULATE(name, n=COUNT(customers.CROSS(suppliers)))",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses 'nations', selecting name and computing counting customers \u00d7 suppliers records as 'n'.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'nations' collection.",
+        "collection": "nations",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "name",
+          "n"
+        ],
+        "term_details": {
+          "name": {
+            "kind": "Reference",
+            "term_name": "name"
+          },
+          "n": {
+            "kind": "Aggregation",
+            "text": "COUNT(customers \u00d7 suppliers)",
+            "function": "COUNT",
+            "args": [
+              {
+                "name": "customers \u00d7 suppliers",
+                "access_path": [],
+                "filters": [],
+                "implicit_scope_note": null
+              }
+            ]
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "n",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "nations",
+      "available_expressions": [
+        "comment",
+        "key",
+        "n",
+        "name",
+        "region_key"
+      ],
+      "output_columns": [
+        "name",
+        "n"
+      ],
+      "column_types": {
+        "name": "string",
+        "n": "numeric"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "nations_cross_in_calculate.md"
+}
