@@ -38,6 +38,7 @@ from pydough.relational import (
     ColumnReference,
     CorrelatedReference,
     EmptySingleton,
+    Explode,
     ExpressionSortInfo,
     Filter,
     GeneratedTable,
@@ -82,6 +83,7 @@ from .hybrid_operations import (
     HybridCalculate,
     HybridChildPullUp,
     HybridCollectionAccess,
+    HybridExplode,
     HybridFilter,
     HybridLimit,
     HybridNoop,
@@ -1402,6 +1404,17 @@ class RelTranslation:
         # expressions mapping
         return TranslationOutput(child_result.relational_node, new_expressions)
 
+    def translate_explode(
+        self, operation: HybridExplode, context: TranslationOutput
+    ) -> TranslationOutput:
+        """
+        TODO
+        """
+        raise NotImplementedError()
+        new_node = Explode()
+        new_expressions: dict[HybridExpr, ColumnReference] = {}
+        return TranslationOutput(new_node, new_expressions)
+
     def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
         """
         Converts a HybridRoot node into a relational tree. This method shifts
@@ -1582,6 +1595,9 @@ class RelTranslation:
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
+            case HybridExplode():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_explode(operation, context)
             case HybridChildPullUp():
                 assert context is None, "Malformed HybridTree pattern."
                 result = self.translate_child_pullup(operation)
@@ -1886,6 +1902,9 @@ def convert_ast_to_relational(
 
     hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
+
+    print()
+    print(hybrid)
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.

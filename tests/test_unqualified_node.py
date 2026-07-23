@@ -327,13 +327,13 @@ answer = _ROOT.nations.CALCULATE(name=_ROOT.name, richest_customer_name=richest_
             id="cross_filter",
         ),
         pytest.param(
-            "answer = _ROOT.customers.EXPLODE(_ROOT.name, index_name='i', value_name='v', version='string', delimiter=' ')",
-            "customers.EXPLODE(name, value_name='v', index_name='i', version='string', delimiter=' ', keep=False, filtering=True, is_distinct=False)",
+            "answer = _ROOT.customers.EXPLODE(_ROOT.name, 'exploded_customer', index_name='i', value_name='v', version='string', delimiter=' ')",
+            "customers.EXPLODE(name, name='exploded_customer', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False)",
             id="explode_01",
         ),
         pytest.param(
-            "answer = _ROOT.customers.EXPLODE(_ROOT.name, index_name='i', value_name='v')",
-            "customers.EXPLODE(name, value_name='v', index_name='i', version='array', keep=False, filtering=True, is_distinct=False)",
+            "answer = _ROOT.customers.EXPLODE(_ROOT.name, 'exploded_customer', index_name='i', value_name='v')",
+            "customers.EXPLODE(name, name='exploded_customer', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False)",
             id="explode_02",
         ),
     ],

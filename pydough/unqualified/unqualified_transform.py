@@ -519,8 +519,6 @@ def from_string(
         else:
             # Just set the metadata on the existing session
             pydough.active_session.metadata = metadata
-        print(transformed_code)
-        print(execution_context)
         exec(compile_ast, {}, execution_context)
     finally:
         if session is not None:

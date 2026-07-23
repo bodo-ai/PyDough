@@ -26,6 +26,7 @@ from pydough.qdag import (
     ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    Explode,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -69,6 +70,7 @@ from .hybrid_filter_merger import HybridFilterMerger
 from .hybrid_operations import (
     HybridCalculate,
     HybridCollectionAccess,
+    HybridExplode,
     HybridFilter,
     HybridLimit,
     HybridNoop,
@@ -1335,6 +1337,9 @@ class HybridTranslator:
             case HybridRoot():
                 # A root does not need to be joined to its parent
                 join_keys = []
+            case HybridExplode():
+                # An explode operator does not need to be joined to its parent
+                join_keys = []
             case HybridUserGeneratedCollection():
                 # A user-generated collection does not need to be joined to its parent
                 join_keys = []
@@ -1446,6 +1451,26 @@ class HybridTranslator:
                 hybrid = self.make_hybrid_tree(
                     node.ancestor_context, parent, is_aggregate
                 )
+                hybrid.add_successor(successor_hybrid)
+                return successor_hybrid
+            case Explode():
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, is_aggregate
+                )
+                expr = self.make_hybrid_expr(
+                    hybrid, node.data, child_ref_mapping, False
+                )
+                explode_operator = HybridExplode(
+                    expr.shift_back(1),
+                    node.value_name,
+                    node.index_name,
+                    node.version,
+                    node.delimiter,
+                    node.filtering,
+                    node.is_distinct,
+                    [term.shift_back(1) for term in hybrid.pipeline[-1].unique_exprs],
+                )
+                successor_hybrid = HybridTree(explode_operator, node.ancestral_mapping)
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case PartitionChild():
@@ -1626,6 +1651,26 @@ class HybridTranslator:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
                                 )
+                    case Explode():
+                        expr = self.make_hybrid_expr(
+                            parent, node.child_access.data, child_ref_mapping, False
+                        )
+                        explode_operator = HybridExplode(
+                            HybridCorrelExpr(expr),
+                            node.child_access.value_name,
+                            node.child_access.index_name,
+                            node.child_access.version,
+                            node.child_access.delimiter,
+                            node.child_access.filtering,
+                            node.child_access.is_distinct,
+                            [
+                                HybridCorrelExpr(term)
+                                for term in parent.pipeline[-1].unique_exprs
+                            ],
+                        )
+                        successor_hybrid = HybridTree(
+                            explode_operator, node.ancestral_mapping
+                        )
                     case PartitionChild():
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
@@ -1747,8 +1792,14 @@ class HybridTranslator:
             The HybridTree representation of the given QDAG node after
             transformations.
         """
+        print()
+        print(node.to_tree_string())
+        print()
         # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
+        print()
+        print(hybrid)
+        print()
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common
@@ -1758,6 +1809,9 @@ class HybridTranslator:
         # filters with correlated references into join conditions.
         self.run_correlation_extraction(hybrid)
         # 5. Run the de-correlation procedure.
+        print()
+        print(hybrid)
+        print()
         self.run_hybrid_decorrelation(hybrid)
         # 6. Run the filter-merging procedure, then re-run ejecting aggregate
         # inputs to clean up any new aggregates created by filter merging.

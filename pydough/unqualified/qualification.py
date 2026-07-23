@@ -10,7 +10,7 @@ from collections.abc import Iterable
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
-from pydough.errors import PyDoughUnqualifiedException
+from pydough.errors import PyDoughQDAGException, PyDoughUnqualifiedException
 from pydough.metadata import GeneralJoinMetadata, GraphMetadata
 from pydough.pydough_operators.expression_operators import (
     ExpressionFunctionOperator,
@@ -43,6 +43,7 @@ from .unqualified_node import (
     UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedCross,
+    UnqualifiedExplode,
     UnqualifiedGeneratedCollection,
     UnqualifiedLiteral,
     UnqualifiedNode,
@@ -546,6 +547,7 @@ class Qualifier:
                 | UnqualifiedWhere()
                 | UnqualifiedOrderBy()
                 | UnqualifiedTopK()
+                | UnqualifiedExplode()
             ):
                 raise PyDoughUnqualifiedException(
                     "Collection accesses are currently unsupported in PyDough general join conditions"
@@ -907,6 +909,7 @@ class Qualifier:
                 | UnqualifiedWhere()
                 | UnqualifiedTopK()
                 | UnqualifiedOrderBy()
+                | UnqualifiedExplode()
                 | UnqualifiedSingular()
                 | UnqualifiedPartition()
                 | UnqualifiedBest()
@@ -985,6 +988,8 @@ class Qualifier:
                 build_node[0] = UnqualifiedBest(build_node[0], *node._parcel[1:])
             case UnqualifiedCross():
                 build_node[0] = UnqualifiedCross(build_node[0], *node._parcel[1:])
+            case UnqualifiedExplode():
+                build_node[0] = UnqualifiedExplode(build_node[0], *node._parcel[1:])
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
@@ -1272,6 +1277,60 @@ class Qualifier:
 
         return qualified_child
 
+    def qualify_explode(
+        self,
+        unqualified: UnqualifiedExplode,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedExplode` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedExplode instance to be transformed.
+            `context`: the collection QDAG whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        data_raw: UnqualifiedNode = unqualified._parcel[1]
+        name: str = unqualified._parcel[2]
+        value_name: str = unqualified._parcel[3]
+        index_name: str | None = unqualified._parcel[4]
+        version: str = unqualified._parcel[5]
+        delimiter: str | None = unqualified._parcel[6]
+        filtering: bool = unqualified._parcel[7]
+        is_distinct: bool = unqualified._parcel[8]
+
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+
+        # Qualify the data being explored with regards to the table being
+        # exploded storing any children built along the way.
+        children: list[PyDoughCollectionQDAG] = []
+        qualified_data = self.qualify_expression(data_raw, qualified_parent, children)
+        if len(children) > 0:
+            raise PyDoughQDAGException(
+                f"Invalid data argument to explode: {data_raw!r} (explode does not currently support exploding data from a child collection; make sure to store the data to be exploded in a column of the parent collection before calling explode)"
+            )
+        # Use the qualified children & terms to create a new EXPLODE node.
+        answer: PyDoughCollectionQDAG = self.builder.build_explode(
+            qualified_parent,
+            qualified_data,
+            name,
+            value_name,
+            index_name,
+            version,
+            delimiter,
+            filtering,
+            is_distinct,
+        )
+        if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+            answer = ChildOperatorChildAccess(answer)
+        return answer
+
     def qualify_generated_collection(
         self,
         unqualified: UnqualifiedGeneratedCollection,
@@ -1369,6 +1428,8 @@ class Qualifier:
                 answer = self.qualify_best(unqualified, context, is_child)
             case UnqualifiedCross():
                 answer = self.qualify_cross(unqualified, context, is_child)
+            case UnqualifiedExplode():
+                answer = self.qualify_explode(unqualified, context, is_child)
             case UnqualifiedGeneratedCollection():
                 answer = self.qualify_generated_collection(
                     unqualified, context, is_child

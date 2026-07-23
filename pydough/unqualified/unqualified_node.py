@@ -438,11 +438,11 @@ class UnqualifiedNode(ABC):
     def EXPLODE(
         self,
         data: "UnqualifiedNode",
+        name: str,
         value_name: str,
         index_name: str | None = None,
         version: str = "array",
         delimiter: str | None = None,
-        keep: bool = False,
         filtering: bool = True,
         is_distinct: bool = False,
     ):
@@ -453,6 +453,9 @@ class UnqualifiedNode(ABC):
 
         Args:
             `data`: the array or string column to explode.
+            `name`: the name of the collection after being exploded.
+            This is the name that will be used to reference the collection in
+            subsequent operations, such as window functions.
             `value_name`: the name of the column representing the exploded
             values.
             `index_name` (optional): the name of the column representing the
@@ -466,9 +469,6 @@ class UnqualifiedNode(ABC):
             `delimiter` (optional): the delimiter to use when exploding a string column.
             This must be provided when `version` is "string" and must be None
             when `version` is "array".
-            `keep`: whether to keep the `data` column in the output alongside
-            the exploded values. If False, only the exploded values will be
-            kept. Default is False.
             `filtering` (optional): if True, indicates that the explode
             operation can result in not every row from the original being
             included in the output, i.e. if some of the rows from `data` are
@@ -483,29 +483,46 @@ class UnqualifiedNode(ABC):
             case "array":
                 if delimiter is not None:
                     raise PyDoughUnqualifiedException(
-                        "Cannot provide a delimiter when version is 'array'"
+                        "Cannot provide a `delimiter` to EXPLODE when `version` is 'array'"
                     )
             case "string":
-                if delimiter is None:
+                if (
+                    delimiter is None
+                    or not isinstance(delimiter, str)
+                    or len(delimiter) == 0
+                ):
                     raise PyDoughUnqualifiedException(
-                        "Must provide a delimiter when version is 'string'"
+                        "Must provide a non-empty string `delimiter` to EXPLODE when `version` is 'string'"
                     )
             case _:
                 raise PyDoughUnqualifiedException(
-                    f"Unrecognized version for EXPLODE: {version!r}"
+                    f"Unrecognized `version` for EXPLODE: {version!r} (must be either 'array' or 'string')"
                 )
+        assert isinstance(name, str), f"Invalid `name` argument for EXPLODE: {name!r}"
+        assert isinstance(value_name, str), (
+            f"Invalid `value_name` argument for EXPLODE: {value_name!r}"
+        )
+        assert index_name is None or isinstance(index_name, str), (
+            f"Invalid `index_name` argument for EXPLODE: {index_name!r}"
+        )
+        assert isinstance(filtering, bool), (
+            f"Invalid `filtering` argument for EXPLODE: {filtering!r}"
+        )
+        assert isinstance(is_distinct, bool), (
+            f"Invalid `is_distinct` argument for EXPLODE: {is_distinct!r}"
+        )
         if index_name is None and not is_distinct:
             raise PyDoughUnqualifiedException(
-                "Must provide index_name when is_distinct is False"
+                "Must provide `index_name` to EXPLODE when `is_distinct` is False"
             )
         return UnqualifiedExplode(
             self,
             data,
+            name,
             value_name,
             index_name,
             version,
             delimiter,
-            keep,
             filtering,
             is_distinct,
         )
@@ -877,11 +894,11 @@ class UnqualifiedExplode(UnqualifiedNode):
         self,
         predecessor: UnqualifiedNode,
         data: UnqualifiedNode,
+        name: str,
         value_name: str,
         index_name: str | None,
         version: str,
         delimiter: str | None,
-        keep: bool,
         filtering: bool,
         is_distinct: bool,
     ):
@@ -889,20 +906,20 @@ class UnqualifiedExplode(UnqualifiedNode):
             UnqualifiedNode,
             UnqualifiedNode,
             str,
+            str,
             str | None,
             str,
             str | None,
             bool,
             bool,
-            bool,
         ] = (
             predecessor,
             data,
+            name,
             value_name,
             index_name,
             version,
             delimiter,
-            keep,
             filtering,
             is_distinct,
         )
@@ -1014,13 +1031,13 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case UnqualifiedExplode():
             result = f"{display_raw(unqualified._parcel[0])}.EXPLODE("
             result += display_raw(unqualified._parcel[1])
-            result += f", value_name={unqualified._parcel[2]!r}"
-            if unqualified._parcel[3] is not None:
-                result += f", index_name={unqualified._parcel[3]!r}"
-            result += f", version={unqualified._parcel[4]!r}"
-            if unqualified._parcel[4] == "string":
-                result += f", delimiter={unqualified._parcel[5]!r}"
-            result += f", keep={unqualified._parcel[6]}"
+            result += f", name={unqualified._parcel[2]!r}"
+            result += f", value_name={unqualified._parcel[3]!r}"
+            if unqualified._parcel[4] is not None:
+                result += f", index_name={unqualified._parcel[4]!r}"
+            result += f", version={unqualified._parcel[5]!r}"
+            if unqualified._parcel[5] == "string":
+                result += f", delimiter={unqualified._parcel[6]!r}"
             result += f", filtering={unqualified._parcel[7]}"
             result += f", is_distinct={unqualified._parcel[8]}"
             return result + ")"

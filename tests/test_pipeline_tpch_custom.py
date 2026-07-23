@@ -4239,10 +4239,10 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
-                "array_data = regions.CALCULATE(nation_names=LISTOF(nations.name))\n"
+                "array_data = regions.CALCULATE(region_name=name, nation_names=LISTOF(nations.name))\n"
                 "result = ("
                 "  array_data"
-                "  .EXPLODE(nation_names, index_name='nation_idx', value_name='nation_name', version='array', keep=True, filtering=False, is_distinct=True)"
+                "  .EXPLODE(nation_names, 'exploded_nations', index_name='nation_idx', value_name='nation_name', version='array', filtering=False, is_distinct=True)"
                 "  .ORDER_BY(region_name, nation_idx)"
                 ")",
                 "TPCH",
@@ -4321,7 +4321,7 @@ from .testing_utilities import (
                 "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
                 "result = ("
                 "  array_data"
-                "  .EXPLODE(arr, index_name='arr_idx', value_name='arr_val', version='array', keep=True, filtering=True, is_distinct=True)"
+                "  .EXPLODE(arr, 'exploded_array', index_name='arr_idx', value_name='arr_val', version='array'filtering=True, is_distinct=True)"
                 "  .ORDER_BY(key, arr_idx)"
                 ")",
                 "TPCH",
@@ -4354,6 +4354,65 @@ from .testing_utilities import (
                 },
             ),
             id="explode_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .TOP_K(5, by=key.ASC())"
+                "  .EXPLODE(name, 'exploded_customers', index_name='idx', value_name='val', version='string', delimiter='#')"
+                "  .ORDER_BY(name, idx)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2] * 5,
+                        "val": [
+                            "Customer",
+                            "000000001",
+                            "Customer",
+                            "000000002",
+                            "Customer",
+                            "000000003",
+                            "Customer",
+                            "000000004",
+                            "Customer",
+                            "000000005",
+                        ],
+                    }
+                ),
+                "explode_03",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "exploded_data = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')\n"
+                "result = ("
+                "  regions"
+                "  .CALCULATE(region_name=name, n_chunks=COUNT(exploded_data))"
+                "  .ORDER_BY(region_name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_chunks": [2, 2, 2, 1, 1],
+                    }
+                ),
+                "explode_04",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_04",
         ),
         pytest.param(
             PyDoughPandasTest(

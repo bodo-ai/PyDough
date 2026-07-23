@@ -7,6 +7,7 @@ __all__ = [
     "Aggregate",
     "ColumnPruner",
     "EmptySingleton",
+    "Explode",
     "Filter",
     "GeneratedTable",
     "Join",
@@ -27,6 +28,7 @@ from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .column_pruner import ColumnPruner
 from .empty_singleton import EmptySingleton
+from .explode import Explode
 from .filter import Filter
 from .generated_table import GeneratedTable
 from .join import Join, JoinCardinality, JoinType

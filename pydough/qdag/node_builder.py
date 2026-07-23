@@ -28,6 +28,7 @@ from .collections import (
     Calculate,
     ChildAccess,
     ChildReferenceCollection,
+    Explode,
     GlobalContext,
     OrderBy,
     PartitionBy,
@@ -400,6 +401,53 @@ class AstNodeBuilder:
             The newly created PyDough SINGULAR instance.
         """
         return Singular(preceding_context)
+
+    def build_explode(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+        data: PyDoughExpressionQDAG,
+        name: str,
+        value_name: str,
+        index_name: str | None,
+        version: str,
+        delimiter: str | None,
+        filtering: bool,
+        is_distinct: bool,
+    ):
+        """
+        Creates an EXPLODE instance.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `data`: the data to be exploded.
+            `name`: the name of the collection after being exploded.
+            `value_name`: the name of the value column in the exploded
+            collection.
+            `index_name`: the name of the index column in the exploded
+            collection.
+            `version`: the version of the explode operation (e.g., "string" or
+            "array").
+            `delimiter`: the delimiter used for string explosion (if
+            applicable).
+            `filtering`: whether the explode operation is filtering (i.e., some
+            rows may be dropped).
+            `is_distinct`: whether the exploded values are distinct with regards
+            to the original row.
+
+        Returns:
+            The newly created PyDough EXPLODE instance.
+        """
+        return Explode(
+            preceding_context,
+            data,
+            name,
+            value_name,
+            index_name,
+            version,
+            delimiter,
+            filtering,
+            is_distinct,
+        )
 
     def build_generated_collection(
         self,

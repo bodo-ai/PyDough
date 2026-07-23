@@ -9,6 +9,7 @@ __all__ = [
     "HybridCalculate",
     "HybridChildPullUp",
     "HybridCollectionAccess",
+    "HybridExplode",
     "HybridFilter",
     "HybridLimit",
     "HybridNoop",
@@ -31,6 +32,7 @@ from pydough.qdag import (
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
+from pydough.types import NumericType
 
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
@@ -518,3 +520,43 @@ class HybridUserGeneratedCollection(HybridOperation):
 
     def __repr__(self):
         return self.user_collection.to_string()
+
+
+class HybridExplode(HybridOperation):
+    """
+    Class for HybridOperation corresponding to the EXPLODE operator.
+    """
+
+    def __init__(
+        self,
+        explode_data: HybridExpr,
+        value_name: str,
+        index_name: str | None,
+        version: str,
+        delimiter: str | None,
+        filtering: bool,
+        is_distinct: bool,
+        parent_unique: list[HybridExpr],
+    ):
+        self.explode_data: HybridExpr = explode_data
+        self.value_name: str = value_name
+        self.index_name: str | None = index_name
+        self.version: str = version
+        self.delimiter: str | None = delimiter
+        self.filtering: bool = filtering
+        self.is_distinct: bool = is_distinct
+        terms: dict[str, HybridExpr] = {}
+        unique_exprs: list[HybridExpr] = []
+        terms[value_name] = HybridRefExpr(value_name, explode_data.typ)
+        if index_name is not None:
+            terms[index_name] = HybridRefExpr(index_name, NumericType())
+        if is_distinct:
+            unique_exprs.append(terms[value_name])
+        else:
+            assert index_name is not None
+            unique_exprs.append(terms[index_name])
+        unique_exprs.extend(parent_unique)
+        super().__init__(terms, {}, [], unique_exprs)
+
+    def __repr__(self):
+        return f"EXPLODE[{self.explode_data}, {self.value_name}, {self.index_name}, {self.version}, {self.delimiter}, {self.filtering}, {self.is_distinct}]"
