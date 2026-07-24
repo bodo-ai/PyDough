@@ -243,7 +243,7 @@ class UnqualifiedNode(ABC):
         return self
 
     def __neg__(self):
-        return 0 - self
+        return -1 * self
 
     def __invert__(self):
         return UnqualifiedOperation(pydop.NOT, [self])

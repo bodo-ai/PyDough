@@ -14,13 +14,9 @@ SELECT
   TRIM('aeiou' FROM customer.c_name) AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,
-  CASE
-    WHEN LENGTH('e') = 0
-    THEN 0
-    ELSE CAST(CAST((
-      LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
-    ) AS DOUBLE PRECISION) / LENGTH('e') AS BIGINT)
-  END AS count_e,
+  CAST(CAST((
+    LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
+  ) AS DOUBLE PRECISION) AS BIGINT) AS count_e,
   POSITION('Alex' IN customer.c_name) - 1 AS idx_Alex
 FROM tpch.customer AS customer
 JOIN tpch.nation AS nation

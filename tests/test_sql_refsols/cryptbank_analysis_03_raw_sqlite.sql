@@ -39,13 +39,13 @@ WITH _s0 AS (
     ON _s1.t_sourceaccount = CASE
       WHEN _s0.a_key = 0
       THEN 0
-      ELSE CASE WHEN _s0.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s0.a_key, 1 + INSTR(_s0.a_key, '-'), CAST(LENGTH(_s0.a_key) AS REAL) / 2) AS INTEGER)
+      ELSE CASE WHEN _s0.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s0.a_key, 1 + INSTR(_s0.a_key, '-'), LENGTH(_s0.a_key) / 2) AS INTEGER)
     END
   JOIN _s2 AS _s2
     ON _s1.t_destaccount = CASE
       WHEN _s2.a_key = 0
       THEN 0
-      ELSE CASE WHEN _s2.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s2.a_key, 1 + INSTR(_s2.a_key, '-'), CAST(LENGTH(_s2.a_key) AS REAL) / 2) AS INTEGER)
+      ELSE CASE WHEN _s2.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s2.a_key, 1 + INSTR(_s2.a_key, '-'), LENGTH(_s2.a_key) / 2) AS INTEGER)
     END
   JOIN _t4 AS _t4
     ON _s2.a_branchkey = _t4.b_key
@@ -70,13 +70,13 @@ WITH _s0 AS (
     ON _s9.t_destaccount = CASE
       WHEN _s8.a_key = 0
       THEN 0
-      ELSE CASE WHEN _s8.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s8.a_key, 1 + INSTR(_s8.a_key, '-'), CAST(LENGTH(_s8.a_key) AS REAL) / 2) AS INTEGER)
+      ELSE CASE WHEN _s8.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s8.a_key, 1 + INSTR(_s8.a_key, '-'), LENGTH(_s8.a_key) / 2) AS INTEGER)
     END
   JOIN _s2 AS _s10
     ON _s9.t_sourceaccount = CASE
       WHEN _s10.a_key = 0
       THEN 0
-      ELSE CASE WHEN _s10.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s10.a_key, 1 + INSTR(_s10.a_key, '-'), CAST(LENGTH(_s10.a_key) AS REAL) / 2) AS INTEGER)
+      ELSE CASE WHEN _s10.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(_s10.a_key, 1 + INSTR(_s10.a_key, '-'), LENGTH(_s10.a_key) / 2) AS INTEGER)
     END
   JOIN _t4 AS _t8
     ON _s10.a_branchkey = _t8.b_key

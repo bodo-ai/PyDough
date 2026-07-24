@@ -1,7 +1,7 @@
 SELECT
   DATE_TRUNC('WEEK', CAST(notifications.created_at AS TIMESTAMP)) AS week,
   COUNT(*) AS num_notifs,
-  SUM((
+  COUNT_IF((
     (
       DAY_OF_WEEK(notifications.created_at) + 6
     ) % 7

@@ -396,8 +396,13 @@ def attempt_join_aggregate_transpose(
             ), False
 
     # Keep a dictionary for the projection columns that will be used to post-process
-    # the output of the aggregates, if needed.
+    # the output of the aggregates, if needed. Initialize an identity mapping.
     projection_columns: dict[str, RelationalExpression] = {}
+    for column_name, column_expr in node.columns.items():
+        projection_columns[column_name] = ColumnReference(
+            column_name, column_expr.data_type
+        )
+
     need_projection: bool = False
 
     # If we need count aggregates, add one to each side of the join.

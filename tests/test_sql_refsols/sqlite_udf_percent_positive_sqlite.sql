@@ -6,9 +6,9 @@ WITH _s0 AS (
 ), _s3 AS (
   SELECT
     _s0.n_regionkey,
-    CAST((
+    (
       100.0 * SUM(CASE WHEN customer.c_acctbal > 0 THEN 1 END)
-    ) AS REAL) / COUNT(*) AS percentage_positive_c_acctbal
+    ) / COUNT(*) AS percentage_positive_c_acctbal
   FROM _s0 AS _s0
   JOIN tpch.customer AS customer
     ON _s0.n_nationkey = customer.c_nationkey
@@ -17,9 +17,9 @@ WITH _s0 AS (
 ), _s7 AS (
   SELECT
     _s4.n_regionkey,
-    CAST((
+    (
       100.0 * SUM(CASE WHEN supplier.s_acctbal > 0 THEN 1 END)
-    ) AS REAL) / COUNT(*) AS percentage_positive_s_acctbal
+    ) / COUNT(*) AS percentage_positive_s_acctbal
   FROM _s0 AS _s4
   JOIN tpch.supplier AS supplier
     ON _s4.n_nationkey = supplier.s_nationkey

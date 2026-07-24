@@ -7,9 +7,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-          ) / LENGTH(' ')
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
         ) >= 0
         THEN 1
         ELSE NULL
@@ -25,9 +23,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-          ) / LENGTH(' ')
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
         ) >= 1
         THEN 2
         ELSE NULL
@@ -43,9 +39,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-          ) / LENGTH(' ')
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
         ) >= 2
         THEN 3
         ELSE NULL
@@ -61,9 +55,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-          ) / LENGTH(' ')
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
         ) >= 3
         THEN 4
         ELSE NULL
@@ -79,9 +71,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-          ) / LENGTH(' ')
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
         ) >= 4
         THEN 5
         ELSE NULL
@@ -97,9 +87,7 @@ SELECT
       1,
       CASE
         WHEN (
-          (
-            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
-          ) / LENGTH(' ')
+          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
         ) >= 5
         THEN 6
         ELSE NULL

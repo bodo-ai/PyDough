@@ -6,10 +6,14 @@ invocations of PyDough function operators into SQLGlot function calls.
 __all__ = [
     "BaseTransformBindings",
     "BodoSQLTransformBindings",
+    "DatabricksTransformBindings",
+    "DuckDBTransformBindings",
     "MySQLTransformBindings",
+    "OracleTransformBindings",
     "PostgresTransformBindings",
     "SQLiteTransformBindings",
     "SnowflakeTransformBindings",
+    "TrinoTransformBindings",
     "bindings_from_dialect",
 ]
 
@@ -20,11 +24,14 @@ from pydough.database_connectors import DatabaseDialect
 
 from .base_transform_bindings import BaseTransformBindings
 from .bodosql_transform_bindings import BodoSQLTransformBindings
+from .databricks_transform_bindings import DatabricksTransformBindings
+from .duckdb_transform_bindings import DuckDBTransformBindings
 from .mysql_transform_bindings import MySQLTransformBindings
 from .oracle_transform_bindings import OracleTransformBindings
 from .postgres_transform_bindings import PostgresTransformBindings
 from .sf_transform_bindings import SnowflakeTransformBindings
 from .sqlite_transform_bindings import SQLiteTransformBindings
+from .trino_transform_bindings import TrinoTransformBindings
 
 if TYPE_CHECKING:
     from pydough.sqlglot.sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -54,6 +61,8 @@ def bindings_from_dialect(
             return SQLiteTransformBindings(configs, visitor)
         case DatabaseDialect.SNOWFLAKE:
             return SnowflakeTransformBindings(configs, visitor)
+        case DatabaseDialect.TRINO:
+            return TrinoTransformBindings(configs, visitor)
         case DatabaseDialect.BODOSQL:
             return BodoSQLTransformBindings(configs, visitor)
         case DatabaseDialect.MYSQL:
@@ -62,5 +71,9 @@ def bindings_from_dialect(
             return PostgresTransformBindings(configs, visitor)
         case DatabaseDialect.ORACLE:
             return OracleTransformBindings(configs, visitor)
+        case DatabaseDialect.DATABRICKS:
+            return DatabricksTransformBindings(configs, visitor)
+        case DatabaseDialect.DUCKDB:
+            return DuckDBTransformBindings(configs, visitor)
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")

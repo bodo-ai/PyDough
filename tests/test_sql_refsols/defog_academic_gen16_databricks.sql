@@ -1,0 +1,19 @@
+WITH _s3 AS (
+  SELECT
+    writes.aid,
+    COUNT(DISTINCT publication.pid) AS ndistinct_publication_id
+  FROM defog.academic.writes AS writes
+  JOIN defog.academic.publication AS publication
+    ON publication.pid = writes.pid AND publication.year = 2021
+  GROUP BY
+    1
+)
+SELECT
+  author.name,
+  _s3.ndistinct_publication_id AS count_publication
+FROM defog.academic.author AS author
+JOIN _s3 AS _s3
+  ON _s3.aid = author.aid
+ORDER BY
+  2 DESC
+LIMIT 1

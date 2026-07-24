@@ -1,0 +1,17 @@
+WITH _u_0 AS (
+  SELECT
+    sales.salesperson_id AS _u_1
+  FROM defog.dealership.sales AS sales
+  JOIN defog.dealership.payments_received AS payments_received
+    ON payments_received.payment_method = 'cash'
+    AND payments_received.sale_id = sales.id
+  GROUP BY
+    1
+)
+SELECT
+  salespersons.id AS salesperson_id
+FROM defog.dealership.salespersons AS salespersons
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = salespersons.id
+WHERE
+  NOT _u_0._u_1 IS NULL

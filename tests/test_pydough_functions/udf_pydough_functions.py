@@ -234,7 +234,7 @@ def sqlite_udf_nested():
     # - For "HOUSEHOLD", the customer's first ever order must have been made
     #   on the 366th day of the year.
     # - For anything else, the condition is False.
-    # Round to 2 decimal places.
+    # Round to 1 decimal place.
     custs = customers.CALCULATE(
         first_order_date=MIN(orders.order_date), min_bal=RELMIN(account_balance)
     ).WHERE(HAS(orders))
@@ -252,6 +252,6 @@ def sqlite_udf_nested():
                     False,
                 )
             ),
-            2,
+            1,
         )
     )

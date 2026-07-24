@@ -1,0 +1,4 @@
+ROOT(columns=[('min_region', min_n_regionkey)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'min_n_regionkey': MIN(n_regionkey)})
+  FILTER(condition=STARTSWITH(n_name, 'I':string), columns={'n_regionkey': n_regionkey})
+   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})

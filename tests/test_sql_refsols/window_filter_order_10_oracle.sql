@@ -1,11 +1,15 @@
-WITH "_u_0" AS (
-  SELECT
-    c_custkey AS "_u_1"
+WITH "_S1" AS (
+  SELECT DISTINCT
+    c_custkey AS C_CUSTKEY
   FROM TPCH.CUSTOMER
   WHERE
     c_mktsegment = 'BUILDING'
+), "_u_0" AS (
+  SELECT
+    C_CUSTKEY AS "_u_1"
+  FROM "_S1"
   GROUP BY
-    c_custkey
+    C_CUSTKEY
 ), "_T" AS (
   SELECT
     ORDERS.o_totalprice AS O_TOTALPRICE,

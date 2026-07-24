@@ -203,12 +203,12 @@ def verify_pydough_code_exec_match_unqualified(
         ),
         pytest.param(
             "answer = -(_ROOT.x % 10) / 3.1415",
-            "((0 - (x % 10)) / 3.1415)",
+            "((-1 * (x % 10)) / 3.1415)",
             id="arithmetic_06",
         ),
         pytest.param(
             "answer = (+_ROOT.x < -_ROOT.y) ^ (_ROOT.y == _ROOT.z)",
-            "((x < (0 - y)) ^ (y == z))",
+            "((x < (-1 * y)) ^ (y == z))",
             id="arithmetic_07",
         ),
         pytest.param(

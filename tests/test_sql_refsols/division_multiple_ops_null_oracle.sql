@@ -4,5 +4,6 @@ SELECT
   ) + l_tax AS computed_value
 FROM TPCH.LINEITEM
 ORDER BY
-  1 NULLS FIRST
+  l_discount NULLS FIRST,
+  l_tax NULLS FIRST
 FETCH FIRST 1 ROWS ONLY

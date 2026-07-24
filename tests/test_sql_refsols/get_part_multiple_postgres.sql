@@ -13,9 +13,9 @@ SELECT
     sbcustname,
     ' ',
     CASE
-      WHEN CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
+      WHEN -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
       THEN 1
-      ELSE 0 - CAST(SUBSTRING(sbcustid FROM 2) AS INT)
+      ELSE -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT)
     END
   ) AS p2,
   SPLIT_PART(
@@ -31,9 +31,9 @@ SELECT
     sbcustemail,
     '.',
     CASE
-      WHEN CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
+      WHEN -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
       THEN 1
-      ELSE 0 - CAST(SUBSTRING(sbcustid FROM 2) AS INT)
+      ELSE -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT)
     END
   ) AS p4,
   SPLIT_PART(
@@ -49,9 +49,9 @@ SELECT
     sbcustphone,
     '-',
     CASE
-      WHEN CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
+      WHEN -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
       THEN 1
-      ELSE 0 - CAST(SUBSTRING(sbcustid FROM 2) AS INT)
+      ELSE -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT)
     END
   ) AS p6,
   SPLIT_PART(
@@ -67,9 +67,9 @@ SELECT
     sbcustpostalcode,
     '00',
     CASE
-      WHEN CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
+      WHEN -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
       THEN 1
-      ELSE 0 - CAST(SUBSTRING(sbcustid FROM 2) AS INT)
+      ELSE -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT)
     END
   ) AS p8,
   SPLIT_PART(
@@ -85,9 +85,9 @@ SELECT
     sbcustname,
     '@',
     CASE
-      WHEN CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
+      WHEN -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
       THEN 1
-      ELSE 0 - CAST(SUBSTRING(sbcustid FROM 2) AS INT)
+      ELSE -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT)
     END
   ) AS p10,
   SPLIT_PART(
@@ -103,9 +103,9 @@ SELECT
     sbcustname,
     '#$*',
     CASE
-      WHEN CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
+      WHEN -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT) = 0
       THEN 1
-      ELSE 0 - CAST(SUBSTRING(sbcustid FROM 2) AS INT)
+      ELSE -1 * CAST(SUBSTRING(sbcustid FROM 2) AS INT)
     END
   ) AS p12,
   SPLIT_PART(

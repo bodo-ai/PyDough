@@ -16,7 +16,6 @@ from pydough.relational.relational_expressions.literal_expression import (
 )
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
-from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -66,25 +65,6 @@ class PostgresTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
-    def convert_sum(
-        self, arg: list[SQLGlotExpression], types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        """
-        Converts a SUM function call to its SQLGlot equivalent.
-        This method checks the type of the argument to determine whether to use
-        COUNT_IF (for BooleanType) or SUM (for other types).
-        Arguments:
-            arg (SQLGlotExpression): The argument to the SUM function.
-            types (list[PyDoughType]): The types of the arguments.
-        """
-        match types[0]:
-            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
-            case BooleanType():
-                return sqlglot_expressions.CountIf(this=arg[0])
-            case _:
-                # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=arg[0])
-
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -97,18 +77,7 @@ class PostgresTransformBindings(BaseTransformBindings):
             this=string_expr,  # string expression
             delimiter=delimiter_expr,  # delimiter
             part_index=sqlglot_expressions.Cast(
-                this=sqlglot_expressions.Case(  # position (1-based)
-                    ifs=[
-                        sqlglot_expressions.If(
-                            this=sqlglot_expressions.EQ(
-                                this=index_expr,
-                                expression=sqlglot_expressions.Literal.number(0),
-                            ),
-                            true=sqlglot_expressions.Literal.number(1),
-                        )
-                    ],
-                    default=index_expr,
-                ),
+                this=self._remap_zero_to_one(index_expr),
                 to=sqlglot_expressions.DataType.build("INTEGER"),
             ),
         )
@@ -237,7 +206,7 @@ class PostgresTransformBindings(BaseTransformBindings):
 
                 dow1 = self.convert_dayofweek([date1], [types[1]])
                 dow2 = self.convert_dayofweek([date2], [types[2]])
-                divion = sqlglot_expressions.Div(
+                division = sqlglot_expressions.Div(
                     this=apply_parens(
                         sqlglot_expressions.Add(
                             this=raw_delta,
@@ -250,7 +219,7 @@ class PostgresTransformBindings(BaseTransformBindings):
                 )
 
                 return sqlglot_expressions.Cast(
-                    this=divion, to=sqlglot_expressions.DataType.build("BIGINT")
+                    this=division, to=sqlglot_expressions.DataType.build("BIGINT")
                 )
 
             case DateTimeUnit.DAY:
@@ -291,7 +260,7 @@ class PostgresTransformBindings(BaseTransformBindings):
                     expression=apply_parens(sub_dates),
                 )
 
-                division: SQLGlotExpression = sqlglot_expressions.Div(
+                division = sqlglot_expressions.Div(
                     this=extract_epoch,
                     expression=sqlglot_expressions.Literal.number(division_literal),
                 )
@@ -343,6 +312,27 @@ class PostgresTransformBindings(BaseTransformBindings):
 
         else:
             return super().apply_datetime_truncation(base, unit)
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        to_char(date, 'Mon')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.TimeToStr(this=date, format=month_format)
 
     def convert_slice(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

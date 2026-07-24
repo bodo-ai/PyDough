@@ -1,7 +1,7 @@
 SELECT
   lineitem.l_shipmode AS L_SHIPMODE,
-  COALESCE(SUM(orders.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS HIGH_LINE_COUNT,
-  COALESCE(SUM(NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS LOW_LINE_COUNT
+  COALESCE(SUM(IIF(orders.o_orderpriority IN ('1-URGENT', '2-HIGH'), 1, 0)), 0) AS HIGH_LINE_COUNT,
+  COALESCE(SUM(IIF(NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH'), 1, 0)), 0) AS LOW_LINE_COUNT
 FROM tpch.lineitem AS lineitem
 JOIN tpch.orders AS orders
   ON lineitem.l_orderkey = orders.o_orderkey

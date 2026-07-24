@@ -6,5 +6,5 @@ SELECT
   END AS computed_value
 FROM tpch.LINEITEM
 ORDER BY
-  1
+  l_discount
 LIMIT 1

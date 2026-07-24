@@ -60,6 +60,110 @@ from tests.testing_utilities import graph_fetcher
             ),
             id="customer_with_greater_order_by_year",
         ),
+        pytest.param(
+            """
+def template(custs_filters, order_year: int):
+    return (
+        customers.WHERE(
+            custs_filters
+        ).CALCULATE(
+            name,
+            n_orders=COUNT(orders.WHERE(YEAR(order_date)==order_year))
+        )
+    )
+result = template(custs_filters=ISIN(INTEGER(GETPART(name, '#', 2)), (100, 200, 300)), order_year=1993)""",
+            None,
+            None,
+            lambda: pd.DataFrame(
+                {
+                    "name": [
+                        "Customer#000000100",
+                        "Customer#000000200",
+                        "Customer#000000300",
+                    ],
+                    "n_orders": [3, 4, 0],
+                }
+            ),
+            id="template_no_var-no_env",
+        ),
+        pytest.param(
+            """
+def template(custs_filters, order_year: int):
+    return (
+        customers.WHERE(
+            custs_filters
+        ).CALCULATE(
+            name,
+            n_orders=COUNT(orders.WHERE(YEAR(order_date)==order_year))
+        )
+    )
+customers_result = template(custs_filters=ISIN(INTEGER(GETPART(name, '#', 2)), (100, 200, 300)), order_year=1993)""",
+            "customers_result",
+            None,
+            lambda: pd.DataFrame(
+                {
+                    "name": [
+                        "Customer#000000100",
+                        "Customer#000000200",
+                        "Customer#000000300",
+                    ],
+                    "n_orders": [3, 4, 0],
+                }
+            ),
+            id="template_var-no_env",
+        ),
+        pytest.param(
+            """
+def template(order_year: int):
+    return (
+        customers.WHERE(
+            (name==customer_name)
+        ).CALCULATE(
+            name,
+            n_orders=COUNT(orders.WHERE(YEAR(order_date)==order_year))
+        )
+    )
+result = template(order_year=filter_year)""",
+            None,
+            {"filter_year": 1992, "customer_name": "Customer#000000100"},
+            lambda: pd.DataFrame(
+                {
+                    "name": [
+                        "Customer#000000100",
+                    ],
+                    "n_orders": [3],
+                }
+            ),
+            id="template_no_var-env",
+        ),
+        pytest.param(
+            """
+def template(mkt_segments: list[str]):
+    return (
+        regions.WHERE(
+            (name==region_name)
+        ).nations.CALCULATE(
+            name,
+            n_customers=COUNT(customers.WHERE(ISIN(market_segment, mkt_segments)))
+        )
+    )
+cnt_customers = template(mkt_segments=segments_list)""",
+            "cnt_customers",
+            {"region_name": "EUROPE", "segments_list": ("BUILDING", "FURNITURE")},
+            lambda: pd.DataFrame(
+                {
+                    "name": [
+                        "FRANCE",
+                        "GERMANY",
+                        "ROMANIA",
+                        "RUSSIA",
+                        "UNITED KINGDOM",
+                    ],
+                    "n_customers": [2469, 2316, 2366, 2399, 2400],
+                }
+            ),
+            id="template_var-env",
+        ),
     ],
 )
 def test_tpch_data_e2e_from_string(

@@ -1,0 +1,5 @@
+SELECT
+  name
+FROM defog.restaurants.restaurant
+WHERE
+  LOWER(city_name) = 'los angeles' AND rating > 4

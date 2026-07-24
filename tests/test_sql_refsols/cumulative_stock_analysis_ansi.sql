@@ -6,7 +6,7 @@ SELECT
   ) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) ORDER BY sbtransaction.sbtxdatetime NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
   ROUND(
     (
-      100.0 * SUM(sbticker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbtransaction.sbtxdatetime NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+      100.0 * COUNT_IF(sbticker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbtransaction.sbtxdatetime NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
     ) / COUNT(*) OVER (ORDER BY sbtransaction.sbtxdatetime NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS pct_apple_txns,
@@ -14,7 +14,7 @@ SELECT
     CASE
       WHEN sbtransaction.sbtxtype = 'buy'
       THEN sbtransaction.sbtxshares
-      ELSE 0 - sbtransaction.sbtxshares
+      ELSE -1 * sbtransaction.sbtxshares
     END
   ) OVER (ORDER BY sbtransaction.sbtxdatetime NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS share_change,
   ROUND(

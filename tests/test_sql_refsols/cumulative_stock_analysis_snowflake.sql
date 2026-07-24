@@ -14,7 +14,7 @@ SELECT
     IFF(
       sbtransaction.sbtxtype = 'buy',
       sbtransaction.sbtxshares,
-      0 - sbtransaction.sbtxshares
+      -1 * sbtransaction.sbtxshares
     )
   ) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS share_change,
   ROUND(

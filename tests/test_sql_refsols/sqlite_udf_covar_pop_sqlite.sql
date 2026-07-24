@@ -1,18 +1,16 @@
 WITH _s5 AS (
   SELECT
     nation.n_regionkey,
-    CAST((
-      SUM(CAST(customer.c_acctbal * orders.o_totalprice AS REAL) / 1000000.0) - CAST(SUM(customer.c_acctbal) * SUM(CAST(orders.o_totalprice AS REAL) / 1000000.0) AS REAL) / SUM(
+    (
+      SUM(customer.c_acctbal * orders.o_totalprice / 1000000.0) - SUM(customer.c_acctbal) * SUM(orders.o_totalprice / 1000000.0) / SUM(
         CASE
-          WHEN NOT CAST(orders.o_totalprice AS REAL) / 1000000.0 IS NULL
-          AND NOT customer.c_acctbal IS NULL
+          WHEN NOT customer.c_acctbal IS NULL AND NOT orders.o_totalprice / 1000000.0 IS NULL
           THEN 1
         END
       )
-    ) AS REAL) / SUM(
+    ) / SUM(
       CASE
-        WHEN NOT CAST(orders.o_totalprice AS REAL) / 1000000.0 IS NULL
-        AND NOT customer.c_acctbal IS NULL
+        WHEN NOT customer.c_acctbal IS NULL AND NOT orders.o_totalprice / 1000000.0 IS NULL
         THEN 1
       END
     ) AS agg_0

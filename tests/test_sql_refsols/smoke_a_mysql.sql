@@ -22,22 +22,18 @@ SELECT
       CASE
         WHEN CHAR_LENGTH(p_name) = 0
         THEN NULL
-        WHEN CHAR_LENGTH(' ') = 0
-        THEN CASE WHEN ABS(2) = 1 THEN p_name ELSE NULL END
         WHEN (
           CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-        ) / CHAR_LENGTH(' ') >= 1
+        ) >= 1
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 2), ' ', -1)
         ELSE NULL
       END,
       CASE
         WHEN CHAR_LENGTH(p_name) = 0
         THEN NULL
-        WHEN CHAR_LENGTH(' ') = 0
-        THEN CASE WHEN ABS(-1) = 1 THEN p_name ELSE NULL END
         WHEN (
           CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
-        ) / CHAR_LENGTH(' ') + 1 >= ABS(-1)
+        ) + 1 >= ABS(-1)
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', -1), ' ', 1)
         ELSE NULL
       END COLLATE utf8mb4_bin
@@ -62,13 +58,9 @@ SELECT
   RPAD(CAST(p_size AS CHAR), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
-  CASE
-    WHEN CHAR_LENGTH('o') = 0
-    THEN 0
-    ELSE CAST((
-      CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, 'o', ''))
-    ) / CHAR_LENGTH('o') AS SIGNED)
-  END + (
+  CAST((
+    CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, 'o', ''))
+  ) AS SIGNED) + (
     (
       LOCATE('o', p_name) - 1
     ) / 100.0

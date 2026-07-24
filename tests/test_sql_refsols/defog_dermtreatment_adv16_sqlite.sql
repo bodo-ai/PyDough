@@ -1,8 +1,8 @@
 SELECT
   (
     CAST((
-      AVG(day100_pasi_score) - AVG(day7_pasi_score)
-    ) AS REAL) / NULLIF(AVG(day7_pasi_score), 0)
+      AVG(CAST(day100_pasi_score AS REAL)) - AVG(CAST(day7_pasi_score AS REAL))
+    ) AS REAL) / NULLIF(AVG(CAST(day7_pasi_score AS REAL)), 0)
   ) * 100 AS d7d100pir
 FROM main.outcomes
 WHERE

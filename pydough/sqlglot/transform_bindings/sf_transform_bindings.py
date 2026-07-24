@@ -17,7 +17,6 @@ from pydough.relational.relational_expressions.literal_expression import (
 )
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 from pydough.types import PyDoughType
-from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -36,6 +35,19 @@ class SnowflakeTransformBindings(BaseTransformBindings):
     @property
     def values_alias_column(self) -> bool:
         return False
+
+    SNOWFLAKE_STRFTIME_OVERRIDES: dict[str, str] = {
+        "%p": "AM",  # AM / PM marker
+    }
+    """
+    Mapping of Python `strftime`-style directives to Snowflake format
+    elements that SQLGlot's Snowflake `TIME_MAPPING` does not translate
+    (e.g. SQLGlot has no entry for `%p`, so it is left as-is in the format
+    string passed to `TO_CHAR`, which Snowflake does not recognize). These
+    replacements are applied before the format string is handed to SQLGlot's
+    `TimeToStr`, so SQLGlot's own translation of the remaining directives
+    (e.g. `%H`, `%M`) is unaffected.
+    """
 
     PYDOP_TO_SNOWFLAKE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.STARTSWITH: "STARTSWITH",
@@ -66,24 +78,23 @@ class SnowflakeTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
-    def convert_sum(
-        self, arg: SQLGlotExpression, types: list[PyDoughType]
+    def convert_string(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        Converts a SUM function call to its SQLGlot equivalent.
-        This method checks the type of the argument to determine whether to use
-        COUNT_IF (for BooleanType) or SUM (for other types).
-        Arguments:
-            `arg` : The argument to the SUM function.
-            `types` : The types of the arguments.
+        Creates a SQLGlot expression for `STRING(X)`/`STRING(X, format)`.
+
+        For the 2-argument form, the format string is preprocessed to
+        replace directives in `SNOWFLAKE_STRFTIME_OVERRIDES` (e.g. `%p`)
+        with their Snowflake format-element equivalents, since SQLGlot's
+        Snowflake `TIME_MAPPING` does not translate them.
         """
-        match types[0]:
-            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
-            case BooleanType():
-                return sqlglot_expressions.CountIf(this=arg[0])
-            case _:
-                # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=arg[0])
+        if len(args) == 2 and isinstance(args[1], sqlglot_expressions.Literal):
+            fmt: str = args[1].this
+            for k, v in self.SNOWFLAKE_STRFTIME_OVERRIDES.items():
+                fmt = fmt.replace(k, v)
+            args = [args[0], sqlglot_expressions.Literal.string(fmt)]
+        return super().convert_string(args, types)
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -221,6 +232,27 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         else:
             # For other units, use base implementation
             return super().convert_datediff(args, types)
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        TO_VARCHAR(my_date, 'Mon')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("Mon")
+        return sqlglot_expressions.ToChar(this=date, format=month_format)
 
     def convert_user_generated_range(
         self, collection: RangeGeneratedCollection

@@ -12,6 +12,10 @@ import pandas as pd
 import pytest
 import datetime
 import logging
+
+# TODO: Remove this skip guard once the LLM package supports pyarrow>=24 and
+# bodo can be included in the standard dev environment without conflict.
+pytest.importorskip("bodo")
 import bodo
 from io import StringIO
 from bodo.spawn.utils import set_global_config
@@ -2621,7 +2625,7 @@ def test_pipeline_e2e_bodosql(
             "bodo_logger_messages", []
         ):
             assert log_message in captured_output, (
-                f"Expected log message not found: {log_message}"
+                f"Expected log message not found: {log_message}. Captured: {captured_output}"
             )
         bodo.user_logging.restore_default_bodo_verbose_level()
         bodo.user_logging.restore_default_bodo_verbose_logger()

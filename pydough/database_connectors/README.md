@@ -20,6 +20,9 @@ The database connectors module provides functionality to manage database connect
         - `MYSQL`: Represents the MySQL dialect.
         - `POSTGRES`: Represents the Postgres dialect
         - `ORACLE`: Represents the Oracle dialect
+        - `DATABRICKS`: Represents the Databricks SQL dialect.
+        - `TRINO`: Represents the Trino SQL dialect.
+        - `DUCKDB`: Represents the DuckDB SQL dialect.
 - `DatabaseContext`: Dataclass that manages the database connection and the corresponding dialect.
     - Fields:
         - `connection`: The `DatabaseConnection` object.
@@ -37,6 +40,9 @@ The database connectors module provides functionality to manage database connect
 - `load_mysql_connection`: Loads a MySQL database connection.
 - `load_postgres_connection`: Loads a Postgres database connection.
 - `load_oracle_connection`: Loads an Oracle database connection.
+- `load_databricks_connection`: Loads a Databricks database connection.
+- `load_trino_connection`: Loads a Trino database connection.
+- `load_duckdb_connection`: Loads a DuckDB database connection.
 
 ## Usage
 

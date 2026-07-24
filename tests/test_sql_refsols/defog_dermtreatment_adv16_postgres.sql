@@ -1,8 +1,8 @@
 SELECT
   (
     (
-      AVG(CAST(day100_pasi_score AS DECIMAL)) - AVG(CAST(day7_pasi_score AS DECIMAL))
-    ) / NULLIF(AVG(CAST(day7_pasi_score AS DECIMAL)), 0)
+      AVG(CAST(CAST(day100_pasi_score AS DOUBLE PRECISION) AS DECIMAL)) - AVG(CAST(CAST(day7_pasi_score AS DOUBLE PRECISION) AS DECIMAL))
+    ) / NULLIF(AVG(CAST(CAST(day7_pasi_score AS DOUBLE PRECISION) AS DECIMAL)), 0)
   ) * 100 AS d7d100pir
 FROM main.outcomes
 WHERE

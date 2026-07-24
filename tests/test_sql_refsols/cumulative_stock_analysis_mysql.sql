@@ -14,7 +14,7 @@ SELECT
     CASE
       WHEN sbTransaction.sbtxtype = 'buy'
       THEN sbTransaction.sbtxshares
-      ELSE 0 - sbTransaction.sbtxshares
+      ELSE -1 * sbTransaction.sbtxshares
     END
   ) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS share_change,
   ROUND(

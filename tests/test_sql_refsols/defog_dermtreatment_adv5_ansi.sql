@@ -19,13 +19,7 @@ WITH _t1 AS (
 SELECT
   CAST(min_year_start_dt AS TEXT) AS year,
   n_rows AS number_of_new_patients,
-  CASE
-    WHEN (
-      n_rows - COALESCE(LAG(n_rows, 1) OVER (ORDER BY min_year_start_dt NULLS LAST), n_rows)
-    ) <> 0
-    THEN n_rows - COALESCE(LAG(n_rows, 1) OVER (ORDER BY min_year_start_dt NULLS LAST), n_rows)
-    ELSE NULL
-  END AS npi
+  n_rows - LAG(n_rows, 1) OVER (ORDER BY min_year_start_dt NULLS LAST) AS npi
 FROM _t0
 ORDER BY
   1

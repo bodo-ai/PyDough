@@ -506,10 +506,10 @@ WITH _s1 AS (
 ), _s3 AS (
   SELECT
     column1 AS x,
-    SUM(CAST(_s1.y AS TEXT) LIKE (
+    COUNT_IF(CAST(_s1.y AS TEXT) LIKE (
       CONCAT('%', CAST(column1 AS TEXT))
     )) AS sum_expr,
-    SUM(CAST(_s1.y AS TEXT) LIKE (
+    COUNT_IF(CAST(_s1.y AS TEXT) LIKE (
       CONCAT(CAST(column1 AS TEXT), '%')
     )) AS sum_expr_5
   FROM (VALUES

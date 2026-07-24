@@ -147,6 +147,14 @@ def datetime_functions():
         dayname_str5=DAYNAME("1995-06-30"),
         dayname_str6=DAYNAME("1995-07-01"),
         dayname_dt=DAYNAME(datetime.datetime(1993, 8, 15)),
+        # MONTHNAME: all types
+        monthname_col=MONTHNAME(order_date),
+        monthname_str1=MONTHNAME("1995-03-27"),
+        monthname_str2=MONTHNAME("1995-05-27"),
+        monthname_str3=MONTHNAME("1995-06-27"),
+        monthname_str4=MONTHNAME("1995-10-27"),
+        monthname_str5=MONTHNAME("1999-12-31"),
+        monthname_dt=MONTHNAME(datetime.datetime(1993, 8, 15)),
     )
 
 

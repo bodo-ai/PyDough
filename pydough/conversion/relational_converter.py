@@ -1758,13 +1758,13 @@ def optimize_relational_tree(
     # It also speeds up all subsequent steps by reducing the total number of
     # objects inside the plan.
     pruner: ColumnPruner = ColumnPruner()
-    root = pruner.prune_unused_columns(root)
+    root = pruner.prune_unused_columns(root, True)
 
     # Run a pass that substitutes join keys when the only columns used by one
     # side of the join are the join keys. This will make some joins redundant
     # and allow them to be deleted later. Then, re-run column pruning.
     root = confirm_root(join_key_substitution(root))
-    root = pruner.prune_unused_columns(root)
+    root = pruner.prune_unused_columns(root, True)
 
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
@@ -1801,7 +1801,7 @@ def optimize_relational_tree(
     # more columns unused. This is done befre the next step to remove as many
     # column names as possible so the column bubbling step can try to use nicer
     # names without worrying about collisions.
-    root = pruner.prune_unused_columns(root)
+    root = pruner.prune_unused_columns(root, True)
 
     # Re-run column bubbling now that the columns have been pruned again.
     root = bubble_column_names(root)
@@ -1834,7 +1834,7 @@ def optimize_relational_tree(
         root = confirm_root(pullup_projections(root))
         root = remove_redundant_aggs(root)
         root = confirm_root(join_key_substitution(root))
-        root = pruner.prune_unused_columns(root)
+        root = pruner.prune_unused_columns(root, True)
 
     # Re-run projection merging, without pushing into joins. This will allow
     # some redundant projections created by pullup to be removed entirely.
