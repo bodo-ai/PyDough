@@ -3,7 +3,7 @@ WITH _s0 AS (
     TRUNC(CAST(sale_date AS TIMESTAMP), 'QUARTER') AS quarter,
     customer_id,
     SUM(sale_price) AS sum_sale_price
-  FROM main.sales
+  FROM defog.dealership.sales
   WHERE
     EXTRACT(YEAR FROM CAST(sale_date AS TIMESTAMP)) = 2023
   GROUP BY
@@ -15,8 +15,8 @@ WITH _s0 AS (
     customers.state,
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price
   FROM _s0 AS _s0
-  JOIN main.customers AS customers
-    ON _s0.customer_id = customers._id
+  JOIN defog.dealership.customers AS customers
+    ON _s0.customer_id = customers.id
   GROUP BY
     1,
     2

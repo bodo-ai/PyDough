@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     sbtxcustid,
     MIN(sbtxdatetime) AS min_sbtxdatetime
-  FROM main.sbtransaction
+  FROM defog.broker.sbtransaction
   GROUP BY
     1
 )
@@ -15,6 +15,6 @@ SELECT
       ) * 60 + EXTRACT(MINUTE FROM CAST(_s1.min_sbtxdatetime AS TIMESTAMP)) - EXTRACT(MINUTE FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
     ) * 60 + EXTRACT(SECOND FROM CAST(_s1.min_sbtxdatetime AS TIMESTAMP)) - EXTRACT(SECOND FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
   ) / 86400.0 AS DaysFromJoinToFirstTransaction
-FROM main.sbcustomer AS sbcustomer
+FROM defog.broker.sbcustomer AS sbcustomer
 JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid

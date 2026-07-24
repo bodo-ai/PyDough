@@ -354,6 +354,8 @@ Below is a list of all supported values for the database name:
 
 - `databricks`: uses a Databricks database. [See here](https://docs.databricks.com/dev-tools/python-sql-connector.html) for details on the connection API and what keyword arguments can be passed in.
 
+- `duckdb`: uses a DuckDB database. [See here](https://duckdb.org/docs/api/python) for details on the connection API and what keyword arguments can be passed in.
+
 - `bodosql`: uses a BodoSQL context. [See here](https://docs.bodo.ai/latest/api_docs/sql/bodosqlcontext/) for details on the BodoSQL context and [here](https://docs.bodo.ai/latest/api_docs/sql/database_catalogs/) for details on the various kinds of catalogs that can be connected to a BodoSQL context.
 
 
@@ -378,6 +380,7 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `oracle` | `python-oracledb`  |
 | `databricks` | `databricks-sql-connector`  |
 | `trino` | `trino`  |
+| `duckdb` | `duckdb`  |
 | `bodosql`    | Depends on the catalog being used |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
@@ -532,6 +535,20 @@ literals. This ensures consistent behavior across DATE expressions. But sub-seco
   ```
 You can find a full example of using a Databricks database with PyDough in [this usage guide](./../demos/notebooks/Databricks_TPCH.ipynb).
 
+- DuckDB: You can connect to a DuckDB database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("duckdb", database=":memory:")
+  ```
+  Example with a connection object
+  ```py
+    import duckdb
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    duckdb_conn = duckdb.connect(database=":memory:")
+    pydough.active_session.connect_database("duckdb", connection=duckdb_conn)
+  ```
+You can find a full example of using a DuckDB database with PyDough in [this usage guide](./../demos/notebooks/DuckDB_TPCH.ipynb).
+
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 
@@ -675,6 +692,7 @@ Different databases have different capabilities for CREATE statements:
 | Oracle     | No (uses DROP + CREATE)| No         | Yes                    | No        |
 | Trino      | No (uses DROP + CREATE)| No         | Yes                    | No        |
 | Databricks  | No (uses DROP + CREATE)| No (uses CREATE VIEW)         | Yes                    | No        |
+| DuckDB     | Yes                    | Yes        | Yes                    | Yes       |
 
 **Note:** SQLite does not support creating persistent views that reference attached databases. When creating a view without `temp=True` on SQLite, PyDough will automatically create a temporary view and issue a warning.
 

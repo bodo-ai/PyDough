@@ -355,8 +355,12 @@ def rewrite_sum_nullif(expr: exp.Expression) -> exp.Expression:
 
 def rewrite_coalesce_count(expr: exp.Expression) -> exp.Expression:
     """
-    Rewrite `COALESCE(COUNT(x), 0)` to `COUNT(x)`, and does the same for
-    `COALESCE(COUNT_IF(x), 0)`.
+    Rewrite `COALESCE(COUNT(x), 0)` to `COUNT(x)`.
+
+    `COUNT(*)` always returns 0 (never NULL) so COALESCE is redundant.
+    `COUNT_IF(cond)` is intentionally excluded: when all rows in a group
+    have a NULL condition (e.g. from a LEFT JOIN producing NULL rows),
+    COUNT_IF returns NULL rather than 0 on some backends (e.g. DuckDB).
 
     Args:
         `expr`: The expression to rewrite.
@@ -367,7 +371,7 @@ def rewrite_coalesce_count(expr: exp.Expression) -> exp.Expression:
     if not isinstance(expr, exp.Coalesce):
         return expr
 
-    return expr.this if isinstance(expr.this, (exp.Count, exp.CountIf)) else expr
+    return expr.this if isinstance(expr.this, exp.Count) else expr
 
 
 def rewrite_nullif_coalesce(expr: exp.Expression) -> exp.Expression:

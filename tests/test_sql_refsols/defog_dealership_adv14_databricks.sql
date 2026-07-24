@@ -1,5 +1,5 @@
 SELECT
   COUNT(*) AS TSC
-FROM main.sales
+FROM defog.dealership.sales
 WHERE
   DATEDIFF(DAY, CAST(sale_date AS DATE), CAST(CURRENT_TIMESTAMP() AS DATE)) <= 7

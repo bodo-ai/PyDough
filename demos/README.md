@@ -30,4 +30,4 @@ Once the introduction notebook is complete, you can explore the other notebooks:
 - [Oracle_TPCH.ipynb](notebooks/Oracle_TPCH.ipynb) demonstrates how to connect an Oracle database with PyDough.
 - [Databricks_TPCH.ipynb](notebooks/Databricks_TPCH.ipynb) demonstrates how to connect a Databricks database with PyDough.
 - [Trino_TPCH.ipynb](notebooks/Trino_TPCH.ipynb) demonstrates how to connect a Trino database with PyDough.
-
+- [DuckDB_TPCH.ipynb](notebooks/DuckDB_TPCH.ipynb) demonstrates how to connect a DuckDB database with PyDough.
