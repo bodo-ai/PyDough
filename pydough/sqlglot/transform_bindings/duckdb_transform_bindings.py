@@ -37,31 +37,47 @@ class DuckDBTransformBindings(BaseTransformBindings):
         # to that part; all other k values return NULL.
         # The base-class recursive CTE cannot be used because DuckDB hoists
         # correlated CTEs to the top level, losing the outer column reference.
+        #
+        # The delimiter is not always a string literal (it can be a column
+        # or expression), so the empty-delimiter case must also be handled
+        # at runtime via a CASE, not just when it is known at compile time.
         assert len(args) == 3
-        if (
-            isinstance(args[1], sqlglot_expressions.Literal)
-            and args[1].is_string
-            and args[1].this == ""
-        ):
-            # Remap k=0 to 1; then ABS(k)=1 means it's within the single part.
-            remapped: SQLGlotExpression = self._remap_zero_to_one(args[2])
-            return sqlglot_expressions.Case(
-                ifs=[
-                    sqlglot_expressions.If(
-                        this=sqlglot_expressions.EQ(
-                            this=sqlglot_expressions.Anonymous(
-                                this="ABS", expressions=[remapped]
-                            ),
-                            expression=sqlglot_expressions.Literal.number(1),
+        delimiter: SQLGlotExpression = args[1]
+        # Remap k=0 to 1; then ABS(k)=1 means it's within the single part.
+        remapped: SQLGlotExpression = self._remap_zero_to_one(args[2])
+        empty_delimiter_result: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=sqlglot_expressions.Anonymous(
+                            this="ABS", expressions=[remapped]
                         ),
-                        true=args[0],
-                    )
-                ],
-                default=sqlglot_expressions.Null(),
-            )
-        return sqlglot_expressions.Anonymous(
+                        expression=sqlglot_expressions.Literal.number(1),
+                    ),
+                    true=args[0],
+                )
+            ],
+            default=sqlglot_expressions.Null(),
+        )
+        split_part_result: SQLGlotExpression = sqlglot_expressions.Anonymous(
             this="SPLIT_PART",
-            expressions=[args[0], args[1], self._remap_zero_to_one(args[2])],
+            expressions=[args[0], delimiter, remapped],
+        )
+        if isinstance(delimiter, sqlglot_expressions.Literal) and delimiter.is_string:
+            # Delimiter is known at compile time: pick the branch directly
+            # instead of emitting a runtime CASE.
+            return empty_delimiter_result if delimiter.this == "" else split_part_result
+        return sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=delimiter,
+                        expression=sqlglot_expressions.Literal.string(""),
+                    ),
+                    true=empty_delimiter_result,
+                )
+            ],
+            default=split_part_result,
         )
 
     def convert_integer(

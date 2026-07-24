@@ -166,6 +166,11 @@ class DatabaseConnection:
         """Close the cursor and the underlying connection.
 
         Should be called when the session is done to release resources.
+
+        The cursor and connection are closed in separate try/except blocks
+        because they are independent resources: if closing the cursor
+        raises (e.g. it was already closed by the driver), we must still
+        attempt to close the underlying connection rather than leak it.
         """
         if self._cursor is not None:
             try:

@@ -129,15 +129,29 @@ SELECT
     END
   ) AS p14,
   SPLIT_PART(sbcustname, ' ', 1) AS p15,
-  SPLIT_PART(
-    sbcuststate,
-    sbcuststate,
-    CASE
-      WHEN CAST(TRUNC(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE)) AS BIGINT) = 0
-      THEN 1
-      ELSE CAST(TRUNC(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE)) AS BIGINT)
+  CASE
+    WHEN sbcuststate = ''
+    THEN CASE
+      WHEN ABS(
+        CASE
+          WHEN CAST(TRUNC(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE)) AS BIGINT) = 0
+          THEN 1
+          ELSE CAST(TRUNC(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE)) AS BIGINT)
+        END
+      ) = 1
+      THEN sbcuststate
+      ELSE NULL
     END
-  ) AS p16,
+    ELSE SPLIT_PART(
+      sbcuststate,
+      sbcuststate,
+      CASE
+        WHEN CAST(TRUNC(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE)) AS BIGINT) = 0
+        THEN 1
+        ELSE CAST(TRUNC(CAST(SUBSTRING(sbcustid, 2) AS DOUBLE)) AS BIGINT)
+      END
+    )
+  END AS p16,
   SPLIT_PART(
     SPLIT_PART(sbcustphone, '-', 1),
     '5',

@@ -1515,7 +1515,7 @@ def duckdb_tpch_db_context(duckdb_tpch_db) -> DatabaseContext:
 
 
 @pytest.fixture(scope="session")
-def duckdb_defog_connection():
+def duckdb_defog_connection(sqlite_defog_connection: DatabaseContext):
     """
     Fixture used to connect to the DuckDB defog database.
 
@@ -1527,11 +1527,14 @@ def duckdb_defog_connection():
     no explicit CAST overrides are needed: the defog schema uses proper
     REAL/NUMERIC/DATE/TIMESTAMP declarations that the scanner maps correctly
     to DuckDB types without any type-mismatch errors.
+
+    Depending on ``sqlite_defog_connection`` (rather than re-running
+    ``setup_defog.sh`` here) ensures defog.db is built exactly once and
+    guarantees this fixture runs after it.
     """
     import duckdb
 
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    subprocess.run("cd tests/gen_data; bash setup_defog.sh", shell=True, check=True)
     defog_db_path: str = os.path.join(base_dir, "tests/gen_data/defog.db")
     conn: duckdb.DuckDBPyConnection = duckdb.connect(":memory:")
     conn.execute("INSTALL sqlite; LOAD sqlite;")
