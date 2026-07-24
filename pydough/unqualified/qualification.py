@@ -35,6 +35,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.types import PyDoughType
+from pydough.utilities import ExplodeSpec
 
 from .unqualified_node import (
     UnqualifiedAccess,
@@ -1296,12 +1297,7 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         data_raw: UnqualifiedNode = unqualified._parcel[1]
         name: str = unqualified._parcel[2]
-        value_name: str = unqualified._parcel[3]
-        index_name: str | None = unqualified._parcel[4]
-        version: str = unqualified._parcel[5]
-        delimiter: str | None = unqualified._parcel[6]
-        filtering: bool = unqualified._parcel[7]
-        is_distinct: bool = unqualified._parcel[8]
+        explode_spec: ExplodeSpec = unqualified._parcel[3]
 
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
@@ -1320,12 +1316,7 @@ class Qualifier:
             qualified_parent,
             qualified_data,
             name,
-            value_name,
-            index_name,
-            version,
-            delimiter,
-            filtering,
-            is_distinct,
+            explode_spec,
         )
         if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
             answer = ChildOperatorChildAccess(answer)

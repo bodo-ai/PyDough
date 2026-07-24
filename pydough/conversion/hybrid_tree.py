@@ -793,7 +793,7 @@ class HybridTree:
                     if not meta.always_matches:
                         return False
             case HybridExplode():
-                if start_operation.filtering:
+                if start_operation.explode_spec.filtering:
                     return False
             case HybridPartition():
                 # For partition nodes, verify the data being partitioned always

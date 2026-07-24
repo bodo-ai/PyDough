@@ -42,6 +42,7 @@ from pydough.types import (
     UnknownType,
 )
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 
 class UnqualifiedNode(ABC):
@@ -519,12 +520,9 @@ class UnqualifiedNode(ABC):
             self,
             data,
             name,
-            value_name,
-            index_name,
-            version,
-            delimiter,
-            filtering,
-            is_distinct,
+            ExplodeSpec(
+                value_name, index_name, version, delimiter, filtering, is_distinct
+            ),
         )
 
 
@@ -895,33 +893,18 @@ class UnqualifiedExplode(UnqualifiedNode):
         predecessor: UnqualifiedNode,
         data: UnqualifiedNode,
         name: str,
-        value_name: str,
-        index_name: str | None,
-        version: str,
-        delimiter: str | None,
-        filtering: bool,
-        is_distinct: bool,
+        explode_spec: ExplodeSpec,
     ):
         self._parcel: tuple[
             UnqualifiedNode,
             UnqualifiedNode,
             str,
-            str,
-            str | None,
-            str,
-            str | None,
-            bool,
-            bool,
+            ExplodeSpec,
         ] = (
             predecessor,
             data,
             name,
-            value_name,
-            index_name,
-            version,
-            delimiter,
-            filtering,
-            is_distinct,
+            explode_spec,
         )
 
 
@@ -1032,14 +1015,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             result = f"{display_raw(unqualified._parcel[0])}.EXPLODE("
             result += display_raw(unqualified._parcel[1])
             result += f", name={unqualified._parcel[2]!r}"
-            result += f", value_name={unqualified._parcel[3]!r}"
-            if unqualified._parcel[4] is not None:
-                result += f", index_name={unqualified._parcel[4]!r}"
-            result += f", version={unqualified._parcel[5]!r}"
-            if unqualified._parcel[5] == "string":
-                result += f", delimiter={unqualified._parcel[6]!r}"
-            result += f", filtering={unqualified._parcel[7]}"
-            result += f", is_distinct={unqualified._parcel[8]}"
+            result += f", {unqualified._parcel[3].keyword_arg_string}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(

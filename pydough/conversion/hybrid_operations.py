@@ -33,6 +33,7 @@ from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.types import NumericType
+from pydough.utilities import ExplodeSpec
 
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
@@ -530,33 +531,27 @@ class HybridExplode(HybridOperation):
     def __init__(
         self,
         explode_data: HybridExpr,
-        value_name: str,
-        index_name: str | None,
-        version: str,
-        delimiter: str | None,
-        filtering: bool,
-        is_distinct: bool,
+        explode_spec: ExplodeSpec,
         parent_unique: list[HybridExpr],
     ):
         self.explode_data: HybridExpr = explode_data
-        self.value_name: str = value_name
-        self.index_name: str | None = index_name
-        self.version: str = version
-        self.delimiter: str | None = delimiter
-        self.filtering: bool = filtering
-        self.is_distinct: bool = is_distinct
+        self.explode_spec: ExplodeSpec = explode_spec
         terms: dict[str, HybridExpr] = {}
         unique_exprs: list[HybridExpr] = []
-        terms[value_name] = HybridRefExpr(value_name, explode_data.typ)
-        if index_name is not None:
-            terms[index_name] = HybridRefExpr(index_name, NumericType())
-        if is_distinct:
-            unique_exprs.append(terms[value_name])
+        terms[explode_spec.value_name] = HybridRefExpr(
+            explode_spec.value_name, explode_data.typ
+        )
+        if explode_spec.index_name is not None:
+            terms[explode_spec.index_name] = HybridRefExpr(
+                explode_spec.index_name, NumericType()
+            )
+        if explode_spec.is_distinct:
+            unique_exprs.append(terms[explode_spec.value_name])
         else:
-            assert index_name is not None
-            unique_exprs.append(terms[index_name])
+            assert explode_spec.index_name is not None
+            unique_exprs.append(terms[explode_spec.index_name])
         unique_exprs.extend(parent_unique)
         super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
-        return f"EXPLODE[{self.explode_data}, {self.value_name}, {self.index_name}, {self.version}, {self.delimiter}, {self.filtering}, {self.is_distinct}]"
+        return f"EXPLODE[{self.explode_data}, {self.explode_spec.arg_list_string}]"

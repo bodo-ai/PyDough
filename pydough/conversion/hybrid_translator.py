@@ -1462,12 +1462,7 @@ class HybridTranslator:
                 )
                 explode_operator = HybridExplode(
                     expr.shift_back(1),
-                    node.value_name,
-                    node.index_name,
-                    node.version,
-                    node.delimiter,
-                    node.filtering,
-                    node.is_distinct,
+                    node.explode_spec,
                     [term.shift_back(1) for term in hybrid.pipeline[-1].unique_exprs],
                 )
                 successor_hybrid = HybridTree(explode_operator, node.ancestral_mapping)
@@ -1657,12 +1652,7 @@ class HybridTranslator:
                         )
                         explode_operator = HybridExplode(
                             HybridCorrelExpr(expr),
-                            node.child_access.value_name,
-                            node.child_access.index_name,
-                            node.child_access.version,
-                            node.child_access.delimiter,
-                            node.child_access.filtering,
-                            node.child_access.is_distinct,
+                            node.child_access.explode_spec,
                             [
                                 HybridCorrelExpr(term)
                                 for term in parent.pipeline[-1].unique_exprs

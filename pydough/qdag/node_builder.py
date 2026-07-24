@@ -22,6 +22,7 @@ from pydough.qdag.collections.user_collection_qdag import (
 )
 from pydough.types import PyDoughType
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
@@ -407,12 +408,7 @@ class AstNodeBuilder:
         preceding_context: PyDoughCollectionQDAG,
         data: PyDoughExpressionQDAG,
         name: str,
-        value_name: str,
-        index_name: str | None,
-        version: str,
-        delimiter: str | None,
-        filtering: bool,
-        is_distinct: bool,
+        explode_spec: ExplodeSpec,
     ):
         """
         Creates an EXPLODE instance.
@@ -421,18 +417,7 @@ class AstNodeBuilder:
             `preceding_context`: the preceding collection.
             `data`: the data to be exploded.
             `name`: the name of the collection after being exploded.
-            `value_name`: the name of the value column in the exploded
-            collection.
-            `index_name`: the name of the index column in the exploded
-            collection.
-            `version`: the version of the explode operation (e.g., "string" or
-            "array").
-            `delimiter`: the delimiter used for string explosion (if
-            applicable).
-            `filtering`: whether the explode operation is filtering (i.e., some
-            rows may be dropped).
-            `is_distinct`: whether the exploded values are distinct with regards
-            to the original row.
+            `explode_spec`: the specification of the explode operation.
 
         Returns:
             The newly created PyDough EXPLODE instance.
@@ -441,12 +426,7 @@ class AstNodeBuilder:
             preceding_context,
             data,
             name,
-            value_name,
-            index_name,
-            version,
-            delimiter,
-            filtering,
-            is_distinct,
+            explode_spec,
         )
 
     def build_generated_collection(
