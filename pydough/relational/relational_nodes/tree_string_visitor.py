@@ -63,5 +63,8 @@ class TreeStringVisitor(RelationalVisitor):
     def visit_root(self, root) -> None:
         self.visit_node(root)
 
-    def visit_generated_table(self, root) -> None:
-        self.visit_node(root)
+    def visit_generated_table(self, generated_table) -> None:
+        self.visit_node(generated_table)
+
+    def visit_explode(self, explode):
+        self.visit_node(explode)

@@ -29,6 +29,7 @@ from pydough.relational import (
     ColumnReferenceInputNameModifier,
     CorrelatedReference,
     EmptySingleton,
+    Explode,
     ExpressionSortInfo,
     Filter,
     GeneratedTable,
@@ -580,6 +581,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             )
         )
         self._stack.append(query)
+
+    def visit_explode(self, explode: Explode) -> None:
+        raise NotImplementedError()
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:
         """

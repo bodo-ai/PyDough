@@ -11,6 +11,7 @@ from pydough.relational.relational_expressions import (
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
+from .explode import Explode
 from .filter import Filter
 from .generated_table import GeneratedTable
 from .join import Join
@@ -77,6 +78,16 @@ class RelationalExpressionShuttleDispatcher(RelationalVisitor):
 
     def visit_generated_table(self, generated_table: GeneratedTable) -> None:
         pass
+
+    def visit_explode(self, explode: Explode) -> None:
+        self.visit_inputs(explode)
+        explode._explode_data = explode._explode_data.accept_shuttle(self.shuttle)
+        for name, expr in explode.columns.items():
+            if name not in (
+                explode.explode_spec.value_name,
+                explode.explode_spec.index_name,
+            ):
+                explode.columns[name] = expr.accept_shuttle(self.shuttle)
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_common(root)

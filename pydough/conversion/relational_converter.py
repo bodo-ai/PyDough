@@ -1410,9 +1410,31 @@ class RelTranslation:
         """
         TODO
         """
-        raise NotImplementedError()
-        new_node = Explode()
+        exploded_data: RelationalExpression = self.translate_expression(
+            operation.explode_data.shift_back(-1), context
+        )
+        input_mapping: dict[str, RelationalExpression] = {
+            name: ColumnReference(name, expr.data_type)
+            for name, expr in context.relational_node.columns.items()
+        }
+        new_node: RelationalNode = Explode(
+            context.relational_node,
+            exploded_data,
+            operation.explode_spec,
+            input_mapping,
+        )
         new_expressions: dict[HybridExpr, ColumnReference] = {}
+        for hybrid_expr, rel_expr in context.expressions.items():
+            new_expressions[hybrid_expr.shift_back(1)] = rel_expr
+        new_expressions[
+            HybridRefExpr(operation.explode_spec.value_name, operation.explode_data.typ)
+        ] = ColumnReference(
+            operation.explode_spec.value_name, operation.explode_data.typ
+        )
+        if operation.explode_spec.index_name is not None:
+            new_expressions[
+                HybridRefExpr(operation.explode_spec.index_name, NumericType())
+            ] = ColumnReference(operation.explode_spec.index_name, NumericType())
         return TranslationOutput(new_node, new_expressions)
 
     def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
@@ -1911,6 +1933,9 @@ def convert_ast_to_relational(
     output: TranslationOutput = rel_translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
     )
+
+    print()
+    print(output.relational_node.to_tree_string())
 
     # Extract the relevant expressions for the final columns and ordering keys
     # so that the root node can be built from them.
