@@ -4321,7 +4321,9 @@ from .testing_utilities import (
                 "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
                 "result = ("
                 "  array_data"
-                "  .EXPLODE(arr, 'exploded_array', index_name='arr_idx', value_name='arr_val', version='array'filtering=True, is_distinct=True)"
+                "  .CALCULATE(key, arr)"
+                "  .EXPLODE(arr, 'exploded_array', index_name='arr_idx', value_name='arr_val', version='array', filtering=True, is_distinct=True)"
+                "  .CALCULATE(key, arr, arr_idx, arr_val)"
                 "  .ORDER_BY(key, arr_idx)"
                 ")",
                 "TPCH",
@@ -4338,7 +4340,7 @@ from .testing_utilities import (
                             [5, 6],
                         ],
                         "arr_idx": [1, 1, 2, 3, 4, 1, 2],
-                        "nation_name": [1, 2, 3, None, 4, 5, 6],
+                        "arr_val": [1, 2, 3, None, 4, 5, 6],
                     }
                 ),
                 "explode_02",
@@ -4359,6 +4361,7 @@ from .testing_utilities import (
             PyDoughPandasTest(
                 "result = ("
                 "  customers"
+                "  .CALCULATE(name)"
                 "  .TOP_K(5, by=key.ASC())"
                 "  .EXPLODE(name, 'exploded_customers', index_name='idx', value_name='val', version='string', delimiter='#')"
                 "  .ORDER_BY(name, idx)"

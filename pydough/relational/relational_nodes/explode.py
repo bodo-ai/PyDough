@@ -62,7 +62,7 @@ class Explode(SingleRelational):
         visitor.visit_explode(self)
 
     def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
-        raise NotImplementedError()
+        return shuttle.visit_explode(self)
 
     def node_copy(
         self,

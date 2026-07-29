@@ -140,6 +140,8 @@ class Explode(ChildAccess):
             raise PyDoughQDAGException(f"Unrecognized term of {self!r}: {expr_name!r}")
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
+        self.verify_term_exists(term_name)
+
         if term_name not in self.all_terms:
             if term_name in self.ancestor_context.all_terms:
                 result: PyDoughQDAG = self.ancestor_context.get_term(term_name)
@@ -200,11 +202,11 @@ class Explode(ChildAccess):
     @property
     def standalone_string(self) -> str:
         terms: list[str] = [
-            f"EXPLODE[{self.data.to_string()}",
+            self.data.to_string(),
             f"name={self.name!r}",
             self.explode_spec.keyword_arg_string,
         ]
-        return ", ".join(terms)
+        return f"EXPLODE[{', '.join(terms)}]"
 
     @property
     def tree_item_string(self) -> str:

@@ -9,6 +9,7 @@ from abc import ABC
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
+from .explode import Explode
 from .filter import Filter
 from .generated_table import GeneratedTable
 from .join import Join
@@ -128,3 +129,12 @@ class RelationalShuttle(ABC):
             `root`: The root node to visit.
         """
         return self.generic_visit_inputs(root)
+
+    def visit_explode(self, explode: Explode) -> RelationalNode:
+        """
+        Visit an Explode node.
+
+        Args:
+            `explode`: The Explode node to visit.
+        """
+        return self.generic_visit_inputs(explode)

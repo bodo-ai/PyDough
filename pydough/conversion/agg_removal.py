@@ -11,6 +11,7 @@ from pydough.relational import (
     Aggregate,
     CallExpression,
     EmptySingleton,
+    Explode,
     Filter,
     GeneratedTable,
     Join,
@@ -218,6 +219,29 @@ def deduce_join_uniqueness(
     return result
 
 
+def deduce_explode_uniqueness(
+    unique_terms: set[frozenset[str]], explode: Explode
+) -> set[frozenset[str]]:
+    """
+    Helper function to transforms the uniqueness sets after an Explode
+    operation duplicates rows.
+    """
+    # Build up the list of column names that imply uniqueness within one of the
+    # expanded row sets (either the index column, or the expanded data, or
+    # both)
+    cross_terms: list[str] = []
+    if explode.explode_spec.index_name is not None:
+        cross_terms.append(explode.explode_spec.index_name)
+    if explode.explode_spec.is_distinct:
+        cross_terms.append(explode.explode_spec.value_name)
+    # Add each of the cross terms to all of the uniqueness sets
+    result: set[frozenset[str]] = set()
+    for term_set in unique_terms:
+        for cross_term in cross_terms:
+            result.add(term_set | frozenset([cross_term]))
+    return result
+
+
 def aggregation_uniqueness_helper(
     node: RelationalNode,
 ) -> tuple[RelationalNode, set[frozenset[str]]]:
@@ -286,6 +310,10 @@ def aggregation_uniqueness_helper(
                 node, unique_sets
             )
             return node, final_uniqueness
+        case Explode():
+            node._input, input_uniqueness = aggregation_uniqueness_helper(node.input)
+            input_uniqueness = bubble_uniqueness(input_uniqueness, node.columns, None)
+            return node, deduce_explode_uniqueness(input_uniqueness, node)
         # Empty singletons don't have uniqueness information.
         case EmptySingleton():
             return node, set()

@@ -1936,6 +1936,8 @@ def convert_ast_to_relational(
 
     print()
     print(output.relational_node.to_tree_string())
+    print()
+    print(output.expressions)
 
     # Extract the relevant expressions for the final columns and ordering keys
     # so that the root node can be built from them.
