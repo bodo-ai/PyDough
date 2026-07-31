@@ -6,7 +6,10 @@ LATERAL(FLATTEN(...))
 
 from typing import TYPE_CHECKING
 
-from pydough.relational.relational_expressions import RelationalExpression
+from pydough.relational.relational_expressions import (
+    ColumnReference,
+    RelationalExpression,
+)
 from pydough.utilities import ExplodeSpec
 
 from .abstract_node import RelationalNode
@@ -29,9 +32,17 @@ class Explode(SingleRelational):
         explode_spec: ExplodeSpec,
         columns: dict[str, RelationalExpression],
     ) -> None:
-        super().__init__(input, columns)
         self._explode_data: RelationalExpression = explode_data
         self._explode_spec: ExplodeSpec = explode_spec
+        total_columns: dict[str, RelationalExpression] = {**columns}
+        total_columns[explode_spec.value_name] = ColumnReference(
+            explode_spec.value_name, explode_data.data_type
+        )
+        if explode_spec.index_name is not None:
+            total_columns[explode_spec.index_name] = ColumnReference(
+                explode_spec.index_name, explode_data.data_type
+            )
+        super().__init__(input, total_columns)
 
     @property
     def explode_data(self) -> RelationalExpression:
@@ -56,7 +67,7 @@ class Explode(SingleRelational):
         )
 
     def to_string(self, compact: bool = False) -> str:
-        return f"Explode({self.explode_data.to_string(compact)}, {self.explode_spec.keyword_arg_string}, columns={self.make_column_string(self.columns, compact)})"
+        return f"EXPLODE({self.explode_data.to_string(compact)}, {self.explode_spec.keyword_arg_string}, columns={self.make_column_string(self.columns, compact)})"
 
     def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_explode(self)

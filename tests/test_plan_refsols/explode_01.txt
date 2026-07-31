@@ -1,0 +1,6 @@
+ROOT(columns=[('nation_name', nation_name), ('nation_idx', nation_idx)], orderings=[(region_name):asc_first, (nation_idx):asc_first])
+ EXPLODE(nation_names, value_name='nation_name', index_name='nation_idx', version='array', filtering=False, is_distinct=True, columns={'nation_idx': nation_idx, 'nation_name': nation_name, 'region_name': region_name})
+  JOIN(condition=t0.key == t1.region_key, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'nation_names': t1.nation_names, 'region_name': t0.region_name})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'region_name': r_name})
+   AGGREGATE(keys={'region_key': region_key}, aggregations={'nation_names': LISTOF(name)})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})

@@ -973,7 +973,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
             """,
             id="good_explode_01",
         ),
@@ -982,7 +982,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=True]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=True]
             """,
             id="good_explode_02",
         ),
@@ -991,7 +991,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=False, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=False, is_distinct=False]
             """,
             id="good_explode_03",
         ),
@@ -1000,7 +1000,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
             """,
             id="good_explode_04",
         ),
@@ -1009,7 +1009,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
             """,
             id="good_explode_05",
         ),
@@ -1018,7 +1018,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=True]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=True]
             """,
             id="good_explode_06",
         ),
@@ -1027,7 +1027,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=False, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=False, is_distinct=False]
             """,
             id="good_explode_07",
         ),
@@ -1036,7 +1036,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
             """,
             id="good_explode_08",
         ),
@@ -1048,7 +1048,7 @@ from tests.test_pydough_functions.user_collections import (
   └─┬─ Calculate[region_name=$1.name]
     ├─┬─ AccessChild
     │ └─── SubCollection[region]
-    ├─── EXPLODE[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+    ├─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
     └─┬─ Where[SLICE(v, None, 1, None) != SLICE(region_name, None, 1, None)]
       └─── SubCollection[customers]
             """,

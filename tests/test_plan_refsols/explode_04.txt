@@ -1,0 +1,6 @@
+ROOT(columns=[('region_name', r_name), ('n_chunks', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(r_name):asc_first])
+ JOIN(condition=t0.r_regionkey == t1.key, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'r_name': t0.r_name})
+  SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
+  AGGREGATE(keys={'key': key}, aggregations={'n_rows': COUNT()})
+   EXPLODE(name, value_name='val', index_name='idx', version='string', delimiter='I', filtering=True, is_distinct=False, columns={'idx': idx, 'key': key, 'val': val})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})

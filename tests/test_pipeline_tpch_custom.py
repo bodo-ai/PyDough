@@ -4419,6 +4419,78 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "exploded_data = ("
+                "  EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')"
+                "  .WHERE(~STARTSWITH(nation.name, val[:1]))"
+                ")\n"
+                "result = ("
+                "  regions"
+                "  .CALCULATE(region_name=name, n_chunks=COUNT(exploded_data))"
+                "  .ORDER_BY(region_name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_chunks": [2, 2, 2, 1, 1],
+                    }
+                ),
+                "explode_05",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_05",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(customer_name=name)"
+                "  .TOP_K(5, by=key.ASC())"
+                "  .EXPLODE(name, 'exploded_customers', index_name='idx', value_name='val', version='string', delimiter='#')"
+                "  .CALCULATE(idx, val)"
+                "  .nation"
+                "  .CALCULATE(customer_name, idx, val, nation_name=name)"
+                "  .ORDER_BY(customer_name, idx)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_name": ["Customer#000000001"] * 2
+                        + ["Customer#000000002"] * 2
+                        + ["Customer#000000003"] * 2
+                        + ["Customer#000000004"] * 2
+                        + ["Customer#000000005"] * 2,
+                        "idx": [1, 2] * 5,
+                        "val": [
+                            "Customer",
+                            "000000001",
+                            "Customer",
+                            "000000002",
+                            "Customer",
+                            "000000003",
+                            "Customer",
+                            "000000004",
+                            "Customer",
+                            "000000005",
+                        ],
+                        "nation_name": [""] * 10,
+                    }
+                ),
+                "explode_06",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_06",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),

@@ -1925,19 +1925,11 @@ def convert_ast_to_relational(
     hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
 
-    print()
-    print(hybrid)
-
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.
     output: TranslationOutput = rel_translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
     )
-
-    print()
-    print(output.relational_node.to_tree_string())
-    print()
-    print(output.expressions)
 
     # Extract the relevant expressions for the final columns and ordering keys
     # so that the root node can be built from them.

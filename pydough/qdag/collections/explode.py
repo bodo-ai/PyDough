@@ -49,6 +49,12 @@ class Explode(ChildAccess):
         self._data: PyDoughExpressionQDAG = data
         self._explode_spec: ExplodeSpec = explode_spec
         self._all_property_names: set[str] = set()
+        # Build a mapping of inherited subcollections from ancestor context.
+        self._inherited_subcollections: dict[str, PyDoughCollectionQDAG] = {}
+        for name in ancestor.all_terms:
+            term = ancestor.get_term(name)
+            if isinstance(term, PyDoughCollectionQDAG):
+                self._inherited_subcollections[name] = term
         # Build the current node's ancestral mapping by copying the ancestor's
         # mapping and incrementing each level by 1 to reflect
         # the added depth of this node.
@@ -59,6 +65,7 @@ class Explode(ChildAccess):
         self._all_property_names.add(explode_spec.value_name)
         if explode_spec.index_name is not None:
             self._all_property_names.add(explode_spec.index_name)
+        self._all_property_names.update(set(self._inherited_subcollections))
 
     def clone_with_parent(self, new_parent: PyDoughCollectionQDAG) -> "Explode":
         return Explode(
@@ -116,6 +123,14 @@ class Explode(ChildAccess):
         return self.ancestor_context.inherited_downstreamed_terms
 
     @property
+    def inherited_subcollections(self) -> dict[str, PyDoughCollectionQDAG]:
+        """
+        All of the collection properties that the EXPLODE operator has
+        access to from its ancestor context.
+        """
+        return self._inherited_subcollections
+
+    @property
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
@@ -141,22 +156,6 @@ class Explode(ChildAccess):
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
         self.verify_term_exists(term_name)
-
-        if term_name not in self.all_terms:
-            if term_name in self.ancestor_context.all_terms:
-                result: PyDoughQDAG = self.ancestor_context.get_term(term_name)
-                if isinstance(result, PyDoughExpressionQDAG):
-                    if isinstance(result, BackReferenceExpression):
-                        return BackReferenceExpression(
-                            self, term_name, result.back_levels + 1
-                        )
-                    return BackReferenceExpression(self, term_name, 1)
-                else:
-                    return result
-            else:
-                raise pydough.active_session.error_builder.term_not_found(
-                    collection=self, term_name=term_name
-                )
 
         # Special handling of terms down-streamed from an ancestor CALCULATE
         # clause.
@@ -184,6 +183,9 @@ class Explode(ChildAccess):
                 context, term_name, context.get_expr(term_name).pydough_type
             )
 
+        if term_name in self.inherited_subcollections:
+            raise NotImplementedError()
+
         typ: PyDoughType
         if term_name == self.explode_spec.value_name:
             if isinstance(self._data.pydough_type, ArrayType):
@@ -206,12 +208,12 @@ class Explode(ChildAccess):
             f"name={self.name!r}",
             self.explode_spec.keyword_arg_string,
         ]
-        return f"EXPLODE[{', '.join(terms)}]"
+        return f"Explode[{', '.join(terms)}]"
 
     @property
     def tree_item_string(self) -> str:
         base_str: str = self.standalone_string
-        return f"EXPLODE[{base_str[8:-1]}]"
+        return f"Explode[{base_str[8:-1]}]"
 
     def equals(self, other: object) -> bool:
         return (

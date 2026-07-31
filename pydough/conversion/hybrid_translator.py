@@ -1242,7 +1242,10 @@ class HybridTranslator:
         name: str
         expr: HybridExpr
         for collation in collations:
-            if type(collation.expr) is Reference:
+            if (
+                type(collation.expr) is Reference
+                and collation.expr.term_name in hybrid.pipeline[-1].terms
+            ):
                 name = collation.expr.term_name
             else:
                 name = self.get_ordering_name(hybrid)
@@ -1782,14 +1785,8 @@ class HybridTranslator:
             The HybridTree representation of the given QDAG node after
             transformations.
         """
-        print()
-        print(node.to_tree_string())
-        print()
         # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
-        print()
-        print(hybrid)
-        print()
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common
@@ -1799,9 +1796,6 @@ class HybridTranslator:
         # filters with correlated references into join conditions.
         self.run_correlation_extraction(hybrid)
         # 5. Run the de-correlation procedure.
-        print()
-        print(hybrid)
-        print()
         self.run_hybrid_decorrelation(hybrid)
         # 6. Run the filter-merging procedure, then re-run ejecting aggregate
         # inputs to clean up any new aggregates created by filter merging.

@@ -160,6 +160,7 @@ def good_explode_08():
 
 
 def good_explode_09():
+    # TODO: handle the case of explode -> subcollection of original.
     return (
         nations.CALCULATE(region_name=region.name)
         .EXPLODE(
