@@ -191,12 +191,12 @@ def simplify_datetrunc(expression: exp.Expression, dialect: Dialect) -> exp.Expr
         return expression
 
     if isinstance(expression, exp.Binary):
-        l, r = expression.left, expression.right  # noqa: E741
+        l, r = expression.left, expression.right
 
         if not _is_datetrunc_predicate(l, r):
             return expression
 
-        l = t.cast(exp.DateTrunc, l)  # noqa: E741
+        l = t.cast(exp.DateTrunc, l)
         trunc_arg = l.this
         unit = l.unit.name.lower()
         date = extract_date(r)
@@ -212,11 +212,11 @@ def simplify_datetrunc(expression: exp.Expression, dialect: Dialect) -> exp.Expr
         )
 
     if isinstance(expression, exp.In):
-        l = expression.this  # noqa: E741
+        l = expression.this
         rs = expression.expressions
 
         if rs and all(_is_datetrunc_predicate(l, r) for r in rs):
-            l = t.cast(exp.DateTrunc, l)  # noqa: E741
+            l = t.cast(exp.DateTrunc, l)
             unit = l.unit.name.lower()
 
             ranges = []
