@@ -859,19 +859,17 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
         # Return None if any of the inputs are None and the operator is
         # guaranteed to return NULL if any of its inptus are NULL.
-        if expr.op in NULL_IF_INPUT_NULL_OPS:
-            if any(
-                isinstance(arg, LiteralExpression) and arg.value is None
-                for arg in expr.inputs
-            ):
-                self.stack.append(output_predicates)
-                return LiteralExpression(None, expr.data_type)
+        if expr.op in NULL_IF_INPUT_NULL_OPS and any(
+            isinstance(arg, LiteralExpression) and arg.value is None
+            for arg in expr.inputs
+        ):
+            self.stack.append(output_predicates)
+            return LiteralExpression(None, expr.data_type)
 
         # If the call has null propagating rules, all of the arguments are
         # non-null, the output is guaranteed to be non-null.
-        if expr.op in NULLABLE_IF_INPUT_NULLABLE_OPS:
-            if intersect_set.not_null:
-                output_predicates.not_null = True
+        if expr.op in NULLABLE_IF_INPUT_NULLABLE_OPS and intersect_set.not_null:
+            output_predicates.not_null = True
 
         match expr.op:
             case pydop.COUNT | pydop.NDISTINCT:
@@ -914,24 +912,23 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     not_negative=True,
                     positive=True,
                 )
-                if expr.op == pydop.SUM:
+                if expr.op == pydop.SUM and (
+                    isinstance(expr.inputs[0], CallExpression)
+                    and expr.inputs[0].op == pydop.IFF
+                ):
+                    # SUM(IFF(cond, 1, 0)) -> SUM(cond)
+                    cond_arg: RelationalExpression = expr.inputs[0].inputs[0]
+                    first_arg: RelationalExpression = expr.inputs[0].inputs[1]
+                    second_arg: RelationalExpression = expr.inputs[0].inputs[2]
                     if (
-                        isinstance(expr.inputs[0], CallExpression)
-                        and expr.inputs[0].op == pydop.IFF
+                        isinstance(first_arg, LiteralExpression)
+                        and first_arg.value in (1, 1.0, True)
+                        and isinstance(second_arg, LiteralExpression)
+                        and second_arg.value in (0, 0.0, False)
                     ):
-                        # SUM(IFF(cond, 1, 0)) -> SUM(cond)
-                        cond_arg: RelationalExpression = expr.inputs[0].inputs[0]
-                        first_arg: RelationalExpression = expr.inputs[0].inputs[1]
-                        second_arg: RelationalExpression = expr.inputs[0].inputs[2]
-                        if (
-                            isinstance(first_arg, LiteralExpression)
-                            and first_arg.value in (1, 1.0, True)
-                            and isinstance(second_arg, LiteralExpression)
-                            and second_arg.value in (0, 0.0, False)
-                        ):
-                            output_expr = CallExpression(
-                                pydop.SUM, expr.data_type, [cond_arg]
-                            )
+                        output_expr = CallExpression(
+                            pydop.SUM, expr.data_type, [cond_arg]
+                        )
 
             # INTEGER(x) -> x if x is a literal integer. Also simplify for
             # booleans.
@@ -1148,7 +1145,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 # MONOTONIC(x, y, z), where x/y/z are all literals
                 # -> True if x <= y <= z, False otherwise
                 if v0 is not None and v1 is not None and v2 is not None:
-                    monotonic_result = (v0 <= v1) and (v1 <= v2)
+                    monotonic_result = v0 <= v1 <= v2
                     output_expr = LiteralExpression(monotonic_result, expr.data_type)
                     if monotonic_result:
                         output_predicates.positive = True

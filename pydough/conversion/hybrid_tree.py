@@ -525,24 +525,21 @@ class HybridTree:
                 if min_steps >= existing_connection.max_steps:
                     if connection_type.is_anti:
                         continue
-                    if connection_type.is_semi:
-                        if not (
-                            always_exists or existing_connection.connection_type.is_semi
-                        ):
-                            # Special case: When applying a SEMI join:
-                            # - If the child is an AGGREGATION, add a COUNT to
-                            #   the aggregation and filter in the parent tree
-                            #   to check that the count is greater than zero.
-                            # - If the child is SINGULAR, do the same but
-                            #   use a PRESENT filter to check that a value
-                            #   exists.
-                            if is_singular:
-                                self.insert_presence_filter(
-                                    idx, connection_type.is_semi
-                                )
-                            else:
-                                self.insert_count_filter(idx, True)
-                            return idx
+                    if connection_type.is_semi and not (
+                        always_exists or existing_connection.connection_type.is_semi
+                    ):
+                        # Special case: When applying a SEMI join:
+                        # - If the child is an AGGREGATION, add a COUNT to
+                        #   the aggregation and filter in the parent tree
+                        #   to check that the count is greater than zero.
+                        # - If the child is SINGULAR, do the same but
+                        #   use a PRESENT filter to check that a value
+                        #   exists.
+                        if is_singular:
+                            self.insert_presence_filter(idx, connection_type.is_semi)
+                        else:
+                            self.insert_count_filter(idx, True)
+                        return idx
                 # If combining a semi/anti with an existing non-semi/anti
                 # and filters are banned, keep the existing connection type
                 # and insert a count/presence filter into the tree so that it
