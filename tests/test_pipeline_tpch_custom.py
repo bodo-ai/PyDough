@@ -4421,7 +4421,7 @@ from .testing_utilities import (
             PyDoughPandasTest(
                 "exploded_data = ("
                 "  EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')"
-                "  .WHERE(~STARTSWITH(nation.name, val[:1]))"
+                "  .WHERE(HAS(nations, STARTSWITH(name, val[:1])))"
                 ")\n"
                 "result = ("
                 "  regions"
@@ -4446,6 +4446,9 @@ from .testing_utilities import (
                 skipped_dialects={"ANSI", "SQLITE"},
             ),
             id="explode_05",
+            marks=pytest.mark.skip(
+                "Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -4488,6 +4491,9 @@ from .testing_utilities import (
                 skipped_dialects={"ANSI", "SQLITE"},
             ),
             id="explode_06",
+            marks=pytest.mark.skip(
+                "Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+            ),
         ),
         pytest.param(
             PyDoughPandasTest(

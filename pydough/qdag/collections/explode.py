@@ -184,7 +184,9 @@ class Explode(ChildAccess):
             )
 
         if term_name in self.inherited_subcollections:
-            raise NotImplementedError()
+            raise PyDoughQDAGException(
+                "PyDough does not currently support accessing subcollections from an EXPLODE operator."
+            )
 
         typ: PyDoughType
         if term_name == self.explode_spec.value_name:
