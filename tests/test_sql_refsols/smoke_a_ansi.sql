@@ -4,7 +4,8 @@ WITH _s2 AS (
     '' AS part,
     p_name AS rest,
     ' ' AS delim,
-    2 AS idx
+    2 AS idx,
+    0 AS is_last
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -19,10 +20,11 @@ WITH _s2 AS (
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
     delim,
-    idx
+    idx,
+    CASE WHEN STR_POSITION(rest, delim) = 0 OR delim = '' THEN 1 ELSE 0 END AS is_last
   FROM _s2
   WHERE
-    rest <> ''
+    is_last = 0
 ), _s3 AS (
   SELECT
     COUNT(*) - 1 AS total_parts
@@ -33,7 +35,8 @@ WITH _s2 AS (
     '' AS part,
     p_name AS rest,
     ' ' AS delim,
-    -1 AS idx
+    -1 AS idx,
+    0 AS is_last
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -48,10 +51,11 @@ WITH _s2 AS (
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
     delim,
-    idx
+    idx,
+    CASE WHEN STR_POSITION(rest, delim) = 0 OR delim = '' THEN 1 ELSE 0 END AS is_last
   FROM _s0
   WHERE
-    rest <> ''
+    is_last = 0
 ), _s1 AS (
   SELECT
     COUNT(*) - 1 AS total_parts
@@ -94,93 +98,111 @@ SELECT
   ) AS BIGINT) AS a,
   UPPER(
     CASE
-      WHEN (
-        SELECT
-          _s0.part
-        FROM _s0 AS _s0
-        CROSS JOIN _s1 AS _s1
-        WHERE
-          _s0.part_index <> 0
-          AND _s0.part_index = CASE
-            WHEN _s0.idx > 0
-            THEN _s0.idx
-            WHEN _s0.idx < 0
-            THEN _s1.total_parts + _s0.idx + 1
-            ELSE 1
-          END
-      ) >= (
-        SELECT
-          _s2.part
-        FROM _s2 AS _s2
-        CROSS JOIN _s3 AS _s3
-        WHERE
-          _s2.part_index <> 0
-          AND _s2.part_index = CASE
-            WHEN _s2.idx > 0
-            THEN _s2.idx
-            WHEN _s2.idx < 0
-            THEN _s3.total_parts + _s2.idx + 1
-            ELSE 1
-          END
+      WHEN COALESCE(
+        (
+          SELECT
+            _s0.part
+          FROM _s0 AS _s0
+          CROSS JOIN _s1 AS _s1
+          WHERE
+            _s0.part_index <> 0
+            AND _s0.part_index = CASE
+              WHEN _s0.idx > 0
+              THEN _s0.idx
+              WHEN _s0.idx < 0
+              THEN _s1.total_parts + _s0.idx + 1
+              ELSE 1
+            END
+        ),
+        ''
+      ) >= COALESCE(
+        (
+          SELECT
+            _s2.part
+          FROM _s2 AS _s2
+          CROSS JOIN _s3 AS _s3
+          WHERE
+            _s2.part_index <> 0
+            AND _s2.part_index = CASE
+              WHEN _s2.idx > 0
+              THEN _s2.idx
+              WHEN _s2.idx < 0
+              THEN _s3.total_parts + _s2.idx + 1
+              ELSE 1
+            END
+        ),
+        ''
       )
-      THEN (
-        SELECT
-          _s2.part
-        FROM _s2 AS _s2
-        CROSS JOIN _s3 AS _s3
-        WHERE
-          _s2.part_index <> 0
-          AND _s2.part_index = CASE
-            WHEN _s2.idx > 0
-            THEN _s2.idx
-            WHEN _s2.idx < 0
-            THEN _s3.total_parts + _s2.idx + 1
-            ELSE 1
-          END
+      THEN COALESCE(
+        (
+          SELECT
+            _s2.part
+          FROM _s2 AS _s2
+          CROSS JOIN _s3 AS _s3
+          WHERE
+            _s2.part_index <> 0
+            AND _s2.part_index = CASE
+              WHEN _s2.idx > 0
+              THEN _s2.idx
+              WHEN _s2.idx < 0
+              THEN _s3.total_parts + _s2.idx + 1
+              ELSE 1
+            END
+        ),
+        ''
       )
-      WHEN (
-        SELECT
-          _s0.part
-        FROM _s0 AS _s0
-        CROSS JOIN _s1 AS _s1
-        WHERE
-          _s0.part_index <> 0
-          AND _s0.part_index = CASE
-            WHEN _s0.idx > 0
-            THEN _s0.idx
-            WHEN _s0.idx < 0
-            THEN _s1.total_parts + _s0.idx + 1
-            ELSE 1
-          END
-      ) <= (
-        SELECT
-          _s2.part
-        FROM _s2 AS _s2
-        CROSS JOIN _s3 AS _s3
-        WHERE
-          _s2.part_index <> 0
-          AND _s2.part_index = CASE
-            WHEN _s2.idx > 0
-            THEN _s2.idx
-            WHEN _s2.idx < 0
-            THEN _s3.total_parts + _s2.idx + 1
-            ELSE 1
-          END
+      WHEN COALESCE(
+        (
+          SELECT
+            _s0.part
+          FROM _s0 AS _s0
+          CROSS JOIN _s1 AS _s1
+          WHERE
+            _s0.part_index <> 0
+            AND _s0.part_index = CASE
+              WHEN _s0.idx > 0
+              THEN _s0.idx
+              WHEN _s0.idx < 0
+              THEN _s1.total_parts + _s0.idx + 1
+              ELSE 1
+            END
+        ),
+        ''
+      ) <= COALESCE(
+        (
+          SELECT
+            _s2.part
+          FROM _s2 AS _s2
+          CROSS JOIN _s3 AS _s3
+          WHERE
+            _s2.part_index <> 0
+            AND _s2.part_index = CASE
+              WHEN _s2.idx > 0
+              THEN _s2.idx
+              WHEN _s2.idx < 0
+              THEN _s3.total_parts + _s2.idx + 1
+              ELSE 1
+            END
+        ),
+        ''
       )
-      THEN (
-        SELECT
-          _s0.part
-        FROM _s0 AS _s0
-        CROSS JOIN _s1 AS _s1
-        WHERE
-          _s0.part_index <> 0
-          AND _s0.part_index = CASE
-            WHEN _s0.idx > 0
-            THEN _s0.idx
-            WHEN _s0.idx < 0
-            THEN _s1.total_parts + _s0.idx + 1
-            ELSE 1
-          END
+      THEN COALESCE(
+        (
+          SELECT
+            _s0.part
+          FROM _s0 AS _s0
+          CROSS JOIN _s1 AS _s1
+          WHERE
+            _s0.part_index <> 0
+            AND _s0.part_index = CASE
+              WHEN _s0.idx > 0
+              THEN _s0.idx
+              WHEN _s0.idx < 0
+              THEN _s1.total_parts + _s0.idx + 1
+              ELSE 1
+            END
+        ),
+        ''
       )
     END
   ) AS b,
