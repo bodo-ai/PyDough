@@ -4447,7 +4447,7 @@ from .testing_utilities import (
             ),
             id="explode_05",
             marks=pytest.mark.skip(
-                "Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+                "(gh #548) Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
             ),
         ),
         pytest.param(
@@ -4483,7 +4483,11 @@ from .testing_utilities import (
                             "Customer",
                             "000000005",
                         ],
-                        "nation_name": [""] * 10,
+                        "nation_name": ["MOROCCO"] * 2
+                        + ["JORDAN"] * 2
+                        + ["ARGENTINA"] * 2
+                        + ["EGYPT"] * 2
+                        + ["CANADA"] * 2,
                     }
                 ),
                 "explode_06",
@@ -4492,8 +4496,136 @@ from .testing_utilities import (
             ),
             id="explode_06",
             marks=pytest.mark.skip(
-                "Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+                "(gh #548) Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
             ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=' ')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=',')"
+                "  .WHERE(val3 != '')"
+                "  .CALCULATE(idx1, idx2, idx3, val3)"
+                "  .ORDER_BY(key.ASC(), idx1.ASC(), idx2.ASC(), idx3.ASC())"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1] * 10 + [2] * 8 + [3] * 14,
+                        "idx1": [
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            1,
+                            1,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            2,
+                            2,
+                            2,
+                            2,
+                            3,
+                            3,
+                            3,
+                            3,
+                        ],
+                        "idx2": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            1,
+                            2,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            1,
+                            2,
+                            3,
+                            4,
+                            1,
+                            2,
+                            3,
+                            4,
+                        ],
+                        "idx3": [1] * 32,
+                        "val3": [
+                            "to",
+                            "the",
+                            "even",
+                            "regular",
+                            "platelets",
+                            "regular",
+                            "ironic",
+                            "epitaphs",
+                            "nag",
+                            "e",
+                            "l",
+                            "accounts",
+                            "blithely",
+                            "ironic",
+                            "theodolites",
+                            "integrate",
+                            "boldly:",
+                            "caref",
+                            "deposits",
+                            "eat",
+                            "slyly",
+                            "ironic",
+                            "even",
+                            "instructions",
+                            "express",
+                            "foxes",
+                            "detect",
+                            "slyly",
+                            "blithely",
+                            "even",
+                            "accounts",
+                            "abov",
+                        ],
+                    }
+                ),
+                "explode_07",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_07",
         ),
         pytest.param(
             PyDoughPandasTest(

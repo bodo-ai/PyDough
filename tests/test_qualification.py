@@ -1054,7 +1054,7 @@ from tests.test_pydough_functions.user_collections import (
             """,
             id="good_explode_09",
             marks=pytest.mark.skip(
-                "Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+                "(gh #548) Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
             ),
         ),
     ],

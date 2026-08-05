@@ -49,12 +49,6 @@ class Explode(ChildAccess):
         self._data: PyDoughExpressionQDAG = data
         self._explode_spec: ExplodeSpec = explode_spec
         self._all_property_names: set[str] = set()
-        # Build a mapping of inherited subcollections from ancestor context.
-        self._inherited_subcollections: dict[str, PyDoughCollectionQDAG] = {}
-        for name in ancestor.all_terms:
-            term = ancestor.get_term(name)
-            if isinstance(term, PyDoughCollectionQDAG):
-                self._inherited_subcollections[name] = term
         # Build the current node's ancestral mapping by copying the ancestor's
         # mapping and incrementing each level by 1 to reflect
         # the added depth of this node.
@@ -63,9 +57,10 @@ class Explode(ChildAccess):
         }
         self._all_property_names.update(self._ancestral_mapping)
         self._all_property_names.add(explode_spec.value_name)
+        self._ancestral_mapping[explode_spec.value_name] = 0
         if explode_spec.index_name is not None:
             self._all_property_names.add(explode_spec.index_name)
-        self._all_property_names.update(set(self._inherited_subcollections))
+            self._ancestral_mapping[explode_spec.index_name] = 0
 
     def clone_with_parent(self, new_parent: PyDoughCollectionQDAG) -> "Explode":
         return Explode(
@@ -123,14 +118,6 @@ class Explode(ChildAccess):
         return self.ancestor_context.inherited_downstreamed_terms
 
     @property
-    def inherited_subcollections(self) -> dict[str, PyDoughCollectionQDAG]:
-        """
-        All of the collection properties that the EXPLODE operator has
-        access to from its ancestor context.
-        """
-        return self._inherited_subcollections
-
-    @property
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
@@ -159,7 +146,10 @@ class Explode(ChildAccess):
 
         # Special handling of terms down-streamed from an ancestor CALCULATE
         # clause.
-        if term_name in self.ancestral_mapping:
+        if (
+            term_name in self.ancestral_mapping
+            and self.ancestral_mapping[term_name] > 0
+        ):
             # Verify that the ancestor name is not also a name in the current
             # context.
             if term_name in self.calc_terms:
@@ -181,11 +171,6 @@ class Explode(ChildAccess):
                     context = context.ancestor_context
             return Reference(
                 context, term_name, context.get_expr(term_name).pydough_type
-            )
-
-        if term_name in self.inherited_subcollections:
-            raise PyDoughQDAGException(
-                "PyDough does not currently support accessing subcollections from an EXPLODE operator."
             )
 
         typ: PyDoughType
