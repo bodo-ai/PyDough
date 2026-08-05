@@ -2137,6 +2137,9 @@ class BaseTransformBindings:
         rest: SQLGlotExpression = sqlglot_expressions.Identifier(
             this="rest", quoted=False
         )
+        is_last: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="is_last", quoted=False
+        )
 
         # Literals definitions
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
@@ -2178,6 +2181,7 @@ class BaseTransformBindings:
                     this=args[2],  # the third arg, the index
                     alias=idx,
                 ),
+                sqlglot_expressions.Alias(this=literal_0, alias=is_last),
             ]
         )
 
@@ -2221,6 +2225,9 @@ class BaseTransformBindings:
         new_rest_case: SQLGlotExpression = (
             sqlglot_expressions.Case().when(delim_cond, literal_empty).else_(new_rest)
         )
+        new_is_last_case: SQLGlotExpression = (
+            sqlglot_expressions.Case().when(delim_cond, literal_1).else_(literal_0)
+        )
 
         # Second half of the recursive CTE:
         # SELECT
@@ -2245,10 +2252,16 @@ class BaseTransformBindings:
                     sqlglot_expressions.Alias(this=new_rest_case, alias=rest),
                     delim,
                     idx,
+                    sqlglot_expressions.Alias(this=new_is_last_case, alias=is_last),
                 ],
             )
             .from_(split_parts_table_name)
-            .where(sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty))
+            .where(
+                sqlglot_expressions.EQ(
+                    this=sqlglot_expressions.Column(this=is_last),
+                    expression=literal_0,
+                )
+            )
         )
 
         # Union the two halves to create the recursive CTE:
@@ -2326,7 +2339,10 @@ class BaseTransformBindings:
         # a subquery so the single column of the scalar subquery is used as the
         # answer.
         result = result.with_(split_parts_table_name, split_parts_union, recursive=True)
-        result = sqlglot_expressions.Subquery(this=result)
+        result = sqlglot_expressions.Coalesce(
+            this=sqlglot_expressions.Subquery(this=result),
+            expressions=[literal_empty],
+        )
 
         return result
 

@@ -282,6 +282,9 @@ class TrinoTransformBindings(BaseTransformBindings):
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
+
+        empty_str: SQLGlotExpression = sqlglot_expressions.Literal.string("")
+
         # SPLIT_PART(string, delimiter, index)
         regular_split: SQLGlotExpression = sqlglot_expressions.Anonymous(
             this="SPLIT_PART", expressions=args
@@ -320,9 +323,8 @@ class TrinoTransformBindings(BaseTransformBindings):
         )
 
         # CASE WHEN index = 0 then <first_split>
-        #      WHEN index < (-n-1) then NULL
-        #      WHEN index > (n+1) then NULL
-        #      WHEN index < 0 then <reverse_split>
+        #      WHEN ABS(index) > (n+1) then NULL
+        #      WHEN index < 0 and abs(index) <= (n+1) then <reverse_split>
         #      ELSE <regular_split>
         # END
         result: sqlglot_expressions = (
@@ -335,20 +337,8 @@ class TrinoTransformBindings(BaseTransformBindings):
                 first_split,
             )
             .when(
-                sqlglot_expressions.LT(
-                    this=apply_parens(args[2]),
-                    expression=apply_parens(
-                        sqlglot_expressions.Add(
-                            this=sqlglot_expressions.Neg(this=apply_parens(n_delim)),
-                            expression=sqlglot_expressions.Literal.number(-1),
-                        )
-                    ),
-                ),
-                sqlglot_expressions.Null(),
-            )
-            .when(
                 sqlglot_expressions.GT(
-                    this=apply_parens(args[2]),
+                    this=sqlglot_expressions.Abs(this=apply_parens(args[2])),
                     expression=apply_parens(
                         sqlglot_expressions.Add(
                             this=apply_parens(n_delim),
@@ -356,12 +346,23 @@ class TrinoTransformBindings(BaseTransformBindings):
                         )
                     ),
                 ),
-                sqlglot_expressions.Null(),
+                empty_str,
             )
             .when(
-                sqlglot_expressions.LT(
-                    this=apply_parens(apply_parens(args[2])),
-                    expression=sqlglot_expressions.Literal.number(0),
+                sqlglot_expressions.And(
+                    this=sqlglot_expressions.LT(
+                        this=apply_parens(args[2]),
+                        expression=sqlglot_expressions.Literal.number(0),
+                    ),
+                    expression=sqlglot_expressions.LTE(
+                        this=sqlglot_expressions.Abs(this=apply_parens(args[2])),
+                        expression=apply_parens(
+                            sqlglot_expressions.Add(
+                                this=apply_parens(n_delim),
+                                expression=sqlglot_expressions.Literal.number(1),
+                            )
+                        ),
+                    ),
                 ),
                 reverse_split,
             )
@@ -388,7 +389,7 @@ class TrinoTransformBindings(BaseTransformBindings):
                     ),
                     args[0],
                 )
-                .else_(sqlglot_expressions.Null()),
+                .else_(empty_str),
             )
             .else_(result)
         )

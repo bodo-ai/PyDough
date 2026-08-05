@@ -9,9 +9,6 @@ import pytest
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
-from tests.test_pydough_functions.simple_pydough_functions import (
-    week_offset,
-)
 from tests.testing_utilities import (
     PyDoughPandasTest,
     PyDoughSQLComparisonTest,
@@ -34,7 +31,7 @@ def defog_custom_oracle_test_data(
     """
     if defog_custom_pipeline_test_data.test_name == "week_offset":
         return PyDoughPandasTest(
-            week_offset,
+            defog_custom_pipeline_test_data.pydough_function,
             "Broker",
             lambda: pd.DataFrame(
                 {
@@ -305,20 +302,236 @@ def defog_custom_oracle_test_data(
             skip_sql=True,
         )
 
+    if defog_custom_pipeline_test_data.test_name == "get_part_multiple":
+        # In Oracle None and empty string are treated the same, so we need to
+        # modify the reference solution data to match this behavior.
+        return PyDoughPandasTest(
+            defog_custom_pipeline_test_data.pydough_function,
+            "Broker",
+            lambda: pd.DataFrame(
+                {
+                    "k": [1, 2, 3, 4],
+                    "p1": ["john", "Smith", None, None],
+                    "p2": ["doe", "Jane", None, None],
+                    "p3": ["john", "smith@email", "com", None],
+                    "p4": ["com", "smith@email", "bob", None],
+                    "p5": ["555", "987", "8135", None],
+                    "p6": ["4567", "987", "555", None],
+                    "p7": ["9", "02", None, None],
+                    "p8": ["01", "1", None, None],
+                    "p9": ["john doe", None, None, None],
+                    "p10": ["john doe", None, None, None],
+                    "p11": ["john doe", None, None, None],
+                    "p12": ["john doe", None, None, None],
+                    "p13": ["john doe", None, None, None],
+                    "p14": [None, None, None, None],
+                    "p15": ["john", "Jane", "Bob", "Samantha"],
+                    "p16": [None, None, None, None],
+                    "p17": [None, None, None, None],
+                    "p18": ["9", None, None, None],
+                }
+            ),
+            "get_part_multiple",
+            skip_sql=True,
+        )
+
+    if defog_custom_pipeline_test_data.test_name == "get_part_test":
+        return PyDoughPandasTest(
+            defog_custom_pipeline_test_data.pydough_function,
+            "Broker",
+            lambda: pd.DataFrame(
+                {
+                    "k": [1, 2, 3, 4],
+                    "p1": ["Customer", "000000002", "", ""],
+                    "p2": ["Customer#", "", "", ""],
+                    "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", "", ""],
+                    "p4": ["E", "XSTf4", "", ""],
+                    "p5": ["25", "768", "748", "5944"],
+                    "p6": ["2988", "687", "719", "14"],
+                    "p7": ["to", "accounts.", "eat", "regular"],
+                    "p8": ["e", "boldly:", "even", "ideas"],
+                    "p9": ["IVhzIApeRb ot,c,E", "", "", ""],
+                    "p10": ["BUILDING", "M", "AUT", ""],
+                    "p11": ["Customer#", "2", "", ""],
+                    "p12": ["*^%3$#", "##2$#&", "^%1$$", ""],
+                    "p13": ["Customer#000000001", "", "", ""],
+                    "p14": ["", "", "", ""],
+                    "p15": ["Customer", "Customer", "Customer", "Customer"],
+                    "p16": ["", "", "", ""],
+                    "p17": ["", "68", "48", ""],
+                }
+            ),
+            defog_custom_pipeline_test_data.test_name,
+            skip_sql=defog_custom_pipeline_test_data.skip_sql,
+        )
+
+    if defog_custom_pipeline_test_data.test_name == "padding_functions":
+        return PyDoughPandasTest(
+            defog_custom_pipeline_test_data.pydough_function,
+            defog_custom_pipeline_test_data.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "original_name": [
+                        "Alex Rodriguez",
+                        "Ava Wilson",
+                        "Bob Johnson",
+                        "David Kim",
+                        "Emily Davis",
+                    ]
+                }
+            ).assign(
+                ref_rpad="Cust0001**********************",
+                ref_lpad="**********************Cust0001",
+                right_padded=lambda x: x.original_name.apply(
+                    lambda s: (s + "*" * 30)[:30]
+                ),
+                # This lambda only works when each string is less than 30 characters
+                left_padded=lambda x: x.original_name.apply(
+                    lambda s: ("#" * 30 + s)[-30:]
+                ),
+                truncated_right=[
+                    "Alex Rod",
+                    "Ava Wils",
+                    "Bob John",
+                    "David Ki",
+                    "Emily Da",
+                ],
+                truncated_left=[
+                    "Alex Rod",
+                    "Ava Wils",
+                    "Bob John",
+                    "David Ki",
+                    "Emily Da",
+                ],
+                zero_pad_right=[None] * 5,
+                zero_pad_left=[None] * 5,
+                right_padded_space=lambda x: x.original_name.apply(
+                    lambda s: (s + " " * 30)[:30]
+                ),
+                left_padded_space=lambda x: x.original_name.apply(
+                    lambda s: (" " * 30 + s)[-30:]
+                ),
+            ),
+            defog_custom_pipeline_test_data.test_name,
+            skip_sql=defog_custom_pipeline_test_data.skip_sql,
+        )
+
+    if defog_custom_pipeline_test_data.test_name == "step_slicing":
+        refsol = defog_custom_pipeline_test_data.pd_function().copy()
+        value_cols = refsol.columns.difference(["name"])
+        refsol[value_cols] = refsol[value_cols].where(refsol[value_cols] != "", None)
+        return PyDoughPandasTest(
+            defog_custom_pipeline_test_data.pydough_function,
+            defog_custom_pipeline_test_data.graph_name,
+            lambda: refsol,
+            defog_custom_pipeline_test_data.test_name,
+            skip_sql=defog_custom_pipeline_test_data.skip_sql,
+        )
+
+    if defog_custom_pipeline_test_data.test_name == "strip":
+        return PyDoughPandasTest(
+            defog_custom_pipeline_test_data.pydough_function,
+            defog_custom_pipeline_test_data.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "stripped_name": [None],
+                    "stripped_name1": ["Alex Rodriguez"],
+                    "stripped_name_with_chars": ["x Rodrigu"],
+                    "stripped_alt_name1": ["Alex Rodriguez"],
+                    "stripped_alt_name2": ["Alex Rodriguez"],
+                    "stripped_alt_name3": ["Alex Rodriguez"],
+                    "stripped_alt_name4": ["Alex Rodriguez"],
+                    "stripped_alt_name5": ["Alex Rodriguez"],
+                }
+            ),
+            defog_custom_pipeline_test_data.test_name,
+            skip_sql=defog_custom_pipeline_test_data.skip_sql,
+        )
+
+    if defog_custom_pipeline_test_data.test_name == "replace":
+        return PyDoughPandasTest(
+            defog_custom_pipeline_test_data.pydough_function,
+            defog_custom_pipeline_test_data.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "replaced_name": ["Alexander Rodriguez"],
+                    "removed_name": [" Rodriguez"],
+                    "case_name": ["Alex Rodriguez"],
+                    "replace_empty_text": [None],
+                    "replace_with_empty_pattern": ["abc"],
+                    "remove_substring": ["bc"],
+                    "empty_all": [None],
+                    "substring_not_found": ["hello"],
+                    "overlapping_matches": ["ba"],
+                    "multiple_occurrences": ["b b b"],
+                    "case_sensitive": ["Apple"],
+                    "unicode_handling": ["cafe"],
+                    "special_character_replace": ["abc"],
+                    "longer_replacement": ["xyz"],
+                    "shorter_replacement": ["xx"],
+                    "same_value_args": ["foofoo"],
+                    "nested_like_replace": ["abcabcabcabc"],
+                }
+            ),
+            defog_custom_pipeline_test_data.test_name,
+            skip_sql=defog_custom_pipeline_test_data.skip_sql,
+        )
+
     return defog_custom_pipeline_test_data
+
+
+@pytest.fixture
+def custom_functions_oracle_test_data(
+    custom_functions_test_data: PyDoughPandasTest,  # noqa: F811
+) -> PyDoughPandasTest:
+    """
+    Modify reference solution data for some custom queries.
+    Return an instance of PyDoughPandasTest containing the modified data.
+    """
+    if custom_functions_test_data.test_name == "get_part_test":
+        # In Oracle None and empty string are treated the same, so we need to
+        # modify the reference solution data to match this behavior.
+        return PyDoughPandasTest(
+            custom_functions_test_data.pydough_function,
+            custom_functions_test_data.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "k": [1, 2, 3, 4],
+                    "p1": ["Customer", "000000002", None, None],
+                    "p2": ["Customer#", None, None, None],
+                    "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", None, None],
+                    "p4": ["E", "XSTf4", None, None],
+                    "p5": ["25", "768", "748", "5944"],
+                    "p6": ["2988", "687", "719", "14"],
+                    "p7": ["to", "accounts.", "eat", "regular"],
+                    "p8": ["e", "boldly:", "even", "ideas"],
+                    "p9": ["IVhzIApeRb ot,c,E", None, None, None],
+                    "p10": ["BUILDING", "M", "AUT", None],
+                    "p11": ["Customer#", "2", None, None],
+                    "p12": ["*^%3$#", "##2$#&", "^%1$$", None],
+                    "p13": ["Customer#000000001", None, None, None],
+                    "p14": [None, None, None, None],
+                    "p15": ["Customer", "Customer", "Customer", "Customer"],
+                    "p16": [None, None, None, None],
+                    "p17": [None, "68", "48", None],
+                }
+            ),
+            custom_functions_test_data.test_name,
+        )
+    return custom_functions_test_data
 
 
 @pytest.mark.oracle
 @pytest.mark.execute
 def test_pipeline_e2e_oracle_custom_functions(
-    custom_functions_test_data: PyDoughPandasTest,
+    custom_functions_oracle_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     oracle_conn_db_context: Callable[[str], DatabaseContext],
 ):
     """
     Test executing the custom functions test data using TPCH with Oracle
     """
-    custom_functions_test_data.run_e2e_test(
+    custom_functions_oracle_test_data.run_e2e_test(
         get_sample_graph, oracle_conn_db_context("tpch"), coerce_types=True
     )
 
