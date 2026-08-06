@@ -1749,15 +1749,6 @@ def harmonize_types(column_a, column_b):
             lambda x: pd.NA if pd.isna(x) else float(x)
         )
 
-        # String vs None. Convert to empty string.
-        # if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
-        #     isinstance(elem, (str, NoneType)) for elem in column_b
-        # ):
-        # return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
-        #     lambda x: "" if pd.isna(x) else str(x)
-        # )
-        pass
-    # breakpoint()
     # float vs None. Convert to nullable floats
     if all(isinstance(elem, (float, NoneType)) for elem in column_a) and all(
         isinstance(elem, (float, NoneType)) for elem in column_b

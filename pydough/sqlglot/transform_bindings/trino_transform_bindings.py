@@ -323,7 +323,7 @@ class TrinoTransformBindings(BaseTransformBindings):
         )
 
         # CASE WHEN index = 0 then <first_split>
-        #      WHEN ABS(index) > (n+1) then NULL
+        #      WHEN ABS(index) > (n+1) then ''
         #      WHEN index < 0 and abs(index) <= (n+1) then <reverse_split>
         #      ELSE <regular_split>
         # END

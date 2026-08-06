@@ -2058,7 +2058,8 @@ class BaseTransformBindings:
                     '' AS part,
                     FIRST_ARGUMENT AS rest,
                     SECOND_ARGUMENT AS delim,
-                    THIRD_ARGUMENT AS idx
+                    THIRD_ARGUMENT AS idx,
+                    0 AS is_last
                 UNION ALL
                 SELECT
                     part_index + 1 AS part_index,
@@ -2073,26 +2074,33 @@ class BaseTransformBindings:
                         ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
                     END AS rest,
                     delim,
-                    idx
+                    idx,
+                    CASE
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
+                        THEN 1
+                        ELSE 0
+                    END AS is_last
                 FROM _s0
                 WHERE
-                    rest <> ''
+                    is_last = 0
             )
-            SELECT _s0.part
-            FROM _s0
-            CROSS JOIN (
-                SELECT COUNT(*) - 1 AS total_parts
+            SELECT COALESCE((
+                SELECT _s0.part
                 FROM _s0
-            ) AS _s1
-            WHERE
-                _s0.part_index <> 0
-                AND _s0.part_index = CASE
-                    WHEN _s0.idx > 0
-                    THEN _s0.idx
-                    WHEN _s0.idx < 0
-                    THEN _s1.total_parts + _s0.idx + 1
-                    ELSE 1
-                END
+                CROSS JOIN (
+                    SELECT COUNT(*) - 1 AS total_parts
+                    FROM _s0
+                ) AS _s1
+                WHERE
+                    _s0.part_index <> 0
+                    AND _s0.part_index = CASE
+                        WHEN _s0.idx > 0
+                        THEN _s0.idx
+                        WHEN _s0.idx < 0
+                        THEN _s1.total_parts + _s0.idx + 1
+                        ELSE 1
+                    END
+            ), '')
         )
         ```
 
@@ -2165,6 +2173,7 @@ class BaseTransformBindings:
         #   input AS rest,
         #   delim AS delim,
         #   idx AS idx
+        #   0 AS is_last
         select_union_params: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Alias(this=literal_0, alias=part_index),
@@ -2235,7 +2244,8 @@ class BaseTransformBindings:
         #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1) END AS part,
         #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN '' ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim)) END AS rest,
         #   delim,
-        #   idx
+        #   idx,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN 1 ELSE 0 END AS is_last
         # FROM split_parts
         select_union_split_parts: SQLGlotExpression = (
             sqlglot_expressions.Select(
