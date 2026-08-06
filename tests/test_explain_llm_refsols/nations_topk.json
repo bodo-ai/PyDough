@@ -2,7 +2,7 @@
   "pydough": "result = nations.TOP_K(5, by=name.ASC())",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses 'nations', keeping the top 5 rows by name asc.",
+    "query_summary": "Accesses 'nations', keeping the top 5 rows by name ascending.",
     "steps": [
       {
         "order": 1,

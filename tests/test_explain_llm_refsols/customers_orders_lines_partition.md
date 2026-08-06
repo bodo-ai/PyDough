@@ -7,7 +7,7 @@
 
 ## Query Summary
 
-Accesses 'customers', filtered to rows where market_segment == 'BUILDING', partitioned by return_flag, selecting return_flag.
+Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then navigates to 'orders' then 'lines', partitioned by return_flag, selecting return_flag.
 
 ## Steps
 

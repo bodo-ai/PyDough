@@ -2,7 +2,7 @@
   "pydough": "result = nations.ORDER_BY(name.ASC())",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses 'nations', ordered by name asc.",
+    "query_summary": "Accesses 'nations', ordered by name ascending.",
     "steps": [
       {
         "order": 1,

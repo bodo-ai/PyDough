@@ -69,7 +69,8 @@
                 "name": "customers \u00d7 suppliers",
                 "access_path": [],
                 "filters": [],
-                "implicit_scope_note": null
+                "implicit_scope_note": null,
+                "user_generated_note": null
               }
             ]
           }

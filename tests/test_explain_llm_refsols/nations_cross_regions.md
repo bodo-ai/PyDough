@@ -15,7 +15,13 @@ Pairs every 'nations' row with every 'regions' row.
 Entry point: the graph-level context.
 
 
-### Step 2 — Cross
+### Step 2 — TableCollection
+
+Accesses the 'nations' collection.
+
+- Collection: `nations`
+
+### Step 3 — Cross
 
 CROSS join: every row of 'nations' paired with every row of 'regions'.
 

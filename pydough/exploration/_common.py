@@ -49,6 +49,8 @@ from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.unqualified import UnqualifiedNode, qualify_node
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 
 def extract_terms(
@@ -223,6 +225,7 @@ def describe_subcollection_arg(
     """
     access_path: list[str] = []
     filters: list[str] = []
+    user_gen: PyDoughUserGeneratedCollectionQDag | None = None
 
     # Walk the preceding_context chain collecting SubCollection hops and
     # Where conditions.  SubCollection.preceding_context is always None
@@ -231,6 +234,8 @@ def describe_subcollection_arg(
     # .child_access so the walk continues into the real subcollection node.
     current: PyDoughCollectionQDAG | None = collection
     while current is not None:
+        if isinstance(current, PyDoughUserGeneratedCollectionQDag):
+            user_gen = current
         if isinstance(current, Where):
             for cond in extract_conditions(current.condition):
                 filters.append(cond.to_string())
@@ -267,11 +272,32 @@ def describe_subcollection_arg(
             f"is implicit in this access path."
         )
 
+    # A user-generated collection (range/DataFrame) has no metadata-graph
+    # definition, so its name alone (e.g. "r") tells the reader nothing —
+    # spell out what it actually contains.
+    user_generated_note: str | None = None
+    if user_gen is not None:
+        inner = user_gen.collection
+        if isinstance(inner, RangeGeneratedCollection):
+            step_str = f", step={inner.step}" if inner.step != 1 else ""
+            user_generated_note = (
+                f"'{name}' is a user-generated range collection: "
+                f"range({inner.start}, {inner.end}{step_str}) in column "
+                f"'{inner.column_name}'."
+            )
+        elif isinstance(inner, DataframeGeneratedCollection):
+            col_names = [c for c, _ in inner.column_names_and_types]
+            user_generated_note = (
+                f"'{name}' is a user-generated DataFrame collection with "
+                f"{len(inner)} row(s), columns: {', '.join(col_names)}."
+            )
+
     return {
         "name": name,
         "access_path": access_path,
         "filters": filters,
         "implicit_scope_note": implicit_scope_note,
+        "user_generated_note": user_generated_note,
     }
 
 
@@ -529,6 +555,29 @@ def generate_step_notes(
                 return True
         return False
 
+    def _find_window_calls(expr: PyDoughExpressionQDAG) -> list[WindowCall]:
+        found: list[WindowCall] = [expr] if isinstance(expr, WindowCall) else []
+        for arg in getattr(expr, "args", []) or []:
+            if isinstance(arg, PyDoughExpressionQDAG):
+                found.extend(_find_window_calls(arg))
+        return found
+
+    def _resolve_window_scope(
+        window: WindowCall, base: PyDoughCollectionQDAG | None
+    ) -> str | None:
+        # `levels` is the number of ancestor_context hops from the collection
+        # the window function was qualified against (see qualification.py's
+        # `per=` handling) — walk the same number of hops to recover the name
+        # of the ancestor collection it actually ranks/partitions within.
+        if window.levels is None or base is None:
+            return None
+        ancestor: PyDoughCollectionQDAG | None = base
+        for _ in range(window.levels):
+            if ancestor is None:
+                return None
+            ancestor = ancestor.ancestor_context
+        return getattr(ancestor, "name", None)
+
     _WINDOW_NOTE = (
         "Note: this step uses a window function (e.g. RANKING, PERCENTILE). "
         "PyDough window functions commonly use 'per=' to rank within partitions "
@@ -537,6 +586,24 @@ def generate_step_notes(
         "— check the source code for a 'per=' argument before assuming this is "
         "a global rank."
     )
+
+    def _window_note(
+        windows: list[WindowCall], base: PyDoughCollectionQDAG | None
+    ) -> str:
+        scopes: list[str] = []
+        for w in windows:
+            name = _resolve_window_scope(w, base)
+            if name is not None and name not in scopes:
+                scopes.append(name)
+        if not scopes:
+            return _WINDOW_NOTE
+        scope_str = ", ".join(f"'{s}'" for s in scopes)
+        return (
+            f"Note: this step uses a window function (e.g. RANKING, "
+            f"PERCENTILE) scoped per {scope_str} — it ranks/partitions "
+            f"independently within each {scope_str} group, not globally "
+            f"across all rows."
+        )
 
     match node:
         case Singular():
@@ -563,8 +630,21 @@ def generate_step_notes(
             )
 
         case Where():
-            if _has_window(node.condition):
-                notes.append(_WINDOW_NOTE)
+            preceding = node.preceding_context
+            if isinstance(preceding, TableCollection) and _is_cross(preceding):
+                # This Where wraps the right-hand argument to CROSS directly
+                # (e.g. `left.CROSS(right.WHERE(cond))`), so it filters
+                # `right` before pairing, not the joined result — even
+                # though it renders immediately after the Cross step.
+                right_name = preceding.collection.name
+                notes.append(
+                    f"This condition filters '{right_name}' before it is "
+                    f"paired by CROSS — it is part of the right-hand "
+                    f"argument, not a filter on the joined result."
+                )
+            windows = _find_window_calls(node.condition)
+            if windows:
+                notes.append(_window_note(windows, node.preceding_context))
 
         case PartitionBy():
             keys = step.get("keys", [])
@@ -582,6 +662,9 @@ def generate_step_notes(
                 kind = detail.get("kind")
                 if kind == "Aggregation":
                     for arg in detail.get("args", []):
+                        user_generated_note = arg.get("user_generated_note")
+                        if user_generated_note is not None:
+                            notes.append(f"Note: {user_generated_note}")
                         implicit_note = arg.get("implicit_scope_note")
                         if implicit_note is not None:
                             # Correct pattern: scoping is via relationship nav.
@@ -625,22 +708,32 @@ def generate_step_notes(
                         f"explicit filter."
                     )
                 elif kind == "WindowCall":
-                    notes.append(_WINDOW_NOTE)
+                    try:
+                        expr = node.get_expr(term_name)
+                        notes.append(
+                            _window_note(
+                                _find_window_calls(expr), node.preceding_context
+                            )
+                        )
+                    except Exception:
+                        notes.append(_WINDOW_NOTE)
                 else:
                     # Check for window functions nested inside other expression
                     # kinds (e.g. a window function inside a BinaryOp term).
                     try:
                         expr = node.get_expr(term_name)
-                        if _has_window(expr):
-                            notes.append(_WINDOW_NOTE)
+                        windows = _find_window_calls(expr)
+                        if windows:
+                            notes.append(_window_note(windows, node.preceding_context))
                     except Exception:
                         pass
 
         case OrderBy():
             # Covers both OrderBy and its TopK subclass.
             for col in node.collation:
-                if _has_window(col.expr):
-                    notes.append(_WINDOW_NOTE)
+                windows = _find_window_calls(col.expr)
+                if windows:
+                    notes.append(_window_note(windows, node.preceding_context))
                     break
 
     return notes
@@ -685,6 +778,22 @@ def generate_query_summary(steps: list[dict]) -> str:
     """
     parts: list[str] = []
 
+    # Split WHERE conditions by hierarchy level: conditions before the first
+    # SubCollection/Cross belong to the root (left-hand) collection; conditions
+    # after belong to a deeper subcollection or the joined result and must be
+    # described separately so the judge understands they filter a different
+    # level of the data. Computed up front because a pre-pairing filter on the
+    # left-hand side must be described *before* the Cross clause below, not
+    # after it, to keep the sentence in chronological order.
+    top_conds: list[str] = []
+    sub_conds: list[str] = []
+    past_first_sub: bool = False
+    for s in steps:
+        if s["type"] in ("SubCollection", "Cross"):
+            past_first_sub = True
+        elif s["type"] == "Where":
+            (sub_conds if past_first_sub else top_conds).extend(_cond_texts(s))
+
     # ------------------------------------------------------------------ #
     # 1. Subject                                                           #
     # ------------------------------------------------------------------ #
@@ -696,7 +805,21 @@ def generate_query_summary(steps: list[dict]) -> str:
         (s for s in steps if s["type"] == "UserGeneratedCollection"), None
     )
 
-    if cross_step:
+    # top_conds_consumed tracks whether the pre-pairing filter clause has
+    # already been folded into the Subject clause below, so section 2 doesn't
+    # repeat it.
+    top_conds_consumed = False
+    if cross_step and top_conds:
+        parts.append(
+            f"Accesses '{cross_step['left']}', filtered to rows where "
+            + " and ".join(top_conds)
+        )
+        parts.append(
+            f"then pairs every '{cross_step['left']}' row with every "
+            f"'{cross_step['right']}' row"
+        )
+        top_conds_consumed = True
+    elif cross_step:
         parts.append(
             f"Pairs every '{cross_step['left']}' row with every "
             f"'{cross_step['right']}' row"
@@ -731,21 +854,17 @@ def generate_query_summary(steps: list[dict]) -> str:
     # ------------------------------------------------------------------ #
     # 2. Filter                                                            #
     # ------------------------------------------------------------------ #
-    # Split WHERE conditions by hierarchy level: conditions before the first
-    # SubCollection belong to the root collection; conditions after belong to
-    # a deeper subcollection and must be described separately so the judge
-    # understands they filter a different level of the data.
-    top_conds: list[str] = []
-    sub_conds: list[str] = []
-    past_first_sub: bool = False
-    for s in steps:
-        if s["type"] in ("SubCollection", "Cross"):
-            past_first_sub = True
-        elif s["type"] == "Where":
-            (sub_conds if past_first_sub else top_conds).extend(_cond_texts(s))
-
-    if top_conds:
+    if top_conds and not top_conds_consumed:
         parts.append("filtered to rows where " + " and ".join(top_conds))
+
+    # Subcollection traversal — e.g. 'customers' -> 'orders' -> 'lines' — so
+    # the judge knows which collection downstream clauses (partition, filter,
+    # compute) actually operate on, rather than assuming it's still the root.
+    sub_coll_steps: list[dict] = [s for s in steps if s["type"] == "SubCollection"]
+    if sub_coll_steps:
+        hops: str = " then ".join(f"'{s['to_collection']}'" for s in sub_coll_steps)
+        parts.append(f"then navigates to {hops}")
+
     if sub_conds:
         parts.append(
             "then subcollection filtered to rows where " + " and ".join(sub_conds)
@@ -839,8 +958,10 @@ def generate_query_summary(steps: list[dict]) -> str:
 
     if sort_step:
         collation: list[dict] = sort_step.get("collation", [])
+        _DIRECTION_WORDS: dict[str, str] = {"ASC": "ascending", "DESC": "descending"}
         by_str: str = ", ".join(
-            f"{c['text']} {c['direction'].lower()}" for c in collation
+            f"{c['text']} {_DIRECTION_WORDS.get(c['direction'], c['direction'])}"
+            for c in collation
         )
         if topk_step:
             suffix: str = f" by {by_str}" if by_str else ""

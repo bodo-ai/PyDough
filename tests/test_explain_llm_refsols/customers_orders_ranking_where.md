@@ -7,7 +7,7 @@
 
 ## Query Summary
 
-Accesses 'customers', then subcollection filtered to rows where RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1, selecting key.
+Accesses 'customers', then navigates to 'orders', then subcollection filtered to rows where RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1, selecting key.
 
 ## Steps
 
@@ -34,7 +34,7 @@ Filters rows to those matching the given conditions.
 
 - Condition: `RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1`
 
-> Note: this step uses a window function (e.g. RANKING, PERCENTILE). PyDough window functions commonly use 'per=' to rank within partitions of an ancestor collection rather than globally. The partition scope is resolved at SQL generation time and is NOT shown in the expression text — check the source code for a 'per=' argument before assuming this is a global rank.
+> Note: this step uses a window function (e.g. RANKING, PERCENTILE) scoped per 'customers' — it ranks/partitions independently within each 'customers' group, not globally across all rows.
 
 ### Step 5 — Calculate
 

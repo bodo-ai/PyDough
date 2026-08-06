@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses 'nations', keeping the top 5 rows by name asc.
+Accesses 'nations', keeping the top 5 rows by name ascending.
 
 ## Steps
 

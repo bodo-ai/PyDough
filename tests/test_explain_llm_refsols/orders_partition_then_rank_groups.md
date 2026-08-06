@@ -8,7 +8,7 @@
 
 ## Query Summary
 
-Accesses 'customers', then subcollection filtered to rows where RANKING(by=(n.DESC(na_pos='last'))) == 1, partitioned by order_status, selecting order_status and computing counting orders records per group as 'n'.
+Accesses 'customers', then navigates to 'orders', then subcollection filtered to rows where RANKING(by=(n.DESC(na_pos='last'))) == 1, partitioned by order_status, selecting order_status and computing counting orders records per group as 'n'.
 
 ## Steps
 

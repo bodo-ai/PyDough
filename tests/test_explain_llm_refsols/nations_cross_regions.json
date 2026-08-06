@@ -27,6 +27,28 @@
       },
       {
         "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'nations' collection.",
+        "collection": "nations",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "comment",
+              "key",
+              "name",
+              "region_key"
+            ],
+            "collections": [
+              "customers",
+              "region",
+              "suppliers"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
         "type": "Cross",
         "description": "CROSS join: every row of 'nations' paired with every row of 'regions'.",
         "left": "nations",

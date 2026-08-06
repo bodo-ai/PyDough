@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses 'nations', selecting name and computing counting customers records as 'n', keeping the top 1 rows by n desc.
+Accesses 'nations', selecting name and computing counting customers records as 'n', keeping the top 1 rows by n descending.
 
 ## Steps
 

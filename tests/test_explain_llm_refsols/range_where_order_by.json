@@ -2,7 +2,7 @@
   "pydough": "result = pydough.range_collection('nums', 'n', 0, 20).WHERE(n > 10).ORDER_BY(n.DESC())",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses user-generated collection 'nums', filtered to rows where n > 10, ordered by n desc.",
+    "query_summary": "Accesses user-generated collection 'nums', filtered to rows where n > 10, ordered by n descending.",
     "steps": [
       {
         "order": 1,

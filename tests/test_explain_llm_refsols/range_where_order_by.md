@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses user-generated collection 'nums', filtered to rows where n > 10, ordered by n desc.
+Accesses user-generated collection 'nums', filtered to rows where n > 10, ordered by n descending.
 
 ## Steps
 

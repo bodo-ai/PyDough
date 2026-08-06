@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses user-generated collection 'scores', keeping the top 3 rows by score desc.
+Accesses user-generated collection 'scores', keeping the top 3 rows by score descending.
 
 ## Steps
 

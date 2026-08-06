@@ -2,7 +2,7 @@
   "pydough": "result = nations.WHERE(key > 5).CALCULATE(tier=IFF(key > 15, 'high', 'low')).PARTITION(name='g', by=tier).CALCULATE(tier=tier, n=COUNT(nations)).TOP_K(1, by=n.DESC()).CALCULATE(tier)",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses 'nations', filtered to rows where key > 5, partitioned by tier, selecting tier and computing counting nations records as 'n', keeping the top 1 rows by n desc.",
+    "query_summary": "Accesses 'nations', filtered to rows where key > 5, partitioned by tier, selecting tier and computing counting nations records as 'n', keeping the top 1 rows by n descending.",
     "steps": [
       {
         "order": 1,
@@ -180,7 +180,8 @@
                 "filters": [
                   "key > 5"
                 ],
-                "implicit_scope_note": null
+                "implicit_scope_note": null,
+                "user_generated_note": null
               }
             ]
           }

@@ -7,7 +7,7 @@
 
 ## Query Summary
 
-Accesses 'customers', partitioned by order_status, selecting order_status, max_price (MAX(orders.total_price)) and computing counting orders records per group as 'n'.
+Accesses 'customers', then navigates to 'orders', partitioned by order_status, selecting order_status, max_price (MAX(orders.total_price)) and computing counting orders records per group as 'n'.
 
 ## Steps
 

@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses user-generated collection 'nums', keeping the top 3 rows by n asc.
+Accesses user-generated collection 'nums', keeping the top 3 rows by n ascending.
 
 ## Steps
 

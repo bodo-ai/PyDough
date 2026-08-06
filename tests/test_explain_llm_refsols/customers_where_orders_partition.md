@@ -7,7 +7,7 @@
 
 ## Query Summary
 
-Accesses 'customers', filtered to rows where market_segment == 'BUILDING', partitioned by order_status, selecting order_status and computing counting orders records per group as 'n', keeping the top 1 rows by n desc.
+Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then navigates to 'orders', partitioned by order_status, selecting order_status and computing counting orders records per group as 'n', keeping the top 1 rows by n descending.
 
 ## Steps
 

@@ -15,7 +15,14 @@ Pairs every 'r' row with every 'nations' row, selecting name.
 Entry point: the graph-level context.
 
 
-### Step 2 — Cross
+### Step 2 — UserGeneratedCollection
+
+Accesses user-generated range collection 'r' (range(1, 4), column 'n').
+
+- Name: `r`
+- Range: `range(1, 4)` in column `n`
+
+### Step 3 — Cross
 
 CROSS join: every row of 'r' paired with every row of 'nations'.
 
@@ -24,7 +31,7 @@ CROSS join: every row of 'r' paired with every row of 'nations'.
 
 > Each row now represents a unique combination of 'r' × 'nations'. After CROSS, only 'nations' terms are directly accessible as expressions; 'r' terms were available before the CROSS.
 
-### Step 3 — Calculate
+### Step 4 — Calculate
 
 Adds computed expressions to the collection.
 

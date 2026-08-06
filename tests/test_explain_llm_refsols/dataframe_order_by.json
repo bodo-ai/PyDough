@@ -2,7 +2,7 @@
   "pydough": "result = pydough.dataframe_collection('scores', my_df, ['row_id']).ORDER_BY(score.DESC())",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses user-generated collection 'scores', ordered by score desc.",
+    "query_summary": "Accesses user-generated collection 'scores', ordered by score descending.",
     "steps": [
       {
         "order": 1,

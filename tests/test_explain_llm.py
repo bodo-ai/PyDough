@@ -512,6 +512,28 @@ _REFSOL_DIR = Path(__file__).parent / "test_explain_llm_refsols"
             ),
             id="nations_cross_in_calculate",
         ),
+        # CROSS where each side is itself a multi-hop subcollection chain,
+        # not a single table access. Known gap: the Cross step's left/right
+        # names are only the last hop before pairing, so the query_summary
+        # sentence doesn't mention 'customers' and repeats 'orders'.
+        pytest.param(
+            (
+                "cross_multi_hop_both_sides",
+                "result = customers.orders.CROSS(suppliers.supply_records)",
+            ),
+            id="cross_multi_hop_both_sides",
+        ),
+        # CROSS where each side is independently partitioned before pairing.
+        # Known gap: generate_query_summary only mentions the first
+        # PartitionBy step, so the second partition ('g2') is missing from
+        # the one-line summary (it is still fully shown in the Steps list).
+        pytest.param(
+            (
+                "cross_partition_both_sides",
+                "result = customers.orders.PARTITION(name='g1', by=order_status).CROSS(suppliers.supply_records.PARTITION(name='g2', by=supply_cost))",
+            ),
+            id="cross_partition_both_sides",
+        ),
         # ---------------------------------------------------------------
         # User-generated collections (range_collection / dataframe_collection)
         # Note: user-generated collections cannot be used as to_table targets.

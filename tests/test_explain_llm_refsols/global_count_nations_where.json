@@ -44,7 +44,8 @@
                 "filters": [
                   "key > 5"
                 ],
-                "implicit_scope_note": null
+                "implicit_scope_note": null,
+                "user_generated_note": null
               }
             ]
           }

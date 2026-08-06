@@ -7,7 +7,7 @@
 
 ## Query Summary
 
-Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then subcollection filtered to rows where total_price > 1000, selecting key.
+Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then navigates to 'orders', then subcollection filtered to rows where total_price > 1000, selecting key.
 
 ## Steps
 

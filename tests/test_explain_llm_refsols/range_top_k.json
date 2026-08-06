@@ -2,7 +2,7 @@
   "pydough": "result = pydough.range_collection('nums', 'n', 1, 11).TOP_K(3, by=n.ASC())",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses user-generated collection 'nums', keeping the top 3 rows by n asc.",
+    "query_summary": "Accesses user-generated collection 'nums', keeping the top 3 rows by n ascending.",
     "steps": [
       {
         "order": 1,

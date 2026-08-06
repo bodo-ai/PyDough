@@ -69,7 +69,8 @@
                 "name": "r",
                 "access_path": [],
                 "filters": [],
-                "implicit_scope_note": null
+                "implicit_scope_note": null,
+                "user_generated_note": "'r' is a user-generated range collection: range(1, 4) in column 'num'."
               }
             ]
           }
@@ -90,7 +91,9 @@
             ]
           }
         },
-        "notes": []
+        "notes": [
+          "Note: 'r' is a user-generated range collection: range(1, 4) in column 'num'."
+        ]
       }
     ],
     "schema": {

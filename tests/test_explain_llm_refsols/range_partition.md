@@ -40,6 +40,8 @@ Adds computed expressions to the collection.
   - `n` → reference
   - `count` → COUNT(`nums`)
 
+> Note: 'nums' is a user-generated range collection: range(0, 3) in column 'n'.
+
 ## Schema
 
 - **Source collection:** `nums`

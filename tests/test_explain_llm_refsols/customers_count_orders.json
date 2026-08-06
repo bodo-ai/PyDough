@@ -74,7 +74,8 @@
                   "orders"
                 ],
                 "filters": [],
-                "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path."
+                "implicit_scope_note": "Aggregating 'orders' which is accessed via relationship navigation ('orders'). Row-level scoping to the parent row is implicit in this access path.",
+                "user_generated_note": null
               }
             ]
           }

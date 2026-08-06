@@ -96,7 +96,8 @@
                 "name": "nums",
                 "access_path": [],
                 "filters": [],
-                "implicit_scope_note": null
+                "implicit_scope_note": null,
+                "user_generated_note": "'nums' is a user-generated range collection: range(0, 3) in column 'n'."
               }
             ]
           }
@@ -112,7 +113,9 @@
             ]
           }
         },
-        "notes": []
+        "notes": [
+          "Note: 'nums' is a user-generated range collection: range(0, 3) in column 'n'."
+        ]
       }
     ],
     "schema": {

@@ -72,7 +72,8 @@
                   "customers"
                 ],
                 "filters": [],
-                "implicit_scope_note": "Aggregating 'customers' which is accessed via relationship navigation ('customers'). Row-level scoping to the parent row is implicit in this access path."
+                "implicit_scope_note": "Aggregating 'customers' which is accessed via relationship navigation ('customers'). Row-level scoping to the parent row is implicit in this access path.",
+                "user_generated_note": null
               }
             ]
           },
@@ -87,7 +88,8 @@
                   "suppliers"
                 ],
                 "filters": [],
-                "implicit_scope_note": "Aggregating 'suppliers' which is accessed via relationship navigation ('suppliers'). Row-level scoping to the parent row is implicit in this access path."
+                "implicit_scope_note": "Aggregating 'suppliers' which is accessed via relationship navigation ('suppliers'). Row-level scoping to the parent row is implicit in this access path.",
+                "user_generated_note": null
               }
             ]
           }

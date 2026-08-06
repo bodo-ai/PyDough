@@ -29,6 +29,8 @@ Adds computed expressions to the collection.
   - `name` → reference
   - `n` → COUNT(`r`)
 
+> Note: 'r' is a user-generated range collection: range(1, 4) in column 'num'.
+
 ## Schema
 
 - **Source collection:** `nations`

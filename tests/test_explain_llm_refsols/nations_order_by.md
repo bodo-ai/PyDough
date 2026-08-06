@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses 'nations', ordered by name asc.
+Accesses 'nations', ordered by name ascending.
 
 ## Steps
 

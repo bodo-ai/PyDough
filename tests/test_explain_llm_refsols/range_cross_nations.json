@@ -27,6 +27,26 @@
       },
       {
         "order": 2,
+        "type": "UserGeneratedCollection",
+        "description": "Accesses user-generated range collection 'r' (range(1, 4), column 'n').",
+        "name": "r",
+        "kind": "range",
+        "column": "n",
+        "start": 1,
+        "end": 4,
+        "step": 1,
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "n"
+            ],
+            "collections": []
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
         "type": "Cross",
         "description": "CROSS join: every row of 'r' paired with every row of 'nations'.",
         "left": "r",
@@ -51,7 +71,7 @@
         ]
       },
       {
-        "order": 3,
+        "order": 4,
         "type": "Calculate",
         "description": "Adds computed expressions to the collection.",
         "terms": [

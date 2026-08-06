@@ -27,6 +27,28 @@
       },
       {
         "order": 2,
+        "type": "UserGeneratedCollection",
+        "description": "Accesses user-generated DataFrame collection 'scores' (5 row(s), columns: row_id, score).",
+        "name": "scores",
+        "kind": "dataframe",
+        "row_count": 5,
+        "columns": [
+          "row_id",
+          "score"
+        ],
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "row_id",
+              "score"
+            ],
+            "collections": []
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
         "type": "Cross",
         "description": "CROSS join: every row of 'scores' paired with every row of 'nations'.",
         "left": "scores",
@@ -51,7 +73,7 @@
         ]
       },
       {
-        "order": 3,
+        "order": 4,
         "type": "Calculate",
         "description": "Adds computed expressions to the collection.",
         "terms": [

@@ -2,11 +2,11 @@
 
 - **Source collection:** `suppliers`
 - **Limit:** none
-- **Data filters:** account_balance > 0 AND account_balance > 1000
+- **Data filters:** market_segment == 'BUILDING' AND account_balance > 0 AND account_balance > 1000
 
 ## Query Summary
 
-Pairs every 'customers' row with every 'suppliers' row, then subcollection filtered to rows where account_balance > 0 and account_balance > 1000.
+Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then pairs every 'customers' row with every 'suppliers' row, then subcollection filtered to rows where account_balance > 0 and account_balance > 1000.
 
 ## Steps
 
@@ -15,7 +15,19 @@ Pairs every 'customers' row with every 'suppliers' row, then subcollection filte
 Entry point: the graph-level context.
 
 
-### Step 2 — Cross
+### Step 2 — TableCollection
+
+Accesses the 'customers' collection.
+
+- Collection: `customers`
+
+### Step 3 — Where
+
+Filters rows to those matching the given conditions.
+
+- Condition: `market_segment == 'BUILDING'`
+
+### Step 4 — Cross
 
 CROSS join: every row of 'customers' paired with every row of 'suppliers'.
 
@@ -24,13 +36,15 @@ CROSS join: every row of 'customers' paired with every row of 'suppliers'.
 
 > Each row now represents a unique combination of 'customers' × 'suppliers'. After CROSS, only 'suppliers' terms are directly accessible as expressions; 'customers' terms were available before the CROSS.
 
-### Step 3 — Where
+### Step 5 — Where
 
 Filters rows to those matching the given conditions.
 
 - Condition: `account_balance > 0`
 
-### Step 4 — Where
+> This condition filters 'suppliers' before it is paired by CROSS — it is part of the right-hand argument, not a filter on the joined result.
+
+### Step 6 — Where
 
 Filters rows to those matching the given conditions.
 

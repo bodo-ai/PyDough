@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses 'nations', filtered to rows where key > 5, partitioned by tier, selecting tier and computing counting nations records as 'n', keeping the top 1 rows by n desc.
+Accesses 'nations', filtered to rows where key > 5, partitioned by tier, selecting tier and computing counting nations records as 'n', keeping the top 1 rows by n descending.
 
 ## Steps
 

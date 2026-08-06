@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses user-generated collection 'scores', ordered by score desc.
+Accesses user-generated collection 'scores', ordered by score descending.
 
 ## Steps
 

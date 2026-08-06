@@ -2,7 +2,7 @@
   "pydough": "result = customers.WHERE(market_segment == 'BUILDING').CROSS(suppliers.WHERE(account_balance > 0)).WHERE(account_balance > 1000)",
   "explain_output": {
     "error": false,
-    "query_summary": "Pairs every 'customers' row with every 'suppliers' row, then subcollection filtered to rows where account_balance > 0 and account_balance > 1000.",
+    "query_summary": "Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then pairs every 'customers' row with every 'suppliers' row, then subcollection filtered to rows where account_balance > 0 and account_balance > 1000.",
     "steps": [
       {
         "order": 1,
@@ -27,6 +27,73 @@
       },
       {
         "order": 2,
+        "type": "TableCollection",
+        "description": "Accesses the 'customers' collection.",
+        "collection": "customers",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "market_segment == 'BUILDING'",
+            "operator": "==",
+            "left": {
+              "kind": "Reference",
+              "term_name": "market_segment"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "'BUILDING'",
+              "value": "BUILDING",
+              "data_type": "string"
+            }
+          }
+        ],
+        "condition_summary": "market_segment == 'BUILDING'",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "account_balance",
+              "address",
+              "comment",
+              "key",
+              "market_segment",
+              "name",
+              "nation_key",
+              "phone"
+            ],
+            "collections": [
+              "nation",
+              "orders"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
         "type": "Cross",
         "description": "CROSS join: every row of 'customers' paired with every row of 'suppliers'.",
         "left": "customers",
@@ -54,7 +121,7 @@
         ]
       },
       {
-        "order": 3,
+        "order": 5,
         "type": "Where",
         "description": "Filters rows to those matching the given conditions.",
         "conditions": [
@@ -93,10 +160,12 @@
             ]
           }
         },
-        "notes": []
+        "notes": [
+          "This condition filters 'suppliers' before it is paired by CROSS \u2014 it is part of the right-hand argument, not a filter on the joined result."
+        ]
       },
       {
-        "order": 4,
+        "order": 6,
         "type": "Where",
         "description": "Filters rows to those matching the given conditions.",
         "conditions": [

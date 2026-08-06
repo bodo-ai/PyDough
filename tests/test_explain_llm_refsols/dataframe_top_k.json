@@ -2,7 +2,7 @@
   "pydough": "result = pydough.dataframe_collection('scores', my_df, ['row_id']).TOP_K(3, by=score.DESC())",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses user-generated collection 'scores', keeping the top 3 rows by score desc.",
+    "query_summary": "Accesses user-generated collection 'scores', keeping the top 3 rows by score descending.",
     "steps": [
       {
         "order": 1,

@@ -7,7 +7,7 @@
 
 ## Query Summary
 
-Accesses 'customers', filtered to rows where market_segment == 'BUILDING', selecting key.
+Accesses 'customers', filtered to rows where market_segment == 'BUILDING', then navigates to 'orders', selecting key.
 
 ## Steps
 

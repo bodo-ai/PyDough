@@ -844,6 +844,17 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     else:
         ancestor = getattr(top, "ancestor_context", None)
     while ancestor is not None:
+        # A GlobalContext produced by CROSS qualification carries its own
+        # ancestor_context (the left-hand chain) — it is plumbing, not a
+        # real step, so skip straight past it to the left-hand chain rather
+        # than emitting a spurious duplicate "entry point" step for it.
+        if (
+            isinstance(ancestor, GlobalContext)
+            and ancestor.ancestor_context is not None
+        ):
+            seen_ids.add(id(ancestor))
+            ancestor = ancestor.ancestor_context
+            continue
         if id(ancestor) not in seen_ids:
             # Walk the preceding_context chain of this ancestor node so we
             # capture e.g. the TableCollection beneath a Where.
@@ -861,6 +872,8 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
                     break
                 cur_a = getattr(cur_a, "preceding_context", None)
             nodes.extend(anc_chain)
+        # Only the true root GlobalContext (ancestor_context is None) ends
+        # the walk; a CROSS-marker GlobalContext is handled above.
         if isinstance(ancestor, GlobalContext):
             break
         ancestor = getattr(ancestor, "ancestor_context", None)
@@ -1073,7 +1086,7 @@ def _render_step_body(step: dict) -> list[str]:
         type-specific fields to display).
     """
     lines: list[str] = []
-    stype = step["type"]
+    stype: str = step["type"]
 
     if stype == "TableCollection":
         lines.append(f"- Collection: `{step['collection']}`")
@@ -1270,7 +1283,7 @@ def _render_md(result: dict) -> str:
         body = _render_step_body(step)
         lines.extend(body)
 
-        notes = step.get("notes", [])
+        notes: list[str] = step.get("notes", [])
         if notes:
             if body:
                 lines.append("")
@@ -1287,8 +1300,8 @@ def _render_md(result: dict) -> str:
 
     lines.append(f"- **Source collection:** {f'`{src}`' if src else '_(none)_'}")
 
-    output_cols = schema.get("output_columns", [])
-    col_types = schema.get("column_types", {})
+    output_cols: list[str] = schema.get("output_columns", [])
+    col_types: dict = schema.get("column_types", {})
     if output_cols:
         col_parts = ", ".join(
             f"`{c}` ({col_types.get(c, 'unknown')})" for c in output_cols
