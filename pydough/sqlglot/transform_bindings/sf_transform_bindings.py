@@ -287,11 +287,17 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
             )
         if idx_index is not None and explode_spec.index_name is not None:
+            idx_expr: SQLGlotExpression = sqlglot_expressions.Column(
+                this=sqlglot_expressions.Identifier(this="INDEX"),
+                table=sqlglot_expressions.Identifier(this=lateral_prefix),
+            )
+            if explode_spec.version == "string":
+                idx_expr = sqlglot_expressions.Sub(
+                    this=idx_expr,
+                    expression=sqlglot_expressions.Literal.number(1),
+                )
             column_exprs[idx_index] = sqlglot_expressions.Alias(
-                this=sqlglot_expressions.Column(
-                    this=sqlglot_expressions.Identifier(this="INDEX"),
-                    table=sqlglot_expressions.Identifier(this=lateral_prefix),
-                ),
+                this=idx_expr,
                 alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
             )
 

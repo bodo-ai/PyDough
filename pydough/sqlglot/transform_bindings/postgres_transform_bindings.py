@@ -10,6 +10,14 @@ from typing import Any
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import (
+    Identifier,
+    Lateral,
+    Select,
+    Subquery,
+    TableAlias,
+    Unnest,
+)
 
 import pydough.pydough_operators as pydop
 from pydough.relational.relational_expressions.literal_expression import (
@@ -21,6 +29,7 @@ from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -66,6 +75,72 @@ class PostgresTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+    ) -> SQLGlotExpression:
+        column_exprs: list[SQLGlotExpression] = [*exprs]
+        lateral_prefix: str = "_L"
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="val"),
+                    table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Column(
+                        this=sqlglot_expressions.Identifier(this="idx"),
+                        table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        if explode_spec.version == "string":
+            assert explode_spec.delimiter is not None, (
+                "Delimiter must be provided for string explode."
+            )
+            explode_expr = sqlglot_expressions.Anonymous(
+                this="STRING_TO_ARRAY",
+                expressions=[
+                    explode_expr,
+                    sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                ],
+            )
+        explode_op: SQLGlotExpression = Unnest(
+            expressions=[explode_expr],
+            offset=sqlglot_expressions.Literal.number(1),
+            alias=TableAlias(
+                this=Identifier(this=lateral_prefix),
+                columns=[
+                    sqlglot_expressions.Identifier(this="val"),
+                    sqlglot_expressions.Identifier(this="idx"),
+                ],
+            ),
+        )
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(Subquery(this=input_expr))
+            .join(
+                Lateral(
+                    this=explode_op,
+                )
+            )
+        )
+
+        return result
 
     def convert_listof(
         self, args: SQLGlotExpression, types: list[PyDoughType]

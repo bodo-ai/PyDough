@@ -4339,7 +4339,7 @@ from .testing_utilities import (
                             [5, 6],
                             [5, 6],
                         ],
-                        "arr_idx": [1, 1, 2, 3, 4, 1, 2],
+                        "arr_idx": [0, 0, 1, 2, 3, 0, 1],
                         "arr_val": [1, 2, 3, None, 4, 5, 6],
                     }
                 ),
@@ -4381,7 +4381,7 @@ from .testing_utilities import (
                             "Customer",
                             "000000005",
                         ],
-                        "idx": [1, 2] * 5,
+                        "idx": [0, 1] * 5,
                     }
                 ),
                 "explode_03",
