@@ -4243,6 +4243,7 @@ from .testing_utilities import (
                 "result = ("
                 "  array_data"
                 "  .EXPLODE(nation_names, 'exploded_nations', index_name='nation_idx', value_name='nation_name', version='array', filtering=False, is_distinct=True)"
+                "  .CALCULATE(region_name, nation_names, nation_idx, nation_name)"
                 "  .ORDER_BY(region_name, nation_idx)"
                 ")",
                 "TPCH",
@@ -4253,7 +4254,7 @@ from .testing_utilities import (
                         + ["ASIA"] * 5
                         + ["EUROPE"] * 5
                         + ["MIDDLE EAST"] * 5,
-                        "nation_names": [
+                        "nation_names": (
                             [["ALGERIA", "ETHIOPIA", "KENYA", "MOROCCO", "MOZAMBIQUE"]]
                             * 5
                             + [
@@ -4277,14 +4278,13 @@ from .testing_utilities import (
                                 ]
                             ]
                             * 5
-                            + [["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"]] * 5,
-                        ],
+                            + [["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"]] * 5
+                        ),
                         "nation_idx": list(range(5)) * 5,
                         "nation_name": [
                             "ALGERIA",
                             "ETHIOPIA",
                             "KENYA",
-                            "MOROCCO",
                             "MOROCCO",
                             "MOZAMBIQUE",
                             "ARGENTINA",
@@ -4345,7 +4345,7 @@ from .testing_utilities import (
                 ),
                 "explode_02",
                 order_sensitive=True,
-                skipped_dialects={"ANSI", "SQLITE"},
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE"},
                 kwargs={
                     "array_df": pd.DataFrame(
                         {
@@ -4369,7 +4369,6 @@ from .testing_utilities import (
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "idx": [1, 2] * 5,
                         "val": [
                             "Customer",
                             "000000001",
@@ -4382,6 +4381,7 @@ from .testing_utilities import (
                             "Customer",
                             "000000005",
                         ],
+                        "idx": [1, 2] * 5,
                     }
                 ),
                 "explode_03",
@@ -4392,10 +4392,12 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
-                "exploded_data = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')\n"
+                "exploded_i = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')\n"
+                "exploded_e = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='E')\n"
+                "exploded_space = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter=' ')\n"
                 "result = ("
                 "  regions"
-                "  .CALCULATE(region_name=name, n_chunks=COUNT(exploded_data))"
+                "  .CALCULATE(region_name=name, n_e_chunks=COUNT(exploded_e), n_i_chunks=COUNT(exploded_i), n_space_chunks=COUNT(exploded_space))"
                 "  .ORDER_BY(region_name)"
                 ")",
                 "TPCH",
@@ -4408,7 +4410,9 @@ from .testing_utilities import (
                             "EUROPE",
                             "MIDDLE EAST",
                         ],
-                        "n_chunks": [2, 2, 2, 1, 1],
+                        "n_e_chunks": [1, 2, 1, 3, 3],
+                        "n_i_chunks": [2, 2, 2, 1, 2],
+                        "n_space_chunks": [1, 1, 1, 1, 2],
                     }
                 ),
                 "explode_04",

@@ -35,6 +35,7 @@ from pydough.user_collections.dataframe_collection import DataframeGeneratedColl
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 from pydough.user_collections.view_collection import ViewGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
@@ -2333,6 +2334,36 @@ class BaseTransformBindings:
             .select(sqlglot_expressions.Star())
             .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
         )
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+    ) -> SQLGlotExpression:
+        """
+        Converts a PyDough EXPLODE operation call to a SQLGlot expression that
+        unravels an array or string into multiple rows (i.e. a lateral join).
+
+        Args:
+            `input_expr`: The subquery containing the data being exploded.
+            `explode_expr`: The expression to explode (e.g., an array or string
+            column).
+            `explode_spec`: The specification of how to explode the data.
+            `exprs`: The list of SQLGlot expressions representing the columns of
+            the data besides the exploded output.
+            `val_index`: The index within `exprs` that should be used to store
+            the exploded data in the output. If None, not included.
+            `idx_index`: The index within `exprs` that should be used to store
+            the exploded data's index in the output. If None, not included.
+
+        Returns:
+            A SQLGlotExpression representing the exploded data.
+        """
+        raise PyDoughSQLException("EXPLODE is not supported in this dialect")
 
     def convert_user_generated_collection(
         self,

@@ -583,7 +583,30 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_explode(self, explode: Explode) -> None:
-        raise NotImplementedError()
+        self.visit_inputs(explode)
+        input_expr: Select = self._stack.pop()
+        explode_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+            explode.explode_data
+        )
+        exprs: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in sorted(explode.columns.items())
+        ]
+        val_index: int | None = None
+        idx_index: int | None = None
+        for i, (_, expr) in enumerate(sorted(explode.columns.items())):
+            if isinstance(expr, ColumnReference):
+                if expr.name == explode.explode_spec.value_name:
+                    val_index = i
+                elif (
+                    explode.explode_spec.index_name is not None
+                    and expr.name == explode.explode_spec.index_name
+                ):
+                    idx_index = i
+        query: SQLGlotExpression = self._expr_visitor._bindings.convert_explode(
+            input_expr, explode_expr, explode.explode_spec, exprs, val_index, idx_index
+        )
+        self._stack.append(query)
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:
         """

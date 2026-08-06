@@ -9,6 +9,14 @@ import math
 from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.expressions import (
+    Anonymous,
+    Identifier,
+    Lateral,
+    Select,
+    Subquery,
+    TableAlias,
+)
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
@@ -21,6 +29,7 @@ from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -257,6 +266,62 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         else:
             # For other units, use base implementation
             return super().convert_datediff(args, types)
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+    ) -> SQLGlotExpression:
+        column_exprs: list[SQLGlotExpression] = [*exprs]
+        lateral_prefix: str = "_L"
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="VALUE"),
+                    table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="INDEX"),
+                    table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        explode_op: SQLGlotExpression
+        if explode_spec.version == "array":
+            explode_op = Anonymous(this="FLATTEN", expressions=[explode_expr])
+        else:
+            assert (
+                explode_spec.version == "string" and explode_spec.delimiter is not None
+            )
+            explode_op = Anonymous(
+                this="SPLIT_TO_TABLE",
+                expressions=[
+                    explode_expr,
+                    sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                ],
+            )
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(Subquery(this=input_expr))
+            .join(
+                Lateral(
+                    this=explode_op,
+                    alias=TableAlias(this=Identifier(this=lateral_prefix)),
+                )
+            )
+        )
+
+        return result
 
     def convert_user_generated_range(
         self, collection: RangeGeneratedCollection

@@ -113,6 +113,11 @@ class DatabricksTransformBindings(BaseTransformBindings):
             to=sqlglot_expressions.DataType.build("BIGINT"),
         )
 
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.ArrayAgg(this=args[0])
+
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType
     ) -> SQLGlotExpression:
