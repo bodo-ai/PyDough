@@ -2059,7 +2059,7 @@ class BaseTransformBindings:
                     FIRST_ARGUMENT AS rest,
                     SECOND_ARGUMENT AS delim,
                     THIRD_ARGUMENT AS idx,
-                    0 AS is_last
+                    0 AS is_last -- Flag to indicate if this is the last part
                 UNION ALL
                 SELECT
                     part_index + 1 AS part_index,
@@ -2234,6 +2234,12 @@ class BaseTransformBindings:
         new_rest_case: SQLGlotExpression = (
             sqlglot_expressions.Case().when(delim_cond, literal_empty).else_(new_rest)
         )
+        # is_last = 1 when this recursive step found no more delimiter (or
+        # the delimiter is empty), meaning `part` computed above is the
+        # final segment of the string; used to stop recursion at exactly
+        # the right point instead of relying on `rest = ''`, which can't
+        # distinguish "no parts left" from "one more empty part is owed"
+        # (e.g. when the delimiter occurs at the very end of the string).
         new_is_last_case: SQLGlotExpression = (
             sqlglot_expressions.Case().when(delim_cond, literal_1).else_(literal_0)
         )

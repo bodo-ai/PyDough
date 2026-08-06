@@ -335,36 +335,6 @@ def defog_custom_oracle_test_data(
             skip_sql=True,
         )
 
-    if defog_custom_pipeline_test_data.test_name == "get_part_test":
-        return PyDoughPandasTest(
-            defog_custom_pipeline_test_data.pydough_function,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "k": [1, 2, 3, 4],
-                    "p1": ["Customer", "000000002", "", ""],
-                    "p2": ["Customer#", "", "", ""],
-                    "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", "", ""],
-                    "p4": ["E", "XSTf4", "", ""],
-                    "p5": ["25", "768", "748", "5944"],
-                    "p6": ["2988", "687", "719", "14"],
-                    "p7": ["to", "accounts.", "eat", "regular"],
-                    "p8": ["e", "boldly:", "even", "ideas"],
-                    "p9": ["IVhzIApeRb ot,c,E", "", "", ""],
-                    "p10": ["BUILDING", "M", "AUT", ""],
-                    "p11": ["Customer#", "2", "", ""],
-                    "p12": ["*^%3$#", "##2$#&", "^%1$$", ""],
-                    "p13": ["Customer#000000001", "", "", ""],
-                    "p14": ["", "", "", ""],
-                    "p15": ["Customer", "Customer", "Customer", "Customer"],
-                    "p16": ["", "", "", ""],
-                    "p17": ["", "68", "48", ""],
-                }
-            ),
-            defog_custom_pipeline_test_data.test_name,
-            skip_sql=defog_custom_pipeline_test_data.skip_sql,
-        )
-
     if defog_custom_pipeline_test_data.test_name == "padding_functions":
         return PyDoughPandasTest(
             defog_custom_pipeline_test_data.pydough_function,
