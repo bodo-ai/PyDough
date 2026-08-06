@@ -1,5 +1,5 @@
 SELECT
-  CAST(COUNT_IF(status = 'success') AS DOUBLE) / NULLIF(COUNT(*), 0) AS _expr0
+  CAST(COALESCE(COUNT_IF(status = 'success'), 0) AS DOUBLE) / NULLIF(COUNT(*), 0) AS _expr0
 FROM postgres.main.wallet_transactions_daily
 WHERE
   DATE_DIFF(

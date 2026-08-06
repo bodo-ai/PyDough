@@ -1,7 +1,7 @@
 SELECT
   specialty,
   COUNT(*) AS num_doctors
-FROM main.doctors
+FROM defog.dermtreatment.doctors
 GROUP BY
   1
 ORDER BY

@@ -77,18 +77,7 @@ class PostgresTransformBindings(BaseTransformBindings):
             this=string_expr,  # string expression
             delimiter=delimiter_expr,  # delimiter
             part_index=sqlglot_expressions.Cast(
-                this=sqlglot_expressions.Case(  # position (1-based)
-                    ifs=[
-                        sqlglot_expressions.If(
-                            this=sqlglot_expressions.EQ(
-                                this=index_expr,
-                                expression=sqlglot_expressions.Literal.number(0),
-                            ),
-                            true=sqlglot_expressions.Literal.number(1),
-                        )
-                    ],
-                    default=index_expr,
-                ),
+                this=self._remap_zero_to_one(index_expr),
                 to=sqlglot_expressions.DataType.build("INTEGER"),
             ),
         )

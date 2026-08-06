@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   100 * (
-    CAST(COUNT_IF(sbcuststatus = 'active') AS DOUBLE) / COUNT(*)
+    CAST(COALESCE(COUNT_IF(sbcuststatus = 'active'), 0) AS DOUBLE) / COUNT(*)
   ) AS ar
 FROM mongo.defog.sbcustomer
 WHERE

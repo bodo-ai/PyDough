@@ -38,7 +38,7 @@ class DatabricksTransformBindings(BaseTransformBindings):
         pydop.LARGEST: "GREATEST",
     }
     """
-    Mapping of PyDough operators to equivalent Snowflake SQL function names
+    Mapping of PyDough operators to equivalent Databricks SQL function names
     These are used to generate anonymous function calls in SQLGlot
     """
 
@@ -49,21 +49,9 @@ class DatabricksTransformBindings(BaseTransformBindings):
         # SPLIT_PART raises INVALID_INDEX_OF_ZERO when the index is 0
         # instead of treating it as 1, so remap a 0 index to 1.
         assert len(args) == 3
-        index_arg: SQLGlotExpression = args[2]
-        index_expr: SQLGlotExpression = sqlglot_expressions.Case(
-            ifs=[
-                sqlglot_expressions.If(
-                    this=sqlglot_expressions.EQ(
-                        this=index_arg,
-                        expression=sqlglot_expressions.Literal.number(0),
-                    ),
-                    true=sqlglot_expressions.Literal.number(1),
-                )
-            ],
-            default=index_arg,
-        )
         return sqlglot_expressions.Anonymous(
-            this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
+            this="SPLIT_PART",
+            expressions=[args[0], args[1], self._remap_zero_to_one(args[2])],
         )
 
     def convert_call_to_sqlglot(

@@ -1,9 +1,9 @@
 SELECT
   sbcustcountry AS country,
   100 * (
-    COUNT_IF(sbcuststatus = 'active') / COUNT(*)
+    COALESCE(COUNT_IF(sbcuststatus = 'active'), 0) / COUNT(*)
   ) AS ar
-FROM main.sbcustomer
+FROM defog.broker.sbcustomer
 WHERE
   sbcustjoindate <= CAST('2022-12-31' AS DATE)
   AND sbcustjoindate >= CAST('2022-01-01' AS DATE)

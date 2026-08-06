@@ -61,6 +61,11 @@ on:
         type: boolean
         required: false
         default: false        
+      run-duckdb:
+        description: "Run DuckDB Tests"
+        type: boolean
+        required: false
+        default: false        
       run-sf_masked:
         description: "Run Snowflake Masked Tests"
         type: boolean
@@ -181,10 +186,10 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3 or bodosql or oracle or trino or databricks)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3 or bodosql or oracle or trino or databricks or duckdb)" -rs
 
-  run-defog-daily-update:
-    name: Run DEFOG Daily Update
+  run-sf-defog-daily-update:
+    name: Run Snowflake DEFOG Daily Update
     needs: [get-msg]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
@@ -199,7 +204,7 @@ jobs:
 
   run-sf-tests:
     name: Snowflake Tests
-    needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
+    needs: [run-sf-defog-daily-update, get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
@@ -361,6 +366,20 @@ jobs:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.11", "3.12", "3.13"]' }}
+
+  run-duckdb-tests:
+    name: DuckDB Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run duckdb]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-duckdb))
+    uses: ./.github/workflows/duckdb_testing.yml
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

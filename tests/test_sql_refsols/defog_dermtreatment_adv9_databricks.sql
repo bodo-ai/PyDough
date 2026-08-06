@@ -6,7 +6,7 @@ WITH _s2 AS (
       LPAD(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)), 2, '0')
     ) AS treatment_month,
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
-  FROM main.treatments
+  FROM defog.dermtreatment.treatments
   WHERE
     start_dt < TRUNC(CURRENT_TIMESTAMP(), 'MONTH')
     AND start_dt >= ADD_MONTHS(TRUNC(CURRENT_TIMESTAMP(), 'MONTH'), -3)
@@ -20,8 +20,8 @@ WITH _s2 AS (
       LPAD(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)), 2, '0')
     ) AS treatment_month,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
-  FROM main.treatments AS treatments
-  JOIN main.drugs AS drugs
+  FROM defog.dermtreatment.treatments AS treatments
+  JOIN defog.dermtreatment.drugs AS drugs
     ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'biologic'
   WHERE
     treatments.start_dt < TRUNC(CURRENT_TIMESTAMP(), 'MONTH')
