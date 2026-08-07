@@ -3059,23 +3059,23 @@ def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
                 lambda: pd.DataFrame(
                     {
                         "k": [1, 2, 3, 4],
-                        "p1": ["Customer", "000000002", None, None],
+                        "p1": ["Customer", "000000002", "", ""],
                         "p2": ["Customer#", "", "", ""],
-                        "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", None, None],
-                        "p4": ["E", "XSTf4", None, None],
+                        "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", "", ""],
+                        "p4": ["E", "XSTf4", "", ""],
                         "p5": ["25", "768", "748", "5944"],
                         "p6": ["2988", "687", "719", "14"],
                         "p7": ["to", "accounts.", "eat", "regular"],
                         "p8": ["e", "boldly:", "even", "ideas"],
-                        "p9": ["IVhzIApeRb ot,c,E", None, None, None],
-                        "p10": ["BUILDING", "M", "AUT", None],
-                        "p11": ["Customer#", "2", None, None],
-                        "p12": ["*^%3$#", "##2$#&", "^%1$$", None],
-                        "p13": ["Customer#000000001", None, None, None],
-                        "p14": [None, None, None, None],
+                        "p9": ["IVhzIApeRb ot,c,E", "", "", ""],
+                        "p10": ["BUILDING", "M", "AUT", ""],
+                        "p11": ["Customer#", "2", "", ""],
+                        "p12": ["*^%3$#", "##2$#&", "^%1$$", ""],
+                        "p13": ["Customer#000000001", "", "", ""],
+                        "p14": ["", "", "", ""],
                         "p15": ["Customer", "Customer", "Customer", "Customer"],
-                        "p16": ["", "", None, None],
-                        "p17": [None, "68", "48", None],
+                        "p16": ["", "", "", ""],
+                        "p17": ["", "68", "48", ""],
                     }
                 ),
                 "get_part_test",
@@ -3458,6 +3458,59 @@ def tpch_custom_test_data_dialect_replacements(
                 }
             ),
             "simple_dataframe_collection_3",
+        )
+
+    if test.test_name == "extract_colors" and dialect == DatabaseDialect.ORACLE:
+        return PyDoughPandasTest(
+            test.pydough_function,
+            test.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "key": list(range(1, 6)),
+                    "c1": ["GOLDENROD", "BLUSH", "SPRING", "CORNFLOWER", "FOREST"],
+                    "c2": ["LAVENDER", "THISTLE", "GREEN", "CHOCOLATE", "BROWN"],
+                    "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
+                    "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
+                    "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
+                    "c6": [None] * 5,
+                }
+            ),
+            test.test_name,
+        )
+
+    if (
+        test.test_name == "dataframe_collection_strings"
+        and dialect == DatabaseDialect.ORACLE
+    ):
+        return PyDoughPandasTest(
+            test.pydough_function,
+            test.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "normal_strings": [
+                        "hello",
+                        "world",
+                        "pydough",
+                        None,
+                        "test_string",
+                    ],
+                    "empty_string": [
+                        None,
+                        "not_empty",
+                        None,
+                        None,
+                        " ",
+                    ],
+                    "special_characters": [
+                        "'simple quoted'",
+                        '"double quoted"',
+                        "unicode_ß_ç_ü",
+                        None,
+                        "tap_space\tnewline_\n_test",
+                    ],
+                }
+            ),
+            test.test_name,
         )
 
     return test
