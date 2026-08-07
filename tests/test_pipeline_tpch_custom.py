@@ -4510,10 +4510,47 @@ from .testing_utilities import (
                 "  .CALCULATE(key)"
                 "  .TOP_K(3, by=key.ASC())"
                 "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .CALCULATE(key, idx1, idx2, val2)"
+                "  .ORDER_BY(key.ASC(), idx1.ASC(), idx2.ASC())"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 1, 1, 1, 2, 2, 3, 3, 3, 3],
+                        "idx1": [0, 0, 1, 1, 0, 1, 0, 0, 1, 2],
+                        "idx2": [0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+                        "val2": [
+                            "to the even",
+                            " regular platelets",
+                            " regular",
+                            " ironic epitaphs nag e",
+                            "l accounts",
+                            " blithely ironic theodolites integrate boldly: caref",
+                            " deposits eat slyly ironic",
+                            " even instructions",
+                            " express foxes detect slyly",
+                            " blithely even accounts abov",
+                        ],
+                    }
+                ),
+                "explode_07",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_07",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
                 "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=' ')"
                 "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=',')"
                 "  .WHERE(val3 != '')"
-                "  .CALCULATE(idx1, idx2, idx3, val3)"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
                 "  .ORDER_BY(key.ASC(), idx1.ASC(), idx2.ASC(), idx3.ASC())"
                 ")",
                 "TPCH",
@@ -4521,52 +4558,52 @@ from .testing_utilities import (
                     {
                         "key": [1] * 10 + [2] * 8 + [3] * 14,
                         "idx1": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
                             1,
                             1,
                             1,
                             1,
                             1,
-                            2,
-                            2,
-                            2,
-                            2,
-                            2,
-                            1,
-                            1,
-                            2,
-                            2,
-                            2,
-                            2,
-                            2,
-                            2,
+                            0,
+                            0,
                             1,
                             1,
                             1,
                             1,
                             1,
                             1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
                             2,
                             2,
                             2,
                             2,
-                            3,
-                            3,
-                            3,
-                            3,
                         ],
                         "idx2": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
                             1,
                             2,
                             3,
                             4,
                             5,
+                            0,
                             1,
-                            2,
-                            3,
-                            4,
-                            5,
-                            1,
-                            2,
                             1,
                             2,
                             3,
@@ -4588,7 +4625,7 @@ from .testing_utilities import (
                             3,
                             4,
                         ],
-                        "idx3": [1] * 32,
+                        "idx3": [0] * 32,
                         "val3": [
                             "to",
                             "the",
@@ -4625,11 +4662,11 @@ from .testing_utilities import (
                         ],
                     }
                 ),
-                "explode_07",
+                "explode_08",
                 order_sensitive=True,
                 skipped_dialects={"ANSI", "SQLITE"},
             ),
-            id="explode_07",
+            id="explode_08",
         ),
         pytest.param(
             PyDoughPandasTest(

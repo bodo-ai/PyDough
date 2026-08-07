@@ -7,10 +7,10 @@ WITH _q_0 AS (
   LIMIT 5
 )
 SELECT
-  _l.val,
-  _l.idx - 1 AS idx
+  _s0.val,
+  _s0.idx - 1 AS idx
 FROM _q_0 AS _q_0
-CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(_q_0.name, '#')) WITH ORDINALITY AS _l(val, idx)
+CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(_q_0.name, '#')) WITH ORDINALITY AS _s0(val, idx)
 ORDER BY
   _q_0.name NULLS FIRST,
   2 NULLS FIRST

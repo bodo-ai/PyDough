@@ -275,21 +275,21 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         exprs: list[SQLGlotExpression],
         val_index: int | None,
         idx_index: int | None,
+        lateral_alias: str,
     ) -> SQLGlotExpression:
         column_exprs: list[SQLGlotExpression] = [*exprs]
-        lateral_prefix: str = "_L"
         if val_index is not None:
             column_exprs[val_index] = sqlglot_expressions.Alias(
                 this=sqlglot_expressions.Column(
                     this=sqlglot_expressions.Identifier(this="VALUE"),
-                    table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
                 ),
                 alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
             )
         if idx_index is not None and explode_spec.index_name is not None:
             idx_expr: SQLGlotExpression = sqlglot_expressions.Column(
                 this=sqlglot_expressions.Identifier(this="INDEX"),
-                table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                table=sqlglot_expressions.Identifier(this=lateral_alias),
             )
             if explode_spec.version == "string":
                 idx_expr = sqlglot_expressions.Sub(
@@ -322,7 +322,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             .join(
                 Lateral(
                     this=explode_op,
-                    alias=TableAlias(this=Identifier(this=lateral_prefix)),
+                    alias=TableAlias(this=Identifier(this=lateral_alias)),
                 )
             )
         )

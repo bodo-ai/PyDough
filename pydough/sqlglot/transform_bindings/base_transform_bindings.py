@@ -2343,6 +2343,7 @@ class BaseTransformBindings:
         exprs: list[SQLGlotExpression],
         val_index: int | None,
         idx_index: int | None,
+        lateral_alias: str,
     ) -> SQLGlotExpression:
         """
         Converts a PyDough EXPLODE operation call to a SQLGlot expression that
@@ -2359,6 +2360,8 @@ class BaseTransformBindings:
             the exploded data in the output. If None, not included.
             `idx_index`: The index within `exprs` that should be used to store
             the exploded data's index in the output. If None, not included.
+            `lateral_alias`: A name given to a LATERAL operator, if needed, to
+            avoid name collisions.
 
         Returns:
             A SQLGlotExpression representing the exploded data.

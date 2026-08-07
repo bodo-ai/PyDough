@@ -604,7 +604,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 ):
                     idx_index = i
         query: SQLGlotExpression = self._expr_visitor._bindings.convert_explode(
-            input_expr, explode_expr, explode.explode_spec, exprs, val_index, idx_index
+            input_expr,
+            explode_expr,
+            explode.explode_spec,
+            exprs,
+            val_index,
+            idx_index,
+            self._generate_table_alias(),
         )
         self._stack.append(query)
 

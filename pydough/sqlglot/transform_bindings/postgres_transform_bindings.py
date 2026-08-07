@@ -84,14 +84,14 @@ class PostgresTransformBindings(BaseTransformBindings):
         exprs: list[SQLGlotExpression],
         val_index: int | None,
         idx_index: int | None,
+        lateral_alias: str,
     ) -> SQLGlotExpression:
         column_exprs: list[SQLGlotExpression] = [*exprs]
-        lateral_prefix: str = "_L"
         if val_index is not None:
             column_exprs[val_index] = sqlglot_expressions.Alias(
                 this=sqlglot_expressions.Column(
                     this=sqlglot_expressions.Identifier(this="val"),
-                    table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
                 ),
                 alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
             )
@@ -100,7 +100,7 @@ class PostgresTransformBindings(BaseTransformBindings):
                 this=sqlglot_expressions.Sub(
                     this=sqlglot_expressions.Column(
                         this=sqlglot_expressions.Identifier(this="idx"),
-                        table=sqlglot_expressions.Identifier(this=lateral_prefix),
+                        table=sqlglot_expressions.Identifier(this=lateral_alias),
                     ),
                     expression=sqlglot_expressions.Literal.number(1),
                 ),
@@ -122,7 +122,7 @@ class PostgresTransformBindings(BaseTransformBindings):
             expressions=[explode_expr],
             offset=sqlglot_expressions.Literal.number(1),
             alias=TableAlias(
-                this=Identifier(this=lateral_prefix),
+                this=Identifier(this=lateral_alias),
                 columns=[
                     sqlglot_expressions.Identifier(this="val"),
                     sqlglot_expressions.Identifier(this="idx"),
