@@ -4795,6 +4795,69 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "supplier_words = ("
+                "  suppliers"
+                "  .CALCULATE(supp_comment=STRIP(REPLACE(REPLACE(REPLACE(REPLACE(comment, ';', ''), ',', ''), ':', ''), '.', ''), ' '))"
+                "  .EXPLODE(supp_comment, 'supp_words', value_name='supp_word', index_name='supp_idx', version='string', delimiter=' ')"
+                "  .PARTITION(name='s_words', by=supp_word)"
+                "  .CALCULATE(supp_word)"
+                ")\n"
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(cust_comment=STRIP(REPLACE(REPLACE(REPLACE(REPLACE(comment, ';', ''), ',', ''), ':', ''), '.', ''), ' '))"
+                "  .EXPLODE(cust_comment, 'cust_words', value_name='cust_word', index_name='cust_idx', version='string', delimiter=' ')"
+                "  .PARTITION(name='c_words', by=cust_word)"
+                "  .CALCULATE(cust_word)"
+                ")\n"
+                "match_words = ("
+                "  supplier_words"
+                "  .WHERE(HAS(CROSS(customer_words).WHERE(supp_word == cust_word)))"
+                ")\n"
+                "result = TPCH.CALCULATE(n_double_words=COUNT(match_words))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_double_words": [1249],
+                    }
+                ),
+                "explode_11",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
+                "result = ("
+                "  array_data"
+                "  .CALCULATE(key)"
+                "  .EXPLODE(arr, 'exploded_array', value_name='arr_val', version='array', filtering=True, is_distinct=True)"
+                "  .PARTITION(name='groups', by=(key, arr_val))"
+                "  .CALCULATE(key, arr_val)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": ["A", "C", "C", "C", "C", "D", "D"],
+                        "arr_val": [1, 2, 3, None, 4, 5, 6],
+                    }
+                ),
+                "explode_12",
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "key": ["A", "B", "C", "D"],
+                            "arr": [[1], [], [2, 3, None, 4], [5, 6]],
+                        }
+                    )
+                },
+            ),
+            id="explode_12",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),
