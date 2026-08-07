@@ -1,0 +1,13 @@
+{
+  "pydough": "result = nations.key",
+  "explain_output": {
+    "error": true,
+    "error_type": "expression_not_collection",
+    "message": "Expected a collection, but received an expression: TPCH.nations.key. Did you mean to use explain_term?",
+    "details": {},
+    "hint": "The result is an expression, not a collection. Wrap it in a collection operation (CALCULATE, WHERE) or use pydough.explain_term() instead.",
+    "steps": [],
+    "schema": null
+  },
+  "explain_output_md": "error_expression_not_collection.md"
+}

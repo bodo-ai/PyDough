@@ -3,22 +3,54 @@ Shared helpers used by both `explain` and `explain_llm`.
 """
 
 __all__ = [
+    "describe_expression",
+    "describe_subcollection_arg",
     "extract_conditions",
     "extract_terms",
     "find_source_collection",
+    "generate_query_summary",
+    "generate_step_notes",
     "qualify_safely",
 ]
 
+import re
+
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
+from pydough.pydough_operators import (
+    BinaryOperator,
+    SqlAliasExpressionFunctionOperator,
+    SqlMacroExpressionFunctionOperator,
+    SqlWindowAliasExpressionFunctionOperator,
+)
 from pydough.qdag import (
+    BackReferenceExpression,
+    Calculate,
+    ChildOperatorChildAccess,
+    ChildReferenceCollection,
+    ChildReferenceExpression,
+    ColumnProperty,
     ExpressionFunctionCall,
+    GlobalContext,
+    Literal,
+    OrderBy,
+    PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
+    Reference,
+    Singular,
+    SubCollection,
     TableCollection,
+    Where,
+    WindowCall,
+)
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.unqualified import UnqualifiedNode, qualify_node
+from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 
 def extract_terms(
@@ -87,10 +119,29 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
         (e.g. global calc or user-generated collection root).
     """
     current: PyDoughCollectionQDAG | None = node
-    while current is not None:
+    visited: set[int] = set()
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
         if isinstance(current, TableCollection):
             return current.collection.name
-        current = getattr(current, "preceding_context", None)
+        elif isinstance(current, PyDoughUserGeneratedCollectionQDag):
+            return current.name
+        elif isinstance(current, ChildOperatorChildAccess):
+            current = current.child_access
+        elif isinstance(current, PartitionBy) and hasattr(current, "child"):
+            # PartitionBy.ancestor_context jumps directly to GlobalContext,
+            # skipping the collection being partitioned (e.g.
+            # customers.WHERE(...).orders).  Get that chain via child instead.
+            current = current.child
+        else:
+            nxt: PyDoughCollectionQDAG | None = getattr(
+                current, "preceding_context", None
+            )
+            if nxt is None:
+                # At a ChildAccess (SubCollection etc.) — cross into the
+                # ancestor_context chain to find the parent collection.
+                nxt = getattr(current, "ancestor_context", None)
+            current = nxt
     return None
 
 
@@ -115,3 +166,816 @@ def qualify_safely(
         return qualify_node(node, session), None
     except Exception as e:
         return None, e
+
+
+def _is_cross(node: TableCollection) -> bool:
+    """
+    Returns True if this ``TableCollection`` was produced by a CROSS join.
+
+    When ``left.CROSS(right)`` is qualified, PyDough creates an intermediate
+    ``GlobalContext(ancestor=left_collection)`` and uses it as the
+    ``ancestor_context`` of the right ``TableCollection``.  A plain root
+    table access (e.g. ``nations``) also has a ``GlobalContext`` as its
+    ``ancestor_context``, but that GlobalContext's own ``ancestor_context``
+    is ``None``.  The nested ancestor is therefore the distinguishing signal.
+
+    Args:
+        `node`: a ``TableCollection`` QDAG node.
+
+    Returns:
+        ``True`` when the node was produced by a CROSS join, ``False``
+        otherwise.
+    """
+    return (
+        isinstance(node.ancestor_context, GlobalContext)
+        and node.ancestor_context.ancestor_context is not None
+    )
+
+
+def describe_subcollection_arg(
+    collection: PyDoughCollectionQDAG,
+) -> dict:
+    """
+    Produces a structured description of a collection used as an argument to
+    an aggregation or predicate operator (``COUNT``, ``NDISTINCT``, ``HAS``,
+    ``HASNOT``).
+
+    The description encodes how the collection is accessed: which subcollection
+    relationships were traversed (``access_path``) and which explicit filters
+    were applied (``filters``).  When the access path is non-empty the
+    aggregation is implicitly scoped to each parent row via relationship
+    navigation — a correct PyDough pattern — so ``implicit_scope_note`` is set
+    to a human-readable explanation.  When the access path is empty (e.g. an
+    unrelated collection was cross-joined in) the note is ``None`` and
+    ``generate_step_notes`` may emit a scoping warning instead.
+
+    Args:
+        `collection`: the QDAG collection node that is the aggregation arg.
+
+    Returns:
+        A dict with keys:
+        - ``"name"``  — display name for the collection (first subcollection
+          property name, or source table name as fallback).
+        - ``"access_path"``  — ordered list of subcollection property names
+          traversed from the parent context to reach this collection.
+        - ``"filters"``  — list of condition strings (``to_string()`` of each
+          AND leaf) from any ``Where`` nodes in the chain.
+        - ``"implicit_scope_note"``  — explanatory string when ``access_path``
+          is non-empty; ``None`` otherwise.
+    """
+    access_path: list[str] = []
+    filters: list[str] = []
+    user_gen: PyDoughUserGeneratedCollectionQDag | None = None
+
+    # Walk the preceding_context chain collecting SubCollection hops and
+    # Where conditions.  SubCollection.preceding_context is always None
+    # (it is a ChildAccess), so the loop naturally terminates there.
+    # ChildOperatorChildAccess is a transparent wrapper — unwrap it via
+    # .child_access so the walk continues into the real subcollection node.
+    current: PyDoughCollectionQDAG | None = collection
+    while current is not None:
+        if isinstance(current, PyDoughUserGeneratedCollectionQDag):
+            user_gen = current
+        if isinstance(current, Where):
+            for cond in extract_conditions(current.condition):
+                filters.append(cond.to_string())
+            current = current.preceding_context
+        elif isinstance(current, SubCollection):
+            access_path.insert(0, current.subcollection_property.name)
+            current = None  # ChildAccess — always None
+        elif isinstance(current, ChildOperatorChildAccess):
+            current = current.child_access
+        else:
+            current = getattr(current, "preceding_context", None)
+
+    # Use the first hop as the display name; fall back to the source table.
+    # For cross-origin collections, show "left × right" so the cartesian
+    # product semantics are not lost by reporting only the right side.
+    if access_path:
+        name: str = access_path[0]
+    elif isinstance(collection, TableCollection) and _is_cross(collection):
+        assert collection.ancestor_context is not None
+        assert collection.ancestor_context.ancestor_context is not None
+        _left = collection.ancestor_context.ancestor_context.name
+        _right = collection.collection.name
+        name = f"{_left} × {_right}"
+    else:
+        name = find_source_collection(collection) or "unknown"
+
+    # Non-empty access_path → row-level scoping via relationship navigation.
+    implicit_scope_note: str | None = None
+    if access_path:
+        path_str: str = " → ".join(f"'{p}'" for p in access_path)
+        implicit_scope_note = (
+            f"Aggregating '{name}' which is accessed via relationship "
+            f"navigation ({path_str}). Row-level scoping to the parent row "
+            f"is implicit in this access path."
+        )
+
+    # A user-generated collection (range/DataFrame) has no metadata-graph
+    # definition, so its name alone (e.g. "r") tells the reader nothing —
+    # spell out what it actually contains.
+    user_generated_note: str | None = None
+    if user_gen is not None:
+        inner = user_gen.collection
+        if isinstance(inner, RangeGeneratedCollection):
+            step_str = f", step={inner.step}" if inner.step != 1 else ""
+            user_generated_note = (
+                f"'{name}' is a user-generated range collection: "
+                f"range({inner.start}, {inner.end}{step_str}) in column "
+                f"'{inner.column_name}'."
+            )
+        elif isinstance(inner, DataframeGeneratedCollection):
+            col_names = [c for c, _ in inner.column_names_and_types]
+            user_generated_note = (
+                f"'{name}' is a user-generated DataFrame collection with "
+                f"{len(inner)} row(s), columns: {', '.join(col_names)}."
+            )
+
+    return {
+        "name": name,
+        "access_path": access_path,
+        "filters": filters,
+        "implicit_scope_note": implicit_scope_note,
+        "user_generated_note": user_generated_note,
+    }
+
+
+def _resolve_collection_arg(
+    arg: PyDoughCollectionQDAG,
+    parent: PyDoughCollectionQDAG | None,
+) -> PyDoughCollectionQDAG:
+    """
+    Resolves a collection argument to the underlying collection node.
+
+    Inside a ``CALCULATE``, aggregation arguments are represented as
+    ``ChildReferenceCollection`` nodes that point to the parent's child list
+    by index.  This function follows that indirection so
+    ``describe_subcollection_arg`` receives the raw ``SubCollection`` (or
+    user-generated collection) rather than a reference wrapper.
+
+    Args:
+        `arg`: the collection arg from an ``ExpressionFunctionCall``.
+        `parent`: the parent ``CALCULATE`` (or other child operator) that owns
+          the children list.  May be ``None`` if not available.
+
+    Returns:
+        The resolved ``PyDoughCollectionQDAG``, or ``arg`` unchanged if the
+        resolution path is unavailable.
+    """
+    if (
+        isinstance(arg, ChildReferenceCollection)
+        and parent is not None
+        and hasattr(parent, "children")
+        and arg.child_idx < len(parent.children)
+    ):
+        child: PyDoughCollectionQDAG = parent.children[arg.child_idx]
+        if isinstance(child, ChildOperatorChildAccess):
+            return child.child_access
+    # ChildReferenceCollection always carries the underlying collection via
+    # .collection — use it as a fallback when the children-list path fails.
+    if isinstance(arg, ChildReferenceCollection):
+        return arg.collection
+    return arg
+
+
+def describe_expression(
+    expr: PyDoughExpressionQDAG,
+    parent: PyDoughCollectionQDAG | None = None,
+) -> dict:
+    """
+    Produces a structured description of a QDAG expression node.
+
+    The ``"kind"`` field identifies the expression category; ``"text"`` is
+    always the canonical ``to_string()`` representation.  Aggregation and
+    predicate operators whose sole argument is a collection receive the full
+    ``describe_subcollection_arg`` treatment so downstream callers (notably
+    ``generate_step_notes``) can detect implicit scoping.
+
+    Args:
+        `expr`: the QDAG expression node to describe.
+        `parent`: the parent collection node (e.g. ``Calculate``) that owns
+          the child list.  Needed to resolve ``ChildReferenceCollection``
+          arguments; pass ``None`` when not available.
+
+    Returns:
+        A dict with at least ``{"kind": str, "text": str}``.  Additional
+        keys depend on the expression kind.
+    """
+    text: str = expr.to_string()
+
+    match expr:
+        case ChildReferenceExpression():
+            # Must come before Reference() — ChildReferenceExpression and
+            # BackReferenceExpression are both subclasses of Reference and
+            # would be matched by case Reference() first otherwise.
+            return {
+                "kind": "ChildReference",
+                "text": text,
+                "term_name": expr.term_name,
+                "child_idx": expr.child_idx,
+            }
+
+        case BackReferenceExpression():
+            return {
+                "kind": "BackReference",
+                "text": text,
+                "term_name": expr.term_name,
+                "back_levels": expr.back_levels,
+            }
+
+        case Reference():
+            return {"kind": "Reference", "term_name": expr.term_name}
+
+        case ColumnProperty():
+            return {
+                "kind": "Column",
+                "text": text,
+                "collection": expr.column_property.collection.name,
+                "column": expr.column_property.name,
+                "data_type": expr.pydough_type.json_string,
+            }
+
+        case Literal():
+            return {
+                "kind": "Literal",
+                "text": text,
+                "value": expr.value,
+                "data_type": expr.pydough_type.json_string,
+            }
+
+        case ExpressionFunctionCall():
+            op = expr.operator
+            # Aggregation/predicate operators whose single arg is a collection
+            # get the full subcollection description.
+            if (
+                op in (pydop.COUNT, pydop.NDISTINCT)
+                and len(expr.args) == 1
+                and isinstance(expr.args[0], PyDoughCollectionQDAG)
+            ):
+                resolved: PyDoughCollectionQDAG = _resolve_collection_arg(
+                    expr.args[0], parent
+                )
+                # User-generated collections produce an internal QDAG repr in
+                # to_string() that is not human-readable; use a clean form.
+                # Cross-origin collections embed the graph namespace in
+                # to_string(); use "COUNT(left × right)" instead.
+                if isinstance(resolved, PyDoughUserGeneratedCollectionQDag):
+                    display_text = f"{op.function_name}({resolved.name})"
+                elif isinstance(resolved, TableCollection) and _is_cross(resolved):
+                    assert resolved.ancestor_context is not None
+                    assert resolved.ancestor_context.ancestor_context is not None
+                    _left = resolved.ancestor_context.ancestor_context.name
+                    _right = resolved.collection.name
+                    display_text = f"{op.function_name}({_left} × {_right})"
+                else:
+                    display_text = text
+                return {
+                    "kind": "Aggregation",
+                    "text": display_text,
+                    "function": op.function_name,
+                    "args": [describe_subcollection_arg(resolved)],
+                }
+
+            if (
+                op in (pydop.HAS, pydop.HASNOT)
+                and len(expr.args) == 1
+                and isinstance(expr.args[0], PyDoughCollectionQDAG)
+            ):
+                resolved = _resolve_collection_arg(expr.args[0], parent)
+                return {
+                    "kind": "Predicate",
+                    "text": text,
+                    "function": op.function_name,
+                    "args": [describe_subcollection_arg(resolved)],
+                }
+
+            if isinstance(op, BinaryOperator):
+                left_arg, right_arg = expr.args[0], expr.args[1]
+                return {
+                    "kind": "BinaryOp",
+                    "text": text,
+                    "operator": op.function_name,
+                    "left": describe_expression(left_arg, parent)
+                    if isinstance(left_arg, PyDoughExpressionQDAG)
+                    else {"kind": "Unknown", "text": str(left_arg)},
+                    "right": describe_expression(right_arg, parent)
+                    if isinstance(right_arg, PyDoughExpressionQDAG)
+                    else {"kind": "Unknown", "text": str(right_arg)},
+                }
+
+            if isinstance(op, SqlAliasExpressionFunctionOperator):
+                return {
+                    "kind": "UDFAlias",
+                    "text": text,
+                    "function": op.function_name,
+                    "sql_alias": op.sql_function_alias,
+                    "is_aggregation": op.is_aggregation,
+                }
+
+            if isinstance(op, SqlMacroExpressionFunctionOperator):
+                return {
+                    "kind": "UDFMacro",
+                    "text": text,
+                    "function": op.function_name,
+                    "macro_text": op.macro_text,
+                    "is_aggregation": op.is_aggregation,
+                }
+
+            # Generic built-in function call
+            return {
+                "kind": "FunctionCall",
+                "text": text,
+                "function": op.function_name,
+                "is_aggregation": op.is_aggregation,
+            }
+
+        case WindowCall():
+            op = expr.window_operator
+            if isinstance(op, SqlWindowAliasExpressionFunctionOperator):
+                return {
+                    "kind": "UDFWindowCall",
+                    "text": text,
+                    "function": op.function_name,
+                    "sql_alias": op.sql_function_alias,
+                }
+            return {
+                "kind": "WindowCall",
+                "text": text,
+                "function": op.function_name,
+            }
+
+        case _:
+            # Fallback — always returns something meaningful
+            return {"kind": "Unknown", "text": text}
+
+
+def generate_step_notes(
+    node: PyDoughCollectionQDAG,
+    step: dict,
+    context_introducing_terms: list[str],
+) -> list[str]:
+    """
+    Produces a list of human-readable notes for a single step in the
+    ``explain_llm`` output.
+
+    Notes serve two purposes:
+    1. **Informational** — flag correct but non-obvious patterns (e.g.
+       implicit row-level scoping via relationship navigation).
+    2. **Warning** — flag potentially incorrect patterns (e.g. aggregating a
+       cross-joined collection without an explicit filter that ties it to the
+       context-introducing terms).
+
+    The ``context_introducing_terms`` list carries expression names that were
+    made available by the most recent CROSS or ``PartitionBy`` step.  These
+    are the terms that should appear in filters for the aggregation to be
+    properly scoped.
+
+    Args:
+        `node`: the QDAG node for this step.
+        `step`: the already-built step dict (may inspect ``"term_details"``,
+          ``"keys"``, ``"child_name"``, etc.).
+        `context_introducing_terms`: expression names introduced by the most
+          recent context-introducing step (CROSS or PartitionBy).  Reset by
+          the step-building loop whenever a new such step is encountered.
+
+    Returns:
+        A list of note strings, possibly empty.  Always emitted so the output
+        shape is consistent.
+    """
+    notes: list[str] = []
+
+    # Walk an expression tree checking for any WindowCall node.  Defined here
+    # so it is reusable across all case branches below.
+    def _has_window(expr: PyDoughExpressionQDAG) -> bool:
+        if isinstance(expr, WindowCall):
+            return True
+        for arg in getattr(expr, "args", []) or []:
+            if isinstance(arg, PyDoughExpressionQDAG) and _has_window(arg):
+                return True
+        return False
+
+    def _find_window_calls(expr: PyDoughExpressionQDAG) -> list[WindowCall]:
+        found: list[WindowCall] = [expr] if isinstance(expr, WindowCall) else []
+        for arg in getattr(expr, "args", []) or []:
+            if isinstance(arg, PyDoughExpressionQDAG):
+                found.extend(_find_window_calls(arg))
+        return found
+
+    def _resolve_window_scope(
+        window: WindowCall, base: PyDoughCollectionQDAG | None
+    ) -> str | None:
+        # `levels` is the number of ancestor_context hops from the collection
+        # the window function was qualified against (see qualification.py's
+        # `per=` handling) — walk the same number of hops to recover the name
+        # of the ancestor collection it actually ranks/partitions within.
+        if window.levels is None or base is None:
+            return None
+        ancestor: PyDoughCollectionQDAG | None = base
+        for _ in range(window.levels):
+            if ancestor is None:
+                return None
+            ancestor = ancestor.ancestor_context
+        return getattr(ancestor, "name", None)
+
+    _WINDOW_NOTE = (
+        "Note: this step uses a window function (e.g. RANKING, PERCENTILE). "
+        "PyDough window functions commonly use 'per=' to rank within partitions "
+        "of an ancestor collection rather than globally. The partition scope is "
+        "resolved at SQL generation time and is NOT shown in the expression text "
+        "— check the source code for a 'per=' argument before assuming this is "
+        "a global rank."
+    )
+
+    def _window_note(
+        windows: list[WindowCall], base: PyDoughCollectionQDAG | None
+    ) -> str:
+        scopes: list[str] = []
+        for w in windows:
+            name = _resolve_window_scope(w, base)
+            if name is not None and name not in scopes:
+                scopes.append(name)
+        if not scopes:
+            return _WINDOW_NOTE
+        scope_str = ", ".join(f"'{s}'" for s in scopes)
+        return (
+            f"Note: this step uses a window function (e.g. RANKING, "
+            f"PERCENTILE) scoped per {scope_str} — it ranks/partitions "
+            f"independently within each {scope_str} group, not globally "
+            f"across all rows."
+        )
+
+    match node:
+        case Singular():
+            notes.append(
+                "SINGULAR asserts that this collection is 1-to-1 with its "
+                "parent context. The PyDough compiler trusts this declaration "
+                "without runtime verification."
+            )
+
+        case TableCollection() if _is_cross(node):
+            # Both collection names are recoverable from the QDAG structure:
+            # the right collection is this node; the left is the ancestor of
+            # the intermediate GlobalContext that CROSS qualification inserts.
+            assert node.ancestor_context is not None
+            assert node.ancestor_context.ancestor_context is not None
+            left_name = node.ancestor_context.ancestor_context.name
+            right_name = node.collection.name
+            notes.append(
+                f"Each row now represents a unique combination of "
+                f"'{left_name}' \u00d7 '{right_name}'. After CROSS, only "
+                f"'{right_name}' terms are directly accessible as "
+                f"expressions; '{left_name}' terms were available before "
+                f"the CROSS."
+            )
+
+        case Where():
+            preceding = node.preceding_context
+            if isinstance(preceding, TableCollection) and _is_cross(preceding):
+                # This Where wraps the right-hand argument to CROSS directly
+                # (e.g. `left.CROSS(right.WHERE(cond))`), so it filters
+                # `right` before pairing, not the joined result — even
+                # though it renders immediately after the Cross step.
+                right_name = preceding.collection.name
+                notes.append(
+                    f"This condition filters '{right_name}' before it is "
+                    f"paired by CROSS — it is part of the right-hand "
+                    f"argument, not a filter on the joined result."
+                )
+            windows = _find_window_calls(node.condition)
+            if windows:
+                notes.append(_window_note(windows, node.preceding_context))
+
+        case PartitionBy():
+            keys = step.get("keys", [])
+            child_name = step.get("child_name", "")
+            notes.append(
+                f"The partition key(s) {keys} identify each group and are "
+                f"accessible at the group level. Row-level data is accessible "
+                f"via the child collection '{child_name}'; aggregating over it "
+                f"(e.g. COUNT('{child_name}')) operates on the rows within "
+                f"that group."
+            )
+
+        case Calculate():
+            for term_name, detail in step.get("term_details", {}).items():
+                kind = detail.get("kind")
+                if kind == "Aggregation":
+                    for arg in detail.get("args", []):
+                        user_generated_note = arg.get("user_generated_note")
+                        if user_generated_note is not None:
+                            notes.append(f"Note: {user_generated_note}")
+                        implicit_note = arg.get("implicit_scope_note")
+                        if implicit_note is not None:
+                            # Correct pattern: scoping is via relationship nav.
+                            access_path = arg.get("access_path", [])
+                            nav_root = access_path[0] if access_path else arg["name"]
+                            notes.append(
+                                f"Note: '{term_name}' aggregates '{arg['name']}'"
+                                f" \u2014 scoping is implicit via '{nav_root}' "
+                                f"relationship navigation, not an explicit filter."
+                            )
+                        elif context_introducing_terms:
+                            # Warn only when context-introducing terms exist but
+                            # none appear in this arg's filters.  Use token-based
+                            # matching to avoid false negatives from substrings
+                            # (e.g. "key" inside "account_key").
+                            filters_text = " ".join(arg.get("filters", []))
+                            filter_tokens = set(re.split(r"\W+", filters_text))
+                            missing = [
+                                t
+                                for t in context_introducing_terms
+                                if t not in filter_tokens
+                            ]
+                            if missing:
+                                notes.append(
+                                    f"Warning: '{term_name}' aggregates "
+                                    f"'{arg['name']}' without filtering on "
+                                    f"context-introducing term(s) {missing}. "
+                                    f"This may produce unintended cross-product "
+                                    f"results."
+                                )
+                elif kind == "ChildReference":
+                    # Singular subcollection reference (e.g. region.name inside
+                    # nations.CALCULATE).  Row-level scoping via the relationship
+                    # is implicit \u2014 alert the judge so it doesn't confuse this
+                    # with a global or unscoped reference.
+                    text = detail.get("text", term_name)
+                    notes.append(
+                        f"Note: '{term_name}' accesses '{text}' via implicit "
+                        f"singular relationship navigation \u2014 scoping to the "
+                        f"parent row is enforced by the relationship, not by an "
+                        f"explicit filter."
+                    )
+                elif kind == "WindowCall":
+                    try:
+                        expr = node.get_expr(term_name)
+                        notes.append(
+                            _window_note(
+                                _find_window_calls(expr), node.preceding_context
+                            )
+                        )
+                    except Exception:
+                        notes.append(_WINDOW_NOTE)
+                else:
+                    # Check for window functions nested inside other expression
+                    # kinds (e.g. a window function inside a BinaryOp term).
+                    try:
+                        expr = node.get_expr(term_name)
+                        windows = _find_window_calls(expr)
+                        if windows:
+                            notes.append(_window_note(windows, node.preceding_context))
+                    except Exception:
+                        pass
+
+        case OrderBy():
+            # Covers both OrderBy and its TopK subclass.
+            for col in node.collation:
+                windows = _find_window_calls(col.expr)
+                if windows:
+                    notes.append(_window_note(windows, node.preceding_context))
+                    break
+
+    return notes
+
+
+def _cond_texts(where_step: dict) -> list[str]:
+    """Extracts condition text strings from a Where step dict."""
+
+    def _text(cond: object) -> str:
+        if not isinstance(cond, dict):
+            return str(cond)
+        if "text" in cond:
+            return cond["text"]
+        if cond.get("kind") == "Reference":
+            return cond.get("term_name", str(cond))
+        return str(cond)
+
+    return [_text(cond) for cond in where_step.get("conditions", [])]
+
+
+def generate_query_summary(steps: list[dict]) -> str:
+    """
+    Returns a single deterministic plain-English sentence summarising what a
+    PyDough query does.
+
+    Generated purely from the already-built ``steps`` dict —
+    no QDAG re-walking, no external calls.  Each clause is omitted when the
+    corresponding step type is absent.
+
+    Clause order:
+    1. Subject  — ``TableCollection`` / ``Cross`` / ``UserGeneratedCollection``
+    2. Filter   — all ``Where`` step conditions joined with ``" and "``
+    3. Partition — ``PartitionBy`` keys
+    4. Compute  — final ``Calculate`` step (refs + aggregations)
+    5. Limit/Order — ``TopK`` or ``OrderBy``
+
+    Args:
+        ``steps``: ordered list of step dicts produced by ``_collect_steps``.
+
+    Returns:
+        A single sentence ending with ``.``.
+    """
+    parts: list[str] = []
+
+    # Split WHERE conditions by hierarchy level: conditions before the first
+    # SubCollection/Cross belong to the root (left-hand) collection; conditions
+    # after belong to a deeper subcollection or the joined result and must be
+    # described separately so the judge understands they filter a different
+    # level of the data. Computed up front because a pre-pairing filter on the
+    # left-hand side must be described *before* the Cross clause below, not
+    # after it, to keep the sentence in chronological order.
+    top_conds: list[str] = []
+    sub_conds: list[str] = []
+    past_first_sub: bool = False
+    for s in steps:
+        if s["type"] in ("SubCollection", "Cross"):
+            past_first_sub = True
+        elif s["type"] == "Where":
+            (sub_conds if past_first_sub else top_conds).extend(_cond_texts(s))
+
+    # ------------------------------------------------------------------ #
+    # 1. Subject                                                           #
+    # ------------------------------------------------------------------ #
+    cross_step: dict | None = next((s for s in steps if s["type"] == "Cross"), None)
+    table_step: dict | None = next(
+        (s for s in steps if s["type"] == "TableCollection"), None
+    )
+    user_step: dict | None = next(
+        (s for s in steps if s["type"] == "UserGeneratedCollection"), None
+    )
+
+    # top_conds_consumed tracks whether the pre-pairing filter clause has
+    # already been folded into the Subject clause below, so section 2 doesn't
+    # repeat it.
+    top_conds_consumed = False
+    if cross_step and top_conds:
+        parts.append(
+            f"Accesses '{cross_step['left']}', filtered to rows where "
+            + " and ".join(top_conds)
+        )
+        parts.append(
+            f"then pairs every '{cross_step['left']}' row with every "
+            f"'{cross_step['right']}' row"
+        )
+        top_conds_consumed = True
+    elif cross_step:
+        parts.append(
+            f"Pairs every '{cross_step['left']}' row with every "
+            f"'{cross_step['right']}' row"
+        )
+    elif table_step:
+        parts.append(f"Accesses '{table_step['collection']}'")
+    elif user_step:
+        parts.append(f"Accesses user-generated collection '{user_step['name']}'")
+    else:
+        # Global-level CALCULATE: infer subject from aggregation args across
+        # ALL Calculate steps (chained CALCULATEs put aggregations in earlier
+        # steps, not necessarily the last one).
+        agg_colls: list[str] = []
+        for s in steps:
+            if s["type"] != "Calculate":
+                continue
+            for tname in s.get("terms", []):
+                detail: dict = s.get("term_details", {}).get(tname, {})
+                if detail.get("kind") == "Aggregation":
+                    for arg_d in detail.get("args", []):
+                        cname: str | None = arg_d.get("name")
+                        if cname and cname != "unknown" and cname not in agg_colls:
+                            agg_colls.append(cname)
+        if agg_colls:
+            parts.append(
+                "Graph-level aggregation over collection(s): "
+                + ", ".join(f"'{c}'" for c in agg_colls)
+            )
+        else:
+            return "Graph-level context with no collection access."
+
+    # ------------------------------------------------------------------ #
+    # 2. Filter                                                            #
+    # ------------------------------------------------------------------ #
+    if top_conds and not top_conds_consumed:
+        parts.append("filtered to rows where " + " and ".join(top_conds))
+
+    # Subcollection traversal — e.g. 'customers' -> 'orders' -> 'lines' — so
+    # the judge knows which collection downstream clauses (partition, filter,
+    # compute) actually operate on, rather than assuming it's still the root.
+    sub_coll_steps: list[dict] = [s for s in steps if s["type"] == "SubCollection"]
+    if sub_coll_steps:
+        hops: str = " then ".join(f"'{s['to_collection']}'" for s in sub_coll_steps)
+        parts.append(f"then navigates to {hops}")
+
+    if sub_conds:
+        parts.append(
+            "then subcollection filtered to rows where " + " and ".join(sub_conds)
+        )
+
+    # ------------------------------------------------------------------ #
+    # 3. Partition                                                         #
+    # ------------------------------------------------------------------ #
+    partition_step: dict | None = next(
+        (s for s in steps if s["type"] == "PartitionBy"), None
+    )
+    if partition_step:
+        keys_str: str = ", ".join(partition_step.get("keys", []))
+        parts.append(f"partitioned by {keys_str}")
+
+    # ------------------------------------------------------------------ #
+    # 4. Compute                                                           #
+    # ------------------------------------------------------------------ #
+    # Use the last Calculate for output column names, but collect aggregation
+    # descriptions from ALL Calculate steps — chained patterns like
+    # .CALCULATE(n=COUNT(...)).TOP_K(...).CALCULATE(col) put the aggregation
+    # in an earlier step, not the final one.
+    calc_step: dict | None = next(
+        (s for s in reversed(steps) if s["type"] == "Calculate"), None
+    )
+    if calc_step:
+        # Annotate computed (non-Reference, non-Aggregation) terms with their
+        # expression so the judge can see e.g. "full_name (JOIN_STRINGS(...))"
+        # instead of just "full_name", making field-combination patterns visible.
+        _MAX_EXPR_LEN = 60
+        ref_terms: list[str] = []
+        for _n in calc_step.get("terms", []):
+            _d = calc_step.get("term_details", {}).get(_n, {})
+            _kind = _d.get("kind", "")
+            if _kind == "Reference":
+                ref_terms.append(_n)
+            elif _kind != "Aggregation":
+                _text = _d.get("text", "")
+                if _text and len(_text) <= _MAX_EXPR_LEN:
+                    ref_terms.append(f"{_n} ({_text})")
+                else:
+                    ref_terms.append(f"{_n} (computed)")
+        agg_terms: list[str] = []
+
+        first_calc_idx: int = next(
+            (i for i, s in enumerate(steps) if s["type"] == "Calculate"),
+            len(steps),
+        )
+        has_partition: bool = any(
+            s["type"] == "PartitionBy" for s in steps[:first_calc_idx]
+        )
+        for s in steps:
+            if s["type"] != "Calculate":
+                continue
+            for name in s.get("terms", []):
+                detail = s.get("term_details", {}).get(name, {})
+                if detail.get("kind") != "Aggregation":
+                    continue
+                fn: str = detail.get("function", "AGG").lower()
+                arg_name: str = (detail.get("args") or [{}])[0].get("name", "?")
+                # Use explicit semantic labels so the judge can distinguish
+                # "counting records per group" (COUNT inside PARTITION) from
+                # "counting all records" (global COUNT) and from
+                # "finding a max/min value" (TOP_K or MAX/MIN aggregation).
+                if fn == "count":
+                    scope = " per group" if has_partition else ""
+                    agg_terms.append(f"counting {arg_name} records{scope} as '{name}'")
+                elif fn == "ndistinct":
+                    scope = " per group" if has_partition else ""
+                    agg_terms.append(f"counting distinct {arg_name}{scope} as '{name}'")
+                else:
+                    agg_terms.append(f"{fn}({arg_name}) as '{name}'")
+                # Don't re-list aggregation output names in ref_terms
+                if name in ref_terms:
+                    ref_terms.remove(name)
+
+        compute_parts: list[str] = []
+        if ref_terms:
+            compute_parts.append("selecting " + ", ".join(ref_terms))
+        if agg_terms:
+            compute_parts.append("computing " + ", ".join(agg_terms))
+        if compute_parts:
+            parts.append(" and ".join(compute_parts))
+
+    # ------------------------------------------------------------------ #
+    # 5. Limit / Order                                                     #
+    # ------------------------------------------------------------------ #
+    topk_step: dict | None = next((s for s in steps if s["type"] == "TopK"), None)
+    order_step: dict | None = next((s for s in steps if s["type"] == "OrderBy"), None)
+    sort_step: dict | None = topk_step or order_step
+
+    if sort_step:
+        collation: list[dict] = sort_step.get("collation", [])
+        _DIRECTION_WORDS: dict[str, str] = {"ASC": "ascending", "DESC": "descending"}
+        by_str: str = ", ".join(
+            f"{c['text']} {_DIRECTION_WORDS.get(c['direction'], c['direction'])}"
+            for c in collation
+        )
+        if topk_step:
+            suffix: str = f" by {by_str}" if by_str else ""
+            parts.append(f"keeping the top {sort_step['limit']} rows{suffix}")
+        elif by_str:
+            parts.append(f"ordered by {by_str}")
+
+    # ------------------------------------------------------------------ #
+    # Compose                                                              #
+    # ------------------------------------------------------------------ #
+    if not parts:
+        return "No operations detected."
+
+    summary: str = parts[0]
+    for p in parts[1:]:
+        summary += ", " + p
+    return summary.rstrip(".") + "."

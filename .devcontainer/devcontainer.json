@@ -19,7 +19,9 @@
                 "ms-python.vscode-pylance",
                 // Jupyter
                 "ms-toolsai.jupyter",
-                "ms-toolsai.vscode-jupyter-powertoys"
+                "ms-toolsai.vscode-jupyter-powertoys",
+                // Lint & format
+                "charliermarsh.ruff"
             ]
         }
     },
