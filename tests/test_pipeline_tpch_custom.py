@@ -4670,6 +4670,131 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = ("
+                "  regions"
+                "  .CALCULATE(name)"
+                "  .EXPLODE(comment, 'words', value_name='val', index_name='idx', version='string', delimiter=' ')"
+                "  .PARTITION(name='region_partition', by=name)"
+                "  .CALCULATE(name, n_words=COUNT(words), words_list=LISTOF(words.val))"
+                "  .ORDER_BY(name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_words": [17, 6, 6, 7, 13],
+                        "words_list": [
+                            [
+                                "lar",
+                                "deposits.",
+                                "blithely",
+                                "final",
+                                "packages",
+                                "cajole.",
+                                "regular",
+                                "waters",
+                                "are",
+                                "final",
+                                "requests.",
+                                "regular",
+                                "accounts",
+                                "are",
+                                "according",
+                                "to",
+                                "",
+                            ],
+                            ["hs", "use", "ironic,", "even", "requests.", "s"],
+                            ["ges.", "thinly", "even", "pinto", "beans", "ca"],
+                            [
+                                "ly",
+                                "final",
+                                "courts",
+                                "cajole",
+                                "furiously",
+                                "final",
+                                "excuse",
+                            ],
+                            [
+                                "uickly",
+                                "special",
+                                "accounts",
+                                "cajole",
+                                "carefully",
+                                "blithely",
+                                "close",
+                                "requests.",
+                                "carefully",
+                                "final",
+                                "asymptotes",
+                                "haggle",
+                                "furiousl",
+                            ],
+                        ],
+                    }
+                ),
+                "explode_09",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "MYSQL"},
+            ),
+            id="explode_09",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(cleaned_comment=STRIP(REPLACE(REPLACE(REPLACE(REPLACE(comment, ';', ''), ',', ''), ':', ''), '.', ''), ' '))"
+                "  .EXPLODE(cleaned_comment, 'words', value_name='val', index_name='idx', version='string', delimiter=' ')"
+                "  .CALCULATE(word_length=LENGTH(val))"
+                "  .PARTITION(name='lengths', by=word_length)"
+                "  .CALCULATE(word_length, n_words=COUNT(words), n_unique_words=NDISTINCT(words.val))"
+                "  .ORDER_BY(word_length)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "word_length": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "n_words": [
+                            40111,
+                            63249,
+                            180758,
+                            127312,
+                            303297,
+                            172864,
+                            223795,
+                            233379,
+                            141958,
+                            17193,
+                            21597,
+                            26271,
+                            478,
+                            168,
+                        ],
+                        "n_unique_words": [
+                            27,
+                            152,
+                            298,
+                            363,
+                            346,
+                            282,
+                            226,
+                            159,
+                            112,
+                            66,
+                            38,
+                            21,
+                            11,
+                            2,
+                        ],
+                    }
+                ),
+                "explode_10",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE"},
+            ),
+            id="explode_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),
