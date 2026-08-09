@@ -6888,9 +6888,7 @@ def test_pipeline_to_table_ddl(
     # that reference attached databases.
     # SQLite the only one that supports temporary views.
     # So the view will be created as TEMPORARY.
-    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
-        expected_create_statement += " TEMPORARY"
-    elif temp:
+    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp or temp:
         expected_create_statement += " TEMPORARY"
 
     expected_create_statement += table_or_view

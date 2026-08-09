@@ -326,7 +326,7 @@ def test_pipeline_e2e_oracle_custom_functions(
 @pytest.mark.oracle
 @pytest.mark.execute
 def test_pipeline_e2e_oracle_defog_custom(
-    defog_custom_oracle_test_data: PyDoughPandasTest,  # noqa: F811
+    defog_custom_oracle_test_data: PyDoughPandasTest,
     get_oracle_defog_graphs: graph_fetcher,
     defog_config: PyDoughConfigs,
     oracle_conn_db_context: Callable[[str], DatabaseContext],

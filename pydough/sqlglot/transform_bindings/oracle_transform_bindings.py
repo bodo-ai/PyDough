@@ -557,7 +557,7 @@ class OracleTransformBindings(BaseTransformBindings):
             ELSE
                 REGEXP_SUBSTR(
                     str,
-                    '(.*?)(' || REGEXP_REPLACE(delim, '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+                    '(.*?)(' || REGEXP_REPLACE(delim, '([][(){}.*+?^$|\\#-])', '\\\1') || '|$)',
                     1,
                     CASE
                         WHEN
