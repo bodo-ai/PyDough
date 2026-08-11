@@ -2625,7 +2625,7 @@ def test_pipeline_e2e_bodosql(
             "bodo_logger_messages", []
         ):
             assert log_message in captured_output, (
-                f"Expected log message not found: {log_message}"
+                f"Expected log message not found: {log_message}. Captured: {captured_output}"
             )
         bodo.user_logging.restore_default_bodo_verbose_level()
         bodo.user_logging.restore_default_bodo_verbose_logger()

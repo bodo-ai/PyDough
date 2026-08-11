@@ -52,7 +52,13 @@ SELECT
   DATE_TRUNC(
     'DAY',
     DATEADD(DAY, DAYOFWEEK(CAST(o_orderdate AS TIMESTAMP)) * -1, CAST(o_orderdate AS TIMESTAMP))
-  ) AS q
+  ) AS q,
+  CONCAT_WS(
+    ':',
+    TO_CHAR(o_orderdate, 'Mon'),
+    TO_CHAR(DATEADD(MONTH, 3, CAST(o_orderdate AS TIMESTAMP)), 'Mon'),
+    TO_CHAR(DATEADD(MONTH, -2, CAST(o_orderdate AS TIMESTAMP)), 'Mon')
+  ) AS r
 FROM tpch.orders
 WHERE
   CONTAINS(o_comment, 'fo')

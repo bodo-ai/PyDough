@@ -459,8 +459,8 @@ def test_division_by_zero_e2e(
         case DivisionByZeroBehavior.NULL:
             expected_df = pd.DataFrame({col_name: [None]})
         case DivisionByZeroBehavior.DATABASE:
-            if db_context.dialect == DatabaseDialect.TRINO:
-                # Trino returns INFINITY for division by zero
+            if db_context.dialect in (DatabaseDialect.TRINO, DatabaseDialect.DUCKDB):
+                # They return INFINITY for division by zero
                 expected_df = pd.DataFrame({col_name: [math.inf]})
             else:
                 # Other dialects that reach this far return NULL

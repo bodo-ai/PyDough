@@ -22,7 +22,6 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek
 from pydough.types import NumericType, PyDoughType
-from pydough.types.boolean_type import BooleanType
 from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
@@ -49,7 +48,7 @@ class DatabricksTransformBindings(BaseTransformBindings):
         pydop.LARGEST: "GREATEST",
     }
     """
-    Mapping of PyDough operators to equivalent Snowflake SQL function names
+    Mapping of PyDough operators to equivalent Databricks SQL function names
     These are used to generate anonymous function calls in SQLGlot
     """
 
@@ -60,21 +59,9 @@ class DatabricksTransformBindings(BaseTransformBindings):
         # SPLIT_PART raises INVALID_INDEX_OF_ZERO when the index is 0
         # instead of treating it as 1, so remap a 0 index to 1.
         assert len(args) == 3
-        index_arg: SQLGlotExpression = args[2]
-        index_expr: SQLGlotExpression = sqlglot_expressions.Case(
-            ifs=[
-                sqlglot_expressions.If(
-                    this=sqlglot_expressions.EQ(
-                        this=index_arg,
-                        expression=sqlglot_expressions.Literal.number(0),
-                    ),
-                    true=sqlglot_expressions.Literal.number(1),
-                )
-            ],
-            default=index_arg,
-        )
         return sqlglot_expressions.Anonymous(
-            this="SPLIT_PART", expressions=[args[0], args[1], index_expr]
+            this="SPLIT_PART",
+            expressions=[args[0], args[1], self._remap_zero_to_one(args[2])],
         )
 
     def convert_call_to_sqlglot(
@@ -89,25 +76,6 @@ class DatabricksTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
-
-    def convert_sum(
-        self, args: list[SQLGlotExpression], types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        """
-        Converts a SUM function call to its SQLGlot equivalent.
-        This method checks the type of the argument to determine whether to use
-        COUNT_IF (for BooleanType) or SUM (for other types).
-        Arguments:
-            `args` : The arguments to the SUM function.
-            `types` : The types of the arguments.
-        """
-        match types[0]:
-            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
-            case BooleanType():
-                return sqlglot_expressions.CountIf(this=args[0])
-            case _:
-                # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=args[0])
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -466,3 +434,23 @@ class DatabricksTransformBindings(BaseTransformBindings):
             ),
             expression=sqlglot_expressions.Literal.number(7),
         )
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        monthname(date)
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date: SQLGlotExpression = self.make_datetime_arg(args[0])
+        return sqlglot_expressions.Anonymous(this="monthname", expressions=[date])

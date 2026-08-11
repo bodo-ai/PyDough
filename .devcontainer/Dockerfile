@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/universal:2
+FROM mcr.microsoft.com/devcontainers/python:3.13
 
 COPY /demos/setup_tpch.sh setup_tpch.sh
 

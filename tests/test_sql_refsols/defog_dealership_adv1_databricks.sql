@@ -9,16 +9,19 @@ SELECT
     CAST(CAST(payments_received.payment_date AS TIMESTAMP) AS DATE)
   ) AS payment_week,
   COUNT(*) AS total_payments,
-  COUNT_IF(
-    (
+  COALESCE(
+    COUNT_IF(
       (
-        DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
-      ) % 7
-    ) IN (5, 6)
+        (
+          DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
+        ) % 7
+      ) IN (5, 6)
+    ),
+    0
   ) AS weekend_payments
-FROM main.payments_received AS payments_received
-JOIN main.sales AS sales
-  ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
+FROM defog.dealership.payments_received AS payments_received
+JOIN defog.dealership.sales AS sales
+  ON payments_received.sale_id = sales.id AND sales.sale_price > 30000
 WHERE
   CAST(DATEDIFF(
     DAY,

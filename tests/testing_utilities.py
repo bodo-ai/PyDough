@@ -42,6 +42,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -1579,10 +1580,10 @@ class PyDoughPandasTest:
         if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
             for col in result.columns:
                 result[col] = result[col].apply(
-                    lambda x: sorted(x) if isinstance(x, list) else x
+                    lambda x: sorted(x) if isinstance(x, (list, np.ndarray)) else x
                 )
                 refsol[col] = refsol[col].apply(
-                    lambda x: sorted(x) if isinstance(x, list) else x
+                    lambda x: sorted(x) if isinstance(x, (list, np.ndarray)) else x
                 )
 
         # Perform the comparison between the result and the reference solution
@@ -1870,11 +1871,13 @@ def harmonize_types(column_a, column_b):
     if (
         pd.api.types.is_object_dtype(column_a)
         and pd.api.types.is_object_dtype(column_b)
-        and any(isinstance(col, list) for col in column_a)
-        and any(isinstance(col, list) for col in column_b)
+        and any(isinstance(col, (list, np.ndarray)) for col in column_a)
+        and any(isinstance(col, (list, np.ndarray)) for col in column_b)
     ):
         for i in range(len(column_a)):
-            if isinstance(column_a[i], list) and isinstance(column_b[i], list):
+            if isinstance(column_a[i], (list, np.ndarray)) and isinstance(
+                column_b[i], (list, np.ndarray)
+            ):
                 column_a[i], column_b[i] = harmonize_types(
                     pd.Series(column_a[i]), pd.Series(column_b[i])
                 )
@@ -1882,6 +1885,24 @@ def harmonize_types(column_a, column_b):
                 # but ensure that NAT is converted to None.
                 column_a[i] = [None if pd.isna(x) else x for x in column_a[i].tolist()]
                 column_b[i] = [None if pd.isna(x) else x for x in column_b[i].tolist()]
+
+    # datetime64 with different resolutions or timezone awareness.
+    # e.g. DuckDB returns us, Databricks returns tz-aware UTC,
+    # Pandas defaults to ns.
+    # Normalize column_a to match the expected dtype (column_b).
+    if pd.api.types.is_datetime64_any_dtype(
+        column_a
+    ) and pd.api.types.is_datetime64_any_dtype(column_b):
+        if column_a.dtype != column_b.dtype:
+            # Strip tz from column_a when column_b is tz-naive, then cast
+            # to the target resolution in one chained step.
+            if (
+                getattr(column_a.dtype, "tz", None) is not None
+                and getattr(column_b.dtype, "tz", None) is None
+            ):
+                column_a = column_a.dt.tz_convert("UTC").dt.tz_localize(None)
+            column_a = column_a.astype(column_b.dtype)
+        return column_a, column_b
 
     return column_a, column_b
 

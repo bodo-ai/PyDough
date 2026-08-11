@@ -11,6 +11,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one, transforms
 from sqlglot.dialects import Databricks as DatabricksDialect
 from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects import DuckDB as DuckDBDialect
 from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Oracle as OracleDialect
 from sqlglot.dialects import Postgres as PostgresDialect
@@ -617,6 +618,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return OracleDialect()
         case DatabaseDialect.DATABRICKS:
             return DatabricksDialect()
+        case DatabaseDialect.DUCKDB:
+            return DuckDBDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
@@ -675,6 +678,19 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                     ]
                 )
             )
+        case DatabaseDialect.DUCKDB:
+            # This ensures the conversion of SEMI/ANTI joins to EXISTS/NOT EXISTS
+            # which is necessary later when optimizing. Without it, HAS()/HASNOT()
+            # emit plain JOINs that inflate COUNT results or invert NOT EXISTS logic.
+            # Note: eliminate_qualify is intentionally absent — DuckDB natively
+            # supports QUALIFY and does not need it rewritten to a subquery.
+            DuckDBDialect.Generator.TRANSFORMS[sqlglot_expressions.Select] = (
+                transforms.preprocess(
+                    [
+                        transforms.eliminate_semi_and_anti_joins,
+                    ]
+                )
+            )
         case DatabaseDialect.TRINO:
             # Replace the DAYOFWEEK override for the Trino generator with the
             # default version, since PyDough handles the conversion logic
@@ -721,6 +737,13 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
                     ]
                 )
             )
+        case DatabaseDialect.DUCKDB:
+            # DuckDB has no Select TRANSFORM by default; delete the one added in
+            # change_sqlglot_dialect_configuration rather than restoring a prior
+            # value. The guard handles reset being called without a preceding
+            # change (e.g. in SQL-only tests that never call change).
+            if sqlglot_expressions.Select in DuckDBDialect.Generator.TRANSFORMS:
+                del DuckDBDialect.Generator.TRANSFORMS[sqlglot_expressions.Select]
         case DatabaseDialect.TRINO:
             Trino.Generator.TRANSFORMS[sqlglot_expressions.DayOfWeek] = lambda self, e: (
                 f"(({self.func('DAY_OF_WEEK', e.this)} % 7) + 1)"

@@ -164,8 +164,8 @@ SELECT
     4
   ) AS m,
   ROUND(AVG(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0)), 2) AS n,
-  SUM(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS o,
-  SUM(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p,
+  SUM(IIF(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL, 1, 0)) AS o,
+  SUM(IIF(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL, 1, 0)) AS p,
   MAX(expr_30) AS q,
   AVG(expr_31) AS r
 FROM _t1

@@ -5,7 +5,7 @@ keywords = ["analytics"]
 description = "Analytics DSL for Python"
 readme = "README.md"
 authors = [{name = "Bodo.ai"}]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -13,9 +13,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 # Note: sqlite is included in the standard library, so it doesn't need to be listed here.
@@ -43,6 +43,7 @@ dev = [
     "pydough[bodosql]",
     "pydough[oracle]",
     "pydough[databricks]",
+    "pydough[duckdb]",
     "pymongo",
     "cassandra-driver",
 ]
@@ -56,6 +57,7 @@ server = ["fastapi", "httpx", "uvicorn"]
 bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0"]
 oracle = ["oracledb==3.4.2"]
 databricks = ["databricks-sql-connector==4.2.6"]
+duckdb = ["duckdb>=1.5.4"]
 
 # TODO: Remove this override once the LLM package supports pyarrow>=24.
 # The base dependency pins pyarrow==22 for LLM compatibility, but bodo

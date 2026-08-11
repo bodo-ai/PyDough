@@ -14,7 +14,6 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek
 from pydough.types import (
-    BooleanType,
     NumericType,
     PyDoughType,
     StringType,
@@ -76,25 +75,6 @@ class TrinoTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
-
-    def convert_sum(
-        self, args: list[SQLGlotExpression], types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        """
-        Converts a SUM function call to its SQLGlot equivalent.
-        This method checks the type of the argument to determine whether to use
-        COUNT_IF (for BooleanType) or SUM (for other types).
-        Arguments:
-            `arg` : The argument to the SUM function.
-            `types` : The types of the arguments.
-        """
-        match types[0]:
-            # If the argument is of BooleanType, it uses COUNT_IF to count true values.
-            case BooleanType():
-                return sqlglot_expressions.CountIf(this=args[0])
-            case _:
-                # For other types, use SUM directly
-                return sqlglot_expressions.Sum(this=args[0])
 
     def convert_extract_datetime(
         self,
@@ -252,6 +232,29 @@ class TrinoTransformBindings(BaseTransformBindings):
             expression=sqlglot_expressions.Literal.number(7),
         )
         return result
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        format_datetime(date, 'MMM')
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+        assert len(args) == 1
+        date = self.make_datetime_arg(args[0])
+        month_format: SQLGlotExpression = sqlglot_expressions.Literal.string("MMM")
+        return sqlglot_expressions.Anonymous(
+            this="format_datetime", expressions=[date, month_format]
+        )
 
     def convert_join_strings(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

@@ -4,10 +4,6 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      py310:
-        description: "Python 3.10"
-        type: boolean
-        default: true
       py311:
         description: "Python 3.11"
         type: boolean
@@ -65,6 +61,11 @@ on:
         type: boolean
         required: false
         default: false        
+      run-duckdb:
+        description: "Run DuckDB Tests"
+        type: boolean
+        required: false
+        default: false        
       run-sf_masked:
         description: "Run Snowflake Masked Tests"
         type: boolean
@@ -77,6 +78,11 @@ on:
         default: false
       run-bodosql:
         description: "Run BodoSQL Tests"
+        type: boolean
+        required: false
+        default: false
+      run-benchmark:
+        description: "Run Benchmark"
         type: boolean
         required: false
         default: false
@@ -123,9 +129,6 @@ jobs:
           versions=()
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [ "${{ inputs.py310 }}" == "true" ]; then
-              versions+=("\"3.10\"")
-            fi
             if [ "${{ inputs.py311 }}" == "true" ]; then
               versions+=("\"3.11\"")
             fi
@@ -137,7 +140,7 @@ jobs:
             fi
           else
             # For pull_request and other events, use all versions by default
-            versions=( "\"3.10\"" "\"3.11\"" "\"3.12\"" "\"3.13\"" )
+            versions=( "\"3.11\"" "\"3.12\"" "\"3.13\"" )
           fi
           # Join the array elements with commas and wrap in brackets to make valid JSON
           joined=$(IFS=, ; echo "[${versions[*]}]")
@@ -159,7 +162,7 @@ jobs:
       matrix:
         python-version: ${{ github.event_name == 'workflow_dispatch'
                         && fromJSON(needs.get-py-ver-matrix.outputs.matrix)
-                        || fromJSON('["3.10", "3.11", "3.12", "3.13"]') }}
+                        || fromJSON('["3.11", "3.12", "3.13"]') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -183,10 +186,10 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3 or bodosql or oracle or trino or databricks)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3 or bodosql or oracle or trino or databricks or duckdb)" -rs
 
-  run-defog-daily-update:
-    name: Run DEFOG Daily Update
+  run-sf-defog-daily-update:
+    name: Run Snowflake DEFOG Daily Update
     needs: [get-msg]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
@@ -201,7 +204,7 @@ jobs:
 
   run-sf-tests:
     name: Snowflake Tests
-    needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
+    needs: [run-sf-defog-daily-update, get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
@@ -215,7 +218,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-trino-tests:
     name: Trino Tests
@@ -236,7 +239,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-mysql-tests:
     name: MySQL Tests
@@ -253,7 +256,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-postgres-tests:
     name: Postgres Tests
@@ -270,7 +273,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-sf-masked-tests:
     name: Masked Snowflake Tests
@@ -292,7 +295,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-s3-tests:
     name: S3 datasets Tests
@@ -307,7 +310,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-bodosql-tests:
     name: BodoSQL Tests
@@ -321,7 +324,7 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
 
   run-oracle-tests:
     name: Oracle Tests
@@ -337,7 +340,19 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
+  
+  run-benchmark:
+    name: Run Benchmark
+    needs: [get-msg]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run benchmark]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-benchmark)
+    uses: ./.github/workflows/benchmark.yml
+    secrets:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  
   run-databricks-tests:
     name: Databricks Tests
     needs: [get-msg, get-py-ver-matrix]
@@ -354,4 +369,18 @@ jobs:
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
-                      || '["3.10", "3.11", "3.12", "3.13"]' }}
+                      || '["3.11", "3.12", "3.13"]' }}
+
+  run-duckdb-tests:
+    name: DuckDB Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run dialects]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run duckdb]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-dialects || inputs.run-duckdb))
+    uses: ./.github/workflows/duckdb_testing.yml
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.11", "3.12", "3.13"]' }}

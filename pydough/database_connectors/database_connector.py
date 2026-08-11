@@ -14,7 +14,7 @@ __all__ = [
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Union, cast
+from typing import Union
 
 import pandas as pd
 
@@ -22,7 +22,7 @@ import pydough
 from pydough.errors import PyDoughSessionException
 from pydough.logger import get_logger
 
-from .db_types import BodoSQLContext, DBConnection, DBCursor, SnowflakeCursor
+from .db_types import BodoSQLContext, DBConnection, DBCursor
 
 
 class DatabaseConnection:
@@ -57,15 +57,8 @@ class DatabaseConnection:
         Returns:
             list[pt.Any]: A list of rows returned by the query.
         """
-        self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
-
-            # This is only for MyPy to pass and know about fetch_pandas_all()
-            # NOTE: Code does not run in type checking mode, so we need to
-            # check at run-time if the cursor has the method.
-            if TYPE_CHECKING:
-                _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
 
             # Identify which columns must be coerced from strings into native
             # types using json.loads based on the cursor description.
@@ -94,12 +87,18 @@ class DatabaseConnection:
                     )
                 case _:
                     pass
-            # At run-time check and run the fetch.
+            # DBCursor is typed to the DB API 2.0 spec, which does not include
+            # dialect-specific fetch methods. We guard with hasattr() at
+            # runtime and suppress the attr-defined error so MyPy does not
+            # require type checking for all dialects. This is safe because
+            # we only call the dialect-specific methods at runtime.
+            pd_table: pd.DataFrame
             if hasattr(self.cursor, "fetch_pandas_all"):
-                pd_table: pd.DataFrame = self.cursor.fetch_pandas_all()
-                for idx in semi_structured_cols:
-                    pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
-                return pd_table
+                # Snowflake
+                pd_table = self.cursor.fetch_pandas_all()  # type: ignore[attr-defined]
+            elif hasattr(self.cursor, "fetchdf"):
+                # DuckDB
+                pd_table = self.cursor.fetchdf()  # type: ignore[attr-defined]
             else:
                 # Assume sqlite3
                 column_names: list[str] = [
@@ -109,16 +108,14 @@ class DatabaseConnection:
                 # TODO: (gh #175) enable typed DataFrames.
                 data = self.cursor.fetchall()
                 pd_table = pd.DataFrame(data, columns=column_names)
-                for idx in semi_structured_cols:
-                    pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
-                return pd_table
+            for idx in semi_structured_cols:
+                pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
+            return pd_table
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, True
             ) from e
-        finally:
-            self.cursor.close()
 
     def execute_ddl(self, sql: str) -> None:
         """Create a cursor object using the connection and execute the DDL query.
@@ -126,7 +123,6 @@ class DatabaseConnection:
         Args:
             `sql`: The DDL SQL query to execute.
         """
-        self._cursor = self._connection.cursor()
         try:
             self.cursor.execute(sql)
             # Consume any results to avoid MySQL "Unread result found" error
@@ -140,8 +136,6 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 sql, e, False
             ) from e
-        finally:
-            self.cursor.close()
 
     def get_table_columns(self, table_name: str) -> list[str]:
         """Get the columns of a table.
@@ -151,7 +145,6 @@ class DatabaseConnection:
         Returns:
             A list of column names in the table.
         """
-        self._cursor = self._connection.cursor()
         try:
             # WHERE 1=0 returns no rows but populates cursor.description
             # with column metadata on all supported dialects.
@@ -170,8 +163,6 @@ class DatabaseConnection:
             raise pydough.active_session.error_builder.sql_runtime_failure(
                 f"Failed to get column names for table {table_name}", e, False
             ) from e
-        finally:
-            self.cursor.close()
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
@@ -189,12 +180,42 @@ class DatabaseConnection:
 
     @property
     def cursor(self) -> DBCursor:
-        """Get the database cursor.
+        """Get the database cursor, creating it on first access.
+
+        A single cursor is created per connection and reused for all
+        operations. This ensures that objects created by execute_ddl
+        (including TEMPORARY TABLEs and VIEWs) remain visible to
+        execute_query_df and get_table_columns within the same session.
+        For databases like DuckDB where cursor() returns an independent
+        connection, this guarantees all operations share one context.
 
         Returns:
             DBCursor: The database cursor PyDough is managing.
         """
+        if self._cursor is None:
+            self._cursor = self._connection.cursor()
         return self._cursor
+
+    def close(self) -> None:
+        """Close the cursor and the underlying connection.
+
+        Should be called when the session is done to release resources.
+
+        The cursor and connection are closed in separate try/except blocks
+        because they are independent resources: if closing the cursor
+        raises (e.g. it was already closed by the driver), we must still
+        attempt to close the underlying connection rather than leak it.
+        """
+        if self._cursor is not None:
+            try:
+                self._cursor.close()
+            except Exception:
+                pass
+            self._cursor = None
+        try:
+            self._connection.close()
+        except Exception:
+            pass
 
 
 @dataclass(frozen=True)
@@ -236,6 +257,7 @@ class DatabaseDialect(Enum):
     ORACLE = "oracle"
     BODOSQL = "bodosql"
     DATABRICKS = "databricks"
+    DUCKDB = "duckdb"
 
     @property
     def create_capabilities(self) -> CreateCapabilities:
@@ -282,6 +304,13 @@ class DatabaseDialect(Enum):
                     replace_view=False,
                     temp_table=False,
                     temp_view=False,
+                )
+            case DatabaseDialect.DUCKDB:
+                return CreateCapabilities(
+                    replace_table=True,
+                    replace_view=True,
+                    temp_table=True,
+                    temp_view=True,
                 )
             case _:
                 return CreateCapabilities(
@@ -331,6 +360,8 @@ class DatabaseDialect(Enum):
                 return "oracle"
             case DatabaseDialect.DATABRICKS:
                 return "databricks"
+            case DatabaseDialect.DUCKDB:
+                return "duckdb"
             case _:
                 raise PyDoughSessionException(f"Unsupported dialect: {self.value}")
 

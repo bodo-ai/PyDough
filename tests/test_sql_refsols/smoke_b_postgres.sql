@@ -60,7 +60,13 @@ SELECT
   DATE_TRUNC(
     'DAY',
     CAST(o_orderdate AS TIMESTAMP) - CAST(EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) || ' days' AS INTERVAL)
-  ) AS q
+  ) AS q,
+  CONCAT_WS(
+    ':',
+    TO_CHAR(o_orderdate, 'Mon'),
+    TO_CHAR(CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3 MONTH', 'Mon'),
+    TO_CHAR(CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2 MONTH', 'Mon')
+  ) AS r
 FROM tpch.orders
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

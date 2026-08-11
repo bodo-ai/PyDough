@@ -346,6 +346,8 @@ class BaseTransformBindings:
                 return self.convert_dayofweek(args, types)
             case pydop.DAYNAME:
                 return self.convert_dayname(args, types)
+            case pydop.MONTHNAME:
+                return self.convert_monthname(args, types)
             case pydop.INTEGER:
                 return self.convert_integer(args, types)
             case pydop.FLOAT:
@@ -391,6 +393,33 @@ class BaseTransformBindings:
             )
         return expr
 
+    def _remap_zero_to_one(self, idx: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Remap a 0-based index to 1-based for SQL's SPLIT_PART.
+        PyDough treats index 0 as "first part"; while some SQL dialects treat
+        index 1 as "first part".
+        This function converts a 0-based index to 1-based by returning 1
+        if the input index is 0, and returning the input index otherwise.
+        Args:
+            `idx`: The SQLGlot expression representing the index to remap.
+        Returns:
+            A SQLGlot expression that evaluates to 1 if `idx` is 0, or `idx`
+            otherwise. This is equivalent to the SQL expression
+            `CASE WHEN idx = 0 THEN 1 ELSE idx END`
+        """
+        return sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=idx,
+                        expression=sqlglot_expressions.Literal.number(0),
+                    ),
+                    true=sqlglot_expressions.Literal.number(1),
+                )
+            ],
+            default=idx,
+        )
+
     def make_datetime_arg(self, expr: SQLGlotExpression) -> SQLGlotExpression:
         """
         Converts a SQLGlot expression to a datetime argument, if needed, including:
@@ -407,8 +436,16 @@ class BaseTransformBindings:
     ) -> SQLGlotExpression:
         """
         Converts a SUM function call to its SQLGlot equivalent.
+        Uses COUNT_IF for BooleanType arguments; SUM otherwise. Dialects
+        without native COUNT_IF support have SQLGlot transpile it to an
+        equivalent expression (e.g. SUM(IIF(expr, 1, 0)) for SQLite,
+        SUM(CASE WHEN expr THEN 1 ELSE 0 END) for Postgres).
         """
-        return sqlglot_expressions.Sum.from_arg_list(args)
+        match types[0]:
+            case BooleanType():
+                return sqlglot_expressions.CountIf(this=args[0])
+            case _:
+                return sqlglot_expressions.Sum(this=args[0])
 
     def convert_listof(
         self, args: SQLGlotExpression, types: list[PyDoughType]
@@ -1787,6 +1824,58 @@ class BaseTransformBindings:
             )
         answer = apply_parens(answer)
         return answer
+
+    def convert_monthname(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `MONTHNAME(X)` as following:
+
+        CASE MONTH(d) WHEN 1 THEN 'Jan' WHEN 2 THEN 'FEB' ...
+
+        Args:
+            `args`: The operands to `MONTHNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `MONTHNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `MONTHNAME`.
+        """
+
+        assert len(args) == 1
+        month_mapping: list[tuple[int, str]] = [
+            (1, "Jan"),
+            (2, "Feb"),
+            (3, "Mar"),
+            (4, "Apr"),
+            (5, "May"),
+            (6, "Jun"),
+            (7, "Jul"),
+            (8, "Aug"),
+            (9, "Sep"),
+            (10, "Oct"),
+            (11, "Nov"),
+            (12, "Dec"),
+        ]
+
+        month_expr: SQLGlotExpression = self.convert_extract_datetime(
+            args, types, DateTimeUnit.MONTH
+        )
+
+        result: SQLGlotExpression = sqlglot_expressions.Case()
+        for month_number, month_name in month_mapping:
+            if month_number == 12:
+                result = result.else_(sqlglot_expressions.Literal.string(month_name))
+            else:
+                result = result.when(
+                    sqlglot_expressions.EQ(
+                        this=month_expr,
+                        expression=sqlglot_expressions.Literal.number(month_number),
+                    ),
+                    sqlglot_expressions.Literal.string(month_name),
+                )
+
+        return result
 
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

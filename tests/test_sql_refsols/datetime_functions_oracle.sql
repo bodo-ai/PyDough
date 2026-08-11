@@ -74,5 +74,12 @@ SELECT
   'Thursday' AS dayname_str4,
   'Friday' AS dayname_str5,
   'Saturday' AS dayname_str6,
-  'Sunday' AS dayname_dt
+  'Sunday' AS dayname_dt,
+  TO_CHAR(o_orderdate, 'Mon') AS monthname_col,
+  TO_CHAR(TO_DATE('1995-03-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str1,
+  TO_CHAR(TO_DATE('1995-05-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str2,
+  TO_CHAR(TO_DATE('1995-06-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str3,
+  TO_CHAR(TO_DATE('1995-10-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str4,
+  TO_CHAR(TO_DATE('1999-12-31', 'YYYY-MM-DD'), 'Mon') AS monthname_str5,
+  TO_CHAR(TO_DATE('1993-08-15 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Mon') AS monthname_dt
 FROM TPCH.ORDERS

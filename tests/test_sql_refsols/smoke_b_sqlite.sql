@@ -128,7 +128,85 @@ SELECT
     o_orderdate,
     '-' || CAST(CAST(STRFTIME('%w', DATETIME(o_orderdate)) AS INTEGER) AS TEXT) || ' days',
     'start of day'
-  ) AS q
+  ) AS q,
+  CONCAT_WS(
+    ':',
+    CASE
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 1
+      THEN 'Jan'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 2
+      THEN 'Feb'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 3
+      THEN 'Mar'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 4
+      THEN 'Apr'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 5
+      THEN 'May'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 6
+      THEN 'Jun'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 7
+      THEN 'Jul'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 8
+      THEN 'Aug'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 9
+      THEN 'Sep'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 10
+      THEN 'Oct'
+      WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END,
+    CASE
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 1
+      THEN 'Jan'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 2
+      THEN 'Feb'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 3
+      THEN 'Mar'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 4
+      THEN 'Apr'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 5
+      THEN 'May'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 6
+      THEN 'Jun'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 7
+      THEN 'Jul'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 8
+      THEN 'Aug'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 9
+      THEN 'Sep'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 10
+      THEN 'Oct'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '3 month')) AS INTEGER) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END,
+    CASE
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 1
+      THEN 'Jan'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 2
+      THEN 'Feb'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 3
+      THEN 'Mar'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 4
+      THEN 'Apr'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 5
+      THEN 'May'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 6
+      THEN 'Jun'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 7
+      THEN 'Jul'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 8
+      THEN 'Aug'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 9
+      THEN 'Sep'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 10
+      THEN 'Oct'
+      WHEN CAST(STRFTIME('%m', DATETIME(o_orderdate, '-2 month')) AS INTEGER) = 11
+      THEN 'Nov'
+      ELSE 'Dec'
+    END
+  ) AS r
 FROM tpch.orders
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

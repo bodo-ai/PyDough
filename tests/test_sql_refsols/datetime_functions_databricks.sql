@@ -77,5 +77,12 @@ SELECT
   'Thursday' AS dayname_str4,
   'Friday' AS dayname_str5,
   'Saturday' AS dayname_str6,
-  'Sunday' AS dayname_dt
+  'Sunday' AS dayname_dt,
+  MONTHNAME(o_orderdate) AS monthname_col,
+  MONTHNAME(CAST('1995-03-27' AS TIMESTAMP)) AS monthname_str1,
+  MONTHNAME(CAST('1995-05-27' AS TIMESTAMP)) AS monthname_str2,
+  MONTHNAME(CAST('1995-06-27' AS TIMESTAMP)) AS monthname_str3,
+  MONTHNAME(CAST('1995-10-27' AS TIMESTAMP)) AS monthname_str4,
+  MONTHNAME(CAST('1999-12-31' AS TIMESTAMP)) AS monthname_str5,
+  MONTHNAME(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) AS monthname_dt
 FROM tpch.orders

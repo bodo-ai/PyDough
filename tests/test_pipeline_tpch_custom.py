@@ -5954,6 +5954,38 @@ from .testing_utilities import (
             ),
             id="rewrite_min_region",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_orders = orders.WHERE(YEAR(order_date) == 1998).TOP_K(5, by=customer_key)\n"
+                "result = selected_orders.CALCULATE(\n"
+                "   order_date,\n"
+                "   month_name_str=MONTHNAME('1995-10-26'),\n"
+                "   month_name_col=MONTHNAME(order_date),\n"
+                "   month_col_added=MONTHNAME(DATETIME(order_date, '+3 months')),\n"
+                "   month_str_subs=MONTHNAME(DATETIME('1995-10-26', '-5 MONTH')),\n"
+                "   month_now=MONTHNAME('now'),\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_date": [
+                            "1998-05-16",
+                            "1998-07-24",
+                            "1998-02-18",
+                            "1998-02-04",
+                            "1998-01-01",
+                        ],
+                        "month_name_str": ["Oct", "Oct", "Oct", "Oct", "Oct"],
+                        "month_name_col": ["May", "Jul", "Feb", "Feb", "Jan"],
+                        "month_col_added": ["Aug", "Oct", "May", "May", "Apr"],
+                        "month_str_subs": ["May", "May", "May", "May", "May"],
+                        "month_now": [datetime.now().strftime("%b")] * 5,
+                    }
+                ),
+                "monthname_function_1",
+            ),
+            id="monthname_function_1",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:

@@ -99,7 +99,13 @@ SELECT
       ) % 7
     ),
     CAST(CAST(o_orderdate AS TIMESTAMP) AS DATE)
-  ) AS q
+  ) AS q,
+  CONCAT_WS(
+    ':',
+    MONTHNAME(o_orderdate),
+    MONTHNAME(DATEADD(MONTH, 3, CAST(o_orderdate AS TIMESTAMP))),
+    MONTHNAME(ADD_MONTHS(CAST(o_orderdate AS TIMESTAMP), -2))
+  ) AS r
 FROM tpch.orders
 WHERE
   CONTAINS(o_comment, 'fo')

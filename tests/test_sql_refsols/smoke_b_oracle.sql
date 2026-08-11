@@ -80,7 +80,8 @@ SELECT
       TO_CHAR(CAST(o_orderdate AS DATE), 'D') + -1
     ), 7) AS DATE),
     'DD'
-  ) AS q
+  ) AS q,
+  NVL(TO_CHAR(o_orderdate, 'Mon'), '') || ':' || NVL(TO_CHAR(ADD_MONTHS(CAST(o_orderdate AS DATE), 3), 'Mon'), '') || ':' || NVL(TO_CHAR(ADD_MONTHS(CAST(o_orderdate AS DATE), -2), 'Mon'), '') AS r
 FROM TPCH.ORDERS
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

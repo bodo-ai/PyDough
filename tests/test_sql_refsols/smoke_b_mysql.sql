@@ -79,7 +79,13 @@ SELECT
         DAYOFWEEK(CAST(o_orderdate AS DATETIME)) + -1
       ) % 7
     ) DAY
-  ) AS DATE) AS q
+  ) AS DATE) AS q,
+  CONCAT_WS(
+    ':',
+    DATE_FORMAT(o_orderdate, '%b'),
+    DATE_FORMAT(DATE_ADD(CAST(o_orderdate AS DATETIME), INTERVAL '3' MONTH), '%b'),
+    DATE_FORMAT(DATE_SUB(CAST(o_orderdate AS DATETIME), INTERVAL '2' MONTH), '%b')
+  ) AS r
 FROM tpch.ORDERS
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

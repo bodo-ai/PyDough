@@ -11,7 +11,7 @@ SELECT
   IIF(
     COUNT(*) > 0,
     CAST((
-      100.0 * SUM(LOWER(users.u_gender) = 'f')
+      100.0 * SUM(IIF(LOWER(users.u_gender) = 'f', 1, 0))
     ) AS REAL) / COUNT(*),
     0.0
   ) AS percentage_of_female_users

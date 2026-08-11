@@ -1,6 +1,6 @@
 SELECT
   city_name,
   COUNT(*) AS total_count
-FROM main.location
+FROM defog.restaurants.location
 GROUP BY
   1

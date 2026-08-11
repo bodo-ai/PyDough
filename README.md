@@ -4,10 +4,7 @@ PyDough is an alternative DSL that can be used to solve analytical problems by p
 
 ## What Is PyDough
 
-PyDough allows expressing analytical questions with hierarchical thinking, as seen in models such as [MongoDB](https://www.mongodb.com/docs/manual/data-modeling/), since that mental model is closer to human linguistics than a relational model.
-Unlike MongoDB, PyDough only uses a logical document model for abstractly explaining & interacting with data, rather than a physical document model to store the data.
-PyDough code can be written in and interleaved with Python code, and practices a lazy evaluation scheme that does not qualify or execute any logic until requested.
-PyDough executes by translating its logic into SQL which it can directly executing in an arbitrary database.
+PyDough allows expressing analytical questions with a purpose built DSL that uses a knowledge graph semantic layer, which incorporates hierarchies and relationships inherent in the data, and makes it more governable. PyDough code is Python, and can be written and analysed as such, and uses a lazy evaluation scheme that does not qualify or execute any logic until requested! We execute by translating its logic into SQL which can be executed in any SQL dialect.
 
 Consider the following information represented by the tables in a database:
 - There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they have attended.
@@ -185,7 +182,48 @@ To run **Trino CI tests**, add the flag `[run trino]` to your commit message.
         export MONGO_USER="your_username"
         export MONGO_PASSWORD="your_password"
     ```
+## Running Oracle Tests on CI
+To run **Oracle CI tests**, add the flag `[run oracle]` to your commit message.
 
+**Running Oracle tests locally:**
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+2. Install the Oracle Connector for Python
+    ```bash
+    pip install oracledb
+    ```
+3. Set your Oracle credentials as environment variables:
+    ```bash
+        export ORACLE_PASSWORD="your_password"
+    ``` 
+## Running Databricks Tests on CI
+To run **Databricks CI tests**, add the flag `[run databricks]` to your commit message.
+
+**Running Databricks tests locally:**
+
+1. Install the Databricks Connector for Python with Pandas support
+    ```bash
+    pip install databricks-sql-connector"
+    ```
+
+2. Set your Databricks credentials as environment variables:
+    ```bash
+        export DATABRICKS_HOST="databricks_instance"
+        export DATABRICKS_HTTP_PATH="server_http_path"
+        export DATABRICKS_TOKEN="databricks_token"
+    ```
+
+## Running DuckDB Tests on CI
+To run **DuckDB CI tests**, add the flag `[run duckdb]` to your commit message.
+
+** Running DuckDB tests locally:**
+1. Install the DuckDB Connector for Python with Pandas support
+    ```bash
+    pip install duckdb
+    ```
+2. DuckDB does not require any additional environment variables to be set up for testing.
+
+3. DuckDB TPC-H and Defog tests require the `tpch.db` and `defog.db` files to be located in the `tests` directory. Please refer to the sqlite setup instructions above for more information on how to set up these files.
 
 ## Runtime Dependencies
 
