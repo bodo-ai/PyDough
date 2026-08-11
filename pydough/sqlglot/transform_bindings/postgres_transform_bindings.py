@@ -118,26 +118,34 @@ class PostgresTransformBindings(BaseTransformBindings):
                     sqlglot_expressions.Literal.string(explode_spec.delimiter),
                 ],
             )
-        explode_op: SQLGlotExpression = Unnest(
-            expressions=[explode_expr],
-            offset=sqlglot_expressions.Literal.number(1),
-            alias=TableAlias(
-                this=Identifier(this=lateral_alias),
-                columns=[
-                    sqlglot_expressions.Identifier(this="val"),
-                    sqlglot_expressions.Identifier(this="idx"),
-                ],
-            ),
-        )
+        explode_op: SQLGlotExpression
+        if val_index is None:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                    ],
+                ),
+            )
+        else:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                offset=sqlglot_expressions.Literal.number(1),
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                        sqlglot_expressions.Identifier(this="idx"),
+                    ],
+                ),
+            )
         result = (
             Select()
             .select(*column_exprs)
             .from_(Subquery(this=input_expr))
-            .join(
-                Lateral(
-                    this=explode_op,
-                )
-            )
+            .join(Lateral(this=explode_op))
         )
 
         return result
