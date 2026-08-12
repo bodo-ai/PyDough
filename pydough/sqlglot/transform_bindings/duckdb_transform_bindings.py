@@ -9,8 +9,16 @@ from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import (
+    Identifier,
+    Lateral,
+    Select,
+    Subquery,
+    TableAlias,
+)
 
 from pydough.types import NumericType, PyDoughType, StringType
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit, apply_parens
@@ -129,6 +137,78 @@ class DuckDBTransformBindings(BaseTransformBindings):
         self, args: SQLGlotExpression, types: list[PyDoughType]
     ) -> SQLGlotExpression:
         return sqlglot_expressions.ArrayAgg(this=args[0])
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+    ) -> SQLGlotExpression:
+        column_exprs: list[SQLGlotExpression] = [*exprs]
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="val"),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="idx"),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        if explode_spec.version == "string":
+            assert explode_spec.delimiter is not None, (
+                "Delimiter must be provided for string explode."
+            )
+            explode_expr = sqlglot_expressions.Split(
+                this=explode_expr,
+                expression=sqlglot_expressions.Literal.string(explode_spec.delimiter),
+            )
+        explode_args: list[SQLGlotExpression] = [
+            sqlglot_expressions.Unnest(expressions=[explode_expr])
+        ]
+        lateral_columns: list[SQLGlotExpression] = [
+            sqlglot_expressions.Identifier(this="val")
+        ]
+        if val_index is not None:
+            explode_args.append(
+                sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Anonymous(
+                        this="generate_subscripts",
+                        expressions=[
+                            explode_expr,
+                            sqlglot_expressions.Literal.number(1),
+                        ],
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                )
+            )
+            lateral_columns.append(sqlglot_expressions.Identifier(this="idx"))
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(Subquery(this=input_expr))
+            .join(
+                Lateral(
+                    this=Subquery(this=Select().select(*explode_args)),
+                    alias=TableAlias(
+                        this=Identifier(this=lateral_alias), columns=lateral_columns
+                    ),
+                )
+            )
+        )
+
+        return result
 
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType

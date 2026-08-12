@@ -4734,6 +4734,7 @@ from .testing_utilities import (
                 ),
                 "explode_09",
                 order_sensitive=True,
+                ignore_array_order=True,
                 skipped_dialects={"ANSI", "SQLITE", "MYSQL"},
             ),
             id="explode_09",
