@@ -227,17 +227,17 @@ from pydough.unqualified import (
         ),
         pytest.param(
             "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string')",
-            "Must provide a non-empty string `delimiter` to EXPLODE when `version` is 'string'",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
             id="bad_explode_06",
         ),
         pytest.param(
-            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter='')",
-            "Must provide a non-empty string `delimiter` to EXPLODE when `version` is 'string'",
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=['x'])",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
             id="bad_explode_07",
         ),
         pytest.param(
             "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=42)",
-            "Must provide a non-empty string `delimiter` to EXPLODE when `version` is 'string'",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
             id="bad_explode_08",
         ),
         pytest.param(
@@ -257,7 +257,7 @@ from pydough.unqualified import (
         ),
         pytest.param(
             "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=0)",
-            "Must provide a non-empty string `delimiter` to EXPLODE when `version` is 'string'",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
             id="bad_explode_12",
         ),
         pytest.param(

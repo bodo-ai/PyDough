@@ -288,13 +288,27 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             assert (
                 explode_spec.version == "string" and explode_spec.delimiter is not None
             )
-            explode_op = Anonymous(
-                this="SPLIT_TO_TABLE",
-                expressions=[
-                    explode_expr,
-                    sqlglot_expressions.Literal.string(explode_spec.delimiter),
-                ],
-            )
+            if explode_spec.delimiter == "":
+                explode_op = Anonymous(
+                    this="FLATTEN",
+                    expressions=[
+                        Anonymous(
+                            this="REGEXP_SUBSTR_ALL",
+                            expressions=[
+                                explode_expr,
+                                sqlglot_expressions.Literal.string(".{1}"),
+                            ],
+                        )
+                    ],
+                )
+            else:
+                explode_op = Anonymous(
+                    this="SPLIT_TO_TABLE",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                    ],
+                )
         result = (
             Select()
             .select(*column_exprs)

@@ -487,13 +487,9 @@ class UnqualifiedNode(ABC):
                         "Cannot provide a `delimiter` to EXPLODE when `version` is 'array'"
                     )
             case "string":
-                if (
-                    delimiter is None
-                    or not isinstance(delimiter, str)
-                    or len(delimiter) == 0
-                ):
+                if delimiter is None or not isinstance(delimiter, str):
                     raise PyDoughUnqualifiedException(
-                        "Must provide a non-empty string `delimiter` to EXPLODE when `version` is 'string'"
+                        "Must provide a string `delimiter` to EXPLODE when `version` is 'string'"
                     )
             case _:
                 raise PyDoughUnqualifiedException(

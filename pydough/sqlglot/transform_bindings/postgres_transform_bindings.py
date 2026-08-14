@@ -111,13 +111,22 @@ class PostgresTransformBindings(BaseTransformBindings):
             assert explode_spec.delimiter is not None, (
                 "Delimiter must be provided for string explode."
             )
-            explode_expr = sqlglot_expressions.Anonymous(
-                this="STRING_TO_ARRAY",
-                expressions=[
-                    explode_expr,
-                    sqlglot_expressions.Literal.string(explode_spec.delimiter),
-                ],
-            )
+            if explode_spec.delimiter == "":
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="REGEXP_SPLIT_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(""),
+                    ],
+                )
+            else:
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="STRING_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                    ],
+                )
         explode_op: SQLGlotExpression
         if val_index is None:
             explode_op = Unnest(

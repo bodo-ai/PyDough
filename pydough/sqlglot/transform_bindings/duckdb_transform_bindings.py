@@ -170,10 +170,21 @@ class DuckDBTransformBindings(BaseTransformBindings):
             assert explode_spec.delimiter is not None, (
                 "Delimiter must be provided for string explode."
             )
-            explode_expr = sqlglot_expressions.Split(
-                this=explode_expr,
-                expression=sqlglot_expressions.Literal.string(explode_spec.delimiter),
-            )
+            if explode_spec.delimiter == "":
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="REGEXP_SPLIT_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(""),
+                    ],
+                )
+            else:
+                explode_expr = sqlglot_expressions.Split(
+                    this=explode_expr,
+                    expression=sqlglot_expressions.Literal.string(
+                        explode_spec.delimiter
+                    ),
+                )
         explode_args: list[SQLGlotExpression] = [
             sqlglot_expressions.Unnest(expressions=[explode_expr])
         ]
