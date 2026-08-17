@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import date, datetime
 from typing import Any, Union
 
@@ -134,6 +134,16 @@ class UnqualifiedNode(ABC):
             )
 
     def __call__(self, *args, **kwargs):
+
+        if pydough.active_session.metadata:
+            metadata_templates: dict[str, Callable] = (
+                pydough.active_session.metadata.templates_definitions
+            )
+
+            name = str(self)
+            if name in metadata_templates:
+                return metadata_templates[name](*args, **kwargs)
+
         raise pydough.active_session.error_builder.undefined_function_call(
             self, *args, **kwargs
         )

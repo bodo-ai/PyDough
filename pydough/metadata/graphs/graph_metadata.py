@@ -2,6 +2,7 @@
 Definition of PyDough metadata for a graph.
 """
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from pydough.errors import PyDoughMetadataException
@@ -26,6 +27,8 @@ class GraphMetadata(AbstractMetadata):
         "collections",
         "relationships",
         "functions",
+        "attributes",
+        "templates",
         "additional definitions",
         "verified pydough analysis",
         "extra semantic info",
@@ -49,6 +52,8 @@ class GraphMetadata(AbstractMetadata):
         self._name: str = name
         self._collections: dict[str, AbstractMetadata] = {}
         self._functions: dict[str, ExpressionFunctionOperator] = {}
+        self._attributes: dict[str, AbstractMetadata] = {}
+        self._templates: dict[str, Callable] = {}
         self._description = description
         self._synonyms = synonyms
         self._extra_semantic_info = extra_semantic_info
@@ -73,6 +78,20 @@ class GraphMetadata(AbstractMetadata):
         The user defined functions contained within the graph.
         """
         return self._functions
+
+    @property
+    def templates_attributes(self) -> dict[str, AbstractMetadata]:
+        """
+        TODO
+        """
+        return self._attributes
+
+    @property
+    def templates_definitions(self) -> dict[str, Callable]:
+        """
+        TODO
+        """
+        return self._templates
 
     @property
     def error_name(self) -> str:
@@ -193,3 +212,42 @@ class GraphMetadata(AbstractMetadata):
                 f"Function {name!r} already exists in {self.error_name}"
             )
         self.functions[name] = function
+
+    def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
+        """
+        Adds a new collection to the graph.
+
+        Args:
+            `collection`: the collection being inserted into the graph.
+
+        Raises:
+            `PyDoughMetadataException`: if `collection` cannot be inserted
+            into the graph because.
+        """
+        from pydough.metadata.templates import AttributeMetadata
+
+        # Make sure the collection is actually a template_attribute
+        HasType(AttributeMetadata).verify(new_attribute, "attribute")
+        assert isinstance(new_attribute, AttributeMetadata)
+
+        # Verify sure the attribute has not already been added to the graph
+        # and does not have a name collision with any other attributes in
+        # the graph.
+        if new_attribute.name in self._attributes:
+            if self.templates_attributes[new_attribute.name] == new_attribute:
+                raise PyDoughMetadataException(
+                    f"Already added {new_attribute.error_name} to {self.error_name}"
+                )
+            raise PyDoughMetadataException(
+                f"Duplicate attributes: {new_attribute.error_name} versus {self.templates_attributes[new_attribute.name].error_name}"
+            )
+        self.templates_attributes[new_attribute.name] = new_attribute
+
+    def add_template_definition(self, name: str, template: Callable) -> None:
+        """
+        TODO
+        """
+        # CHECK IF THERE IS A TEMPLATE WITH THE SAME NAME ALREADY
+        # CHECK IF THE NAME OF THE TEMPLATE CONFLICTS WIHT A BUILTIN PYTHON FUNCTION
+
+        self.templates_definitions[name] = template

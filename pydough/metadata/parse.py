@@ -4,7 +4,11 @@ The logic used to parse PyDough metadata from a JSON file.
 
 __all__ = ["parse_json_metadata_from_file", "parse_metadata_from_list"]
 
+import ast
 import json
+import re
+import textwrap
+from collections.abc import Callable
 from typing import Any
 
 from pydough.errors import PyDoughMetadataException
@@ -29,6 +33,7 @@ from .properties import (
     ReversiblePropertyMetadata,
     SimpleJoinMetadata,
 )
+from .templates import AttributeMetadata
 
 
 def parse_metadata(metadata_info: Any, graph_name: str) -> GraphMetadata | None:
@@ -241,10 +246,46 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             assert isinstance(udf_definition, dict)
             parse_function_v2(graph, udf_definition)
 
+    if "templates" in graph_json:
+        templates_object: dict = extract_object(
+            graph_json, "templates", graph.error_name
+        )
+
+        # Attributes are optional
+        if "attributes" in templates_object:
+            attribute_definitions: list = extract_array(
+                templates_object, "attributes", graph.error_name
+            )
+            for attribute_definition in attribute_definitions:
+                is_json_object.verify(
+                    attribute_definition,
+                    f"metadat for Templates definition inside {graph.error_name}",
+                )
+                assert isinstance(attribute_definition, dict)
+                parse_template_attributes_v2(graph, attribute_definition)
+        else:
+            # TODO: Save it as an empty list []
+            pass
+
+        # Templates definitions
+        templates_definitions: list = extract_array(
+            templates_object, "definitions", graph.error_name
+        )
+
+        for template_definition in templates_definitions:
+            is_json_object.verify(
+                template_definition,
+                f"metadat for Templates definition inside {graph.error_name}",
+            )
+            assert isinstance(template_definition, dict)
+            parse_template_definitions_v2(graph, template_definition)
+
     NoExtraKeys(GraphMetadata.allowed_fields).verify(graph_json, graph.error_name)
     for collection in graph.collections.values():
         assert isinstance(collection, CollectionMetadata)
         collection.verify_complete()
+
+    # breakpoint()
     return graph
 
 
@@ -504,3 +545,123 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
                 f"Unrecognized PyDough function type for {error_name}: {function_type!r}"
             )
     graph.add_function(function_name, func)
+
+
+def parse_template_attributes_v2(graph: GraphMetadata, attribute_json: dict) -> None:
+    """
+    TODO
+    """
+    attribute_name: str = extract_string(
+        attribute_json, "name", f"metadata for collections within {graph.error_name}"
+    )
+
+    AttributeMetadata.parse_from_json(graph, attribute_name, attribute_json)
+
+
+def parse_template_definitions_v2(graph: GraphMetadata, definition_json: dict) -> None:
+    """
+    TODO
+    Loads the template definition and save it in the graph property
+    """
+    template_name: str = extract_string(definition_json, "name", graph.error_name)
+    answer_variable: str = extract_string(
+        definition_json, "answer_variable", graph.error_name
+    )
+    code: str = extract_string(definition_json, "code", graph.error_name)
+    kwargs: dict[str, dict] = extract_object(
+        definition_json, "parameters", graph.error_name
+    )
+
+    # --------------------------------------------------------------------------
+    arg_names: list[str] = list(kwargs.keys())
+    args_parts: list[str] = []
+
+    part: str
+    for key, spec in kwargs.items():
+        part = (
+            f"{key}: {spec['type']}"
+            if "type" in spec and spec["type"] != "pydough"
+            else f"{key}"
+        )
+        args_parts.append(part)
+    args: str = ", ".join(args_parts)
+
+    # --- Replace {1}, {2}, ... with the corresponding argument name ---
+    def _replace_placeholder(match: re.Match) -> str:
+        index = int(match.group(1))
+        if not (1 <= index <= len(arg_names)):
+            raise ValueError(
+                f"Placeholder {{{index}}} in pydough_code has no matching "
+                f"argument (only {len(arg_names)} args provided)."
+            )
+        return arg_names[index - 1]
+
+    substituted_code = re.sub(r"\{(\d+)\}", _replace_placeholder, code)
+
+    # --- Indent and assemble the final template ---
+    indented_code = textwrap.indent(substituted_code.strip(), "    ")
+
+    template_str: str = (
+        f"def {template_name}({args}):\n{indented_code}\n    return {answer_variable}\n"
+    )
+
+    loaded_template: Callable = build_function_from_string(
+        template_str,
+        arg_names,
+        template_name,
+        graph,
+    )
+
+    graph.add_template_definition(template_name, loaded_template)
+
+
+def build_function_from_string(
+    template_str: str,
+    args: list[str],
+    template_name: str,
+    metadata: GraphMetadata | None = None,
+) -> Callable:
+    """
+    Builds a callable from a PyDough source string, without executing it.
+    Intended for constructing template functions that get stored (e.g. via
+    `graph.add_template_definition`) and invoked later.
+
+    Args:
+        `template_str`: the PyDough code that forms the body of the function.
+        `args`: the parameter names of the generated function.
+        `template_name`: the name to give the generated function.
+        `answer_variable`: the variable in `source` holding the return value.
+        Defaults to "result".
+        `metadata`: the metadata graph bound into the function's closure as
+        `_graph`. Defaults to `pydough.active_session.metadata`.
+        `environment`: extra names available both when transforming the
+        source and inside the function's closure.
+
+    Returns:
+        The callable built from `source`, not yet invoked.
+    """
+    import pydough
+    from pydough.unqualified.unqualified_transform import AddRootVisitor
+
+    # Args + "pydough" are "known" so they aren't
+    # rewritten into _ROOT.<name> by the visitor.
+    known_names: set[str] = set(args) | {"pydough"}
+    graph_name: str = "_graph"
+    visitor = AddRootVisitor(graph_name, known_names)
+
+    tree: ast.AST = ast.parse(template_str)
+    new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
+    transformed_code: str = ast.unparse(new_tree)
+
+    compiled = compile(transformed_code, filename=f"<{template_name}>", mode="exec")
+
+    # `_graph` and `pydough` are baked into the function's globals so that
+    # they're available whenever the function is later called
+    namespace: dict[str, Any] = {
+        graph_name: metadata,
+        "pydough": pydough,
+    }
+    exec(compiled, namespace, namespace)
+
+    loaded_template: Callable = namespace[template_name]
+    return loaded_template

@@ -5208,6 +5208,44 @@ from .testing_utilities import (
             ),
             id="monthname_function_1",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = orders.WHERE("
+                "(1996 == YEAR(order_date))\n"
+                ").CALCULATE(\n"
+                "revenue=order_revenue()\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame({}),
+                "template_test",
+            ),
+            id="template_test",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = orders_revenue_by(1996, customer.market_segment).WHERE("
+                "(dimension == 'FURNITURE')\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"dimension": ["FURNITURE"], "segment_revenue": [6.671056e09]}
+                ),
+                "nested_template",
+            ),
+            id="nested_template",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE("
+                "(account_balance >= template_literal(9000))\n"
+                ")\n"
+                "result = TPCH.CALCULATE(n_custs=COUNT(selected_customers))\n",
+                "TPCH",
+                lambda: pd.DataFrame({"n_custs": [13533]}),
+                "literal_template",
+            ),
+            id="literal_template",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:

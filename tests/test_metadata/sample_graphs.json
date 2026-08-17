@@ -845,6 +845,83 @@
         "synonyms": ["transactions", "purchases"]
       }
     ],
+    "templates": {
+      "attributes": [
+        {
+          "name": "years",
+          "usage": [],
+          "type": "int",
+          "description": "The year for which to calculate the revenue of orders.",
+          "options": [
+            { "label": "Year 1992", "value": 1992},
+            { "label": "Year 1993", "value": 1993}, 
+            { "label": "Year 1994", "value": 1994}, 
+            { "label": "Year 1995", "value": 1995}, 
+            { "label": "Year 1996", "value": 1996}, 
+            { "label": "Year 1997", "value": 1997}, 
+            { "label": "Year 1998", "value": 1998}
+          ]
+        },
+        {
+          "name": "order_dimensions",
+          "usage": ["orders_revenue_by"],
+          "type": "pydough",
+          "description": "The dimension by which to partition the orders calculation.",
+          "options": [
+            {"value": "customer.market_segment", "label": "Customer Market Segment"},
+            {"value": "customer.nation.name", "label": "Customer Nation"},
+            {"value": "customer.nation.region.name", "label": "Customer Region"},
+            {"value": "order_priority", "label": "Order Priority"},
+            {"value": "MONTHNAME(order_date)", "label": "Month"},
+            {"value": "clerk", "label": "Clerk"}
+          ]
+        }
+      ],
+      "definitions": [
+        {
+          "name": "order_revenue",
+          "dependencies": [],
+          "description": "Calculates the revenue of an order, which is the sum of the extended price * (1 - discount) for all line items in the order.",
+          "parameters": {},
+          "code": "result = SUM(lines.extended_price * (1 - lines.discount))\n",
+          "answer_variable": "result"
+        },
+        { 
+          "name": "orders_revenue_by",
+          "description": "Calculates the revenue of orders in a given year, partitioned by a specified dimension.",
+          "dependencies": ["order_revenue"],
+          "parameters": {
+            "arg_year": {
+              "type": "int", 
+              "description": "The year for which to calculate the revenue of orders."
+            },
+            "arg_dimension": {
+              "type": "pydough",
+              "description": "The dimension by which to partition the revenue calculation."
+            }
+            },
+          "code": "result = orders.WHERE(({1} == YEAR(order_date))).CALCULATE(revenue=order_revenue(), dimension=({2})).PARTITION(name=\"orders_groups\", by=dimension).CALCULATE(dimension, segment_revenue=SUM(orders.revenue))\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "top_bottom_comparison",
+          "description": "Compares the top and bottom groups of a partitioned orders",
+          "dependencies": [],
+          "parameters": {
+            "arg_partitioned_orders": {
+              "type": "pydough",
+              "description": "The partitioned orders to compare."
+            },
+            "arg_calculation": {
+              "type": "pydough",
+              "description": "The metric by which to compare the groups."
+            }
+          },
+          "code": "result = {1}.CALCULATE(dimension, segment_revenue, comparison_value={2}).WHERE(ABSENT(PREV(segment_revenue, by=segment_revenue.DESC())) | ABSENT(NEXT(segment_revenue, by=segment_revenue.DESC())) )",
+          "answer_variable": "result"
+        }
+      ]
+    },
     "additional definitions": [
       "Revenue for a lineitem is the extended_price * (1 - discount) * (1 - tax) minus quantity * supply_cost from the corresponding supply record",
       "A domestic shipment is a lineitem where the customer and supplier are from the same nation",
