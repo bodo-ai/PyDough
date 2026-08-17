@@ -15,9 +15,9 @@ SELECT
   _s2.val AS val3
 FROM _q_0 AS _q_0
 CROSS JOIN UNNEST(SPLIT(_q_0.comment, '.')) WITH ORDINALITY AS _s0(val, idx)
-CROSS JOIN UNNEST(SPLIT(_s0.val, ' ')) WITH ORDINALITY AS _s1(val, idx)
-JOIN UNNEST(SPLIT(_s1.val, ',')) WITH ORDINALITY AS _s2(val, idx)
-  ON _s2.val <> ''
+CROSS JOIN UNNEST(SPLIT(_s0.val, ' ')) WITH ORDINALITY AS _s1(val, idx), UNNEST(SPLIT(_s1.val, ',')) WITH ORDINALITY AS _s2(val, idx)
+WHERE
+  _s2.val <> ''
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST,

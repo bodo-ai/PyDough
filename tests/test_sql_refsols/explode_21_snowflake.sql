@@ -16,9 +16,9 @@ WITH _q_0 AS (
   FROM _q_0 AS _q_0
   CROSS JOIN LATERAL SPLIT_TO_TABLE(_q_0.comment, '.') AS _s0
   CROSS JOIN LATERAL SPLIT_TO_TABLE(_s0.value, ',') AS _s1
-  CROSS JOIN LATERAL SPLIT_TO_TABLE(_s1.value, ' ') AS _s2
-  JOIN LATERAL FLATTEN(REGEXP_EXTRACT_ALL(_s2.value, '.{1}')) AS _s3(seq, key, path, index, value, this)
-    ON _s3.value <> ''
+  CROSS JOIN LATERAL SPLIT_TO_TABLE(_s1.value, ' ') AS _s2, LATERAL FLATTEN(REGEXP_EXTRACT_ALL(_s2.value, '.{1}')) AS _s3(seq, key, path, index, value, this)
+  WHERE
+    _s3.value <> ''
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY _s1.index - 1, _s0.index - 1, key, _s2.index - 1 ORDER BY _s3.index - 1) = 1
 )

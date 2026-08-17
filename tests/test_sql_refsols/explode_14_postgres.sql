@@ -16,9 +16,9 @@ WITH _q_0 AS (
     ROW_NUMBER() OVER (PARTITION BY _q_0.key ORDER BY _s0.idx - 1, _s1.idx - 1, _s2.idx - 1) AS _w
   FROM _q_0 AS _q_0
   CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(_q_0.comment, '.')) WITH ORDINALITY AS _s0(val, idx)
-  CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(_s0.val, ',')) WITH ORDINALITY AS _s1(val, idx)
-  JOIN LATERAL UNNEST(STRING_TO_ARRAY(_s1.val, ' ')) WITH ORDINALITY AS _s2(val, idx)
-    ON _s2.val <> ''
+  CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(_s0.val, ',')) WITH ORDINALITY AS _s1(val, idx), LATERAL UNNEST(STRING_TO_ARRAY(_s1.val, ' ')) WITH ORDINALITY AS _s2(val, idx)
+  WHERE
+    _s2.val <> ''
 )
 SELECT
   key,

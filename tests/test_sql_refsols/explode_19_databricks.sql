@@ -15,9 +15,9 @@ WITH _q_0 AS (
     _s2.val AS val3
   FROM _q_0 AS _q_0
   CROSS JOIN LATERAL POSEXPLODE(SPLIT(_q_0.comment, '\\Q.\\E')) AS _s0(idx, val)
-  CROSS JOIN LATERAL POSEXPLODE(SPLIT(_s0.val, '\\Q,\\E')) AS _s1(idx, val)
-  JOIN LATERAL POSEXPLODE(SPLIT(_s1.val, '\\Q \\E')) AS _s2(idx, val)
-    ON _s2.val <> ''
+  CROSS JOIN LATERAL POSEXPLODE(SPLIT(_s0.val, '\\Q,\\E')) AS _s1(idx, val), LATERAL POSEXPLODE(SPLIT(_s1.val, '\\Q \\E')) AS _s2(idx, val)
+  WHERE
+    _s2.val <> ''
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY _q_0.key, _s0.idx ORDER BY _s1.idx DESC NULLS FIRST, _s2.idx DESC NULLS FIRST) = 1
 )

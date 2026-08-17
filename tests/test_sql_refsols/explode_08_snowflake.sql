@@ -15,9 +15,9 @@ SELECT
   _s2.value AS val3
 FROM _q_0 AS _q_0
 CROSS JOIN LATERAL SPLIT_TO_TABLE(_q_0.comment, '.') AS _s0
-CROSS JOIN LATERAL SPLIT_TO_TABLE(_s0.value, ' ') AS _s1
-JOIN LATERAL SPLIT_TO_TABLE(_s1.value, ',') AS _s2
-  ON _s2.value <> ''
+CROSS JOIN LATERAL SPLIT_TO_TABLE(_s0.value, ' ') AS _s1, LATERAL SPLIT_TO_TABLE(_s1.value, ',') AS _s2
+WHERE
+  _s2.value <> ''
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST,

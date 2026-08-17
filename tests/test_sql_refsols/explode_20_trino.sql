@@ -9,8 +9,8 @@ WITH _q_0 AS (
 SELECT
   _s0.val AS char,
   COUNT(*) AS n
-FROM _q_0 AS _q_0
-JOIN UNNEST(SPLIT(_q_0.comment, '')) WITH ORDINALITY AS _s0(val, idx)
-  ON _s0.val <> ''
+FROM _q_0 AS _q_0, UNNEST(SPLIT(_q_0.comment, '')) WITH ORDINALITY AS _s0(val, idx)
+WHERE
+  _s0.val <> ''
 GROUP BY
   1

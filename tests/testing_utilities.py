@@ -1659,7 +1659,7 @@ class PyDoughPandasTest:
             "to_table did not return an UnqualifiedGeneratedCollection as expected"
         )
         # Access the inner PyDoughUserGeneratedCollection to get columns
-        inner_collection = collection.user_collection
+        inner_collection = collection._parcel[0]
         assert isinstance(inner_collection, ViewGeneratedCollection), (
             "to_table did not return a ViewGeneratedCollection as expected"
         )

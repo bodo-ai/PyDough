@@ -29,13 +29,13 @@ WITH _q_0 AS (
     SELECT
       UNNEST(STR_SPLIT(_s1.val, ' ')) AS _col_0,
       GENERATE_SUBSCRIPTS(STR_SPLIT(_s1.val, ' '), 1) - 1 AS _col_1
-  ) AS _s2(val, idx)
-  JOIN LATERAL (
+  ) AS _s2(val, idx), LATERAL (
     SELECT
       UNNEST(REGEXP_SPLIT_TO_ARRAY(_s2.val, '')) AS _col_0,
       GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY(_s2.val, ''), 1) - 1 AS _col_1
   ) AS _s3(val, idx)
-    ON _s3.val <> ''
+  WHERE
+    _s3.val <> ''
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY _s1.idx, _s0.idx, _q_0.key, _s2.idx ORDER BY _s3.idx) = 1
 )

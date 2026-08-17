@@ -9,8 +9,8 @@ WITH _q_0 AS (
 SELECT
   _s0.val AS char,
   COUNT(*) AS n
-FROM _q_0 AS _q_0
-JOIN LATERAL UNNEST(REGEXP_SPLIT_TO_ARRAY(_q_0.comment, '')) WITH ORDINALITY AS _s0(val, idx)
-  ON _s0.val <> ''
+FROM _q_0 AS _q_0, LATERAL UNNEST(REGEXP_SPLIT_TO_ARRAY(_q_0.comment, '')) WITH ORDINALITY AS _s0(val, idx)
+WHERE
+  _s0.val <> ''
 GROUP BY
   1

@@ -18,9 +18,9 @@ WITH _q_0 AS (
   FROM _q_0 AS _q_0
   CROSS JOIN UNNEST(SPLIT(_q_0.comment, '.')) WITH ORDINALITY AS _s0(val, idx)
   CROSS JOIN UNNEST(SPLIT(_s0.val, ',')) WITH ORDINALITY AS _s1(val, idx)
-  CROSS JOIN UNNEST(SPLIT(_s1.val, ' ')) WITH ORDINALITY AS _s2(val, idx)
-  JOIN UNNEST(SPLIT(_s2.val, '')) WITH ORDINALITY AS _s3(val, idx)
-    ON _s3.val <> ''
+  CROSS JOIN UNNEST(SPLIT(_s1.val, ' ')) WITH ORDINALITY AS _s2(val, idx), UNNEST(SPLIT(_s2.val, '')) WITH ORDINALITY AS _s3(val, idx)
+  WHERE
+    _s3.val <> ''
 )
 SELECT
   key,
