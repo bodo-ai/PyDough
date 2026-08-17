@@ -4,10 +4,7 @@ PyDough is an alternative DSL that can be used to solve analytical problems by p
 
 ## What Is PyDough
 
-PyDough allows expressing analytical questions with hierarchical thinking, as seen in models such as [MongoDB](https://www.mongodb.com/docs/manual/data-modeling/), since that mental model is closer to human linguistics than a relational model.
-Unlike MongoDB, PyDough only uses a logical document model for abstractly explaining & interacting with data, rather than a physical document model to store the data.
-PyDough code can be written in and interleaved with Python code, and practices a lazy evaluation scheme that does not qualify or execute any logic until requested.
-PyDough executes by translating its logic into SQL which it can directly executing in an arbitrary database.
+PyDough allows expressing analytical questions with a purpose built DSL that uses a knowledge graph semantic layer, which incorporates hierarchies and relationships inherent in the data, and makes it more governable. PyDough code is Python, and can be written and analysed as such, and uses a lazy evaluation scheme that does not qualify or execute any logic until requested! We execute by translating its logic into SQL which can be executed in any SQL dialect.
 
 Consider the following information represented by the tables in a database:
 - There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they have attended.
