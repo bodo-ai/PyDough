@@ -1,15 +1,15 @@
-WITH _s3 AS (
+WITH _s5 AS (
   SELECT DISTINCT
-    _s1.val AS cust_word
+    _s2.val AS cust_word
   FROM tpch.customer AS customer
   CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(
     TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', '')),
     ' '
-  )) WITH ORDINALITY AS _s1(val, idx)
+  )) WITH ORDINALITY AS _s2(val, idx)
 ), _u_0 AS (
   SELECT
     cust_word AS _u_1
-  FROM _s3
+  FROM _s5
   GROUP BY
     1
 )

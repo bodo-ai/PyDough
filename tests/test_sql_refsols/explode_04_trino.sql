@@ -1,44 +1,44 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     r_regionkey AS key,
     r_name AS name
   FROM tpch.region
-), _s2 AS (
+), _s3 AS (
   SELECT
-    _q_0.key,
+    _s1.key,
     COUNT(*) AS n_rows
-  FROM _q_0 AS _q_0
-  CROSS JOIN UNNEST(SPLIT(_q_0.name, 'E')) WITH ORDINALITY AS _s0(val, idx)
+  FROM _s1 AS _s1
+  CROSS JOIN UNNEST(SPLIT(_s1.name, 'E')) WITH ORDINALITY AS _s0(val, idx)
   GROUP BY
     1
-), _s5 AS (
+), _s7 AS (
   SELECT
-    _q_1.key,
+    _s5.key,
     COUNT(*) AS n_rows
-  FROM _q_0 AS _q_1
-  CROSS JOIN UNNEST(SPLIT(_q_1.name, 'I')) WITH ORDINALITY AS _s3(val, idx)
+  FROM _s1 AS _s5
+  CROSS JOIN UNNEST(SPLIT(_s5.name, 'I')) WITH ORDINALITY AS _s4(val, idx)
   GROUP BY
     1
-), _s8 AS (
+), _s11 AS (
   SELECT
-    _q_2.key,
+    _s9.key,
     COUNT(*) AS n_rows
-  FROM _q_0 AS _q_2
-  CROSS JOIN UNNEST(SPLIT(_q_2.name, ' ')) WITH ORDINALITY AS _s6(val, idx)
+  FROM _s1 AS _s9
+  CROSS JOIN UNNEST(SPLIT(_s9.name, ' ')) WITH ORDINALITY AS _s8(val, idx)
   GROUP BY
     1
 )
 SELECT
   region.r_name AS region_name,
-  COALESCE(_s2.n_rows, 0) AS n_e_chunks,
-  COALESCE(_s5.n_rows, 0) AS n_i_chunks,
-  COALESCE(_s8.n_rows, 0) AS n_space_chunks
+  COALESCE(_s3.n_rows, 0) AS n_e_chunks,
+  COALESCE(_s7.n_rows, 0) AS n_i_chunks,
+  COALESCE(_s11.n_rows, 0) AS n_space_chunks
 FROM tpch.region AS region
-LEFT JOIN _s2 AS _s2
-  ON _s2.key = region.r_regionkey
-LEFT JOIN _s5 AS _s5
-  ON _s5.key = region.r_regionkey
-LEFT JOIN _s8 AS _s8
-  ON _s8.key = region.r_regionkey
+LEFT JOIN _s3 AS _s3
+  ON _s3.key = region.r_regionkey
+LEFT JOIN _s7 AS _s7
+  ON _s7.key = region.r_regionkey
+LEFT JOIN _s11 AS _s11
+  ON _s11.key = region.r_regionkey
 ORDER BY
   1 NULLS FIRST

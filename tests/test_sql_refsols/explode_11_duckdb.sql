@@ -1,6 +1,6 @@
-WITH _s3 AS (
+WITH _s5 AS (
   SELECT DISTINCT
-    _s1.val AS cust_word
+    _s2.val AS cust_word
   FROM tpch.customer AS customer
   CROSS JOIN LATERAL (
     SELECT
@@ -23,11 +23,11 @@ WITH _s3 AS (
         ),
         1
       ) - 1 AS _col_1
-  ) AS _s1(val, idx)
+  ) AS _s2(val, idx)
 ), _u_0 AS (
   SELECT
     cust_word AS _u_1
-  FROM _s3
+  FROM _s5
   GROUP BY
     1
 )

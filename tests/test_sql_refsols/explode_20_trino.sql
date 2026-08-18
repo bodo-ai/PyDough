@@ -1,4 +1,4 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     c_comment AS comment
   FROM tpch.customer
@@ -9,7 +9,7 @@ WITH _q_0 AS (
 SELECT
   _s0.val AS char,
   COUNT(*) AS n
-FROM _q_0 AS _q_0, UNNEST(SPLIT(_q_0.comment, '')) WITH ORDINALITY AS _s0(val, idx)
+FROM _s1 AS _s1, UNNEST(SPLIT(_s1.comment, '')) WITH ORDINALITY AS _s0(val, idx)
 WHERE
   _s0.val <> ''
 GROUP BY

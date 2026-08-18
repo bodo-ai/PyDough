@@ -85,6 +85,7 @@ class PostgresTransformBindings(BaseTransformBindings):
         val_index: int | None,
         idx_index: int | None,
         lateral_alias: str,
+        subquery_alias: str,
     ) -> SQLGlotExpression:
         column_exprs: list[SQLGlotExpression] = [*exprs]
         if val_index is not None:
@@ -153,7 +154,12 @@ class PostgresTransformBindings(BaseTransformBindings):
         result = (
             Select()
             .select(*column_exprs)
-            .from_(Subquery(this=input_expr))
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
             .join(Lateral(this=explode_op))
         )
 

@@ -611,6 +611,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             val_index,
             idx_index,
             self._generate_table_alias(),
+            self._generate_table_alias(),
         )
         self._stack.append(query)
 

@@ -1,17 +1,17 @@
-WITH _s3 AS (
+WITH _s5 AS (
   SELECT DISTINCT
-    _s1.val AS cust_word
+    _s2.val AS cust_word
   FROM tpch.customer AS customer
   CROSS JOIN LATERAL POSEXPLODE(
     SPLIT(
       TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', '')),
       '\\Q \\E'
     )
-  ) AS _s1(idx, val)
+  ) AS _s2(idx, val)
 ), _u_0 AS (
   SELECT
     cust_word AS _u_1
-  FROM _s3
+  FROM _s5
   GROUP BY
     1
 )

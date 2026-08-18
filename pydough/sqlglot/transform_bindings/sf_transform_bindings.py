@@ -256,8 +256,25 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         val_index: int | None,
         idx_index: int | None,
         lateral_alias: str,
+        subquery_alias: str,
     ) -> SQLGlotExpression:
-        column_exprs: list[SQLGlotExpression] = [*exprs]
+        # Rewrite all input expressions to point to the subquery
+        column_exprs: list[SQLGlotExpression] = []
+        for expr in exprs:
+            if isinstance(expr, sqlglot_expressions.Identifier):
+                expr = sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this=expr.this),
+                    table=sqlglot_expressions.Identifier(this=subquery_alias),
+                )
+            else:
+                for exp in expr.find_all(sqlglot_expressions.Identifier):
+                    exp.replace(
+                        sqlglot_expressions.Column(
+                            this=sqlglot_expressions.Identifier(this=exp.this),
+                            table=sqlglot_expressions.Identifier(this=subquery_alias),
+                        )
+                    )
+            column_exprs.append(expr)
         if val_index is not None:
             column_exprs[val_index] = sqlglot_expressions.Alias(
                 this=sqlglot_expressions.Column(
@@ -271,7 +288,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 this=sqlglot_expressions.Identifier(this="INDEX"),
                 table=sqlglot_expressions.Identifier(this=lateral_alias),
             )
-            if explode_spec.version == "string":
+            if explode_spec.version == "string" and explode_spec.delimiter != "":
                 idx_expr = sqlglot_expressions.Sub(
                     this=idx_expr,
                     expression=sqlglot_expressions.Literal.number(1),
@@ -312,7 +329,12 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         result = (
             Select()
             .select(*column_exprs)
-            .from_(Subquery(this=input_expr))
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
             .join(
                 Lateral(
                     this=explode_op,

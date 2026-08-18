@@ -1,4 +1,4 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     c_comment AS comment,
     c_custkey AS key
@@ -9,35 +9,35 @@ WITH _q_0 AS (
 ), _t0 AS (
   SELECT
     _s0.idx AS idx1,
-    _s1.idx AS idx2,
-    _s2.idx AS idx3,
-    _s3.idx AS idx4,
-    _q_0.key,
-    _s3.val AS val4
-  FROM _q_0 AS _q_0
+    _s2.idx AS idx2,
+    _s4.idx AS idx3,
+    _s6.idx AS idx4,
+    _s1.key,
+    _s6.val AS val4
+  FROM _s1 AS _s1
   CROSS JOIN LATERAL (
     SELECT
-      UNNEST(STR_SPLIT(_q_0.comment, '.')) AS _col_0,
-      GENERATE_SUBSCRIPTS(STR_SPLIT(_q_0.comment, '.'), 1) - 1 AS _col_1
+      UNNEST(STR_SPLIT(_s1.comment, '.')) AS _col_0,
+      GENERATE_SUBSCRIPTS(STR_SPLIT(_s1.comment, '.'), 1) - 1 AS _col_1
   ) AS _s0(val, idx)
   CROSS JOIN LATERAL (
     SELECT
       UNNEST(STR_SPLIT(_s0.val, ',')) AS _col_0,
       GENERATE_SUBSCRIPTS(STR_SPLIT(_s0.val, ','), 1) - 1 AS _col_1
-  ) AS _s1(val, idx)
+  ) AS _s2(val, idx)
   CROSS JOIN LATERAL (
     SELECT
-      UNNEST(STR_SPLIT(_s1.val, ' ')) AS _col_0,
-      GENERATE_SUBSCRIPTS(STR_SPLIT(_s1.val, ' '), 1) - 1 AS _col_1
-  ) AS _s2(val, idx), LATERAL (
+      UNNEST(STR_SPLIT(_s2.val, ' ')) AS _col_0,
+      GENERATE_SUBSCRIPTS(STR_SPLIT(_s2.val, ' '), 1) - 1 AS _col_1
+  ) AS _s4(val, idx), LATERAL (
     SELECT
-      UNNEST(REGEXP_SPLIT_TO_ARRAY(_s2.val, '')) AS _col_0,
-      GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY(_s2.val, ''), 1) - 1 AS _col_1
-  ) AS _s3(val, idx)
+      UNNEST(REGEXP_SPLIT_TO_ARRAY(_s4.val, '')) AS _col_0,
+      GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY(_s4.val, ''), 1) - 1 AS _col_1
+  ) AS _s6(val, idx)
   WHERE
-    _s3.val <> ''
+    _s6.val <> ''
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s1.idx, _s0.idx, _q_0.key, _s2.idx ORDER BY _s3.idx) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s2.idx, _s0.idx, _s1.key, _s4.idx ORDER BY _s6.idx) = 1
 )
 SELECT
   key,

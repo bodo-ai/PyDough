@@ -1,4 +1,4 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     c_name AS name
   FROM tpch.customer
@@ -9,8 +9,8 @@ WITH _q_0 AS (
 SELECT
   _s0.val,
   _s0.idx
-FROM _q_0 AS _q_0
-CROSS JOIN LATERAL POSEXPLODE(SPLIT(_q_0.name, '\\Q#\\E')) AS _s0(idx, val)
+FROM _s1 AS _s1
+CROSS JOIN LATERAL POSEXPLODE(SPLIT(_s1.name, '\\Q#\\E')) AS _s0(idx, val)
 ORDER BY
-  _q_0.name,
+  _s1.name,
   2

@@ -19,6 +19,7 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [SINGULAR](#singular)
    * [BEST](#best)
    * [CROSS](#cross)
+   * [EXPLODE](#explode)
 - [User Generated Collections](#user-generated-collections)
     * [range_collection](#range_collection)
     * [dataframe_collection](#dataframe_collection)
@@ -36,7 +37,7 @@ This page describes the specification of the PyDough DSL. The specification incl
 ## Example Graph
 
 The examples in this document use a metadata graph (named `GRAPH`) with the following collections:
-- `People`: records of every known person. Scalar properties: `first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`.
+- `People`: records of every known person. Scalar properties: `first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`, `phone_numbers`.
 - `Addresses`: records of every known address. Scalar properties: `address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`.
 - `Packages`: records of every known package. Scalar properties: `package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`.
 
@@ -1536,6 +1537,119 @@ People.CALCULATE(Packages=COUNT(People.packages)).CROSS(Packages)
 People.CROSS(Addresses).current_address
 ```
 
+<!-- TOC --><a name="explode"></a>
+### EXPLODE
+
+A PyDough operation that explodes each row from a collection into multiple rows, i.e. from flattening a column of array data, or by splitting up a string column on a delimiter. The outputted collection will be a sub-collection of the original context containing the exploded data, and an optional indexed column keeping track of the indices of each value of the exploded data within a single row. This newly generated sub-collection has no other sub-collections from the original collection. The syntax for this operation is `collection.EXPLODE(...)`. `EXPLODE` has the following arguments:
+- `data` (required): the expression from the current context being exploded (either an array or string). This expression cannot reference any sub-collections of the current context.
+- `name` (required): the name of the collection created from the explosion operation (similar to `PARTITION`).
+- `value_name` (required): a string literal declaring the name of the new column that will be used to store the exploded data.
+- `index_name` (optional): a string literal declaring the name of the new column that will be used to store the indices of the exploded data.  If not provided, this column is not generated. The `index_name` is required if `is_distinct` is False. The indices are 0-indexed.
+- `version` (optional, default=`"array"`): either `"array"` or `"string"`, stating whether the data to explode is an array being flattened or a string being split on a delimiter.
+- `delimiter` (optional): a string literal indicating the delimiter that should be used to split up the string if `version="string"`. If `delimiter` is an empty string, the string will be split into individual characters.
+- `filtering` (optional, default=`True`): `True` if it is possible for not every row in the original collection to be preserved in the exploded sub-collection (i.e. if one of the arrays is empty), and `False` otherwise.
+- `is_distinct` (optional, default=`False`): `True` if each row of the exploded data is unique within the set of all other values from that same original row of unexploded data, and `False` otherwise. An `index_name` can only be omitted if `is_distinct` is `True`.
+
+> [!IMPORTANT]
+> This feature is only supported in certain dialects. It is currently supported for Snowflake, DataBricks, DuckDB, Postgres and Trino.
+
+**Good Example #1**: List out every phone number had by every person (assuming `phone_numbers` is an array of strings).
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', is_distinct=True)
+```
+
+**Good Example #2**: For each person, find the first phone number they have (assuming `phone_numbers` is an array of strings).
+
+```py
+%%pydough
+People.CALCULATE(first_name, last_name)
+      .EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name='idx', is_distinct=True)
+      .WHERE(idx == 0)
+      .CALCULATE(first_name, last_name, phone_number)
+```
+
+**Good Example #3**: For each person, count how many phone numbers they have (assuming `phone_numbers` is an array of strings).
+```py
+%%pydough
+exploded_numbers = EXPLODE(phone_numbers, "numbers", value_name='phone_number', is_distinct=True)
+People.CALCULATE(first_name, last_name, n_phone_numbers=COUNT(exploded_numbers))
+```
+
+**Good Example #4**: List out every phone number had by every person (assuming `phone_numbers` is a string of comma separated values).
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', version="string", delimiter=",", is_distinct=True)
+```
+
+**Good Example #5**: List the number of times each character of the alphabet used within first names of people.
+
+```py
+%%pydough
+People.EXPLODE(LOWER(first_name), "characters", value_name='char', index_name="idx", version="string", delimiter="")
+      .PARTITION(name='letters', by=char)
+      .CALCULATE(char, n_uses=COUNT(characters))
+```
+
+**Bad Example #1**: Missing the `name`.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, value_name='phone_number', index_name="idx")
+```
+
+**Bad Example #2**: Missing the `value_name`.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", index_name="idx")
+```
+
+**Bad Example #3**: Missing the `index_name` when `is_distinct=True` is not provided.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number')
+```
+
+**Bad Example #4**: Providing an invalid `version`
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx", version="party")
+```
+
+**Bad Example #5**: Missing the `delimiter` when `version="string"`
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx", version="string")
+```
+
+**Bad Example #6**: Not providing a string literal for the delimiter.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx", version="string", delimiter=first_name)
+```
+
+**Bad Example #7**: Attempting to access a sub-collection after exploding.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx")
+      .packages
+```
+
+**Bad Example #8**: Accessing a sub-collection when declaring the data to explode.
+
+```py
+%%pydough
+People.EXPLODE(LISTOF(packages.package_cost), "costs", value_name='cost', index_name="idx")
+```
+
 <!-- TOC --><a name="user-generated-collections"></a>
 ## User Generated Collections
 
@@ -1605,11 +1719,15 @@ The supported PyDough types for `dataframe_collection` are:
 - `NumericType`: includes float, integer, infinity, Nan.
 - `BooleanType`: True or False.
 - `StringType`: alphanumeric characters.
-- `Datetype`: date and datetime.
+- `DateType`: date and datetime.
+- `ArrayType`: arrays of data.
 - `UnknownType`: used for all `None` columns.
 
 Note: MySQL by default does not support infinity values. When PyDough detects 
 infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
+
+> [!IMPORTANT]
+> `ArrayType` is only supported for certain dialects: Trino, Postgres, DuckDB, Databricks.
 
 #### Example 1
 

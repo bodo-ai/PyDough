@@ -1,4 +1,4 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     c_name AS name
   FROM tpch.customer
@@ -9,12 +9,12 @@ WITH _q_0 AS (
 SELECT
   _s0.val,
   _s0.idx
-FROM _q_0 AS _q_0
+FROM _s1 AS _s1
 CROSS JOIN LATERAL (
   SELECT
-    UNNEST(STR_SPLIT(_q_0.name, '#')) AS _col_0,
-    GENERATE_SUBSCRIPTS(STR_SPLIT(_q_0.name, '#'), 1) - 1 AS _col_1
+    UNNEST(STR_SPLIT(_s1.name, '#')) AS _col_0,
+    GENERATE_SUBSCRIPTS(STR_SPLIT(_s1.name, '#'), 1) - 1 AS _col_1
 ) AS _s0(val, idx)
 ORDER BY
-  _q_0.name NULLS FIRST,
+  _s1.name NULLS FIRST,
   2 NULLS FIRST

@@ -1,4 +1,4 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     c_comment AS comment
   FROM tpch.customer
@@ -9,10 +9,10 @@ WITH _q_0 AS (
 SELECT
   _s0.val AS char,
   COUNT(*) AS n
-FROM _q_0 AS _q_0, LATERAL (
+FROM _s1 AS _s1, LATERAL (
   SELECT
-    UNNEST(REGEXP_SPLIT_TO_ARRAY(_q_0.comment, '')) AS _col_0,
-    GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY(_q_0.comment, ''), 1) - 1 AS _col_1
+    UNNEST(REGEXP_SPLIT_TO_ARRAY(_s1.comment, '')) AS _col_0,
+    GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY(_s1.comment, ''), 1) - 1 AS _col_1
 ) AS _s0(val, idx)
 WHERE
   _s0.val <> ''

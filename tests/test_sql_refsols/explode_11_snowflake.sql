@@ -1,6 +1,6 @@
-WITH _s3 AS (
+WITH _s5 AS (
   SELECT DISTINCT
-    _s1.value AS cust_word
+    _s2.value AS cust_word
   FROM tpch.customer AS customer
   CROSS JOIN LATERAL SPLIT_TO_TABLE(
     TRIM(
@@ -8,11 +8,11 @@ WITH _s3 AS (
       ' '
     ),
     ' '
-  ) AS _s1
+  ) AS _s2
 ), _u_0 AS (
   SELECT
     cust_word AS _u_1
-  FROM _s3
+  FROM _s5
   GROUP BY
     1
 )

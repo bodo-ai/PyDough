@@ -147,6 +147,7 @@ class DuckDBTransformBindings(BaseTransformBindings):
         val_index: int | None,
         idx_index: int | None,
         lateral_alias: str,
+        subquery_alias: str,
     ) -> SQLGlotExpression:
         column_exprs: list[SQLGlotExpression] = [*exprs]
         if val_index is not None:
@@ -208,7 +209,12 @@ class DuckDBTransformBindings(BaseTransformBindings):
         result = (
             Select()
             .select(*column_exprs)
-            .from_(Subquery(this=input_expr))
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
             .join(
                 Lateral(
                     this=Subquery(this=Select().select(*explode_args)),

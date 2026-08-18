@@ -72,6 +72,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [HASNOT](#hasnot)
    * [VAR](#var)
    * [STD](#std)
+   * [LISTOF](#listof)
 - [Window Functions](#window-functions)
    * [RANKING](#ranking)
    * [PERCENTILE](#percentile)
@@ -1087,6 +1088,23 @@ Parts.CALCULATE(std = STD(supply_records.supply_cost))
 
 # Compute the sample standard deviation
 Parts.CALCULATE(std = STD(supply_records.supply_cost, type="sample"))
+```
+
+<!-- TOC --><a name="std"></a>
+
+### LISTOF
+
+The `LISTOF` function collects a set of values into an array.
+
+> [!IMPORTANT]
+> This function is only supported in certain dialects. It is currently supported for Snowflake, DataBricks, DuckDB, Postgres and Trino.
+
+```py
+# For each region, list the names of all nations inside that region
+Regions.CALCULATE(region_name=name, nation_names=LISTOF(nations.name))
+
+# For each customer, list the total quantities of all purchases made by that customer.
+Customers.CALCULATE(customer_name=name, quantities=LISTOF(orders.lines.quantity))
 ```
 
 <!-- TOC --><a name="window-functions"></a>

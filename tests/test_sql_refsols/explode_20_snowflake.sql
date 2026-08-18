@@ -1,4 +1,4 @@
-WITH _q_0 AS (
+WITH _s1 AS (
   SELECT
     c_comment AS comment
   FROM tpch.customer
@@ -9,7 +9,7 @@ WITH _q_0 AS (
 SELECT
   _s0.value AS char,
   COUNT(*) AS n
-FROM _q_0 AS _q_0, LATERAL FLATTEN(REGEXP_EXTRACT_ALL(_q_0.comment, '.{1}')) AS _s0(seq, key, path, index, value, this)
+FROM _s1 AS _s1, LATERAL FLATTEN(REGEXP_EXTRACT_ALL(_s1.comment, '.{1}')) AS _s0(seq, key, path, index, value, this)
 WHERE
   _s0.value <> ''
 GROUP BY
