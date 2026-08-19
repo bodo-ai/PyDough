@@ -2,6 +2,7 @@
 Base definition of PyDough metadata for template attributes.
 """
 
+from pydough.errors.error_types import PyDoughMetadataException
 from pydough.errors.error_utils import (
     HasType,
     extract_array,
@@ -14,11 +15,14 @@ from pydough.metadata.graphs import GraphMetadata
 
 class AttributeMetadata(AbstractMetadata):
     """
-    Abstract base class for PyDough metadata for template attributes.
+    Concrete metadata implementation class for PyDough template attributes.
+    Representing the options (labels and values) that can be used on the templates
+    definitions.
     """
 
     # Set of names of fields that can be included in the JSON
-    # object describing a template attribute. Implementations should extend this.
+    # object describing a template attribute.
+    # TODO: Maybe create a verify complete function with this if not delete it
     allowed_fields: set[str] = {
         "name",
         "usage",
@@ -35,9 +39,6 @@ class AttributeMetadata(AbstractMetadata):
         type: str,
         description: str,
     ):
-        # TODO: Check if the name is a valid one (not a the graph, collection name)
-        # Really this name is not going to be use for other than just identifying
-        # the attribute so maybe is not really worth the check
         HasType(GraphMetadata).verify(graph, f"graph {name!r}")
 
         self._graph: GraphMetadata = graph
@@ -99,7 +100,11 @@ class AttributeMetadata(AbstractMetadata):
 
     @property
     def path(self) -> str:
-        return f"{self.graph.path}.{self.name}"
+        return f"{self.graph.path}.templates.attributes.{self.name}"
+
+    @staticmethod
+    def create_error_name(name: str, graph_error_name: str):
+        return f"template attribute {name!r} in {graph_error_name}"
 
     def add_attribute_option(self, label: str, value: str | int) -> None:
         """
@@ -109,23 +114,6 @@ class AttributeMetadata(AbstractMetadata):
             raise ValueError(f"Duplicate option label: {label!r}")
 
         self.options[label] = value
-
-    @staticmethod
-    def create_error_name(name: str, graph_error_name: str):
-        return f"template attribute {name!r} in {graph_error_name}"
-
-    def verify_complete(self) -> None:
-        """
-        Verifies that a template attribute is well-formed after the parsing of all of
-        its properties is complete. Subclasses should extend the checks done
-        in the default implementation.
-
-        Raises:
-            `PyDoughMetadataException`: if the template attribute is malformed
-            in any way after parsing is done.
-        """
-        # TODO
-        return
 
     @staticmethod
     def parse_from_json(
@@ -172,10 +160,14 @@ class AttributeMetadata(AbstractMetadata):
         for option in attr_options:
             label: str = extract_string(option, "label", error_name)
             value: str | int
+
             try:
-                value = extract_string(option, "value", error_name)
-            except AssertionError:
-                value = extract_integer(option, "value", error_name)
+                if type(option["value"]) is str:
+                    value = extract_string(option, "value", error_name)
+                else:
+                    value = extract_integer(option, "value", error_name)
+            except PyDoughMetadataException:
+                raise PyDoughMetadataException("Option value must be string or integer")
 
             new_attribute.add_attribute_option(label, value)
 

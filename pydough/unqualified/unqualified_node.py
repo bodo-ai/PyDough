@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 from abc import ABC
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from datetime import date, datetime
 from typing import Any, Union
 
@@ -32,6 +32,7 @@ import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
 from pydough.metadata import GraphMetadata
+from pydough.metadata.templates import TemplateMetadata
 from pydough.types import (
     ArrayType,
     BooleanType,
@@ -136,7 +137,7 @@ class UnqualifiedNode(ABC):
     def __call__(self, *args, **kwargs):
 
         if pydough.active_session.metadata:
-            metadata_templates: dict[str, Callable] = (
+            metadata_templates: dict[str, TemplateMetadata] = (
                 pydough.active_session.metadata.templates_definitions
             )
 
