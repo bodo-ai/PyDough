@@ -18,8 +18,13 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# Note: sqlite is included in the standard library, so it doesn't need to be listed here.
+# Note: sqlite is included in the standard library, so it doesn't need to be 
+# listed here.
 # There is a bug in some unit tests when run with sqlglot>=26.8.0
+# As of August 2026 LLM team work requires pyarrow=22.0.0, but 
+# BodoSQL requires latest version of pyarrow. 
+# So we are not specifying any version for pyarrow here to avoid conflicts and 
+# allow other packages to specify their own version of pyarrow.
 dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab", "pyarrow"]
 
 [project.urls]
