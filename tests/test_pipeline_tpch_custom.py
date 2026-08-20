@@ -5336,6 +5336,51 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = ("
+                "  regions"
+                "  .CALCULATE(name)"
+                "  .EXPLODE(['A', 'E', 'I'], 'letters', value_name='letter', index_name='idx')"
+                "  .CALCULATE(name, letter)"
+                "  .WHERE(CONTAINS(name, letter))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "AFRICA",
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                        ],
+                        "letter": [
+                            "A",
+                            "I",
+                            "A",
+                            "E",
+                            "I",
+                            "A",
+                            "I",
+                            "E",
+                            "A",
+                            "E",
+                            "I",
+                        ],
+                    }
+                ),
+                "explode_22",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_22",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),

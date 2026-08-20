@@ -898,7 +898,7 @@ class UnqualifiedExplode(UnqualifiedNode):
             ExplodeSpec,
         ] = (
             predecessor,
-            data,
+            self.coerce_to_unqualified(data),
             name,
             explode_spec,
         )
