@@ -113,20 +113,22 @@ class DatabricksTransformBindings(BaseTransformBindings):
         subquery_alias: str,
     ) -> SQLGlotExpression:
         column_exprs: list[SQLGlotExpression] = [*exprs]
+        val_expr: SQLGlotExpression = sqlglot_expressions.Column(
+            this=sqlglot_expressions.Identifier(this="val"),
+            table=sqlglot_expressions.Identifier(this=lateral_alias),
+        )
+        idx_expr: SQLGlotExpression = sqlglot_expressions.Column(
+            this=sqlglot_expressions.Identifier(this="idx"),
+            table=sqlglot_expressions.Identifier(this=lateral_alias),
+        )
         if val_index is not None:
             column_exprs[val_index] = sqlglot_expressions.Alias(
-                this=sqlglot_expressions.Column(
-                    this=sqlglot_expressions.Identifier(this="val"),
-                    table=sqlglot_expressions.Identifier(this=lateral_alias),
-                ),
+                this=val_expr,
                 alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
             )
         if idx_index is not None and explode_spec.index_name is not None:
             column_exprs[idx_index] = sqlglot_expressions.Alias(
-                this=sqlglot_expressions.Column(
-                    this=sqlglot_expressions.Identifier(this="idx"),
-                    table=sqlglot_expressions.Identifier(this=lateral_alias),
-                ),
+                this=idx_expr,
                 alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
             )
 
@@ -165,6 +167,18 @@ class DatabricksTransformBindings(BaseTransformBindings):
                 )
             )
         )
+
+        if explode_spec.version == "string" and explode_spec.delimiter == "":
+            # Databricks' SPLIT() returns an array with a single empty string
+            # when the input is an empty string, but PyDough's EXPLODE() expects
+            # no rows to be returned in that case. Filter out the empty string
+            # from the exploded results.
+            result = result.where(
+                sqlglot_expressions.NEQ(
+                    this=val_expr,
+                    expression=sqlglot_expressions.Literal.string(""),
+                )
+            )
 
         return result
 

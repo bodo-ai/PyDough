@@ -5381,6 +5381,25 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = ("
+                "  TPCH"
+                "  .EXPLODE('ALPHABET', 'letters', value_name='letter', index_name='idx', version='string', delimiter='')"
+                "  .CALCULATE(idx, letter)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": list(range(8)),
+                        "letter": list("ALPHABET"),
+                    }
+                ),
+                "explode_23",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_23",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),
