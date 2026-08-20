@@ -7127,9 +7127,7 @@ def test_pipeline_e2e_simple_week(
         pytest.param(
             dataframe_collection_bad_5,
             None,
-            re.escape(
-                "Arrays in column 'col1', are not supported for dataframe collections"
-            ),
+            re.escape("Array types are not currently supported in dialect SQLITE"),
             id="dataframe_collection_bad_5",
         ),
         pytest.param(

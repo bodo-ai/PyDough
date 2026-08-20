@@ -260,7 +260,7 @@
         "always matches": true,
         "description": "The company that handled the shipment"
       }
-    ]
+    ],
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}
