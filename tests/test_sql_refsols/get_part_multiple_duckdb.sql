@@ -117,7 +117,7 @@ SELECT
       END
     ) = 1
     THEN sbcustname
-    ELSE NULL
+    ELSE ''
   END AS p13,
   SPLIT_PART(
     '',
@@ -140,7 +140,7 @@ SELECT
         END
       ) = 1
       THEN sbcuststate
-      ELSE NULL
+      ELSE ''
     END
     ELSE SPLIT_PART(
       sbcuststate,

@@ -1,12 +1,12 @@
 SELECT
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustname) - CHAR_LENGTH(REPLACE(sbcustname, ' ', ''))
     ) + 1 >= ABS(-1)
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', -1), ' ', 1)
-    ELSE NULL
+    ELSE ''
   END AS last_name
 FROM main.sbCustomer
 WHERE
