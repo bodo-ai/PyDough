@@ -225,6 +225,13 @@ def deduce_explode_uniqueness(
     """
     Helper function to transforms the uniqueness sets after an Explode
     operation duplicates rows.
+
+    Args:
+        `unique_terms`: the uniqueness sets of the input to the explode.
+        `explode`: the explode node.
+
+    Returns:
+        The uniqueness sets of the output of the explode.
     """
     # Build up the list of column names that imply uniqueness within one of the
     # expanded row sets (either the index column, or the expanded data, or

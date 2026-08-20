@@ -1408,7 +1408,9 @@ class RelTranslation:
         self, operation: HybridExplode, context: TranslationOutput
     ) -> TranslationOutput:
         """
-        TODO
+        Converts an HybridExplode operation into the relational tree for the
+        EXPLODE operation, which unnests a collection column into multiple rows,
+        with the exploded values appearing in separate rows.
         """
         exploded_data: RelationalExpression = self.translate_expression(
             operation.explode_data.shift_back(-1), context

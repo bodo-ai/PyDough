@@ -76,7 +76,7 @@ class DatabaseConnection:
                         }
                     )
                 case DatabaseDialect.MYSQL:
-                    # Snowflake returns JSON data (type 245) as strings, so we
+                    # MySQL returns JSON data (type 245) as strings, so we
                     # need to parse those back into Python types.
                     semi_structured_cols.update(
                         {

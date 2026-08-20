@@ -1728,6 +1728,7 @@ infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
 
 > [!IMPORTANT]
 > `ArrayType` is only supported for certain dialects: Trino, Postgres, DuckDB, Databricks.
+> Postgres has a limited ability to support rows with an empty array, depending on the type of the column. These sorts of array literals are only supported when the overall column type is an array of booleans, numbers, strings, or datetime values.
 
 #### Example 1
 

@@ -1293,6 +1293,9 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified EXPLODE node.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         data_raw: UnqualifiedNode = unqualified._parcel[1]
