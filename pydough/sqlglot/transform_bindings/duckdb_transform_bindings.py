@@ -57,7 +57,7 @@ class DuckDBTransformBindings(BaseTransformBindings):
                     true=args[0],
                 )
             ],
-            default=sqlglot_expressions.Null(),
+            default=sqlglot_expressions.Literal.string(""),
         )
         split_part_result: SQLGlotExpression = sqlglot_expressions.Anonymous(
             this="SPLIT_PART",

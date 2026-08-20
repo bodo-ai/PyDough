@@ -1,0 +1,20 @@
+{
+  "pydough": "result = nations.WHERE(naem == 'ASIA')",
+  "explain_output": {
+    "error": true,
+    "error_type": "unrecognized_term",
+    "message": "Unrecognized term of TPCH.nations: 'naem'. Did you mean: name, key, region?",
+    "details": {
+      "term": "naem",
+      "suggestions": [
+        "name",
+        "key",
+        "region"
+      ]
+    },
+    "hint": "Use one of the suggested names above. Do not reuse the name that caused this error.",
+    "steps": [],
+    "schema": null
+  },
+  "explain_output_md": "error_unrecognized_term.md"
+}

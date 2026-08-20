@@ -37,26 +37,34 @@ SELECT
     LEAST(
       CASE
         WHEN (
-          -CAST(CAST((
+          CAST(CAST((
             LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-          ) AS DOUBLE) AS BIGINT) + -1
-        ) > 2
-        THEN NULL
+          ) AS DOUBLE) AS BIGINT) + 1
+        ) < ABS(2)
+        THEN ''
+        ELSE SPLIT_PART(p_name, ' ', 2)
+      END,
+      CASE
         WHEN (
           CAST(CAST((
             LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
           ) AS DOUBLE) AS BIGINT) + 1
-        ) < 2
-        THEN NULL
-        ELSE SPLIT_PART(p_name, ' ', 2)
-      END,
-      SPLIT_PART(
-        p_name,
-        ' ',
-        CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + 1
-      )
+        ) < ABS(-1)
+        THEN ''
+        WHEN (
+          CAST(CAST((
+            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+          ) AS DOUBLE) AS BIGINT) + 1
+        ) >= ABS(-1)
+        THEN SPLIT_PART(
+          p_name,
+          ' ',
+          CAST(CAST((
+            LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
+          ) AS DOUBLE) AS BIGINT) + 1
+        )
+        ELSE SPLIT_PART(p_name, ' ', -1)
+      END
     )
   ) AS b,
   TRIM('o' FROM SUBSTRING(p_name, 1, 2)) AS c,

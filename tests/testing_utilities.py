@@ -1749,16 +1749,8 @@ def harmonize_types(column_a, column_b):
             lambda x: pd.NA if pd.isna(x) else float(x)
         )
 
-    # String vs None. Convert to empty string.
-    if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
-        isinstance(elem, (str, NoneType)) for elem in column_b
-    ):
-        return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
-            lambda x: "" if pd.isna(x) else str(x)
-        )
-
     # float vs None. Convert to nullable floats
-    if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
+    if all(isinstance(elem, (float, NoneType)) for elem in column_a) and all(
         isinstance(elem, (float, NoneType)) for elem in column_b
     ):
         return column_a.astype("Float64"), column_b.astype("Float64")
