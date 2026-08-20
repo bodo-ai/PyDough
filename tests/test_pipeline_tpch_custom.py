@@ -2066,7 +2066,7 @@ from .testing_utilities import (
                         "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
                         "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
                         "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
-                        "c6": [None] * 5,
+                        "c6": [""] * 5,
                     }
                 ),
                 "extract_colors",

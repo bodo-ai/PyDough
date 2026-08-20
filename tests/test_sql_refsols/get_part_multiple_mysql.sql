@@ -2,7 +2,7 @@ SELECT
   TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) AS _expr0,
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustname) - CHAR_LENGTH(REPLACE(sbcustname, ' ', ''))
     ) + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -23,11 +23,11 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', 1), ' ', -1)
-    ELSE NULL
+    ELSE ''
   END AS p1,
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) <= (
@@ -62,11 +62,11 @@ SELECT
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', 1), ' ', -1)
-    ELSE NULL
+    ELSE ''
   END AS p2,
   CASE
     WHEN CHAR_LENGTH(sbcustemail) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustemail) - CHAR_LENGTH(REPLACE(sbcustemail, '.', ''))
     ) + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -87,11 +87,11 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustemail, '.', 1), '.', -1)
-    ELSE NULL
+    ELSE ''
   END AS p3,
   CASE
     WHEN CHAR_LENGTH(sbcustemail) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) <= (
@@ -126,11 +126,11 @@ SELECT
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustemail, '.', 1), '.', -1)
-    ELSE NULL
+    ELSE ''
   END AS p4,
   CASE
     WHEN CHAR_LENGTH(sbcustphone) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
     ) + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -151,11 +151,11 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-    ELSE NULL
+    ELSE ''
   END AS p5,
   CASE
     WHEN CHAR_LENGTH(sbcustphone) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) <= (
@@ -190,11 +190,11 @@ SELECT
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-    ELSE NULL
+    ELSE ''
   END AS p6,
   CASE
     WHEN CHAR_LENGTH(sbcustpostalcode) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustpostalcode) - CHAR_LENGTH(REPLACE(sbcustpostalcode, '00', ''))
     ) / 2 + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -215,11 +215,11 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustpostalcode, '00', 1), '00', -1)
-    ELSE NULL
+    ELSE ''
   END AS p7,
   CASE
     WHEN CHAR_LENGTH(sbcustpostalcode) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) <= (
@@ -262,11 +262,11 @@ SELECT
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustpostalcode, '00', 1), '00', -1)
-    ELSE NULL
+    ELSE ''
   END AS p8,
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustname) - CHAR_LENGTH(REPLACE(sbcustname, '!', ''))
     ) + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -287,11 +287,11 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, '!', 1), '!', -1)
-    ELSE NULL
+    ELSE ''
   END AS p9,
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) <= (
@@ -326,11 +326,11 @@ SELECT
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, '@', 1), '@', -1)
-    ELSE NULL
+    ELSE ''
   END AS p10,
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustname) - CHAR_LENGTH(REPLACE(sbcustname, 'aa', ''))
     ) / 2 + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -351,11 +351,11 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, 'aa', 1), 'aa', -1)
-    ELSE NULL
+    ELSE ''
   END AS p11,
   CASE
     WHEN CHAR_LENGTH(sbcustname) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) <= (
@@ -390,23 +390,23 @@ SELECT
       -1 * TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
     ) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, '#$*', 1), '#$*', -1)
-    ELSE NULL
+    ELSE ''
   END AS p12,
   CASE
     WHEN ABS(TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)) = 1
     THEN sbcustname
-    ELSE NULL
+    ELSE ''
   END AS p13,
-  NULL AS p14,
+  '' AS p14,
   SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', 1), ' ', -1) AS p15,
   CASE
     WHEN CHAR_LENGTH(sbcuststate) = 0
-    THEN NULL
+    THEN ''
     WHEN CHAR_LENGTH(sbcuststate) = 0
     THEN CASE
       WHEN ABS(TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)) = 1
       THEN sbcuststate
-      ELSE NULL
+      ELSE ''
     END
     WHEN (
       CHAR_LENGTH(sbcuststate) - CHAR_LENGTH(REPLACE(sbcuststate, sbcuststate, ''))
@@ -428,42 +428,42 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcuststate, sbcuststate, 1), sbcuststate, -1)
-    ELSE NULL
+    ELSE ''
   END AS p16,
   CASE
     WHEN CHAR_LENGTH(
       CASE
         WHEN CHAR_LENGTH(sbcustphone) = 0
-        THEN NULL
+        THEN ''
         WHEN (
           CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
         ) >= 0
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-        ELSE NULL
+        ELSE ''
       END
     ) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(
         CASE
           WHEN CHAR_LENGTH(sbcustphone) = 0
-          THEN NULL
+          THEN ''
           WHEN (
             CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
           ) >= 0
           THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-          ELSE NULL
+          ELSE ''
         END
       ) - CHAR_LENGTH(
         REPLACE(
           CASE
             WHEN CHAR_LENGTH(sbcustphone) = 0
-            THEN NULL
+            THEN ''
             WHEN (
               CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
             ) >= 0
             THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-            ELSE NULL
+            ELSE ''
           END,
           '5',
           ''
@@ -475,12 +475,12 @@ SELECT
       SUBSTRING_INDEX(
         CASE
           WHEN CHAR_LENGTH(sbcustphone) = 0
-          THEN NULL
+          THEN ''
           WHEN (
             CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
           ) >= 0
           THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-          ELSE NULL
+          ELSE ''
         END,
         '5',
         TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -492,23 +492,23 @@ SELECT
       CHAR_LENGTH(
         CASE
           WHEN CHAR_LENGTH(sbcustphone) = 0
-          THEN NULL
+          THEN ''
           WHEN (
             CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
           ) >= 0
           THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-          ELSE NULL
+          ELSE ''
         END
       ) - CHAR_LENGTH(
         REPLACE(
           CASE
             WHEN CHAR_LENGTH(sbcustphone) = 0
-            THEN NULL
+            THEN ''
             WHEN (
               CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
             ) >= 0
             THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-            ELSE NULL
+            ELSE ''
           END,
           '5',
           ''
@@ -520,12 +520,12 @@ SELECT
       SUBSTRING_INDEX(
         CASE
           WHEN CHAR_LENGTH(sbcustphone) = 0
-          THEN NULL
+          THEN ''
           WHEN (
             CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
           ) >= 0
           THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-          ELSE NULL
+          ELSE ''
         END,
         '5',
         TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -538,12 +538,12 @@ SELECT
       SUBSTRING_INDEX(
         CASE
           WHEN CHAR_LENGTH(sbcustphone) = 0
-          THEN NULL
+          THEN ''
           WHEN (
             CHAR_LENGTH(sbcustphone) - CHAR_LENGTH(REPLACE(sbcustphone, '-', ''))
           ) >= 0
           THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustphone, '-', 1), '-', -1)
-          ELSE NULL
+          ELSE ''
         END,
         '5',
         1
@@ -551,11 +551,11 @@ SELECT
       '5',
       -1
     )
-    ELSE NULL
+    ELSE ''
   END AS p17,
   CASE
     WHEN CHAR_LENGTH(sbcustpostalcode) = 0
-    THEN NULL
+    THEN ''
     WHEN (
       CHAR_LENGTH(sbcustpostalcode) - CHAR_LENGTH(REPLACE(sbcustpostalcode, '0', ''))
     ) + 1 >= TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0)
@@ -576,7 +576,7 @@ SELECT
     )
     WHEN TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) = 0
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustpostalcode, '0', 1), '0', -1)
-    ELSE NULL
+    ELSE ''
   END AS p18
 FROM main.sbCustomer
 WHERE

@@ -8,7 +8,6 @@ import pytest
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from tests.test_pydough_functions.simple_pydough_functions import (
-    get_part_multiple,
     week_offset,
 )
 from tests.testing_utilities import (
@@ -304,36 +303,6 @@ def defog_postgres_test_data(
             skip_sql=True,
         )
 
-    if defog_custom_pipeline_test_data.test_name == "get_part_multiple":
-        return PyDoughPandasTest(
-            get_part_multiple,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "k": [1, 2, 3, 4],
-                    "p1": ["john", "Smith", None, None],
-                    "p2": ["doe", "Jane", None, None],
-                    "p3": ["john", "smith@email", "com", None],
-                    "p4": ["com", "smith@email", "bob", None],
-                    "p5": ["555", "987", "8135", None],
-                    "p6": ["4567", "987", "555", None],
-                    "p7": ["9", "02", None, None],
-                    "p8": ["01", "1", None, None],
-                    "p9": ["john doe", None, None, None],
-                    "p10": ["john doe", None, None, None],
-                    "p11": ["john doe", None, None, None],
-                    "p12": ["john doe", None, None, None],
-                    "p13": ["john doe", None, None, None],
-                    "p14": [None, None, None, None],
-                    "p15": ["john", "Jane", "Bob", "Samantha"],
-                    "p16": ["", "", None, None],
-                    "p17": ["", "", "", ""],
-                    "p18": ["9", "", "", None],
-                }
-            ),
-            "get_part_multiple",
-            skip_sql=True,
-        )
     return defog_custom_pipeline_test_data
 
 

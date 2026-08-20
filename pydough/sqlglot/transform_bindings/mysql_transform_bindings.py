@@ -304,18 +304,18 @@ class MySQLTransformBindings(BaseTransformBindings):
         """
         GETPART(str, delim, idx) ->
             CASE
-                WHEN LENGTH(str) = 0 THEN NULL
+                WHEN LENGTH(str) = 0 THEN ''
                 WHEN LENGTH(delim) = 0 THEN
                     CASE
                         WHEN ABS(idx) = 1 THEN str
-                        ELSE NULL
+                        ELSE ''
                     END
                 WHEN idx > 0 AND idx <= (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
                     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, -1)
                 WHEN idx < 0 AND -idx <= (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
                     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, 1)
                 WHEN idx = 0 THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, 1), delim, -1)
-                ELSE NULL
+                ELSE ''
             END
         """
 
@@ -325,6 +325,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         literal_1: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
         literal_neg_1: SQLGlotExpression = sqlglot_expressions.Literal.number(-1)
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+        empty_str: SQLGlotExpression = sqlglot_expressions.Literal.string("")
 
         # (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
         difference: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -390,7 +391,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                         this=sqlglot_expressions.Length(this=string_expr),
                         expression=literal_0,
                     ),
-                    true=sqlglot_expressions.Null(),
+                    true=empty_str,
                 ),
                 sqlglot_expressions.If(
                     this=sqlglot_expressions.EQ(
@@ -407,7 +408,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                                 true=string_expr,
                             )
                         ],
-                        default=sqlglot_expressions.Null(),
+                        default=empty_str,
                     ),
                 ),
                 sqlglot_expressions.If(
@@ -438,7 +439,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                     true=zero_index_case,
                 ),
             ],
-            default=sqlglot_expressions.Null(),
+            default=empty_str,
         )
         return result
 

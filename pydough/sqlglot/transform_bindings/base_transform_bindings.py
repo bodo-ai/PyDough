@@ -2074,7 +2074,8 @@ class BaseTransformBindings:
                     '' AS part,
                     FIRST_ARGUMENT AS rest,
                     SECOND_ARGUMENT AS delim,
-                    THIRD_ARGUMENT AS idx
+                    THIRD_ARGUMENT AS idx,
+                    0 AS is_last -- Flag to indicate if this is the last part
                 UNION ALL
                 SELECT
                     part_index + 1 AS part_index,
@@ -2089,26 +2090,33 @@ class BaseTransformBindings:
                         ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
                     END AS rest,
                     delim,
-                    idx
+                    idx,
+                    CASE
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
+                        THEN 1
+                        ELSE 0
+                    END AS is_last
                 FROM _s0
                 WHERE
-                    rest <> ''
+                    is_last = 0
             )
-            SELECT _s0.part
-            FROM _s0
-            CROSS JOIN (
-                SELECT COUNT(*) - 1 AS total_parts
+            SELECT COALESCE((
+                SELECT _s0.part
                 FROM _s0
-            ) AS _s1
-            WHERE
-                _s0.part_index <> 0
-                AND _s0.part_index = CASE
-                    WHEN _s0.idx > 0
-                    THEN _s0.idx
-                    WHEN _s0.idx < 0
-                    THEN _s1.total_parts + _s0.idx + 1
-                    ELSE 1
-                END
+                CROSS JOIN (
+                    SELECT COUNT(*) - 1 AS total_parts
+                    FROM _s0
+                ) AS _s1
+                WHERE
+                    _s0.part_index <> 0
+                    AND _s0.part_index = CASE
+                        WHEN _s0.idx > 0
+                        THEN _s0.idx
+                        WHEN _s0.idx < 0
+                        THEN _s1.total_parts + _s0.idx + 1
+                        ELSE 1
+                    END
+            ), '')
         )
         ```
 
@@ -2153,6 +2161,9 @@ class BaseTransformBindings:
         rest: SQLGlotExpression = sqlglot_expressions.Identifier(
             this="rest", quoted=False
         )
+        is_last: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="is_last", quoted=False
+        )
 
         # Literals definitions
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
@@ -2178,6 +2189,7 @@ class BaseTransformBindings:
         #   input AS rest,
         #   delim AS delim,
         #   idx AS idx
+        #   0 AS is_last
         select_union_params: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Alias(this=literal_0, alias=part_index),
@@ -2194,6 +2206,7 @@ class BaseTransformBindings:
                     this=args[2],  # the third arg, the index
                     alias=idx,
                 ),
+                sqlglot_expressions.Alias(this=literal_0, alias=is_last),
             ]
         )
 
@@ -2237,6 +2250,15 @@ class BaseTransformBindings:
         new_rest_case: SQLGlotExpression = (
             sqlglot_expressions.Case().when(delim_cond, literal_empty).else_(new_rest)
         )
+        # is_last = 1 when this recursive step found no more delimiter (or
+        # the delimiter is empty), meaning `part` computed above is the
+        # final segment of the string; used to stop recursion at exactly
+        # the right point instead of relying on `rest = ''`, which can't
+        # distinguish "no parts left" from "one more empty part is owed"
+        # (e.g. when the delimiter occurs at the very end of the string).
+        new_is_last_case: SQLGlotExpression = (
+            sqlglot_expressions.Case().when(delim_cond, literal_1).else_(literal_0)
+        )
 
         # Second half of the recursive CTE:
         # SELECT
@@ -2244,7 +2266,8 @@ class BaseTransformBindings:
         #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1) END AS part,
         #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN '' ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim)) END AS rest,
         #   delim,
-        #   idx
+        #   idx,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN 1 ELSE 0 END AS is_last
         # FROM split_parts
         select_union_split_parts: SQLGlotExpression = (
             sqlglot_expressions.Select(
@@ -2261,10 +2284,16 @@ class BaseTransformBindings:
                     sqlglot_expressions.Alias(this=new_rest_case, alias=rest),
                     delim,
                     idx,
+                    sqlglot_expressions.Alias(this=new_is_last_case, alias=is_last),
                 ],
             )
             .from_(split_parts_table_name)
-            .where(sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty))
+            .where(
+                sqlglot_expressions.EQ(
+                    this=sqlglot_expressions.Column(this=is_last),
+                    expression=literal_0,
+                )
+            )
         )
 
         # Union the two halves to create the recursive CTE:
@@ -2342,7 +2371,10 @@ class BaseTransformBindings:
         # a subquery so the single column of the scalar subquery is used as the
         # answer.
         result = result.with_(split_parts_table_name, split_parts_union, recursive=True)
-        result = sqlglot_expressions.Subquery(this=result)
+        result = sqlglot_expressions.Coalesce(
+            this=sqlglot_expressions.Subquery(this=result),
+            expressions=[literal_empty],
+        )
 
         return result
 
