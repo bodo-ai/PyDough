@@ -1579,13 +1579,6 @@ class PyDoughPandasTest:
         # within arrays caused by how different dialects group array values.
         if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
             for col in result.columns:
-                print(
-                    col,
-                    type(result[col][0]),
-                    result[col][0],
-                    type(refsol[col][0]),
-                    refsol[col][0],
-                )
                 result[col] = result[col].apply(
                     lambda x: (
                         sorted(x)

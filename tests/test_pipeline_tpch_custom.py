@@ -4312,6 +4312,7 @@ from .testing_utilities import (
                 ),
                 "explode_01",
                 order_sensitive=True,
+                ignore_array_order=True,
                 skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
             ),
             id="explode_01",
