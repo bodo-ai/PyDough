@@ -5899,6 +5899,7 @@ from .testing_utilities import (
                     }
                 ),
                 "dataframe_collection_inf",
+                skipped_dialects={"MYSQL"},
             ),
             id="dataframe_collection_inf",
         ),
@@ -6566,11 +6567,6 @@ def test_pipeline_until_sql_tpch_custom(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
-    if (
-        tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
-        and empty_context_database.dialect == DatabaseDialect.MYSQL
-    ):
-        pytest.skip("Skipping test as MySQL does not support Infinity values.")
 
     tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
         empty_context_database.dialect, tpch_custom_pipeline_test_data
@@ -6599,12 +6595,6 @@ def test_pipeline_e2e_tpch_custom(
     # it would take too long.
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("Skipping tpch custom test for BodoSQL.")
-
-    if (
-        db_context.dialect == DatabaseDialect.MYSQL
-        and tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
-    ):
-        pytest.skip("Skipping test as MySQL does not support Infinity values.")
 
     tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
         db_context.dialect, tpch_custom_pipeline_test_data

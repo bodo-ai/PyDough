@@ -1579,6 +1579,13 @@ class PyDoughPandasTest:
         # within arrays caused by how different dialects group array values.
         if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
             for col in result.columns:
+                print(
+                    col,
+                    type(result[col][0]),
+                    result[col][0],
+                    type(refsol[col][0]),
+                    refsol[col][0],
+                )
                 result[col] = result[col].apply(
                     lambda x: (
                         sorted(x)
@@ -1800,8 +1807,11 @@ def harmonize_types(column_a, column_b):
         )
 
     # float vs None. Convert to nullable floats
-    if all(isinstance(elem, (float, NoneType)) for elem in column_a) and all(
-        isinstance(elem, (float, NoneType)) for elem in column_b
+    if (
+        all(isinstance(elem, (float, NoneType)) for elem in column_a)
+        and all(isinstance(elem, (float, NoneType)) for elem in column_b)
+        and len(column_a) > 0
+        and len(column_b) > 0
     ):
         return column_a.astype("Float64"), column_b.astype("Float64")
 

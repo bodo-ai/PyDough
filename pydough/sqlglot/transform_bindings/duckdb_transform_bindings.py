@@ -149,6 +149,40 @@ class DuckDBTransformBindings(BaseTransformBindings):
         lateral_alias: str,
         subquery_alias: str,
     ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL (
+            UNNEST(explode_expr) as val,
+            GENERATE_SUBSCRIPTS(explode_expr, 1) as idx
+        ) AS L
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL (
+            UNNEST(SPLIT(explode_expr, delimiter)) as val,
+            GENERATE_SUBSCRIPTS(SPLIT(explode_expr, delimiter), 1) as idx
+        ) AS L
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL (
+            UNNEST(REGEXP_SPLIT_TO_ARRAY(explode_expr, '')) as val,
+            GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY(explode_expr, ''), 1) as idx
+        ) AS L
+        ```
+        """
         column_exprs: list[SQLGlotExpression] = [*exprs]
         if val_index is not None:
             column_exprs[val_index] = sqlglot_expressions.Alias(

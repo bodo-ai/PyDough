@@ -258,6 +258,31 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         lateral_alias: str,
         subquery_alias: str,
     ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.value AS value, L.index AS idx
+        FROM (...) AS S,
+        LATERAL FLATTEN(explode_expr) AS L(seq, key, path, index, value, this)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.value AS value, L.index - 1 AS idx
+        FROM (...) AS S,
+        LATERAL SPLIT_TO_TABLE(explode_expr, delimiter) AS L
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.value AS value, L.index AS idx
+        FROM (...) AS S,
+        LATERAL FLATTEN(REGEXP_SUBSTR_ALL(explode_expr, '.{1}')) AS L
+        ```
+        """
         # Rewrite all input expressions to point to the subquery
         column_exprs: list[SQLGlotExpression] = []
         for expr in exprs:

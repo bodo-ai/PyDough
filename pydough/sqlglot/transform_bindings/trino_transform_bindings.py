@@ -135,6 +135,31 @@ class TrinoTransformBindings(BaseTransformBindings):
         lateral_alias: str,
         subquery_alias: str,
     ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL UNNEST(explode_expr) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL UNNEST(SPLIT(explode_expr, delimiter)) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL UNNEST(REGEXP_EXTRACT_ALL(explode_expr, '.')) WITH ORDINALITY AS L(val, idx)
+        ```
+        """
         column_exprs: list[SQLGlotExpression] = [*exprs]
         if val_index is not None:
             column_exprs[val_index] = sqlglot_expressions.Alias(

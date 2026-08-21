@@ -112,6 +112,32 @@ class DatabricksTransformBindings(BaseTransformBindings):
         lateral_alias: str,
         subquery_alias: str,
     ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S
+        CROSS JOIN POSEXPLODE(explode_expr) AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        CROSS JOIN POSEXPLODE(SPLIT(explode_expr, delimiter)) AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        CROSS JOIN POSEXPLODE(SPLIT(explode_expr, '\\Q.\\E')) AS L(val, idx)
+        WHERE L.val != ''
+        ```
+        """
         column_exprs: list[SQLGlotExpression] = [*exprs]
         val_expr: SQLGlotExpression = sqlglot_expressions.Column(
             this=sqlglot_expressions.Identifier(this="val"),
