@@ -9,7 +9,7 @@ WITH _s1 AS (
 SELECT
   _s0.val AS char,
   COUNT(*) AS n
-FROM _s1 AS _s1, UNNEST(SPLIT(_s1.comment, '')) WITH ORDINALITY AS _s0(val, idx)
+FROM _s1 AS _s1, UNNEST(REGEXP_EXTRACT_ALL(_s1.comment, '.')) WITH ORDINALITY AS _s0(val, idx)
 WHERE
   _s0.val <> ''
 GROUP BY

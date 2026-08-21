@@ -18,7 +18,7 @@ WITH _s1 AS (
   FROM _s1 AS _s1
   CROSS JOIN UNNEST(SPLIT(_s1.comment, '.')) WITH ORDINALITY AS _s0(val, idx)
   CROSS JOIN UNNEST(SPLIT(_s0.val, ',')) WITH ORDINALITY AS _s2(val, idx)
-  CROSS JOIN UNNEST(SPLIT(_s2.val, ' ')) WITH ORDINALITY AS _s4(val, idx), UNNEST(SPLIT(_s4.val, '')) WITH ORDINALITY AS _s6(val, idx)
+  CROSS JOIN UNNEST(SPLIT(_s2.val, ' ')) WITH ORDINALITY AS _s4(val, idx), UNNEST(REGEXP_EXTRACT_ALL(_s4.val, '.')) WITH ORDINALITY AS _s6(val, idx)
   WHERE
     _s6.val <> ''
 )

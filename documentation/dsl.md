@@ -1593,6 +1593,34 @@ People.EXPLODE(LOWER(first_name), "characters", value_name='char', index_name="i
       .CALCULATE(char, n_uses=COUNT(characters))
 ```
 
+**Data Example**:
+
+Suppose we have the following collection of data `thesaurus` containing words and some of their synonyms in an array:
+| word    | synonyms                       |
+|---------|--------------------------------|
+| 'wise'  | ['sage', 'insightful', 'keen'] |
+| 'old'   | ['elderly', 'ancient']         |
+| 'my'    | []                             |
+| 'large' | ['big']                        |
+
+Now suppose the following PyDough code is used to transform `thesaurus` using the `EXPLODE` operator (note: `filtering=True` because one of the rows is an empty array):
+```py
+%%pydough
+thesaurus.CALCULATE(word)
+         .EXPLODE(synonyms, "words", value_name='synonym', index_name='syn_idx', filtering=True)
+         .CALCULATE(word, syn_idx, synonym)
+```
+
+The result would be the following table:
+| name    | syn_idx | synonym      |
+|---------|---------|--------------|
+| 'wise'  | 0       | 'sage'       |
+| 'wise'  | 1       | 'insightful' |
+| 'wise'  | 2       | 'keen'       |
+| 'old'   | 0       | 'elderly     |
+| 'old'   | 1       | 'ancient     |
+| 'large' | 0       | 'big'        |
+
 **Bad Example #1**: Missing the `name`.
 
 ```py

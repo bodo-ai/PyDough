@@ -1580,10 +1580,20 @@ class PyDoughPandasTest:
         if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
             for col in result.columns:
                 result[col] = result[col].apply(
-                    lambda x: sorted(x) if isinstance(x, (list, np.ndarray)) else x
+                    lambda x: (
+                        sorted(x)
+                        if isinstance(x, (list, np.ndarray))
+                        or (hasattr(x, "__iter__") and not isinstance(x, str))
+                        else x
+                    )
                 )
                 refsol[col] = refsol[col].apply(
-                    lambda x: sorted(x) if isinstance(x, (list, np.ndarray)) else x
+                    lambda x: (
+                        sorted(x)
+                        if isinstance(x, (list, np.ndarray))
+                        or (hasattr(x, "__iter__") and not isinstance(x, str))
+                        else x
+                    )
                 )
 
         # Perform the comparison between the result and the reference solution
