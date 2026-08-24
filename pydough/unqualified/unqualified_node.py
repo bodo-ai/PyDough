@@ -143,7 +143,7 @@ class UnqualifiedNode(ABC):
 
             name = str(self)
             if name in metadata_templates:
-                return metadata_templates[name](*args, **kwargs)
+                return metadata_templates[name].template_callable(*args, **kwargs)
 
         raise pydough.active_session.error_builder.undefined_function_call(
             self, *args, **kwargs

@@ -3,7 +3,13 @@ Logic for transforming raw Python code into PyDough code by replacing undefined
 variables with unqualified nodes by prepending it with `_ROOT.`.
 """
 
-__all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
+__all__ = [
+    "call_template",
+    "from_string",
+    "init_pydough_context",
+    "transform_cell",
+    "transform_code",
+]
 
 import ast
 import builtins
@@ -14,6 +20,7 @@ from typing import Any
 from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughSessionException, PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
+from pydough.metadata.templates import AttributeMetadata, TemplateMetadata
 
 from .unqualified_node import UnqualifiedNode
 
@@ -540,6 +547,100 @@ def from_string(
             f"Expected variable {answer_variable!r} in the text to store PyDough code, instead found {ret_val.__class__.__name__!r}."
         )
     return ret_val
+
+
+def call_template(
+    name: str,
+    labels: dict[str, str],
+) -> UnqualifiedNode:
+    """
+    Invokes a named PyDough template using user-facing labels instead of
+    raw PyDough syntax, returning the resulting unqualified (unexecuted)
+    node.
+
+    Each entry in `labels` maps a template parameter name to a label string
+    that is looked up in the active session's graph attributes (via each
+    attribute's `options`) to resolve it to a concrete value and type. The
+    resolved arguments are used to build a call to the template as PyDough
+    source text, which is then parsed and executed via `from_string` to
+    produce the corresponding `UnqualifiedNode` — the same lazy, chainable
+    object that would result from calling the template directly with
+    equivalent literal or expression arguments (e.g. `.WHERE(...)` can be
+    chained onto the returned node). No query execution occurs at this
+    point.
+
+    Args:
+        `name`: the name of the template to call, as registered in
+        `pydough.active_session.metadata.templates_definitions`.
+        `labels`: a mapping of template parameter name to a label string
+        (e.g. `{"arg_year": "Year 1998", "arg_dimension": "Customer Market
+        Segment"}`). Each label must appear in the `options` of exactly
+        one attribute in the active session's graph, and that attribute's
+        type must match the corresponding template parameter's type.
+
+        TODO: What to do with repeated labels? Check before add the option?
+
+    Returns:
+        The `UnqualifiedNode` produced by calling the template with the
+        resolved arguments, ready for further chaining or execution
+        (e.g. `.to_df()`).
+
+    Raises:
+        `ValueError`: if no metadata is loaded in the active session, if a
+        label's attribute type doesn't match the template parameter's
+        expected type, or if a label isn't found in any attribute's
+        options.
+    """
+
+    import pydough
+
+    if pydough.active_session.metadata is None:
+        raise ValueError("No metadata loaded in the current active session")
+
+    calling_template: TemplateMetadata = (
+        pydough.active_session.metadata.templates_definitions[name]
+    )
+
+    graph_attributes: dict[str, AttributeMetadata] = (
+        pydough.active_session.metadata.templates_attributes
+    )
+
+    template_kwargs: dict[str, dict[str, str | int]] = {}
+
+    for arg_name, label in labels.items():
+        # Use this arg type to check the option value
+        arg_type: str = calling_template.parameters[arg_name].type
+
+        kwarg: dict[str, str | int] | None = None
+
+        for attr_name, attribute in graph_attributes.items():
+            if label in attribute.options:
+                # Types must match
+                if attribute.type != arg_type:
+                    raise ValueError(
+                        f"The type of {attr_name} attribute doesn't match the argument {arg_name} type"
+                    )
+
+                kwarg = {"type": attribute.type, "value": attribute.options[label]}
+                # No more search for this label
+                break
+
+        if kwarg is None:
+            raise ValueError(f"Label {label} not found in any attribute's options")
+
+        template_kwargs[arg_name] = kwarg
+
+    # Build call
+    template_call: str = (
+        f"result = {calling_template.create_template_call(template_kwargs)}"
+    )
+
+    result = from_string(
+        source=template_call,
+        metadata=pydough.active_session.metadata,
+        environment={name: calling_template.template_callable},
+    )
+    return result
 
 
 def init_pydough_context(graph: GraphMetadata):

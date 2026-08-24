@@ -18,7 +18,7 @@ from pydough.metadata.graphs.graph_metadata import GraphMetadata
 @dataclass
 class TemplateParameter:
     """
-    TODO
+    Dataclass contaning everything needed for the template parameter
     """
 
     name: str
@@ -28,8 +28,9 @@ class TemplateParameter:
 
     type: str
     """
-    Type of data this parameter receives.
-    NOTE: `pydough` type will keep this parameter without type hint.
+    String containing type of data this parameter receives.
+    NOTE: `pydough` type will keep this parameter without type hint for the
+    template.
     """
 
     description: str
@@ -52,6 +53,8 @@ class TemplateMetadata(AbstractMetadata):
         code: str,
         answer_variable: str = "result",
     ):
+        super().__init__(description, None, None)
+
         self._graph: GraphMetadata = graph
         self._name: str = name
         self._code: str = code
@@ -60,49 +63,47 @@ class TemplateMetadata(AbstractMetadata):
         self._parameters: dict[str, TemplateParameter] = (
             TemplateMetadata.parse_parameters_from_json(parameters)
         )
-        self._template_callable: Callable = self.build_template_callable(graph)
-
-        super().__init__(description, None, None)
+        self._template_callable: Callable = self.create_template_callable(graph)
 
     @property
     def graph(self) -> GraphMetadata:
         """
-        TODO
+        The graph that the template belongs to.
         """
         return self._graph
 
     @property
     def name(self) -> str:
         """
-        TODO
+        Name of the template.
         """
         return self._name
 
     @property
     def parameters(self) -> dict[str, TemplateParameter]:
         """
-        TODO
+        Parameters required for this template.
         """
         return self._parameters
 
     @property
     def code(self) -> str:
         """
-        TODO
+        PyDough code being return when the template is called.
         """
         return self._code
 
     @property
     def answer_variable(self) -> str:
         """
-        TODO
+        Name of the variable being returned and holds the final answer.
         """
         return self._answer_variable
 
     @property
-    def template_callable(self) -> Callable | None:
+    def template_callable(self) -> Callable:
         """
-        TODO
+        Template callable used for its execution.
         """
         return self._template_callable
 
@@ -120,15 +121,6 @@ class TemplateMetadata(AbstractMetadata):
         # TODO: Not sure about the usage of this path
         return f"{self.graph.path}.templates.definitions.{self.name}"
 
-    def __call__(self, *args, **kwds):
-        if self.template_callable is None:
-            raise ValueError("")
-        return (
-            self.template_callable(*args, **kwds)
-            if self.template_callable is not None
-            else None
-        )
-
     @staticmethod
     def create_error_name(name: str, graph_error_name: str):
         return f"template definition {name!r} in {graph_error_name}"
@@ -136,7 +128,20 @@ class TemplateMetadata(AbstractMetadata):
     @staticmethod
     def parse_from_json(graph: GraphMetadata, name: str, definition_json: dict) -> None:
         """
-        TODO
+        Parses a JSON object into the metadata for a template definition
+        and inserts it into the graph.
+
+        Args:
+            `graph`: the metadata for the graph that the template attribute will
+            be added to.
+            `name`: the name of the template definition that will be
+            added to the graph.
+            `definition_json`: the JSON object that is being parsed to create
+            the new template definition.
+
+        Raises:
+            `PyDoughMetadataException`: if the JSON does not meet the necessary
+            structure properties.
         """
         description: str = extract_string(
             definition_json, "description", graph.error_name
@@ -165,7 +170,19 @@ class TemplateMetadata(AbstractMetadata):
         parameters_json: dict,
     ) -> dict[str, TemplateParameter]:
         """
-        TODO
+        Parses a JSON object into the parameters for a template definition
+        and returns it
+
+        Args:
+            `parameters_json`: the JSON object that is being parsed to create
+            the parameters required for a template.
+
+        Returns:
+            All paremeters parsed for a template.
+
+        Raises:
+            `PyDoughMetadataException`: if the JSON does not meet the necessary
+            structure properties.
         """
 
         template_params: dict[str, TemplateParameter] = {}
@@ -188,9 +205,9 @@ class TemplateMetadata(AbstractMetadata):
 
         return template_params
 
-    def build_template_callable(
+    def create_template_callable(
         self,
-        metadata: GraphMetadata | None = None,
+        graph: GraphMetadata | None = None,
     ) -> Callable:
         """
         Builds a callable from a PyDough source string, without executing it.
@@ -198,21 +215,14 @@ class TemplateMetadata(AbstractMetadata):
         `graph.add_template_definition`) and invoked later.
 
         Args:
-            `template_str`: the PyDough code that forms the body of the function.
-            `args`: the parameter names of the generated function.
-            `template_name`: the name to give the generated function.
-            `answer_variable`: the variable in `source` holding the return value.
-            Defaults to "result".
-            `metadata`: the metadata graph bound into the function's closure as
-            `_graph`. Defaults to `pydough.active_session.metadata`.
-            `environment`: extra names available both when transforming the
-            source and inside the function's closure.
+            `graph`: the metadata graph bound into the function's closure as
+            `_graph`.
 
         Returns:
             The callable built from `source`, not yet invoked.
         """
 
-        template_str: str = self.generate_template_str()
+        template_str: str = self.create_template_def()
 
         import pydough
         from pydough.unqualified.unqualified_transform import AddRootVisitor
@@ -232,7 +242,7 @@ class TemplateMetadata(AbstractMetadata):
         # `_graph` and `pydough` are baked into the function's globals so that
         # they're available whenever the function is later called
         namespace: dict[str, Any] = {
-            graph_name: metadata,
+            graph_name: graph,
             "pydough": pydough,
         }
         exec(compiled, namespace, namespace)
@@ -240,9 +250,21 @@ class TemplateMetadata(AbstractMetadata):
         loaded_template: Callable = namespace[self.name]
         return loaded_template
 
-    def generate_template_str(self) -> str:
+    def create_template_def(self) -> str:
         """
-        TODO
+        Builds the Python source code for a function definition from this
+        template's metadata, without executing or compiling it.
+
+        Uses `self.parameters` to construct the function's signature (typed
+        parameters, except those of type "pydough" which are left untyped),
+        substitutes positional placeholders (`{1}`, `{2}`, ...) in `self.code`
+        with the corresponding parameter names, indents the resulting body,
+        and appends a `return` statement for `self.answer_variable`.
+
+        Returns:
+            A string containing the full `def <name>(...): ...` source for
+            this template, ready to be parsed/executed (e.g. via `from_string`
+            or `exec`) elsewhere to obtain the actual callable.
         """
         # Parsing arguments
         arg_names: list[str] = list(self.parameters.keys())
@@ -272,3 +294,44 @@ class TemplateMetadata(AbstractMetadata):
         template_str: str = f"def {self.name}({template_args}):\n{indented_code}\n    return {self.answer_variable}\n"
 
         return template_str
+
+    def create_template_call(self, kwargs: dict[str, dict[str, str | int]] = {}) -> str:
+        """
+        Builds the Python source code for a call to this template, without
+        executing it.
+
+        Each entry in `kwargs` maps a parameter name to a spec dict with a
+        `"value"` (rendered as-is into the call) and, optionally, a `"type"`
+        used to decide formatting: values with type `"str"` are wrapped in
+        quotes, all others are inserted unquoted (e.g. numeric literals or
+        pydough expressions such as `customer.market_segment`).
+
+        Args:
+            `kwargs`: a mapping of parameter name to a spec dict, e.g.
+            `{"arg_year": {"type": "int", "value": "1996"}}`. Values with
+            `"type": "str"` are quoted in the generated call; all other
+            values are inserted as raw, unquoted source text.
+
+        Returns:
+        A string of the form `"<name>(<param>=<value>, ...)"` representing
+        the unevaluated call to this template. The returned string is
+        intended to be embedded in a larger source snippet (e.g. via
+        `from_string`) rather than executed on its own.
+        """
+
+        # TODO: VALIDATE ARG TYPES WITH THE PARAMETERS TYPES
+        # NOTE: Add test with date types
+
+        args_parts: list = []
+        part: str = ""
+        for key, spec in kwargs.items():
+            display_quotes: bool = "type" in spec and spec["type"] == "str"
+
+            arg_value = f"'{spec['value']}'" if display_quotes else f"{spec['value']}"
+            part = f"{key} = {arg_value}"
+
+            args_parts.append(part)
+
+        args = ", ".join(args_parts)
+
+        return f"""{self.name}({args})"""

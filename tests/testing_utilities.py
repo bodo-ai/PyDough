@@ -1053,7 +1053,23 @@ def transform_and_exec_pydough(
         return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
     else:
         # Otherwise, transform the function with the decorator and call it.
-        return init_pydough_context(graph)(pydough_impl)(**kwargs)
+
+        # Temporarily set the active session (or just metadata) so that
+        # UnqualifiedNode.__call__ can resolve templates via
+        # pydough.active_session.metadata, and so functions like
+        # pydough.to_table can access session info during execution.
+        old_session = pydough.active_session
+        try:
+            if session is not None:
+                pydough.active_session = session
+            else:
+                pydough.active_session.metadata = graph
+            return init_pydough_context(graph)(pydough_impl)(**kwargs)
+        finally:
+            if session is not None:
+                pydough.active_session = old_session
+            else:
+                pydough.active_session.metadata = old_session.metadata
 
 
 @dataclass

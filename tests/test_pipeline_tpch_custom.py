@@ -195,6 +195,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
+from tests.test_pydough_functions.tpch_templates import (
+    template_api,
+    template_call,
+)
 from tests.test_pydough_functions.user_collections import (
     dataframe_collection_bad_1,
     dataframe_collection_bad_2,
@@ -5245,6 +5249,115 @@ from .testing_utilities import (
                 "literal_template",
             ),
             id="literal_template",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'orders_revenue_by', {'arg_year': 'Year 1998', 'arg_dimension': 'Customer Market Segment'}"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "dimension": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "segment_revenue": [
+                            3.839372e09,
+                            3.943587e09,
+                            3.897561e09,
+                            3.877929e09,
+                            3.875373e09,
+                        ],
+                    }
+                ),
+                "api_template_call_simple",
+            ),
+            id="api_template_call_simple",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE("
+                "   (account_balance >= pydough.call_template('template_literal', {'base_number': 'Year 1992'}))\n"
+                ")\n"
+                "result = TPCH.CALCULATE(n_custs=COUNT(selected_customers))\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "dimension": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "segment_revenue": [
+                            3.839372e09,
+                            3.943587e09,
+                            3.897561e09,
+                            3.877929e09,
+                            3.875373e09,
+                        ],
+                    }
+                ),
+                "api_template_call_literal",
+            ),
+            id="api_template_call_literal",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                template_call,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "dimension": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "segment_revenue": [
+                            6563815859.6161,
+                            6752822196.8331995,
+                            6671055612.9225,
+                            6670709849.0533,
+                            6620124465.2663,
+                        ],
+                    }
+                ),
+                "template_call_func",
+            ),
+            id="template_call_func",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                template_api,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "dimension": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "segment_revenue": [
+                            6.612832e09,
+                            6.618720e09,
+                            6.688478e09,
+                            6.746079e09,
+                            6.612420e09,
+                        ],
+                    }
+                ),
+                "template_api_call",
+            ),
+            id="template_api_call",
         ),
     ],
 )

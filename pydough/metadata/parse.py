@@ -565,8 +565,18 @@ def parse_template_attributes_v2(graph: GraphMetadata, attribute_json: dict) -> 
 
 def parse_template_definition_v2(graph: GraphMetadata, definition_json: dict) -> None:
     """
-    TODO
-    Loads the template definition and save it in the graph property
+    Parses the JSON object for a PyDough template definition in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the template_definition would be
+        added to. The attribute will be added to this graph in-place.
+        `attribute_json`: the JSON object containing the metadata for the
+        template definition.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
     """
     template_name: str = extract_string(
         definition_json,
