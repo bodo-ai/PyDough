@@ -20,17 +20,6 @@ class AttributeMetadata(AbstractMetadata):
     definitions.
     """
 
-    # Set of names of fields that can be included in the JSON
-    # object describing a template attribute.
-    # TODO: Maybe create a verify complete function with this if not delete it
-    allowed_fields: set[str] = {
-        "name",
-        "usage",
-        "type",
-        "description",
-        "options",
-    }
-
     def __init__(
         self,
         name: str,

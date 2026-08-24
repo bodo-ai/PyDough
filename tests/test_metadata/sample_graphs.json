@@ -883,7 +883,7 @@
           "dependencies": [],
           "description": "Calculates the revenue of an order, which is the sum of the extended price * (1 - discount) for all line items in the order.",
           "parameters": {},
-          "code": "result = SUM(lines.extended_price * (1 - lines.discount))\n",
+          "source": "result = SUM(lines.extended_price * (1 - lines.discount))\n",
           "answer_variable": "result"
         },
         { 
@@ -900,7 +900,7 @@
               "description": "The dimension by which to partition the revenue calculation."
             }
             },
-          "code": "result = orders.WHERE(({1} == YEAR(order_date))).CALCULATE(revenue=order_revenue(), dimension=({2})).PARTITION(name=\"orders_groups\", by=dimension).CALCULATE(dimension, segment_revenue=SUM(orders.revenue))\n",
+          "source": "result = orders.WHERE(({1} == YEAR(order_date))).CALCULATE(revenue=order_revenue(), dimension=({2})).PARTITION(name=\"orders_groups\", by=dimension).CALCULATE(dimension, segment_revenue=SUM(orders.revenue))\n",
           "answer_variable": "result"
         },
         {
@@ -917,7 +917,7 @@
               "description": "The metric by which to compare the groups."
             }
           },
-          "code": "result = {1}.CALCULATE(dimension, segment_revenue, comparison_value={2}).WHERE(ABSENT(PREV(segment_revenue, by=segment_revenue.DESC())) | ABSENT(NEXT(segment_revenue, by=segment_revenue.DESC())) )",
+          "source": "result = {1}.CALCULATE(dimension, segment_revenue, comparison_value={2}).WHERE(ABSENT(PREV(segment_revenue, by=segment_revenue.DESC())) | ABSENT(NEXT(segment_revenue, by=segment_revenue.DESC())) )",
           "answer_variable": "result"
         }
       ]

@@ -231,7 +231,6 @@ class GraphMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if `new_attribute` cannot be inserted
             into the graph because.
         """
-        from pydough.metadata.templates import AttributeMetadata
 
         # Make sure the new_attribute is actually a template_attribute
         HasType(AttributeMetadata).verify(new_attribute, "attribute")
@@ -264,7 +263,6 @@ class GraphMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if `template` cannot be inserted
             into the graph because.
         """
-        from pydough.metadata.templates import TemplateMetadata
 
         # Cirular import error raises if the import is made globally
         from pydough.pydough_operators import builtin_registered_operators

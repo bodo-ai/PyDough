@@ -277,7 +277,6 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
     for collection in graph.collections.values():
         assert isinstance(collection, CollectionMetadata)
         collection.verify_complete()
-
     return graph
 
 

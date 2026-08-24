@@ -18,7 +18,7 @@ from pydough.metadata.graphs.graph_metadata import GraphMetadata
 @dataclass
 class TemplateParameter:
     """
-    Dataclass contaning everything needed for the template parameter
+    Parameter for the defined template
     """
 
     name: str
@@ -50,14 +50,14 @@ class TemplateMetadata(AbstractMetadata):
         graph: GraphMetadata,
         description: str,
         parameters: dict[str, dict[str, str]],
-        code: str,
+        source: str,
         answer_variable: str = "result",
     ):
         super().__init__(description, None, None)
 
         self._graph: GraphMetadata = graph
         self._name: str = name
-        self._code: str = code
+        self._source: str = source
         self._answer_variable: str = answer_variable
 
         self._parameters: dict[str, TemplateParameter] = (
@@ -87,11 +87,11 @@ class TemplateMetadata(AbstractMetadata):
         return self._parameters
 
     @property
-    def code(self) -> str:
+    def source(self) -> str:
         """
-        PyDough code being return when the template is called.
+        PyDough source being return when the template is called.
         """
-        return self._code
+        return self._source
 
     @property
     def answer_variable(self) -> str:
@@ -113,7 +113,7 @@ class TemplateMetadata(AbstractMetadata):
 
     @property
     def components(self):
-        comp: list = [self.name, self.description, self.code]
+        comp: list = [self.name, self.description, self.source]
         return comp
 
     @property
@@ -149,7 +149,7 @@ class TemplateMetadata(AbstractMetadata):
         answer_variable: str = extract_string(
             definition_json, "answer_variable", graph.error_name
         )
-        code: str = extract_string(definition_json, "code", graph.error_name)
+        source: str = extract_string(definition_json, "source", graph.error_name)
         kwargs: dict[str, dict] = extract_object(
             definition_json, "parameters", graph.error_name
         )
@@ -159,7 +159,7 @@ class TemplateMetadata(AbstractMetadata):
             graph,
             description,
             kwargs,
-            code,
+            source,
             answer_variable,
         )
 
@@ -277,6 +277,7 @@ class TemplateMetadata(AbstractMetadata):
         template_args: str = ", ".join(args_parts)
 
         # --- Replace {1}, {2}, ... with the corresponding argument name ---
+        # NOTE: Add a detail documentation about this replacement
         def _replace_placeholder(match: re.Match) -> str:
             index = int(match.group(1))
             if not (1 <= index <= len(arg_names)):
@@ -286,7 +287,7 @@ class TemplateMetadata(AbstractMetadata):
                 )
             return arg_names[index - 1]
 
-        substituted_code = re.sub(r"\{(\d+)\}", _replace_placeholder, self.code)
+        substituted_code = re.sub(r"\{(\d+)\}", _replace_placeholder, self.source)
 
         # --- Indent and assemble the final template ---
         indented_code: str = textwrap.indent(substituted_code.strip(), "    ")
@@ -318,9 +319,6 @@ class TemplateMetadata(AbstractMetadata):
         intended to be embedded in a larger source snippet (e.g. via
         `from_string`) rather than executed on its own.
         """
-
-        # TODO: VALIDATE ARG TYPES WITH THE PARAMETERS TYPES
-        # NOTE: Add test with date types
 
         args_parts: list = []
         part: str = ""
