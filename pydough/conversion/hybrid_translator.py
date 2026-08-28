@@ -26,6 +26,7 @@ from pydough.qdag import (
     ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    Explode,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -69,6 +70,7 @@ from .hybrid_filter_merger import HybridFilterMerger
 from .hybrid_operations import (
     HybridCalculate,
     HybridCollectionAccess,
+    HybridExplode,
     HybridFilter,
     HybridLimit,
     HybridNoop,
@@ -1240,7 +1242,10 @@ class HybridTranslator:
         name: str
         expr: HybridExpr
         for collation in collations:
-            if type(collation.expr) is Reference:
+            if (
+                type(collation.expr) is Reference
+                and collation.expr.term_name in hybrid.pipeline[-1].terms
+            ):
                 name = collation.expr.term_name
             else:
                 name = self.get_ordering_name(hybrid)
@@ -1334,6 +1339,9 @@ class HybridTranslator:
                 join_keys = []
             case HybridRoot():
                 # A root does not need to be joined to its parent
+                join_keys = []
+            case HybridExplode():
+                # An explode operator does not need to be joined to its parent
                 join_keys = []
             case HybridUserGeneratedCollection():
                 # A user-generated collection does not need to be joined to its parent
@@ -1446,6 +1454,21 @@ class HybridTranslator:
                 hybrid = self.make_hybrid_tree(
                     node.ancestor_context, parent, is_aggregate
                 )
+                hybrid.add_successor(successor_hybrid)
+                return successor_hybrid
+            case Explode():
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, is_aggregate
+                )
+                expr = self.make_hybrid_expr(
+                    hybrid, node.data, child_ref_mapping, False
+                )
+                explode_operator = HybridExplode(
+                    expr.shift_back(1),
+                    node.explode_spec,
+                    [term.shift_back(1) for term in hybrid.pipeline[-1].unique_exprs],
+                )
+                successor_hybrid = HybridTree(explode_operator, node.ancestral_mapping)
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case PartitionChild():
@@ -1626,6 +1649,21 @@ class HybridTranslator:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
                                 )
+                    case Explode():
+                        expr = self.make_hybrid_expr(
+                            parent, node.child_access.data, child_ref_mapping, False
+                        )
+                        explode_operator = HybridExplode(
+                            HybridCorrelExpr(expr),
+                            node.child_access.explode_spec,
+                            [
+                                HybridCorrelExpr(term)
+                                for term in parent.pipeline[-1].unique_exprs
+                            ],
+                        )
+                        successor_hybrid = HybridTree(
+                            explode_operator, node.ancestral_mapping
+                        )
                     case PartitionChild():
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):

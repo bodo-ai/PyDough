@@ -9,6 +9,14 @@ import math
 from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.expressions import (
+    Anonymous,
+    Identifier,
+    Lateral,
+    Select,
+    Subquery,
+    TableAlias,
+)
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
@@ -20,6 +28,7 @@ from pydough.types import PyDoughType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -117,6 +126,11 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             return sqlglot_expressions.Cast(
                 this=args[0], to=sqlglot_expressions.DataType.build("BIGINT")
             )
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.ArrayAgg(this=args[0])
 
     def convert_current_timestamp(self) -> SQLGlotExpression:
         """
@@ -232,6 +246,129 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         else:
             # For other units, use base implementation
             return super().convert_datediff(args, types)
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+        subquery_alias: str,
+    ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.value AS value, L.index AS idx
+        FROM (...) AS S,
+        LATERAL FLATTEN(explode_expr) AS L(seq, key, path, index, value, this)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.value AS value, L.index - 1 AS idx
+        FROM (...) AS S,
+        LATERAL SPLIT_TO_TABLE(explode_expr, delimiter) AS L
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.value AS value, L.index AS idx
+        FROM (...) AS S,
+        LATERAL FLATTEN(REGEXP_SUBSTR_ALL(explode_expr, '.{1}')) AS L
+        ```
+        """
+        # Rewrite all input expressions to point to the subquery
+        column_exprs: list[SQLGlotExpression] = []
+        for expr in exprs:
+            if isinstance(expr, sqlglot_expressions.Identifier):
+                expr = sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this=expr.this),
+                    table=sqlglot_expressions.Identifier(this=subquery_alias),
+                )
+            else:
+                for exp in expr.find_all(sqlglot_expressions.Identifier):
+                    exp.replace(
+                        sqlglot_expressions.Column(
+                            this=sqlglot_expressions.Identifier(this=exp.this),
+                            table=sqlglot_expressions.Identifier(this=subquery_alias),
+                        )
+                    )
+            column_exprs.append(expr)
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="VALUE"),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            idx_expr: SQLGlotExpression = sqlglot_expressions.Column(
+                this=sqlglot_expressions.Identifier(this="INDEX"),
+                table=sqlglot_expressions.Identifier(this=lateral_alias),
+            )
+            if explode_spec.version == "string" and explode_spec.delimiter != "":
+                idx_expr = sqlglot_expressions.Sub(
+                    this=idx_expr,
+                    expression=sqlglot_expressions.Literal.number(1),
+                )
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=idx_expr,
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        explode_op: SQLGlotExpression
+        if explode_spec.version == "array":
+            explode_op = Anonymous(this="FLATTEN", expressions=[explode_expr])
+        else:
+            assert (
+                explode_spec.version == "string" and explode_spec.delimiter is not None
+            )
+            if explode_spec.delimiter == "":
+                explode_op = Anonymous(
+                    this="FLATTEN",
+                    expressions=[
+                        Anonymous(
+                            this="REGEXP_SUBSTR_ALL",
+                            expressions=[
+                                explode_expr,
+                                sqlglot_expressions.Literal.string(".{1}"),
+                            ],
+                        )
+                    ],
+                )
+            else:
+                explode_op = Anonymous(
+                    this="SPLIT_TO_TABLE",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                    ],
+                )
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
+            .join(
+                Lateral(
+                    this=explode_op,
+                    alias=TableAlias(this=Identifier(this=lateral_alias)),
+                )
+            )
+        )
+
+        return result
 
     def convert_monthname(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

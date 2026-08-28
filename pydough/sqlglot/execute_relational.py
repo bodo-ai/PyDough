@@ -25,9 +25,14 @@ from sqlglot.dialects.trino import Trino
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import (
     Alias,
+    And,
     Column,
+    Join,
+    Lateral,
     Select,
     Table,
+    Unnest,
+    Where,
     With,
 )
 from sqlglot.expressions import Collate as SQLGlotCollate
@@ -222,6 +227,9 @@ def apply_sqlglot_optimizer(
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
+
+    # Pull out ON conditions from a lateral join into a WHERE clause
+    remove_lateral_on_conditions(glot_expr)
 
     # Remove the Tuple generated around each row in VALUES during the parsing step.
     # For example `(ROW(i))` becomes `ROW(i)`. The tuple would generate invalid
@@ -504,6 +512,47 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
             for item in arg:
                 if isinstance(item, SQLGlotExpression):
                     remove_table_aliases_conditional(item)
+
+
+def remove_lateral_on_conditions(expr: SQLGlotExpression) -> None:
+    """
+    Pulls out ON conditions from a lateral join into a WHERE clause. This is
+    necessary because not every dialect supports ON conditions in lateral joins.
+    """
+    # Find every lateral/unnest join that has an ON condition.
+    if (
+        isinstance(expr, Select)
+        and expr.args.get("joins") is not None
+        and len(expr.args.get("joins")) > 0
+    ):
+        popped_conditions: list[SQLGlotExpression] = []
+        for join in expr.args.get("joins"):
+            if (
+                isinstance(join, Join)
+                and join.args.get("on", None) is not None
+                and join.find(Lateral, Unnest) is not None
+            ):
+                popped_conditions.append(join.args.pop("on"))
+        # After the conditions were removed from the ON clause, insert them
+        # into the WHERE clause.
+        if len(popped_conditions) > 0:
+            combined_condition: SQLGlotExpression = popped_conditions[0]
+            for condition in popped_conditions[1:]:
+                combined_condition = And(this=combined_condition, expression=condition)
+            if expr.args.get("where") is None:
+                expr.set("where", Where(this=combined_condition))
+            else:
+                expr.set(
+                    "where",
+                    Where(
+                        this=And(
+                            this=expr.args.get("where"), expression=combined_condition
+                        )
+                    ),
+                )
+    # Recursively visit the sub-expressions
+    for sub_expr in expr.iter_expressions():
+        remove_lateral_on_conditions(sub_expr)
 
 
 def remove_tuple_row_values(expr: SQLGlotExpression) -> None:

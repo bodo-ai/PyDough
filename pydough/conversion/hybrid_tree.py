@@ -41,6 +41,7 @@ from .hybrid_operations import (
     HybridCalculate,
     HybridChildPullUp,
     HybridCollectionAccess,
+    HybridExplode,
     HybridFilter,
     HybridLimit,
     HybridNoop,
@@ -710,6 +711,10 @@ class HybridTree:
                     )
                 else:
                     return JoinCardinality.PLURAL_ACCESS
+            case HybridExplode():
+                # Each record of an explode operator points back to one row
+                # of its parent.
+                return JoinCardinality.SINGULAR_ACCESS
             # For partition & partition child, infer from the underlying child.
             case HybridPartition():
                 return self.children[0].subtree.infer_root_reverse_cardinality(context)
@@ -787,6 +792,9 @@ class HybridTree:
                     )
                     if not meta.always_matches:
                         return False
+            case HybridExplode():
+                if start_operation.explode_spec.filtering:
+                    return False
             case HybridPartition():
                 # For partition nodes, verify the data being partitioned always
                 # exists.

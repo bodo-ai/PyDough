@@ -200,6 +200,116 @@ from pydough.unqualified import (
             "Unrecognized term of TPCH: 'TPCH'. Did you mean: lines, parts, orders, nations, regions?",
             id="double_graph",
         ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v')",
+            "Must provide `index_name` to EXPLODE when `is_distinct` is False",
+            id="bad_explode_01",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE()",
+            "missing 3 required positional arguments: 'data', 'name', and 'value_name'",
+            id="bad_explode_02",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names')",
+            "missing 1 required positional argument: 'value_name'",
+            id="bad_explode_03",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, value_name='v')",
+            "missing 1 required positional argument: 'name'",
+            id="bad_explode_04",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='foo')",
+            "Unrecognized `version` for EXPLODE: 'foo' (must be either 'array' or 'string')",
+            id="bad_explode_05",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string')",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
+            id="bad_explode_06",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=['x'])",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
+            id="bad_explode_07",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=42)",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
+            id="bad_explode_08",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', delimiter='x')",
+            "Cannot provide a `delimiter` to EXPLODE when `version` is 'array'",
+            id="bad_explode_09",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='array', delimiter='x')",
+            "Cannot provide a `delimiter` to EXPLODE when `version` is 'array'",
+            id="bad_explode_10",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(nation_names, 'names', value_name='v', index_name='i')",
+            "Unrecognized term of TPCH.nations: 'nation_names'. Did you mean: name, region, region_key?",
+            id="bad_explode_11",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=0)",
+            "Must provide a string `delimiter` to EXPLODE when `version` is 'string'",
+            id="bad_explode_12",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 0, value_name='v', index_name='i', version='string', delimiter=' ')",
+            "Invalid `name` argument for EXPLODE: 0",
+            id="bad_explode_13",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name=0, index_name='i', version='string', delimiter=' ')",
+            "Invalid `value_name` argument for EXPLODE: 0",
+            id="bad_explode_14",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name=0, version='string', delimiter=' ')",
+            "Invalid `index_name` argument for EXPLODE: 0",
+            id="bad_explode_15",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version=0, delimiter=' ')",
+            "Unrecognized `version` for EXPLODE: 0 (must be either 'array' or 'string')",
+            id="bad_explode_16",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=' ', filtering='yay')",
+            "Invalid `filtering` argument for EXPLODE: 'yay'",
+            id="bad_explode_17",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=' ', is_distinct='nope')",
+            "Invalid `is_distinct` argument for EXPLODE: 'nope'",
+            id="bad_explode_18",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='i', version='string', delimiter=' ', extra_kwarg='fizzbuzz')",
+            "UnqualifiedNode.EXPLODE() got an unexpected keyword argument 'extra_kwarg'",
+            id="bad_explode_19",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(customers.name, 'names', value_name='v', index_name='i', version='string', delimiter='#')",
+            "Invalid data argument to explode: customers.name (explode does not currently support exploding data from a child collection; make sure to store the data to be exploded in a column of the parent collection before calling explode)",
+            id="bad_explode_20",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='name', index_name='i', version='string', delimiter='#')",
+            "Cannot use 'name' as the `value_name` for EXPLODE because it is already a term in the ancestor context",
+            id="bad_explode_21",
+        ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='key', version='string', delimiter='#')",
+            "Cannot use 'key' as the `index_name` for EXPLODE because it is already a term in the ancestor context",
+            id="bad_explode_22",
+        ),
     ],
 )
 def test_qualify_error(

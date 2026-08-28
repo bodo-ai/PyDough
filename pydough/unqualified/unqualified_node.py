@@ -42,6 +42,7 @@ from pydough.types import (
     UnknownType,
 )
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 
 class UnqualifiedNode(ABC):
@@ -435,6 +436,91 @@ class UnqualifiedNode(ABC):
 
         return UnqualifiedBest(self, by, per, allow_ties, n_best)
 
+    def EXPLODE(
+        self,
+        data: "UnqualifiedNode",
+        name: str,
+        value_name: str,
+        index_name: str | None = None,
+        version: str = "array",
+        delimiter: str | None = None,
+        filtering: bool = True,
+        is_distinct: bool = False,
+    ):
+        """
+        Method used to create an EXPLODE node, transforming the existing
+        collection by exploding each row into multiple rows based on the values
+        in an array column, or from splitting a string column on a delimiter.
+
+        Args:
+            `data`: the array or string column to explode.
+            `name`: the name of the collection after being exploded.
+            This is the name that will be used to reference the collection in
+            subsequent operations, such as window functions.
+            `value_name`: the name of the column representing the exploded
+            values.
+            `index_name` (optional): the name of the column representing the
+            index of each exploded value within its original array or string.
+            If None, no such column will be created. This must be provided when
+            `is_distinct` is False. Default is None.
+            `version` (optional): the version of explode to use. Must be one of "array"
+            or "string". "array" should be used when exploding an array column,
+            and "string" should be used when exploding a string column by a
+            delimiter. Default is "array".
+            `delimiter` (optional): the delimiter to use when exploding a string column.
+            This must be provided when `version` is "string" and must be None
+            when `version` is "array".
+            `filtering` (optional): if True, indicates that the explode
+            operation can result in not every row from the original being
+            included in the output, i.e. if some of the rows from `data` are
+            empty arrays. Default is True.
+            `is_distinct` (optional): if True, indicates that each value within
+            `data` is unique within that row of the original data. If so, then
+            the index column is no longer mandatory since the values of the
+            exploded data can be used to co-identify unique rows. Default is
+            False.
+        """
+        match version:
+            case "array":
+                if delimiter is not None:
+                    raise PyDoughUnqualifiedException(
+                        "Cannot provide a `delimiter` to EXPLODE when `version` is 'array'"
+                    )
+            case "string":
+                if delimiter is None or not isinstance(delimiter, str):
+                    raise PyDoughUnqualifiedException(
+                        "Must provide a string `delimiter` to EXPLODE when `version` is 'string'"
+                    )
+            case _:
+                raise PyDoughUnqualifiedException(
+                    f"Unrecognized `version` for EXPLODE: {version!r} (must be either 'array' or 'string')"
+                )
+        assert isinstance(name, str), f"Invalid `name` argument for EXPLODE: {name!r}"
+        assert isinstance(value_name, str), (
+            f"Invalid `value_name` argument for EXPLODE: {value_name!r}"
+        )
+        assert index_name is None or isinstance(index_name, str), (
+            f"Invalid `index_name` argument for EXPLODE: {index_name!r}"
+        )
+        assert isinstance(filtering, bool), (
+            f"Invalid `filtering` argument for EXPLODE: {filtering!r}"
+        )
+        assert isinstance(is_distinct, bool), (
+            f"Invalid `is_distinct` argument for EXPLODE: {is_distinct!r}"
+        )
+        if index_name is None and not is_distinct:
+            raise PyDoughUnqualifiedException(
+                "Must provide `index_name` to EXPLODE when `is_distinct` is False"
+            )
+        return UnqualifiedExplode(
+            self,
+            data,
+            name,
+            ExplodeSpec(
+                value_name, index_name, version, delimiter, filtering, is_distinct
+            ),
+        )
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -792,10 +878,30 @@ class UnqualifiedGeneratedCollection(UnqualifiedNode):
     def __init__(self, user_collection: PyDoughUserGeneratedCollection):
         self._parcel: tuple[PyDoughUserGeneratedCollection] = (user_collection,)
 
-    @property
-    def user_collection(self) -> PyDoughUserGeneratedCollection:
-        """The wrapped user-generated collection."""
-        return self._parcel[0]
+
+class UnqualifiedExplode(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to an EXPLODE clause.
+    """
+
+    def __init__(
+        self,
+        predecessor: UnqualifiedNode,
+        data: UnqualifiedNode,
+        name: str,
+        explode_spec: ExplodeSpec,
+    ):
+        self._parcel: tuple[
+            UnqualifiedNode,
+            UnqualifiedNode,
+            str,
+            ExplodeSpec,
+        ] = (
+            predecessor,
+            self.coerce_to_unqualified(data),
+            name,
+            explode_spec,
+        )
 
 
 def display_raw(unqualified: UnqualifiedNode) -> str:
@@ -900,6 +1006,12 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             result += f"name={unqualified._parcel[0].name!r}, "
             result += f"columns=[{', '.join(unqualified._parcel[0].columns)}],"
             result += f"data={unqualified._parcel[0].to_string()}"
+            return result + ")"
+        case UnqualifiedExplode():
+            result = f"{display_raw(unqualified._parcel[0])}.EXPLODE("
+            result += display_raw(unqualified._parcel[1])
+            result += f", name={unqualified._parcel[2]!r}"
+            result += f", {unqualified._parcel[3].keyword_arg_string}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(

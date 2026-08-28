@@ -59,6 +59,124 @@ def dumb_aggregation():
     )
 
 
+def good_explode_01():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=True,
+        is_distinct=False,
+    )
+
+
+def good_explode_02():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=True,
+        is_distinct=True,
+    )
+
+
+def good_explode_03():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=False,
+        is_distinct=False,
+    )
+
+
+def good_explode_04():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=True,
+        is_distinct=False,
+    )
+
+
+def good_explode_05():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=True,
+        is_distinct=False,
+    )
+
+
+def good_explode_06():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=True,
+        is_distinct=True,
+    )
+
+
+def good_explode_07():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=False,
+        is_distinct=False,
+    )
+
+
+def good_explode_08():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=True,
+        is_distinct=False,
+    )
+
+
+def good_explode_09():
+    return (
+        nations.CALCULATE(region_name=region.name)
+        .EXPLODE(
+            name,
+            "exploded_nation",
+            value_name="v",
+            index_name="i",
+            version="string",
+            delimiter=" ",
+            filtering=True,
+            is_distinct=False,
+        )
+        .WHERE(v[:1] != region_name[:1])
+        .customers
+    )
+
+
 def simple_collation():
     return (
         suppliers.CALCULATE(

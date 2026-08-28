@@ -22,12 +22,14 @@ from pydough.qdag.collections.user_collection_qdag import (
 )
 from pydough.types import PyDoughType
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
     Calculate,
     ChildAccess,
     ChildReferenceCollection,
+    Explode,
     GlobalContext,
     OrderBy,
     PartitionBy,
@@ -400,6 +402,32 @@ class AstNodeBuilder:
             The newly created PyDough SINGULAR instance.
         """
         return Singular(preceding_context)
+
+    def build_explode(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+        data: PyDoughExpressionQDAG,
+        name: str,
+        explode_spec: ExplodeSpec,
+    ):
+        """
+        Creates an EXPLODE instance.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `data`: the data to be exploded.
+            `name`: the name of the collection after being exploded.
+            `explode_spec`: the specification of the explode operation.
+
+        Returns:
+            The newly created PyDough EXPLODE instance.
+        """
+        return Explode(
+            preceding_context,
+            data,
+            name,
+            explode_spec,
+        )
 
     def build_generated_collection(
         self,

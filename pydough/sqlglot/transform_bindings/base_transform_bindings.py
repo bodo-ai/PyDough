@@ -23,16 +23,19 @@ from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.types import (
+    ArrayType,
     BooleanType,
     DatetimeType,
     NumericType,
     PyDoughType,
     StringType,
+    UnknownType,
 )
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 from pydough.user_collections.view_collection import ViewGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
@@ -265,6 +268,8 @@ class BaseTransformBindings:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
                 )
+            case pydop.LISTOF:
+                return self.convert_listof(args, types)
             case pydop.STARTSWITH:
                 return self.convert_startswith(args, types)
             case pydop.ENDSWITH:
@@ -441,6 +446,17 @@ class BaseTransformBindings:
                 return sqlglot_expressions.CountIf(this=args[0])
             case _:
                 return sqlglot_expressions.Sum(this=args[0])
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a LISTOF function call to its SQLGlot equivalent. Some dialects
+        do not support this functionality.
+        """
+        raise self._visitor._session.error_builder.sql_call_dialect_unsupported(
+            pydop.LISTOF, self._visitor._session.database.dialect.name
+        )
 
     def convert_find(
         self,
@@ -2440,6 +2456,42 @@ class BaseTransformBindings:
             .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
         )
 
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+        subquery_alias: str,
+    ) -> SQLGlotExpression:
+        """
+        Converts a PyDough EXPLODE operation call to a SQLGlot expression that
+        unravels an array or string into multiple rows (i.e. a lateral join).
+
+        Args:
+            `input_expr`: The subquery containing the data being exploded.
+            `explode_expr`: The expression to explode (e.g., an array or string
+            column).
+            `explode_spec`: The specification of how to explode the data.
+            `exprs`: The list of SQLGlot expressions representing the columns of
+            the data besides the exploded output.
+            `val_index`: The index within `exprs` that should be used to store
+            the exploded data in the output. If None, not included.
+            `idx_index`: The index within `exprs` that should be used to store
+            the exploded data's index in the output. If None, not included.
+            `lateral_alias`: A name given to a LATERAL operator, if needed, to
+            avoid name collisions.
+            `subquery_alias`: A name given to the data before the LATERAL
+            operator, if needed, to avoid name collisions.
+
+        Returns:
+            A SQLGlotExpression representing the exploded data.
+        """
+        raise PyDoughSQLException("EXPLODE is not supported in this dialect")
+
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
@@ -2572,6 +2624,16 @@ class BaseTransformBindings:
         (None, NaN, BooleanType, StringType) meaning that this representation
         works through all current dialects.
         """
+        if isinstance(item, list):
+            inner_type: PyDoughType
+            if isinstance(item_type, ArrayType):
+                inner_type = item_type.elem_type
+            else:
+                inner_type = UnknownType()
+            inner_items: list[SQLGlotExpression] = [
+                self.generate_dataframe_item_expression(i, inner_type) for i in item
+            ]
+            return self.generate_dataframe_array_expression(inner_items, inner_type)
 
         if item is None or pd.isna(item):
             return sqlglot_expressions.Null()
@@ -2585,6 +2647,22 @@ class BaseTransformBindings:
 
             case _:  # Specific dialect expression
                 return self.generate_dataframe_item_dialect_expression(item, item_type)
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for an array of items with given pydough type.
+
+        Args:
+            `items` : The list of SQLGlotExpressions representing the items in the array.
+            `inner_type` : The mapped PydDough type for the items in the array.
+        Returns:
+            A SQLGlotExpression representing the array of items.
+        """
+        raise NotImplementedError(
+            f"Array types are not currently supported in dialect {self._visitor._expr_visitor._dialect.name}."
+        )
 
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType

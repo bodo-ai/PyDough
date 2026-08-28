@@ -27,6 +27,7 @@ from .hybrid_expressions import (
 from .hybrid_operations import (
     HybridCalculate,
     HybridChildPullUp,
+    HybridExplode,
     HybridFilter,
     HybridNoop,
     HybridPartition,
@@ -307,6 +308,14 @@ class HybridDecorrelater:
                         correl_level,
                         new_parent_uni_keys,
                     )
+                if isinstance(operation, HybridExplode):
+                    operation.explode_data = self.remove_correl_refs(
+                        operation.explode_data,
+                        old_parent,
+                        child_height,
+                        correl_level,
+                        new_parent_uni_keys,
+                    )
             # Repeat the process on the ancestor until either loop guard
             # condition is no longer True. Only update the child height if we
             # are still making steps from the original tree, as opposed to from
@@ -553,6 +562,10 @@ class HybridDecorrelater:
             if isinstance(operation, HybridFilter):
                 correl_levels = max(
                     correl_levels, operation.condition.count_correlated_levels()
+                )
+            if isinstance(operation, HybridExplode):
+                correl_levels = max(
+                    correl_levels, operation.explode_data.count_correlated_levels()
                 )
 
         assert correl_levels <= len(self.stack)

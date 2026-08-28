@@ -4080,6 +4080,1326 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = regions.CALCULATE(region_name=name, nation_names=LISTOF(nations.name)).ORDER_BY(region_name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nation_names": [
+                            ["ALGERIA", "ETHIOPIA", "KENYA", "MOROCCO", "MOZAMBIQUE"],
+                            ["ARGENTINA", "BRAZIL", "CANADA", "PERU", "UNITED STATES"],
+                            ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"],
+                            [
+                                "FRANCE",
+                                "GERMANY",
+                                "ROMANIA",
+                                "RUSSIA",
+                                "UNITED KINGDOM",
+                            ],
+                            ["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"],
+                        ],
+                    }
+                ),
+                "array_data_01",
+                order_sensitive=True,
+                ignore_array_order=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="array_data_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['idx'])",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2, 3, 4],
+                        "arr_s": [["A"], [], ["B", "C"], ["D", "E", None, "F"]],
+                        "arr_i": [[10], [], [20, 30], [40, 50, None, 60]],
+                    }
+                ),
+                "array_data_02",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE", "ORACLE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "idx": [1, 2, 3, 4],
+                            "arr_s": [["A"], [], ["B", "C"], ["D", "E", None, "F"]],
+                            "arr_i": [[10], [], [20, 30], [40, 50, None, 60]],
+                        }
+                    )
+                },
+            ),
+            id="array_data_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['idx'])",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2, 3, 4],
+                        "arr_f": [
+                            [1.1],
+                            [],
+                            [-2.3, 0.0],
+                            [3.14, None, float("nan"), float("inf"), float("-inf")],
+                        ],
+                    }
+                ),
+                "array_data_03",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE", "ORACLE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "idx": [1, 2, 3, 4],
+                            "arr_f": [
+                                [1.1],
+                                [],
+                                [-2.3, 0.0],
+                                [3.14, None, float("nan"), float("inf"), float("-inf")],
+                            ],
+                        }
+                    )
+                },
+            ),
+            id="array_data_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['idx'])",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": [1, 2, 3, 4],
+                        "arr_d": [
+                            [datetime(2020, 1, 1, 0, 0, 0)],
+                            [],
+                            [
+                                datetime(2021, 6, 15, 0, 0, 0),
+                                datetime(2022, 12, 31, 0, 0, 0),
+                            ],
+                            [
+                                datetime(1999, 7, 4, 0, 0, 0),
+                                None,
+                                datetime(2000, 1, 1, 0, 0, 0),
+                            ],
+                        ],
+                        "arr_t": [
+                            [pd.Timestamp("2020-01-01 12:00:00")],
+                            [],
+                            [pd.Timestamp("2021-06-15"), pd.Timestamp("2022-12-31")],
+                            [
+                                pd.Timestamp("1999-07-04 23:15:00"),
+                                None,
+                                pd.Timestamp("2000-01-01"),
+                            ],
+                        ],
+                    }
+                ),
+                "array_data_04",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE", "ORACLE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "idx": [1, 2, 3, 4],
+                            "arr_d": [
+                                [date(2020, 1, 1)],
+                                [],
+                                [date(2021, 6, 15), date(2022, 12, 31)],
+                                [date(1999, 7, 4), None, date(2000, 1, 1)],
+                            ],
+                            "arr_t": [
+                                [pd.Timestamp("2020-01-01 12:00:00")],
+                                [],
+                                [
+                                    pd.Timestamp("2021-06-15"),
+                                    pd.Timestamp("2022-12-31"),
+                                ],
+                                [
+                                    pd.Timestamp("1999-07-04 23:15:00"),
+                                    None,
+                                    pd.Timestamp("2000-01-01"),
+                                ],
+                            ],
+                        }
+                    )
+                },
+            ),
+            id="array_data_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = regions.CALCULATE(region_name=name, nation_names=LISTOF(nations.name))\n"
+                "result = ("
+                "  array_data"
+                "  .EXPLODE(nation_names, 'exploded_nations', index_name='nation_idx', value_name='nation_name', version='array', filtering=False, is_distinct=True)"
+                "  .CALCULATE(region_name, nation_names, nation_name)"
+                "  .ORDER_BY(region_name, nation_name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": ["AFRICA"] * 5
+                        + ["AMERICA"] * 5
+                        + ["ASIA"] * 5
+                        + ["EUROPE"] * 5
+                        + ["MIDDLE EAST"] * 5,
+                        "nation_names": (
+                            [["ALGERIA", "ETHIOPIA", "KENYA", "MOROCCO", "MOZAMBIQUE"]]
+                            * 5
+                            + [
+                                [
+                                    "ARGENTINA",
+                                    "BRAZIL",
+                                    "CANADA",
+                                    "PERU",
+                                    "UNITED STATES",
+                                ]
+                            ]
+                            * 5
+                            + [["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"]] * 5
+                            + [
+                                [
+                                    "FRANCE",
+                                    "GERMANY",
+                                    "ROMANIA",
+                                    "RUSSIA",
+                                    "UNITED KINGDOM",
+                                ]
+                            ]
+                            * 5
+                            + [["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"]] * 5
+                        ),
+                        "nation_name": [
+                            "ALGERIA",
+                            "ETHIOPIA",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "CHINA",
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "VIETNAM",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            "EGYPT",
+                            "IRAN",
+                            "IRAQ",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                    }
+                ),
+                "explode_01",
+                order_sensitive=True,
+                ignore_array_order=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
+                "result = ("
+                "  array_data"
+                "  .CALCULATE(key, arr)"
+                "  .EXPLODE(arr, 'exploded_array', index_name='arr_idx', value_name='arr_val', version='array', filtering=True, is_distinct=True)"
+                "  .CALCULATE(key, arr, arr_idx, arr_val)"
+                "  .ORDER_BY(key, arr_idx)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": ["A", "C", "C", "C", "C", "D", "D"],
+                        "arr": [
+                            [1],
+                            [2, 3, None, 4],
+                            [2, 3, None, 4],
+                            [2, 3, None, 4],
+                            [2, 3, None, 4],
+                            [5, 6],
+                            [5, 6],
+                        ],
+                        "arr_idx": [0, 0, 1, 2, 3, 0, 1],
+                        "arr_val": [1, 2, 3, None, 4, 5, 6],
+                    }
+                ),
+                "explode_02",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE", "ORACLE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "key": ["A", "B", "C", "D"],
+                            "arr": [[1], [], [2, 3, None, 4], [5, 6]],
+                        }
+                    )
+                },
+            ),
+            id="explode_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(name)"
+                "  .TOP_K(5, by=key.ASC())"
+                "  .EXPLODE(name, 'exploded_customers', index_name='idx', value_name='val', version='string', delimiter='#')"
+                "  .ORDER_BY(name, idx)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "val": [
+                            "Customer",
+                            "000000001",
+                            "Customer",
+                            "000000002",
+                            "Customer",
+                            "000000003",
+                            "Customer",
+                            "000000004",
+                            "Customer",
+                            "000000005",
+                        ],
+                        "idx": [0, 1] * 5,
+                    }
+                ),
+                "explode_03",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "exploded_i = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')\n"
+                "exploded_e = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='E')\n"
+                "exploded_space = EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter=' ')\n"
+                "result = ("
+                "  regions"
+                "  .CALCULATE(region_name=name, n_e_chunks=COUNT(exploded_e), n_i_chunks=COUNT(exploded_i), n_space_chunks=COUNT(exploded_space))"
+                "  .ORDER_BY(region_name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_e_chunks": [1, 2, 1, 3, 3],
+                        "n_i_chunks": [2, 2, 2, 1, 2],
+                        "n_space_chunks": [1, 1, 1, 1, 2],
+                    }
+                ),
+                "explode_04",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "exploded_data = ("
+                "  EXPLODE(name, 'exploded_names', index_name='idx', value_name='val', version='string', delimiter='I')"
+                "  .WHERE(HAS(nations, STARTSWITH(name, val[:1])))"
+                ")\n"
+                "result = ("
+                "  regions"
+                "  .CALCULATE(region_name=name, n_chunks=COUNT(exploded_data))"
+                "  .ORDER_BY(region_name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_chunks": [2, 2, 2, 1, 1],
+                    }
+                ),
+                "explode_05",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_05",
+            marks=pytest.mark.skip(
+                "(gh #548) Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+            ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(customer_name=name)"
+                "  .TOP_K(5, by=key.ASC())"
+                "  .EXPLODE(name, 'exploded_customers', index_name='idx', value_name='val', version='string', delimiter='#')"
+                "  .CALCULATE(idx, val)"
+                "  .nation"
+                "  .CALCULATE(customer_name, idx, val, nation_name=name)"
+                "  .ORDER_BY(customer_name, idx)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_name": ["Customer#000000001"] * 2
+                        + ["Customer#000000002"] * 2
+                        + ["Customer#000000003"] * 2
+                        + ["Customer#000000004"] * 2
+                        + ["Customer#000000005"] * 2,
+                        "idx": [1, 2] * 5,
+                        "val": [
+                            "Customer",
+                            "000000001",
+                            "Customer",
+                            "000000002",
+                            "Customer",
+                            "000000003",
+                            "Customer",
+                            "000000004",
+                            "Customer",
+                            "000000005",
+                        ],
+                        "nation_name": ["MOROCCO"] * 2
+                        + ["JORDAN"] * 2
+                        + ["ARGENTINA"] * 2
+                        + ["EGYPT"] * 2
+                        + ["CANADA"] * 2,
+                    }
+                ),
+                "explode_06",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_06",
+            marks=pytest.mark.skip(
+                "(gh #548) Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+            ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .CALCULATE(key, idx1, idx2, val2)"
+                "  .ORDER_BY(key.ASC(), idx1.ASC(), idx2.ASC())"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 1, 1, 1, 2, 2, 3, 3, 3, 3],
+                        "idx1": [0, 0, 1, 1, 0, 1, 0, 0, 1, 2],
+                        "idx2": [0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+                        "val2": [
+                            "to the even",
+                            " regular platelets",
+                            " regular",
+                            " ironic epitaphs nag e",
+                            "l accounts",
+                            " blithely ironic theodolites integrate boldly: caref",
+                            " deposits eat slyly ironic",
+                            " even instructions",
+                            " express foxes detect slyly",
+                            " blithely even accounts abov",
+                        ],
+                    }
+                ),
+                "explode_07",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_07",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=' ')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=',')"
+                "  .WHERE(val3 != '')"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                "  .ORDER_BY(key.ASC(), idx1.ASC(), idx2.ASC(), idx3.ASC())"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1] * 10 + [2] * 8 + [3] * 14,
+                        "idx1": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            2,
+                            2,
+                            2,
+                            2,
+                        ],
+                        "idx2": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            0,
+                            1,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            1,
+                            2,
+                            3,
+                            4,
+                            1,
+                            2,
+                            3,
+                            4,
+                        ],
+                        "idx3": [0] * 32,
+                        "val3": [
+                            "to",
+                            "the",
+                            "even",
+                            "regular",
+                            "platelets",
+                            "regular",
+                            "ironic",
+                            "epitaphs",
+                            "nag",
+                            "e",
+                            "l",
+                            "accounts",
+                            "blithely",
+                            "ironic",
+                            "theodolites",
+                            "integrate",
+                            "boldly:",
+                            "caref",
+                            "deposits",
+                            "eat",
+                            "slyly",
+                            "ironic",
+                            "even",
+                            "instructions",
+                            "express",
+                            "foxes",
+                            "detect",
+                            "slyly",
+                            "blithely",
+                            "even",
+                            "accounts",
+                            "abov",
+                        ],
+                    }
+                ),
+                "explode_08",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_08",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  regions"
+                "  .CALCULATE(name)"
+                "  .EXPLODE(comment, 'words', value_name='val', index_name='idx', version='string', delimiter=' ')"
+                "  .PARTITION(name='region_partition', by=name)"
+                "  .CALCULATE(name, n_words=COUNT(words), words_list=LISTOF(words.val))"
+                "  .ORDER_BY(name)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_words": [17, 6, 6, 7, 13],
+                        "words_list": [
+                            [
+                                "lar",
+                                "deposits.",
+                                "blithely",
+                                "final",
+                                "packages",
+                                "cajole.",
+                                "regular",
+                                "waters",
+                                "are",
+                                "final",
+                                "requests.",
+                                "regular",
+                                "accounts",
+                                "are",
+                                "according",
+                                "to",
+                                "",
+                            ],
+                            ["hs", "use", "ironic,", "even", "requests.", "s"],
+                            ["ges.", "thinly", "even", "pinto", "beans", "ca"],
+                            [
+                                "ly",
+                                "final",
+                                "courts",
+                                "cajole",
+                                "furiously",
+                                "final",
+                                "excuse",
+                            ],
+                            [
+                                "uickly",
+                                "special",
+                                "accounts",
+                                "cajole",
+                                "carefully",
+                                "blithely",
+                                "close",
+                                "requests.",
+                                "carefully",
+                                "final",
+                                "asymptotes",
+                                "haggle",
+                                "furiousl",
+                            ],
+                        ],
+                    }
+                ),
+                "explode_09",
+                order_sensitive=True,
+                ignore_array_order=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_09",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(cleaned_comment=STRIP(REPLACE(REPLACE(REPLACE(REPLACE(comment, ';', ''), ',', ''), ':', ''), '.', ''), ' '))"
+                "  .EXPLODE(cleaned_comment, 'words', value_name='val', index_name='idx', version='string', delimiter=' ')"
+                "  .CALCULATE(word_length=LENGTH(val))"
+                "  .PARTITION(name='lengths', by=word_length)"
+                "  .CALCULATE(word_length, n_words=COUNT(words), n_unique_words=NDISTINCT(words.val))"
+                "  .ORDER_BY(word_length)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "word_length": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "n_words": [
+                            40111,
+                            63249,
+                            180758,
+                            127312,
+                            303297,
+                            172864,
+                            223795,
+                            233379,
+                            141958,
+                            17193,
+                            21597,
+                            26271,
+                            478,
+                            168,
+                        ],
+                        "n_unique_words": [
+                            27,
+                            152,
+                            298,
+                            363,
+                            346,
+                            282,
+                            226,
+                            159,
+                            112,
+                            66,
+                            38,
+                            21,
+                            11,
+                            2,
+                        ],
+                    }
+                ),
+                "explode_10",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "supplier_words = ("
+                "  suppliers"
+                "  .CALCULATE(supp_comment=STRIP(REPLACE(REPLACE(REPLACE(REPLACE(comment, ';', ''), ',', ''), ':', ''), '.', ''), ' '))"
+                "  .EXPLODE(supp_comment, 'supp_words', value_name='supp_word', index_name='supp_idx', version='string', delimiter=' ')"
+                "  .PARTITION(name='s_words', by=supp_word)"
+                "  .CALCULATE(supp_word)"
+                ")\n"
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(cust_comment=STRIP(REPLACE(REPLACE(REPLACE(REPLACE(comment, ';', ''), ',', ''), ':', ''), '.', ''), ' '))"
+                "  .EXPLODE(cust_comment, 'cust_words', value_name='cust_word', index_name='cust_idx', version='string', delimiter=' ')"
+                "  .PARTITION(name='c_words', by=cust_word)"
+                "  .CALCULATE(cust_word)"
+                ")\n"
+                "match_words = ("
+                "  supplier_words"
+                "  .WHERE(HAS(CROSS(customer_words).WHERE(supp_word == cust_word)))"
+                ")\n"
+                "result = TPCH.CALCULATE(n_double_words=COUNT(match_words))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_double_words": [1249],
+                    }
+                ),
+                "explode_11",
+                order_sensitive=True,
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
+                "result = ("
+                "  array_data"
+                "  .CALCULATE(key)"
+                "  .EXPLODE(arr, 'exploded_array', value_name='arr_val', version='array', filtering=True, is_distinct=True)"
+                "  .PARTITION(name='groups', by=(key, arr_val))"
+                "  .CALCULATE(key, arr_val)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": ["A", "C", "C", "C", "C", "D", "D"],
+                        "arr_val": [1, 2, 3, None, 4, 5, 6],
+                    }
+                ),
+                "explode_12",
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE", "ORACLE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "key": ["A", "B", "C", "D"],
+                            "arr": [[1], [], [2, 3, None, 4], [5, 6]],
+                        }
+                    )
+                },
+            ),
+            id="explode_12",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "array_data = pydough.dataframe_collection(name='tbl', dataframe=array_df, unique_column_names=['key'])\n"
+                "result = ("
+                "  array_data"
+                "  .CALCULATE(key)"
+                "  .EXPLODE(arr, 'exploded_array', value_name='arr_val', index_name='idx', version='array', filtering=True, is_distinct=False)"
+                "  .PARTITION(name='groups', by=(key, arr_val))"
+                "  .CALCULATE(key, arr_val)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": ["A", "C", "C", "C", "C", "D", "D"],
+                        "arr_val": [1, 2, 3, None, 4, 5, 6],
+                    }
+                ),
+                "explode_13",
+                skipped_dialects={"ANSI", "SQLITE", "SNOWFLAKE", "ORACLE", "MYSQL"},
+                kwargs={
+                    "array_df": pd.DataFrame(
+                        {
+                            "key": ["A", "B", "C", "D"],
+                            "arr": [[1], [], [2, 3, None, 4, None], [5, 6, 5]],
+                        }
+                    )
+                },
+            ),
+            id="explode_13",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .WHERE(val3 != '')"
+                ")\n"
+                "result = ("
+                "  customer_words"
+                "  .BEST(per='customers', by=(idx1.ASC(), idx2.ASC(), idx3.ASC()))"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "idx1": [0, 0, 0],
+                        "idx2": [0, 0, 0],
+                        "idx3": [0, 0, 1],
+                        "val3": ["to", "l", "deposits"],
+                    }
+                ),
+                "explode_14",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_14",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .WHERE(val3 != '')"
+                ")\n"
+                "result = ("
+                "  customer_words"
+                "  .BEST(per='customers', by=(idx1.DESC(), idx2.ASC(), idx3.ASC()))"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "idx1": [1, 1, 2],
+                        "idx2": [0, 0, 0],
+                        "idx3": [1, 1, 1],
+                        "val3": ["regular", "blithely", "blithely"],
+                    }
+                ),
+                "explode_15",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_15",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .WHERE(val3 != '')"
+                ")\n"
+                "result = ("
+                "  customer_words"
+                "  .BEST(per='customers', by=(idx1.ASC(), idx2.DESC(), idx3.ASC()))"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "idx1": [0, 0, 0],
+                        "idx2": [1, 0, 1],
+                        "idx3": [1, 0, 1],
+                        "val3": ["regular", "l", "even"],
+                    }
+                ),
+                "explode_16",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_16",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .WHERE(val3 != '')"
+                ")\n"
+                "result = ("
+                "  customer_words"
+                "  .BEST(per='customers', by=(idx1.DESC(), idx2.DESC(), idx3.ASC()))"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "idx1": [1, 1, 2],
+                        "idx2": [1, 0, 0],
+                        "idx3": [1, 1, 1],
+                        "val3": ["ironic", "blithely", "blithely"],
+                    }
+                ),
+                "explode_17",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_17",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .WHERE(val3 != '')"
+                ")\n"
+                "result = ("
+                "  customer_words"
+                "  .BEST(per='exp2', by=idx3.DESC())"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 1, 1, 1, 2, 2, 3, 3, 3, 3],
+                        "idx1": [0, 0, 1, 1, 0, 1, 0, 0, 1, 2],
+                        "idx2": [0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+                        "idx3": [2, 2, 1, 4, 1, 6, 4, 2, 4, 4],
+                        "val3": [
+                            "even",
+                            "platelets",
+                            "regular",
+                            "e",
+                            "accounts",
+                            "caref",
+                            "ironic",
+                            "instructions",
+                            "slyly",
+                            "abov",
+                        ],
+                    }
+                ),
+                "explode_18",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_18",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "customer_words = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .WHERE(val3 != '')"
+                ")\n"
+                "result = ("
+                "  customer_words"
+                "  .BEST(per='exp1', by=(idx2.DESC(), idx3.DESC()))"
+                "  .CALCULATE(key, idx1, idx2, idx3, val3)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 1, 2, 2, 3, 3, 3],
+                        "idx1": [0, 1, 0, 1, 0, 1, 2],
+                        "idx2": [1, 1, 0, 0, 1, 0, 0],
+                        "idx3": [2, 4, 1, 6, 2, 4, 4],
+                        "val3": [
+                            "platelets",
+                            "e",
+                            "accounts",
+                            "caref",
+                            "instructions",
+                            "slyly",
+                            "abov",
+                        ],
+                    }
+                ),
+                "explode_19",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_19",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp', value_name='char', index_name='idx', version='string', delimiter='')"
+                "  .WHERE(char != '')"
+                "  .PARTITION(name='chars', by=char)"
+                "  .CALCULATE(char, n=COUNT(exp))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "char": list(" ,.:abcdefghilnoprstuvxy"),
+                        "exp": [
+                            30,
+                            3,
+                            4,
+                            1,
+                            11,
+                            4,
+                            10,
+                            4,
+                            27,
+                            2,
+                            4,
+                            5,
+                            14,
+                            16,
+                            12,
+                            13,
+                            5,
+                            11,
+                            14,
+                            19,
+                            5,
+                            4,
+                            2,
+                            7,
+                        ],
+                    }
+                ),
+                "explode_20",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_20",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  customers"
+                "  .CALCULATE(key)"
+                "  .TOP_K(3, by=key.ASC())"
+                "  .EXPLODE(comment, 'exp1', value_name='val1', index_name='idx1', version='string', delimiter='.')"
+                "  .EXPLODE(val1, 'exp2', value_name='val2', index_name='idx2', version='string', delimiter=',')"
+                "  .EXPLODE(val2, 'exp3', value_name='val3', index_name='idx3', version='string', delimiter=' ')"
+                "  .EXPLODE(val3, 'expr4', value_name='val4', index_name='idx4', version='string', delimiter='')"
+                "  .WHERE(val4 != '')"
+                "  .BEST(per='exp3', by=idx4.ASC())"
+                "  .CALCULATE(key, idx1, idx2, idx3, idx4, val4)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            2,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                            3,
+                        ],
+                        "idx1": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            2,
+                            2,
+                            2,
+                            2,
+                        ],
+                        "idx2": [
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        "idx3": [
+                            0,
+                            1,
+                            2,
+                            1,
+                            2,
+                            1,
+                            1,
+                            2,
+                            3,
+                            4,
+                            0,
+                            1,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            1,
+                            2,
+                            3,
+                            4,
+                            1,
+                            2,
+                            1,
+                            2,
+                            3,
+                            4,
+                            1,
+                            2,
+                            3,
+                            4,
+                        ],
+                        "idx4": [0] * 32,
+                        "val4": [
+                            "t",
+                            "t",
+                            "e",
+                            "r",
+                            "p",
+                            "r",
+                            "i",
+                            "e",
+                            "n",
+                            "e",
+                            "l",
+                            "a",
+                            "b",
+                            "i",
+                            "t",
+                            "i",
+                            "b",
+                            "c",
+                            "d",
+                            "e",
+                            "s",
+                            "i",
+                            "e",
+                            "i",
+                            "e",
+                            "f",
+                            "d",
+                            "s",
+                            "b",
+                            "e",
+                            "a",
+                            "a",
+                        ],
+                    }
+                ),
+                "explode_21",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_21",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  regions"
+                "  .CALCULATE(name)"
+                "  .EXPLODE(['A', 'E', 'I'], 'letters', value_name='letter', index_name='idx')"
+                "  .CALCULATE(name, letter)"
+                "  .WHERE(CONTAINS(name, letter))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "AFRICA",
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                        ],
+                        "letter": [
+                            "A",
+                            "I",
+                            "A",
+                            "E",
+                            "I",
+                            "A",
+                            "I",
+                            "E",
+                            "A",
+                            "E",
+                            "I",
+                        ],
+                    }
+                ),
+                "explode_22",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_22",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                "  TPCH"
+                "  .EXPLODE('ALPHABET', 'letters', value_name='letter', index_name='idx', version='string', delimiter='')"
+                "  .CALCULATE(idx, letter)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "idx": list(range(8)),
+                        "letter": list("ALPHABET"),
+                    }
+                ),
+                "explode_23",
+                skipped_dialects={"ANSI", "SQLITE", "ORACLE", "MYSQL"},
+            ),
+            id="explode_23",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_range_1,
                 "TPCH",
                 lambda: pd.DataFrame({"value": range(10)}),
@@ -4579,6 +5899,7 @@ from .testing_utilities import (
                     }
                 ),
                 "dataframe_collection_inf",
+                skipped_dialects={"MYSQL"},
             ),
             id="dataframe_collection_inf",
         ),
@@ -5246,11 +6567,6 @@ def test_pipeline_until_sql_tpch_custom(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
-    if (
-        tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
-        and empty_context_database.dialect == DatabaseDialect.MYSQL
-    ):
-        pytest.skip("Skipping test as MySQL does not support Infinity values.")
 
     tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
         empty_context_database.dialect, tpch_custom_pipeline_test_data
@@ -5279,12 +6595,6 @@ def test_pipeline_e2e_tpch_custom(
     # it would take too long.
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("Skipping tpch custom test for BodoSQL.")
-
-    if (
-        db_context.dialect == DatabaseDialect.MYSQL
-        and tpch_custom_pipeline_test_data.test_name == "dataframe_collection_inf"
-    ):
-        pytest.skip("Skipping test as MySQL does not support Infinity values.")
 
     tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
         db_context.dialect, tpch_custom_pipeline_test_data
@@ -5871,9 +7181,7 @@ def test_pipeline_e2e_simple_week(
         pytest.param(
             dataframe_collection_bad_5,
             None,
-            re.escape(
-                "Arrays in column 'col1', are not supported for dataframe collections"
-            ),
+            re.escape("Array types are not currently supported in dialect SQLITE"),
             id="dataframe_collection_bad_5",
         ),
         pytest.param(
@@ -6011,6 +7319,7 @@ def test_pipeline_e2e_errors(
                     {"name": ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"]}
                 ),
                 "to_table_test_1",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_1",
         ),
@@ -6025,6 +7334,7 @@ def test_pipeline_e2e_errors(
                     {"name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"]}
                 ),
                 "to_table_test_2",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_2",
         ),
@@ -6042,6 +7352,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_3",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_3",
         ),
@@ -6067,6 +7378,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_4",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_4",
         ),
@@ -6090,6 +7402,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_5",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_5",
         ),
@@ -6130,6 +7443,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_6",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_6",
         ),
@@ -6149,6 +7463,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_7",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_7",
         ),
@@ -6169,6 +7484,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_8",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_8",
         ),
@@ -6194,6 +7510,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_9",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_9",
         ),
@@ -6218,6 +7535,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_10",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_10",
         ),
@@ -6243,6 +7561,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_11",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_11",
         ),
@@ -6267,6 +7586,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_12",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_12",
         ),
@@ -6289,6 +7609,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_13",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_13",
         ),
@@ -6313,6 +7634,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_14",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_14",
         ),
@@ -6330,6 +7652,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_15",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_15",
         ),
@@ -6347,6 +7670,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_16",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_16",
         ),
@@ -6364,6 +7688,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_17",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_17",
         ),
@@ -6382,6 +7707,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_18",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_18",
         ),
@@ -6401,6 +7727,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_19",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_19",
         ),
@@ -6417,6 +7744,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_20",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_20",
         ),
@@ -6439,6 +7767,7 @@ def test_pipeline_e2e_errors(
                         {"user_id": [1, 2, 3], "user_name": ["Alice", "Bob", "Charlie"]}
                     )
                 },
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_21",
         ),
@@ -6474,6 +7803,7 @@ def test_pipeline_e2e_errors(
                         {"pid": [10, 20], "product_name": ["Apple", "Banana"]}
                     )
                 },
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_22",
         ),
@@ -6514,6 +7844,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_23",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_23",
         ),
@@ -6551,6 +7882,7 @@ def test_pipeline_e2e_errors(
                         }
                     )
                 },
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_24",
         ),
@@ -6596,6 +7928,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_25",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_25",
         ),
@@ -6702,9 +8035,6 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
-
     table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
@@ -6732,6 +8062,7 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
                 "TPCH",
                 lambda: pd.DataFrame(),
                 "window_filter_order_1",
+                skipped_dialects={"BODOSQL"},
             ),
             id="window_filter_order_1",
         ),
@@ -6786,9 +8117,6 @@ def test_pipeline_to_table_ddl(
     """
 
     db_context, graph = all_dialects_tpch_db_context
-
-    if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
     table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 

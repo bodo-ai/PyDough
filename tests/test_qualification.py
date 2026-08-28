@@ -18,6 +18,15 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     absurd_partition_window_per,
     absurd_window_per,
     customer_most_recent_orders,
+    good_explode_01,
+    good_explode_02,
+    good_explode_03,
+    good_explode_04,
+    good_explode_05,
+    good_explode_06,
+    good_explode_07,
+    good_explode_08,
+    good_explode_09,
     n_orders_first_day,
     orders_versus_first_orders,
     partition_as_child,
@@ -958,6 +967,95 @@ from tests.test_pydough_functions.user_collections import (
   └─── OrderBy[value.DESC(na_pos='last')]
             """,
             id="simple_range_2",
+        ),
+        pytest.param(
+            good_explode_01,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
+            """,
+            id="good_explode_01",
+        ),
+        pytest.param(
+            good_explode_02,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=True]
+            """,
+            id="good_explode_02",
+        ),
+        pytest.param(
+            good_explode_03,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=False, is_distinct=False]
+            """,
+            id="good_explode_03",
+        ),
+        pytest.param(
+            good_explode_04,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
+            """,
+            id="good_explode_04",
+        ),
+        pytest.param(
+            good_explode_05,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+            """,
+            id="good_explode_05",
+        ),
+        pytest.param(
+            good_explode_06,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=True]
+            """,
+            id="good_explode_06",
+        ),
+        pytest.param(
+            good_explode_07,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=False, is_distinct=False]
+            """,
+            id="good_explode_07",
+        ),
+        pytest.param(
+            good_explode_08,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[nations]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+            """,
+            id="good_explode_08",
+        ),
+        pytest.param(
+            good_explode_09,
+            """
+──┬─ TPCH
+  ├─── TableCollection[nations]
+  └─┬─ Calculate[region_name=$1.name]
+    ├─┬─ AccessChild
+    │ └─── SubCollection[region]
+    ├─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+    └─┬─ Where[SLICE(v, None, 1, None) != SLICE(region_name, None, 1, None)]
+      └─── SubCollection[customers]
+            """,
+            id="good_explode_09",
+            marks=pytest.mark.skip(
+                "(gh #548) Skipping until PyDough supports accessing subcollections from an EXPLODE operator."
+            ),
         ),
     ],
 )
