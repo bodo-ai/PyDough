@@ -4243,7 +4243,7 @@ from .testing_utilities import (
                 "result = ("
                 "  array_data"
                 "  .EXPLODE(nation_names, 'exploded_nations', index_name='nation_idx', value_name='nation_name', version='array', filtering=False, is_distinct=True)"
-                "  .CALCULATE(region_name, nation_names, nation_idx, nation_name)"
+                "  .CALCULATE(region_name, nation_names, nation_name)"
                 "  .ORDER_BY(region_name, nation_name)"
                 ")",
                 "TPCH",
