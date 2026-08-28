@@ -9,7 +9,6 @@ WITH _s1 AS (
 SELECT
   region.r_name AS region_name,
   _s1.nation_names,
-  _s2.idx AS nation_idx,
   _s2.val AS nation_name
 FROM tpch.region AS region
 JOIN _s1 AS _s1
@@ -17,4 +16,4 @@ JOIN _s1 AS _s1
 CROSS JOIN LATERAL POSEXPLODE(_s1.nation_names) AS _s2(idx, val)
 ORDER BY
   1,
-  4
+  3
