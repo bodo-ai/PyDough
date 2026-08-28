@@ -17,4 +17,4 @@ JOIN _s1 AS _s1
 CROSS JOIN LATERAL FLATTEN(_s1.nation_names) AS _s2(seq, key, path, index, value, this)
 ORDER BY
   1 NULLS FIRST,
-  3 NULLS FIRST
+  4 NULLS FIRST

@@ -17,4 +17,4 @@ JOIN _s1 AS _s1
 CROSS JOIN LATERAL POSEXPLODE(_s1.nation_names) AS _s2(idx, val)
 ORDER BY
   1,
-  3
+  4

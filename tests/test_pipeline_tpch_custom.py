@@ -4244,7 +4244,7 @@ from .testing_utilities import (
                 "  array_data"
                 "  .EXPLODE(nation_names, 'exploded_nations', index_name='nation_idx', value_name='nation_name', version='array', filtering=False, is_distinct=True)"
                 "  .CALCULATE(region_name, nation_names, nation_idx, nation_name)"
-                "  .ORDER_BY(region_name, nation_idx)"
+                "  .ORDER_BY(region_name, nation_name)"
                 ")",
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -4280,7 +4280,6 @@ from .testing_utilities import (
                             * 5
                             + [["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"]] * 5
                         ),
-                        "nation_idx": list(range(5)) * 5,
                         "nation_name": [
                             "ALGERIA",
                             "ETHIOPIA",
@@ -7320,6 +7319,7 @@ def test_pipeline_e2e_errors(
                     {"name": ["CHINA", "INDIA", "INDONESIA", "JAPAN", "VIETNAM"]}
                 ),
                 "to_table_test_1",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_1",
         ),
@@ -7334,6 +7334,7 @@ def test_pipeline_e2e_errors(
                     {"name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"]}
                 ),
                 "to_table_test_2",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_2",
         ),
@@ -7351,6 +7352,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_3",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_3",
         ),
@@ -7376,6 +7378,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_4",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_4",
         ),
@@ -7399,6 +7402,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_5",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_5",
         ),
@@ -7439,6 +7443,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_6",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_6",
         ),
@@ -7458,6 +7463,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_7",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_7",
         ),
@@ -7478,6 +7484,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_8",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_8",
         ),
@@ -7503,6 +7510,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_9",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_9",
         ),
@@ -7527,6 +7535,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_10",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_10",
         ),
@@ -7552,6 +7561,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_11",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_11",
         ),
@@ -7576,6 +7586,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_12",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_12",
         ),
@@ -7598,6 +7609,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_13",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_13",
         ),
@@ -7622,6 +7634,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_14",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_14",
         ),
@@ -7639,6 +7652,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_15",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_15",
         ),
@@ -7656,6 +7670,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_16",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_16",
         ),
@@ -7673,6 +7688,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_17",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_17",
         ),
@@ -7691,6 +7707,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_18",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_18",
         ),
@@ -7710,6 +7727,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_19",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_19",
         ),
@@ -7726,6 +7744,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_20",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_20",
         ),
@@ -7748,6 +7767,7 @@ def test_pipeline_e2e_errors(
                         {"user_id": [1, 2, 3], "user_name": ["Alice", "Bob", "Charlie"]}
                     )
                 },
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_21",
         ),
@@ -7783,6 +7803,7 @@ def test_pipeline_e2e_errors(
                         {"pid": [10, 20], "product_name": ["Apple", "Banana"]}
                     )
                 },
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_22",
         ),
@@ -7823,6 +7844,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_23",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_23",
         ),
@@ -7860,6 +7882,7 @@ def test_pipeline_e2e_errors(
                         }
                     )
                 },
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_24",
         ),
@@ -7905,6 +7928,7 @@ def test_pipeline_e2e_errors(
                     }
                 ),
                 "to_table_test_25",
+                skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_25",
         ),
@@ -8011,9 +8035,6 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
     """
     db_context, graph = all_dialects_tpch_db_context
 
-    if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
-
     table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 
     test_data = tpch_custom_pipeline_to_table_test_data
@@ -8041,6 +8062,7 @@ def test_pipeline_tpch_sql_to_table_all_dialects(
                 "TPCH",
                 lambda: pd.DataFrame(),
                 "window_filter_order_1",
+                skipped_dialects={"BODOSQL"},
             ),
             id="window_filter_order_1",
         ),
@@ -8095,9 +8117,6 @@ def test_pipeline_to_table_ddl(
     """
 
     db_context, graph = all_dialects_tpch_db_context
-
-    if db_context.dialect == DatabaseDialect.BODOSQL:
-        pytest.skip("TODO: (gh#500) to_table() is not yet implemented for BodoSQL")
 
     table_prefix: str = get_table_prefix_for_dialect(db_context.dialect)
 

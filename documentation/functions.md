@@ -1103,9 +1103,20 @@ The `LISTOF` function collects a set of values into an array.
 # For each region, list the names of all nations inside that region
 Regions.CALCULATE(region_name=name, nation_names=LISTOF(nations.name))
 
-# For each customer, list the total quantities of all purchases made by that customer.
-Customers.CALCULATE(customer_name=name, quantities=LISTOF(orders.lines.quantity))
+# For each customer, list the three largest quantities purchased made by that
+# customer.
+selected_lines = orders.lines.best(by=quantity.DESC(), per='Customers', n_best=3)
+Customers.CALCULATE(customer_name=name, quantities=LISTOF(selected_lines.quantity))
 ```
+
+The first of these examples would produce the following output:
+| region_name   | nation_names                                                  |
+|---------------|---------------------------------------------------------------|
+| "AFRICA"      | ["ALGERIA",  "ETHIOPIA",  "KENYA",  "MOROCCO",  "MOZAMBIQUE"] |
+| "AMERICA"     | ["ARGENTINA", "BRAZIL", "CANADA", "PERU", "UNITED STATES"]    |
+| "ASIA"        | ["INDIA", "INDONESIA", "JAPAN", "CHINA", "VIETNAM"]           |
+| "EUROPE"      | ["FRANCE", "GERMANY", "ROMANIA", "RUSSIA", "UNITED KINGDOM"]  |
+| "MIDDLE EAST" | ["EGYPT", "IRAN", "IRAQ", "JORDAN", "SAUDI ARABIA"]           |
 
 <!-- TOC --><a name="window-functions"></a>
 
