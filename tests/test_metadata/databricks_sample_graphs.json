@@ -814,6 +814,312 @@
         "synonyms": ["transactions", "purchases"]
       }
     ],
+    "templates": {
+      "attributes": [
+        {
+          "name": "years",
+          "usage": {"orders_revenue_by": ["arg_year"], "multiply_by_2": ["base_number"]},
+          "type": "int",
+          "description": "The year for which to calculate the revenue of orders.",
+          "options": [
+            { "label": "Year 1992", "value": 1992},
+            { "label": "Year 1993", "value": 1993}, 
+            { "label": "Year 1994", "value": 1994}, 
+            { "label": "Year 1995", "value": 1995}, 
+            { "label": "Year 1996", "value": 1996}, 
+            { "label": "Year 1997", "value": 1997}, 
+            { "label": "Year 1998", "value": 1998}
+          ]
+        },
+        {
+          "name": "order_dimensions",
+          "usage": {"orders_revenue_by": ["arg_dimension"]},
+          "type": "pydough",
+          "description": "The dimension by which to partition the orders calculation.",
+          "options": [
+            {"value": "customer.market_segment", "label": "Customer Market Segment"},
+            {"value": "customer.nation.name", "label": "Customer Nation"},
+            {"value": "customer.nation.region.name", "label": "Customer Region"},
+            {"value": "order_priority", "label": "Order Priority"},
+            {"value": "MONTHNAME(order_date)", "label": "Month"},
+            {"value": "clerk", "label": "Clerk"}
+          ]
+        },
+        {
+          "name": "order_filter_condition",
+          "usage": {"orders_filter_count": ["orders_filter"]},
+          "type": "pydough",
+          "description": "Condition(s) by which orders can be filtered",
+          "options": [
+            {"label": "Status O", "value": "(order_status == 'O')"},
+            {"label": "Price above 3000", "value": "(total_price > 3000)"},
+            {"label": "March", "value": "(MONTH(order_date) == 3)"},
+            {"label": "High priority", "value": "ISIN(order_priority, ('1-URGENT', '2-HIGH'))"}
+          ]
+        },
+        {
+          "name": "order_priority_levels",
+          "usage": {"order_lvl_priority": ["level"]},
+          "type": "str",
+          "description": "Level of priority for an order",
+          "options": [
+            {"label": "LEVEL 0", "value": "other"},
+            {"label": "LEVEL 1", "value": "low"},
+            {"label": "LEVEL 2", "value": "medium"},
+            {"label": "LEVEL 3", "value": "high"}
+          ]
+        },
+        {
+          "name": "dataframe_collection_column",
+          "usage": {"generate_df_collection": ["col1"]},
+          "type": "list",
+          "description": "List with various types of colors to be used in the dataframe collection",
+          "options":[
+            {"label": "COLORS", "value": "['blue', 'red', 'yellow', 'purple']"}
+          ]
+        },
+        {
+          "name": "dataframe_collections_names",
+          "usage": {"generate_df_collection": ["collection_name"]},
+          "type": "str",
+          "description": "Names of the dataframes to be created in the collection",
+          "options":[
+            {"label": "NAME1", "value": "colors_collection"}
+          ]
+        }
+      ],
+      "definitions": [
+        {
+          "name": "orders_filter_count",
+          "description": "Counts the number of orders placed that satisfied the given condition.",
+          "parameters": {
+            "orders_filter": {
+              "type": "pydough",
+              "description": "Condition(s) for the order to make it count"
+            }
+          },
+          "source": "result = COUNT(orders.WHERE({1}))",
+          "answer_variable": "result"
+        },
+        {
+          "name": "cumulative_orders_counter",
+          "description": "Calculates the cumulative counter of all orders placed from a base year through a given last year. Recursively sums the current year's counter and the cumulative counter of all next years.",
+          "parameters": {
+            "base_year": { "type": "int", "description": "The year through which to calculate cumulative revenue." },
+            "last_year": { "type": "int", "description": "The earliest year to include in the cumulation (recursion base case)." }
+          },
+          "source": "assert base_year <= last_year\nif {1} == {2}:\n  result = COUNT(orders.WHERE(YEAR(order_date) == base_year))\nelse:\n result = (\n COUNT(orders.WHERE(YEAR(order_date) == base_year)) + cumulative_orders_counter(base_year + 1, last_year))\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "order_revenue",
+          "description": "Calculates the revenue of an order, which is the sum of the extended price * (1 - discount) for all line items in the order.",
+          "parameters": {},
+          "source": "result = SUM(lines.extended_price * (1 - lines.discount))\n",
+          "answer_variable": "result"
+        },
+        { 
+          "name": "orders_revenue_by",
+          "description": "Calculates the revenue of orders in a given year, partitioned by a specified dimension.",
+          "parameters": {
+            "arg_year": {
+              "type": "int", 
+              "description": "The year for which to calculate the revenue of orders."
+            },
+            "arg_dimension": {
+              "type": "pydough",
+              "description": "The dimension by which to partition the revenue calculation."
+            }
+            },
+          "source": "result = orders.WHERE(({1} == YEAR(order_date))).CALCULATE(revenue=order_revenue(), dimension=({2})).PARTITION(name=\"orders_groups\", by=dimension).CALCULATE(dimension, segment_revenue=SUM(orders.revenue))\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "top_bottom_comparison",
+          "description": "Compares the top and bottom groups of a partitioned orders",
+          "parameters": {
+            "arg_partitioned_orders": {
+              "type": "pydough",
+              "description": "The partitioned orders to compare."
+            },
+            "arg_calculation": {
+              "type": "pydough",
+              "description": "The metric by which to compare the groups."
+            }
+          },
+          "source": "result = {1}.CALCULATE(dimension, segment_revenue, comparison_value={2}).WHERE(ABSENT(PREV(segment_revenue, by=segment_revenue.DESC())) | ABSENT(NEXT(segment_revenue, by=segment_revenue.DESC())) )",
+          "answer_variable": "result"
+        },
+        {
+          "name": "multiply_by_2",
+          "description": "Receives an integer and return its multiplication by 2.",
+          "parameters": {
+            "base_number": {
+              "type": "int",
+              "description": "Number being multiply by 2"
+            }
+          },
+          "source": "result = {1} * 2\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "order_lvl_priority",
+          "description": "Returns a list with orders priority based on the given level. High, Medium, Low",
+          "parameters": {
+            "level": {
+              "type": "str",
+              "description": "Level of the priority"
+            }
+          },
+          "source": "if {1} == 'high':\n  result = ['1-URGENT', '2-HIGH']\nelif {1} == 'medium':\n  result = ['3-MEDIUM', '5-LOW']\nelse:\n result = ['4-NOT SPECIFIED']",
+          "answer_variable": "result"
+        },
+        {
+          "name": "customer_calculate",
+          "description": "Returns a dictionary, representing the fields for CALCULATE a customer",
+          "parameters": {
+            "cust_name": {
+              "type": "str",
+              "description": "Rename for the customer name column"
+            },
+            "cust_nation": {
+              "type": "str",
+              "description": "Rename for the customer nation name column"
+            },
+            "balance": {
+              "type": "str",
+              "description": "Rename for the customer account balance column"
+            }
+          },
+          "source": "result = {\n {1}: name,\n {2}: nation.name,\n  {3}: account_balance\n}",
+          "answer_variable": "result"
+        },
+        {
+          "name": "generate_range_collection",
+          "description": "Generates a simple range collection and returns it",
+          "parameters":{
+            "start": {
+              "type": "int",
+              "description": "Start of the range collection"
+            },
+            "end": {
+              "type": "int",
+              "description": "End of the range collection"
+            }
+          },
+          "source": "result = pydough.range_collection('template_range', 'idx', {1}, {2})",
+          "answer_variable": "result"
+        },
+        {
+          "name": "range_cross_collection",
+          "description": "Generates a range collection and cross it with the given collection",
+          "parameters":{
+            "cross_collection": {
+              "type": "pydough",
+              "description": "Pydough collection to cross with the generated range collection"
+            },
+            "range_name" : {
+              "type": "str",
+              "description": "Name for the generated range collection"
+            },
+            "start": {
+              "type": "int",
+              "description": "Start of the range collection"
+            },
+            "end": {
+              "type": "int",
+              "description": "End of the range collection"
+            },
+            "cross_cond":{
+              "type": "pydough",
+              "description": "Condition for the cross operation"
+            }
+          },
+          "source": "created_range = pydough.range_collection({2}, 'idx', {3}, {4}).CALCULATE(idx)\nresult = created_range.CROSS({1}).WHERE({5})",
+          "answer_variable": "result"
+        },
+        {
+          "name": "generate_df_collection",
+          "description": "Generates a dataframe collection from the given parameters",
+          "parameters": {
+            "collection_name": {
+              "type": "str",
+              "description": "Name for the generated dataframe collection"
+            },
+            "col1": {
+              "type": "list",
+              "description": "List with the data for the column of the new dataframe"
+            }
+          },
+          "source": "assert len(col1) > 0\nnew_df = pd.DataFrame({\n'names': {2}, 'idx': range(len(col1))})\nresult = pydough.dataframe_collection(name={1}, dataframe=new_df, unique_column_names=['idx'])",
+          "answer_variable": "result"
+        },
+        {
+          "name": "dataframe_input_collection",
+          "description": "Generates a dataframe collection from the given parameters",
+          "parameters": {
+            "collection_name": {
+              "type": "str",
+              "description": "Name for the generated dataframe collection"
+            },
+            "new_df": {
+              "type": "pd.DataFrame",
+              "description": "New dataframe to create the collection with"
+            },
+            "unique_columns": {
+              "type": "list",
+              "description": "List of unique column names for the dataframe collection"
+            }
+          },
+          "source": "result = pydough.dataframe_collection({1}, {2}, {3})",
+          "answer_variable": "result"
+        },
+        {
+          "name": "temporary_nations",
+          "description": "Generates a temporary table with nations filtered by the given region",
+          "parameters": {
+            "filtered_region": {
+              "type": "str",
+              "description": "Region to filter the nations by"
+            }
+          },
+          "source": "my_nations = nations.WHERE(region.name == {1})\nnations_tmp = pydough.to_table(my_nations, name='region_nations_t1', temp=False, replace=True)\nresult = nations_tmp.CALCULATE(name)",
+          "answer_variable": "result"
+        },
+        {
+          "name": "add_datetime_days",
+          "description": "Adds a specified number of days to a base datetime and returns the resulting datetime",
+          "parameters": {
+            "base_datetime": {
+              "type": "datetime",
+              "description": "Base datetime to add days to"
+            },
+            "adding_days": {
+              "type": "int",
+              "description": "Number of days to add"
+            }
+          },
+          "source": "result = DATETIME({1}, f'+{{2}} days')",
+          "answer_variable": "result"
+        },
+        {
+          "name": "add_datetime_months",
+          "description": "Adds a specified number of months to a base datetime and returns the resulting datetime",
+          "parameters": {
+            "base_datetime": {
+              "type": "datetime",
+              "description": "Base datetime to add months to"
+            },
+            "adding_months": {
+              "type": "int",
+              "description": "Number of months to add"
+            }
+          },
+          "source": "result = pd.to_datetime({1}) + pd.DateOffset(months={2})",
+          "answer_variable": "result"
+        }
+      ]
+    },
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}

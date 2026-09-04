@@ -32,6 +32,7 @@ import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
 from pydough.metadata import GraphMetadata
+from pydough.metadata.templates import TemplateMetadata
 from pydough.types import (
     ArrayType,
     BooleanType,
@@ -134,6 +135,16 @@ class UnqualifiedNode(ABC):
             )
 
     def __call__(self, *args, **kwargs):
+
+        if pydough.active_session.metadata:
+            metadata_templates: dict[str, TemplateMetadata] = (
+                pydough.active_session.metadata.templates_definitions
+            )
+
+            name = str(self)
+            if name in metadata_templates:
+                return metadata_templates[name].template_callable(*args, **kwargs)
+
         raise pydough.active_session.error_builder.undefined_function_call(
             self, *args, **kwargs
         )

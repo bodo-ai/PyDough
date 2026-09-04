@@ -9,6 +9,7 @@ from pydough.errors.error_utils import HasType, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
 
 if TYPE_CHECKING:
+    from pydough.metadata.templates import AttributeMetadata, TemplateMetadata
     from pydough.pydough_operators import (
         ExpressionFunctionOperator,
     )
@@ -26,6 +27,8 @@ class GraphMetadata(AbstractMetadata):
         "collections",
         "relationships",
         "functions",
+        "attributes",
+        "templates",
         "additional definitions",
         "verified pydough analysis",
         "extra semantic info",
@@ -49,6 +52,8 @@ class GraphMetadata(AbstractMetadata):
         self._name: str = name
         self._collections: dict[str, AbstractMetadata] = {}
         self._functions: dict[str, ExpressionFunctionOperator] = {}
+        self._attributes: dict[str, AttributeMetadata] = {}
+        self._templates: dict[str, TemplateMetadata] = {}
         self._description = description
         self._synonyms = synonyms
         self._extra_semantic_info = extra_semantic_info
@@ -73,6 +78,20 @@ class GraphMetadata(AbstractMetadata):
         The user defined functions contained within the graph.
         """
         return self._functions
+
+    @property
+    def templates_attributes(self) -> dict[str, "AttributeMetadata"]:
+        """
+        The attributes that can be used with the templates within the graph.
+        """
+        return self._attributes
+
+    @property
+    def templates_definitions(self) -> dict[str, "TemplateMetadata"]:
+        """
+        The templates defined within the graph.
+        """
+        return self._templates
 
     @property
     def error_name(self) -> str:
@@ -179,6 +198,9 @@ class GraphMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if `function` cannot be inserted
             into the graph because of a name collision.
         """
+        # Cirular import error raises if the import is made globally
+        from pydough.pydough_operators import builtin_registered_operators
+
         is_valid_name.verify(name, f"function name {name!r}")
         if name == self.name:
             raise PyDoughMetadataException(
@@ -188,8 +210,90 @@ class GraphMetadata(AbstractMetadata):
             raise PyDoughMetadataException(
                 f"Function name {name!r} cannot be the same as a collection name in {self.error_name}"
             )
+        if name in builtin_registered_operators():
+            raise PyDoughMetadataException(
+                f"Function name {name!r} already in use for a PyDough operador"
+            )
         if name in self.functions:
             raise PyDoughMetadataException(
                 f"Function {name!r} already exists in {self.error_name}"
             )
         self.functions[name] = function
+
+    def get_all_labels(self) -> dict[str, str]:
+        """
+        Fetches all of the labels defined in the graph's template attributes.
+        """
+        all_labels: dict[str, str] = {}
+        for attribute in self.templates_attributes.values():
+            all_labels.update(dict.fromkeys(attribute.options.keys(), attribute.name))
+
+        return all_labels
+
+    def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
+        """
+        Adds a new attribute to the graph.
+
+        Args:
+            `new_attribute`: the attribute being inserted into the graph.
+
+        Raises:
+            `PyDoughMetadataException`: if `new_attribute` cannot be inserted
+            into the graph because.
+        """
+        from pydough.metadata.templates import AttributeMetadata
+
+        # Make sure the new_attribute is actually a template_attribute
+        HasType(AttributeMetadata).verify(new_attribute, "attribute")
+        assert isinstance(new_attribute, AttributeMetadata)
+
+        # Verify the attribute has not already been added to the graph
+        # and does not have a name collision with any other attributes in
+        # the graph.
+        if new_attribute.name in self.templates_attributes:
+            if self.templates_attributes[new_attribute.name] == new_attribute:
+                raise PyDoughMetadataException(
+                    f"Already added {new_attribute.error_name} to {self.error_name}"
+                )
+            raise PyDoughMetadataException(
+                f"Duplicate attributes: {new_attribute.error_name} versus {self.templates_attributes[new_attribute.name].error_name}"
+            )
+        self.templates_attributes[new_attribute.name] = new_attribute
+
+    def add_template_definition(
+        self, name: str, new_template: AbstractMetadata
+    ) -> None:
+        """
+        Adds a new template to the graph.
+
+        Args:
+            `name`: the name of the new template being added.
+            `template`: the template callable being inserted into the graph
+
+        Raises:
+            `PyDoughMetadataException`: if `template` cannot be inserted
+            into the graph because.
+        """
+
+        # Cirular import error raises if the import is made globally
+        from pydough.metadata.templates import TemplateMetadata
+        from pydough.pydough_operators import builtin_registered_operators
+
+        # Make sure the new_template is actually a template_attribute
+        HasType(TemplateMetadata).verify(new_template, "template")
+        assert isinstance(new_template, TemplateMetadata)
+
+        if name in self.templates_definitions:
+            if self.templates_definitions[name] == new_template:
+                raise PyDoughMetadataException(
+                    f"Already added {name} to {self.error_name}"
+                )
+            raise PyDoughMetadataException(
+                f"Duplicate templates: {name} versus {self.templates_definitions[name]}"
+            )
+        if name in builtin_registered_operators():
+            raise PyDoughMetadataException(
+                f"The template '{name}' already exists as a PyDough operador"
+            )
+
+        self.templates_definitions[name] = new_template
