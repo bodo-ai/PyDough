@@ -462,6 +462,54 @@ def from_string(
     Raises:
         `PyDoughSessionException` if both `session` and `metadata` are provided.
     """
+
+    source_execution = _execute_source(
+        source, answer_variable, metadata, environment, session
+    )
+    assert isinstance(source_execution, UnqualifiedNode)
+
+    return source_execution
+
+
+def _execute_source(
+    source: str,
+    answer_variable: str | None = None,
+    metadata: GraphMetadata | None = None,
+    environment: dict[str, Any] | None = None,
+    session: PyDoughSession | None = None,
+    return_unqualified: bool = True,
+) -> Any:
+    """
+    Parses and transforms a PyDough source string, returning an unqualified node
+    if `return_unqualified` is True on which operations like `explain()`, `to_sql()`
+    , or `to_df()` can be called, otherwise could return a literal.
+
+    Args:
+        `source`: a valid PyDough code string that will be executed to define
+        the PyDough code.
+        `answer_variable`: The name of the variable that holds the result of the
+        PyDough code. If not provided, assumes the answer is `result`.
+        `metadata`: The metadata graph to use. If not provided,
+        `active_session.metadata` will be used.
+        `environment`: A dictionary of variables that will be available
+        in the environment where the PyDough code is executed. If not provided,
+        uses an empty dictionary.
+        `session`: A PyDoughSession to use during execution. If provided, this
+        session will be temporarily bound to `pydough.active_session` during
+        code execution, allowing functions like `pydough.to_table` to access
+        the database connection. If not provided, only metadata is temporarily
+        set on the active session. Cannot be combined with `metadata` — if a
+        session is provided, use `session.metadata` to control the graph.
+        `return_unqualified`: Flag that triggers the returned type, if True
+        an UnqualifiedNode will be returned, Any otherwise.
+
+    Returns:
+        A PyDough UnualifiedNode object representing the result of the
+        transformed PyDough code.
+
+    Raises:
+        `PyDoughSessionException` if both `session` and `metadata` are provided.
+    """
     import pydough
 
     if session is not None and metadata is not None:
@@ -541,8 +589,8 @@ def from_string(
             f"PyDough code expected to store the answer in a variable named '{answer_variable}'."
         )
     ret_val = execution_context[answer_variable]
-    # Check if answer is an UnqualifiedNode
-    if not isinstance(ret_val, UnqualifiedNode):
+    # if return_unqualified is True, make sure the answer is an UnqualifiedNode
+    if return_unqualified and not isinstance(ret_val, UnqualifiedNode):
         raise PyDoughUnqualifiedException(
             f"Expected variable {answer_variable!r} in the text to store PyDough code, instead found {ret_val.__class__.__name__!r}."
         )
@@ -552,7 +600,7 @@ def from_string(
 def call_template(
     name: str,
     labels: dict[str, str],
-) -> UnqualifiedNode:
+) -> Any:
     """
     Invokes a named PyDough template using user-facing labels instead of
     raw PyDough syntax, returning the resulting unqualified (unexecuted)
@@ -562,12 +610,9 @@ def call_template(
     that is looked up in the active session's graph attributes (via each
     attribute's `options`) to resolve it to a concrete value and type. The
     resolved arguments are used to build a call to the template as PyDough
-    source text, which is then parsed and executed via `from_string` to
-    produce the corresponding `UnqualifiedNode` — the same lazy, chainable
-    object that would result from calling the template directly with
-    equivalent literal or expression arguments (e.g. `.WHERE(...)` can be
-    chained onto the returned node). No query execution occurs at this
-    point.
+    source text, which is then parsed and executed via `_execute_source` to
+    produce the corresponding result, which can be an `UnqualifiedNode`
+    or any other type.
 
     Args:
         `name`: the name of the template to call, as registered in
@@ -601,9 +646,14 @@ def call_template(
         pydough.active_session.metadata.templates_definitions[name]
     )
 
-    graph_attributes: dict[str, AttributeMetadata] = (
+    available_attributes: dict[str, AttributeMetadata] = (
         pydough.active_session.metadata.templates_attributes
     )
+
+    if len(available_attributes) == 0:
+        raise ValueError(
+            f"No attributes available for template '{name}' in the current active session"
+        )
 
     template_kwargs: dict[str, dict[str, str | int]] = {}
 
@@ -613,12 +663,22 @@ def call_template(
 
         kwarg: dict[str, str | int] | None = None
 
-        for attr_name, attribute in graph_attributes.items():
+        for attr_name, attribute in available_attributes.items():
             if label in attribute.options:
+                # Check if the attribute is available for this template and argument
+                if attribute.usage != {} and (
+                    name not in attribute.usage
+                    or attribute.usage[name] == []  # No argument restrictions
+                    or arg_name not in attribute.usage[name]
+                ):
+                    raise ValueError(
+                        f"The attribute '{attr_name}' is not available for parameter '{arg_name}' on template '{name}'"
+                    )
+
                 # Types must match
                 if attribute.type != arg_type:
                     raise ValueError(
-                        f"The type of {attr_name} attribute doesn't match the argument {arg_name} type"
+                        f"The type of '{attr_name}' attribute doesn't match the argument '{arg_name}'s type"
                     )
 
                 kwarg = {"type": attribute.type, "value": attribute.options[label]}
@@ -634,11 +694,13 @@ def call_template(
     template_call: str = (
         f"result = {calling_template.create_template_call(template_kwargs)}"
     )
+    import pandas as pd
 
-    result = from_string(
+    result = _execute_source(
         source=template_call,
         metadata=pydough.active_session.metadata,
-        environment={name: calling_template.template_callable},
+        environment={name: calling_template.template_callable, "pd": pd},
+        return_unqualified=False,
     )
     return result
 

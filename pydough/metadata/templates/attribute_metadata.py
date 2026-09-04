@@ -7,6 +7,7 @@ from pydough.errors.error_utils import (
     HasType,
     extract_array,
     extract_integer,
+    extract_object,
     extract_string,
 )
 from pydough.metadata.abstract_metadata import AbstractMetadata
@@ -24,7 +25,7 @@ class AttributeMetadata(AbstractMetadata):
         self,
         name: str,
         graph: GraphMetadata,
-        usage: list[str],
+        usage: dict[str, list[str]],
         type: str,
         description: str,
     ):
@@ -32,7 +33,7 @@ class AttributeMetadata(AbstractMetadata):
 
         self._graph: GraphMetadata = graph
         self._name: str = name
-        self._usage: list[str] = usage
+        self._usage: dict[str, list[str]] = usage
         self._type: str = type
         self._options: dict[str, str | int] = {}
 
@@ -53,7 +54,7 @@ class AttributeMetadata(AbstractMetadata):
         return self._name
 
     @property
-    def usage(self) -> list[str]:
+    def usage(self) -> dict[str, list[str]]:
         """
         List with the names of the templates where the attribute can be used
         """
@@ -131,7 +132,9 @@ class AttributeMetadata(AbstractMetadata):
 
         # Extract the relevant properties from the JSON to build the new template
         # attribute, then add it to the graph
-        attr_usage: list[str] = extract_array(attribute_json, "usage", error_name)
+        attr_usage: dict[str, list[str]] = extract_object(
+            attribute_json, "usage", error_name
+        )
         attr_type: str = extract_string(attribute_json, "type", error_name)
         attr_desc: str = extract_string(attribute_json, "description", error_name)
 
@@ -157,6 +160,14 @@ class AttributeMetadata(AbstractMetadata):
                     value = extract_integer(option, "value", error_name)
             except PyDoughMetadataException:
                 raise PyDoughMetadataException("Option value must be string or integer")
+
+            graph_labels: dict[str, str] = graph.get_all_labels()
+            if label in graph_labels:
+                raise ValueError(
+                    f"Duplicate option label: {label!r} for attribute {attribute_name!r}. "
+                    f"The label is already in use by attribute {graph_labels[label]!r} "
+                    f"in graph {graph.name!r}."
+                )
 
             new_attribute.add_attribute_option(label, value)
 

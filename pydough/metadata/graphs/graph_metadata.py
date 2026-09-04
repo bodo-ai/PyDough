@@ -220,6 +220,16 @@ class GraphMetadata(AbstractMetadata):
             )
         self.functions[name] = function
 
+    def get_all_labels(self) -> dict[str, str]:
+        """
+        Fetches all of the labels defined in the graph's template attributes.
+        """
+        all_labels: dict[str, str] = {}
+        for attribute in self.templates_attributes.values():
+            all_labels.update(dict.fromkeys(attribute.options.keys(), attribute.name))
+
+        return all_labels
+
     def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
         """
         Adds a new attribute to the graph.
@@ -231,6 +241,7 @@ class GraphMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if `new_attribute` cannot be inserted
             into the graph because.
         """
+        from pydough.metadata.templates import AttributeMetadata
 
         # Make sure the new_attribute is actually a template_attribute
         HasType(AttributeMetadata).verify(new_attribute, "attribute")
@@ -265,6 +276,7 @@ class GraphMetadata(AbstractMetadata):
         """
 
         # Cirular import error raises if the import is made globally
+        from pydough.metadata.templates import TemplateMetadata
         from pydough.pydough_operators import builtin_registered_operators
 
         # Make sure the new_template is actually a template_attribute

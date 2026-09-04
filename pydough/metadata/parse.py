@@ -255,7 +255,7 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             for attribute_definition in attribute_definitions:
                 is_json_object.verify(
                     attribute_definition,
-                    f"metadat for Templates definition inside {graph.error_name}",
+                    f"metadata for Templates definition inside {graph.error_name}",
                 )
                 assert isinstance(attribute_definition, dict)
                 parse_template_attributes_v2(graph, attribute_definition)
@@ -268,7 +268,7 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
         for template_definition in templates_definitions:
             is_json_object.verify(
                 template_definition,
-                f"metadat for Templates definition inside {graph.error_name}",
+                f"metadata for Templates definition inside {graph.error_name}",
             )
             assert isinstance(template_definition, dict)
             parse_template_definition_v2(graph, template_definition)

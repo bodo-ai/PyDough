@@ -229,7 +229,7 @@ class TemplateMetadata(AbstractMetadata):
 
         # Args + "pydough" are "known" so they aren't
         # rewritten into _ROOT.<name> by the visitor.
-        known_names: set[str] = {"pydough"}
+        known_names: set[str] = {"pydough", "pd"}
         graph_name: str = "_graph"
         visitor = AddRootVisitor(graph_name, known_names)
 
@@ -239,11 +239,15 @@ class TemplateMetadata(AbstractMetadata):
 
         compiled = compile(transformed_code, filename=f"<{self.name}>", mode="exec")
 
-        # `_graph` and `pydough` are baked into the function's globals so that
+        # `_graph`, `pydough` and pd are baked into the function's globals so that
         # they're available whenever the function is later called
+        # Required for dataframe collections
+        import pandas as pd
+
         namespace: dict[str, Any] = {
             graph_name: graph,
             "pydough": pydough,
+            "pd": pd,
         }
         exec(compiled, namespace, namespace)
 

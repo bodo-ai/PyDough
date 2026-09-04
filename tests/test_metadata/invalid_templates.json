@@ -1,0 +1,42 @@
+[
+    {
+        "name": "NO_TEMPLATES_DEFINITIONS",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic desctiption",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "NO_ATTIBUTE_OPTIONS",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic desctiption",
+                    "options": [
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    }
+]
