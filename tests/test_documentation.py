@@ -28,7 +28,7 @@ def test_function_list():
     # Identify every section header in the function documentation
     headers: set[str] = set()
     with open("documentation/functions.md") as f:
-        for line in f.readlines():
+        for line in f:
             if line.startswith("#"):
                 headers.add(line.strip("#").strip())
     # Remove any function name that is in the headers, and fail if there are

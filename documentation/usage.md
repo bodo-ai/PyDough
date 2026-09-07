@@ -74,6 +74,7 @@ A new `PyDoughSession` object can be created as follows:
 
 ```py
 from pydough.configs import PyDoughSession
+
 session = PyDoughSession()
 ```
 
@@ -82,6 +83,7 @@ There exists a special session object `pydough.active_session` used to describe 
 ```py
 import pydough
 from pydough.configs import PyDoughSession
+
 # Create a new session
 session_a = PyDoughSession()
 # Capture the original active session
@@ -132,6 +134,7 @@ The configurations of a session object can be accessed with the `.config` field 
 ```py
 import pydough
 from pydough.configs import PyDoughConfigs
+
 # Create a new session
 new_configs = PyDoughConfigs()
 # Capture the original configs of the active session
@@ -163,6 +166,7 @@ Not every nation has at least 1 customer with a name containing the substring `2
 
 ```py
 import pydough
+
 # Capture the configs of the active session
 configs = pydough.active_session.config
 # Access the original value of sum_default_zero (which should be True)
@@ -275,24 +279,24 @@ configs = pydough.active_session.config
 configs.start_of_week = DayOfWeek.MONDAY
 # Set start of week to be 1
 configs.start_week_as_zero = False
-# This would return dow = 4, as March 20, 2025 is a Thursday and is the 4th day 
+# This would return dow = 4, as March 20, 2025 is a Thursday and is the 4th day
 # of the week when the start of week is considered to be Monday
-TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 4
-# If start_week_as_zero is set to True (configs.start_week_as_zero = True), 
+TPCH.calculate(dow=DAYOFWEEK("2025-03-20"))  # dow = 4
+# If start_week_as_zero is set to True (configs.start_week_as_zero = True),
 # then DAYOFWEEK("2025-03-20") = 3
 configs.start_week_as_zero = True
-TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 3
+TPCH.calculate(dow=DAYOFWEEK("2025-03-20"))  # dow = 3
 
 # Now, start_of_week is set to Thursday,
 configs.start_of_week = DayOfWeek.Thursday
 configs.start_week_as_zero = False
 # This would return dow = 1, as March 20, 2025 is a Thursday and is the 1st day
 # of the week when the start of week is considered to be Thursday.
-TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 1
-# If start_week_as_zero is set to True (configs.start_week_as_zero = True), 
+TPCH.calculate(dow=DAYOFWEEK("2025-03-20"))  # dow = 1
+# If start_week_as_zero is set to True (configs.start_week_as_zero = True),
 # then DAYOFWEEK("2025-03-20") = 0
 configs.start_week_as_zero = True
-TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 0
+TPCH.calculate(dow=DAYOFWEEK("2025-03-20"))  # dow = 0
 
 
 # Understanding the behavior of DATETIME with `start of week`
@@ -300,34 +304,34 @@ TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 0
 configs.start_of_week = DayOfWeek.MONDAY
 # This would set `dt` to the start of the week for March 20, 2025 (Wednesday)
 # to be March 17, 2025 (recent Monday)
-TPCH.calculate(dt = DATETIME("2025-03-20", "start of week")) # dt = 2025-03-17
+TPCH.calculate(dt=DATETIME("2025-03-20", "start of week"))  # dt = 2025-03-17
 
 # start_of_week is set to Thursday,
 configs.start_of_week = DayOfWeek.Thursday
 # This would set `dt` to the start of the week for March 20, 2025 (Thursday)
 # to be March 20, 2025 (recent Thursday)
-TPCH.calculate(dt = DATETIME("2025-03-20", "start of week")) # dt = 2025-03-20
-# Note: DATETIME function related to week does not depend on the 
+TPCH.calculate(dt=DATETIME("2025-03-20", "start of week"))  # dt = 2025-03-20
+# Note: DATETIME function related to week does not depend on the
 # `start_week_as_zero` config.
 
 
 # Understanding the behavior of DATEDIFF with `start of week`
 # Set the start of the week to Monday
 configs.start_of_week = DayOfWeek.MONDAY
-# This would return 0, as the difference between March 20, 2025(Thursday) and 
-# March 17, 2025(Monday) is 0 weeks when the start of week is considered to be 
+# This would return 0, as the difference between March 20, 2025(Thursday) and
+# March 17, 2025(Monday) is 0 weeks when the start of week is considered to be
 # Monday. This is because both these dates fall on the same week.
-TPCH.calculate(diff = DATEDIFF("2025-03-17", "2025-03-20", "week")) # diff = 0
+TPCH.calculate(diff=DATEDIFF("2025-03-17", "2025-03-20", "week"))  # diff = 0
 
 # Set the start of the week to Thursday
 configs.start_of_week = DayOfWeek.Thursday
 # This would return 1, as the difference between March 20, 2025 (Thursday)
-# and March 17, 2025 (Monday) is 1 week when the start of week is considered 
+# and March 17, 2025 (Monday) is 1 week when the start of week is considered
 # to be Thursday. This is because March 17, 2025 belongs to the week starting
-# from March 13, 2025 (the recent Thursday for it) and March 20, 2025 belongs 
+# from March 13, 2025 (the recent Thursday for it) and March 20, 2025 belongs
 # to the week starting from March 20, 2025 (the recent Thursday).
-TPCH.calculate(diff = DATEDIFF("2025-03-17", "2025-03-20", "week")) # diff = 1
-# Note: DATEDIFF function related to week does not depend on the 
+TPCH.calculate(diff=DATEDIFF("2025-03-17", "2025-03-20", "week"))  # diff = 1
+# Note: DATEDIFF function related to week does not depend on the
 # `start_week_as_zero` config.
 ```
 
@@ -398,7 +402,9 @@ education_context = load_database_context("sqlite", database="db_files/education
 pydough.active_session.database = education_context
 
 # Same but for another database & with a different method
-shakespeare_context  = pydough.active_session.load_database("sqlite", database="db_files/education.db")
+shakespeare_context = pydough.active_session.load_database(
+    "sqlite", database="db_files/education.db"
+)
 ```
 
 Notice that both APIs `load_database_context` and `sesion.load_database` take in the name of the database type first and all the connection keyword arguments, and also return the context object.
@@ -410,73 +416,89 @@ It is important to ensure that the correct database context is being used for se
 #### Examples with different supported database connectors with PyDough
 - Snowflake: You can connect to a Snowflake database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("snowflake", 
-          user=snowflake_username,
-          password=snowflake_password,
-          account=snowflake_account,
-          warehouse=snowflake_warehouse,
-          database=snowflake_database,
-          schema=snowflake_schema
-    )
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH"
+  )
+  pydough.active_session.connect_database(
+      "snowflake",
+      user=snowflake_username,
+      password=snowflake_password,
+      account=snowflake_account,
+      warehouse=snowflake_warehouse,
+      database=snowflake_database,
+      schema=snowflake_schema,
+  )
   ```
 You can find a full example of using Snowflake database with PyDough in [this usage guide](./../demos/notebooks/SF_TPCH_q1.ipynb).
 
 - MySQL: You can connect to a mysql database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("mysql", 
-          user=mysql_username,
-          password=mysql_password,
-          database=mysql_tpch_db,
-          host=mysql_host,
-    )
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  pydough.active_session.connect_database(
+      "mysql",
+      user=mysql_username,
+      password=mysql_password,
+      database=mysql_tpch_db,
+      host=mysql_host,
+  )
   ```
 You can find a full example of using MySQL database with PyDough in [this usage guide](./../demos/notebooks/MySQL_TPCH.ipynb).
 
 - Postgres: You can connect to a postgres database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("postgres", 
-          user=postgres_username,
-          password=postgres_password,
-          database=postgres_db,
-          host=postgres_host,
-    )
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  pydough.active_session.connect_database(
+      "postgres",
+      user=postgres_username,
+      password=postgres_password,
+      database=postgres_db,
+      host=postgres_host,
+  )
   ```
   Example with a connection object
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    postgres_conn: psycopg2.extensions.connection = psycopg2.connect(
-        dbname=postgres_db,
-        user=postgres_user,
-        password=postgres_password,
-        host=postgres_host,
-        port=postgres_port,
-    )
-    pydough.active_session.connect_database("postgres", connection=postgres_conn)
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  postgres_conn: psycopg2.extensions.connection = psycopg2.connect(
+      dbname=postgres_db,
+      user=postgres_user,
+      password=postgres_password,
+      host=postgres_host,
+      port=postgres_port,
+  )
+  pydough.active_session.connect_database("postgres", connection=postgres_conn)
   ```
 You can find a full example of using Postgres database with PyDough in [this usage guide](./../demos/notebooks/PG_TPCH.ipynb).
 
 
 - Postgres: You can connect to a postgres database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("trino", 
-        host=TRINO_HOST,
-        port=TRINO_PORT,
-        user=TRINO_USER,
-    )
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  pydough.active_session.connect_database(
+      "trino",
+      host=TRINO_HOST,
+      port=TRINO_PORT,
+      user=TRINO_USER,
+  )
   ```
   Example with a connection object
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    trino_conn: trino.dbapi.Connection = trino.dbapi.connect(
-        host=TRINO_HOST,
-        port=TRINO_PORT,
-        user=TRINO_USER,
-    )
-    pydough.active_session.connect_database("trino", connection=trino_conn)
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  trino_conn: trino.dbapi.Connection = trino.dbapi.connect(
+      host=TRINO_HOST,
+      port=TRINO_PORT,
+      user=TRINO_USER,
+  )
+  pydough.active_session.connect_database("trino", connection=trino_conn)
   ```
 You can find a full example of using Trino database with PyDough in [this usage guide](./../demos/notebooks/Trino_TPCH.ipynb).
 
@@ -495,16 +517,18 @@ You can find a full example of using Trino database with PyDough in [this usage 
 
   Example with a connection object
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    oracle_conn: oracledb.connection =  oracledb.connect(
-        dbname=oracle_db,
-        user=oracle_user,
-        password=oracle_password,
-        host=oracle_host,
-        port=oracle_port,
-        service_name=oracle_service_name,
-    )
-    pydough.active_session.connect_database("oracle", connection=oracle_conn)
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  oracle_conn: oracledb.connection = oracledb.connect(
+      dbname=oracle_db,
+      user=oracle_user,
+      password=oracle_password,
+      host=oracle_host,
+      port=oracle_port,
+      service_name=oracle_service_name,
+  )
+  pydough.active_session.connect_database("oracle", connection=oracle_conn)
   ```
 You can find a full example of using an Oracle database with PyDough in [this usage guide](./../demos/notebooks/Oracle_TPCH.ipynb).
 
@@ -516,37 +540,48 @@ literals. This ensures consistent behavior across DATE expressions. But sub-seco
 
 - Databricks: You can connect to a Databricks database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/databricks_sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("databricks",
-        server_hostname=databricks_host,
-        http_path=databricks_http_path,
-        access_token=databricks_token
-    )
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/databricks_sample_graphs.json", "TPCH"
+  )
+  pydough.active_session.connect_database(
+      "databricks",
+      server_hostname=databricks_host,
+      http_path=databricks_http_path,
+      access_token=databricks_token,
+  )
   ```
   Example with a connection object
   ```py
-    from databricks import sql
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/databricks_sample_graphs.json", "TPCH")
-    databricks_conn = sql.connect(
-        server_hostname=databricks_host,
-        http_path=databricks_http_path,
-        access_token=databricks_token
-    )
-    pydough.active_session.connect_database("databricks", connection=databricks_conn)
+  from databricks import sql
+
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/databricks_sample_graphs.json", "TPCH"
+  )
+  databricks_conn = sql.connect(
+      server_hostname=databricks_host,
+      http_path=databricks_http_path,
+      access_token=databricks_token,
+  )
+  pydough.active_session.connect_database("databricks", connection=databricks_conn)
   ```
 You can find a full example of using a Databricks database with PyDough in [this usage guide](./../demos/notebooks/Databricks_TPCH.ipynb).
 
 - DuckDB: You can connect to a DuckDB database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    pydough.active_session.connect_database("duckdb", database=":memory:")
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  pydough.active_session.connect_database("duckdb", database=":memory:")
   ```
   Example with a connection object
   ```py
-    import duckdb
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
-    duckdb_conn = duckdb.connect(database=":memory:")
-    pydough.active_session.connect_database("duckdb", connection=duckdb_conn)
+  import duckdb
+
+  pydough.active_session.load_metadata_graph(
+      "../../tests/test_metadata/sample_graphs.json", "TPCH"
+  )
+  duckdb_conn = duckdb.connect(database=":memory:")
+  pydough.active_session.connect_database("duckdb", connection=duckdb_conn)
   ```
 You can find a full example of using a DuckDB database with PyDough in [this usage guide](./../demos/notebooks/DuckDB_TPCH.ipynb).
 
@@ -824,13 +859,17 @@ This first example is of Python code using `pydough.from_string` to generate SQL
 import pydough
 
 # Setup demo metadata. Make sure you have the TPC-H dataset downloaded locally.
-graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
+graph = pydough.active_session.load_metadata_graph(
+    "demos/metadata/tpch_demo_graph.json", "TPCH"
+)
 pydough.active_session.connect_database("sqlite", database="tpch.db")
 
 # Example of a single line pydough code snippet
-pydough_code = "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
+pydough_code = (
+    "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
+)
 # Transform the pydough code and get the result from pydough_query
-query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG":"AUTOMOBILE"})
+query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG": "AUTOMOBILE"})
 sql = pydough.to_sql(query)
 ```
 
@@ -849,9 +888,13 @@ This next example is of Python code to generate SQL to get the top 5 suppliers w
 nation_name = "JAPAN"
 ship_mode = "TRUCK"
 ship_year = 1996
-env = {"TARGET_NATION" : nation_name, "DESIRED_SHIP_MODE" : ship_mode, "REQUESTED_SHIP_YEAR" : ship_year}
+env = {
+    "TARGET_NATION": nation_name,
+    "DESIRED_SHIP_MODE": ship_mode,
+    "REQUESTED_SHIP_YEAR": ship_year,
+}
 
-pydough_code="""
+pydough_code = """
 # The supply records for the supplier that were from a medium part
 selected_records = supply_records.WHERE(STARTSWITH(part.name, "coral")).CALCULATE(supply_cost)
 
@@ -911,8 +954,8 @@ LIMIT 5
 
 This final example is of Python code to generate an SQL query, using 'datetime.date' passed in through the environment.
 ```py
-# For every customer, how many urgent orders have they made in year 1996 with a 
-# total price over 100000, and what is the sum of the total prices of all such 
+# For every customer, how many urgent orders have they made in year 1996 with a
+# total price over 100000, and what is the sum of the total prices of all such
 # orders they made? Sort the result by the sum from highest to lowest, and only
 # include customers with at least one such order
 
@@ -920,9 +963,10 @@ This final example is of Python code to generate an SQL query, using 'datetime.d
 # and date function from datetime. Optionally, we could import datetime.date
 # from inside the pydough code string
 import datetime
-env = {"date" : datetime.date, "YEAR" : 1996}
 
-pydough_code="""
+env = {"date": datetime.date, "YEAR": 1996}
+
+pydough_code = """
 selected_orders=orders.WHERE((order_priority == '1-URGENT') & (total_price > 100000) & 
   (order_date >= date(YEAR, 1, 1)) & (order_date < date(YEAR + 1, 1, 1)))
 
@@ -982,6 +1026,7 @@ Below is an example that displays information about the TPC-H schema, truncated 
 
 ```py
 import pydough
+
 graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
 pydough.explain_structure(graph)
 ```
@@ -1041,6 +1086,7 @@ Below are examples of each of these behaviors, using a knowledge graph for the T
 
 ```py
 import pydough
+
 graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
 pydough.explain(graph, verbose=True)
 ```
@@ -1064,6 +1110,7 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
 
 ```py
 import pydough
+
 graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
 pydough.explain(graph["nations"], verbose=True)
 ```
@@ -1088,6 +1135,7 @@ Call pydough.explain(graph['nations'][property_name]) to learn more about any of
 
 ```py
 import pydough
+
 graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
 pydough.explain(graph["nations"]["name"], verbose=True)
 ```
@@ -1102,6 +1150,7 @@ Data type: string
 
 ```py
 import pydough
+
 graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
 pydough.explain(graph["nations"]["customers"], verbose=True)
 ```
@@ -1389,8 +1438,8 @@ The output always has a consistent shape regardless of whether the expression is
 {
     "error": False,
     "query_summary": "...",  # deterministic plain-English sentence
-    "steps": [...],          # ordered list of operation steps
-    "schema": {...}          # source collection, output columns, ordering, limit
+    "steps": [...],  # ordered list of operation steps
+    "schema": {...},  # source collection, output columns, ordering, limit
 }
 
 # Failure (unrecognised term, wrong type, etc.)
@@ -1398,7 +1447,7 @@ The output always has a consistent shape regardless of whether the expression is
     "error": True,
     "message": "Unrecognised term 'typo'. Did you mean: name?",
     "steps": [],
-    "schema": None
+    "schema": None,
 }
 ```
 
@@ -1590,6 +1639,7 @@ Here is an example of basic usage. We have not set the environment variable, hen
 
 ```py
 from pydough import get_logger
+
 pyd_logger = get_logger(__name__)
 
 logger.info("This is an info message.")

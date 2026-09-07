@@ -50,8 +50,10 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
         name: str,
         dataframe: pd.DataFrame,
         unique_column_names: list[str | list[str]],
-        column_subset: list[str] = [],
+        column_subset: list[str] | None = None,
     ) -> None:
+        if column_subset is None:
+            column_subset = []
         dataframe = self.filter_dataframe(dataframe, column_subset)
         super().__init__(
             name=name,
