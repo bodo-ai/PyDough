@@ -37,6 +37,20 @@ class GraphMetadata(AbstractMetadata):
     Fields allowed in the JSON object describing a graph.
     """
 
+    ALLOWED_TYPES: set[str] = {
+        "str",
+        "int",
+        "float",
+        "list",
+        "dict",
+        "pydough",
+        "pd.DataFrame",  # Type for pandas dataframe for Dataframe Collections
+        "datetime",  # Type for datatimes
+    }
+    """
+    Allowed types for template attributes and definitions in the graph.
+    """
+
     def __init__(
         self,
         name: str,
@@ -225,10 +239,23 @@ class GraphMetadata(AbstractMetadata):
         Fetches all of the labels defined in the graph's template attributes.
         """
         all_labels: dict[str, str] = {}
-        for attribute in self.templates_attributes.values():
-            all_labels.update(dict.fromkeys(attribute.options.keys(), attribute.name))
+        for name, attribute in self.templates_attributes.items():
+            all_labels.update(dict.fromkeys(attribute.options.keys(), name))
 
         return all_labels
+
+    def is_valid_data_type(self, type_str: str) -> bool:
+        """
+        Validate that type_str is exactly one of the allowed type names.
+
+        Args:
+            `type_str`: the type name to validate.
+
+        Returns:
+            Bool: True if type_str is a valid type name, False otherwise.
+        """
+
+        return type_str.strip() == type_str and type_str in self.ALLOWED_TYPES
 
     def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
         """
@@ -253,7 +280,7 @@ class GraphMetadata(AbstractMetadata):
         if new_attribute.name in self.templates_attributes:
             if self.templates_attributes[new_attribute.name] == new_attribute:
                 raise PyDoughMetadataException(
-                    f"Already added {new_attribute.error_name} to {self.error_name}"
+                    f"Already added {new_attribute.error_name}"
                 )
             raise PyDoughMetadataException(
                 f"Duplicate attributes: {new_attribute.error_name} versus {self.templates_attributes[new_attribute.name].error_name}"
@@ -286,7 +313,7 @@ class GraphMetadata(AbstractMetadata):
         if name in self.templates_definitions:
             if self.templates_definitions[name] == new_template:
                 raise PyDoughMetadataException(
-                    f"Already added {name} to {self.error_name}"
+                    f"Already added {name!r} to {self.error_name}"
                 )
             raise PyDoughMetadataException(
                 f"Duplicate templates: {name} versus {self.templates_definitions[name]}"

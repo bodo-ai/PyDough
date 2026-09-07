@@ -19,6 +19,7 @@ from typing import Any
 
 from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughSessionException, PyDoughUnqualifiedException
+from pydough.errors.error_utils import find_possible_name_matches
 from pydough.metadata import GraphMetadata
 from pydough.metadata.templates import AttributeMetadata, TemplateMetadata
 
@@ -642,6 +643,28 @@ def call_template(
     if pydough.active_session.metadata is None:
         raise ValueError("No metadata loaded in the current active session")
 
+    if name not in pydough.active_session.metadata.templates_definitions:
+        available_templates: list[str] = list(
+            pydough.active_session.metadata.templates_definitions.keys()
+        )
+        suggestions: list[str] = find_possible_name_matches(
+            term_name=name,
+            candidates=set(available_templates),
+            atol=2,
+            rtol=0.1,
+            min_names=3,
+            max_names=5,
+            insert_cost=0.5,
+            delete_cost=1.0,
+            substitution_cost=1.0,
+            capital_cost=0.1,
+        )
+        error_message: str = f"PyDough template {name!r} doesn't exist."
+        if len(suggestions) > 0:
+            suggestions_str: str = ", ".join(suggestions)
+            error_message += f" Did you mean: {suggestions_str}?"
+        raise ValueError(error_message)
+
     calling_template: TemplateMetadata = (
         pydough.active_session.metadata.templates_definitions[name]
     )
@@ -658,6 +681,13 @@ def call_template(
     template_kwargs: dict[str, dict[str, str | int]] = {}
 
     for arg_name, label in labels.items():
+        if arg_name not in calling_template.parameters:
+            template_params: list[str] = list(calling_template.parameters.keys())
+            template_params_str: str = ", ".join(template_params)
+
+            raise ValueError(
+                f"Template {name!r} doesn't have a paramater called {arg_name!r}. Did you mean: {template_params_str}"
+            )
         # Use this arg type to check the option value
         arg_type: str = calling_template.parameters[arg_name].type
 
@@ -672,7 +702,7 @@ def call_template(
                     or arg_name not in attribute.usage[name]
                 ):
                     raise ValueError(
-                        f"The attribute '{attr_name}' is not available for parameter '{arg_name}' on template '{name}'"
+                        f"The label {label!r} is not available for parameter '{arg_name}' on template '{name}'"
                     )
 
                 # Types must match
@@ -686,7 +716,7 @@ def call_template(
                 break
 
         if kwarg is None:
-            raise ValueError(f"Label {label} not found in any attribute's options")
+            raise ValueError(f"Label {label!r} not found in any attribute's options")
 
         template_kwargs[arg_name] = kwarg
 

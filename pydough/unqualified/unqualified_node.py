@@ -136,6 +136,7 @@ class UnqualifiedNode(ABC):
 
     def __call__(self, *args, **kwargs):
 
+        available_templates: list[str] = []
         if pydough.active_session.metadata:
             metadata_templates: dict[str, TemplateMetadata] = (
                 pydough.active_session.metadata.templates_definitions
@@ -145,8 +146,10 @@ class UnqualifiedNode(ABC):
             if name in metadata_templates:
                 return metadata_templates[name].template_callable(*args, **kwargs)
 
+            available_templates.extend(metadata_templates.keys())
+
         raise pydough.active_session.error_builder.undefined_function_call(
-            self, *args, **kwargs
+            self, available_templates, *args, **kwargs
         )
 
     def __bool__(self):

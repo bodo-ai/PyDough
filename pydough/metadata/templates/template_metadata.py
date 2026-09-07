@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from pydough.errors.error_types import PyDoughMetadataException
-from pydough.errors.error_utils import extract_object, extract_string
+from pydough.errors.error_utils import extract_object, extract_string, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs.graph_metadata import GraphMetadata
 
@@ -61,7 +61,7 @@ class TemplateMetadata(AbstractMetadata):
         self._answer_variable: str = answer_variable
 
         self._parameters: dict[str, TemplateParameter] = (
-            TemplateMetadata.parse_parameters_from_json(parameters)
+            TemplateMetadata.parse_parameters_from_json(graph, parameters, name)
         )
         self._template_callable: Callable = self.create_template_callable(graph)
 
@@ -123,7 +123,7 @@ class TemplateMetadata(AbstractMetadata):
 
     @staticmethod
     def create_error_name(name: str, graph_error_name: str):
-        return f"template definition {name!r} in {graph_error_name}"
+        return f"Template definition {name!r} in {graph_error_name}"
 
     @staticmethod
     def parse_from_json(graph: GraphMetadata, name: str, definition_json: dict) -> None:
@@ -143,12 +143,22 @@ class TemplateMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if the JSON does not meet the necessary
             structure properties.
         """
+        error_name: str = TemplateMetadata.create_error_name(name, graph.error_name)
+        # Validates the name for the template
+        is_valid_name.verify(name, error_name)
+
         description: str = extract_string(
             definition_json, "description", graph.error_name
         )
         answer_variable: str = extract_string(
             definition_json, "answer_variable", graph.error_name
         )
+        error_answer_var: str = (
+            f"Answer variable {answer_variable!r} of template {name!r} "
+            f"in graph {graph.name!r}"
+        )
+        is_valid_name.verify(answer_variable, error_answer_var)
+
         source: str = extract_string(definition_json, "source", graph.error_name)
         kwargs: dict[str, dict] = extract_object(
             definition_json, "parameters", graph.error_name
@@ -167,7 +177,9 @@ class TemplateMetadata(AbstractMetadata):
 
     @staticmethod
     def parse_parameters_from_json(
+        graph: GraphMetadata,
         parameters_json: dict,
+        template_name: str,
     ) -> dict[str, TemplateParameter]:
         """
         Parses a JSON object into the parameters for a template definition
@@ -188,16 +200,24 @@ class TemplateMetadata(AbstractMetadata):
         template_params: dict[str, TemplateParameter] = {}
 
         for param_name, arg in parameters_json.items():
-            if param_name in template_params:
-                raise PyDoughMetadataException(
-                    f"Already added {param_name} to the template's parameters"
-                )
+            error_param_name: str = f"Parameter {param_name!r} in template {template_name!r} in graph {graph.name!r}"
+            is_valid_name.verify(param_name, error_param_name)
 
             param_type: str = extract_string(
                 arg, "type", "All parameters must have type"
             )
+            # Validate the type of the attribute
+            if not graph.is_valid_data_type(param_type):
+                raise PyDoughMetadataException(
+                    f"Invalid type {param_type!r} for the parameter {param_name!r}"
+                    f" of template {template_name!r} in graph {graph.name!r}."
+                    f" Must be one of: {sorted(graph.ALLOWED_TYPES)}"
+                )
+
             param_description: str = extract_string(
-                arg, "description", "All parameters must have description"
+                arg,
+                "description",
+                f"All parameters must have description in {template_name!r}",
             )
             new_param = TemplateParameter(param_name, param_type, param_description)
 
@@ -221,7 +241,6 @@ class TemplateMetadata(AbstractMetadata):
         Returns:
             The callable built from `source`, not yet invoked.
         """
-
         template_str: str = self.create_template_def()
 
         import pydough
@@ -233,11 +252,23 @@ class TemplateMetadata(AbstractMetadata):
         graph_name: str = "_graph"
         visitor = AddRootVisitor(graph_name, known_names)
 
-        tree: ast.AST = ast.parse(template_str)
+        try:
+            tree: ast.AST = ast.parse(template_str)
+        except SyntaxError as e:
+            raise PyDoughMetadataException(
+                f"Template definition {self.name!r} does not contain valid Python code: {e}"
+            ) from e
+
         new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
         transformed_code: str = ast.unparse(new_tree)
 
-        compiled = compile(transformed_code, filename=f"<{self.name}>", mode="exec")
+        try:
+            compiled = compile(transformed_code, filename=f"<{self.name}>", mode="exec")
+        except (SyntaxError, ValueError) as e:
+            raise PyDoughMetadataException(
+                f"Internal error: failed to compile transformed template for "
+                f"{self.name!r}: {e}"
+            ) from e
 
         # `_graph`, `pydough` and pd are baked into the function's globals so that
         # they're available whenever the function is later called

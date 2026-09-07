@@ -2,6 +2,8 @@
 TODO
 """
 
+import re
+
 import pandas as pd
 import pytest
 
@@ -24,7 +26,11 @@ from tests.test_pydough_functions.tpch_templates import (
     template_recursive_call,
     template_simple_call,
 )
-from tests.testing_utilities import PyDoughPandasTest
+from tests.testing_utilities import (
+    PyDoughPandasTest,
+    graph_fetcher,
+    run_e2e_error_test,
+)
 
 
 @pytest.fixture(
@@ -407,20 +413,221 @@ def test_pipeline_e2e_tpch_templates(
     )
 
 
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "pydough_impl, columns, error_message",
+    [
+        pytest.param(
+            "result = orders_filter_count2()",
+            None,
+            "PyDough object orders_filter_count2 is not callable. Did you mean: orders_filter_count, RELCOUNT, STRCOUNT?",
+            id="unexisting_template_definition_call",
+        ),
+        pytest.param(
+            "result = pydough.call_template('orders_filter_count2', labels={})",
+            None,
+            "PyDough template 'orders_filter_count2' doesn't exist. Did you mean: orders_filter_count, order_revenue, order_lvl_priority?",
+            id="unexisting_template_definition_api",
+        ),
+        pytest.param(
+            "result = orders_filter_count(no_param=True)",
+            None,
+            re.escape(
+                "orders_filter_count() got an unexpected keyword argument 'no_param'"
+            ),
+            id="wrong_template_arguments_call",
+        ),
+        pytest.param(
+            "result = pydough.call_template('orders_filter_count', labels={'no_param': 'LABEL 1'})",
+            None,
+            "Template 'orders_filter_count' doesn't have a paramater called 'no_param'. Did you mean: orders_filter",
+            id="wrong_template_arguments_api",
+        ),
+        pytest.param(
+            "result = pydough.call_template('orders_filter_count', labels={'orders_filter': 'INVALID LABEL'})",
+            None,
+            "Label 'INVALID LABEL' not found in any attribute's options",
+            id="wrong_template_label_api",
+        ),
+        pytest.param(
+            "result = pydough.call_template('orders_filter_count', labels={'orders_filter': 'LEVEL 0'})",
+            None,
+            "The label 'LEVEL 0' is not available for parameter 'orders_filter' on template 'orders_filter_count'",
+            id="restricted_template_attribute_api",
+        ),
+        pytest.param(
+            "result = pydough.call_template('orders_revenue_by', labels={'arg_year': 'Month', 'arg_dimension': 'Year 1992'})",
+            None,
+            "The label 'Month' is not available for parameter 'arg_year' on template 'orders_revenue_by'",
+            id="restricted_template_parameter_api",
+        ),
+    ],
+)
+def test_pipeline_e2e_tpch_templates_errors(
+    pydough_impl: str,
+    columns: dict[str, str] | list[str] | None,
+    error_message: str,
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    """
+    Tests running bad PyDough code through the entire pipeline to verify that
+    a certain error is raised.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    run_e2e_error_test(
+        pydough_impl,
+        error_message,
+        graph,
+        columns=columns,
+        database=sqlite_tpch_db_context,
+    )
+
+
 @pytest.mark.parametrize(
     "graph_name, error_message",
     [
+        # Attr with invalid name
+        pytest.param(
+            "INVALID_ATTRIBUTE_NAME",
+            "metadata for template attribute within graph 'INVALID_ATTRIBUTE_NAME' must be a JSON object containing a field 'name' and field 'name' must be a string",
+            id="invalid_attribute_name",
+        ),
+        # Dupplicated attribute name
+        pytest.param(
+            "DUPPLICATED_ATTRIBUTE_NAME",
+            "Already added template attribute 'attr1' in graph 'DUPPLICATED_ATTRIBUTE_NAME'",
+            id="duplicated_attribute_name",
+        ),
+        # Attr with invalid usage
+        pytest.param(
+            "INVALID_ATTRIBUTE_USAGE",
+            "template attribute 'attr1' in graph 'INVALID_ATTRIBUTE_USAGE' must be a dictionary where each key must be a string and each value must be a list where each element must be a string",
+            id="invalid_attribute_usage",
+        ),
+        # Attr with invalid type
+        pytest.param(
+            "INVALID_ATTRIBUTE_TYPE",
+            re.escape(
+                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['dict', 'float', 'int', 'list', 'pydough', 'str']"
+            ),
+            id="invalid_attribute_type",
+        ),
+        # Attribute with no options
+        pytest.param(
+            "NO_ATTRIBUTE_OPTIONS",
+            "Template attribute 'attr1' in graph 'NO_ATTRIBUTE_OPTIONS' must have at least one option defined.",
+            id="missing_options",
+        ),
+        # Attribute with invalid option label
+        pytest.param(
+            "INVALID_ATTRIBUTE_OPTION_LABEL",
+            "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_LABEL' must be a JSON object containing a field 'label' and field 'label' must be a string",
+            id="invalid_option_label",
+        ),
+        # Attribute with invalid option value
+        pytest.param(
+            "INVALID_ATTRIBUTE_OPTION_VALUE",
+            re.escape(
+                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings or all integers (not a mix, and no other type)."
+            ),
+            id="invalid_option_value",
+        ),
+        # Duplicated option label
+        pytest.param(
+            "DUPPLICATED_ATTRIBUTE_OPTION_LABEL",
+            "Duplicate option label: 'LABEL 1' for attribute 'attr1'. The label is already in use by attribute 'attr1' in graph 'DUPPLICATED_ATTRIBUTE_OPTION_LABEL'.",
+            id="duplicated_option_label",
+        ),
+        # Duplicates label option across attributes
+        pytest.param(
+            "DUPPLICATED_ATTRIBUTE_OPTION_LABEL_2",
+            "Duplicate option label: 'LABEL 1' for attribute 'attr2'. The label is already in use by attribute 'attr1' in graph 'DUPPLICATED_ATTRIBUTE_OPTION_LABEL_2'.",
+            id="duplicated_option_label_across",
+        ),
+        # Mixed option value type
+        pytest.param(
+            "MIXED_TYPE_ATTRIBUTE_OPTIONS",
+            re.escape(
+                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings or all integers (not a mix, and no other type)."
+            ),
+            id="mixed_type_options",
+        ),
         # Attr with no definitions
         pytest.param(
             "NO_TEMPLATES_DEFINITIONS",
             "graph 'NO_TEMPLATES_DEFINITIONS' must be a JSON object containing a field 'definitions' and field 'definitions' must be a JSON array",
             id="missing_definitions",
         ),
-        # Attr with no options
+        # Template with invalid name
         pytest.param(
-            "NO_ATTIBUTE_OPTIONS",
-            "graph 'NO_ATTIBUTE_OPTIONS' must be a JSON object containing a field 'options' and field 'options' must be a JSON array",
-            id="missing_options",
+            "TEMPLATE_INVALID_NAME",
+            "Template definition 'name with space' in graph 'TEMPLATE_INVALID_NAME' must be a string that is a valid Python identifier",
+            id="invalid_template_name",
+        ),
+        # Template with invalid name reserved python word
+        pytest.param(
+            "TEMPLATE_NAME_PYTHON_RESERVED_WORD",
+            "Template definition 'continue' in graph 'TEMPLATE_NAME_PYTHON_RESERVED_WORD' must be a string that is not a Python reserved word or built-in name",
+            id="invalid_template_name_python_word",
+        ),
+        # Template with invalid name reserved pydough word
+        pytest.param(
+            "TEMPLATE_NAME_PYDOUGH_RESERVED_WORD",
+            "Template definition 'CALCULATE' in graph 'TEMPLATE_NAME_PYDOUGH_RESERVED_WORD' must be a string that is not a PyDough reserved word",
+            id="invalid_template_name_pydough_word",
+        ),
+        # Duplicated template name
+        pytest.param(
+            "TEMPLATE_NAME_DUPLICATED",
+            "Already added 'template_1' to graph 'TEMPLATE_NAME_DUPLICATED'",
+            id="invalid_template_name_duplicated",
+        ),
+        # Template with invalid paramter name
+        pytest.param(
+            "TEMPLATE_INVALID_PARAMETER_NAME",
+            re.escape(
+                "Parameter 'invalid_#@param' in template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_NAME' must be a string that is a valid Python identifier"
+            ),
+            id="invalid_template_param_name",
+        ),
+        # Template with invalid parameter type
+        pytest.param(
+            "TEMPLATE_INVALID_PARAMETER_TYPE",
+            re.escape(
+                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['dict', 'float', 'int', 'list', 'pydough', 'str']"
+            ),
+            id="invalid_template_param_type",
+        ),
+        # No descrition on param
+        pytest.param(
+            "TEMPLATE_PARAM_NO_DESC",
+            re.escape(
+                "All parameters must have description in 'template_1' must be a JSON object containing a field 'description' and field 'description' must be a string"
+            ),
+            id="invalid_template_param_no_desc",
+        ),
+        # Invalid answer variable
+        pytest.param(
+            "TEMPLATE_INVALID_ANSWER_VAR",
+            re.escape(
+                "Answer variable '(no_valid_identifier)' of template 'template_1' in graph 'TEMPLATE_INVALID_ANSWER_VAR' must be a string that is a valid Python identifier"
+            ),
+            id="invalid_template_answer_var",
+        ),
+        pytest.param(
+            "TEMPLATE_INVALID_SOURCE_CODE",
+            re.escape(
+                "Template definition 'template_1' does not contain valid Python code: invalid syntax (<unknown>, line 2)"
+            ),
+            id="invalid_template_source",
+        ),
+        pytest.param(
+            "TEMPLATE_INVALID_SOURCE_CODE_2",
+            re.escape(
+                "Internal error: failed to compile transformed template for 'template_1': no binding for nonlocal 'foo' found (<template_1>, line 7)"
+            ),
+            id="invalid_template_source_2",
         ),
     ],
 )

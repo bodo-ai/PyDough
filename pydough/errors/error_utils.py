@@ -625,6 +625,10 @@ simple_join_keys_predicate: PyDoughPredicate = NonEmptyMapOf(
     is_string, NonEmptyListOf(is_string)
 )
 
+attributes_usage_predicate: PyDoughPredicate = PossiblyEmptyMapOf(
+    is_string, PossiblyEmptyListOf(is_string)
+)
+
 
 ################################################################################
 # Extraction functions
