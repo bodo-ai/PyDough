@@ -509,7 +509,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "INVALID_ATTRIBUTE_TYPE",
             re.escape(
-                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['dict', 'float', 'int', 'list', 'pydough', 'str']"
+                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str']"
             ),
             id="invalid_attribute_type",
         ),
@@ -595,7 +595,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "TEMPLATE_INVALID_PARAMETER_TYPE",
             re.escape(
-                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['dict', 'float', 'int', 'list', 'pydough', 'str']"
+                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str']"
             ),
             id="invalid_template_param_type",
         ),
