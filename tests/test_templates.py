@@ -440,7 +440,7 @@ def test_pipeline_e2e_tpch_templates(
         pytest.param(
             "result = pydough.call_template('orders_filter_count', labels={'no_param': 'LABEL 1'})",
             None,
-            "Template 'orders_filter_count' doesn't have a paramater called 'no_param'. Did you mean: orders_filter",
+            "Template 'orders_filter_count' is missing a label for the following parameter(s): orders_filter",
             id="wrong_template_arguments_api",
         ),
         pytest.param(
