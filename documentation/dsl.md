@@ -23,6 +23,7 @@ This page describes the specification of the PyDough DSL. The specification incl
     * [range_collection](#range_collection)
     * [dataframe_collection](#dataframe_collection)
     * [View/Table Collections (via to_table)](#view_collection)
+- [PyDough Templates](#templates)
 - [Larger Examples](#larger-examples)
    * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
    * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
@@ -1775,6 +1776,258 @@ Result:
 1           9    1
 2          12    1
 ``` 
+
+<!-- TOC --><a name="templates"></a>
+## PyDough Templates
+
+Once a template is registered in metadata (see [Templates](metadata#templates) for how to define one), it can be used in two ways:
+
+- **Directly**, as an ordinary PyDough function call, passing raw literal/PyDough values as arguments.
+- **Through the API**, via [`pydough.call_template`](usage#call_template_api), passing human-facing labels instead of raw values.
+
+Both approaches ultimately call the same generated function and produce the same result — the only difference is how the arguments are supplied. Regardless of which is used, the result of a template call can be treated like any other PyDough value: chained into further PyDough operations, passed into another template, or (if the template's `answer_variable` is a plain literal) used directly in Python.
+
+<!-- TOC --><a name="using-templates-direct"></a>
+### Calling a Template Directly
+
+A loaded template behaves like any other PyDough function — call it by name, passing values positionally in the order its `parameters` were defined (see [Parameter Numeration](#template-parameter-numeration)).
+
+Example: using the `orders_filter_count` template directly, with a raw PyDough filter condition, to find the top 5 customers by number of orders placed in 1996 above a price of 3000:
+
+Template definition:
+```json
+{
+    "name": "orders_filter_count",
+    "description": "Counts the number of orders placed that satisfied the given condition.",
+    "parameters": {
+        "orders_filter": {
+            "type": "pydough",
+            "description": "Condition(s) for the order to make it count"
+        }
+    },
+    "source": "result = COUNT(orders.WHERE({1}))",
+    "answer_variable": "result"
+}
+```
+
+```python
+customers.CALCULATE(
+    key,
+    n_orders=orders_filter_count(
+        (total_price > 3000) & (YEAR(order_date) == 1996)
+    ),
+).TOP_K(5, by=(n_orders.DESC(), key.ASC()))
+```
+
+<!-- TOC --><a name="using-templates-api"></a>
+### Calling a Template via `pydough.call_template`
+
+Instead of passing raw values, `pydough.call_template` looks up each argument by a human-facing **label**, resolving it to the underlying value through the graph's [attributes](metadata#template-attributes). See [`pydough.call_template`](usage#call_template_api) for the full parameter/error reference.
+
+Example: using the `orders_filter_count` template via the API, with the label `"High priority"` resolving to a PyDough filter condition:
+
+```python
+result = customers.CALCULATE(
+    key,
+    n_orders=pydough.call_template(
+        "orders_filter_count", labels={"orders_filter": "High priority"}
+    ),
+).TOP_K(5, by=(n_orders.DESC(), key.ASC()))
+
+pydough.to_df(result)
+```
+
+Because `call_template` returns an ordinary `UnqualifiedNode` (or literal), its result can be used exactly like any other PyDough value — including inside a filter, as shown here to find the nations with the most customers who have placed an order above 3000:
+
+```python
+selected_orders = pydough.call_template(
+    "orders_filter_count", labels={"orders_filter": "Price above 3000"}
+)
+result = nations.CALCULATE(
+    name, n_customers=COUNT(customers.WHERE(selected_orders > 0))
+).TOP_K(3, by=(n_customers.DESC(), name.ASC()))
+
+pydough.to_df(result)
+```
+
+<!-- TOC --><a name="using-templates-follow-up"></a>
+### Chaining Templates Together
+
+The result of one template call can be fed directly into another template as an argument, letting templates build on each other without needing to re-express the earlier result in raw PyDough. Works the same way whether the first call was made directly or through the API.
+
+Example: calling `orders_revenue_by` via the API to partition order revenue for 1997 by month, then passing that result into `top_bottom_comparison` to find the highest- and lowest-performing months:
+
+Template definitions:
+```json
+{ 
+    "name": "orders_revenue_by",
+    "description": "Calculates the revenue of orders in a given year, partitioned by a specified dimension.",
+    "parameters": {
+        "arg_year": {
+            "type": "int", 
+            "description": "The year for which to calculate the revenue of orders."
+        },
+        "arg_dimension": {
+            "type": "pydough",
+            "description": "The dimension by which to partition the revenue calculation."
+        }
+    },
+    "source": "result = orders.WHERE(({1} == YEAR(order_date))).CALCULATE(revenue=order_revenue(), dimension=({2})).PARTITION(name=\"orders_groups\", by=dimension).CALCULATE(dimension, segment_revenue=SUM(orders.revenue))\n",
+    "answer_variable": "result"
+},
+{
+    "name": "top_bottom_comparison",
+    "description": "Compares the top and bottom groups of a partitioned orders",
+    "parameters": {
+        "arg_partitioned_orders": {
+            "type": "pydough",
+            "description": "The partitioned orders to compare."
+        },
+        "arg_calculation": {
+            "type": "pydough",
+            "description": "The metric by which to compare the groups."
+        }
+    },
+    "source": "result = {1}.CALCULATE(dimension, segment_revenue, comparison_value={2}).WHERE(ABSENT(PREV(segment_revenue, by=segment_revenue.DESC())) | ABSENT(NEXT(segment_revenue, by=segment_revenue.DESC())) )",
+    "answer_variable": "result"
+}
+``` 
+
+```python
+orders_segmentation = pydough.call_template(
+    "orders_revenue_by", labels={"arg_year": "Year 1997", "arg_dimension": "Month"}
+)
+
+final_result = top_bottom_comparison(orders_segmentation, AVG(orders.revenue))
+
+pydough.to_df(final_result)
+```
+
+<!-- TOC --><a name="using-templates-literal"></a>
+### Templates Returning Literals
+
+Not every template needs to return a PyDough collection/expression — a template's `answer_variable` can just as easily hold a plain literal (see [Definition Field: `source`](metadata#template-source)). Its result can then be used as an ordinary Python/PyDough value, such as a threshold in a later filter.
+
+Example: calling `multiply_by_2` via the API to compute a minimum account balance from a label, then using that value directly in a `WHERE`:
+
+Template definition:
+```json
+{
+    "name": "multiply_by_2",
+    "description": "Receives an integer and return its multiplication by 2.",
+    "parameters": {
+    "base_number": {
+        "type": "int",
+        "description": "Number being multiply by 2"
+    }
+    },
+    "source": "result = {1} * 2\n",
+    "answer_variable": "result"
+}
+```
+
+```python
+min_account_balance = pydough.call_template(
+    "multiply_by_2", labels={"base_number": "Year 1992"}
+)
+
+selected_customers = customers.WHERE(account_balance >= min_account_balance)
+final_result = TPCH.CALCULATE(n_custs=COUNT(selected_customers))
+
+pydough.to_df(final_result)
+```
+
+<!-- TOC --><a name="using-templates-dataframe"></a>
+### Templates Producing a User-Generated Collection
+
+A template's `source` can also produce a **user-generated collection** — e.g. one built from an in-memory `pd.DataFrame` via `pydough.dataframe_collection` — rather than deriving from the graph itself. This works like any other template, but the `pd.DataFrame` and `list` typed parameters let external, ad hoc data be wrapped into a proper collection and then combined with the rest of the graph (e.g. via `CROSS`, `WHERE`, `CALCULATE`) just as if it were a regular collection.
+
+Example template definition, wrapping a `pd.DataFrame` into a named dataframe collection with a list of unique columns:
+
+```json
+{
+  "name": "dataframe_input_collection",
+  "description": "Generates a dataframe collection from the given parameters",
+  "parameters": {
+    "collection_name": {
+      "type": "str",
+      "description": "Name for the generated dataframe collection"
+    },
+    "new_df": {
+      "type": "pd.DataFrame",
+      "description": "New dataframe to create the collection with"
+    },
+    "unique_columns": {
+      "type": "list",
+      "description": "List of unique column names for the dataframe collection"
+    }
+  },
+  "source": "result = pydough.dataframe_collection({1}, {2}, {3})",
+  "answer_variable": "result"
+}
+```
+
+Example usage: calling `dataframe_input_collection` directly with an input DataFrame, then crossing the resulting collection with a filtered set of orders:
+
+```python
+input_df = pd.DataFrame(
+    {
+        "cust_id": [1, 2, 3],
+        "customer_name": ["customer_1", "customer_2", "customer_3"],
+    }
+)
+
+df_collection = dataframe_input_collection(
+    "customers_collection", input_df, ["cust_id"]
+)
+
+selected_orders = orders.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(key, clerk)
+
+(
+    df_collection.CALCULATE(cust_id, customer_name)
+    .CROSS(selected_orders)
+    .WHERE(cust_id == key)
+    .CALCULATE(cust_id, customer_name, key, clerk)
+)
+```
+
+<!-- TOC --><a name="using-templates-recursive"></a>
+### Recursive Templates
+
+A template's `source` can call itself, since it is compiled into a regular Python function (see [Definition Field: `source`](metadata#template-source)). Recursive templates are called the same way as any other template — directly or via the API — with no special handling needed at the call site.
+
+Example: calling the recursive `cumulative_orders_counter` template directly, with different `base_year`/`last_year` ranges:
+
+Template definition:
+```json
+{
+    "name": "cumulative_orders_counter",
+    "description": "Calculates the cumulative counter of all orders placed from a base year through a given last year. Recursively sums the current year's counter and the cumulative counter of all next years.",
+    "parameters": {
+        "base_year": { 
+            "type": "int", 
+            "description": "The year through which to calculate cumulative revenue." 
+        },
+        "last_year": { 
+            "type": "int", 
+            "description": "The earliest year to include in the cumulation (recursion base case)." 
+        }
+    },
+    "source": "assert base_year <= last_year\nif {1} == {2}:\n  result = COUNT(orders.WHERE(YEAR(order_date) == base_year))\nelse:\n result = (\n COUNT(orders.WHERE(YEAR(order_date) == base_year)) + cumulative_orders_counter(base_year + 1, last_year))\n",
+    "answer_variable": "result"
+}
+```
+
+```python
+result = TPCH.CALCULATE(
+    y_1994=cumulative_orders_counter(1994, 1994),
+    y_1994_1996=cumulative_orders_counter(1994, 1996),
+    y_1994_1998=cumulative_orders_counter(1994, 1998),
+)
+
+pydough.to_df(result)
+```
+
 
 <!-- TOC --><a name="larger-examples"></a>
 ## Larger Examples

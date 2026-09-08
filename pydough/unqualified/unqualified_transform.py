@@ -624,8 +624,6 @@ def call_template(
         one attribute in the active session's graph, and that attribute's
         type must match the corresponding template parameter's type.
 
-        TODO: What to do with repeated labels? Check before add the option?
-
     Returns:
         The `UnqualifiedNode` produced by calling the template with the
         resolved arguments, ready for further chaining or execution
@@ -669,6 +667,16 @@ def call_template(
         pydough.active_session.metadata.templates_definitions[name]
     )
 
+    missing_params: list[str] = [
+        p for p in calling_template.parameters if p not in labels
+    ]
+    if missing_params:
+        missing_params_str: str = ", ".join(missing_params)
+        raise ValueError(
+            f"Template {name!r} is missing a label for the following "
+            f"parameter(s): {missing_params_str}"
+        )
+
     available_attributes: dict[str, AttributeMetadata] = (
         pydough.active_session.metadata.templates_attributes
     )
@@ -698,8 +706,10 @@ def call_template(
                 # Check if the attribute is available for this template and argument
                 if attribute.usage != {} and (
                     name not in attribute.usage
-                    or attribute.usage[name] == []  # No argument restrictions
-                    or arg_name not in attribute.usage[name]
+                    or (
+                        attribute.usage[name] != []
+                        and arg_name not in attribute.usage[name]
+                    )
                 ):
                     raise ValueError(
                         f"The label {label!r} is not available for parameter '{arg_name}' on template '{name}'"

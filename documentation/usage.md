@@ -16,6 +16,7 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.to_table`](#pydoughto_table)
 - [Transformation APIs](#transformation-apis)
    * [`pydough.from_string`](#pydoughfrom_string)
+   * [`pydough.call_template`](#call_template_api)
 - [Exploration APIs](#exploration-apis)
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
@@ -965,6 +966,72 @@ JOIN _s1 AS _s1
 ORDER BY
   3 DESC
 ```
+
+<!-- TOC --><a name="call_template_api"></a>
+### `pydough.call_template`
+
+The `call_template` API invokes a previously registered [template](metadata#templates) using human-facing **labels** instead of raw PyDough/Python values. Each label is resolved against the `options` of the graph's [attributes](metadata#template-attributes) to find the concrete value (and its type) to pass into the template, after which the template is called like a normal PyDough function and the result is returned.
+
+#### Syntax
+```python
+def call_template(
+    name: str,
+    labels: dict[str, str],
+) -> Any:
+```
+
+- `name`: the name of the template to call, as registered in `pydough.active_session.metadata.templates_definitions`.
+- `labels`: a mapping from **template parameter name** to a **label string** (e.g. `{"arg_year": "Year 1998", "arg_dimension": "Customer Market Segment"}`). Each label must appear in the `options` of exactly one attribute in the active session's graph, and that attribute's `type` must match the corresponding template parameter's `type`.
+
+#### Return value
+
+The return type is `Any`, not necessarily an `UnqualifiedNode`. Because a template's `source` is a full Python function body (see [Definition Field: `source`](metadata#template-source)), the result of calling it can be an `UnqualifiedNode` (on which `explain()`, `to_sql()`, or `to_df()` can be called), or it can be a plain literal (`int`, `str`, `dict`, etc.) if that's what the template's `answer_variable` ultimately holds.
+
+#### Resolution process
+
+For each `(arg_name, label)` pair in `labels`, `call_template` does the following:
+
+1. Confirms `arg_name` is a real parameter of the named template; if not, raises an error listing the template's actual parameter names as suggestions.
+2. Searches every attribute registered in the active session's graph for one whose `options` contains `label`.
+3. If a match is found, verifies that the matching attribute is allowed to supply this template/parameter combination, based on the attribute's [`usage`](metadata#attribute-usage-restriction) field.
+4. Verifies that the matching attribute's `type` matches the template parameter's `type`.
+5. Resolves `label` to its corresponding `value`, to be substituted into the generated call.
+
+Once every entry in `labels` has been resolved, the template is invoked with the resolved arguments (as a normal PyDough/Python call), and the result is returned exactly as produced by the template — no additional check is made that it's an `UnqualifiedNode`.
+
+#### Errors
+
+`call_template` raises `ValueError` in the following cases:
+
+| Condition | Message behavior |
+|---|---|
+| No metadata is loaded in the active session | `"No metadata loaded in the current active session"` |
+| `name` doesn't match any registered template | Reports the template isn't found; if similarly-named templates exist, suggests them. |
+| The graph has no attributes registered at all | Reports that no attributes are available for the template. |
+| `arg_name` in `labels` isn't a parameter of the template | Reports the parameter doesn't exist; suggests the template's actual parameter names. |
+| `label` isn't restricted to this template/parameter by its attribute's `usage` | Reports the label isn't available for that parameter on that template. |
+| The matching attribute's `type` differs from the parameter's expected `type` | Reports the type mismatch between the attribute and the parameter. |
+| `label` doesn't appear in any attribute's `options` | Reports the label wasn't found in any attribute's options. |
+| A required template parameter has no corresponding entry in `labels` | Reports the template is missing labels for those parameter(s), by name. |
+
+#### Example
+
+Using the `orders_revenue_by` template and the `years` / `order_dimensions` attributes shown [here](metadata#templates):
+
+```python
+import pydough
+
+graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
+pydough.active_session.connect_database("sqlite", database="tpch.db")
+
+result = pydough.call_template(
+    "orders_revenue_by",
+    labels={"arg_year": "Year 1996", "arg_dimension": "Customer Region"},
+)
+pydough.to_df(result)
+```
+
+This resolves `"Year 1996"` to `1996` via the `years` attribute and `"Customer Region"` to `customer.nation.region.name` via the `order_dimensions` attribute, then calls the generated `orders_revenue_by(1996, customer.nation.region.name)` function and returns its result.
 
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs

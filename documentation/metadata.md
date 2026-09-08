@@ -26,6 +26,7 @@ This page document the exact format that the JSON files containing PyDough metad
 - [Function Deducers](#function-deducers)
   * [Function Deducer Type: Constant](#function-deducer-type-constant)
   * [Function Deducer Type: Select Argument](#function-deducer-type-select-argument)
+- [Templates](#templates)
 - [PyDough Type Strings](#pydough-type-strings)
 - [Metadata Examples](#metadata-examples)
    * [Example: TPC-H](#example-tpch)
@@ -492,6 +493,279 @@ Below are several examples the JSON for such deducers:
 
 - Returns the type of the first argument: `{"type": "select argument", "value": 0}`
 - Returns the type of the second argument: `{"type": "select argument", "value": 1}`
+
+
+<!-- TOC --><a name="templates"></a>
+## Templates
+
+A template registers a reusable, **parametrized function** in metadata, which becomes available for later use either as a normal PyDough function call or through the `pydough.call_template()` API using human-readable **labels** instead of raw values. More about templates' usage [here](dsl#pydough-templates)
+
+Despite the name, a template is not limited to a single PyDough expression — its `source` is effectively the **body of a Python function**. It can contain PyDough collection/expression code, arbitrary Python control flow (`if`/`else`, `assert`, loops), plain Python/PyDough literals (`int`, `str`, `dict`, …), and even recursive calls back into itself. See [Definition Field: `source`](#template-source) for details and an example.
+
+All template-related metadata lives under a single top-level `"templates"` key, with two sub-parts:
+
+```json
+"templates": {
+  "attributes": [ ... ],
+  "definitions": [ ... ]
+}
+```
+
+- **`attributes`** — (optional) the shared pool of *values* (with human-readable labels) that templates can use as an argument. Only needed if a template will be invoked via `call_template()`; a template that is only ever called directly with literal arguments does not require any attributes.
+- **`definitions`** — the templates themselves: the PyDough/Python source, its parameters, and a brief description.
+
+Both attribute values and template parameters are typed using a shared, fixed set of [supported types](#template-supported-types); an attribute can only supply a value to a parameter if their types match.
+
+<!-- TOC --><a name="template-attributes"></a>
+### Attributes
+
+An attribute describes a reusable, labeled set of values that one or more templates can use as an argument. Attributes are exclusively used with `call_template()` — they map a user-facing **label** (e.g. `"Year 1996"`) to the actual PyDough/Python **value** (e.g. `1996`) that gets substituted into the template.
+
+Every JSON object describing an attribute has the following fields:
+- `name` (required): unique identifier for the attribute. Referenced by templates that use it.
+- `usage` (required): which templates (and optionally which parameters of those templates) may use this attribute. An empty list `[]` means "usable by all templates." [See here](#attribute-usage-restriction) for the specification of this field.
+- `type` (required): the value's type. This is used to verify if the value match the template's parameter. To know more about the supported types [See here](#template-supported-types)
+*Note*: `pydough` is a special type that represents a raw PyDough expression/snipet.
+- `description` (required): a semantic description of what the attribute represents.
+- `options` (required): the set of valid `{label, value}` pairs for this attribute. [See here](#attribute-options) for the specification of these objects.
+
+<!-- TOC --><a name="attribute-usage-restriction"></a>
+#### Attribute Field: `usage`
+
+The `usage` field must unambiguously express **which templates**, and **which specific parameter(s) of those templates**, can use the attribute. This field is a JSON object (map) keyed by template name, whose value is a list of parameter names within that template allowed to use the attribute:
+
+```json
+"usage": {
+  "orders_revenue_by": ["arg_dimension"],
+  "top_bottom_comparison": ["arg_calculation"]
+}
+```
+
+An empty object `{}` means the attribute is usable by any parameter of any template. Also an empty list `[]` for a template indicates that the attribute can be used in any parameter of the template.
+
+<!-- TOC --><a name="attribute-options"></a>
+#### Attribute Field: `options`
+
+Each entry in `options` is a JSON object with the following fields:
+- `label` (required): the human-facing name shown to / provided by the user (e.g. in a question or UI). This is what `call_template()` accepts. This label must be unique among all labels in the graph.
+- `value` (required): the literal or PyDough snippet substituted into the template source when this label is selected.
+
+<!-- TOC --><a name="attribute-options-list-dict"></a>
+##### Options with `list` or `dict` Values
+
+For attributes whose `type` is `list` or `dict`, `value` cannot be written as a native JSON array/object, because a raw JSON array or object cannot hold an unquoted PyDough expression (e.g. `pydough.expression`) — JSON only allows quoted strings, numbers, booleans, `null`, or nested arrays/objects as elements. Instead, the entire list or dict literal is written as a single string, using Python/PyDough syntax. This string is substituted verbatim into the source (it is not JSON-decoded).
+
+Example of the structure of the metadata for an attribute named `years`:
+
+```json
+{
+  "name": "years",
+  "usage": {"orders_revenue_by": ["arg_year"], "multiply_by_2": ["base_number"]},
+  "type": "int",
+  "description": "The year for which to calculate the revenue of orders.",
+  "options": [
+    { "label": "Year 1992", "value": 1992},
+    { "label": "Year 1993", "value": 1993}
+  ]
+}
+```
+
+Example of the structure of the metadata for an attribute of type `pydough`, whose options are filter conditions:
+
+```json
+{
+  "name": "order_filter_condition",
+  "usage": { "orders_filter_count": ["orders_filter"] },
+  "type": "pydough",
+  "description": "Condition(s) by which orders can be filtered",
+  "options": [
+    { "label": "Status O", "value": "(order_status == 'O')" },
+    { "label": "Price above 3000", "value": "(total_price > 3000)" },
+    { "label": "March", "value": "(MONTH(order_date) == 3)" },
+    { "label": "High priority", "value": "ISIN(order_priority, ('1-URGENT', '2-HIGH'))" }
+  ]
+}
+```
+
+Example of the structure of the metadata for an attribute of type `str`:
+
+```json
+{
+  "name": "order_priority_levels",
+  "usage": { "order_lvl_priority": ["level"] },
+  "type": "str",
+  "description": "Level of priority for an order",
+  "options": [
+    { "label": "LEVEL 0", "value": "other" },
+    { "label": "LEVEL 1", "value": "low" },
+    { "label": "LEVEL 2", "value": "medium" },
+    { "label": "LEVEL 3", "value": "high" }
+  ]
+}
+```
+
+Example of the structure of the metadata for an attribute of type `list`:
+
+```json
+{
+  "name": "dataframe_collection_column",
+  "usage": { "generate_df_collection": ["col1"] },
+  "type": "list",
+  "description": "List with various types of colors to be used in the dataframe collection",
+  "options": [
+    { "label": "COLORS", "value": "['blue', 'red', 'yellow', 'purple']" }
+  ]
+}
+```
+
+An analogous `dict`-typed attribute would follow the same pattern:
+
+```json
+{ "label": "DICT VALUE", "value": "{'key': pydough.expression}" }
+```
+
+<!-- TOC --><a name="template-definitions"></a>
+### Template Definitions
+
+A definition describes one callable template: its parameters, its PyDough source code, and what it returns.
+
+Every JSON object describing a template definition has the following fields:
+- `name` (required): unique template name, which must be a valid PyDough identifier and must not overlap with the name of other collections/properties/relationships/functions within the graph. Becomes both the generated PyDough function name and the string passed to `call_template()`. This name will become reserved like other function names in PyDough (`COUNT`, `LOWER`, etc.)
+- `description` (required): a semantic description of what the template computes.
+- `parameters` (required, `{}` if none): the template's arguments, keyed by parameter name. [See here](#template-parameters) for the specification of these objects.
+- `source` (required): the PyDough code body. Must assign to the variable named in `answer_variable`. Positional placeholders (`{1}`, `{2}`, …) are substituted with parameter values/expressions before evaluation. All details about `source` for template definitions can be found [here](#template-source).
+- `answer_variable` (required): name of the variable inside `source` whose value the generated function returns.
+
+<!-- TOC --><a name="template-parameters"></a>
+#### Definition Field: `parameters`
+
+`parameters` is a JSON object (map) keyed by parameter name. Each value is a JSON object with the following fields:
+- `type` (required): `"int"`, `"pydough"`, etc. `"pydough"` signals the value is a raw expression rather than a literal. To know more about the supported types [See here](#template-supported-types)
+- `description` (required): a semantic description of the parameter's purpose.
+
+<!-- TOC --><a name="template-parameter-numeration"></a>
+##### Parameter Numeration
+
+Parameters are numbered implicitly by their position within the `parameters` object: the first key defined is parameter `1`, the second is parameter `2`, and so on. This numeration determines which placeholder each parameter fills in `source` — parameter `1` replaces every `{1}` in the source code, parameter `2` replaces every `{2}`, etc.
+
+> **Note:** this relies on the `parameters` object preserving key insertion order. All standard JSON parsers used by this project (e.g. Python's `json` module) preserve insertion order, but this ordering is not part of the JSON specification itself — reordering, alphabetizing, or otherwise regenerating the keys of a `parameters` object will change which placeholder each parameter maps to.
+
+Example of the structure of the metadata for a parameter map with two parameters — `arg_year` is `{1}` and `arg_dimension` is `{2}` in `source`:
+
+```json
+"parameters": {
+  "arg_year": {
+    "type": "int",
+    "description": "The year for which to calculate the revenue of orders."
+  },
+  "arg_dimension": {
+    "type": "pydough",
+    "description": "The dimension by which to partition the revenue calculation."
+  }
+}
+```
+
+Example of the structure of the metadata for a template named `orders_revenue_by` (depends on another template, `order_revenue`):
+
+```json
+{
+  "name": "orders_filter_count",
+  "description": "Counts the number of orders placed that satisfied the given condition.",
+  "parameters": {
+    "orders_filter": {
+      "type": "pydough",
+      "description": "Condition(s) for the order to make it count"
+    }
+  },
+  "source": "result = COUNT(orders.WHERE({1}))",
+  "answer_variable": "result"
+}
+```
+
+Example of the structure of the metadata template named `order_revenue`:
+
+```json
+{
+  "name": "order_revenue",
+  "dependencies": [],
+  "description": "Calculates the revenue of an order, which is the sum of the extended price * (1 - discount) for all line items in the order.",
+  "parameters": {},
+  "source": "result = SUM(lines.extended_price * (1 - lines.discount))\n",
+  "answer_variable": "result"
+}
+```
+
+<!-- TOC --><a name="template-naming-collisions"></a>
+### Naming Collisions
+
+`name` (for both attributes and template definitions) must be validated against:
+1. Other attribute/template names (no duplicates within their own graph).
+2. Existing PyDough built-in functions (e.g. `GETPART`, `STRCOUNT`) — a template cannot shadow one of these.
+3. Python builtins, to the extent the generated function is exposed in a namespace where that matters.
+
+
+<!-- TOC --><a name="template-supported-types"></a>
+### Supported Types
+
+Both the `type` field of an [attribute](#template-attributes) and the `type` field of a [template parameter](#template-parameters) draw from the same fixed set of supported types. When an attribute is used to supply a value for a parameter, their `type`s must match.
+
+The currently supported types are:
+
+| Type | Description |
+|---|---|
+| `str` | A string literal. |
+| `int` | An integer literal. |
+| `float` | A floating-point literal. |
+| `list` | A Python list literal. Written as a [string](#attribute-options-list-dict) in attribute options. |
+| `dict` | A Python dict literal. Written as a [string](#attribute-options-list-dict) in attribute options. |
+| `pydough` | A raw, untyped PyDough expression/snippet (e.g. a column reference, a `CALCULATE` call, or the output of another template). |
+| `pd.DataFrame` | A pandas DataFrame. |
+| `datetime` | A `datetime` value. |
+
+For template parameters, every type except `pydough` is written as a type annotation on the generated function's signature (e.g. a parameter of type `int` named `base_year` becomes `base_year: int`). Parameters of type `pydough` are left unannotated, since they represent arbitrary PyDough expressions rather than a single Python type.
+
+<!-- TOC --><a name="template-source"></a>
+### Definition Field: `source`
+
+`source` is not limited to a single PyDough expression — it is the **body of a Python function**, and can contain anything valid inside one: `if`/`else` branching, `assert` statements, intermediate variables, loops, and even recursive calls back to the template itself (referenced by its own `name`). The only requirements are:
+
+- The code must assign to the variable named in `answer_variable` along every code path.
+- Positional placeholders (`{1}`, `{2}`, …) are substituted with the corresponding parameter names — following the [parameter numeration](#template-parameter-numeration) — before the code is parsed.
+
+Because of this, a template's `answer_variable` does not need to hold a PyDough collection/expression — it can just as easily be a plain Python/PyDough literal (`int`, `str`, `dict`, etc.), the result of ordinary Python control flow, or the result of the template recursively calling itself.
+
+Example of the structure of the metadata for a recursive template, which sums a per-year order counter from `base_year` through `last_year`:
+
+```json
+{
+  "name": "cumulative_orders_counter",
+  "description": "Calculates the cumulative counter of all orders placed from a base year through a given last year. Recursively sums the current year's counter and the cumulative counter of all next years.",
+  "parameters": {
+    "base_year": { "type": "int", "description": "The year through which to calculate cumulative revenue." },
+    "last_year": { "type": "int", "description": "The earliest year to include in the cumulation (recursion base case)." }
+  },
+  "source": "assert base_year <= last_year\nif {1} == {2}:\n  result = COUNT(orders.WHERE(YEAR(order_date) == base_year))\nelse:\n result = (\n COUNT(orders.WHERE(YEAR(order_date) == base_year)) + cumulative_orders_counter(base_year + 1, last_year))\n",
+  "answer_variable": "result"
+}
+```
+
+This is equivalent to generating the following function:
+
+```python
+def cumulative_orders_counter(base_year: int, last_year: int):
+    assert base_year <= last_year
+    if base_year == last_year:
+        result = COUNT(orders.WHERE(YEAR(order_date) == base_year))
+    else:
+        result = (
+            COUNT(orders.WHERE(YEAR(order_date) == base_year))
+            + cumulative_orders_counter(base_year + 1, last_year)
+        )
+    return result
+```
+
+TODO: Add link to the part how the templates are used
+
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
