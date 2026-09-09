@@ -776,7 +776,7 @@ def cumulative_orders_counter(base_year: int, last_year: int):
     return result
 ```
 
-TODO: Add link to the part how the templates are used
+You can find how to use templates and more examples [here](dsl#pydough-templates)
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
