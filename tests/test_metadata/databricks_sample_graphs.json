@@ -1083,7 +1083,7 @@
               "description": "Region to filter the nations by"
             }
           },
-          "source": "my_nations = nations.WHERE(region.name == {1})\nnations_tmp = pydough.to_table(my_nations, name='region_nations_t1', temp=False, replace=True)\nresult = nations_tmp.CALCULATE(name)",
+          "source": "my_nations = nations.WHERE(region.name == {1})\nnations_tmp = pydough.to_table(my_nations, name='region_nations_t1', write_path='e2e_tests_db.to_table_py313.region_nations_t1', temp=False, replace=True)\nresult = nations_tmp.CALCULATE(name)",
           "answer_variable": "result"
         },
         {
