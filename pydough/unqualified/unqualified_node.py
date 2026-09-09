@@ -446,7 +446,7 @@ class UnqualifiedNode(ABC):
         delimiter: str | None = None,
         filtering: bool = True,
         is_distinct: bool = False,
-    ):
+    ) -> "UnqualifiedNode":
         """
         Method used to create an EXPLODE node, transforming the existing
         collection by exploding each row into multiple rows based on the values

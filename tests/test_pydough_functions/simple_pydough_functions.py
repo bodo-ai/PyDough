@@ -102,8 +102,8 @@ def good_explode_04():
         value_name="v",
         index_name="i",
         version="array",
-        filtering=True,
-        is_distinct=False,
+        filtering=False,
+        is_distinct=True,
     )
 
 
@@ -154,8 +154,8 @@ def good_explode_08():
         index_name="i",
         version="string",
         delimiter=" ",
-        filtering=True,
-        is_distinct=False,
+        filtering=False,
+        is_distinct=True,
     )
 
 

@@ -108,8 +108,12 @@ class DatabaseConnection:
                 # TODO: (gh #175) enable typed DataFrames.
                 data = self.cursor.fetchall()
                 pd_table = pd.DataFrame(data, columns=column_names)
+            # Parse all semi-structured columns from JSON strings into native
+            # Python types.
             for idx in semi_structured_cols:
-                pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(json.loads)
+                pd_table.iloc[:, idx] = pd_table.iloc[:, idx].apply(
+                    lambda s: None if s is None else json.loads(s)
+                )
             return pd_table
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")

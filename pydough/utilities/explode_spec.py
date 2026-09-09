@@ -19,7 +19,7 @@ class ExplodeSpec:
     is_distinct: bool
 
     @property
-    def arg_list_string(self):
+    def arg_list_string(self) -> str:
         args: list[str] = []
         args.append(self.value_name)
         if self.index_name is not None:
@@ -32,7 +32,7 @@ class ExplodeSpec:
         return ", ".join(args)
 
     @property
-    def keyword_arg_string(self):
+    def keyword_arg_string(self) -> str:
         kwargs: list[str] = []
         kwargs.append(f"value_name={self.value_name!r}")
         if self.index_name is not None:

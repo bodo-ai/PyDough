@@ -2,7 +2,7 @@
 Definition of the base class for creating exceptions in PyDough.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from pydough.errors import (
     PyDoughException,
@@ -256,7 +256,7 @@ class PyDoughErrorBuilder:
         )
 
     def sql_call_dialect_unsupported(
-        self, operator: "PyDoughOperator", dialect: str
+        self, operator: Union["PyDoughOperator", "str"], dialect: str
     ) -> PyDoughException:
         """
         Creates an exception for when a SQL dialect does not allow converting

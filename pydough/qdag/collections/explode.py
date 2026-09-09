@@ -45,6 +45,13 @@ class Explode(ChildAccess):
             raise PyDoughQDAGException(
                 f"Cannot use {explode_spec.index_name!r} as the `index_name` for EXPLODE because it is already a term in the ancestor context"
             )
+        if (
+            explode_spec.index_name is not None
+            and explode_spec.index_name == explode_spec.value_name
+        ):
+            raise PyDoughQDAGException(
+                f"Cannot use {explode_spec.index_name!r} as the `index_name` for EXPLODE because it is the same as the `value_name`"
+            )
         self._name: str = name
         self._data: PyDoughExpressionQDAG = data
         self._explode_spec: ExplodeSpec = explode_spec

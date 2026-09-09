@@ -310,6 +310,11 @@ from pydough.unqualified import (
             "Cannot use 'key' as the `index_name` for EXPLODE because it is already a term in the ancestor context",
             id="bad_explode_22",
         ),
+        pytest.param(
+            "result = nations.EXPLODE(name, 'names', value_name='v', index_name='v', version='string', delimiter='#')",
+            "Cannot use 'v' as the `index_name` for EXPLODE because it is the same as the `value_name`",
+            id="bad_explode_23",
+        ),
     ],
 )
 def test_qualify_error(

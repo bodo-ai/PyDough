@@ -409,7 +409,7 @@ class AstNodeBuilder:
         data: PyDoughExpressionQDAG,
         name: str,
         explode_spec: ExplodeSpec,
-    ):
+    ) -> Explode:
         """
         Creates an EXPLODE instance.
 

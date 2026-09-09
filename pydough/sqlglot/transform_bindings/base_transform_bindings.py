@@ -2660,8 +2660,8 @@ class BaseTransformBindings:
         Returns:
             A SQLGlotExpression representing the array of items.
         """
-        raise NotImplementedError(
-            f"Array types are not currently supported in dialect {self._visitor._expr_visitor._dialect.name}."
+        raise self._visitor._session.error_builder.sql_call_dialect_unsupported(
+            "LITERAL ARRAY", self._visitor._session.database.dialect.name
         )
 
     def generate_dataframe_item_dialect_expression(
