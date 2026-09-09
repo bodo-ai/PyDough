@@ -326,6 +326,16 @@ answer = _ROOT.nations.CALCULATE(name=_ROOT.name, richest_customer_name=richest_
             "customers.CROSS(customers.orders.WHERE((order_priority == '1-URGENT'))).TOP_K(5, by=(key.DESC(na_pos='last')))",
             id="cross_filter",
         ),
+        pytest.param(
+            "answer = _ROOT.customers.EXPLODE(_ROOT.name, 'exploded_customer', index_name='i', value_name='v', version='string', delimiter=' ')",
+            "customers.EXPLODE(name, name='exploded_customer', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False)",
+            id="explode_01",
+        ),
+        pytest.param(
+            "answer = _ROOT.customers.EXPLODE(_ROOT.name, 'exploded_customer', index_name='i', value_name='v')",
+            "customers.EXPLODE(name, name='exploded_customer', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False)",
+            id="explode_02",
+        ),
     ],
 )
 def test_unqualified_to_string(

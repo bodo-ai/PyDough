@@ -23,6 +23,7 @@ from pydough.relational import (
     ColumnReference,
     CorrelatedReference,
     EmptySingleton,
+    Explode,
     Filter,
     GeneratedTable,
     Join,
@@ -1647,6 +1648,13 @@ class SimplificationVisitor(RelationalVisitor):
         output_predicates: dict[RelationalExpression, PredicateSet] = (
             self.generic_visit(node)
         )
+        self.stack.append(output_predicates)
+
+    def visit_explode(self, node: Explode) -> None:
+        output_predicates: dict[RelationalExpression, PredicateSet] = (
+            self.generic_visit(node)
+        )
+        node._explode_data = node._explode_data.accept_shuttle(self.shuttle)
         self.stack.append(output_predicates)
 
     def infer_null_predicates_from_condition(

@@ -8,17 +8,28 @@ import math
 from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot import parse_one
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import (
+    Identifier,
+    Lateral,
+    Select,
+    Subquery,
+    TableAlias,
+    Unnest,
+)
 
 import pydough.pydough_operators as pydop
 from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
-from pydough.types import PyDoughType
+from pydough.types import PyDoughType, StringType
+from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -64,6 +75,148 @@ class PostgresTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+        subquery_alias: str,
+    ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.val AS value, L.idx - 1 AS index
+        FROM (...) AS S
+        CROSS JOIN LATERAL UNNEST(explode_expr) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.val AS value, L.idx - 1 AS index
+        FROM (...) AS S,
+        CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(explode_expr, delimiter)) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.val AS value, L.idx - 1 AS index
+        FROM (...) AS S,
+        CROSS JOIN LATERAL UNNEST(REGEXP_SPLIT_TO_ARRAY(explode_expr, '')) WITH ORDINALITY AS L(val, idx)
+        ```
+        """
+        column_exprs: list[SQLGlotExpression] = [*exprs]
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="val"),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Column(
+                        this=sqlglot_expressions.Identifier(this="idx"),
+                        table=sqlglot_expressions.Identifier(this=lateral_alias),
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        if explode_spec.version == "string":
+            assert explode_spec.delimiter is not None, (
+                "Delimiter must be provided for string explode."
+            )
+            if explode_spec.delimiter == "":
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="REGEXP_SPLIT_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(""),
+                    ],
+                )
+            else:
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="STRING_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                    ],
+                )
+        explode_op: SQLGlotExpression
+        if val_index is None:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                    ],
+                ),
+            )
+        else:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                offset=sqlglot_expressions.Literal.number(1),
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                        sqlglot_expressions.Identifier(this="idx"),
+                    ],
+                ),
+            )
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
+            .join(Lateral(this=explode_op))
+        )
+
+        return result
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="ARRAY_AGG", expressions=args)
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        if len(items) == 0:
+            # Convoluted way to generate empty array literal in Postgres using
+            # SQLGlot, to work around Postgres's typing rules.
+            inner_term: str
+            match inner_type:
+                case BooleanType():
+                    inner_term = "true"
+                case StringType():
+                    inner_term = "''"
+                case NumericType():
+                    inner_term = "0"
+                case DatetimeType():
+                    inner_term = "CAST('1970-01-01' AS TIMESTAMP)"
+                case _:
+                    raise ValueError(
+                        f"Cannot support empty array of type {inner_type} in Postgres."
+                    )
+            return parse_one(f"(ARRAY[{inner_term}])[1:0]")
+        return sqlglot_expressions.Array(expressions=items)
 
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]

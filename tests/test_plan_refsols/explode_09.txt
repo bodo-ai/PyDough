@@ -1,0 +1,4 @@
+ROOT(columns=[('name', name), ('n_words', n_rows), ('words_list', listof_val)], orderings=[(name):asc_first])
+ AGGREGATE(keys={'name': name}, aggregations={'listof_val': LISTOF(val), 'n_rows': COUNT()})
+  EXPLODE(comment, value_name='val', index_name='idx', version='string', delimiter=' ', filtering=True, is_distinct=False, columns={'idx': idx, 'name': name, 'val': val})
+   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'name': r_name})

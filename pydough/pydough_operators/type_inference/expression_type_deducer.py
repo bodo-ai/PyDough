@@ -3,6 +3,7 @@ Utilities used for PyDough return type inference.
 """
 
 __all__ = [
+    "ArrayOfType",
     "ConstantType",
     "ExpressionTypeDeducer",
     "SelectArgumentType",
@@ -16,9 +17,10 @@ from pydough.errors.error_utils import (
     NoExtraKeys,
     PyDoughMetadataException,
     extract_integer,
+    extract_object,
     extract_string,
 )
-from pydough.types import PyDoughType, UnknownType, parse_type_from_string
+from pydough.types import ArrayType, PyDoughType, UnknownType, parse_type_from_string
 
 
 class ExpressionTypeDeducer(ABC):
@@ -87,6 +89,26 @@ class ConstantType(ExpressionTypeDeducer):
         return self.data_type
 
 
+class ArrayOfType(ExpressionTypeDeducer):
+    """
+    Type deduction implementation class that always returns an array type
+    of a specific PyDough type.
+    """
+
+    def __init__(self, inner_builder: ExpressionTypeDeducer):
+        self._inner_builder: ExpressionTypeDeducer = inner_builder
+
+    @property
+    def inner_builder(self) -> ExpressionTypeDeducer:
+        """
+        The inner type deducer used to determine the array element type.
+        """
+        return self._inner_builder
+
+    def infer_return_type(self, args: list[Any]) -> PyDoughType:
+        return ArrayType(self.inner_builder.infer_return_type(args))
+
+
 def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeDeducer:
     """
     Builds a type deducer from a JSON object.
@@ -136,6 +158,16 @@ def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeD
                     f"Invalid argument index in select argument deducer JSON data: {arg_idx!r}"
                 )
             return SelectArgumentType(arg_idx)
+
+        # Select argument deducer type.
+        case "array of":
+            NoExtraKeys({"type", "element type"}).verify(
+                json_data, "array of deducer JSON metadata"
+            )
+            inner_dict: dict[str, Any] = extract_object(
+                json_data, "element type", "array of deducer JSON data"
+            )
+            return ArrayOfType(build_deducer_from_json(inner_dict))
 
         case _:
             raise PyDoughMetadataException(f"Unknown deducer type: {deducer_type!r}")
