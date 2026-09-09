@@ -7181,7 +7181,9 @@ def test_pipeline_e2e_simple_week(
         pytest.param(
             dataframe_collection_bad_5,
             None,
-            re.escape("Array types are not currently supported in dialect SQLITE"),
+            re.escape(
+                "Cannot convert function LITERAL ARRAY to SQL using dialect SQLITE"
+            ),
             id="dataframe_collection_bad_5",
         ),
         pytest.param(

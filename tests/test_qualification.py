@@ -1000,7 +1000,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=True, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='array', filtering=False, is_distinct=True]
             """,
             id="good_explode_04",
         ),
@@ -1036,7 +1036,7 @@ from tests.test_pydough_functions.user_collections import (
             """
 ──┬─ TPCH
   └─┬─ TableCollection[nations]
-    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=True, is_distinct=False]
+    └─── Explode[name, name='exploded_nation', value_name='v', index_name='i', version='string', delimiter=' ', filtering=False, is_distinct=True]
             """,
             id="good_explode_08",
         ),
