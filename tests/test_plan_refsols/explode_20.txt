@@ -1,0 +1,6 @@
+ROOT(columns=[('char', char), ('n', n_rows)], orderings=[])
+ AGGREGATE(keys={'char': char}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=char != '':string, columns={'char': char})
+   EXPLODE(comment, value_name='char', index_name='idx', version='string', delimiter='', filtering=True, is_distinct=False, columns={'char': char, 'idx': idx})
+    LIMIT(limit=3:numeric, columns={'comment': comment}, orderings=[(key):asc_first])
+     SCAN(table=tpch.CUSTOMER, columns={'comment': c_comment, 'key': c_custkey})

@@ -467,12 +467,12 @@ Below are several examples the JSON for such verifiers:
 
 The JSON for a function deducer, used in the `output signature` field of a function definition, specifies the rules for determining the output type of a call to the function in terms of its input arguments. If a verifier is not provided, the default assumption is that the function call outputs an expression of type `"unknown"`.
 
-Each deducer has a mandatory string field `type` specifying what kind of verifier it is. The currently supported values are `"constant"` and `"select argument"`.
+Each deducer has a mandatory string field `type` specifying what kind of verifier it is. The currently supported values are `"constant"`, `"select argument"` and `"array of"`.
 
 <!-- TOC --><a name="function-deducer-type-constant"></a>
 ### Function Deducer Type: Constant
 
-Function deducers of this type have a type string of `"constant"` and correspond to a function call that always returns the same type. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+Function deducers of this type have a type string of `"constant"` and correspond to a function call that always returns the same type. Deducers of this type have the following additional key-value pairs in their metadata JSON object:
 
 - `value` (required): a type string ([see here for more information](#pydough-type-strings)) indicating what type the function always returns.
 
@@ -485,7 +485,7 @@ Below are several examples the JSON for such deducers:
 <!-- TOC --><a name="function-deducer-type-select-argument"></a>
 ### Function Deducer Type: Select Argument
 
-Function deducers of this type have a type string of `"select argument"` and correspond to a function call that always returns a value of the same type as a specific argument. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+Function deducers of this type have a type string of `"select argument"` and correspond to a function call that always returns a value of the same type as a specific argument. Deducers of this type have the following additional key-value pairs in their metadata JSON object:
 
 - `value` (required): a non-negative integer indicating which input argument to the function call should determine the output type of the function when called.
 
@@ -493,6 +493,18 @@ Below are several examples the JSON for such deducers:
 
 - Returns the type of the first argument: `{"type": "select argument", "value": 0}`
 - Returns the type of the second argument: `{"type": "select argument", "value": 1}`
+
+<!-- TOC --><a name="function-deducer-type-array-of"></a>
+### Function Deducer Type: Array Of
+
+Function deducers of this type have a type string of `"array of"` and correspond to a function call that returns an array type. Deducers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `element type` (required): a JSON object containing the specification for another function deducer containing the element type of the array.
+
+Below are several examples the JSON for such deducers:
+
+- Returns an array of strings: `{"type": "array of", "element type": {"type": "constant", "value": "string"}}`
+- Returns an array where the elements have the same type as the first argument: `{"type": "array of", "element type": {"type": "select argument", "value": 0}}`
 
 
 <!-- TOC --><a name="templates"></a>
@@ -765,7 +777,6 @@ def cumulative_orders_counter(base_year: int, last_year: int):
 ```
 
 TODO: Add link to the part how the templates are used
-
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings

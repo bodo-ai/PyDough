@@ -12,6 +12,7 @@ from pydough.relational import (
     CallExpression,
     ColumnReference,
     EmptySingleton,
+    Explode,
     Filter,
     GeneratedTable,
     Join,
@@ -318,6 +319,27 @@ class FilterPushdownShuttle(RelationalShuttle):
         # Materialize all filters before the user generated table, since they
         # cannot be pushed down any further.
         return self.flush_remaining_filters(generated_table, self.filters, set())
+
+    def visit_explode(self, explode: Explode) -> RelationalNode:
+        pushable_filters: set[RelationalExpression]
+        remaining_filters: set[RelationalExpression]
+        # Push all filters that only depend on columns that pass through
+        # from the input, as opposed to being generated outputs.
+        allowed_cols: set[str] = set()
+        for name, expr in explode.columns.items():
+            if not (
+                isinstance(expr, ColumnReference)
+                and expr.name
+                in (explode.explode_spec.value_name, explode.explode_spec.index_name)
+            ):
+                allowed_cols.add(name)
+        pushable_filters, remaining_filters = partition_expressions(
+            self.filters,
+            lambda expr: only_references_columns(expr, allowed_cols),
+        )
+        return self.flush_remaining_filters(
+            explode, remaining_filters, pushable_filters
+        )
 
 
 def push_filters(node: RelationalNode, session: PyDoughSession) -> RelationalNode:

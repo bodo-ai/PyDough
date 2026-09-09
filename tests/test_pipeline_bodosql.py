@@ -1479,6 +1479,22 @@ result = (
             id="color_q16",
         ),
         pytest.param(
+            # List the most frequent words that appear within color names
+            PyDoughPandasTest(
+                "result = ("
+                " colors"
+                " .EXPLODE(key, 'words', value_name='word', index_name='idx', version='string', delimiter='_')"
+                " .PARTITION(name='word_groups', by=word)"
+                " .BEST(by=COUNT(words).DESC(), allow_ties=True)"
+                " .CALCULATE(word)"
+                ")",
+                "COLORSHOP",
+                lambda: pd.DataFrame({"word": ["blue"]}),
+                "color_q18",
+            ),
+            id="color_q18",
+        ),
+        pytest.param(
             # List all colors whose name ends with `yz`.
             PyDoughPandasTest(
                 "result = colors.WHERE(ENDSWITH(name, 'yz'))",

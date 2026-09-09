@@ -150,6 +150,7 @@ These functions can be called on plural data to aggregate it into a singular exp
 - `SAMPLE_STD`: returns the sample standard deviation of the values of a plural expression.
 - `POPULATION_VAR`: returns the population variance of the values of a plural expression.
 - `POPULATION_STD`: returns the population standard deviation of the values of a plural expression.
+- `LISTOF`: returns an array of the elements within the plural expression.
 
 ##### Collection Aggregations
 

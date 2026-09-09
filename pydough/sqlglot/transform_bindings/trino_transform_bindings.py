@@ -10,6 +10,13 @@ from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import (
+    Identifier,
+    Select,
+    Subquery,
+    TableAlias,
+    Unnest,
+)
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek
@@ -18,6 +25,7 @@ from pydough.types import (
     PyDoughType,
     StringType,
 )
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit, apply_parens
@@ -105,6 +113,123 @@ class TrinoTransformBindings(BaseTransformBindings):
                     this=unit.value.upper(), expressions=[ts_expr]
                 )
         return func_expr
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.ArrayAgg(this=args[0])
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Array(expressions=items)
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+        subquery_alias: str,
+    ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL UNNEST(explode_expr) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL UNNEST(SPLIT(explode_expr, delimiter)) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.val AS value, L.idx AS index
+        FROM (...) AS S,
+        LATERAL UNNEST(REGEXP_EXTRACT_ALL(explode_expr, '.')) WITH ORDINALITY AS L(val, idx)
+        ```
+        """
+        column_exprs: list[SQLGlotExpression] = [*exprs]
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="val"),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Column(
+                        this=sqlglot_expressions.Identifier(this="idx"),
+                        table=sqlglot_expressions.Identifier(this=lateral_alias),
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        if explode_spec.version == "string":
+            assert explode_spec.delimiter is not None, (
+                "Delimiter must be provided for string explode."
+            )
+            if explode_spec.delimiter == "":
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="regexp_extract_all",
+                    expressions=[explode_expr, sqlglot_expressions.Literal.string(".")],
+                )
+            else:
+                explode_expr = sqlglot_expressions.Split(
+                    this=explode_expr,
+                    expression=sqlglot_expressions.Literal.string(
+                        explode_spec.delimiter
+                    ),
+                )
+        explode_op: SQLGlotExpression
+        if val_index is None:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                    ],
+                ),
+            )
+        else:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[sqlglot_expressions.Identifier(this="val")],
+                ),
+                offset=sqlglot_expressions.Identifier(this="idx"),
+            )
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
+            .join(explode_op)
+        )
+
+        return result
 
     def convert_datediff(
         self,

@@ -1,0 +1,8 @@
+ROOT(columns=[('key', key), ('idx1', idx1), ('idx2', idx2), ('idx3', idx3), ('val3', val3)], orderings=[])
+ FILTER(condition=1:numeric == RANKING(args=[], partition=[key], order=[(idx1):desc_first, (idx2):desc_first, (idx3):asc_last], allow_ties=False), columns={'idx1': idx1, 'idx2': idx2, 'idx3': idx3, 'key': key, 'val3': val3})
+  FILTER(condition=val3 != '':string, columns={'idx1': idx1, 'idx2': idx2, 'idx3': idx3, 'key': key, 'val3': val3})
+   EXPLODE(val2, value_name='val3', index_name='idx3', version='string', delimiter=' ', filtering=True, is_distinct=False, columns={'idx1': idx1, 'idx2': idx2, 'idx3': idx3, 'key': key, 'val3': val3})
+    EXPLODE(val1, value_name='val2', index_name='idx2', version='string', delimiter=',', filtering=True, is_distinct=False, columns={'idx1': idx1, 'idx2': idx2, 'key': key, 'val2': val2})
+     EXPLODE(comment, value_name='val1', index_name='idx1', version='string', delimiter='.', filtering=True, is_distinct=False, columns={'idx1': idx1, 'key': key, 'val1': val1})
+      LIMIT(limit=3:numeric, columns={'comment': comment, 'key': key}, orderings=[(key):asc_first])
+       SCAN(table=tpch.CUSTOMER, columns={'comment': c_comment, 'key': c_custkey})
