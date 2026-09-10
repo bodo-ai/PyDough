@@ -21,6 +21,7 @@ __all__ = [
     "UnqualifiedTopK",
     "UnqualifiedWhere",
     "UnqualifiedWindow",
+    "call_template",
     "display_raw",
     "from_string",
     "init_pydough_context",
@@ -50,6 +51,7 @@ from .unqualified_node import (
     display_raw,
 )
 from .unqualified_transform import (
+    call_template,
     from_string,
     init_pydough_context,
     transform_cell,
