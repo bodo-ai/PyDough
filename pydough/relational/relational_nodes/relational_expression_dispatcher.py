@@ -10,6 +10,7 @@ from pydough.relational.relational_expressions import (
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
+from .explode import Explode
 from .filter import Filter
 from .join import Join
 from .limit import Limit
@@ -80,3 +81,7 @@ class RelationalExpressionDispatcher(RelationalVisitor):
 
     def visit_generated_table(self, generated_table) -> None:
         self.visit_common(generated_table)
+
+    def visit_explode(self, explode: Explode):
+        self.visit_common(explode)
+        explode.explode_data.accept(self._expr_visitor)

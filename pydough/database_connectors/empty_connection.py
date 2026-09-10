@@ -11,7 +11,7 @@ __all__ = ["empty_connection"]
 
 from pydough.errors import PyDoughSessionException
 
-from .database_connector import DatabaseConnection
+from .database_connector import DatabaseConnection, DatabaseDialect
 
 
 class EmptyConnection(Connection):
@@ -36,4 +36,6 @@ class EmptyConnection(Connection):
         raise PyDoughSessionException("No SQL Database is specified.")
 
 
-empty_connection: DatabaseConnection = DatabaseConnection(EmptyConnection())
+empty_connection: DatabaseConnection = DatabaseConnection(
+    EmptyConnection(), DatabaseDialect.ANSI
+)

@@ -9,6 +9,7 @@ __all__ = [
     "HybridCalculate",
     "HybridChildPullUp",
     "HybridCollectionAccess",
+    "HybridExplode",
     "HybridFilter",
     "HybridLimit",
     "HybridNoop",
@@ -31,6 +32,8 @@ from pydough.qdag import (
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
+from pydough.types import NumericType
+from pydough.utilities import ExplodeSpec
 
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
@@ -518,3 +521,37 @@ class HybridUserGeneratedCollection(HybridOperation):
 
     def __repr__(self):
         return self.user_collection.to_string()
+
+
+class HybridExplode(HybridOperation):
+    """
+    Class for HybridOperation corresponding to the EXPLODE operator.
+    """
+
+    def __init__(
+        self,
+        explode_data: HybridExpr,
+        explode_spec: ExplodeSpec,
+        parent_unique: list[HybridExpr],
+    ):
+        self.explode_data: HybridExpr = explode_data
+        self.explode_spec: ExplodeSpec = explode_spec
+        terms: dict[str, HybridExpr] = {}
+        unique_exprs: list[HybridExpr] = []
+        terms[explode_spec.value_name] = HybridRefExpr(
+            explode_spec.value_name, explode_data.typ
+        )
+        if explode_spec.index_name is not None:
+            terms[explode_spec.index_name] = HybridRefExpr(
+                explode_spec.index_name, NumericType()
+            )
+        if explode_spec.is_distinct:
+            unique_exprs.append(terms[explode_spec.value_name])
+        else:
+            assert explode_spec.index_name is not None
+            unique_exprs.append(terms[explode_spec.index_name])
+        unique_exprs.extend(parent_unique)
+        super().__init__(terms, {}, [], unique_exprs)
+
+    def __repr__(self):
+        return f"EXPLODE[{self.explode_data}, {self.explode_spec.arg_list_string}]"

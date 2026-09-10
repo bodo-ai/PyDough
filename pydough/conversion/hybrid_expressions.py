@@ -325,6 +325,8 @@ class HybridBackRefExpr(HybridExpr):
     def shift_back(self, levels: int, shift_correl: bool = True) -> HybridExpr:
         if levels == 0:
             return self
+        elif levels < 0 and abs(levels) == self.back_idx:
+            return HybridRefExpr(self.name, self.typ)
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
     def squish_backrefs_into_correl(

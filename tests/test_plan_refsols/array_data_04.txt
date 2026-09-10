@@ -1,0 +1,2 @@
+ROOT(columns=[('idx', idx), ('arr_d', arr_d), ('arr_t', arr_t)], orderings=[])
+ GENERATED_TABLE(DataframeCollection(name='tbl', shape=(4, 3), columns=['idx', 'arr_d', 'arr_t']))

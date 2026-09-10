@@ -1,0 +1,10 @@
+SELECT
+  _s0.idx,
+  _s0.val AS letter
+FROM (VALUES
+  (NULL)) AS _q_0(_col_0)
+CROSS JOIN LATERAL (
+  SELECT
+    UNNEST(REGEXP_SPLIT_TO_ARRAY('ALPHABET', '')) AS _col_0,
+    GENERATE_SUBSCRIPTS(REGEXP_SPLIT_TO_ARRAY('ALPHABET', ''), 1) - 1 AS _col_1
+) AS _s0(val, idx)

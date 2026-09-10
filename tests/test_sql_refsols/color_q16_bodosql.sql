@@ -1,11 +1,11 @@
 WITH _t1 AS (
   SELECT
-    ARRAY_AGG(identname) AS listof_identname,
     chex,
+    ARRAY_AGG(identname) AS listof_identname,
     COUNT(*) AS n_rows
   FROM clrs
   GROUP BY
-    2
+    1
 )
 SELECT
   chex AS hex_code,
