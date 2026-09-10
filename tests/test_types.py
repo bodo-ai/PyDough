@@ -5,7 +5,7 @@ Unit tests the PyDough types module.
 import pytest
 
 # Used so eval() has access to all the type classes
-from pydough.types import *  # noqa
+from pydough.types import *
 from pydough.types import parse_type_from_string
 
 

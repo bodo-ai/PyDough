@@ -116,7 +116,9 @@ Below is each binary operator currently supported in PyDough.
 Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
 
 ```py
-Lineitems.CALCULATE(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_price)
+Lineitems.CALCULATE(
+    value=(extended_price * (1 - (discount**2)) + 1.0) / part.retail_price
+)
 ```
 
 > [!WARNING]
@@ -130,12 +132,12 @@ Expression values can be compared using standard comparison operators: `<=`, `<`
 
 ```py
 customers.CALCULATE(
-    in_debt = acctbal < 0,
-    at_most_12_orders = COUNT(orders) <= 12,
-    is_european = nation.region.name == "EUROPE",
-    non_german = nation.name != "GERMANY",
-    non_empty_acct = acctbal > 0,
-    at_least_5_orders = COUNT(orders) >= 5,
+    in_debt=acctbal < 0,
+    at_most_12_orders=COUNT(orders) <= 12,
+    is_european=nation.region.name == "EUROPE",
+    non_german=nation.name != "GERMANY",
+    non_empty_acct=acctbal > 0,
+    at_least_5_orders=COUNT(orders) >= 5,
 )
 ```
 
@@ -153,9 +155,9 @@ is_asian = nation.region.name == "ASIA"
 is_european = nation.region.name == "EUROPE"
 in_debt = acctbal < 0
 customers.CALCULATE(
-    is_eurasian = is_asian | is_european,
-    is_not_eurasian = ~(is_asian | is_european),
-    is_european_in_debt = is_european & in_debt
+    is_eurasian=is_asian | is_european,
+    is_not_eurasian=~(is_asian | is_european),
+    is_european_in_debt=is_european & in_debt,
 )
 ```
 
@@ -175,7 +177,7 @@ Below is each unary operator currently supported in PyDough.
 A numerical expression's sign can be flipped by prefixing it with the `-` operator:
 
 ```py
-Lineitems.CALCULATE(lost_value = extended_price * (-discount))
+Lineitems.CALCULATE(lost_value=extended_price * (-discount))
 ```
 
 <!-- TOC --><a name="other-operators"></a>
@@ -218,7 +220,7 @@ Below is each function currently supported in PyDough that operates on strings.
 Calling `LOWER` on a string converts its characters to lowercase:
 
 ```py
-customers.CALCULATE(lowercase_name = LOWER(name))
+customers.CALCULATE(lowercase_name=LOWER(name))
 ```
 
 <!-- TOC --><a name="upper"></a>
@@ -228,7 +230,7 @@ customers.CALCULATE(lowercase_name = LOWER(name))
 Calling `UPPER` on a string converts its characters to uppercase:
 
 ```py
-customers.CALCULATE(uppercase_name = UPPER(name))
+customers.CALCULATE(uppercase_name=UPPER(name))
 ```
 
 <!-- TOC --><a name="length"></a>
@@ -238,7 +240,7 @@ customers.CALCULATE(uppercase_name = UPPER(name))
 Calling `length` on a string returns the number of characters it contains:
 
 ```py
-Suppliers.CALCULATE(n_chars_in_comment = LENGTH(comment))
+Suppliers.CALCULATE(n_chars_in_comment=LENGTH(comment))
 ```
 
 <!-- TOC --><a name="startswith"></a>
@@ -248,7 +250,7 @@ Suppliers.CALCULATE(n_chars_in_comment = LENGTH(comment))
 The `STARTSWITH` function checks if its first argument begins with its second argument as a string prefix:
 
 ```py
-Parts.CALCULATE(begins_with_yellow = STARTSWITH(name, "yellow"))
+Parts.CALCULATE(begins_with_yellow=STARTSWITH(name, "yellow"))
 ```
 
 <!-- TOC --><a name="endswith"></a>
@@ -258,7 +260,7 @@ Parts.CALCULATE(begins_with_yellow = STARTSWITH(name, "yellow"))
 The `ENDSWITH` function checks if its first argument ends with its second argument as a string suffix:
 
 ```py
-Parts.CALCULATE(ends_with_chocolate = ENDSWITH(name, "chocolate"))
+Parts.CALCULATE(ends_with_chocolate=ENDSWITH(name, "chocolate"))
 ```
 
 <!-- TOC --><a name="contains"></a>
@@ -268,7 +270,7 @@ Parts.CALCULATE(ends_with_chocolate = ENDSWITH(name, "chocolate"))
 The `CONTAINS` function checks if its first argument contains its second argument as a substring:
 
 ```py
-Parts.CALCULATE(is_green = CONTAINS(name, "green"))
+Parts.CALCULATE(is_green=CONTAINS(name, "green"))
 ```
 
 <!-- TOC --><a name="like"></a>
@@ -278,7 +280,7 @@ Parts.CALCULATE(is_green = CONTAINS(name, "green"))
 The `LIKE` function checks if the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 
 ```py
-Orders.CALCULATE(is_special_request = LIKE(comment, "%special%requests%"))
+Orders.CALCULATE(is_special_request=LIKE(comment, "%special%requests%"))
 ```
 
 [This link](https://www.w3schools.com/sql/sql_like.asp) explains how these SQL pattern strings work and provides some examples.
@@ -290,12 +292,10 @@ Orders.CALCULATE(is_special_request = LIKE(comment, "%special%requests%"))
 The `JOIN_STRINGS` function concatenates all its string arguments, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
 
 ```py
-Regions.CALCULATE(
-   region_name=name
-).nations.CALCULATE(
-   nation_name=name
+Regions.CALCULATE(region_name=name).nations.CALCULATE(
+    nation_name=name
 ).customers.CALCULATE(
-   fully_qualified_name = JOIN_STRINGS("-", region_name, nation_name, name)
+    fully_qualified_name=JOIN_STRINGS("-", region_name, nation_name, name)
 )
 ```
 
@@ -319,7 +319,7 @@ The function behaves as follows:
 - If the padding argument is not a single character, it raises an error.
 
 ```py
-customers.CALCULATE(left_padded_name = LPAD(name, 30, "*"))
+customers.CALCULATE(left_padded_name=LPAD(name, 30, "*"))
 ```
 
 Here are examples on how it pads on string literals:
@@ -349,7 +349,7 @@ The function behaves as follows:
 - If the padding argument is not a single character, it raises an error
 
 ```py
-customers.CALCULATE(right_padded_name = RPAD(name, 30, "*"))
+customers.CALCULATE(right_padded_name=RPAD(name, 30, "*"))
 ```
 
 Here are examples on how it pads on string literals:
@@ -391,8 +391,12 @@ This function is equivalent to python's `str.strip()` method.
 Note: This function is case-sensitive.
 
 ```py
-customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trailing whitespace
-customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
+customers.CALCULATE(
+    stripped_name=STRIP(name)
+)  # removes all leading and trailing whitespace
+customers.CALCULATE(
+    stripped_name=STRIP(name, "aeiou")
+)  # removes all leading and trailing vowels
 ```
 
 | **Input String (X)**       | **STRIP(X, Y)**                    | **Result**          |
@@ -412,8 +416,10 @@ This function is equivalent to Python’s `str.replace()` method with the defaul
 Note: This function is case-sensitive.
 
 ```py
-Customers.CALCULATE(updated_name= REPLACE(name, "xy", "..")) # replaces all `xy` with `..`
-Customers.CALCULATE(updated_name= REPLACE(name, "xy")) # removes all `xy` appearances.
+Customers.CALCULATE(
+    updated_name=REPLACE(name, "xy", "..")
+)  # replaces all `xy` with `..`
+Customers.CALCULATE(updated_name=REPLACE(name, "xy"))  # removes all `xy` appearances.
 ```
 
 | **Input String (X)**          | **REPLACE(X, Y, Z)**                    | **Result**          |
@@ -430,9 +436,13 @@ This function requires the two arguments, and is equivalent to the Python string
 Note: This function is case-sensitive and if one or both of the arguments are an empty string returns 0.
 
 ```py
-Customers.CALCULATE(count_substring= STRCOUNT(name, "e")) # counts how many 'e's are in name
-Customers.CALCULATE(count_substring= STRCOUNT(name, "Alex")) # counts how many 'Alex's are in name
-Customers.CALCULATE(count_substring= STRCOUNT(name, "")) # returns 0 by default
+Customers.CALCULATE(
+    count_substring=STRCOUNT(name, "e")
+)  # counts how many 'e's are in name
+Customers.CALCULATE(
+    count_substring=STRCOUNT(name, "Alex")
+)  # counts how many 'Alex's are in name
+Customers.CALCULATE(count_substring=STRCOUNT(name, ""))  # returns 0 by default
 ```
 
 | **Input String (X)**          | **STRCOUNT(X, Y)**                    | **Result**          |
@@ -455,13 +465,13 @@ If the index is out of range, `GETPART` returns `""`. If the delimiter is an emp
 
 ```py
 # Extracts the first name from a full name
-Customers.CALCULATE(first_name = GETPART(name, " ", 1))
+Customers.CALCULATE(first_name=GETPART(name, " ", 1))
 
 # Extracts the last name from a full name
-Customers.CALCULATE(last_name = GETPART(name, " ", -1))
+Customers.CALCULATE(last_name=GETPART(name, " ", -1))
 
 # Extracts the second part from a hyphen-separated string
-Parts.CALCULATE(second_code = GETPART(code, "-", 2))
+Parts.CALCULATE(second_code=GETPART(code, "-", 2))
 ```
 
 | **Input String**      | **Delimiter** | **Index** | **GETPART Result** |
@@ -526,16 +536,16 @@ If there are multiple modifiers, they operate left-to-right.
 # 5. The current day, at midnight
 # 6. The first day after the start of the current quarter
 TPCH.CALCULATE(
-   ts_1=DATETIME('now'),
-   ts_2=DATETIME('NoW', 'start of month'),
-   ts_3=DATETIME(' CURRENT_DATE ', '12 hours'),
-   ts_4=DATETIME('Current Timestamp', 'start of y', '- 1 D'),
-   ts_5=DATETIME('NOW', '  Start  of  Day  '),
-   ts_6=DATETIME('now', 'start of quarter', '+1 d'),
+    ts_1=DATETIME("now"),
+    ts_2=DATETIME("NoW", "start of month"),
+    ts_3=DATETIME(" CURRENT_DATE ", "12 hours"),
+    ts_4=DATETIME("Current Timestamp", "start of y", "- 1 D"),
+    ts_5=DATETIME("NOW", "  Start  of  Day  "),
+    ts_6=DATETIME("now", "start of quarter", "+1 d"),
 )
 
 # For each order, truncates the order date to the first day of the year
-Orders.CALCULATE(order_year=DATETIME(order_year, 'START OF Y'))
+Orders.CALCULATE(order_year=DATETIME(order_year, "START OF Y"))
 ```
 
 <!-- TOC --><a name="year"></a>
@@ -565,7 +575,7 @@ Orders.WHERE(QUARTER(order_date) == 1)
 Calling `MONTH` on a date/timestamp extracts the month of the year it belongs to:
 
 ```py
-Orders.CALCULATE(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
+Orders.CALCULATE(is_summer=(MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
 ```
 
 <!-- TOC --><a name="day"></a>
@@ -575,7 +585,7 @@ Orders.CALCULATE(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8)
 Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
 
 ```py
-Orders.CALCULATE(is_first_of_month = DAY(order_date) == 1)
+Orders.CALCULATE(is_first_of_month=DAY(order_date) == 1)
 ```
 
 <!-- TOC --><a name="hour"></a>
@@ -586,7 +596,7 @@ Calling `HOUR` on a date/timestamp extracts the hour it belongs to. The range of
 is from 0-23:
 
 ```py
-Orders.CALCULATE(is_12pm = HOUR(order_date) == 12)
+Orders.CALCULATE(is_12pm=HOUR(order_date) == 12)
 ```
 
 <!-- TOC --><a name="minute"></a>
@@ -597,7 +607,7 @@ Calling `MINUTE` on a date/timestamp extracts the minute. The range of output
 is from 0-59:
 
 ```py
-Orders.CALCULATE(is_half_hour = MINUTE(order_date) == 30)
+Orders.CALCULATE(is_half_hour=MINUTE(order_date) == 30)
 ```
 
 <!-- TOC --><a name="second"></a>
@@ -608,7 +618,7 @@ Calling `SECOND` on a date/timestamp extracts the second. The range of output
 is from 0-59:
 
 ```py
-Orders.CALCULATE(is_lt_30_seconds = SECOND(order_date) < 30)
+Orders.CALCULATE(is_lt_30_seconds=SECOND(order_date) < 30)
 ```
 
 <!-- TOC --><a name="datediff"></a>
@@ -634,9 +644,7 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
 ```py
 # Calculates, for each order, the number of days since January 1st 1992
 # that the order was placed:
-Orders.CALCULATE( 
-   days_since=DATEDIFF("days",datetime.date(1992, 1, 1), order_date)
-)
+Orders.CALCULATE(days_since=DATEDIFF("days", datetime.date(1992, 1, 1), order_date))
 ```
 
 The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown. See [`DATETIME`](#datetime) for the supported units and their aliases. Invalid or unrecognized units will result in an error.
@@ -651,7 +659,7 @@ In other words, `DAYOFWEEK` returns which day of the week is the given date/time
 
 ```py
 # Returns the day of the week for the order date
-Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
+Orders.CALCULATE(day_of_week=DAYOFWEEK(order_date))
 ```
 
 The following table shows the day of the week for a given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config and if the week starts at 0 or 1 decided by the `start_week_as_zero` config.
@@ -675,7 +683,7 @@ The `DAYNAME` function returns the name of the day of the week for a given date/
 
 ```py
 # Returns the name of the day of the week for the order date
-Orders.CALCULATE(day_name = DAYNAME(order_date))
+Orders.CALCULATE(day_name=DAYNAME(order_date))
 ```
 
 <!-- TOC --><a name="monthname"></a>
@@ -685,7 +693,7 @@ The `MONTHNAME` function returns the name of the month of the year for a given d
 
 ```py
 # Retuns the 3-letter abbrivation of the month for the order date
-Orders.CALCULATE(day_name = MONTHNAME(order_date))
+Orders.CALCULATE(day_name=MONTHNAME(order_date))
 ```
 
 <!-- TOC --><a name="conditional-functions"></a>
@@ -703,7 +711,7 @@ The `IFF` function cases on the True/False value of its first argument. If it is
 ```py
 qty_from_germany = IFF(supplier.nation.name == "GERMANY", quantity, 0)
 customers.CALCULATE(
-    total_quantity_shipped_from_germany = SUM(lines.CALCULATE(q=qty_from_germany).q)
+    total_quantity_shipped_from_germany=SUM(lines.CALCULATE(q=qty_from_germany).q)
 )
 ```
 
@@ -724,7 +732,7 @@ Parts.WHERE(ISIN(size, (10, 11, 17, 19, 45)))
 The `DEFAULT_TO` function returns the first of its arguments that is non-null (e.g. the same as the `COALESCE` function in SQL):
 
 ```py
-Lineitems.CALCULATE(adj_tax = DEFAULT_TO(tax, 0))
+Lineitems.CALCULATE(adj_tax=DEFAULT_TO(tax, 0))
 ```
 
 <!-- TOC --><a name="present"></a>
@@ -734,7 +742,7 @@ Lineitems.CALCULATE(adj_tax = DEFAULT_TO(tax, 0))
 The `PRESENT` function checks if its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
 
 ```py
-Lineitems.CALCULATE(has_tax = PRESENT(tax))
+Lineitems.CALCULATE(has_tax=PRESENT(tax))
 ```
 
 <!-- TOC --><a name="absent"></a>
@@ -744,7 +752,7 @@ Lineitems.CALCULATE(has_tax = PRESENT(tax))
 The `ABSENT` function checks if its argument is null (e.g. the same as `IS NULL` in SQL):
 
 ```py
-Lineitems.CALCULATE(no_tax = ABSENT(tax))
+Lineitems.CALCULATE(no_tax=ABSENT(tax))
 ```
 
 <!-- TOC --><a name="keep_if"></a>
@@ -754,7 +762,11 @@ Lineitems.CALCULATE(no_tax = ABSENT(tax))
 The `KEEP_IF` function returns the first function if the second arguments is True, otherwise it returns a null value. In other words, `KEEP_IF(a, b)` is equivalent to the SQL expression `CASE WHEN b THEN a END`.
 
 ```py
-TPCH.CALCULATE(avg_non_debt_balance = AVG(customers.CALCULATE(no_debt_bal = KEEP_IF(acctbal, acctbal > 0)).no_debt_bal))
+TPCH.CALCULATE(
+    avg_non_debt_balance=AVG(
+        customers.CALCULATE(no_debt_bal=KEEP_IF(acctbal, acctbal > 0)).no_debt_bal
+    )
+)
 ```
 
 <!-- TOC --><a name="monotonic"></a>
@@ -780,9 +792,9 @@ Below is each numerical function currently supported in PyDough.
 The `ABS` function returns the absolute value of its input. The Python builtin `abs()` function can also be used to accomplish the same thing.
 
 ```py
-customers.CALCULATE(acct_magnitude = ABS(acctbal))
+customers.CALCULATE(acct_magnitude=ABS(acctbal))
 # The below statement is equivalent to above.
-customers.CALCULATE(acct_magnitude = abs(acctbal))
+customers.CALCULATE(acct_magnitude=abs(acctbal))
 ```
 
 <!-- TOC --><a name="round"></a>
@@ -792,14 +804,14 @@ customers.CALCULATE(acct_magnitude = abs(acctbal))
 The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places (to match the Python builtin `round()` function). The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
-Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
+Parts.CALCULATE(rounded_price=ROUND(retail_price, 1))
 # The below statement is equivalent to above.
-Parts.CALCULATE(rounded_price = round(retail_price, 1))
+Parts.CALCULATE(rounded_price=round(retail_price, 1))
 
 # The below statement takes the default precision as 0.
-Parts.CALCULATE(rounded_price = ROUND(retail_price))
+Parts.CALCULATE(rounded_price=ROUND(retail_price))
 # The below statement is equivalent to above.
-Parts.CALCULATE(rounded_price = ROUND(retail_price,0))
+Parts.CALCULATE(rounded_price=ROUND(retail_price, 0))
 ```
 
 <!-- TOC --><a name="power"></a>
@@ -809,7 +821,7 @@ Parts.CALCULATE(rounded_price = ROUND(retail_price,0))
 The `CEIL` function rounds its argument up to the nearest integer. It returns the smallest integer value that is greater than or equal to the input. This is equivalent to Python's `math.ceil()` function and corresponds to the SQL `CEIL` or `CEILING` function.
 
 ```py
-parts.CALCULATE(ceiled_price = CEIL(retail_price))
+parts.CALCULATE(ceiled_price=CEIL(retail_price))
 ```
 Here are examples on how `CEIL` works:
 | Input | Output |
@@ -824,7 +836,7 @@ Note: `CEIL` only accepts a single numeric argument and always returns an intege
 The `FLOOR` function rounds its argument down to the nearest integer. It returns the greatest integer value that is less than or equal to the input. This is equivalent to Python's `math.floor()` function and the SQL `FLOOR` function.
 
 ```py
-parts.CALCULATE(floored_price = FLOOR(retail_price))
+parts.CALCULATE(floored_price=FLOOR(retail_price))
 ```
 
 Here are examples on how `FLOOR` works:
@@ -840,7 +852,7 @@ Note: `FLOOR` only accepts a single numeric argument and always returns an integ
 The `POWER` function exponentiates its first argument to the power of its second argument.
 
 ```py
-Parts.CALCULATE(powered_price = POWER(retail_price, 2))
+Parts.CALCULATE(powered_price=POWER(retail_price, 2))
 ```
 
 <!-- TOC --><a name="sqrt"></a>
@@ -850,7 +862,7 @@ Parts.CALCULATE(powered_price = POWER(retail_price, 2))
 The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,0.5)`.
 
 ```py
-Parts.CALCULATE(sqrt_price = SQRT(retail_price))
+Parts.CALCULATE(sqrt_price=SQRT(retail_price))
 ```
 
 <!-- TOC --><a name="sign"></a>
@@ -860,7 +872,7 @@ Parts.CALCULATE(sqrt_price = SQRT(retail_price))
 The `SIGN` function returns the sign of its input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
 
 ```py
-Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
+Suppliers.CALCULATE(sign_of_acctbal=SIGN(account_balance))
 ```
 
 <!-- TOC --><a name="smallest"></a>
@@ -871,16 +883,18 @@ The `SMALLEST` function returns the smallest value from the set of values it is 
 
 ```py
 TPCH.CALCULATE(
-    s1=SMALLEST(20,10,10,-1,-2,100,-200), # Returns -200
-    s2=SMALLEST(-0.001,-0.01,-0.0001), # Returns -0.0001
-    s3=SMALLEST(datetime.datetime(2025,1,1),datetime.datetime(2024,1,1)), # Returns 2024-01-01
-    s4=SMALLEST(1,None,3,4), # Returns NULL
+    s1=SMALLEST(20, 10, 10, -1, -2, 100, -200),  # Returns -200
+    s2=SMALLEST(-0.001, -0.01, -0.0001),  # Returns -0.0001
+    s3=SMALLEST(
+        datetime.datetime(2025, 1, 1), datetime.datetime(2024, 1, 1)
+    ),  # Returns 2024-01-01
+    s4=SMALLEST(1, None, 3, 4),  # Returns NULL
 )
 # Average gap, in days, for shipments between when they were ordered
 # versus when they were expected to arrive (or when they actually arrived,
 # if they were early), for shipments done via rail.
 delay_info = Lineitems.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
-   day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
+    day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
 )
 return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
 ```
@@ -893,16 +907,18 @@ The `LARGEST` function returns the largest value from the set of values it is ca
 
 ```py
 TPCH.CALCULATE(
-    l1=LARGEST(20,10,10,-1,-2,100,-200), # Returns 100
-    l2=LARGEST(-0.001,-0.01,-0.0001), # Returns -0.01
-    l3=LARGEST(datetime.datetime(2025,1,1),datetime.datetime(2024,1,1)), # Returns 2025-01-01
-    l4=LARGEST(1,None,3,4), # Returns NULL
+    l1=LARGEST(20, 10, 10, -1, -2, 100, -200),  # Returns 100
+    l2=LARGEST(-0.001, -0.01, -0.0001),  # Returns -0.01
+    l3=LARGEST(
+        datetime.datetime(2025, 1, 1), datetime.datetime(2024, 1, 1)
+    ),  # Returns 2025-01-01
+    l4=LARGEST(1, None, 3, 4),  # Returns NULL
 )
 # For each region, what is the average account balance of all
 # customers in a hypothetical scenario where all debt was erased
 Regions.CALCULATE(
-   region_name=name,
-   avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
+    region_name=name,
+    avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
 )
 ```
 
@@ -921,7 +937,7 @@ Aggregation functions are a special set of functions that, when called on their 
 The `SUM` function returns the sum of the plural set of numerical values it is called on.
 
 ```py
-Nations.CALCULATE(total_consumer_wealth = SUM(customers.acctbal))
+Nations.CALCULATE(total_consumer_wealth=SUM(customers.acctbal))
 ```
 
 <!-- TOC --><a name="avg"></a>
@@ -931,7 +947,7 @@ Nations.CALCULATE(total_consumer_wealth = SUM(customers.acctbal))
 The `AVG` function takes the average of the plural set of numerical values it is called on.
 
 ```py
-Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
+Parts.CALCULATE(average_shipment_size=AVG(lines.quantity))
 ```
 
 <!-- TOC --><a name="median"></a>
@@ -942,10 +958,7 @@ The `MEDIAN` function takes the median of the plural set of numerical values it 
 Note: absent records are ignored when deriving the median.
 
 ```py
-customers.CALCULATE(
-   name,
-   median_order_price = MEDIAN(orders.total_price)
-)
+customers.CALCULATE(name, median_order_price=MEDIAN(orders.total_price))
 ```
 
 <!-- TOC --><a name="min"></a>
@@ -955,7 +968,7 @@ customers.CALCULATE(
 The `MIN` function returns the smallest value from the set of values it is called on.
 
 ```py
-Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
+Suppliers.CALCULATE(cheapest_part_supplied=MIN(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="max"></a>
@@ -965,7 +978,7 @@ Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
 The `MAX` function returns the largest value from the set of values it is called on.
 
 ```py
-Suppliers.CALCULATE(most_expensive_part_supplied = MAX(supply_records.supply_cost))
+Suppliers.CALCULATE(most_expensive_part_supplied=MAX(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="quantile"></a>
@@ -980,10 +993,10 @@ The `QUANTILE` function returns the value at a specified quantile from the set o
 
 ```py
 # Returns the value at the 90th percentile of supply costs for each supplier
-Suppliers.CALCULATE(ninetieth_percentile_cost = QUANTILE(supply_records.supply_cost, 0.9))
+Suppliers.CALCULATE(ninetieth_percentile_cost=QUANTILE(supply_records.supply_cost, 0.9))
 
 # Returns the median (50th percentile, discrete) supply cost for each supplier
-Suppliers.CALCULATE(median_cost = QUANTILE(supply_records.supply_cost, 0.5))
+Suppliers.CALCULATE(median_cost=QUANTILE(supply_records.supply_cost, 0.5))
 ```
 
 - The first argument is the plural set of values to aggregate.
@@ -1007,7 +1020,7 @@ Suppliers.CALCULATE(median_cost = QUANTILE(supply_records.supply_cost, 0.5))
 The `ANYTHING` function returns an arbitrary value from the set of values it is called on.
 
 ```py
-Suppliers.CALCULATE(chosen_part_name = ANYTHING(supply_records.part.name))
+Suppliers.CALCULATE(chosen_part_name=ANYTHING(supply_records.part.name))
 ```
 
 <!-- TOC --><a name="count"></a>
@@ -1017,13 +1030,13 @@ Suppliers.CALCULATE(chosen_part_name = ANYTHING(supply_records.part.name))
 The `COUNT` function returns how many non-null records exist on the set of plural values it is called on.
 
 ```py
-customers.CALCULATE(num_taxed_purchases = COUNT(orders.lines.tax))
+customers.CALCULATE(num_taxed_purchases=COUNT(orders.lines.tax))
 ```
 
 The `COUNT` function can also be called on a sub-collection, in which case it will return how many records from that sub-collection exist.
 
 ```py
-Nations.CALCULATE(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
+Nations.CALCULATE(num_customers_in_debt=COUNT(customers.WHERE(acctbal < 0)))
 ```
 
 <!-- TOC --><a name="ndistinct"></a>
@@ -1033,7 +1046,7 @@ Nations.CALCULATE(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
 The `NDISTINCT` function returns how many distinct values of its argument exist.
 
 ```py
-customers.CALCULATE(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
+customers.CALCULATE(num_unique_parts_purchased=NDISTINCT(orders.lines.parts.key))
 ```
 
 <!-- TOC --><a name="has"></a>
@@ -1067,10 +1080,10 @@ The `VAR` function returns the variance of the set of numerical values it is cal
 
 ```py
 # Compute the population variance
-Parts.CALCULATE(variance = VAR(supply_records.supply_cost))
+Parts.CALCULATE(variance=VAR(supply_records.supply_cost))
 
 # Compute the sample variance
-Parts.CALCULATE(variance = VAR(supply_records.supply_cost, type="sample"))
+Parts.CALCULATE(variance=VAR(supply_records.supply_cost, type="sample"))
 ```
 
 <!-- TOC --><a name="std"></a>
@@ -1084,10 +1097,10 @@ The `STD` function returns the standard deviation of the set of numerical values
 
 ```py
 # Compute the population standard deviation
-Parts.CALCULATE(std = STD(supply_records.supply_cost))
+Parts.CALCULATE(std=STD(supply_records.supply_cost))
 
 # Compute the sample standard deviation
-Parts.CALCULATE(std = STD(supply_records.supply_cost, type="sample"))
+Parts.CALCULATE(std=STD(supply_records.supply_cost, type="sample"))
 ```
 
 <!-- TOC --><a name="std"></a>
@@ -1177,11 +1190,13 @@ The `RANKING` function returns ordinal position of the current record when all r
 ```py
 # Rank customers per-nation by their account balance
 # (highest = rank #1, no ties)
-Nations.customers.CALCULATE(r = RANKING(by=acctbal.DESC(), per="Nations"))
+Nations.customers.CALCULATE(r=RANKING(by=acctbal.DESC(), per="Nations"))
 
 # For every customer, finds their most recent order
 # (ties allowed)
-customers.orders.WHERE(RANKING(by=order_date.DESC(), per="customers", allow_ties=True) == 1)
+customers.orders.WHERE(
+    RANKING(by=order_date.DESC(), per="customers", allow_ties=True) == 1
+)
 ```
 
 <!-- TOC --><a name="percentile"></a>
@@ -1218,27 +1233,27 @@ The `PREV` function returns the value of an expression from a preceding record i
 # Find the 10 customers with at least 5 orders with the largest average time
 # gap between their orders, in days.
 order_info = orders.CALCULATE(
-   day_diff=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), per="customers"), order_date)
+    day_diff=DATEDIFF(
+        "days", PREV(order_date, by=order_date.ASC(), per="customers"), order_date
+    )
 )
 customers.WHERE(COUNT(orders) > 5).CALCULATE(
-   name,
-   average_order_gap=AVG(order_info.day_diff)
+    name, average_order_gap=AVG(order_info.day_diff)
 ).TOP_K(10, by=average_order_gap.DESC())
 
 # For every year/month, calculate the percent change in the number of
 # orders made in that month from the previous month.
 PARTITION(
-   Orders(year=YEAR(order_date), month=MONTH(order_date)),
-   name="orders",
-   by=(year, month)
+    Orders(year=YEAR(order_date), month=MONTH(order_date)),
+    name="orders",
+    by=(year, month),
 ).CALCULATE(
-   year,
-   month,
-   n_orders=COUNT(orders),
-   pct_change=
-      100.0
-      * (COUNT(orders) - PREV(COUNT(orders), by=(year.ASC(), month.ASC())))
-      / PREV(COUNT(orders), by=(year.ASC(), month.ASC()))
+    year,
+    month,
+    n_orders=COUNT(orders),
+    pct_change=100.0
+    * (COUNT(orders) - PREV(COUNT(orders), by=(year.ASC(), month.ASC())))
+    / PREV(COUNT(orders), by=(year.ASC(), month.ASC())),
 )
 ```
 
@@ -1287,11 +1302,15 @@ Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, per="Nations"))
 
 # Finds, for each customer, the wealth of that customer combined with all
 # poorer customers.
-Customers.CALCULATE(cumulative_wealth=RELSUM(acctbal, by=acctbal.ASC(), cumulative=True))
+Customers.CALCULATE(
+    cumulative_wealth=RELSUM(acctbal, by=acctbal.ASC(), cumulative=True)
+)
 
 # Finds, for each customer's orders, the sum of the total price of that
 # order and the two most recent orders before it.
-Customers.orders.CALCULATE(sliding_sum=RELSUM(total_price, by=order_date.ASC(), per="Customers", frame=(-2, 0)))
+Customers.orders.CALCULATE(
+    sliding_sum=RELSUM(total_price, by=order_date.ASC(), per="Customers", frame=(-2, 0))
+)
 ```
 
 
@@ -1325,12 +1344,18 @@ Nations.customers.WHERE(acctbal > RELAVG(acctbal, per="Nations"))
 
 # Finds the cumulative average of the total price of orders when sorted by
 # order date (breaking ties by the order key).
-Orders.CALCULATE(average_price_so_far=RELAVG(total_price, by=(order_date.ASC(), key.ASC()), cumulative=True))
+Orders.CALCULATE(
+    average_price_so_far=RELAVG(
+        total_price, by=(order_date.ASC(), key.ASC()), cumulative=True
+    )
+)
 
 # For each order, finds the average of the total price of that order and the 5
 # orders before/after it when sorted by order date (breaking ties by the order
 # key).
-Orders.CALCULATE(window_average=RELAVG(total_price, by=(order_date.ASC(), key.ASC()), frame=(-5, 5)))
+Orders.CALCULATE(
+    window_average=RELAVG(total_price, by=(order_date.ASC(), key.ASC()), frame=(-5, 5))
+)
 ```
 
 
@@ -1357,19 +1382,30 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 ```py
 # Divides each customer's account balance by the total number of positive
 # account balances globally.
-customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
+customers.CALCULATE(ratio=acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
 
 # Divides each customer's account balance by the total number of positive
 # account balances in the same nation.
-Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), per="Nations"))
+Nations.customers.CALCULATE(
+    ratio=acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), per="Nations")
+)
 
 # For each customer, count how many customers are poorer than them but are not
 # in debt.
-Customers.CALCULATE(n_poorer_non_debt=RELCOUNT(KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), cumulative=True) - (acctbal >= 0))
+Customers.CALCULATE(
+    n_poorer_non_debt=RELCOUNT(
+        KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), cumulative=True
+    )
+    - (acctbal >= 0)
+)
 
 # Same as previous example, but using frames to exclude the current record
 # instead of subtracting (acctbal >= 0)
-Customers.CALCULATE(n_poorer_non_debt=RELCOUNT(KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), frame=(None, -1)))
+Customers.CALCULATE(
+    n_poorer_non_debt=RELCOUNT(
+        KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), frame=(None, -1)
+    )
+)
 ```
 
 
@@ -1395,18 +1431,20 @@ The `RELSIZE` function returns the number of total records, either globally or t
 ```py
 # Divides each customer's account balance by
 # the number of total customers.
-customers.CALCULATE(ratio = acctbal / RELSIZE())
+customers.CALCULATE(ratio=acctbal / RELSIZE())
 
 # Divides each customer's account balance by the
 # number of total customers in that nation.
-Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
+Nations.customers.CALCULATE(ratio=acctbal / RELSIZE(per="Nations"))
 
 # For each customer, returns the number of customers poorer than them.
 Customers.CALCULATE(customers_poorer=RELSIZE(by=(acctbal.ASC()), cumulative=True) - 1)
 
 # For each customer's orders, count how many orders the customer made AFTER the
 # current order.
-Customers.orders.CALCULATE(n_orders_after=RELSIZE(by=(order_date.ASC(), key.ASC()), frame=(1, None)))
+Customers.orders.CALCULATE(
+    n_orders_after=RELSIZE(by=(order_date.ASC(), key.ASC()), frame=(1, None))
+)
 ```
 
 
@@ -1422,14 +1460,14 @@ The `STRING` function casts the first argument to a string data type. The first 
 
 ```py
 Orders.CALCULATE(
-   # Casts the key column (numeric type) to a string.
-   key_string=STRING(key),
-   # Casts the order_date column (date type) to a string
-   # with the format YYYY-MM-DD.
-   # Please refer to your underlying database's documentation
-   # for the format strings it supports.
-   # In this case, the database used is SQLite.
-   order_date_string=STRING(order_date, "%Y-%m-%d"),
+    # Casts the key column (numeric type) to a string.
+    key_string=STRING(key),
+    # Casts the order_date column (date type) to a string
+    # with the format YYYY-MM-DD.
+    # Please refer to your underlying database's documentation
+    # for the format strings it supports.
+    # In this case, the database used is SQLite.
+    order_date_string=STRING(order_date, "%Y-%m-%d"),
 )
 ```
 
@@ -1453,10 +1491,10 @@ The `INTEGER` function casts the argument to an integer.
 
 ```py
 Orders.CALCULATE(
-   # Casts the total_price column (decimal type) to an integer.
-   total_price_int=INTEGER(total_price),
-   # Casts the string "2" to an integer.
-   discount = INTEGER("2")
+    # Casts the total_price column (decimal type) to an integer.
+    total_price_int=INTEGER(total_price),
+    # Casts the string "2" to an integer.
+    discount=INTEGER("2"),
 )
 ```
 
@@ -1468,10 +1506,10 @@ The `FLOAT` function casts the argument to a float.
 
 ```py
 Orders.CALCULATE(
-   # Casts the ship_priority column (integer type) to a float.
-   ship_priority_float=FLOAT(ship_priority),
-   # Casts the string "2" to a float.
-   discount = FLOAT("-2.71")
+    # Casts the ship_priority column (integer type) to a float.
+    ship_priority_float=FLOAT(ship_priority),
+    # Casts the string "2" to a float.
+    discount=FLOAT("-2.71"),
 )
 ```
 
@@ -1488,17 +1526,17 @@ The `__bool__` magic method is not supported in PyDough. PyDough code cannot be 
 ```py
 # Not allowed - will raise PyDoughUnqualifiedException
 if Customer and Order:
-   print("Available")
+    print("Available")
 
 customers.WHERE((acctbal > 0) and (nation.name == "GERMANY"))
 # Use &`instead of `and`:
 # customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
 Orders.WHERE((discount > 0.05) or (tax > 0.08))
-# Use `|` instead of `or` 
+# Use `|` instead of `or`
 # Orders.WHERE((discount > 0.05) | (tax > 0.08))
 
-Parts.WHERE(not(retail_price > 1000))
+Parts.WHERE(not (retail_price > 1000))
 # Use `~` instead of `not`
 # Parts.WHERE(~(retail_price > 1000))
 ```
@@ -1631,7 +1669,7 @@ Using the `in` operator calls the `__contains__` magic method, which is not supp
 
 ```py
 # Not allowed currently as it would need to return a boolean instead of a PyDough object
-Orders('discount' in order.details)
+Orders("discount" in order.details)
 ```
 
 <!-- TOC --><a name="__setitem__"></a>
@@ -1642,7 +1680,7 @@ Assigning to an index calls the `__setitem__` magic method, which is not support
 
 ```py
 # Not allowed currently as PyDough objects cannot support item assignment.
-Order.details['discount'] = True
+Order.details["discount"] = True
 ```
 
 <!-- TOC --><a name="__iter__"></a>
@@ -1654,7 +1692,7 @@ Iterating over an object calls the `__iter__` magic method, which is not support
 ```py
 # Not allowed currently as implementation has to return an iterator instead of a PyDough object.
 for item in customer:
-   print(item)
+    print(item)
 
 [item for item in customer]
 

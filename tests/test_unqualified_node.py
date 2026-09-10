@@ -187,11 +187,6 @@ def verify_pydough_code_exec_match_unqualified(
             id="arithmetic_03",
         ),
         pytest.param(
-            "answer = ((1.5 * _ROOT.x) - 1)",
-            "((1.5 * x) - 1)",
-            id="arithmetic_03",
-        ),
-        pytest.param(
             "answer = (_ROOT.STARTSWITH(_ROOT.x, 'hello') | _ROOT.ENDSWITH(_ROOT.x, 'world')) & _ROOT.CONTAINS(_ROOT.x, ' ')",
             "((STARTSWITH(x, 'hello') | ENDSWITH(x, 'world')) & CONTAINS(x, ' '))",
             id="arithmetic_04",

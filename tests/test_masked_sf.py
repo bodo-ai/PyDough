@@ -973,7 +973,7 @@ from .testing_sf_masked_utilities import (
                 "selected_patients = patients.WHERE("
                 + " | ".join(
                     [
-                        f"ISIN(last_name, {repr(names)})"
+                        f"ISIN(last_name, {names!r})"
                         for names in [
                             ["Bailey", "Baker", "Ball", "Banks", "Barajas", "Barnett"],
                             ["Barrera", "Barron", "Barton", "Cabrera", "Calderon"],
@@ -1434,28 +1434,30 @@ def test_pipeline_hard_limit_variations(
     cases with the PYDOUGH_MASK_SERVER_HARD_LIMIT with fewer other parameters.
     """
     sf_data = sf_masked_context("BODO", test_data.graph_name, "FULL")
-    with temp_env_override(
-        {
-            "PYDOUGH_MASK_SERVER_HARD_LIMIT": str(hard_limit),
-            "PYDOUGH_ENABLE_MASK_REWRITES": "1",
-        }
+    with (
+        temp_env_override(
+            {
+                "PYDOUGH_MASK_SERVER_HARD_LIMIT": str(hard_limit),
+                "PYDOUGH_ENABLE_MASK_REWRITES": "1",
+            }
+        ),
+        redirect_stdout(io.StringIO()),
     ):
-        with redirect_stdout(io.StringIO()):
-            if execute:
-                test_data.run_e2e_test(
-                    get_sf_masked_graphs,
-                    sf_masked_context("BODO", test_data.graph_name, "FULL"),
-                    coerce_types=True,
-                    mask_server=true_mask_server_info,
-                )
-            else:
-                file_path: str = get_sql_test_filename(
-                    f"{test_data.test_name}_rewrite", sf_data.dialect
-                )
-                test_data.run_sql_test(
-                    get_sf_masked_graphs,
-                    file_path,
-                    update_tests,
-                    sf_data,
-                    mask_server=true_mask_server_info,
-                )
+        if execute:
+            test_data.run_e2e_test(
+                get_sf_masked_graphs,
+                sf_masked_context("BODO", test_data.graph_name, "FULL"),
+                coerce_types=True,
+                mask_server=true_mask_server_info,
+            )
+        else:
+            file_path: str = get_sql_test_filename(
+                f"{test_data.test_name}_rewrite", sf_data.dialect
+            )
+            test_data.run_sql_test(
+                get_sf_masked_graphs,
+                file_path,
+                update_tests,
+                sf_data,
+                mask_server=true_mask_server_info,
+            )

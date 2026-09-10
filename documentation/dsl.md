@@ -396,10 +396,7 @@ So far, many different kinds of expressions have been noted in the examples for 
 
 ```py
 # Referencing scalar properties of the current collection
-People.CALCULATE(
-    first_name,
-    last_name
-)
+People.CALCULATE(first_name, last_name)
 
 # Referencing scalar properties of a singular sub-collection
 People.CALCULATE(
@@ -410,8 +407,8 @@ People.CALCULATE(
 # Referencing properties from the CALCULATE an ancestor collection
 # (see down-streaming for more details)
 Addresses.CALCULATE(zip_code).current_occupants.CALCULATE(email).packages.CALCULATE(
-    email,    # <- refers to the `email` from `current_occupants`
-    zip_code, # <- refers to the `zip_code` from `Addresses`
+    email,  # <- refers to the `email` from `current_occupants`
+    zip_code,  # <- refers to the `zip_code` from `Addresses`
 )
 
 # Invoking normal functions/operations on other singular data
@@ -434,6 +431,7 @@ customers.CALCULATE(
 from pandas import Timestamp
 from datetime import date
 from decimal import Decimal
+
 customers.CALCULATE(
     a=0,
     b=3.14,
