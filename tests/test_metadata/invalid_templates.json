@@ -22,7 +22,7 @@
         }
     },
     {
-        "name": "DUPPLICATED_ATTRIBUTE_NAME",
+        "name": "DUPLICATED_ATTRIBUTE_NAME",
         "version": "V2",
         "relationships": [],
         "collections": [],
@@ -157,7 +157,7 @@
         }
     },
     {
-        "name": "DUPPLICATED_ATTRIBUTE_OPTION_LABEL",
+        "name": "DUPLICATED_ATTRIBUTE_OPTION_LABEL",
         "version": "V2",
         "relationships": [],
         "collections": [],
@@ -178,7 +178,7 @@
         }
     },
     {
-        "name": "DUPPLICATED_ATTRIBUTE_OPTION_LABEL_2",
+        "name": "DUPLICATED_ATTRIBUTE_OPTION_LABEL_2",
         "version": "V2",
         "relationships": [],
         "collections": [],

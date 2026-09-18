@@ -608,16 +608,16 @@ def test_pipeline_e2e_tpch_templates_errors(
             "metadata for template attribute within graph 'INVALID_ATTRIBUTE_NAME' must be a JSON object containing a field 'name' and field 'name' must be a string",
             id="invalid_attribute_name",
         ),
-        # Dupplicated attribute name
+        # Duplicated attribute name
         pytest.param(
-            "DUPPLICATED_ATTRIBUTE_NAME",
-            "Already added template attribute 'attr1' in graph 'DUPPLICATED_ATTRIBUTE_NAME'",
+            "DUPLICATED_ATTRIBUTE_NAME",
+            "Duplicate attributes: Template attribute 'attr1' in graph 'DUPLICATED_ATTRIBUTE_NAME' versus Template attribute 'attr1' in graph 'DUPLICATED_ATTRIBUTE_NAME'",
             id="duplicated_attribute_name",
         ),
         # Attr with invalid usage
         pytest.param(
             "INVALID_ATTRIBUTE_USAGE",
-            "template attribute 'attr1' in graph 'INVALID_ATTRIBUTE_USAGE' must be a dictionary where each key must be a string and each value must be a list where each element must be a string",
+            "Template attribute 'attr1' in graph 'INVALID_ATTRIBUTE_USAGE' must be a dictionary where each key must be a string and each value must be a list where each element must be a string",
             id="invalid_attribute_usage",
         ),
         # Attr with invalid type
@@ -644,27 +644,27 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "INVALID_ATTRIBUTE_OPTION_VALUE",
             re.escape(
-                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings or all integers (not a mix, and no other type)."
+                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings, integers or floats (not a mix, and no other type)."
             ),
             id="invalid_option_value",
         ),
         # Duplicated option label
         pytest.param(
-            "DUPPLICATED_ATTRIBUTE_OPTION_LABEL",
-            "Duplicate option label: 'LABEL 1' for attribute 'attr1'. The label is already in use by attribute 'attr1' in graph 'DUPPLICATED_ATTRIBUTE_OPTION_LABEL'.",
+            "DUPLICATED_ATTRIBUTE_OPTION_LABEL",
+            "Duplicate option label: 'LABEL 1' for attribute 'attr1'. The label is already in use by attribute 'attr1' in graph 'DUPLICATED_ATTRIBUTE_OPTION_LABEL'.",
             id="duplicated_option_label",
         ),
         # Duplicates label option across attributes
         pytest.param(
-            "DUPPLICATED_ATTRIBUTE_OPTION_LABEL_2",
-            "Duplicate option label: 'LABEL 1' for attribute 'attr2'. The label is already in use by attribute 'attr1' in graph 'DUPPLICATED_ATTRIBUTE_OPTION_LABEL_2'.",
+            "DUPLICATED_ATTRIBUTE_OPTION_LABEL_2",
+            "Duplicate option label: 'LABEL 1' for attribute 'attr2'. The label is already in use by attribute 'attr1' in graph 'DUPLICATED_ATTRIBUTE_OPTION_LABEL_2'.",
             id="duplicated_option_label_across",
         ),
         # Mixed option value type
         pytest.param(
             "MIXED_TYPE_ATTRIBUTE_OPTIONS",
             re.escape(
-                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings or all integers (not a mix, and no other type)."
+                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings, integers or floats (not a mix, and no other type)."
             ),
             id="mixed_type_options",
         ),
