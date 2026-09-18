@@ -191,6 +191,24 @@ result = movielens.CALCULATE(
             ),
             id="movielens_2274",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                r"""
+result = california_schools.schools.CALCULATE( 
+    frpm_level_name=IFF( frpm.percent_percentage_eligible_frpm_k_12 >= 0.75, 'High', 'Medium-Low' )
+).PARTITION( 
+    name="county_frpm_groups", 
+    by=(county, frpm_level_name) 
+).schools.CALCULATE( 
+    percent_eligible_frpm_k_12=frpm.percent_percentage_eligible_frpm_k_12, 
+    frpm_category=frpm_level_name 
+)""",
+                "california_schools",
+                lambda: pd.DataFrame({}),
+                "california_schools_quoted_alias",
+            ),
+            id="california_schools_quoted_alias",
+        ),
     ],
 )
 def s3_datasets_test_data(request) -> PyDoughPandasTest:
