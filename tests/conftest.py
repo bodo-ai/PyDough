@@ -250,6 +250,14 @@ def invalid_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def invalid_templates_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the invalid templates.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/invalid_templates.json"
+
+
+@pytest.fixture(scope="session")
 def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.

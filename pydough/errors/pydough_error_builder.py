@@ -271,7 +271,7 @@ class PyDoughErrorBuilder:
         )
 
     def undefined_function_call(
-        self, node: "UnqualifiedNode", *args, **kwargs
+        self, node: "UnqualifiedNode", available_templates: list[str], *args, **kwargs
     ) -> PyDoughException:
         """
         Creates an exception for when a function call is made on an unqualified
@@ -296,7 +296,7 @@ class PyDoughErrorBuilder:
         ):
             suggestions: list[str] = find_possible_name_matches(
                 term_name=node._parcel[1],
-                candidates=set(node._parcel[0]._parcel[1]),
+                candidates=set(node._parcel[0]._parcel[1]) | set(available_templates),
                 atol=2,
                 rtol=0.1,
                 min_names=3,
