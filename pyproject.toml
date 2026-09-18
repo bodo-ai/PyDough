@@ -52,7 +52,7 @@ dev = [
 ]
 
 [project.optional-dependencies]
-snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
+snowflake = ["snowflake-connector-python[pandas]==4.7.1"]
 trino = ["trino"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
