@@ -229,6 +229,29 @@
         }
     },
     {
+        "name": "EXTRA_ATTRIBUTE_KEY",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ],
+                    "extrakey": "My extra key"
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
         "name": "NO_TEMPLATES_DEFINITIONS",
         "version": "V2",
         "relationships": [],
@@ -436,7 +459,30 @@
             ]
         }
     },
-     {
+    {
+        "name": "EXTRA_TEMPLATE_KEY",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result",
+                    "extrakey": "My extra key"
+                }
+            ]
+        }
+    },
+    {
         "name": "TEMPLATE_INVALID_SOURCE_CODE",
         "version": "V2",
         "relationships": [],
@@ -474,7 +520,33 @@
                             "description": "Generic description"
                         }
                     },
-                     "source": "nonlocal foo",
+                    "source": "nonlocal foo",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_SOURCE_PLACEHOLDER",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        },
+                        "parameter_2": {
+                            "type": "str",
+                            "description": "Generic description 2"
+                        }
+                    },
+                    "source": "result = {3} == 'string'",
                     "answer_variable": "result"
                 }
             ]

@@ -639,7 +639,9 @@ def call_template(
     import pydough
 
     if pydough.active_session.metadata is None:
-        raise ValueError("No metadata loaded in the current active session")
+        raise ValueError(
+            f"No metadata loaded in the current active session; cannot call template {name!r}."
+        )
 
     if name not in pydough.active_session.metadata.templates_definitions:
         available_templates: list[str] = list(
@@ -667,6 +669,14 @@ def call_template(
         pydough.active_session.metadata.templates_definitions[name]
     )
 
+    available_attributes: dict[str, AttributeMetadata] = (
+        pydough.active_session.metadata.templates_attributes
+    )
+    if len(labels) > 0 and len(available_attributes) == 0:
+        raise ValueError(
+            f"No attributes available for template '{name}' in the current active session"
+        )
+
     missing_params: list[str] = [
         p for p in calling_template.parameters if p not in labels
     ]
@@ -677,16 +687,7 @@ def call_template(
             f"parameter(s): {missing_params_str}"
         )
 
-    available_attributes: dict[str, AttributeMetadata] = (
-        pydough.active_session.metadata.templates_attributes
-    )
-
-    if len(available_attributes) == 0:
-        raise ValueError(
-            f"No attributes available for template '{name}' in the current active session"
-        )
-
-    template_kwargs: dict[str, dict[str, str | int]] = {}
+    template_kwargs: dict[str, dict[str, str | int | float]] = {}
 
     for arg_name, label in labels.items():
         if arg_name not in calling_template.parameters:
@@ -699,7 +700,7 @@ def call_template(
         # Use this arg type to check the option value
         arg_type: str = calling_template.parameters[arg_name].type
 
-        kwarg: dict[str, str | int] | None = None
+        kwarg: dict[str, str | int | float] | None = None
 
         for attr_name, attribute in available_attributes.items():
             if label in attribute.options:
@@ -734,12 +735,20 @@ def call_template(
     template_call: str = (
         f"result = {calling_template.create_template_call(template_kwargs)}"
     )
+    from datetime import datetime
+
     import pandas as pd
+
+    templates_env: dict = {
+        name: calling_template.template_callable,
+        "pd": pd,
+        "datetime": datetime,
+    }
 
     result = _execute_source(
         source=template_call,
         metadata=pydough.active_session.metadata,
-        environment={name: calling_template.template_callable, "pd": pd},
+        environment=templates_env,
         return_unqualified=False,
     )
     return result

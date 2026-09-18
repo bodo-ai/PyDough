@@ -10,7 +10,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from pydough.errors.error_types import PyDoughMetadataException
-from pydough.errors.error_utils import extract_object, extract_string, is_valid_name
+from pydough.errors.error_utils import (
+    NoExtraKeys,
+    extract_object,
+    extract_string,
+    is_valid_name,
+)
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs.graph_metadata import GraphMetadata
 
@@ -43,6 +48,16 @@ class TemplateMetadata(AbstractMetadata):
     """
     Concrete metadata implementation class for PyDough template definitions.
     """
+
+    # Set of names of fields that can be included in the JSON
+    # object describing a template attribute.
+    allowed_fields: set[str] = {
+        "name",
+        "description",
+        "parameters",
+        "source",
+        "answer_variable",
+    }
 
     def __init__(
         self,
@@ -113,7 +128,13 @@ class TemplateMetadata(AbstractMetadata):
 
     @property
     def components(self):
-        comp: list = [self.name, self.description, self.source]
+        comp: list = [
+            self.name,
+            self.description,
+            self.source,
+            self.parameters,
+            self.answer_variable,
+        ]
         return comp
 
     @property
@@ -163,6 +184,9 @@ class TemplateMetadata(AbstractMetadata):
         kwargs: dict[str, dict] = extract_object(
             definition_json, "parameters", graph.error_name
         )
+
+        # Check for extra keys
+        NoExtraKeys(TemplateMetadata.allowed_fields).verify(definition_json, error_name)
 
         new_template: TemplateMetadata = TemplateMetadata(
             name,
@@ -316,7 +340,7 @@ class TemplateMetadata(AbstractMetadata):
         def _replace_placeholder(match: re.Match) -> str:
             index = int(match.group(1))
             if not (1 <= index <= len(arg_names)):
-                raise ValueError(
+                raise PyDoughMetadataException(
                     f"Placeholder {{{index}}} in pydough_code has no matching "
                     f"argument (only {len(arg_names)} args provided)."
                 )
@@ -331,7 +355,9 @@ class TemplateMetadata(AbstractMetadata):
 
         return template_str
 
-    def create_template_call(self, kwargs: dict[str, dict[str, str | int]] = {}) -> str:
+    def create_template_call(
+        self, kwargs: dict[str, dict[str, str | int | float]] | None = None
+    ) -> str:
         """
         Builds the Python source code for a call to this template, without
         executing it.
@@ -354,13 +380,14 @@ class TemplateMetadata(AbstractMetadata):
         intended to be embedded in a larger source snippet (e.g. via
         `from_string`) rather than executed on its own.
         """
+        kwargs = kwargs or {}
 
         args_parts: list = []
         part: str = ""
         for key, spec in kwargs.items():
             display_quotes: bool = "type" in spec and spec["type"] == "str"
 
-            arg_value = f"'{spec['value']}'" if display_quotes else f"{spec['value']}"
+            arg_value = repr(spec["value"]) if display_quotes else f"{spec['value']}"
             part = f"{key} = {arg_value}"
 
             args_parts.append(part)

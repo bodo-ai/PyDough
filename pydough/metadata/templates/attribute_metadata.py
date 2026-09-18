@@ -5,11 +5,14 @@ Base definition of PyDough metadata for template attributes.
 from pydough.errors.error_types import PyDoughMetadataException
 from pydough.errors.error_utils import (
     HasType,
+    NoExtraKeys,
     attributes_usage_predicate,
     extract_array,
+    extract_float,
     extract_integer,
     extract_object,
     extract_string,
+    is_float,
     is_integer,
     is_string,
 )
@@ -23,6 +26,16 @@ class AttributeMetadata(AbstractMetadata):
     Representing the options (labels and values) that can be used on the templates
     definitions.
     """
+
+    # Set of names of fields that can be included in the JSON
+    # object describing a template attribute.
+    allowed_fields: set[str] = {
+        "name",
+        "usage",
+        "type",
+        "description",
+        "options",
+    }
 
     def __init__(
         self,
@@ -38,7 +51,7 @@ class AttributeMetadata(AbstractMetadata):
         self._name: str = name
         self._usage: dict[str, list[str]] = usage
         self._type: str = type
-        self._options: dict[str, str | int] = {}
+        self._options: dict[str, str | int | float] = {}
 
         super().__init__(description, None, None)
 
@@ -75,7 +88,7 @@ class AttributeMetadata(AbstractMetadata):
         return self._type
 
     @property
-    def options(self) -> dict[str, str | int]:
+    def options(self) -> dict[str, str | int | float]:
         """
         List with all options of the attribute
         """
@@ -87,8 +100,7 @@ class AttributeMetadata(AbstractMetadata):
 
     @property
     def components(self):
-        comp: list = [self.name, self.description, self.type]
-        comp.extend(self.usage)
+        comp: list = [self.name, self.description, self.type, self.options, self.usage]
         return comp
 
     @property
@@ -97,9 +109,9 @@ class AttributeMetadata(AbstractMetadata):
 
     @staticmethod
     def create_error_name(name: str, graph_error_name: str):
-        return f"template attribute {name!r} in {graph_error_name}"
+        return f"Template attribute {name!r} in {graph_error_name}"
 
-    def add_attribute_option(self, label: str, value: str | int) -> None:
+    def add_attribute_option(self, label: str, value: str | int | float) -> None:
         """
         Add an option to the list of options
         """
@@ -146,6 +158,9 @@ class AttributeMetadata(AbstractMetadata):
 
         attr_desc: str = extract_string(attribute_json, "description", error_name)
 
+        # Check for extra keys
+        NoExtraKeys(AttributeMetadata.allowed_fields).verify(attribute_json, error_name)
+
         new_attribute: AttributeMetadata = AttributeMetadata(
             attribute_name,
             graph,
@@ -172,19 +187,24 @@ class AttributeMetadata(AbstractMetadata):
         option_values = [option.get("value") for option in attr_options]
         all_strings = all(is_string.accept(v) for v in option_values)
         all_integers = all(is_integer.accept(v) for v in option_values)
+        all_floats = all(is_float.accept(v) for v in option_values)
 
-        if not (all_strings or all_integers):
+        if not (all_strings or all_integers or all_floats):
             raise PyDoughMetadataException(
-                f"{option_error_name} 'value' fields must be either all strings or "
-                f"all integers (not a mix, and no other type)."
+                f"{option_error_name} 'value' fields must be either all strings, "
+                f"integers or floats (not a mix, and no other type)."
             )
 
         for option in attr_options:
             label: str = extract_string(option, "label", option_error_name)
-            value: str | int = (
+            value: str | int | float = (
                 extract_string(option, "value", option_error_name)
                 if all_strings
-                else extract_integer(option, "value", option_error_name)
+                else (
+                    extract_integer(option, "value", option_error_name)
+                    if all_integers
+                    else extract_float(option, "value", option_error_name)
+                )
             )
 
             graph_labels: dict[str, str] = graph.get_all_labels()

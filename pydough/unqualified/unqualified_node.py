@@ -137,21 +137,28 @@ class UnqualifiedNode(ABC):
 
     def __call__(self, *args, **kwargs):
 
-        available_templates: list[str] = []
-        if pydough.active_session.metadata:
-            metadata_templates: dict[str, TemplateMetadata] = (
-                pydough.active_session.metadata.templates_definitions
-            )
-
-            name = str(self)
-            if name in metadata_templates:
-                return metadata_templates[name].template_callable(*args, **kwargs)
-
-            available_templates.extend(metadata_templates.keys())
-
+        # Getting the graph for templates suggestions if possible
+        graph = self._locate_root_graph()
+        available_templates: list[str] = (
+            list(graph.templates_definitions.keys()) if graph is not None else []
+        )
         raise pydough.active_session.error_builder.undefined_function_call(
             self, available_templates, *args, **kwargs
         )
+
+    def _locate_root_graph(self) -> "GraphMetadata | None":
+        """
+        Walks up from this node to the UnqualifiedRoot it was accessed from,
+        and returns its bound graph. A template call is always a name resolved
+        directly off the root, so this should only return None in genuinely
+        unreachable cases (e.g. no graph loaded at all).
+        """
+        node: UnqualifiedNode = self
+        while isinstance(node, UnqualifiedAccess):
+            node = node._parcel[0]
+        if isinstance(node, UnqualifiedRoot):
+            return node._parcel[0]
+        return None
 
     def __bool__(self):
         raise PyDoughUnqualifiedException(
@@ -557,13 +564,16 @@ class UnqualifiedRoot(UnqualifiedNode):
         )
 
     def __getattribute__(self, name: str) -> Any:
-        func_map: dict[str, pydop.PyDoughOperator] = super(
-            UnqualifiedNode, self
-        ).__getattribute__("_parcel")[1]
+        graph, func_map = super(UnqualifiedNode, self).__getattribute__("_parcel")
         if name in func_map:
             return UnqualifiedOperator(func_map[name])
-        else:
-            return super().__getattribute__(name)
+
+        templates: dict[str, TemplateMetadata] = graph.templates_definitions
+        if name in templates:
+            # Templates execute immediately, so hand back the callable bound
+            # to *this* root's graph directly.
+            return templates[name].template_callable
+        return super().__getattribute__(name)
 
 
 class UnqualifiedLiteral(UnqualifiedNode):

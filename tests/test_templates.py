@@ -1,5 +1,5 @@
 """
-TODO
+Tests for PyDough templates. Using direct calls and `pydough.call_template` API.
 """
 
 import re
@@ -378,6 +378,119 @@ from tests.testing_utilities import (
             ),
             id="templates_to_table",
         ),
+        pytest.param(
+            # Test quote inside a string
+            PyDoughPandasTest(
+                "selected_nations = pydough.call_template('filter_nations_comment', labels={'contain_comment': 'NATION COMMENT'})\n"
+                "result = selected_nations.CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [],
+                    }
+                ),
+                "templates_quote_string_api",
+            ),
+            id="templates_quote_string_api",
+        ),
+        pytest.param(
+            # Test quote inside a string
+            PyDoughPandasTest(
+                'selected_nations = filter_nations_comment("it\'s string with quote")\n'
+                "result = selected_nations.CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [],
+                    }
+                ),
+                "templates_quote_string_call",
+            ),
+            id="templates_quote_string_call",
+        ),
+        pytest.param(
+            # Test quote inside a string
+            PyDoughPandasTest(
+                'selected_nations = filter_nations_comment("it\'s string with quote")\n'
+                "result = selected_nations.CALCULATE(name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [],
+                    }
+                ),
+                "templates_quote_string_call",
+            ),
+            id="templates_quote_string_call",
+        ),
+        pytest.param(
+            # Test float, dict and datetime as attributes
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'filter_users_conditions',\n"
+                "   labels={'account_balance_threshold': 'High threshold', 'column_selection': 'Customer General Information', 'orders_cutoff': 'Start of 1996' }\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [42452, 52241, 91010, 91630, 145787],
+                        "cust_name": [
+                            "Customer#000042452",
+                            "Customer#000052241",
+                            "Customer#000091010",
+                            "Customer#000091630",
+                            "Customer#000145787",
+                        ],
+                        "cust_balance": [
+                            5001.49,
+                            5001.56,
+                            5001.30,
+                            5001.36,
+                            5001.30,
+                        ],
+                    }
+                ),
+                "templates_attr_datatypes_api",
+            ),
+            id="templates_attr_datatypes_api",
+        ),
+        pytest.param(
+            # Test dataframe as attribute value
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'dataframe_input_collection',\n"
+                "   labels={'collection_name': 'NAME 2', 'new_df': 'Three test customers', 'unique_columns': 'Unique cust columns' }\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_id": [1, 2, 3],
+                        "cust_name": ["c1", "c2", "c3"],
+                    }
+                ),
+                "templates_attr_df_api",
+            ),
+            id="templates_attr_df_api",
+        ),
+        pytest.param(
+            # Test a template that uses unrestricted attribute and no param restriction
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'orders_nations',\n"
+                "   labels={'count_orders': 'Number 60k', 'region_name': 'Region 1'}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["VIETNAM", "INDONESIA", "CHINA"],
+                        "nation_region": ["ASIA", "ASIA", "ASIA"],
+                        "n_orders": [60347, 61377, 60784],
+                    }
+                ),
+                "templates_unrestricted_attr",
+            ),
+            id="templates_unrestricted_attr",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:
@@ -420,13 +533,13 @@ def test_pipeline_e2e_tpch_templates(
         pytest.param(
             "result = orders_filter_count2()",
             None,
-            "PyDough object orders_filter_count2 is not callable. Did you mean: orders_filter_count, RELCOUNT, STRCOUNT?",
+            "PyDough object orders_filter_count2 is not callable. Did you mean: orders_filter_count, orders_nations, RELCOUNT?",
             id="unexisting_template_definition_call",
         ),
         pytest.param(
             "result = pydough.call_template('orders_filter_count2', labels={})",
             None,
-            "PyDough template 'orders_filter_count2' doesn't exist. Did you mean: orders_filter_count, order_revenue, order_lvl_priority?",
+            "PyDough template 'orders_filter_count2' doesn't exist. Did you mean: orders_filter_count, orders_nations, order_revenue?",
             id="unexisting_template_definition_api",
         ),
         pytest.param(
@@ -555,6 +668,14 @@ def test_pipeline_e2e_tpch_templates_errors(
             ),
             id="mixed_type_options",
         ),
+        # Extra key attribute definition
+        pytest.param(
+            "EXTRA_ATTRIBUTE_KEY",
+            re.escape(
+                "Template attribute 'attr1' in graph 'EXTRA_ATTRIBUTE_KEY' must be a JSON object containing no fields except for ['description', 'name', 'options', 'type', 'usage']"
+            ),
+            id="extra_attribute_key",
+        ),
         # Attr with no definitions
         pytest.param(
             "NO_TEMPLATES_DEFINITIONS",
@@ -617,6 +738,14 @@ def test_pipeline_e2e_tpch_templates_errors(
             ),
             id="invalid_template_answer_var",
         ),
+        # Extra key template definition
+        pytest.param(
+            "EXTRA_TEMPLATE_KEY",
+            re.escape(
+                "Template definition 'template_1' in graph 'EXTRA_TEMPLATE_KEY' must be a JSON object containing no fields except for ['answer_variable', 'description', 'name', 'parameters', 'source']"
+            ),
+            id="extra_template_key",
+        ),
         pytest.param(
             "TEMPLATE_INVALID_SOURCE_CODE",
             re.escape(
@@ -630,6 +759,13 @@ def test_pipeline_e2e_tpch_templates_errors(
                 "Internal error: failed to compile transformed template for 'template_1': no binding for nonlocal 'foo' found (<template_1>, line 7)"
             ),
             id="invalid_template_source_2",
+        ),
+        pytest.param(
+            "TEMPLATE_INVALID_SOURCE_PLACEHOLDER",
+            re.escape(
+                "Placeholder {3} in pydough_code has no matching argument (only 2 args provided)."
+            ),
+            id="invalid_source_placeholder",
         ),
     ],
 )

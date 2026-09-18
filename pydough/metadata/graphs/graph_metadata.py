@@ -44,8 +44,8 @@ class GraphMetadata(AbstractMetadata):
         "list",
         "dict",
         "pydough",
-        "pd.DataFrame",  # Type for pandas dataframe for Dataframe Collections
-        "datetime",  # Type for datatimes
+        "pd.DataFrame",
+        "datetime",
     }
     """
     Allowed types for template attributes and definitions in the graph.
@@ -226,7 +226,7 @@ class GraphMetadata(AbstractMetadata):
             )
         if name in builtin_registered_operators():
             raise PyDoughMetadataException(
-                f"Function name {name!r} already in use for a PyDough operador"
+                f"Function name {name!r} already in use for a PyDough operator"
             )
         if name in self.functions:
             raise PyDoughMetadataException(
@@ -255,7 +255,7 @@ class GraphMetadata(AbstractMetadata):
             Bool: True if type_str is a valid type name, False otherwise.
         """
 
-        return type_str.strip() == type_str and type_str in self.ALLOWED_TYPES
+        return type_str in self.ALLOWED_TYPES
 
     def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
         """
@@ -320,7 +320,7 @@ class GraphMetadata(AbstractMetadata):
             )
         if name in builtin_registered_operators():
             raise PyDoughMetadataException(
-                f"The template '{name}' already exists as a PyDough operador"
+                f"The template '{name}' already exists as a PyDough operator"
             )
 
         self.templates_definitions[name] = new_template

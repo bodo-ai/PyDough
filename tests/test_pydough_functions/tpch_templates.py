@@ -1,6 +1,6 @@
 """
-Various functions containing user generated collections as
-PyDough code snippets for testing purposes.
+Various functions containing direct template calls and through `call_template` API
+as PyDough code snippets for testing purposes.
 """
 # ruff: noqa
 # mypy: ignore-errors
@@ -70,7 +70,7 @@ def template_dataframe_collection():
     # Template that creates a dataframe collection
 
     generated_collection = pydough.call_template(
-        "generate_df_collection", labels={"collection_name": "NAME1", "col1": "COLORS"}
+        "generate_df_collection", labels={"collection_name": "NAME 1", "col1": "COLORS"}
     )
 
     return generated_collection

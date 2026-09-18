@@ -1012,7 +1012,7 @@ Once every entry in `labels` has been resolved, the template is invoked with the
 | `label` isn't restricted to this template/parameter by its attribute's `usage` | Reports the label isn't available for that parameter on that template. |
 | The matching attribute's `type` differs from the parameter's expected `type` | Reports the type mismatch between the attribute and the parameter. |
 | `label` doesn't appear in any attribute's `options` | Reports the label wasn't found in any attribute's options. |
-| A required template parameter has no corresponding entry in `labels` | Reports the template is missing labels for those parameter(s), by name. |
+| A required template parameter has no corresponding entry in `labels` | Reports which parameter(s) it's missing labels for, by name. |
 
 #### Example
 

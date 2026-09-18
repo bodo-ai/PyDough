@@ -1930,7 +1930,7 @@ Result:
 Once a template is registered in metadata (see [Templates](metadata#templates) for how to define one), it can be used in two ways:
 
 - **Directly**, as an ordinary PyDough function call, passing raw literal/PyDough values as arguments.
-- **Through the API**, via [`pydough.call_template`](usage#call_template_api), passing human-facing labels instead of raw values.
+- **Through the API**, via [`pydough.call_template`](usage#call_template_api), passing `user-facing` labels instead of raw values.
 
 Both approaches ultimately call the same generated function and produce the same result — the only difference is how the arguments are supplied. Regardless of which is used, the result of a template call can be treated like any other PyDough value: chained into further PyDough operations, passed into another template, or (if the template's `answer_variable` is a plain literal) used directly in Python.
 
@@ -2000,7 +2000,7 @@ pydough.to_df(result)
 <!-- TOC --><a name="using-templates-follow-up"></a>
 ### Chaining Templates Together
 
-The result of one template call can be fed directly into another template as an argument, letting templates build on each other without needing to re-express the earlier result in raw PyDough. Works the same way whether the first call was made directly or through the API.
+The result of one template call can be fed directly into another template as an argument, letting templates build on each other without needing to re-express the earlier result in raw PyDough. It works the same way whether the first call was made directly or through the API.
 
 Example: calling `orders_revenue_by` via the API to partition order revenue for 1997 by month, then passing that result into `top_bottom_comparison` to find the highest- and lowest-performing months:
 
@@ -2087,7 +2087,7 @@ pydough.to_df(final_result)
 <!-- TOC --><a name="using-templates-dataframe"></a>
 ### Templates Producing a User-Generated Collection
 
-A template's `source` can also produce a **user-generated collection** — e.g. one built from an in-memory `pd.DataFrame` via `pydough.dataframe_collection` — rather than deriving from the graph itself. This works like any other template, but the `pd.DataFrame` and `list` typed parameters let external, ad hoc data be wrapped into a proper collection and then combined with the rest of the graph (e.g. via `CROSS`, `WHERE`, `CALCULATE`) just as if it were a regular collection.
+A template's `source` can also produce a **user-generated collection** — e.g. one built from an in-memory `pd.DataFrame` via `pydough.dataframe_collection` — rather than deriving from the graph itself. This works like any other template, but the `pd.DataFrame` and `list` typed parameters let you wrap external, ad hoc data into a a proper collection and combine it with the rest of the graph (e.g. via `CROSS`, `WHERE`, `CALCULATE`) just as if it were a regular collection.
 
 Example template definition, wrapping a `pd.DataFrame` into a named dataframe collection with a list of unique columns:
 

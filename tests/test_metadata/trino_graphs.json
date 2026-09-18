@@ -902,20 +902,92 @@
         },
         {
           "name": "dataframe_collection_column",
-          "usage": {"generate_df_collection": ["col1"]},
+          "usage": {"generate_df_collection": ["col1"], "dataframe_input_collection": ["unique_columns"]},
           "type": "list",
           "description": "List with various types of colors to be used in the dataframe collection",
           "options":[
-            {"label": "COLORS", "value": "['blue', 'red', 'yellow', 'purple']"}
+            {"label": "COLORS", "value": "['blue', 'red', 'yellow', 'purple']"},
+            {"label": "Unique cust columns", "value": "['cust_id']"}
           ]
         },
         {
           "name": "dataframe_collections_names",
-          "usage": {"generate_df_collection": ["collection_name"]},
+          "usage": {"generate_df_collection": ["collection_name"], "dataframe_input_collection": ["collection_name"]},
           "type": "str",
           "description": "Names of the dataframes to be created in the collection",
           "options":[
-            {"label": "NAME1", "value": "colors_collection"}
+            {"label": "NAME 1", "value": "colors_collection"},
+            {"label": "NAME 2", "value": "customers_collection"}
+          ]
+        },
+        {
+          "name": "filter_comments",
+          "usage": {"filter_nations_comment": []},
+          "type": "str",
+          "description": "Comments to filter by",
+          "options":[
+            {"label": "NATION COMMENT", "value": "it's string with quote"}
+          ]
+        },
+        {
+          "name": "price_thresholds",
+          "usage": {"filter_users_conditions": ["account_balance_threshold"] },
+          "type": "float",
+          "description": "A minimum order price threshold",
+          "options": [
+            { "label": "Mid threshold", "value": 2500.5 },
+            { "label": "High threshold", "value": 5000.5 }
+          ]
+        },
+        {
+          "name": "customer_selected_columns",
+          "usage": { "filter_users_conditions": ["column_selection"] },
+          "type": "dict",
+          "description": "Column customer selection",
+          "options": [
+            { "label": "Customer General Information", "value": "{'cust_key': key, 'cust_name': name, 'cust_balance': account_balance}"},
+            { "label": "Customer Orders", "value": "{'cust_key': key, 'cust_market': market_segment, 'n_orders': COUNT(orders)}" }
+          ]
+        },
+        {
+          "name": "cutoff_dates",
+          "usage": { "filter_users_conditions": ["orders_cutoff"] },
+          "type": "datetime",
+          "description": "A cutoff date for filtering orders",
+          "options": [
+            { "label": "Start of 1996", "value": "datetime(1996, 1, 1)" }
+          ]
+        },
+        {
+          "name": "seed_customer_frames",
+          "usage": { "dataframe_input_collection": ["new_df"] },
+          "type": "pd.DataFrame",
+          "description": "A small seed DataFrame of customers to join against",
+          "options": [
+            {
+              "label": "Three test customers",
+              "value": "pd.DataFrame({'cust_id': [1, 2, 3], 'customer_name': ['c1', 'c2', 'c3']})"
+            }
+          ]
+        },
+        {
+          "name": "unrestricted_attribute",
+          "usage": {},
+          "type": "int",
+          "description": "Some integer values that can be used freely",
+          "options": [
+            { "label": "Number 1k", "value": 1000},
+            { "label": "Number 60k", "value": 60000}
+          ]
+        },
+        {
+          "name": "parameter_unrestriected_attribute",
+          "usage": {"orders_nations": []},
+          "type": "str",
+          "description": "Some integer values that can be used freely",
+          "options": [
+            { "label": "Region 1", "value": "ASIA"},
+            { "label": "Region 2", "value": "EUROPE"}
           ]
         }
       ],
@@ -1147,6 +1219,54 @@
             }
           },
           "source": "result = pd.to_datetime({1}) + pd.DateOffset(months={2})",
+          "answer_variable": "result"
+        },
+        {
+          "name": "filter_nations_comment",
+          "description": "It filters the nations based on something in the comment",
+          "parameters": {
+            "contain_comment": {
+              "type": "str",
+              "description": "Comment to filter by"
+            }
+          },
+          "source": "result = nations.WHERE(CONTAINS(name, {1}))",
+          "answer_variable": "result"
+        },
+        {
+          "name": "filter_users_conditions",
+          "description": "It filters customers based on conditions and selecting the given columns",
+          "parameters": {
+            "account_balance_threshold": {
+              "type": "float",
+              "description": "Threshold for the account balance"
+            },
+            "column_selection":{
+              "type": "dict",
+              "description": "Dictionary representing the column selection"
+            },
+            "orders_cutoff":{
+              "type": "datetime",
+              "description": "Datetime for the orders cutoff"
+            }
+          },
+          "source": "result = customers.WHERE((account_balance >= {1}) & HAS(orders.WHERE(order_date >= {3}))).CALCULATE(**{2}).TOP_K(5, by=cust_balance)",
+          "answer_variable": "result"
+        },
+        {
+          "name": "orders_nations",
+          "description": "Gets nations with orders more then the given threshold and from the given region",
+          "parameters": {
+            "count_orders": {
+              "type": "int",
+              "description": "Threshold for the number of orders"
+            },
+            "region_name":{
+              "type": "str",
+              "description": "Name of the region from where the nations are filtered"
+            }
+          },
+          "source": "result = nations.WHERE((COUNT(customers.orders) >= {1}) & (region.name == {2})).CALCULATE(name, nation_region=region.name, n_orders=COUNT(customers.orders))",
           "answer_variable": "result"
         }
       ]
