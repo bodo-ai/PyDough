@@ -1,0 +1,6 @@
+ROOT(columns=[('percent_eligible_frpm_k_12', "Percent (%) Eligible FRPM (K-12)"), ('frpm_category', IFF(("Percent (%) Eligible FRPM (K-12)"_1 >= 0.75:numeric), 'High':string, 'Medium-Low':string))], orderings=[])
+ JOIN(condition=t0."CDSCode" == t1."CDSCode", type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'"Percent (%) Eligible FRPM (K-12)"': t1."Percent (%) Eligible FRPM (K-12)", '"Percent (%) Eligible FRPM (K-12)"_1': t0."Percent (%) Eligible FRPM (K-12)"})
+  JOIN(condition=t0."CDSCode" == t1."CDSCode", type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'"CDSCode"': t0."CDSCode", '"Percent (%) Eligible FRPM (K-12)"': t1."Percent (%) Eligible FRPM (K-12)"})
+   SCAN(table=main.schools, columns={'"CDSCode"': "CDSCode"})
+   SCAN(table=main.frpm, columns={'"CDSCode"': "CDSCode", '"Percent (%) Eligible FRPM (K-12)"': "Percent (%) Eligible FRPM (K-12)"})
+  SCAN(table=main.frpm, columns={'"CDSCode"': "CDSCode", '"Percent (%) Eligible FRPM (K-12)"': "Percent (%) Eligible FRPM (K-12)"})
