@@ -288,7 +288,7 @@ def explain_unqualified(
             )
         elif "Unrecognized term" in str(error):
             lines.append(
-                f"{str(error)}\n"
+                f"{error!s}\n"
                 "This could mean you accessed a property using a name that does not exist, or\n"
                 "that you need to place your PyDough code into a context for it to make sense.\n"
                 "Did you mean to use pydough.explain_term?"

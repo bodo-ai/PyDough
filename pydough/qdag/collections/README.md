@@ -59,9 +59,7 @@ Below is an example of a PyDough snippet and the corresponding tree string repre
 ```python
 Nations.CALCULATE(
     nation_name=name,
-).WHERE(
-    region.name == "EUROPE"
-).suppliers.CALCULATE(
+).WHERE(region.name == "EUROPE").suppliers.CALCULATE(
     supplier_name=name,
     nation_name=nation_name,
 )
@@ -84,12 +82,8 @@ And below is another such example:
 german_suppliers = supply_records.WHERE(supplier.nation == "GERMANY")
 selected_parts = parts.WHERE(HAS(german_suppliers))
 PARTITION(selected_parts, name="p", by=size).CALCULATE(
-    size,
-    n_parts_with_german_supplier=COUNT(p)
-).TOP_K(
-    10, 
-    by=n_parts_with_german_supplier.DESC()
-)
+    size, n_parts_with_german_supplier=COUNT(p)
+).TOP_K(10, by=n_parts_with_german_supplier.DESC())
 ```
 
 ```

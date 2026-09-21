@@ -16,8 +16,7 @@ The following PyDough snippet solves this problem:
 
 ```py
 result = People.CALCULATE(
-    name,
-    net_income = SUM(jobs.income_earned) - SUM(schools.tuition_paid)
+    name, net_income=SUM(jobs.income_earned) - SUM(schools.tuition_paid)
 )
 pydough.to_df(result)
 ```

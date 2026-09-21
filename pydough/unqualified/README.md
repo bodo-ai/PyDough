@@ -44,14 +44,14 @@ from pydough.metadata import parse_json_metadata_from_file
 # Define a graph metadata object by reading from a JSON file
 graph = parse_json_metadata_from_file("path/to/metadata.json", "example_graph")
 
+
 # Define a function with the init_pydough_context decorator
 @init_pydough_context(graph)
 def example_function():
     return Nations.CALCULATE(
-        nation_name=name,
-        region_name=region.name,
-        num_customers=COUNT(customers)
+        nation_name=name, region_name=region.name, num_customers=COUNT(customers)
     )
+
 
 # Transform the source code of the function
 source_code = """
@@ -68,6 +68,7 @@ transformed_ast = transform_code(source_code, graph_dict, known_names)
 
 # Display the transformed Python code
 import ast
+
 print(ast.unparse(transformed_ast))
 
 # Transform a Jupyter cell
@@ -88,13 +89,15 @@ The transformed Python code for the function will look like this:
 
 ```python
 from pydough.unqualified import UnqualifiedRoot
+
 _ROOT = UnqualifiedRoot(example_graph)
+
 
 def example_function():
     return _ROOT.Nations.CALCULATE(
         nation_name=_ROOT.name,
         region_name=_ROOT.region.name,
-        num_customers=_ROOT.COUNT(_ROOT.customers)
+        num_customers=_ROOT.COUNT(_ROOT.customers),
     )
 ```
 
@@ -102,12 +105,13 @@ The transformed Python code for the Jupyter cell will look like this:
 
 ```python
 from pydough.unqualified import UnqualifiedRoot
+
 _ROOT = UnqualifiedRoot(example_graph)
 
 result = _ROOT.Nations.CALCULATE(
     nation_name=_ROOT.name,
     region_name=_ROOT.region.name,
-    num_customers=_ROOT.COUNT(_ROOT.customers)
+    num_customers=_ROOT.COUNT(_ROOT.customers),
 )
 ```
 

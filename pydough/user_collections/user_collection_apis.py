@@ -58,7 +58,7 @@ def dataframe_collection(
     name: str,
     dataframe: pd.DataFrame,
     unique_column_names: list[str | list[str]],
-    column_subset: list[str] = [],
+    column_subset: list[str] | None = None,
 ) -> UnqualifiedGeneratedCollection:
     """
     Implementation of the `pydough.dataframe_collection` function, which provides
@@ -77,6 +77,8 @@ def dataframe_collection(
         A collection with the given dataframe.
     """
     # Validate name
+    if column_subset is None:
+        column_subset = []
     if not isinstance(name, str):
         raise TypeError(f"Expected 'name' to be a string, got {type(name).__name__}")
 

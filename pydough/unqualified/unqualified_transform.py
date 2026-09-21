@@ -383,7 +383,7 @@ def transform_code(
     """
     assert len(graph_dict) == 1, "Expected exactly one key in the graph_dict"
     visitor: ast.NodeTransformer = AddRootVisitor(
-        list(graph_dict.keys())[0], known_names
+        next(iter(graph_dict.keys())), known_names
     )
     source = source.lstrip("\n")
     n_strip = len(source) - len(source.lstrip())
@@ -493,7 +493,7 @@ def from_string(
         tree: ast.AST = ast.parse(source)
     except SyntaxError as e:
         raise ValueError(
-            f"Syntax error in source PyDough code:\n{source}\n{str(e)}"
+            f"Syntax error in source PyDough code:\n{source}\n{e!s}"
         ) from e
     assert isinstance(tree, ast.AST)
     new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
@@ -504,7 +504,7 @@ def from_string(
     try:
         compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
     except SyntaxError as e:
-        raise ValueError(f"Syntax error in transformed PyDough code:\n{str(e)}") from e
+        raise ValueError(f"Syntax error in transformed PyDough code:\n{e!s}") from e
     execution_context: dict[str, Any] = environment | {
         graph_name: metadata,
         "pydough": pydough,

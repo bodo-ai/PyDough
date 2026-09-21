@@ -390,14 +390,7 @@ from tests.testing_utilities import (
         pytest.param(
             PyDoughPandasTest(
                 "selected_accounts = accounts.WHERE("
-                + " & ".join(
-                    [
-                        "((account_type == 'retirement') | (account_type == 'savings'))",
-                        "(balance >= 5000)",
-                        "(CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail'))",
-                        "(YEAR(creation_timestamp) < 2020)",
-                    ]
-                )
+                + "((account_type == 'retirement') | (account_type == 'savings')) & (balance >= 5000) & (CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail')) & (YEAR(creation_timestamp) < 2020)"
                 + ")\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
                 "CRYPTBANK",
@@ -1203,14 +1196,7 @@ def test_pipeline_e2e_cryptbank(
         ),
         pytest.param(
             "selected_accounts = accounts.WHERE("
-            + " & ".join(
-                [
-                    "((account_type == 'retirement') | (account_type == 'savings'))",
-                    "(balance >= 5000)",
-                    "(CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail'))",
-                    "(YEAR(creation_timestamp) < 2020)",
-                ]
-            )
+            + "((account_type == 'retirement') | (account_type == 'savings')) & (balance >= 5000) & (CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail')) & (YEAR(creation_timestamp) < 2020)"
             + ")\n"
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
             [
@@ -1505,16 +1491,26 @@ def test_pipeline_e2e_cryptbank(
             + ")",
             [
                 {
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
-                    "'CONTAINS', 2, '__col__', 'e']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
-                    "'CONTAINS', 2, '__col__', 'u']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', "
-                    "'CONTAINS', 2, '__col__', 'i']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', "
-                    "'CONTAINS', 2, '__col__', 'o']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', "
-                    "'CONTAINS', 2, '__col__', 'u']",
+                    (
+                        "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
+                        "'CONTAINS', 2, '__col__', 'e']"
+                    ),
+                    (
+                        "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
+                        "'CONTAINS', 2, '__col__', 'u']"
+                    ),
+                    (
+                        "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', "
+                        "'CONTAINS', 2, '__col__', 'i']"
+                    ),
+                    (
+                        "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', "
+                        "'CONTAINS', 2, '__col__', 'o']"
+                    ),
+                    (
+                        "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', "
+                        "'CONTAINS', 2, '__col__', 'u']"
+                    ),
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
@@ -1637,7 +1633,6 @@ def test_pipeline_e2e_cryptbank(
                 {
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
-                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
                     "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
                     "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",

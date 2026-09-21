@@ -153,8 +153,8 @@ The output always has a consistent shape:
 {
     "error": False,
     "query_summary": "...",  # deterministic plain-English sentence
-    "steps": [...],          # ordered list of operation steps
-    "schema": {...}          # source collection, output columns, ordering, limit
+    "steps": [...],  # ordered list of operation steps
+    "schema": {...},  # source collection, output columns, ordering, limit
 }
 
 # Failure (e.g. unrecognised term, expression instead of collection)
@@ -162,7 +162,7 @@ The output always has a consistent shape:
     "error": True,
     "message": "Unrecognised term 'typo'. Did you mean: name?",
     "steps": [],
-    "schema": None
+    "schema": None,
 }
 ```
 
@@ -189,9 +189,11 @@ from pydough.metadata import parse_json_metadata_from_file
 
 graph = parse_json_metadata_from_file("path/to/metadata.json", "example_graph")
 
+
 @pydough.init_pydough_context(graph)
 def my_query():
     return nations.WHERE(region.name == "ASIA").CALCULATE(key, name)
+
 
 node = my_query()
 

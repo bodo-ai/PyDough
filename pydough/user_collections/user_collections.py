@@ -98,8 +98,10 @@ class PyDoughUserGeneratedCollection(ABC):
             A list of human-readable explanation strings.
         """
         lines = [
-            f"This node accesses user-generated collection {self.name!r}.\n"
-            f"Columns: {', '.join(sorted(self.columns))}",
+            (
+                f"This node accesses user-generated collection {self.name!r}.\n"
+                f"Columns: {', '.join(sorted(self.columns))}"
+            ),
         ]
         if verbose:
             unique = self.unique_column_names[0]
