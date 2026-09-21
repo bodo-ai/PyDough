@@ -1,59 +1,60 @@
-WITH "_T1" AS (
+WITH "_t1" AS (
   SELECT
-    p_container AS P_CONTAINER,
-    p_size AS P_SIZE
+    P_CONTAINER,
+    P_SIZE
   FROM TPCH.PART
   WHERE
-    p_container LIKE 'LG%'
-), "_S6" AS (
+    P_CONTAINER LIKE 'LG%'
+), "_s6" AS (
   SELECT DISTINCT
     P_SIZE
-  FROM "_T1"
+  FROM "_t1"
   ORDER BY
     1 NULLS FIRST
   FETCH FIRST 10 ROWS ONLY
-), "_S0" AS (
+), "_s0" AS (
   SELECT DISTINCT
     P_SIZE
-  FROM "_T1"
+  FROM "_t1"
   ORDER BY
     1 NULLS FIRST
   FETCH FIRST 10 ROWS ONLY
-), "_T4" AS (
+), "_t4" AS (
   SELECT
-    ORDERS.o_orderpriority AS O_ORDERPRIORITY,
-    "_S0".P_SIZE,
-    SUM(LINEITEM.l_quantity) AS SUM_L_QUANTITY
-  FROM "_S0" "_S0"
+    ORDERS.O_ORDERPRIORITY,
+    "_s0".P_SIZE,
+    SUM(LINEITEM.L_QUANTITY) AS SUM_L_QUANTITY
+  FROM "_s0" "_s0"
   JOIN TPCH.ORDERS ORDERS
-    ON EXTRACT(MONTH FROM CAST(ORDERS.o_orderdate AS DATE)) = 1
-    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) = 1998
+    ON EXTRACT(MONTH FROM CAST(ORDERS.O_ORDERDATE AS DATE)) = 1
+    AND EXTRACT(YEAR FROM CAST(ORDERS.O_ORDERDATE AS DATE)) = 1998
   JOIN TPCH.LINEITEM LINEITEM
-    ON LINEITEM.l_discount = 0
-    AND LINEITEM.l_orderkey = ORDERS.o_orderkey
-    AND LINEITEM.l_shipmode = 'SHIP'
-    AND LINEITEM.l_tax = 0
+    ON LINEITEM.L_DISCOUNT = 0
+    AND LINEITEM.L_ORDERKEY = ORDERS.O_ORDERKEY
+    AND LINEITEM.L_SHIPMODE = 'SHIP'
+    AND LINEITEM.L_TAX = 0
   JOIN TPCH.PART PART
-    ON LINEITEM.l_partkey = PART.p_partkey
-    AND PART.p_container LIKE 'LG%'
-    AND PART.p_size = "_S0".P_SIZE
+    ON LINEITEM.L_PARTKEY = PART.P_PARTKEY
+    AND PART.P_CONTAINER LIKE 'LG%'
+    AND PART.P_SIZE = "_s0".P_SIZE
   GROUP BY
-    ORDERS.o_orderpriority,
-    "_S0".P_SIZE
-), "_T" AS (
+    ORDERS.O_ORDERPRIORITY,
+    "_s0".P_SIZE
+), "_t" AS (
   SELECT
     O_ORDERPRIORITY,
     P_SIZE,
     SUM_L_QUANTITY,
-    ROW_NUMBER() OVER (PARTITION BY P_SIZE ORDER BY CASE
-      WHEN (
-        NOT SUM_L_QUANTITY IS NULL AND SUM_L_QUANTITY > 0
-      )
-      THEN COALESCE(SUM_L_QUANTITY, 0)
-      ELSE NULL
-    END DESC) AS "_W"
-  FROM "_T4"
-), "_S7" AS (
+    ROW_NUMBER() OVER (
+      PARTITION BY P_SIZE
+      ORDER BY CASE
+        WHEN COALESCE(SUM_L_QUANTITY, 0) > 0
+        THEN COALESCE(SUM_L_QUANTITY, 0)
+        ELSE NULL
+      END DESC
+    ) AS "_w"
+  FROM "_t4"
+), "_s7" AS (
   SELECT
     CASE
       WHEN (
@@ -64,16 +65,16 @@ WITH "_T1" AS (
     END AS TOTAL_QTY,
     O_ORDERPRIORITY,
     P_SIZE
-  FROM "_T"
+  FROM "_t"
   WHERE
-    "_W" = 1
+    "_w" = 1
 )
 SELECT
-  "_S6".P_SIZE AS part_size,
-  "_S7".O_ORDERPRIORITY AS best_order_priority,
-  "_S7".TOTAL_QTY AS best_order_priority_qty
-FROM "_S6" "_S6"
-LEFT JOIN "_S7" "_S7"
-  ON "_S6".P_SIZE = "_S7".P_SIZE
+  "_s6".P_SIZE AS part_size,
+  "_s7".O_ORDERPRIORITY AS best_order_priority,
+  "_s7".TOTAL_QTY AS best_order_priority_qty
+FROM "_s6" "_s6"
+LEFT JOIN "_s7" "_s7"
+  ON "_s6".P_SIZE = "_s7".P_SIZE
 ORDER BY
   1 NULLS FIRST

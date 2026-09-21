@@ -25,7 +25,7 @@ WITH _u_0 AS (
     1
 )
 SELECT
-  CAST(min_year_start_dt AS TEXT) AS year,
+  CAST(min_year_start_dt AS VARCHAR) AS year,
   n_rows AS number_of_new_patients,
   n_rows - LAG(n_rows, 1) OVER (ORDER BY min_year_start_dt) AS npi
 FROM _t0

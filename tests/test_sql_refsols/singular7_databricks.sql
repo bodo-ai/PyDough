@@ -19,7 +19,10 @@ WITH _s3 AS (
     partsupp.ps_partkey,
     1
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY partsupp.ps_suppkey ORDER BY count_l_suppkey DESC NULLS FIRST, anything_p_name NULLS LAST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY partsupp.ps_suppkey
+      ORDER BY COALESCE(CASE WHEN count_l_suppkey <> 0 THEN count_l_suppkey ELSE NULL END, 0) DESC NULLS FIRST, anything_p_name NULLS LAST
+    ) = 1
 )
 SELECT
   supplier.s_name AS supplier_name,

@@ -15,7 +15,7 @@ WITH _t2 AS (
     COUNT(*) AS n_rows
   FROM _t2 AS _t4
   JOIN _s1 AS _s3
-    ON _s3.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t4.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s3.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t4.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s3.ca_dt >= _t4.pr_release
   JOIN main.devices AS devices
     ON _s3.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
@@ -28,7 +28,7 @@ WITH _t2 AS (
     SUM(_s7.n_rows) AS sum_n_rows
   FROM _t2 AS _t2
   JOIN _s1 AS _s1
-    ON _s1.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t2.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s1.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t2.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s1.ca_dt >= _t2.pr_release
   LEFT JOIN _s7 AS _s7
     ON _s1.ca_dt = _s7.ca_dt
@@ -39,14 +39,14 @@ WITH _t2 AS (
     TRUNC(CAST(_s11.ca_dt AS TIMESTAMP), 'QUARTER') AS quarter
   FROM _t2 AS _t10
   JOIN _s1 AS _s11
-    ON _s11.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t10.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s11.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t10.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s11.ca_dt >= _t10.pr_release
 ), _s17 AS (
   SELECT
     _s15.ca_dt
   FROM _t2 AS _t11
   JOIN _s1 AS _s15
-    ON _s15.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t11.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s15.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t11.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s15.ca_dt >= _t11.pr_release
 ), _s23 AS (
   SELECT

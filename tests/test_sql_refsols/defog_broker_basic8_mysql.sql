@@ -1,5 +1,5 @@
 SELECT
-  sbcustcountry AS country,
+  sbCustCountry AS country,
   COUNT(*) AS num_customers
 FROM broker.sbCustomer
 GROUP BY

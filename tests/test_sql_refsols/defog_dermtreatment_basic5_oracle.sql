@@ -1,16 +1,16 @@
 WITH "_u_0" AS (
   SELECT
-    doc_id AS "_u_1"
+    DOC_ID AS "_u_1"
   FROM MAIN.TREATMENTS
   GROUP BY
-    doc_id
+    DOC_ID
 )
 SELECT
-  DOCTORS.doc_id,
-  DOCTORS.first_name,
-  DOCTORS.last_name
+  DOCTORS.DOC_ID AS doc_id,
+  DOCTORS.FIRST_NAME AS first_name,
+  DOCTORS.LAST_NAME AS last_name
 FROM MAIN.DOCTORS DOCTORS
 LEFT JOIN "_u_0" "_u_0"
-  ON DOCTORS.doc_id = "_u_0"."_u_1"
+  ON DOCTORS.DOC_ID = "_u_0"."_u_1"
 WHERE
   NOT "_u_0"."_u_1" IS NULL

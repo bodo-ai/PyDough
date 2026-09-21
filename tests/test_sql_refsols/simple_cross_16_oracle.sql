@@ -1,38 +1,38 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT
-    c_acctbal AS C_ACCTBAL
+    C_ACCTBAL
   FROM TPCH.CUSTOMER
-), "_S1" AS (
+), "_s1" AS (
   SELECT
     MIN(C_ACCTBAL) AS MIN_C_ACCTBAL
-  FROM "_S0"
-), "_S4" AS (
+  FROM "_s0"
+), "_s4" AS (
   SELECT
     COUNT(*) AS N_ROWS
-  FROM "_S0" "_S0"
-  JOIN "_S1" "_S1"
-    ON "_S0".C_ACCTBAL <= (
-      "_S1".MIN_C_ACCTBAL + 10.0
+  FROM "_s0" "_s0"
+  JOIN "_s1" "_s1"
+    ON "_s0".C_ACCTBAL <= (
+      "_s1".MIN_C_ACCTBAL + 10.0
     )
-), "_S2" AS (
+), "_s2" AS (
   SELECT
-    s_acctbal AS S_ACCTBAL
+    S_ACCTBAL
   FROM TPCH.SUPPLIER
-), "_S3" AS (
+), "_s3" AS (
   SELECT
     MAX(S_ACCTBAL) AS MAX_S_ACCTBAL
-  FROM "_S2"
-), "_S5" AS (
+  FROM "_s2"
+), "_s5" AS (
   SELECT
     COUNT(*) AS N_ROWS
-  FROM "_S2" "_S2"
-  JOIN "_S3" "_S3"
-    ON "_S2".S_ACCTBAL >= (
-      "_S3".MAX_S_ACCTBAL - 10.0
+  FROM "_s2" "_s2"
+  JOIN "_s3" "_s3"
+    ON "_s2".S_ACCTBAL >= (
+      "_s3".MAX_S_ACCTBAL - 10.0
     )
 )
 SELECT
-  "_S4".N_ROWS AS n1,
-  "_S5".N_ROWS AS n2
-FROM "_S4" "_S4"
-CROSS JOIN "_S5" "_S5"
+  "_s4".N_ROWS AS n1,
+  "_s5".N_ROWS AS n2
+FROM "_s4" "_s4"
+CROSS JOIN "_s5" "_s5"

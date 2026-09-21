@@ -1,6 +1,6 @@
 SELECT
-  year,
-  AVG(citation_num) AS average_citations
+  YEAR AS year,
+  AVG(CITATION_NUM) AS average_citations
 FROM MAIN.PUBLICATION
 GROUP BY
-  year
+  YEAR

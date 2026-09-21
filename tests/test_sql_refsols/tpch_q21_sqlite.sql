@@ -45,7 +45,7 @@ WITH _t5 AS (
     AND _t3.l_orderkey = _u_0._u_2
     AND _t3.o_orderkey = _u_0._u_2
   WHERE
-    _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+    NOT NOT _u_0._u_1 IS NULL AND _t3.anything_o_orderstatus = 'F'
 )
 SELECT
   MAX(supplier.s_name) AS S_NAME,

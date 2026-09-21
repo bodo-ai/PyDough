@@ -1,5 +1,9 @@
 SELECT
   n_name AS name,
-  NTILE(5) OVER (ORDER BY CASE WHEN n_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, n_name COLLATE utf8mb4_bin) AS p1,
-  NTILE(5) OVER (ORDER BY CASE WHEN n_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, n_name COLLATE utf8mb4_bin) AS p2
+  NTILE(5) OVER (
+    ORDER BY CASE WHEN n_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, n_name COLLATE utf8mb4_bin
+  ) AS p1,
+  NTILE(5) OVER (
+    ORDER BY CASE WHEN n_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, n_name COLLATE utf8mb4_bin
+  ) AS p2
 FROM tpch.NATION

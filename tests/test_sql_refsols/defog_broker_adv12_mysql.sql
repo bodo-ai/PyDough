@@ -3,6 +3,6 @@ SELECT
 FROM broker.sbCustomer
 WHERE
   (
-    LOWER(sbcustname) LIKE '%ez' OR LOWER(sbcustname) LIKE 'j%'
+    LOWER(sbCustName) LIKE '%ez' OR LOWER(sbCustName) LIKE 'j%'
   )
-  AND LOWER(sbcuststate) LIKE '%a'
+  AND LOWER(sbCustState) LIKE '%a'

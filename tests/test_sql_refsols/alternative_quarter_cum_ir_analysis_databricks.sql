@@ -14,7 +14,7 @@ WITH _s0 AS (
     TRUNC(CAST(_s0.ca_dt AS TIMESTAMP), 'QUARTER') AS quarter
   FROM _s0 AS _s0
   JOIN _t2 AS _t2
-    ON _s0.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t2.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s0.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t2.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s0.ca_dt >= _t2.pr_release
 ), _t5 AS (
   SELECT
@@ -36,7 +36,7 @@ WITH _s0 AS (
     COUNT(DISTINCT incidents.in_device_id) AS ndistinct_in_device_id
   FROM _s0 AS _s2
   JOIN _t2 AS _t4
-    ON _s2.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t4.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s2.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t4.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s2.ca_dt >= _t4.pr_release
   JOIN main.incidents AS incidents
     ON _s2.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
@@ -52,7 +52,7 @@ WITH _s0 AS (
     COUNT(*) AS n_rows
   FROM _s0 AS _s14
   JOIN _t2 AS _t8
-    ON _s14.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t8.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s14.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t8.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s14.ca_dt >= _t8.pr_release
   JOIN main.devices AS devices
     ON _s14.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))

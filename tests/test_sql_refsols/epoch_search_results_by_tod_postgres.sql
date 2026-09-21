@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     times.t_name,
-    MAX(times.t_start_hour) AS anything_t_start_hour,
+    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
     AVG(CAST(searches.search_num_results AS DECIMAL)) AS avg_search_num_results,
     COUNT(*) AS n_rows
   FROM times AS times

@@ -1,19 +1,34 @@
 WITH _s0 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)),
-      CASE
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)) IS NULL
+      OR CASE
         WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT)) >= 2
         THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT), 1, 2)
         ELSE SUBSTRING(
-          CONCAT('00', CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT)),
+          '00' || CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT),
           (
             2 * -1
           )
         )
-      END
-    ) AS month,
+      END IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)),
+        CASE
+          WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT)) >= 2
+          THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT), 1, 2)
+          ELSE SUBSTRING(
+            '00' || CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT),
+            (
+              2 * -1
+            )
+          )
+        END
+      )
+    END AS month,
     sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,
     MAX(sbdphigh) AS max_sbdphigh,

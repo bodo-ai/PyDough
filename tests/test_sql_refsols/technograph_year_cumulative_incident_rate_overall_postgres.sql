@@ -40,19 +40,19 @@ SELECT
     2
   ) AS cum_ir,
   ROUND(
-    CAST(CAST((
+    CAST((
       100.0 * (
         sum_expr_3 - LAG(sum_expr_3, 1) OVER (ORDER BY year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(sum_expr_3, 1) OVER (ORDER BY year_ca_dt) AS DECIMAL),
+    ) / LAG(sum_expr_3, 1) OVER (ORDER BY year_ca_dt) AS DECIMAL),
     2
   ) AS pct_bought_change,
   ROUND(
-    CAST(CAST((
+    CAST((
       100.0 * (
         COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt) AS DECIMAL),
+    ) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt) AS DECIMAL),
     2
   ) AS pct_incident_change,
   sum_expr_3 AS bought,

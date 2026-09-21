@@ -34,9 +34,13 @@ WITH _t6 AS (
     (
       CAST(0.15 AS REAL) / _s2.anything_n
     ) + 0.85 * SUM(
-      CAST((
-        CAST(_s3.l_source <> _s3.l_target OR _s3.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
-      ) AS REAL) / COALESCE(_s2.sum_n_target, 0)
+      (
+        CAST((
+          _s3.l_target IS NULL
+        ) OR (
+          _s3.l_source <> _s3.l_target
+        ) AS INTEGER) * _s2.anything_page_rank
+      ) / COALESCE(_s2.sum_n_target, 0)
     ) OVER (PARTITION BY _s5.s_key) AS page_rank
   FROM _s2 AS _s2
   JOIN _s1 AS _s3
@@ -52,7 +56,11 @@ WITH _t6 AS (
       CAST(0.15 AS REAL) / _t3.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_s7.l_source <> _s7.l_target OR _s7.l_target IS NULL AS INTEGER) * _t3.page_rank
+        CAST((
+          _s7.l_target IS NULL
+        ) OR (
+          _s7.l_source <> _s7.l_target
+        ) AS INTEGER) * _t3.page_rank
       ) AS REAL) / COALESCE(_t3.sum_n_target, 0)
     ) OVER (PARTITION BY _s9.s_key) AS page_rank
   FROM _t3 AS _t3

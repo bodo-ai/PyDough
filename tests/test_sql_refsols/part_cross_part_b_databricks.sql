@@ -36,7 +36,11 @@ WITH _s0 AS (
 SELECT
   _s0.sbcuststate AS state,
   _s1.month AS month_of_year,
-  SUM(COALESCE(_s9.n_rows, 0)) OVER (PARTITION BY _s0.sbcuststate ORDER BY _s1.month NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n
+  SUM(COALESCE(_s9.n_rows, 0)) OVER (
+    PARTITION BY _s0.sbcuststate
+    ORDER BY _s1.month NULLS LAST
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS n
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1
 LEFT JOIN _s9 AS _s9

@@ -19,7 +19,10 @@ WITH _s1 AS (
   WHERE
     _s4.value <> ''
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s1.key, _s0.index - 1 ORDER BY _s2.index - 1 DESC, _s4.index - 1 DESC) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _s1.key, _s0.index - 1
+      ORDER BY _s2.index - 1 DESC, _s4.index - 1 DESC
+    ) = 1
 )
 SELECT
   key,

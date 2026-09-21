@@ -32,9 +32,13 @@ WITH _t4 AS (
     (
       CAST(0.15 AS REAL) / _s2.anything_n
     ) + 0.85 * SUM(
-      CAST((
-        CAST(_s3.l_source <> _s3.l_target OR _s3.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
-      ) AS REAL) / COALESCE(_s2.sum_n_target, 0)
+      (
+        CAST((
+          _s3.l_target IS NULL
+        ) OR (
+          _s3.l_source <> _s3.l_target
+        ) AS INTEGER) * _s2.anything_page_rank
+      ) / COALESCE(_s2.sum_n_target, 0)
     ) OVER (PARTITION BY _s5.s_key) AS page_rank
   FROM _s2 AS _s2
   JOIN _s1 AS _s3

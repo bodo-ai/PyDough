@@ -27,4 +27,4 @@ SELECT
     )
   ) AS d3
 FROM (VALUES
-  (NULL)) AS _q_0(_col_0)
+  (NULL)) AS _0(_col_0)

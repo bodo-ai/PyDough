@@ -2,10 +2,10 @@ SELECT
   sbtxdatetime AS x,
   CAST('2025-05-02 11:00:00' AS TIMESTAMP) AS y1,
   CAST('2023-04-03 13:16:30' AS TIMESTAMP) AS y,
-  YEAR(TO_DATE(CAST('2025-05-02 11:00:00' AS TIMESTAMP))) - YEAR(TO_DATE(sbtxdatetime)) AS years_diff,
+  YEAR(CAST('2025-05-02 11:00:00' AS TIMESTAMP)) - YEAR(sbtxdatetime) AS years_diff,
   (
-    YEAR(TO_DATE(CAST('2025-05-02 11:00:00' AS TIMESTAMP))) - YEAR(TO_DATE(sbtxdatetime))
-  ) * 12 + MONTH(TO_DATE(CAST('2025-05-02 11:00:00' AS TIMESTAMP))) - MONTH(TO_DATE(sbtxdatetime)) AS months_diff,
+    YEAR(CAST('2025-05-02 11:00:00' AS TIMESTAMP)) - YEAR(sbtxdatetime)
+  ) * 12 + MONTH(CAST('2025-05-02 11:00:00' AS TIMESTAMP)) - MONTH(sbtxdatetime) AS months_diff,
   DATEDIFF(
     DAY,
     CAST(sbtxdatetime AS DATE),

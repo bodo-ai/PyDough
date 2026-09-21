@@ -1,5 +1,11 @@
 SELECT
-  CONCAT_WS('-', region.r_name, nation.n_name, SUBSTRING(customer.c_name FROM 17)) AS a,
+  CASE
+    WHEN SUBSTRING(customer.c_name FROM 17) IS NULL
+    OR nation.n_name IS NULL
+    OR region.r_name IS NULL
+    THEN NULL
+    ELSE CONCAT_WS('-', region.r_name, nation.n_name, SUBSTRING(customer.c_name FROM 17))
+  END AS a,
   ROUND(CAST(customer.c_acctbal AS DECIMAL), 1) AS b,
   CASE
     WHEN SUBSTRING(customer.c_phone FROM 1 FOR 1) = '3'

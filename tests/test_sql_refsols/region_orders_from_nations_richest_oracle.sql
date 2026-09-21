@@ -1,35 +1,38 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    CUSTOMER.c_custkey AS C_CUSTKEY,
-    NATION.n_regionkey AS N_REGIONKEY,
-    ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC, CUSTOMER.c_name) AS "_W"
+    CUSTOMER.C_CUSTKEY,
+    NATION.N_REGIONKEY,
+    ROW_NUMBER() OVER (
+      PARTITION BY CUSTOMER.C_NATIONKEY
+      ORDER BY CUSTOMER.C_ACCTBAL DESC, CUSTOMER.C_NAME
+    ) AS "_w"
   FROM TPCH.NATION NATION
   JOIN TPCH.CUSTOMER CUSTOMER
-    ON CUSTOMER.c_nationkey = NATION.n_nationkey
-), "_S3" AS (
+    ON CUSTOMER.C_NATIONKEY = NATION.N_NATIONKEY
+), "_s3" AS (
   SELECT
-    o_custkey AS O_CUSTKEY,
+    O_CUSTKEY,
     COUNT(*) AS N_ROWS
   FROM TPCH.ORDERS
   GROUP BY
-    o_custkey
-), "_S5" AS (
+    O_CUSTKEY
+), "_s5" AS (
   SELECT
-    "_T".N_REGIONKEY,
-    SUM("_S3".N_ROWS) AS SUM_N_ROWS
-  FROM "_T" "_T"
-  JOIN "_S3" "_S3"
-    ON "_S3".O_CUSTKEY = "_T".C_CUSTKEY
+    "_t".N_REGIONKEY,
+    SUM("_s3".N_ROWS) AS SUM_N_ROWS
+  FROM "_t" "_t"
+  JOIN "_s3" "_s3"
+    ON "_s3".O_CUSTKEY = "_t".C_CUSTKEY
   WHERE
-    "_T"."_W" = 1
+    "_t"."_w" = 1
   GROUP BY
-    "_T".N_REGIONKEY
+    "_t".N_REGIONKEY
 )
 SELECT
-  REGION.r_name AS region_name,
-  COALESCE("_S5".SUM_N_ROWS, 0) AS n_orders
+  REGION.R_NAME AS region_name,
+  COALESCE("_s5".SUM_N_ROWS, 0) AS n_orders
 FROM TPCH.REGION REGION
-LEFT JOIN "_S5" "_S5"
-  ON REGION.r_regionkey = "_S5".N_REGIONKEY
+LEFT JOIN "_s5" "_s5"
+  ON REGION.R_REGIONKEY = "_s5".N_REGIONKEY
 ORDER BY
   1 NULLS FIRST

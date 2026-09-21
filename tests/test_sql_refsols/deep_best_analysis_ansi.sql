@@ -11,7 +11,10 @@ WITH _t2 AS (
     c_nationkey
   FROM _t2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY c_acctbal DESC NULLS FIRST, c_custkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY c_nationkey
+      ORDER BY c_acctbal DESC NULLS FIRST, c_custkey NULLS LAST
+    ) = 1
 ), _s4 AS (
   SELECT
     n_nationkey,
@@ -26,7 +29,10 @@ WITH _t2 AS (
   JOIN _t2 AS _s5
     ON _s4.n_nationkey = _s5.c_nationkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s4.n_regionkey ORDER BY _s5.c_acctbal DESC NULLS FIRST, _s5.c_custkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _s4.n_regionkey
+      ORDER BY _s5.c_acctbal DESC NULLS FIRST, _s5.c_custkey NULLS LAST
+    ) = 1
 ), _t7 AS (
   SELECT
     _s8.n_nationkey,
@@ -41,7 +47,10 @@ WITH _t2 AS (
   JOIN tpch.partsupp AS partsupp
     ON partsupp.ps_suppkey = supplier.s_suppkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s8.n_regionkey ORDER BY partsupp.ps_availqty DESC NULLS FIRST, partsupp.ps_partkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _s8.n_regionkey
+      ORDER BY partsupp.ps_availqty DESC NULLS FIRST, partsupp.ps_partkey NULLS LAST
+    ) = 1
 ), _t5 AS (
   SELECT
     n_nationkey,
@@ -51,7 +60,10 @@ WITH _t2 AS (
     s_suppkey
   FROM _t7
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY ps_availqty DESC NULLS FIRST, s_suppkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY n_regionkey
+      ORDER BY ps_availqty DESC NULLS FIRST, s_suppkey NULLS LAST
+    ) = 1
     AND n_nationkey = s_nationkey
 ), _t9 AS (
   SELECT

@@ -1,10 +1,10 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    RANK() OVER (ORDER BY o_orderdate) AS "_W"
+    RANK() OVER (ORDER BY O_ORDERDATE) AS "_w"
   FROM TPCH.ORDERS
 )
 SELECT
   COUNT(*) AS n_orders
-FROM "_T"
+FROM "_t"
 WHERE
-  "_W" = 1
+  "_w" = 1

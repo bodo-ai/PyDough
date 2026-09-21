@@ -1,16 +1,16 @@
 WITH "_u_0" AS (
   SELECT
-    o_custkey AS "_u_1"
+    O_CUSTKEY AS "_u_1"
   FROM TPCH.ORDERS
   WHERE
-    o_clerk = 'Clerk#000000470' AND o_totalprice = 252004.18
+    O_CLERK = 'Clerk#000000470' AND O_TOTALPRICE = 252004.18
   GROUP BY
-    o_custkey
+    O_CUSTKEY
 )
 SELECT
-  ANY_VALUE(CUSTOMER.c_name) AS any_customer
+  ANY_VALUE(CUSTOMER.C_NAME) AS any_customer
 FROM TPCH.CUSTOMER CUSTOMER
 LEFT JOIN "_u_0" "_u_0"
-  ON CUSTOMER.c_custkey = "_u_0"."_u_1"
+  ON CUSTOMER.C_CUSTKEY = "_u_0"."_u_1"
 WHERE
   NOT "_u_0"."_u_1" IS NULL

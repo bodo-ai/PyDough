@@ -1,10 +1,16 @@
 WITH _s0 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      CAST(YEAR(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR),
-      CAST(LPAD(CAST(MONTH(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
-    ) AS month,
+    CASE
+      WHEN '-' IS NULL
+      OR CAST(YEAR(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR) IS NULL
+      OR CAST(LPAD(CAST(MONTH(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        CAST(YEAR(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR),
+        CAST(LPAD(CAST(MONTH(CAST(sbdpdate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
+      )
+    END AS month,
     sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,
     MAX(sbdphigh) AS max_sbdphigh,
@@ -35,11 +41,11 @@ SELECT
   CAST(sum_sum_sbdpclose AS DOUBLE) / sum_count_sbdpclose AS avg_close,
   max_max_sbdphigh AS max_high,
   min_min_sbdplow AS min_low,
-  CAST((
+  (
     (
       CAST(sum_sum_sbdpclose AS DOUBLE) / sum_count_sbdpclose
     ) - LAG(CAST(sum_sum_sbdpclose AS DOUBLE) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) AS DOUBLE) / NULLIF(
+  ) / NULLIF(
     LAG(CAST(sum_sum_sbdpclose AS DOUBLE) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month),
     0
   ) AS momc

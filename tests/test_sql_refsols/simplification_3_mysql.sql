@@ -1,25 +1,39 @@
 WITH _t2 AS (
   SELECT
-    ABS(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) AS expr_13,
-    ROW_NUMBER() OVER (ORDER BY CASE WHEN sbcustname COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, sbcustname COLLATE utf8mb4_bin) AS `rank`,
-    AVG(CAST(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0)) AS DOUBLE)) OVER () AS ravg1,
+    ABS(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0)) AS expr_13,
+    ROW_NUMBER() OVER (
+      ORDER BY CASE WHEN sbCustName COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, sbCustName COLLATE utf8mb4_bin
+    ) AS `rank`,
+    AVG(CAST(ABS(COALESCE(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0), 0)) AS DOUBLE)) OVER () AS ravg1,
     COALESCE(
-      AVG(CAST(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0)) AS DOUBLE)) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(CAST(ABS(COALESCE(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0), 0)) AS DOUBLE)) OVER (
+        ORDER BY sbCustName COLLATE utf8mb4_bin
+        ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+      ),
       0.1
     ) AS ravg2,
-    COUNT(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) OVER () AS rcnt1,
+    COUNT(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0)) OVER () AS rcnt1,
     COALESCE(
-      COUNT(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      COUNT(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0)) OVER (
+        ORDER BY sbCustName COLLATE utf8mb4_bin
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ),
       0.1
     ) AS rcnt2,
     COUNT(*) OVER () AS rsiz1,
     COALESCE(
-      COUNT(*) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
+      COUNT(*) OVER (
+        ORDER BY sbCustName COLLATE utf8mb4_bin
+        ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING
+      ),
       0.1
     ) AS rsiz2,
-    SUM(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER () AS rsum1,
+    SUM(ABS(COALESCE(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0), 0))) OVER () AS rsum1,
     COALESCE(
-      SUM(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      SUM(ABS(COALESCE(TRUNCATE(CAST(sbCustPostalCode AS FLOAT), 0), 0))) OVER (
+        ORDER BY sbCustName COLLATE utf8mb4_bin
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ),
       0.1
     ) AS rsum2
   FROM main.sbCustomer

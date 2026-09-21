@@ -1,5 +1,5 @@
 SELECT
-  MAX(merchants.name) AS name,
+  ANY_VALUE(merchants.name) AS name,
   CAST(COUNT(DISTINCT wallet_transactions_daily.coupon_id) AS DOUBLE PRECISION) / NULLIF(COUNT(DISTINCT wallet_transactions_daily.txid), 0) AS CPUR
 FROM main.merchants AS merchants
 JOIN main.wallet_transactions_daily AS wallet_transactions_daily

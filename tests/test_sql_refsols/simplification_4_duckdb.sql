@@ -14,7 +14,7 @@ SELECT
     (
       DAYOFWEEK(CAST(sbtxdatetime AS TIMESTAMP)) + 6
     ) % 7
-  ) AS INT) - 7 * INTERVAL '8' DAY AS s00,
+  ) AS INT) - INTERVAL '8' WEEK AS s00,
   FALSE AS s01,
   EXTRACT(MONTH FROM CAST(sbtxdatetime AS TIMESTAMP)) IN (1, 2, 3) AS s02,
   EXTRACT(MONTH FROM CAST(sbtxdatetime AS TIMESTAMP)) IN (4, 5, 6) AS s03,

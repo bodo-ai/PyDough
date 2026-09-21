@@ -1,5 +1,5 @@
 SELECT
-  name
+  NAME AS name
 FROM MAIN.RESTAURANT
 WHERE
-  LOWER(city_name) = 'los angeles' AND rating > 4
+  LOWER(CITY_NAME) = 'los angeles' AND RATING > 4

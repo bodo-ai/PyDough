@@ -1,25 +1,25 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    o_custkey AS O_CUSTKEY,
+    O_CUSTKEY,
     COUNT(*) AS N_ROWS
   FROM TPCH.ORDERS
   GROUP BY
-    o_custkey
-), "_T1" AS (
+    O_CUSTKEY
+), "_t1" AS (
   SELECT
-    CUSTOMER.c_acctbal AS C_ACCTBAL,
-    CUSTOMER.c_custkey AS C_CUSTKEY,
-    "_S1".N_ROWS,
-    COUNT(*) OVER (PARTITION BY CUSTOMER.c_nationkey) AS N_CUST
+    CUSTOMER.C_ACCTBAL,
+    CUSTOMER.C_CUSTKEY,
+    "_s1".N_ROWS,
+    COUNT(*) OVER (PARTITION BY CUSTOMER.C_NATIONKEY) AS N_CUST
   FROM TPCH.CUSTOMER CUSTOMER
-  LEFT JOIN "_S1" "_S1"
-    ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
+  LEFT JOIN "_s1" "_s1"
+    ON CUSTOMER.C_CUSTKEY = "_s1".O_CUSTKEY
 )
 SELECT
   C_CUSTKEY AS cust_key,
   N_ROWS AS n_orders,
   N_CUST AS n_cust
-FROM "_T1"
+FROM "_t1"
 WHERE
   N_ROWS <> 0
 ORDER BY

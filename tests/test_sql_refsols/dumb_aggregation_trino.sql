@@ -15,9 +15,9 @@ WITH _s0 AS (
         (
           ROW_NUMBER() OVER (PARTITION BY r_regionkey ORDER BY r_regionkey DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(r_regionkey) OVER (PARTITION BY r_regionkey) - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN r_regionkey

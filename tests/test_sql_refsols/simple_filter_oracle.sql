@@ -1,7 +1,7 @@
 SELECT
-  o_orderdate AS order_date,
-  o_orderkey,
-  o_totalprice
+  O_ORDERDATE AS order_date,
+  O_ORDERKEY AS o_orderkey,
+  O_TOTALPRICE AS o_totalprice
 FROM TPCH.ORDERS
 WHERE
-  o_totalprice < 1000.0
+  O_TOTALPRICE < 1000.0

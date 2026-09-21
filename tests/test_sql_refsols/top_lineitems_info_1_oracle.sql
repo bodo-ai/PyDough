@@ -1,34 +1,34 @@
-WITH "_S2" AS (
+WITH "_s2" AS (
   SELECT
-    l_linenumber AS L_LINENUMBER,
-    l_orderkey AS L_ORDERKEY,
-    l_partkey AS L_PARTKEY,
-    l_suppkey AS L_SUPPKEY
+    L_LINENUMBER,
+    L_ORDERKEY,
+    L_PARTKEY,
+    L_SUPPKEY
   FROM TPCH.LINEITEM
   ORDER BY
     2 NULLS FIRST,
     1 NULLS FIRST
   FETCH FIRST 7 ROWS ONLY
-), "_S0" AS (
+), "_s0" AS (
   SELECT
-    ps_partkey AS PS_PARTKEY,
-    ps_suppkey AS PS_SUPPKEY
+    PS_PARTKEY,
+    PS_SUPPKEY
   FROM TPCH.PARTSUPP
 )
 SELECT
-  "_S2".L_ORDERKEY AS order_key,
-  "_S2".L_LINENUMBER AS line_number,
-  PART.p_size AS part_size,
-  SUPPLIER.s_nationkey AS supplier_nation
-FROM "_S2" "_S2"
-JOIN "_S0" "_S0"
-  ON "_S0".PS_PARTKEY = "_S2".L_PARTKEY AND "_S0".PS_SUPPKEY = "_S2".L_SUPPKEY
+  "_s2".L_ORDERKEY AS order_key,
+  "_s2".L_LINENUMBER AS line_number,
+  PART.P_SIZE AS part_size,
+  SUPPLIER.S_NATIONKEY AS supplier_nation
+FROM "_s2" "_s2"
+JOIN "_s0" "_s0"
+  ON "_s0".PS_PARTKEY = "_s2".L_PARTKEY AND "_s0".PS_SUPPKEY = "_s2".L_SUPPKEY
 JOIN TPCH.PART PART
-  ON PART.p_partkey = "_S0".PS_PARTKEY
-JOIN "_S0" "_S4"
-  ON "_S2".L_PARTKEY = "_S4".PS_PARTKEY AND "_S2".L_SUPPKEY = "_S4".PS_SUPPKEY
+  ON PART.P_PARTKEY = "_s0".PS_PARTKEY
+JOIN "_s0" "_s4"
+  ON "_s2".L_PARTKEY = "_s4".PS_PARTKEY AND "_s2".L_SUPPKEY = "_s4".PS_SUPPKEY
 JOIN TPCH.SUPPLIER SUPPLIER
-  ON SUPPLIER.s_suppkey = "_S4".PS_SUPPKEY
+  ON SUPPLIER.S_SUPPKEY = "_s4".PS_SUPPKEY
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST

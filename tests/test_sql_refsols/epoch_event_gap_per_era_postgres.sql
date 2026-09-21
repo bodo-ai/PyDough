@@ -20,4 +20,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  MAX(er_start_year) NULLS FIRST
+  ANY_VALUE(er_start_year) NULLS FIRST

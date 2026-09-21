@@ -1,9 +1,9 @@
 SELECT
-  l_quantity * (
-    l_extendedprice / NULLIF(l_discount, 0)
-  ) + l_tax AS computed_value
+  L_QUANTITY * (
+    L_EXTENDEDPRICE / NULLIF(L_DISCOUNT, 0)
+  ) + L_TAX AS computed_value
 FROM TPCH.LINEITEM
 ORDER BY
-  l_discount NULLS FIRST,
-  l_tax NULLS FIRST
+  L_DISCOUNT NULLS FIRST,
+  L_TAX NULLS FIRST
 FETCH FIRST 1 ROWS ONLY

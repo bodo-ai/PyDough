@@ -1,13 +1,13 @@
 SELECT
-  p_partkey AS "key",
+  P_PARTKEY AS "key",
   UPPER(
     REGEXP_SUBSTR(
-      p_name,
+      P_NAME,
       '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
       1,
       CASE
         WHEN (
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
+          LENGTH(P_NAME) - LENGTH(REPLACE(P_NAME, ' '))
         ) >= 0
         THEN 1
         ELSE NULL
@@ -18,12 +18,12 @@ SELECT
   ) AS c1,
   UPPER(
     REGEXP_SUBSTR(
-      p_name,
+      P_NAME,
       '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
       1,
       CASE
         WHEN (
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
+          LENGTH(P_NAME) - LENGTH(REPLACE(P_NAME, ' '))
         ) >= 1
         THEN 2
         ELSE NULL
@@ -34,12 +34,12 @@ SELECT
   ) AS c2,
   UPPER(
     REGEXP_SUBSTR(
-      p_name,
+      P_NAME,
       '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
       1,
       CASE
         WHEN (
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
+          LENGTH(P_NAME) - LENGTH(REPLACE(P_NAME, ' '))
         ) >= 2
         THEN 3
         ELSE NULL
@@ -50,12 +50,12 @@ SELECT
   ) AS c3,
   UPPER(
     REGEXP_SUBSTR(
-      p_name,
+      P_NAME,
       '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
       1,
       CASE
         WHEN (
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
+          LENGTH(P_NAME) - LENGTH(REPLACE(P_NAME, ' '))
         ) >= 3
         THEN 4
         ELSE NULL
@@ -66,12 +66,12 @@ SELECT
   ) AS c4,
   UPPER(
     REGEXP_SUBSTR(
-      p_name,
+      P_NAME,
       '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
       1,
       CASE
         WHEN (
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
+          LENGTH(P_NAME) - LENGTH(REPLACE(P_NAME, ' '))
         ) >= 4
         THEN 5
         ELSE NULL
@@ -82,12 +82,12 @@ SELECT
   ) AS c5,
   UPPER(
     REGEXP_SUBSTR(
-      p_name,
+      P_NAME,
       '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
       1,
       CASE
         WHEN (
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' '))
+          LENGTH(P_NAME) - LENGTH(REPLACE(P_NAME, ' '))
         ) >= 5
         THEN 6
         ELSE NULL

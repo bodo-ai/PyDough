@@ -31,7 +31,10 @@ WITH _s1 AS (
   WHERE
     _s4.val <> ''
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s1.key, _s0.idx ORDER BY _s2.idx DESC NULLS FIRST, _s4.idx DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _s1.key, _s0.idx
+      ORDER BY _s2.idx DESC NULLS FIRST, _s4.idx DESC NULLS FIRST
+    ) = 1
 )
 SELECT
   key,

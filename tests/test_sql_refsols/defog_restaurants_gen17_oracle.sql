@@ -1,8 +1,8 @@
 SELECT
-  city_name,
-  AVG(rating) AS avg_rating
+  CITY_NAME AS city_name,
+  AVG(RATING) AS avg_rating
 FROM MAIN.RESTAURANT
 WHERE
-  LOWER(food_type) = 'mexican'
+  LOWER(FOOD_TYPE) = 'mexican'
 GROUP BY
-  city_name
+  CITY_NAME

@@ -391,4 +391,4 @@ SELECT
     THEN 4
   END AS q_diff12
 FROM (VALUES
-  (NULL)) AS _q_0
+  (NULL)) AS _0

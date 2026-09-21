@@ -1,31 +1,31 @@
 SELECT
-  sbtxdatetime AS date_time,
+  SBTXDATETIME AS date_time,
   TRUNC(
-    CAST(CAST(sbtxdatetime AS DATE) - MOD((
-      TO_CHAR(CAST(sbtxdatetime AS DATE), 'D') + -1
+    CAST(CAST(SBTXDATETIME AS DATE) - MOD((
+      TO_CHAR(CAST(SBTXDATETIME AS DATE), 'D') + -1
     ), 7) AS DATE),
     'DD'
   ) AS sow,
   CASE
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 1
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 1
     THEN 'Sunday'
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 2
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 2
     THEN 'Monday'
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 3
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 3
     THEN 'Tuesday'
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 4
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 4
     THEN 'Wednesday'
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 5
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 5
     THEN 'Thursday'
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 6
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 6
     THEN 'Friday'
-    WHEN TO_CHAR(sbtxdatetime, 'D') = 7
+    WHEN TO_CHAR(SBTXDATETIME, 'D') = 7
     THEN 'Saturday'
   END AS dayname,
   MOD((
-    TO_CHAR(sbtxdatetime, 'D') + -1
+    TO_CHAR(SBTXDATETIME, 'D') + -1
   ), 7) AS dayofweek
 FROM MAIN.SBTRANSACTION
 WHERE
-  EXTRACT(DAY FROM CAST(sbtxdatetime AS DATE)) > 1
-  AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATE)) < 2025
+  EXTRACT(DAY FROM CAST(SBTXDATETIME AS DATE)) > 1
+  AND EXTRACT(YEAR FROM CAST(SBTXDATETIME AS DATE)) < 2025

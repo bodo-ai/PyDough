@@ -1,11 +1,11 @@
 SELECT
   """," AS "dbl_quote_dot",
   "." AS "dot",
-  "." + COALESCE("FLOAT", str, 1) AS addition,
+  "." + COALESCE("FLOAT", STR, 1) AS addition,
   "__col__" AS "col",
   "__col1__" AS "col1",
-  def AS def_,
-  del AS "__del__",
+  DEF AS def_,
+  DEL AS "__del__",
   "__init__"
 FROM KEYWORDS."COUNT"
 WHERE

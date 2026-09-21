@@ -1,9 +1,9 @@
 SELECT
-  sbcustcountry AS country,
+  SBCUSTCOUNTRY AS country,
   COUNT(*) AS num_customers
 FROM MAIN.SBCUSTOMER
 GROUP BY
-  sbcustcountry
+  SBCUSTCOUNTRY
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 5 ROWS ONLY

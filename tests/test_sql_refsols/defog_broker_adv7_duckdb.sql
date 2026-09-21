@@ -1,19 +1,34 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
-      CASE
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)) IS NULL
+      OR CASE
         WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT)) >= 2
         THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT), 1, 2)
         ELSE SUBSTRING(
-          CONCAT('00', CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT)),
+          '00' || CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT),
           (
             2 * -1
           )
         )
-      END
-    ) AS month,
+      END IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
+        CASE
+          WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT)) >= 2
+          THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT), 1, 2)
+          ELSE SUBSTRING(
+            '00' || CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT),
+            (
+              2 * -1
+            )
+          )
+        END
+      )
+    END AS month,
     COUNT(*) AS n_rows
   FROM main.sbcustomer
   WHERE
@@ -26,23 +41,35 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
-      CASE
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) IS NULL
+      OR CASE
         WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT)) >= 2
         THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT), 1, 2)
         ELSE SUBSTRING(
-          CONCAT(
-            '00',
-            CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT)
-          ),
+          '00' || CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT),
           (
             2 * -1
           )
         )
-      END
-    ) AS month,
+      END IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
+        CASE
+          WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT)) >= 2
+          THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT), 1, 2)
+          ELSE SUBSTRING(
+            '00' || CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT),
+            (
+              2 * -1
+            )
+          )
+        END
+      )
+    END AS month,
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction

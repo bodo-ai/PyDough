@@ -1,28 +1,28 @@
-WITH "_S3" AS (
+WITH "_s3" AS (
   SELECT
     1 AS N_ROWS,
-    id AS ID
+    ID
   FROM MAIN.DISH
   WHERE
-    LOWER(name) = 'baked apples with cream'
-), "_T1" AS (
+    LOWER(NAME) = 'baked apples with cream'
+), "_t1" AS (
   SELECT
-    MENUPAGE.menu_id AS MENU_ID,
-    MAX(MENUITEM.price) AS MAX_PRICE,
-    SUM("_S3".N_ROWS) AS SUM_N_ROWS
+    MENUPAGE.MENU_ID,
+    MAX(MENUITEM.PRICE) AS MAX_PRICE,
+    SUM("_s3".N_ROWS) AS SUM_N_ROWS
   FROM MAIN.MENUPAGE MENUPAGE
   JOIN MAIN.MENUITEM MENUITEM
-    ON MENUITEM.menu_page_id = MENUPAGE.id
-  LEFT JOIN "_S3" "_S3"
-    ON MENUITEM.dish_id = "_S3".ID
+    ON MENUITEM.MENU_PAGE_ID = MENUPAGE.ID
+  LEFT JOIN "_s3" "_s3"
+    ON MENUITEM.DISH_ID = "_s3".ID
   GROUP BY
-    MENUPAGE.menu_id
+    MENUPAGE.MENU_ID
 )
 SELECT
-  MENU.sponsor
+  MENU.SPONSOR AS sponsor
 FROM MAIN.MENU MENU
-JOIN "_T1" "_T1"
-  ON MENU.id = "_T1".MENU_ID AND "_T1".SUM_N_ROWS <> 0
+JOIN "_t1" "_t1"
+  ON MENU.ID = "_t1".MENU_ID AND "_t1".SUM_N_ROWS <> 0
 ORDER BY
-  "_T1".MAX_PRICE DESC NULLS LAST
+  "_t1".MAX_PRICE DESC NULLS LAST
 FETCH FIRST 1 ROWS ONLY

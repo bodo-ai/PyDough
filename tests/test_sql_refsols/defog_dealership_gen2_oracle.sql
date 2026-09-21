@@ -4,7 +4,7 @@ FROM MAIN.PAYMENTS_MADE
 WHERE
   (
     MOD((
-      TO_CHAR(payment_date, 'D') + 5
+      TO_CHAR(PAYMENT_DATE, 'D') + 5
     ), 7)
   ) IN (5, 6)
-  AND vendor_name = 'Utility Company'
+  AND VENDOR_NAME = 'Utility Company'

@@ -3,8 +3,15 @@ SELECT
   NTILE(10) OVER (ORDER BY customer.c_acctbal NULLS LAST) AS precentile_value,
   LAG(customer.c_acctbal, 2, 0.0) OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal NULLS LAST) AS two_prev_value,
   LEAD(customer.c_acctbal, 2) OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal NULLS LAST) AS two_next_value,
-  SUM(customer.c_acctbal) OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal NULLS LAST ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) AS relsum_value,
-  SUM(customer.c_acctbal) OVER (ORDER BY customer.c_acctbal NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS relsum_value2,
+  SUM(customer.c_acctbal) OVER (
+    PARTITION BY nation.n_regionkey
+    ORDER BY customer.c_acctbal NULLS LAST
+    ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
+  ) AS relsum_value,
+  SUM(customer.c_acctbal) OVER (
+    ORDER BY customer.c_acctbal NULLS LAST
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS relsum_value2,
   customer.c_acctbal / AVG(CAST(customer.c_acctbal AS DOUBLE)) OVER (ORDER BY customer.c_acctbal NULLS LAST ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS relavg_value,
   customer.c_acctbal / COUNT(CASE WHEN customer.c_acctbal > 0.0 THEN customer.c_acctbal ELSE NULL END) OVER () AS relcount_value,
   customer.c_acctbal / COUNT(*) OVER () AS relsize_value

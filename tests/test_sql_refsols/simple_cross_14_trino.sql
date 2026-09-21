@@ -4,7 +4,7 @@ WITH _s1 AS (
     COUNT(*) AS n_rows
   FROM tpch.nation
   WHERE
-    SUBSTRING(n_name, 1, 1) IN ('A', 'B', 'C')
+    SUBSTR(n_name, 1, 1) IN ('A', 'B', 'C')
   GROUP BY
     1
 )

@@ -2,7 +2,9 @@ WITH _t AS (
   SELECT
     car_id,
     is_in_inventory,
-    RANK() OVER (ORDER BY CASE WHEN snapshot_date IS NULL THEN 1 ELSE 0 END DESC, snapshot_date DESC) AS _w
+    RANK() OVER (
+      ORDER BY CASE WHEN snapshot_date IS NULL THEN 1 ELSE 0 END DESC, snapshot_date DESC
+    ) AS _w
   FROM dealership.inventory_snapshots
   WHERE
     EXTRACT(MONTH FROM CAST(snapshot_date AS DATETIME)) = 3

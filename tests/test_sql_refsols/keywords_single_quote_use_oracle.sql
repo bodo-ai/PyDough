@@ -1,5 +1,5 @@
 SELECT
-  description
+  DESCRIPTION AS description
 FROM KEYWORDS.MASTER
 WHERE
-  description <> 'One-One ''master row' AND id1 = 1 AND id2 = 1
+  DESCRIPTION <> 'One-One ''master row' AND ID1 = 1 AND ID2 = 1
