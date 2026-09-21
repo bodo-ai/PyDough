@@ -138,7 +138,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     query: Select = Select(
         **{
             "expressions": expressions,
-            "from": from_result,
+            "from_": from_result,
         }
     )
     if "where" in kwargs:

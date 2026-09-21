@@ -21,7 +21,7 @@ def contains_real_aggregate(expression) -> bool:
     is created by PyDough to account for such an edge case when pushing down
     predicates.
     """
-    for agg_expr in find_all_in_scope(expression, exp.AggFunc, bfs=True):
+    for agg_expr in find_all_in_scope(expression, exp.AggFunc):
         if (
             isinstance(agg_expr, (exp.Max, exp.Min))
             and len(agg_expr.args["expressions"]) > 0

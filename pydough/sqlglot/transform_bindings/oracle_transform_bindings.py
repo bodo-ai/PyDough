@@ -27,6 +27,7 @@ from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    extract_int_literal,
 )
 
 
@@ -308,48 +309,30 @@ class OracleTransformBindings(BaseTransformBindings):
 
         start_idx: int | None = None
         if not isinstance(start, sqlglot_expressions.Null):
-            if isinstance(start, sqlglot_expressions.Literal):
-                try:
-                    start_idx = int(start.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the start index being integer literal or absent, got non-integer literal."
-                    )
-            else:
+            start_idx = extract_int_literal(start)
+            if start_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the start index being integer literal or absent, got non-integer literal."
                 )
 
         stop_idx: int | None = None
         if not isinstance(stop, sqlglot_expressions.Null):
-            if isinstance(stop, sqlglot_expressions.Literal):
-                try:
-                    stop_idx = int(stop.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the stop index being integer literal or absent, got non-integer literal."
-                    )
-            else:
+            stop_idx = extract_int_literal(stop)
+            if stop_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the stop index being integer literal or absent, got non-integer literal."
                 )
 
         step_idx: int | None = None
         if not isinstance(step, sqlglot_expressions.Null):
-            if isinstance(step, sqlglot_expressions.Literal):
-                try:
-                    step_idx = int(step.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
-                    )
-                if step_idx != 1:
-                    raise ValueError(
-                        "SLICE function currently only supports the step being integer literal 1 or absent, got value different than 1."
-                    )
-            else:
+            step_idx = extract_int_literal(step)
+            if step_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the step being integer literal 1 or absent, got non-integer literal."
+                )
+            if step_idx != 1:
+                raise ValueError(
+                    "SLICE function currently only supports the step being integer literal 1 or absent, got value different than 1."
                 )
 
         # SQLGlot expressions for 0 and 1 and empty string
