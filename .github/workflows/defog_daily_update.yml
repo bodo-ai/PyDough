@@ -5,10 +5,12 @@ on:
     secrets:
       SF_USERNAME:
         required: true
-      SF_PASSWORD:
-        required: true
       SF_ACCOUNT:
         required: true
+      SF_PRIVATE_KEY:
+        required: true
+      SF_PRIVATE_KEY_PASSPHRASE:
+        required: false
 
 jobs:
   defog-daily-update:
@@ -26,11 +28,24 @@ jobs:
       - name: Install Snowflake Connector
         run: pip install snowflake-connector-python
 
+      - name: Setup Snowflake Key Pair
+        env:
+          SF_PRIVATE_KEY: ${{ secrets.SF_PRIVATE_KEY }}
+          SF_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SF_PRIVATE_KEY_PASSPHRASE }}
+        run: |
+          # Write the private key to a file and expose the path (and
+          # passphrase, since the key is encrypted) for key pair (JWT)
+          # authentication.
+          key_path="$RUNNER_TEMP/snowflake_test_key.p8"
+          printf '%s\n' "$SF_PRIVATE_KEY" > "$key_path"
+          echo "SF_PRIVATE_KEY_FILE=$key_path" >> "$GITHUB_ENV"
+          echo "SF_PRIVATE_KEY_FILE_PWD=$SF_PRIVATE_KEY_PASSPHRASE" >> "$GITHUB_ENV"
+        shell: bash
+
       - name: Run DEFOG_DAILY_UPDATE if table is older than 1 day
         env:
           SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
           SF_USERNAME: ${{ secrets.SF_USERNAME }}
-          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
         run: |
           python << 'EOF'
           import snowflake.connector
@@ -38,8 +53,10 @@ jobs:
 
           conn = snowflake.connector.connect(
               user=os.environ['SF_USERNAME'],
-              password=os.environ['SF_PASSWORD'],
               account=os.environ['SF_ACCOUNT'],
+              authenticator='snowflake_jwt',
+              private_key_file=os.environ['SF_PRIVATE_KEY_FILE'],
+              private_key_file_pwd=os.environ.get('SF_PRIVATE_KEY_FILE_PWD') or None,
               warehouse='DEMO_WH',
               database='DEFOG',
               schema='BROKER',
