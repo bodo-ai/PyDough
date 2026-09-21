@@ -202,9 +202,14 @@ result = california_schools.schools.CALCULATE(
 ).schools.CALCULATE( 
     percent_eligible_frpm_k_12=frpm.percent_percentage_eligible_frpm_k_12, 
     frpm_category=frpm_level_name 
-)""",
+).TOP_K(5, by=percent_eligible_frpm_k_12.DESC())""",
                 "california_schools",
-                lambda: pd.DataFrame({}),
+                lambda: pd.DataFrame(
+                    {
+                        "percent_eligible_frpm_k_12": [1.0, 1.0, 1.0, 1.0, 1.0],
+                        "frpm_category": ["High", "High", "High", "High", "High"],
+                    }
+                ),
                 "california_schools_quoted_alias",
             ),
             id="california_schools_quoted_alias",

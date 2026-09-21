@@ -1159,7 +1159,7 @@ def s3_datasets_setup():
         S3_DATASETS,
         S3_DATASETS_SCRIPTS,
     )
-    breakpoint()
+
     yield
 
     remove_s3_custom_metadata(metadata_folder, S3_DATASETS, S3_DATASETS_SCRIPTS)

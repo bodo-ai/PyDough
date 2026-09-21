@@ -6,6 +6,7 @@ aggregations.
 
 __all__ = ["pullup_projections"]
 
+import re
 
 import pydough.pydough_operators as pydop
 from pydough.relational import (
@@ -83,7 +84,11 @@ def widen_columns(
                 idx: int = 0
                 while new_name in node.columns:
                     idx += 1
-                    new_name = f"{name}_{idx}"
+                    # Removes all characters that are not letter, number,
+                    # or underscore.
+                    input_name = re.sub(r"[^a-zA-Z0-9_]", "", name)
+                    new_name = f"{input_name}_{idx}"
+
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
                 existing_vals[ref_expr] = new_ref
