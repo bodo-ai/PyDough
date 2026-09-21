@@ -84,8 +84,7 @@ def widen_columns(
                 idx: int = 0
                 while new_name in node.columns:
                     idx += 1
-                    # Removes all characters that are not letter, number,
-                    # or underscore.
+                    # Removes all characters except letters, numbers, and underscores.
                     input_name = re.sub(r"[^a-zA-Z0-9_]", "", name)
                     new_name = f"{input_name}_{idx}"
 
