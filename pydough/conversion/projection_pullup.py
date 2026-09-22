@@ -6,7 +6,6 @@ aggregations.
 
 __all__ = ["pullup_projections"]
 
-import re
 
 import pydough.pydough_operators as pydop
 from pydough.relational import (
@@ -34,6 +33,20 @@ from pydough.relational.rel_util import (
 from pydough.types import BooleanType, NumericType
 
 from .merge_projects import merge_adjacent_projects
+
+
+def build_new_ref_name(name: str, idx: int) -> str:
+    """
+    Build a new reference name by appending an index suffix.
+
+    If `name` is wrapped in double quotes (e.g. '"name"'), the index is
+    inserted before the closing quote, so the result stays quoted
+    (e.g. '"name_idx"'). Otherwise, the index is simply appended
+    (e.g. 'name_idx').
+    """
+    if len(name) >= 2 and name.startswith('"') and name.endswith('"'):
+        return f'"{name[1:-1]}_{idx}"'
+    return f"{name}_{idx}"
 
 
 def widen_columns(
@@ -84,9 +97,7 @@ def widen_columns(
                 idx: int = 0
                 while new_name in node.columns:
                     idx += 1
-                    # Removes all characters except letters, numbers, and underscores.
-                    input_name = re.sub(r"[^a-zA-Z0-9_]", "", name)
-                    new_name = f"{input_name}_{idx}"
+                    new_name = build_new_ref_name(name, idx)
 
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
