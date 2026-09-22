@@ -114,11 +114,16 @@ To run **Snowflake CI tests**, add the flag `[run SF]` to your commit message.
     pip install "snowflake-connector-python[pandas]"
     ```
 
+
 2. Set your Snowflake credentials as environment variables:
+    - `SF_PRIVATE_KEY_FILE`
+   must point to your private key file (e.g. `rsa_key.p8`); 
+   - `SF_PRIVATE_KEY_FILE_PWD`
     ```bash
         export SF_USERNAME="your_username"
-        export SF_PASSWORD="your_password"
         export SF_ACCOUNT="your_account"
+        export SF_PRIVATE_KEY_FILE="/path/to/rsa_key.p8"
+        export SF_PRIVATE_KEY_FILE_PWD="your_passphrase"  
     ```
 
 ### Running MySQL Tests on CI

@@ -1209,12 +1209,22 @@ def sqlite_s3_datasets_connection(
     return _impl
 
 
-SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]
+SF_ENVS = [
+    "SF_USERNAME",
+    "SF_ACCOUNT",
+    "SF_PRIVATE_KEY_FILE",
+    "SF_PRIVATE_KEY_FILE_PWD",
+]
 """
     Snowflake environment variables required for connection.
     SF_USERNAME: The username for the Snowflake account.
-    SF_PASSWORD: The password for the Snowflake account.
     SF_ACCOUNT: The account identifier for the Snowflake account.
+    Password authentication is no longer supported for Bodo's account.
+    Instead we need:
+        - SF_PRIVATE_KEY_FILE: Path to the private key file for key pair (JWT)
+            authentication. 
+        - SF_PRIVATE_KEY_FILE_PWD: is also required because in our case the key
+            is encrypted. 
 """
 
 
@@ -1226,6 +1236,25 @@ def is_snowflake_env_set() -> bool:
         bool: True if all required Snowflake environment variables are set, False otherwise.
     """
     return all(os.getenv(env) for env in SF_ENVS)
+
+
+def get_snowflake_auth_kwargs() -> dict[str, str]:
+    """
+    Build the authentication keyword arguments for connecting to Snowflake
+    using key pair (JWT) authentication.
+
+    Returns:
+        dict[str, str]: Keyword arguments to merge into the Snowflake
+        connection parameters (`authenticator` + `private_key_file` [+
+        `private_key_file_pwd` if the key is encrypted]).
+    """
+    auth_kwargs = {
+        "authenticator": "snowflake_jwt",
+        "private_key_file": os.environ["SF_PRIVATE_KEY_FILE"],
+    }
+    if passphrase := os.getenv("SF_PRIVATE_KEY_FILE_PWD"):
+        auth_kwargs["private_key_file_pwd"] = passphrase
+    return auth_kwargs
 
 
 @pytest.fixture(scope="session")
@@ -1243,16 +1272,15 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
         import snowflake.connector as sf_connector
 
         warehouse = "DEMO_WH"
-        password = os.getenv("SF_PASSWORD")
         username = os.getenv("SF_USERNAME")
         account = os.getenv("SF_ACCOUNT")
         connection: sf_connector.connection.SnowflakeConnection = sf_connector.connect(
             user=username,
-            password=password,
             account=account,
             warehouse=warehouse,
             database=database_name,
             schema=schema_name,
+            **get_snowflake_auth_kwargs(),
         )
 
         with connection.cursor() as cur:
@@ -1300,17 +1328,16 @@ def sf_params_tpch_db_context() -> DatabaseContext:
     sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
     sf_tpch_schema = "TPCH_SF1"
     warehouse = "DEMO_WH"
-    password = os.getenv("SF_PASSWORD")
     username = os.getenv("SF_USERNAME")
     account = os.getenv("SF_ACCOUNT")
     return load_database_context(
         "snowflake",
         user=username,
-        password=password,
         account=account,
         warehouse=warehouse,
         database=sf_tpch_db,
         schema=sf_tpch_schema,
+        **get_snowflake_auth_kwargs(),
     )
 
 
