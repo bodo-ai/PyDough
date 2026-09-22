@@ -989,7 +989,7 @@ ORDER BY
 <!-- TOC --><a name="call_template_api"></a>
 ### `pydough.call_template`
 
-The `call_template` API invokes a previously registered [template](metadata#templates) using human-facing **labels** instead of raw PyDough/Python values. Each label is resolved against the `options` of the graph's [attributes](metadata#template-attributes) to find the concrete value (and its type) to pass into the template, after which the template is called like a normal PyDough function and the result is returned.
+The `call_template` API invokes a previously registered [template](metadata#templates) using user-facing **labels** instead of raw PyDough/Python values. Each label is resolved against the `options` of the graph's [attributes](metadata#template-attributes) to find the concrete value (and its type) to pass into the template, after which the template is called like a normal PyDough function and the result is returned.
 
 #### Syntax
 ```python

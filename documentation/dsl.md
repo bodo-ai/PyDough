@@ -1969,7 +1969,7 @@ customers.CALCULATE(
 <!-- TOC --><a name="using-templates-api"></a>
 ### Calling a Template via `pydough.call_template`
 
-Instead of passing raw values, `pydough.call_template` looks up each argument by a human-facing **label**, resolving it to the underlying value through the graph's [attributes](metadata#template-attributes). See [`pydough.call_template`](usage#call_template_api) for the full parameter/error reference.
+Instead of passing raw values, `pydough.call_template` looks up each argument by a user-facing **label**, resolving it to the underlying value through the graph's [attributes](metadata#template-attributes). See [`pydough.call_template`](usage#call_template_api) for the full parameter/error reference.
 
 Example: using the `orders_filter_count` template via the API, with the label `"High priority"` resolving to a PyDough filter condition:
 

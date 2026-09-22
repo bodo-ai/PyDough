@@ -728,7 +728,7 @@ def extract_float(json_obj: dict, key_name: str, obj_name: str) -> float:
 
     Raises:
         `PyDoughMetadataException` if the JSON object does not contain a key
-        with the name `key_name`, or if the value of the key is not an integer.
+        with the name `key_name`, or if the value of the key is not a float.
     """
     HasPropertyWith(key_name, is_float).verify(json_obj, obj_name)
     value = json_obj[key_name]

@@ -228,6 +228,10 @@ class GraphMetadata(AbstractMetadata):
             raise PyDoughMetadataException(
                 f"Function name {name!r} already in use for a PyDough operator"
             )
+        if name in self.templates_definitions:
+            raise PyDoughMetadataException(
+                f"Function {name!r} already in use for a template"
+            )
         if name in self.functions:
             raise PyDoughMetadataException(
                 f"Function {name!r} already exists in {self.error_name}"
@@ -321,6 +325,10 @@ class GraphMetadata(AbstractMetadata):
         if name in builtin_registered_operators():
             raise PyDoughMetadataException(
                 f"The template '{name}' already exists as a PyDough operator"
+            )
+        if name in self.functions:
+            raise PyDoughMetadataException(
+                f"Template {name!r} already in use for a function"
             )
 
         self.templates_definitions[name] = new_template

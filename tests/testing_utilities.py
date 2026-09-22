@@ -1055,8 +1055,8 @@ def transform_and_exec_pydough(
     else:
         # Otherwise, transform the function with the decorator and call it.
 
-        # Temporarily set the active session (or just metadata) so that
-        # UnqualifiedNode.__call__ can resolve templates via
+        # Temporarily set the active session so testing with functions
+        # can resolve templates directly or with pydough.call_template api via
         # pydough.active_session.metadata, and so functions like
         # pydough.to_table can access session info during execution.
         old_session = pydough.active_session

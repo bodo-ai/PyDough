@@ -334,8 +334,7 @@ class TemplateMetadata(AbstractMetadata):
             args_parts.append(part)
         template_args: str = ", ".join(args_parts)
 
-        # --- Replace {1}, {2}, ... with the corresponding argument name ---
-        # NOTE: Add a detail documentation about this replacement
+        # --- Replace {1}, {2}, ... with the corresponding parameter name ---
         def _replace_placeholder(match: re.Match) -> str:
             index = int(match.group(1))
             if not (1 <= index <= len(arg_names)):
