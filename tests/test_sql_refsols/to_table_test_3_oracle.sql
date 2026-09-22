@@ -1,4 +1,4 @@
 SELECT
   "key",
-  name
+  NAME AS name
 FROM ASIAN_NATIONS_T3

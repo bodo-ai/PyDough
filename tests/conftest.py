@@ -3384,7 +3384,7 @@ def tpch_custom_test_data_dialect_replacements(
                             "d17": ["02"],  # HH12
                             "d18": ["30"],  # MI
                             "d19": ["45"],  # SS
-                            "d20": ["P.M."],  # AM
+                            "d20": ["PM"],  # AM
                         }
                     ),
                     "string_format_specifiers",
