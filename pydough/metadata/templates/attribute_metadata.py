@@ -153,7 +153,8 @@ class AttributeMetadata(AbstractMetadata):
         # Validate the type of the attribute
         if not graph.is_valid_data_type(attr_type):
             raise PyDoughMetadataException(
-                f"Invalid type {attr_type!r} for attribute {attribute_name!r} in graph {graph.name!r}. Must be one of: {sorted(graph.ALLOWED_TYPES)}"
+                f"Invalid type {attr_type!r} for attribute {attribute_name!r} "
+                f"in graph {graph.name!r}. Must be one of: {sorted(graph.ALLOWED_TYPES)}"
             )
 
         attr_desc: str = extract_string(attribute_json, "description", error_name)
@@ -182,8 +183,8 @@ class AttributeMetadata(AbstractMetadata):
             f"Option in attribute {attribute_name!r} in graph {graph.name!r}"
         )
 
-        # Determine whether all option values are consistently strings or consistently
-        # integers -- reject any mix, and reject any other type entirely.
+        # Determine whether all option values are consistently strings, integers
+        # or floats -- reject any mix, and reject any other type entirely.
         option_values = [option.get("value") for option in attr_options]
         all_strings = all(is_string.accept(v) for v in option_values)
         all_integers = all(is_integer.accept(v) for v in option_values)

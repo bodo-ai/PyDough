@@ -139,7 +139,6 @@ class TemplateMetadata(AbstractMetadata):
 
     @property
     def path(self) -> str:
-        # TODO: Not sure about the usage of this path
         return f"{self.graph.path}.templates.definitions.{self.name}"
 
     @staticmethod
