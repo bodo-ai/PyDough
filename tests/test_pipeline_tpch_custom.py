@@ -2692,7 +2692,7 @@ from .testing_utilities import (
                             "MACHINERY",
                         ],
                         "avg_max_pct_diff": [122.27, 122.25, 122.3, 122.23, 122.25],
-                        "avg_cust_bal": [4495.51] * 5,
+                        "avg_bal": [4495.51] * 5,
                     }
                 ),
                 "global_double_partition_interweave_a",
