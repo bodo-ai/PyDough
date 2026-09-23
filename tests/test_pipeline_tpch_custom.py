@@ -113,6 +113,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     function_sampler,
     global_acctbal_breakdown,
     highest_priority_per_year,
+    iff_with_aggregates_on_different_collections,
     month_year_sliding_windows,
     n_orders_first_day,
     nation_acctbal_breakdown,
@@ -6528,6 +6529,15 @@ from .testing_utilities import (
                 "monthname_function_1",
             ),
             id="monthname_function_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                iff_with_aggregates_on_different_collections,
+                "TPCH",
+                lambda: pd.DataFrame({"output": [10000]}),
+                "iff_with_aggregates_on_different_collections",
+            ),
+            id="iff_with_aggregates_on_different_collections",
         ),
     ],
 )
