@@ -731,6 +731,22 @@ def test_pipeline_e2e_tpch_templates_errors(
             "Already added 'template_1' to graph 'TEMPLATE_NAME_DUPLICATED'",
             id="invalid_template_name_duplicated",
         ),
+        # Template name already in used by the graph
+        pytest.param(
+            "TEMPLATE_NAME_GRAPH_USED",
+            re.escape(
+                "Template name 'TEMPLATE_NAME_GRAPH_USED' cannot be the same as the graph name 'TEMPLATE_NAME_GRAPH_USED'"
+            ),
+            id="invalid_template_name_graph",
+        ),
+        pytest.param(
+            "TEMPLATE_NAME_COLLECTION_USED",
+            re.escape(
+                "Template name 'COLLECTION_NAME' cannot be the same as a collection name in graph 'TEMPLATE_NAME_COLLECTION_USED'"
+            ),
+            id="invalid_template_name_collection",
+        ),
+        # Template name already in used by a udf
         pytest.param(
             "TEMPLATE_NAME_UDF_USED",
             re.escape(

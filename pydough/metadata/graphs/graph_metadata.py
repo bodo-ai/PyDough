@@ -314,6 +314,14 @@ class GraphMetadata(AbstractMetadata):
         HasType(TemplateMetadata).verify(new_template, "template")
         assert isinstance(new_template, TemplateMetadata)
 
+        if name == self.name:
+            raise PyDoughMetadataException(
+                f"Template name {name!r} cannot be the same as the graph name {self.name!r}"
+            )
+        if name in self.get_collection_names():
+            raise PyDoughMetadataException(
+                f"Template name {name!r} cannot be the same as a collection name in {self.error_name}"
+            )
         if name in self.templates_definitions:
             if self.templates_definitions[name] == new_template:
                 raise PyDoughMetadataException(

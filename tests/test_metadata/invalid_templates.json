@@ -373,6 +373,70 @@
         }
     },
     {
+        "name": "TEMPLATE_NAME_GRAPH_USED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "TEMPLATE_NAME_GRAPH_USED",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_COLLECTION_USED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [
+            {
+                "name": "COLLECTION_NAME",
+                "type": "simple table",
+                "table path": "table_name",
+                "unique properties": ["id"],
+                "properties": [
+                    {
+                        "name": "id_",
+                        "type": "table column",
+                        "column name": "id",
+                        "data type": "numeric",
+                        "description": "Unique identifier id for the row",
+                        "sample values": [0, 1, 2, 3, 4],
+                        "synonyms": ["id"]
+                    }
+                ],
+                "description": "Generic description",
+                "synonyms": []
+            }
+        ],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "COLLECTION_NAME",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
         "name": "TEMPLATE_NAME_UDF_USED",
         "version": "V2",
         "relationships": [],
