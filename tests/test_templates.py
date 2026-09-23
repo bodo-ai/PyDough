@@ -3,6 +3,7 @@ Tests for PyDough templates. Using direct calls and `pydough.call_template` API.
 """
 
 import re
+from collections.abc import Callable
 
 import pandas as pd
 import pytest
@@ -491,6 +492,25 @@ from tests.testing_utilities import (
             ),
             id="templates_unrestricted_attr",
         ),
+        pytest.param(
+            # Test a template api call in a graph with no attributes
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'current_date',\n"
+                "   labels={}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "current_year": [pd.Timestamp.now().year],
+                        "current_month": [pd.Timestamp.now().month_name()[:3]],
+                        "current_day": [pd.Timestamp.now().day_name()],
+                    }
+                ),
+                "templates_no_attributes_api",
+            ),
+            id="templates_no_attributes_api",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:
@@ -506,6 +526,7 @@ def tpch_templates_test_data(request) -> PyDoughPandasTest:
 def test_pipeline_e2e_tpch_templates(
     tpch_templates_test_data: PyDoughPandasTest,
     all_dialects_tpch_db_context: tuple[DatabaseContext, GraphMetadata],
+    get_empty_tpch_graph: Callable[[], GraphMetadata],
 ):
     """
     Test executing the the template queries with TPC-H data from the original
@@ -517,6 +538,10 @@ def test_pipeline_e2e_tpch_templates(
     # it would take too long.
     if db_context.dialect == DatabaseDialect.BODOSQL:
         pytest.skip("Skipping tpch template test for BodoSQL.")
+
+    if tpch_templates_test_data.test_name == "templates_no_attributes_api":
+        # Loads the empty TPCH graph with no attributes
+        graph = get_empty_tpch_graph()
 
     tpch_templates_test_data.run_e2e_test(
         lambda _: graph,
@@ -705,6 +730,13 @@ def test_pipeline_e2e_tpch_templates_errors(
             "TEMPLATE_NAME_DUPLICATED",
             "Already added 'template_1' to graph 'TEMPLATE_NAME_DUPLICATED'",
             id="invalid_template_name_duplicated",
+        ),
+        pytest.param(
+            "TEMPLATE_NAME_UDF_USED",
+            re.escape(
+                "Template 'POSITIVE' already in use for a user defined function (UDF)"
+            ),
+            id="invalid_template_name_udf",
         ),
         # Template with invalid paramter name
         pytest.param(

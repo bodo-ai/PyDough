@@ -328,7 +328,7 @@ class GraphMetadata(AbstractMetadata):
             )
         if name in self.functions:
             raise PyDoughMetadataException(
-                f"Template {name!r} already in use for a function"
+                f"Template {name!r} already in use for a user defined function (UDF)"
             )
 
         self.templates_definitions[name] = new_template

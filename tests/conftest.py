@@ -498,6 +498,20 @@ def sample_graphs(
 
 
 @pytest.fixture(scope="session")
+def get_empty_tpch_graph() -> graph_fetcher:
+    """
+    Returns an empty TPCH graph with defined template
+    """
+
+    @cache
+    def impl() -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/empty_attributes_tpch_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name="TPCH")
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     """
     Builds a QDAG node builder using the TPCH graph.

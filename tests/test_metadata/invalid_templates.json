@@ -373,6 +373,38 @@
         }
     },
     {
+        "name": "TEMPLATE_NAME_UDF_USED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "functions": [
+            {
+                "name": "POSITIVE",
+                "type": "sql macro",
+                "macro text": "{0} > 0",
+                "description": "Returns true if the argument is greater than zero.",
+                "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+                "output signature": {"type": "constant", "value": "bool"}
+            }
+        ],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "POSITIVE",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
         "name": "TEMPLATE_INVALID_PARAMETER_NAME",
         "version": "V2",
         "relationships": [],
