@@ -408,13 +408,32 @@ It is important to ensure that the correct database context is being used for se
 - The context's database connection is used to execute queries once translated to SQL.
 
 #### Examples with different supported database connectors with PyDough
-- Snowflake: You can connect to a Snowflake database using `load_metadata_graph` and `connect_database` APIs. For example:
+- Snowflake: You can connect to a Snowflake database using `load_metadata_graph` and `connect_database` APIs. Snowflake supports both password authentication and key pair (JWT) authentication.
+
+  Password authentication:
   ```py
     pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH")
     pydough.active_session.connect_database("snowflake", 
           user=snowflake_username,
           password=snowflake_password,
           account=snowflake_account,
+          warehouse=snowflake_warehouse,
+          database=snowflake_database,
+          schema=snowflake_schema
+    )
+  ```
+
+  Key pair (JWT) authentication
+  The private key file can be an unencrypted or encrypted PEM PKCS#8 file; pass
+  `private_key_file_pwd` only if the key is encrypted:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH")
+    pydough.active_session.connect_database("snowflake",
+          user=snowflake_username,
+          account=snowflake_account,
+          authenticator="snowflake_jwt",
+          private_key_file=snowflake_private_key_file_path,
+          private_key_file_pwd=snowflake_private_key_file_pwd,  # omit if the key is unencrypted
           warehouse=snowflake_warehouse,
           database=snowflake_database,
           schema=snowflake_schema
