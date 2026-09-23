@@ -4,11 +4,11 @@ WITH "_T1" AS (
   FROM MAIN.COUNTRIES
   WHERE
     NOT co_name LIKE '%C%'
-), "_S5" AS (
+), "_S7" AS (
   SELECT DISTINCT
     TRUNC(CAST(CALENDAR.ca_dt AS DATE), 'YEAR') AS START_OF_YEAR,
-    "_T3".CO_NAME
-  FROM "_T1" "_T3"
+    "_T4".CO_NAME
+  FROM "_T1" "_T4"
   JOIN MAIN.PRODUCTS PRODUCTS
     ON PRODUCTS.pr_name = 'AmethystCopper-I'
   JOIN MAIN.CALENDAR CALENDAR
@@ -17,10 +17,12 @@ WITH "_T1" AS (
 )
 SELECT
   "_T1".CO_NAME AS country_name,
-  "_S5".START_OF_YEAR AS start_of_year
+  "_S7".START_OF_YEAR AS start_of_year
 FROM "_T1" "_T1"
-LEFT JOIN "_S5" "_S5"
-  ON "_S5".CO_NAME = "_T1".CO_NAME
+JOIN MAIN.PRODUCTS PRODUCTS
+  ON PRODUCTS.pr_name = 'AmethystCopper-I'
+LEFT JOIN "_S7" "_S7"
+  ON "_S7".CO_NAME = "_T1".CO_NAME
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST

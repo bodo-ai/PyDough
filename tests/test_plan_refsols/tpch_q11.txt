@@ -1,5 +1,5 @@
 ROOT(columns=[('PS_PARTKEY', ps_partkey), ('VALUE', DEFAULT_TO(sum_expr, 0:numeric))], orderings=[(DEFAULT_TO(sum_expr, 0:numeric)):desc_last], limit=10:numeric)
- JOIN(condition=DEFAULT_TO(t1.sum_expr, 0:numeric) > (DEFAULT_TO(t0.sum_metric, 0:numeric) * 0.0001:numeric), type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ps_partkey': t1.ps_partkey, 'sum_expr': t1.sum_expr})
+ JOIN(condition=DEFAULT_TO(t1.sum_expr, 0:numeric) > (DEFAULT_TO(t0.sum_metric, 0:numeric) * 0.0001:numeric), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ps_partkey': t1.ps_partkey, 'sum_expr': t1.sum_expr})
   AGGREGATE(keys={}, aggregations={'sum_metric': SUM((ps_supplycost * ps_availqty))})
    JOIN(condition=t0.ps_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'ps_availqty': t0.ps_availqty, 'ps_supplycost': t0.ps_supplycost})
     SCAN(table=tpch.PARTSUPP, columns={'ps_availqty': ps_availqty, 'ps_suppkey': ps_suppkey, 'ps_supplycost': ps_supplycost})

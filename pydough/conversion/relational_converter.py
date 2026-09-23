@@ -686,8 +686,8 @@ class RelTranslation:
             and bool(out_rel.condition.value)
         ):
             out_rel._join_type = JoinType.INNER
-            out_rel._cardinality = out_rel._cardinality.remove_filter()
-            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
+            out_rel._cardinality = JoinCardinality.PLURAL_ACCESS
+            out_rel._reverse_cardinality = JoinCardinality.PLURAL_ACCESS
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote

@@ -1,19 +1,23 @@
-WITH _s1 AS (
+WITH _s5 AS (
   SELECT
-    n_regionkey,
+    NATION.n_regionkey,
     COUNT(*) AS n_rows
-  FROM tpch.NATION
+  FROM tpch.NATION AS NATION
+  CROSS JOIN (VALUES
+    ROW(NULL)) AS _q_1(_col_0)
   WHERE
-    SUBSTRING(n_name, 1, 1) IN ('A', 'B', 'C')
+    SUBSTRING(NATION.n_name, 1, 1) IN ('A', 'B', 'C')
   GROUP BY
     1
 )
 SELECT
   REGION.r_name COLLATE utf8mb4_bin AS region_name,
   'foo' AS x,
-  COALESCE(_s1.n_rows, 0) AS n
+  COALESCE(_s5.n_rows, 0) AS n
 FROM tpch.REGION AS REGION
-LEFT JOIN _s1 AS _s1
-  ON REGION.r_regionkey = _s1.n_regionkey
+CROSS JOIN (VALUES
+  ROW(NULL)) AS _q_0(_col_0)
+LEFT JOIN _s5 AS _s5
+  ON REGION.r_regionkey = _s5.n_regionkey
 ORDER BY
   1
