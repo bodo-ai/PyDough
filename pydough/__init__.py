@@ -4,6 +4,7 @@ Top-level init file for PyDough package.
 
 __all__ = [
     "active_session",
+    "call_template",
     "dataframe_collection",
     "display_raw",
     "explain",
@@ -26,7 +27,7 @@ from .evaluation import to_df, to_sql, to_table
 from .exploration import explain, explain_llm, explain_structure, explain_term
 from .logger import get_logger
 from .metadata import parse_json_metadata_from_file, parse_metadata_from_list
-from .unqualified import display_raw, from_string, init_pydough_context
+from .unqualified import call_template, display_raw, from_string, init_pydough_context
 from .user_collections.user_collection_apis import (
     dataframe_collection,
     range_collection,
