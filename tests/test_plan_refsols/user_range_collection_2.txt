@@ -2,6 +2,6 @@ ROOT(columns=[('x', x), ('n_prefix', DEFAULT_TO(sum_expr_5, 0:numeric)), ('n_suf
  JOIN(condition=t0.x == t1.x, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'sum_expr': t1.sum_expr, 'sum_expr_5': t1.sum_expr_5, 'x': t0.x})
   GENERATED_TABLE(RangeCollection('a', x=range(0, 10)))
   AGGREGATE(keys={'x': x}, aggregations={'sum_expr': SUM(ENDSWITH(STRING(y), STRING(x))), 'sum_expr_5': SUM(STARTSWITH(STRING(y), STRING(x)))})
-   JOIN(condition=ENDSWITH(STRING(t1.y), STRING(t0.x)) | STARTSWITH(STRING(t1.y), STRING(t0.x)), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'x': t0.x, 'y': t1.y})
+   JOIN(condition=ENDSWITH(STRING(t1.y), STRING(t0.x)) | STARTSWITH(STRING(t1.y), STRING(t0.x)), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'x': t0.x, 'y': t1.y})
     GENERATED_TABLE(RangeCollection('a', x=range(0, 10)))
     GENERATED_TABLE(RangeCollection('b', y=range(0, 1001, 2)))

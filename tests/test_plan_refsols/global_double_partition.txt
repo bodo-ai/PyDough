@@ -3,7 +3,7 @@ ROOT(columns=[('market_segment', c_mktsegment), ('avg_max_pct_diff', ROUND(avg_m
   AGGREGATE(keys={'c_mktsegment': c_mktsegment, 'n_name': n_name}, aggregations={'max_max_pct_diff': MAX(max_pct_diff)})
    JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'c_mktsegment': t0.c_mktsegment, 'max_pct_diff': t0.max_pct_diff, 'n_name': t1.n_name})
     AGGREGATE(keys={'c_mktsegment': c_mktsegment, 'c_nationkey': c_nationkey}, aggregations={'max_pct_diff': MAX(((100.0:numeric * (c_acctbal - avg_c_acctbal)) / avg_c_acctbal))})
-     JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'avg_c_acctbal': t0.avg_c_acctbal, 'c_acctbal': t1.c_acctbal, 'c_mktsegment': t1.c_mktsegment, 'c_nationkey': t1.c_nationkey})
+     JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'avg_c_acctbal': t0.avg_c_acctbal, 'c_acctbal': t1.c_acctbal, 'c_mktsegment': t1.c_mktsegment, 'c_nationkey': t1.c_nationkey})
       AGGREGATE(keys={}, aggregations={'avg_c_acctbal': AVG(c_acctbal)})
        SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal})
       SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_mktsegment': c_mktsegment, 'c_nationkey': c_nationkey})

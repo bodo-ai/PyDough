@@ -1,0 +1,29 @@
+WITH "_T1" AS (
+  SELECT
+    n_name AS N_NAME,
+    n_nationkey AS N_NATIONKEY
+  FROM TPCH.NATION
+  WHERE
+    n_name IN ('CANADA', 'ARGENTINA')
+), "_S6" AS (
+  SELECT DISTINCT
+    EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) AS YEAR_O_ORDERDATE,
+    "_T1".N_NAME
+  FROM TPCH.ORDERS ORDERS
+  JOIN TPCH.CUSTOMER CUSTOMER
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+  JOIN "_T1" "_T1"
+    ON CUSTOMER.c_nationkey = "_T1".N_NATIONKEY
+), "_S7" AS (
+  SELECT DISTINCT
+    "_T3".N_NAME
+  FROM TPCH.SUPPLIER SUPPLIER
+  JOIN "_T1" "_T3"
+    ON SUPPLIER.s_nationkey = "_T3".N_NATIONKEY
+)
+SELECT
+  "_S6".N_NAME AS c_nation,
+  "_S6".YEAR_O_ORDERDATE AS o_year
+FROM "_S6" "_S6"
+JOIN "_S7" "_S7"
+  ON "_S6".N_NAME = "_S7".N_NAME

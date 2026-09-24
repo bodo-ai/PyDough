@@ -1,6 +1,6 @@
 ROOT(columns=[('market_segment', c_mktsegment), ('max_nation_pct_diff', ROUND(max_pct_diff, 2:numeric))], orderings=[])
  AGGREGATE(keys={'c_mktsegment': c_mktsegment}, aggregations={'max_pct_diff': MAX(((100.0:numeric * ((sum_sum_c_acctbal / sum_count_c_acctbal) - avg_c_acctbal)) / avg_c_acctbal))})
-  JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'avg_c_acctbal': t0.avg_c_acctbal, 'c_mktsegment': t1.c_mktsegment, 'sum_count_c_acctbal': t1.sum_count_c_acctbal, 'sum_sum_c_acctbal': t1.sum_sum_c_acctbal})
+  JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'avg_c_acctbal': t0.avg_c_acctbal, 'c_mktsegment': t1.c_mktsegment, 'sum_count_c_acctbal': t1.sum_count_c_acctbal, 'sum_sum_c_acctbal': t1.sum_sum_c_acctbal})
    AGGREGATE(keys={}, aggregations={'avg_c_acctbal': AVG(c_acctbal)})
     SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal})
    AGGREGATE(keys={'c_mktsegment': c_mktsegment, 'n_name': n_name}, aggregations={'sum_count_c_acctbal': SUM(count_c_acctbal), 'sum_sum_c_acctbal': SUM(sum_c_acctbal)})
