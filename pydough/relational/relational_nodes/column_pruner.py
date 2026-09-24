@@ -147,6 +147,11 @@ class ColumnPruner:
         # Determine the new node.
         output = new_node.copy(inputs=new_inputs)
         output = self._prune_identity_project(output)
+        # Shared dict used by the join-collapsing special cases below
+        # to remap a join's own column names onto the surviving input's
+        # native columns (each special case either returns before the next
+        # one runs, or leaves this untouched, so it is always empty here).
+        new_columns: dict[str, RelationalExpression] = {}
         # Special case: replace empty aggregation with VALUES () if possible.
         if (
             isinstance(output, Aggregate)
@@ -155,13 +160,21 @@ class ColumnPruner:
         ):
             return EmptySingleton(), correl_refs
         # Special case: replace join where LHS is VALUES () with the RHS if
-        # possible.
+        # possible, remapping the RHS's columns through the join's own
+        # column names in case the join had renamed any of them (e.g. due
+        # to a name collision with the LHS).
         if (
             isinstance(output, Join)
             and isinstance(output.inputs[0], EmptySingleton)
             and output.join_type in (JoinType.INNER, JoinType.LEFT)
         ):
-            return output.inputs[1], correl_refs
+            for column_name, column_val in output.columns.items():
+                assert isinstance(column_val, ColumnReference)
+                new_columns[column_name] = output.inputs[1].columns[column_val.name]
+            if isinstance(output.inputs[1], Aggregate):
+                for key in output.inputs[1].keys:
+                    new_columns[key] = output.inputs[1].keys[key]
+            return output.inputs[1].copy(columns=new_columns), correl_refs
 
         # Special case: replace LEFT join where RHS is unused with LHS (only
         # possible if the join is used to bring 1:1 data into the rows of the
@@ -195,7 +208,6 @@ class ColumnPruner:
                     if uses_lhs and uses_rhs:
                         break
 
-                new_columns: dict[str, RelationalExpression] = {}
                 if prune_right and not uses_rhs:
                     for column_name, column_val in output.columns.items():
                         assert isinstance(column_val, ColumnReference)
