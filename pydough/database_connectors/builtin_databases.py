@@ -135,16 +135,18 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
         # If a connection object is provided, return it wrapped in DatabaseConnection
         return DatabaseConnection(connection, DatabaseDialect.SNOWFLAKE)
     # Snowflake connection requires specific parameters:
-    # user, password, account.
-    # Raise an error if any of these are missing.
+    # user, account, and either password or private_key_file (key pair/JWT
+    # authentication). Raise an error if any of these are missing.
     # NOTE: database, schema, and warehouse are optional and
     # will default to the user's settings.
     # See: https://docs.snowflake.com/en/developer-guide/python-connector/python-connector-api#label-snowflake-connector-methods-connect
-    required_keys = ["user", "password", "account"]
-    if not all(key in kwargs for key in required_keys):
+    required_keys = ["user", "account"]
+    if not all(key in kwargs for key in required_keys) or not (
+        "password" in kwargs or "private_key_file" in kwargs
+    ):
         raise ValueError(
-            "Snowflake connection requires the following arguments: "
-            + ", ".join(required_keys)
+            "Snowflake connection requires 'user', 'account', and either "
+            "'password' or 'private_key_file'"
         )
     # Create a Snowflake connection using the provided keyword arguments
     connection = snowflake.connector.connect(**kwargs)

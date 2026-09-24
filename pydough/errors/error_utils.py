@@ -613,6 +613,7 @@ class PositiveInteger(PyDoughPredicate):
 is_valid_name: PyDoughPredicate = ValidName()
 is_valid_sql_name: PyDoughPredicate = ValidSQLName()
 is_integer = HasType(int, "integer")
+is_float = HasType(float, "float")
 is_string = HasType(str, "string")
 is_bool = HasType(bool, "boolean")
 is_json_object = HasType(dict, "JSON object")
@@ -623,6 +624,10 @@ unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
 )
 simple_join_keys_predicate: PyDoughPredicate = NonEmptyMapOf(
     is_string, NonEmptyListOf(is_string)
+)
+
+attributes_usage_predicate: PyDoughPredicate = PossiblyEmptyMapOf(
+    is_string, PossiblyEmptyListOf(is_string)
 )
 
 
@@ -703,6 +708,31 @@ def extract_integer(json_obj: dict, key_name: str, obj_name: str) -> int:
     HasPropertyWith(key_name, is_integer).verify(json_obj, obj_name)
     value = json_obj[key_name]
     assert isinstance(value, int)
+    return value
+
+
+def extract_float(json_obj: dict, key_name: str, obj_name: str) -> float:
+    """
+    Extracts a float field from a JSON object, returning the float field
+    and verifying that the field exists and is well formed.
+
+    Args:
+        `json_obj`: the JSON object to extract the string from.
+        `key_name`: the name of the key in the JSON object that
+        contains the string.
+        `obj_name`: the name of the object being extracted from, to be used
+        in error messages.
+
+    Returns:
+        The float value of the field.
+
+    Raises:
+        `PyDoughMetadataException` if the JSON object does not contain a key
+        with the name `key_name`, or if the value of the key is not a float.
+    """
+    HasPropertyWith(key_name, is_float).verify(json_obj, obj_name)
+    value = json_obj[key_name]
+    assert isinstance(value, float)
     return value
 
 
