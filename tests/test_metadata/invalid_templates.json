@@ -1,0 +1,651 @@
+[
+    {
+        "name": "INVALID_ATTRIBUTE_NAME",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": 123,
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "DUPLICATED_ATTRIBUTE_NAME",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ]
+                },
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 4", "value": "VALUE 4"}, 
+                        { "label": "LABEL 5", "value": "VALUE 5"}, 
+                        { "label": "LABEL 6", "value": "VALUE 6"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "INVALID_ATTRIBUTE_USAGE",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {"template_1": "invalid_usage"},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "INVALID_ATTRIBUTE_TYPE",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "invalid_type",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "NO_ATTRIBUTE_OPTIONS",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": []
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "INVALID_ATTRIBUTE_OPTION_LABEL",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": 123, "value": "VALUE 1"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "INVALID_ATTRIBUTE_OPTION_VALUE",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": ["INVALID", "VALUE"]}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "DUPLICATED_ATTRIBUTE_OPTION_LABEL",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 1", "value": "VALUE 2"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "DUPLICATED_ATTRIBUTE_OPTION_LABEL_2",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}
+                    ]
+                },
+                {
+                    "name": "attr2",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "MIXED_TYPE_ATTRIBUTE_OPTIONS",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": 2}
+                    ]
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "EXTRA_ATTRIBUTE_KEY",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ],
+                    "extrakey": "My extra key"
+                }
+            ],
+            "definitions":[]
+        }
+    },
+    {
+        "name": "NO_TEMPLATES_DEFINITIONS",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "attributes": [
+                {
+                    "name": "attr1",
+                    "usage": {},
+                    "type": "str",
+                    "description": "Generic description",
+                    "options": [
+                        { "label": "LABEL 1", "value": "VALUE 1"}, 
+                        { "label": "LABEL 2", "value": "VALUE 2"}, 
+                        { "label": "LABEL 3", "value": "VALUE 3"}
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_NAME",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "name with space",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "orders_filter": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_PYTHON_RESERVED_WORD",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "continue",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "orders_filter": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_PYDOUGH_RESERVED_WORD",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "CALCULATE",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_DUPLICATED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                },
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_GRAPH_USED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "TEMPLATE_NAME_GRAPH_USED",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_COLLECTION_USED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [
+            {
+                "name": "COLLECTION_NAME",
+                "type": "simple table",
+                "table path": "table_name",
+                "unique properties": ["id"],
+                "properties": [
+                    {
+                        "name": "id_",
+                        "type": "table column",
+                        "column name": "id",
+                        "data type": "numeric",
+                        "description": "Unique identifier id for the row",
+                        "sample values": [0, 1, 2, 3, 4],
+                        "synonyms": ["id"]
+                    }
+                ],
+                "description": "Generic description",
+                "synonyms": []
+            }
+        ],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "COLLECTION_NAME",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_NAME_UDF_USED",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "functions": [
+            {
+                "name": "POSITIVE",
+                "type": "sql macro",
+                "macro text": "{0} > 0",
+                "description": "Returns true if the argument is greater than zero.",
+                "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+                "output signature": {"type": "constant", "value": "bool"}
+            }
+        ],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "POSITIVE",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "pydough",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_PARAMETER_NAME",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "invalid_#@param": {
+                            "type": "invalid_type",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_PARAMETER_TYPE",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "invalid_type",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_PARAM_NO_DESC",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_ANSWER_VAR",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "(no_valid_identifier)"
+                }
+            ]
+        }
+    },
+    {
+        "name": "EXTRA_TEMPLATE_KEY",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "result = True",
+                    "answer_variable": "result",
+                    "extrakey": "My extra key"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_SOURCE_CODE",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        }
+                    },
+                     "source": "+= no valid syntax",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_SOURCE_CODE_2",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        }
+                    },
+                    "source": "nonlocal foo",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    },
+    {
+        "name": "TEMPLATE_INVALID_SOURCE_PLACEHOLDER",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description"
+                        },
+                        "parameter_2": {
+                            "type": "str",
+                            "description": "Generic description 2"
+                        }
+                    },
+                    "source": "result = {3} == 'string'",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    }
+]

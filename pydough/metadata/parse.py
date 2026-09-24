@@ -29,6 +29,7 @@ from .properties import (
     ReversiblePropertyMetadata,
     SimpleJoinMetadata,
 )
+from .templates import AttributeMetadata, TemplateMetadata
 
 
 def parse_metadata(metadata_info: Any, graph_name: str) -> GraphMetadata | None:
@@ -240,6 +241,37 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             )
             assert isinstance(udf_definition, dict)
             parse_function_v2(graph, udf_definition)
+
+    if "templates" in graph_json:
+        templates_object: dict = extract_object(
+            graph_json, "templates", graph.error_name
+        )
+
+        # Attributes are optional
+        if "attributes" in templates_object:
+            attribute_definitions: list = extract_array(
+                templates_object, "attributes", graph.error_name
+            )
+            for attribute_definition in attribute_definitions:
+                is_json_object.verify(
+                    attribute_definition,
+                    f"metadata for Templates definition inside {graph.error_name}",
+                )
+                assert isinstance(attribute_definition, dict)
+                parse_template_attributes_v2(graph, attribute_definition)
+
+        # Templates definitions
+        templates_definitions: list = extract_array(
+            templates_object, "definitions", graph.error_name
+        )
+
+        for template_definition in templates_definitions:
+            is_json_object.verify(
+                template_definition,
+                f"metadata for Templates definition inside {graph.error_name}",
+            )
+            assert isinstance(template_definition, dict)
+            parse_template_definition_v2(graph, template_definition)
 
     NoExtraKeys(GraphMetadata.allowed_fields).verify(graph_json, graph.error_name)
     for collection in graph.collections.values():
@@ -504,3 +536,51 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
                 f"Unrecognized PyDough function type for {error_name}: {function_type!r}"
             )
     graph.add_function(function_name, func)
+
+
+def parse_template_attributes_v2(graph: GraphMetadata, attribute_json: dict) -> None:
+    """
+    Parses the JSON object for a PyDough template attribute in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the attribute would be
+        added to. The attribute will be added to this graph in-place.
+        `attribute_json`: the JSON object containing the metadata for the
+        template attribute.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
+    """
+    attribute_name: str = extract_string(
+        attribute_json,
+        "name",
+        f"metadata for template attribute within {graph.error_name}",
+    )
+
+    AttributeMetadata.parse_from_json(graph, attribute_name, attribute_json)
+
+
+def parse_template_definition_v2(graph: GraphMetadata, definition_json: dict) -> None:
+    """
+    Parses the JSON object for a PyDough template definition in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the template_definition would be
+        added to. The attribute will be added to this graph in-place.
+        `attribute_json`: the JSON object containing the metadata for the
+        template definition.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
+    """
+    template_name: str = extract_string(
+        definition_json,
+        "name",
+        f"metadata for template definition within {graph.error_name}",
+    )
+
+    TemplateMetadata.parse_from_json(graph, template_name, definition_json)

@@ -250,6 +250,14 @@ def invalid_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def invalid_templates_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the invalid templates.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/invalid_templates.json"
+
+
+@pytest.fixture(scope="session")
 def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
@@ -487,6 +495,20 @@ def sample_graphs(
     file.
     """
     return get_sample_graph(sample_graph_names)
+
+
+@pytest.fixture(scope="session")
+def get_empty_tpch_graph() -> graph_fetcher:
+    """
+    Returns an empty TPCH graph with defined template
+    """
+
+    @cache
+    def impl() -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/empty_attributes_tpch_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name="TPCH")
+
+    return impl
 
 
 @pytest.fixture(scope="session")
