@@ -26,4 +26,4 @@ SELECT
   GREATEST('', 'alphabet soup', 'Hello World') AS l8,
   NULL AS l9
 FROM VALUES
-  (NULL) AS _q_0(_col_0)
+  (NULL) AS _0(_col_0)

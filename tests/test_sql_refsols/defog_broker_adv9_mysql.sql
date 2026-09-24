@@ -1,24 +1,24 @@
 SELECT
   CAST(DATE_SUB(
-    CAST(sbTransaction.sbtxdatetime AS DATETIME),
+    CAST(sbTransaction.sbTxDateTime AS DATETIME),
     INTERVAL (
       (
-        DAYOFWEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME)) + 5
+        DAYOFWEEK(CAST(sbTransaction.sbTxDateTime AS DATETIME)) + 5
       ) % 7
     ) DAY
   ) AS DATE) AS week,
   COUNT(*) AS num_transactions,
   COALESCE(SUM((
     (
-      DAYOFWEEK(sbTransaction.sbtxdatetime) + 5
+      DAYOFWEEK(sbTransaction.sbTxDateTime) + 5
     ) % 7
   ) IN (5, 6)), 0) AS weekend_transactions
 FROM broker.sbTransaction AS sbTransaction
 JOIN broker.sbTicker AS sbTicker
-  ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
-  AND sbTicker.sbtickertype = 'stock'
+  ON sbTicker.sbTickerId = sbTransaction.sbTxTickerId
+  AND sbTicker.sbTickerType = 'stock'
 WHERE
-  sbTransaction.sbtxdatetime < CAST(DATE_SUB(
+  sbTransaction.sbTxDateTime < CAST(DATE_SUB(
     CURRENT_TIMESTAMP(),
     INTERVAL (
       (
@@ -26,7 +26,7 @@ WHERE
       ) % 7
     ) DAY
   ) AS DATE)
-  AND sbTransaction.sbtxdatetime >= DATE_SUB(
+  AND sbTransaction.sbTxDateTime >= DATE_SUB(
     CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (

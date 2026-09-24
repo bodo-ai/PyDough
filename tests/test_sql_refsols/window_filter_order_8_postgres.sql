@@ -7,7 +7,7 @@ WITH _s3 AS (
     AND EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
 ), _t2 AS (
   SELECT
-    MAX(customer.c_acctbal) AS anything_c_acctbal,
+    ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
     COUNT(_s3.o_custkey) AS count_o_custkey
   FROM tpch.customer AS customer
   JOIN tpch.nation AS nation
@@ -20,7 +20,7 @@ WITH _s3 AS (
   SELECT
     anything_c_acctbal,
     count_o_custkey,
-    SUM(COALESCE(count_o_custkey, 0)) OVER () AS _w
+    SUM(COALESCE(CASE WHEN count_o_custkey <> 0 THEN count_o_custkey ELSE NULL END, 0)) OVER () AS _w
   FROM _t2
 )
 SELECT

@@ -1,20 +1,20 @@
 SELECT
-  sbtxdatetime AS date_time,
+  sbTxDateTime AS date_time,
   CAST(DATE_SUB(
-    CAST(sbtxdatetime AS DATETIME),
+    CAST(sbTxDateTime AS DATETIME),
     INTERVAL (
       (
-        DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 0
+        DAYOFWEEK(CAST(sbTxDateTime AS DATETIME)) + 0
       ) % 7
     ) DAY
   ) AS DATE) AS sow,
-  DAYNAME(sbtxdatetime) AS dayname,
+  DAYNAME(sbTxDateTime) AS dayname,
   (
     (
-      DAYOFWEEK(sbtxdatetime) + 0
+      DAYOFWEEK(sbTxDateTime) + 0
     ) % 7
   ) + 1 AS dayofweek
 FROM main.sbTransaction
 WHERE
-  EXTRACT(DAY FROM CAST(sbtxdatetime AS DATETIME)) > 1
-  AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
+  EXTRACT(DAY FROM CAST(sbTxDateTime AS DATETIME)) > 1
+  AND EXTRACT(YEAR FROM CAST(sbTxDateTime AS DATETIME)) < 2025

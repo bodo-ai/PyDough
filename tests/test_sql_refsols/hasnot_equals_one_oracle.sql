@@ -1,17 +1,17 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    o_custkey AS O_CUSTKEY,
+    O_CUSTKEY,
     COUNT(*) AS N_ROWS
   FROM TPCH.ORDERS
   WHERE
-    o_orderpriority = '1-URGENT'
+    O_ORDERPRIORITY = '1-URGENT'
   GROUP BY
-    o_custkey
+    O_CUSTKEY
 )
 SELECT
   COUNT(*) AS n
 FROM TPCH.CUSTOMER CUSTOMER
-LEFT JOIN "_S1" "_S1"
-  ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
+LEFT JOIN "_s1" "_s1"
+  ON CUSTOMER.C_CUSTKEY = "_s1".O_CUSTKEY
 WHERE
-  "_S1".N_ROWS = 0 OR "_S1".N_ROWS IS NULL
+  "_s1".N_ROWS = 0 OR "_s1".N_ROWS IS NULL

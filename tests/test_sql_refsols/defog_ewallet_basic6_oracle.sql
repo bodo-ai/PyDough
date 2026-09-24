@@ -1,9 +1,9 @@
 SELECT
-  device_type,
+  DEVICE_TYPE AS device_type,
   COUNT(*) AS count
 FROM MAIN.USER_SESSIONS
 GROUP BY
-  device_type
+  DEVICE_TYPE
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 2 ROWS ONLY

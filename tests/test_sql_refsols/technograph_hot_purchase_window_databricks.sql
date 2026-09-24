@@ -4,7 +4,7 @@ SELECT
 FROM main.calendar AS calendar
 JOIN main.calendar AS calendar_2
   ON calendar.ca_dt <= calendar_2.ca_dt
-  AND calendar_2.ca_dt < DATEADD(DAY, 5, CAST(calendar.ca_dt AS TIMESTAMP))
+  AND calendar_2.ca_dt < DATE_ADD(DAY, 5, CAST(calendar.ca_dt AS TIMESTAMP))
 JOIN main.devices AS devices
   ON calendar_2.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
 WHERE

@@ -5,11 +5,18 @@ WITH _t AS (
     ORDERS.o_orderpriority,
     ORDERS.o_totalprice,
     priority_taxes.tax_rate,
-    ROW_NUMBER() OVER (PARTITION BY ORDERS.o_orderkey ORDER BY CASE
-      WHEN ORDERS.o_totalprice + ORDERS.o_totalprice * priority_taxes.tax_rate IS NULL
-      THEN 1
-      ELSE 0
-    END, ORDERS.o_totalprice + ORDERS.o_totalprice * priority_taxes.tax_rate) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY ORDERS.o_orderkey
+      ORDER BY CASE
+        WHEN ORDERS.o_totalprice + (
+          ORDERS.o_totalprice * priority_taxes.tax_rate
+        ) IS NULL
+        THEN 1
+        ELSE 0
+      END, ORDERS.o_totalprice + (
+        ORDERS.o_totalprice * priority_taxes.tax_rate
+      )
+    ) AS _w
   FROM tpch.ORDERS AS ORDERS
   JOIN (VALUES
     ROW('1-URGENT', 0.05),

@@ -22,7 +22,7 @@ WITH _s3 AS (
   FROM _t2
   QUALIFY
     NULLIF(count_o_custkey, 0) IS NULL
-    AND anything_c_acctbal < SUM(COALESCE(count_o_custkey, 0)) OVER ()
+    AND anything_c_acctbal < SUM(COALESCE(CASE WHEN count_o_custkey <> 0 THEN count_o_custkey ELSE NULL END, 0)) OVER ()
 )
 SELECT
   COUNT(*) AS n

@@ -1,6 +1,6 @@
 SELECT
   "key",
-  name
+  NAME AS name
 FROM SORTED_NATIONS_T14
 ORDER BY
   2 DESC NULLS LAST

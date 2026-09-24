@@ -13,8 +13,8 @@ WITH _t5 AS (
     _t5.l_linenumber,
     _t5.l_orderkey,
     orders.o_orderkey,
-    MAX(_t5.l_suppkey) AS anything_l_suppkey,
-    MAX(orders.o_orderstatus) AS anything_o_orderstatus
+    ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
+    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus
   FROM _t5 AS _t5
   JOIN tpch.orders AS orders
     ON _t5.l_orderkey = orders.o_orderkey
@@ -48,7 +48,7 @@ WITH _t5 AS (
     _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
 )
 SELECT
-  MAX(supplier.s_name) AS S_NAME,
+  ANY_VALUE(supplier.s_name) AS S_NAME,
   COUNT(_s11.anything_l_suppkey) AS NUMWAIT
 FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation

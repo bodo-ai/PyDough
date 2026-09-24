@@ -1,13 +1,13 @@
 SELECT
   CASE
-    WHEN CHAR_LENGTH(sbcustname) = 0
+    WHEN CHAR_LENGTH(sbCustName) = 0
     THEN ''
     WHEN (
-      CHAR_LENGTH(sbcustname) - CHAR_LENGTH(REPLACE(sbcustname, ' ', ''))
+      CHAR_LENGTH(sbCustName) - CHAR_LENGTH(REPLACE(sbCustName, ' ', ''))
     ) + 1 >= ABS(-1)
-    THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', -1), ' ', 1)
+    THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbCustName, ' ', -1), ' ', 1)
     ELSE ''
   END AS last_name
 FROM main.sbCustomer
 WHERE
-  sbcustname = 'Alex Rodriguez'
+  sbCustName = 'Alex Rodriguez'

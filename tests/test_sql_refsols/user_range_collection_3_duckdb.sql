@@ -515,7 +515,9 @@ WITH _s5 AS (
     (996),
     (998),
     (1000)) AS b_2(y)
-    ON CAST(b_2.y AS TEXT) LIKE CONCAT('%', CAST(a_2.x AS TEXT))
+    ON CAST(b_2.y AS TEXT) LIKE (
+      '%' || CAST(a_2.x AS TEXT)
+    )
   GROUP BY
     1
 )
@@ -1036,7 +1038,9 @@ JOIN (VALUES
   (996),
   (998),
   (1000)) AS b(y)
-  ON CAST(b.y AS TEXT) LIKE CONCAT(CAST(a.x AS TEXT), '%')
+  ON CAST(b.y AS TEXT) LIKE (
+    CAST(a.x AS TEXT) || '%'
+  )
 JOIN _s5 AS _s5
   ON _s5.x = a.x
 GROUP BY

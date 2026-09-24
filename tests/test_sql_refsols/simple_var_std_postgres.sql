@@ -1,5 +1,5 @@
 SELECT
-  MAX(nation.n_name) AS name,
+  ANY_VALUE(nation.n_name) AS name,
   VAR_POP(supplier.s_acctbal) AS var,
   STDDEV_POP(supplier.s_acctbal) AS std,
   VAR_SAMP(supplier.s_acctbal) AS sample_var,

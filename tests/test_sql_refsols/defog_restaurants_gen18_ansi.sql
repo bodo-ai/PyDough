@@ -11,7 +11,7 @@ WITH _s0 AS (
   SELECT DISTINCT
     _s0.region
   FROM _s0 AS _s0
-  JOIN _s1 AS _s1
+  SEMI JOIN _s1 AS _s1
     ON _s0.city_name = _s1.city_name
 ), _s5 AS (
   SELECT
@@ -26,7 +26,7 @@ WITH _s0 AS (
     SUM(_s5.sum_rating) / SUM(_s5.count_rating) AS avg_rating,
     _s2.region
   FROM _s0 AS _s2
-  JOIN _s1 AS _s3
+  SEMI JOIN _s1 AS _s3
     ON _s2.city_name = _s3.city_name
   JOIN _s5 AS _s5
     ON _s2.city_name = _s5.city_name

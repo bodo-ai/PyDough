@@ -60,7 +60,7 @@ def merge_subqueries(expression: E, leave_tables_isolated: bool = False) -> E:
 # If a derived table has these Select args, it can't be merged
 UNMERGABLE_ARGS = set(exp.Select.arg_types) - {
     "expressions",
-    "from",
+    "from_",
     "joins",
     "where",
     "order",
@@ -135,7 +135,7 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> boo
     # Temporarily remove the "with" context from the outer scope to avoid
     # using CTEs when considering what the outer scope contains, then restore
     # it before returning.
-    with_ctx = outer_scope.expression.args.pop("with", None)
+    with_ctx = outer_scope.expression.args.pop("with_", None)
     result: bool = False
     if inner_scope.expression.find(exp.AggFunc) and (
         outer_scope.expression.find(exp.AggFunc)
@@ -184,7 +184,7 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> boo
             if contains_match:
                 result = True
                 break
-    outer_scope.expression.args["with"] = with_ctx
+    outer_scope.expression.args["with_"] = with_ctx
     return result
 
 
@@ -198,6 +198,12 @@ def has_seq4_or_table(expr: Scope) -> bool:
         True if SEQ4() or TABLE() is found, False otherwise.
     """
     for e in expr.walk():
+        # PYDOUGH CHANGE: sqlglot now parses SEQ4() and TABLE(...) into
+        # dedicated expression classes (Seq4, TableFromRows) instead of
+        # falling back to a generic Anonymous function call, so both forms
+        # need to be checked for.
+        if isinstance(e, (exp.Seq4, exp.TableFromRows)):
+            return True
         if isinstance(e, exp.Anonymous) and e.this.upper() in {"SEQ4", "TABLE"}:
             return True
     return False
@@ -271,7 +277,7 @@ def _mergeable(
         if not on:
             return False
         selections = [c.name for c in on.find_all(exp.Column) if c.table == alias]
-        inner_from = inner_scope.expression.args.get("from")
+        inner_from = inner_scope.expression.args.get("from_")
         if not inner_from:
             return False
         inner_from_table = inner_from.alias_or_name
@@ -303,7 +309,7 @@ def _mergeable(
         and not outer_scope.expression.is_star
         and isinstance(inner_select, exp.Select)
         and not any(inner_select.args.get(arg) for arg in UNMERGABLE_ARGS)
-        and inner_select.args.get("from") is not None
+        and inner_select.args.get("from_") is not None
         and not outer_scope.pivots
         and not any(e.find(exp.Select, exp.Explode) for e in inner_select.expressions)
         # PYDOUGH CHANGE: allow merging when the inner select has an

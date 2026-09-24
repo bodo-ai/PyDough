@@ -5,7 +5,9 @@ WITH _t1 AS (
     COUNT(DISTINCT searches.search_id) AS ndistinct_search_id
   FROM events AS events
   JOIN searches AS searches
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+    ON LOWER(searches.search_string) LIKE (
+      '%' || LOWER(events.ev_name) || '%'
+    )
   JOIN users AS users
     ON searches.search_user_id = users.user_id
   GROUP BY

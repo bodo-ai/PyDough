@@ -3,7 +3,10 @@ WITH _t AS (
     doc_id,
     start_dt,
     treatment_id,
-    ROW_NUMBER() OVER (PARTITION BY doc_id ORDER BY CASE WHEN start_dt IS NULL THEN 1 ELSE 0 END, start_dt) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY doc_id
+      ORDER BY CASE WHEN start_dt IS NULL THEN 1 ELSE 0 END, start_dt
+    ) AS _w
   FROM treatments
 ), _s1 AS (
   SELECT

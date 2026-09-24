@@ -1,17 +1,17 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT DISTINCT
-    o_orderpriority AS O_ORDERPRIORITY
+    O_ORDERPRIORITY
   FROM TPCH.ORDERS
-), "_S1" AS (
+), "_s1" AS (
   SELECT DISTINCT
-    c_mktsegment AS C_MKTSEGMENT
+    C_MKTSEGMENT
   FROM TPCH.CUSTOMER
 )
 SELECT
-  "_S0".O_ORDERPRIORITY AS order_priority,
-  "_S1".C_MKTSEGMENT AS market_segment
-FROM "_S0" "_S0"
-CROSS JOIN "_S1" "_S1"
+  "_s0".O_ORDERPRIORITY AS order_priority,
+  "_s1".C_MKTSEGMENT AS market_segment
+FROM "_s0" "_s0"
+CROSS JOIN "_s1" "_s1"
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST

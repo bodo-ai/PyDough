@@ -6,11 +6,15 @@ SELECT
   customer.c_name LIKE '%z' AS ends_with_z,
   customer.c_name LIKE '%sub%' AS contains_sub,
   customer.c_name LIKE '%test%' AS matches_like,
-  CONCAT_WS('::', customer.c_name, nation.n_name) AS joined_string,
+  CASE
+    WHEN customer.c_name IS NULL OR nation.n_name IS NULL
+    THEN NULL
+    ELSE CONCAT_WS('::', customer.c_name, nation.n_name)
+  END AS joined_string,
   NULL AS join_nulls,
   LPAD(CAST(customer.c_name AS TEXT), 20, '*') AS lpad_name,
   RPAD(CAST(customer.c_name AS TEXT), 20, '-') AS rpad_name,
-  TRIM(CONCAT(CHR(10), CHR(9), CHR(13), ' ') FROM customer.c_name) AS stripped,
+  TRIM(CHR(  10) || CHR(  9) || CHR(  13) || ' ' FROM customer.c_name) AS stripped,
   TRIM('aeiou' FROM customer.c_name) AS stripped_vowels,
   REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,

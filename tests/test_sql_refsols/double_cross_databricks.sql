@@ -11,23 +11,21 @@ WITH _t3 AS (
     CAST((
       DATEDIFF(
         DAY,
-        DATEADD(
-          DAY,
+        DATE_ADD(
+          CAST(_s0.min_o_orderdate AS DATE),
           -(
             (
-              DAYOFWEEK(TO_DATE(_s0.min_o_orderdate)) + -1
+              DAYOFWEEK(_s0.min_o_orderdate) + -1
             ) % 7
-          ),
-          CAST(_s0.min_o_orderdate AS DATE)
+          )
         ),
-        DATEADD(
-          DAY,
+        DATE_ADD(
+          CAST(orders.o_orderdate AS DATE),
           -(
             (
-              DAYOFWEEK(TO_DATE(orders.o_orderdate)) + -1
+              DAYOFWEEK(orders.o_orderdate) + -1
             ) % 7
-          ),
-          CAST(orders.o_orderdate AS DATE)
+          )
         )
       )
     ) / 7 AS BIGINT) AS ord_wk,
@@ -36,23 +34,21 @@ WITH _t3 AS (
   JOIN tpch.orders AS orders
     ON CAST(DATEDIFF(
       DAY,
-      DATEADD(
-        DAY,
+      DATE_ADD(
+        CAST(_s0.min_o_orderdate AS DATE),
         -(
           (
-            DAYOFWEEK(TO_DATE(_s0.min_o_orderdate)) + -1
+            DAYOFWEEK(_s0.min_o_orderdate) + -1
           ) % 7
-        ),
-        CAST(_s0.min_o_orderdate AS DATE)
+        )
       ),
-      DATEADD(
-        DAY,
+      DATE_ADD(
+        CAST(orders.o_orderdate AS DATE),
         -(
           (
-            DAYOFWEEK(TO_DATE(orders.o_orderdate)) + -1
+            DAYOFWEEK(orders.o_orderdate) + -1
           ) % 7
-        ),
-        CAST(orders.o_orderdate AS DATE)
+        )
       )
     ) / 7 AS BIGINT) < 10
     AND orders.o_orderpriority = '1-URGENT'
@@ -68,23 +64,21 @@ WITH _t3 AS (
     CAST((
       DATEDIFF(
         DAY,
-        DATEADD(
-          DAY,
+        DATE_ADD(
+          CAST(_s3.min_o_orderdate AS DATE),
           -(
             (
-              DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) + -1
+              DAYOFWEEK(_s3.min_o_orderdate) + -1
             ) % 7
-          ),
-          CAST(_s3.min_o_orderdate AS DATE)
+          )
         ),
-        DATEADD(
-          DAY,
+        DATE_ADD(
+          CAST(lineitem.l_receiptdate AS DATE),
           -(
             (
-              DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) + -1
+              DAYOFWEEK(lineitem.l_receiptdate) + -1
             ) % 7
-          ),
-          CAST(lineitem.l_receiptdate AS DATE)
+          )
         )
       )
     ) / 7 AS BIGINT) AS line_wk,
@@ -96,45 +90,41 @@ WITH _t3 AS (
   JOIN tpch.lineitem AS lineitem
     ON CAST(DATEDIFF(
       DAY,
-      DATEADD(
-        DAY,
+      DATE_ADD(
+        CAST(_s3.min_o_orderdate AS DATE),
         -(
           (
-            DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) + -1
+            DAYOFWEEK(_s3.min_o_orderdate) + -1
           ) % 7
-        ),
-        CAST(_s3.min_o_orderdate AS DATE)
+        )
       ),
-      DATEADD(
-        DAY,
+      DATE_ADD(
+        CAST(lineitem.l_receiptdate AS DATE),
         -(
           (
-            DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) + -1
+            DAYOFWEEK(lineitem.l_receiptdate) + -1
           ) % 7
-        ),
-        CAST(lineitem.l_receiptdate AS DATE)
+        )
       )
     ) / 7 AS BIGINT) < 10
     AND EXTRACT(YEAR FROM CAST(lineitem.l_receiptdate AS TIMESTAMP)) = 1992
     AND _s2.ord_wk = CAST(DATEDIFF(
       DAY,
-      DATEADD(
-        DAY,
+      DATE_ADD(
+        CAST(_s3.min_o_orderdate AS DATE),
         -(
           (
-            DAYOFWEEK(TO_DATE(_s3.min_o_orderdate)) + -1
+            DAYOFWEEK(_s3.min_o_orderdate) + -1
           ) % 7
-        ),
-        CAST(_s3.min_o_orderdate AS DATE)
+        )
       ),
-      DATEADD(
-        DAY,
+      DATE_ADD(
+        CAST(lineitem.l_receiptdate AS DATE),
         -(
           (
-            DAYOFWEEK(TO_DATE(lineitem.l_receiptdate)) + -1
+            DAYOFWEEK(lineitem.l_receiptdate) + -1
           ) % 7
-        ),
-        CAST(lineitem.l_receiptdate AS DATE)
+        )
       )
     ) / 7 AS BIGINT)
     AND lineitem.l_returnflag = 'R'

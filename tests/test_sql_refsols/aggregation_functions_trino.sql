@@ -15,9 +15,9 @@ WITH _s1 AS (
         (
           ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN customer.c_acctbal

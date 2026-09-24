@@ -25,13 +25,19 @@ WITH _s1 AS (
     anything_o_custkey,
     anything_o_orderdate,
     sum_r,
-    LAG(COALESCE(sum_r, 0), 1) OVER (PARTITION BY anything_o_custkey ORDER BY CASE WHEN anything_o_orderdate IS NULL THEN 1 ELSE 0 END, anything_o_orderdate) AS _w
+    LAG(COALESCE(sum_r, 0), 1) OVER (
+      PARTITION BY anything_o_custkey
+      ORDER BY CASE WHEN anything_o_orderdate IS NULL THEN 1 ELSE 0 END, anything_o_orderdate
+    ) AS _w
   FROM _t5
 ), _t1 AS (
   SELECT
     _t.anything_o_custkey,
     CUSTOMER.c_name,
-    COALESCE(_t.sum_r, 0) - LAG(COALESCE(_t.sum_r, 0), 1) OVER (PARTITION BY _t.anything_o_custkey ORDER BY CASE WHEN _t.anything_o_orderdate IS NULL THEN 1 ELSE 0 END, _t.anything_o_orderdate) AS revenue_delta
+    COALESCE(_t.sum_r, 0) - LAG(COALESCE(_t.sum_r, 0), 1) OVER (
+      PARTITION BY _t.anything_o_custkey
+      ORDER BY CASE WHEN _t.anything_o_orderdate IS NULL THEN 1 ELSE 0 END, _t.anything_o_orderdate
+    ) AS revenue_delta
   FROM tpch.CUSTOMER AS CUSTOMER
   JOIN _t AS _t
     ON CUSTOMER.c_custkey = _t.anything_o_custkey AND NOT _t._w IS NULL

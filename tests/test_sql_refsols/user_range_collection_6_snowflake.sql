@@ -1,7 +1,7 @@
 WITH years AS (
   SELECT
     1990 + SEQ4() AS year
-  FROM TABLE(GENERATOR(ROWCOUNT => 11))
+  FROM TABLE(GENERATOR(ROWCOUNT => 11)) AS _0
 ), _s5 AS (
   SELECT
     YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,

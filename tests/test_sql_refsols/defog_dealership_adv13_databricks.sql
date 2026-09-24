@@ -7,7 +7,7 @@ WITH _s1 AS (
     1
 ), _t0 AS (
   SELECT
-    DATEADD(MONTH, months.n, _s1.start_month) AS dt,
+    DATE_ADD(MONTH, months.n, _s1.start_month) AS dt,
     SUM(IF(months.n > 0, 0, COALESCE(_s1.sum_payment_amount, 0))) AS sum_payment
   FROM VALUES
     (0),
@@ -25,7 +25,7 @@ WITH _s1 AS (
   JOIN _s1 AS _s1
     ON (
       TRUNC(CURRENT_TIMESTAMP(), 'MONTH') + INTERVAL '1' HOUR
-    ) >= DATEADD(MONTH, months.n, _s1.start_month)
+    ) >= DATE_ADD(MONTH, months.n, _s1.start_month)
   GROUP BY
     1
 )

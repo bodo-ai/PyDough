@@ -37,8 +37,12 @@ WITH _t7 AS (
     month_o_orderdate,
     year_o_orderdate,
     sum_o_totalprice,
-    LEAD(COALESCE(sum_o_totalprice, 0), 1, 0.0) OVER (ORDER BY CASE WHEN year_o_orderdate IS NULL THEN 1 ELSE 0 END, year_o_orderdate, CASE WHEN month_o_orderdate IS NULL THEN 1 ELSE 0 END, month_o_orderdate) AS _w,
-    LAG(COALESCE(sum_o_totalprice, 0), 1, 0.0) OVER (ORDER BY CASE WHEN year_o_orderdate IS NULL THEN 1 ELSE 0 END, year_o_orderdate, CASE WHEN month_o_orderdate IS NULL THEN 1 ELSE 0 END, month_o_orderdate) AS _w_2
+    LEAD(COALESCE(sum_o_totalprice, 0), 1, 0.0) OVER (
+      ORDER BY CASE WHEN year_o_orderdate IS NULL THEN 1 ELSE 0 END, year_o_orderdate, CASE WHEN month_o_orderdate IS NULL THEN 1 ELSE 0 END, month_o_orderdate
+    ) AS _w,
+    LAG(COALESCE(sum_o_totalprice, 0), 1, 0.0) OVER (
+      ORDER BY CASE WHEN year_o_orderdate IS NULL THEN 1 ELSE 0 END, year_o_orderdate, CASE WHEN month_o_orderdate IS NULL THEN 1 ELSE 0 END, month_o_orderdate
+    ) AS _w_2
   FROM _t2
 )
 SELECT

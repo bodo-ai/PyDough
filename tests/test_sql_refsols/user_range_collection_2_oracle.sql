@@ -1,4 +1,4 @@
-WITH "_S3" AS (
+WITH "_s3" AS (
   SELECT
     A_2.X,
     SUM(TO_CHAR(B.Y) LIKE (
@@ -527,8 +527,8 @@ WITH "_S3" AS (
 )
 SELECT
   A.X AS x,
-  COALESCE("_S3".SUM_EXPR_5, 0) AS n_prefix,
-  COALESCE("_S3".SUM_EXPR, 0) AS n_suffix
+  COALESCE("_s3".SUM_EXPR_5, 0) AS n_prefix,
+  COALESCE("_s3".SUM_EXPR, 0) AS n_suffix
 FROM (VALUES
   (0),
   (1),
@@ -540,7 +540,7 @@ FROM (VALUES
   (7),
   (8),
   (9)) AS A(X)
-LEFT JOIN "_S3" "_S3"
-  ON A.X = "_S3".X
+LEFT JOIN "_s3" "_s3"
+  ON A.X = "_s3".X
 ORDER BY
   1 NULLS FIRST

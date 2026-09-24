@@ -6,9 +6,9 @@ WITH _t0 AS (
         (
           ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER () - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
@@ -19,9 +19,9 @@ WITH _t0 AS (
         (
           ROW_NUMBER() OVER (ORDER BY c_acctbal DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(c_acctbal) OVER () - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN c_acctbal
@@ -32,9 +32,9 @@ WITH _t0 AS (
         (
           ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER () - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END

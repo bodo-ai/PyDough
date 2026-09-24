@@ -3,12 +3,19 @@ WITH _t AS (
     a_balance,
     a_key,
     a_type,
-    ROW_NUMBER() OVER (PARTITION BY (
-      SUBSTRING(a_type, -1) || SUBSTRING(a_type, 1, LENGTH(a_type) - 1)
-    ) = 'retirement'
-    OR (
-      SUBSTRING(a_type, -1) || SUBSTRING(a_type, 1, LENGTH(a_type) - 1)
-    ) = 'savings' ORDER BY SQRT(a_balance) DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY (
+        (
+          SUBSTRING(a_type, -1) || SUBSTRING(a_type, 1, LENGTH(a_type) - 1)
+        ) = 'retirement'
+      )
+      OR (
+        (
+          SUBSTRING(a_type, -1) || SUBSTRING(a_type, 1, LENGTH(a_type) - 1)
+        ) = 'savings'
+      )
+      ORDER BY SQRT(a_balance) DESC
+    ) AS _w
   FROM crbnk.accounts
 )
 SELECT

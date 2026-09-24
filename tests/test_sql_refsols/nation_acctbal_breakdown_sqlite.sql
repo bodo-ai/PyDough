@@ -6,7 +6,10 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY customer.c_nationkey
+            ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
           CAST((
             COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY customer.c_nationkey) - 1.0
@@ -32,7 +35,10 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY customer.c_nationkey
+            ORDER BY CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
           CAST((
             COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY customer.c_nationkey) - 1.0

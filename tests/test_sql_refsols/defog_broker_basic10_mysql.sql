@@ -1,15 +1,15 @@
 WITH _u_0 AS (
   SELECT
-    sbdptickerid AS _u_1
+    sbDpTickerId AS _u_1
   FROM broker.sbDailyPrice
   GROUP BY
     1
 )
 SELECT
-  sbTicker.sbtickerid AS _id,
-  sbTicker.sbtickersymbol AS symbol
+  sbTicker.sbTickerId AS _id,
+  sbTicker.sbTickerSymbol AS symbol
 FROM broker.sbTicker AS sbTicker
 LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = sbTicker.sbtickerid
+  ON _u_0._u_1 = sbTicker.sbTickerId
 WHERE
-  _u_0._u_1 IS NULL
+  NOT NOT _u_0._u_1 IS NULL

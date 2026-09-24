@@ -9,8 +9,8 @@ WITH _s0 AS (
   FROM main.countries
 ), _t1 AS (
   SELECT
-    MAX(_s3.co_id) AS anything__id_3,
-    MAX(_s2.co_id) AS anything_co_id,
+    ANY_VALUE(_s3.co_id) AS anything__id_3,
+    ANY_VALUE(_s2.co_id) AS anything_co_id,
     COUNT(incidents.in_device_id) AS count_in_device_id
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3

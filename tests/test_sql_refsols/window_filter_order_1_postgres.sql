@@ -17,7 +17,9 @@ WITH _s3 AS (
 ), _t AS (
   SELECT
     count_o_custkey,
-    AVG(CAST(COALESCE(count_o_custkey, 0) AS DOUBLE PRECISION)) OVER () AS _w
+    AVG(
+      CAST(COALESCE(CASE WHEN count_o_custkey <> 0 THEN count_o_custkey ELSE NULL END, 0) AS DOUBLE PRECISION)
+    ) OVER () AS _w
   FROM _t2
 )
 SELECT

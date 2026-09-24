@@ -1,8 +1,8 @@
 SELECT
-  ps_suppkey AS supplier_key,
-  ps_partkey AS part_key,
-  FLOOR(ps_availqty) AS complete_parts,
-  CEIL(ps_supplycost * FLOOR(ps_availqty)) AS total_cost
+  PS_SUPPKEY AS supplier_key,
+  PS_PARTKEY AS part_key,
+  FLOOR(PS_AVAILQTY) AS complete_parts,
+  CEIL(PS_SUPPLYCOST * FLOOR(PS_AVAILQTY)) AS total_cost
 FROM TPCH.PARTSUPP
 ORDER BY
   4 DESC NULLS LAST

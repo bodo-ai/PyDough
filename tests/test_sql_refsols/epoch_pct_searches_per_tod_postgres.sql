@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     times.t_name,
-    MAX(times.t_start_hour) AS anything_t_start_hour,
+    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
     COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches

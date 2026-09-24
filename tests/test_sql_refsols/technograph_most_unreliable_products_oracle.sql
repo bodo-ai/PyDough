@@ -1,29 +1,29 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    in_device_id AS IN_DEVICE_ID,
+    IN_DEVICE_ID,
     COUNT(*) AS N_ROWS
   FROM MAIN.INCIDENTS
   GROUP BY
-    in_device_id
-), "_S3" AS (
+    IN_DEVICE_ID
+), "_s3" AS (
   SELECT
-    DEVICES.de_product_id AS DE_PRODUCT_ID,
+    DEVICES.DE_PRODUCT_ID,
     COUNT(*) AS N_ROWS,
-    SUM("_S1".N_ROWS) AS SUM_N_ROWS
+    SUM("_s1".N_ROWS) AS SUM_N_ROWS
   FROM MAIN.DEVICES DEVICES
-  LEFT JOIN "_S1" "_S1"
-    ON DEVICES.de_id = "_S1".IN_DEVICE_ID
+  LEFT JOIN "_s1" "_s1"
+    ON DEVICES.DE_ID = "_s1".IN_DEVICE_ID
   GROUP BY
-    DEVICES.de_product_id
+    DEVICES.DE_PRODUCT_ID
 )
 SELECT
-  PRODUCTS.pr_name AS product,
-  PRODUCTS.pr_brand AS product_brand,
-  PRODUCTS.pr_type AS product_type,
-  ROUND(COALESCE("_S3".SUM_N_ROWS, 0) / "_S3".N_ROWS, 2) AS ir
+  PRODUCTS.PR_NAME AS product,
+  PRODUCTS.PR_BRAND AS product_brand,
+  PRODUCTS.PR_TYPE AS product_type,
+  ROUND(COALESCE("_s3".SUM_N_ROWS, 0) / "_s3".N_ROWS, 2) AS ir
 FROM MAIN.PRODUCTS PRODUCTS
-JOIN "_S3" "_S3"
-  ON PRODUCTS.pr_id = "_S3".DE_PRODUCT_ID
+JOIN "_s3" "_s3"
+  ON PRODUCTS.PR_ID = "_s3".DE_PRODUCT_ID
 ORDER BY
   4 DESC NULLS LAST
 FETCH FIRST 5 ROWS ONLY

@@ -1,26 +1,26 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    doc_id AS DOC_ID,
-    start_dt AS START_DT,
-    treatment_id AS TREATMENT_ID,
-    ROW_NUMBER() OVER (PARTITION BY doc_id ORDER BY start_dt) AS "_W"
+    DOC_ID,
+    START_DT,
+    TREATMENT_ID,
+    ROW_NUMBER() OVER (PARTITION BY DOC_ID ORDER BY START_DT) AS "_w"
   FROM MAIN.TREATMENTS
-), "_S1" AS (
+), "_s1" AS (
   SELECT
     DOC_ID,
     START_DT,
     TREATMENT_ID
-  FROM "_T"
+  FROM "_t"
   WHERE
-    "_W" = 1
+    "_w" = 1
 )
 SELECT
-  DOCTORS.last_name,
-  DOCTORS.year_reg,
-  "_S1".START_DT AS first_treatment_date,
-  "_S1".TREATMENT_ID AS first_treatment_id
+  DOCTORS.LAST_NAME AS last_name,
+  DOCTORS.YEAR_REG AS year_reg,
+  "_s1".START_DT AS first_treatment_date,
+  "_s1".TREATMENT_ID AS first_treatment_id
 FROM MAIN.DOCTORS DOCTORS
-LEFT JOIN "_S1" "_S1"
-  ON DOCTORS.doc_id = "_S1".DOC_ID
+LEFT JOIN "_s1" "_s1"
+  ON DOCTORS.DOC_ID = "_s1".DOC_ID
 WHERE
-  DOCTORS.year_reg = EXTRACT(YEAR FROM CAST(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -24) AS DATE))
+  DOCTORS.YEAR_REG = EXTRACT(YEAR FROM CAST(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -24) AS DATE))

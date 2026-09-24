@@ -20,7 +20,7 @@ WITH _s3 AS (
   SELECT
     anything_c_acctbal,
     count_o_custkey,
-    SUM(COALESCE(count_o_custkey, 0)) OVER () AS _w
+    SUM(COALESCE(CASE WHEN count_o_custkey <> 0 THEN count_o_custkey ELSE NULL END, 0)) OVER () AS _w
   FROM _t2
 )
 SELECT

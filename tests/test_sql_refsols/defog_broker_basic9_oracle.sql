@@ -1,15 +1,15 @@
 WITH "_u_0" AS (
   SELECT
-    sbtxcustid AS "_u_1"
+    SBTXCUSTID AS "_u_1"
   FROM MAIN.SBTRANSACTION
   GROUP BY
-    sbtxcustid
+    SBTXCUSTID
 )
 SELECT
-  SBCUSTOMER.sbcustid AS "_id",
-  SBCUSTOMER.sbcustname AS name
+  SBCUSTOMER.SBCUSTID AS "_id",
+  SBCUSTOMER.SBCUSTNAME AS name
 FROM MAIN.SBCUSTOMER SBCUSTOMER
 LEFT JOIN "_u_0" "_u_0"
-  ON SBCUSTOMER.sbcustid = "_u_0"."_u_1"
+  ON SBCUSTOMER.SBCUSTID = "_u_0"."_u_1"
 WHERE
   "_u_0"."_u_1" IS NULL

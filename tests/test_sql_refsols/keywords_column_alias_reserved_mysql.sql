@@ -9,6 +9,6 @@ JOIN keywords.`lowercase_detail` AS `lowercase_detail`
   ON `MixedCase_1:1`.`LowerCaseId` = `lowercase_detail`.id
   AND `lowercase_detail`.`as` = '10 as reserved word'
 JOIN keywords.`UPPERCASE_MASTER` AS `UPPERCASE_MASTER`
-  ON `MixedCase_1:1`.`Id` = `UPPERCASE_MASTER`.id
+  ON `MixedCase_1:1`.`Id` = `UPPERCASE_MASTER`.ID
 WHERE
   `MixedCase_1:1`.`(parentheses)` = '5 (parentheses)'

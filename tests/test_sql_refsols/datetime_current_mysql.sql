@@ -21,4 +21,4 @@ SELECT
     INTERVAL '2' SECOND
   ) AS d3
 FROM (VALUES
-  ROW(NULL)) AS _q_0(_col_0)
+  ROW(NULL)) AS _0(_col_0)

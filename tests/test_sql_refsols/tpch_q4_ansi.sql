@@ -1,10 +1,16 @@
+WITH _s1 AS (
+  SELECT
+    l_orderkey
+  FROM tpch.lineitem
+  WHERE
+    l_commitdate < l_receiptdate
+)
 SELECT
   orders.o_orderpriority AS O_ORDERPRIORITY,
   COUNT(*) AS ORDER_COUNT
 FROM tpch.orders AS orders
-JOIN tpch.lineitem AS lineitem
-  ON lineitem.l_commitdate < lineitem.l_receiptdate
-  AND lineitem.l_orderkey = orders.o_orderkey
+SEMI JOIN _s1 AS _s1
+  ON _s1.l_orderkey = orders.o_orderkey
 WHERE
   EXTRACT(MONTH FROM CAST(orders.o_orderdate AS DATETIME)) IN (7, 8, 9)
   AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993

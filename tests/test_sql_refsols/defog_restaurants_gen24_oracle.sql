@@ -1,5 +1,5 @@
 SELECT
-  name
+  NAME AS name
 FROM MAIN.RESTAURANT
 WHERE
-  LOWER(food_type) = 'italian'
+  LOWER(FOOD_TYPE) = 'italian'

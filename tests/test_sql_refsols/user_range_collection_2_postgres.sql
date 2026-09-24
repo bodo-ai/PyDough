@@ -2,27 +2,23 @@ WITH _s3 AS (
   SELECT
     a_2.x,
     SUM(
-      CASE
-        WHEN CAST(b.y AS TEXT) LIKE (
-          CONCAT('%', CAST(a_2.x AS TEXT))
-        )
-        THEN 1
-        ELSE 0
-      END
+      CASE WHEN CAST(b.y AS TEXT) LIKE (
+        '%' || CAST(a_2.x AS TEXT)
+      ) THEN 1 ELSE 0 END
     ) AS sum_expr,
     SUM(
-      CASE
-        WHEN CAST(b.y AS TEXT) LIKE (
-          CONCAT(CAST(a_2.x AS TEXT), '%')
-        )
-        THEN 1
-        ELSE 0
-      END
+      CASE WHEN CAST(b.y AS TEXT) LIKE (
+        CAST(a_2.x AS TEXT) || '%'
+      ) THEN 1 ELSE 0 END
     ) AS sum_expr_5
   FROM GENERATE_SERIES(0, 9, 1) AS a_2(x)
   JOIN GENERATE_SERIES(0, 1000, 2) AS b(y)
-    ON CAST(b.y AS TEXT) LIKE CONCAT('%', CAST(a_2.x AS TEXT))
-    OR CAST(b.y AS TEXT) LIKE CONCAT(CAST(a_2.x AS TEXT), '%')
+    ON CAST(b.y AS TEXT) LIKE (
+      '%' || CAST(a_2.x AS TEXT)
+    )
+    OR CAST(b.y AS TEXT) LIKE (
+      CAST(a_2.x AS TEXT) || '%'
+    )
   GROUP BY
     1
 )

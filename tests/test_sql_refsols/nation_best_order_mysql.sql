@@ -18,7 +18,10 @@ WITH _t3 AS (
     o_orderkey,
     o_totalprice,
     value_percentage,
-    ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN o_totalprice IS NULL THEN 1 ELSE 0 END DESC, o_totalprice DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY c_nationkey
+      ORDER BY CASE WHEN o_totalprice IS NULL THEN 1 ELSE 0 END DESC, o_totalprice DESC
+    ) AS _w
   FROM _t3
 )
 SELECT

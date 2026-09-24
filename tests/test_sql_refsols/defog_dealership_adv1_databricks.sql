@@ -1,22 +1,19 @@
 SELECT
-  DATEADD(
-    DAY,
+  DATE_ADD(
+    CAST(CAST(payments_received.payment_date AS TIMESTAMP) AS DATE),
     -(
       (
-        DAYOFWEEK(TO_DATE(CAST(payments_received.payment_date AS TIMESTAMP))) + 5
+        DAYOFWEEK(CAST(payments_received.payment_date AS TIMESTAMP)) + 5
       ) % 7
-    ),
-    CAST(CAST(payments_received.payment_date AS TIMESTAMP) AS DATE)
+    )
   ) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
-    COUNT_IF(
+    COUNT_IF((
       (
-        (
-          DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
-        ) % 7
-      ) IN (5, 6)
-    ),
+        DAYOFWEEK(payments_received.payment_date) + 5
+      ) % 7
+    ) IN (5, 6)),
     0
   ) AS weekend_payments
 FROM defog.dealership.payments_received AS payments_received
@@ -25,44 +22,40 @@ JOIN defog.dealership.sales AS sales
 WHERE
   CAST(DATEDIFF(
     DAY,
-    DATEADD(
-      DAY,
+    DATE_ADD(
+      CAST(payments_received.payment_date AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
+          DAYOFWEEK(payments_received.payment_date) + 5
         ) % 7
-      ),
-      CAST(payments_received.payment_date AS DATE)
+      )
     ),
-    DATEADD(
-      DAY,
+    DATE_ADD(
+      CAST(CURRENT_TIMESTAMP() AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
+          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
         ) % 7
-      ),
-      CAST(CURRENT_TIMESTAMP() AS DATE)
+      )
     )
   ) / 7 AS BIGINT) <= 8
   AND CAST(DATEDIFF(
     DAY,
-    DATEADD(
-      DAY,
+    DATE_ADD(
+      CAST(payments_received.payment_date AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(payments_received.payment_date)) + 5
+          DAYOFWEEK(payments_received.payment_date) + 5
         ) % 7
-      ),
-      CAST(payments_received.payment_date AS DATE)
+      )
     ),
-    DATEADD(
-      DAY,
+    DATE_ADD(
+      CAST(CURRENT_TIMESTAMP() AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
+          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
         ) % 7
-      ),
-      CAST(CURRENT_TIMESTAMP() AS DATE)
+      )
     )
   ) / 7 AS BIGINT) >= 1
 GROUP BY

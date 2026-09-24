@@ -2,7 +2,11 @@ WITH _t3 AS (
   SELECT
     sbtxdatetime,
     CAST((
-      100.0 * SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) ORDER BY sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+      100.0 * SUM(sbtxshares) OVER (
+        PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))
+        ORDER BY sbtxdatetime
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      )
     ) AS DOUBLE) / SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))) AS pct_of_day
   FROM main.sbtransaction
   WHERE
@@ -10,7 +14,10 @@ WITH _t3 AS (
 ), _t AS (
   SELECT
     sbtxdatetime,
-    ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) ORDER BY pct_of_day) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))
+      ORDER BY pct_of_day
+    ) AS _w
   FROM _t3
   WHERE
     pct_of_day >= 50.0

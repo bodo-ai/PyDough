@@ -5,7 +5,12 @@ WITH _t AS (
     orders.o_orderpriority,
     orders.o_totalprice,
     priority_taxes.column2 AS tax_rate,
-    ROW_NUMBER() OVER (PARTITION BY orders.o_orderkey ORDER BY orders.o_totalprice + orders.o_totalprice * priority_taxes.column2) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY orders.o_orderkey
+      ORDER BY orders.o_totalprice + (
+        orders.o_totalprice * priority_taxes.column2
+      )
+    ) AS _w
   FROM tpch.orders AS orders
   JOIN (VALUES
     ('1-URGENT', 0.05),

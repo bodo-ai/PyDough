@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     o_custkey,
     o_orderdate,
-    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_totalprice IS NULL THEN 1 ELSE 0 END DESC, o_totalprice DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY o_custkey
+      ORDER BY CASE WHEN o_totalprice IS NULL THEN 1 ELSE 0 END DESC, o_totalprice DESC
+    ) AS _w
   FROM tpch.ORDERS
   WHERE
     o_orderpriority = '1-URGENT'

@@ -6,25 +6,22 @@ JOIN defog.broker.sbcustomer AS sbcustomer
   ON LOWER(sbcustomer.sbcustcountry) = 'usa'
   AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
 WHERE
-  sbtransaction.sbtxdatetime < DATEADD(
-    DAY,
+  sbtransaction.sbtxdatetime < DATE_ADD(
+    CAST(CURRENT_TIMESTAMP() AS DATE),
     -(
       (
-        DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
+        DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
       ) % 7
-    ),
-    CAST(CURRENT_TIMESTAMP() AS DATE)
+    )
   )
-  AND sbtransaction.sbtxdatetime >= DATEADD(
-    DAY,
-    -7,
-    DATEADD(
-      DAY,
+  AND sbtransaction.sbtxdatetime >= DATE_ADD(
+    DATE_ADD(
+      CAST(CURRENT_TIMESTAMP() AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(CURRENT_TIMESTAMP())) + 5
+          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
         ) % 7
-      ),
-      CAST(CURRENT_TIMESTAMP() AS DATE)
-    )
+      )
+    ),
+    -7
   )

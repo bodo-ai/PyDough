@@ -1,3 +1,3 @@
 SELECT
-  name
+  NAME AS name
 FROM ASIAN_NATIONS_T1

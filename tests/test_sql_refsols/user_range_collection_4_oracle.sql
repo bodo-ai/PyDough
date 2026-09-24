@@ -1,9 +1,9 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    PART.p_name AS P_NAME,
-    PART.p_retailprice AS P_RETAILPRICE,
+    PART.P_NAME,
+    PART.P_RETAILPRICE,
     SIZES.PART_SIZE,
-    ROW_NUMBER() OVER (PARTITION BY SIZES.PART_SIZE ORDER BY PART.p_retailprice) AS "_W"
+    ROW_NUMBER() OVER (PARTITION BY SIZES.PART_SIZE ORDER BY PART.P_RETAILPRICE) AS "_w"
   FROM (VALUES
     (1),
     (2),
@@ -16,17 +16,17 @@ WITH "_T" AS (
     (9),
     (10)) AS SIZES(PART_SIZE)
   JOIN TPCH.PART PART
-    ON PART.p_container LIKE '%SM DRUM%'
-    AND PART.p_name LIKE '%azure%'
-    AND PART.p_size = SIZES.PART_SIZE
-    AND PART.p_type LIKE '%PLATED%'
+    ON PART.P_CONTAINER LIKE '%SM DRUM%'
+    AND PART.P_NAME LIKE '%azure%'
+    AND PART.P_SIZE = SIZES.PART_SIZE
+    AND PART.P_TYPE LIKE '%PLATED%'
 )
 SELECT
   PART_SIZE AS part_size,
   P_NAME AS name,
   P_RETAILPRICE AS retail_price
-FROM "_T"
+FROM "_t"
 WHERE
-  "_W" = 1
+  "_w" = 1
 ORDER BY
   1 NULLS FIRST

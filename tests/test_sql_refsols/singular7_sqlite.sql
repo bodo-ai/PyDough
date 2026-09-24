@@ -23,7 +23,10 @@ WITH _s3 AS (
     ps_suppkey,
     anything_p_name,
     count_l_suppkey,
-    ROW_NUMBER() OVER (PARTITION BY ps_suppkey ORDER BY COALESCE(count_l_suppkey, 0) DESC, anything_p_name) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY ps_suppkey
+      ORDER BY COALESCE(CASE WHEN count_l_suppkey <> 0 THEN count_l_suppkey ELSE NULL END, 0) DESC, anything_p_name
+    ) AS _w
   FROM _t4
 ), _s5 AS (
   SELECT

@@ -4,7 +4,10 @@ WITH _t AS (
     teachers.first_name,
     teachers.last_name,
     teaching.semester,
-    ROW_NUMBER() OVER (PARTITION BY teachers.tid ORDER BY CASE WHEN teaching.semester COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END DESC, teaching.semester COLLATE utf8mb4_bin DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY teachers.tid
+      ORDER BY CASE WHEN teaching.semester COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END DESC, teaching.semester COLLATE utf8mb4_bin DESC
+    ) AS _w
   FROM (VALUES
     ROW(1, 'Anil', 'Lee'),
     ROW(2, 'Mike', 'Lee'),

@@ -1,20 +1,20 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    car_id AS CAR_ID,
-    AVG(sale_price) AS AVG_SALE_PRICE
+    CAR_ID,
+    AVG(SALE_PRICE) AS AVG_SALE_PRICE
   FROM MAIN.SALES
   GROUP BY
-    car_id
+    CAR_ID
 )
 SELECT
-  CARS.make,
-  CARS.model,
-  CARS.year,
-  CARS.color,
-  CARS.vin_number,
-  "_S1".AVG_SALE_PRICE AS avg_sale_price
+  CARS.MAKE AS make,
+  CARS.MODEL AS model,
+  CARS.YEAR AS year,
+  CARS.COLOR AS color,
+  CARS.VIN_NUMBER AS vin_number,
+  "_s1".AVG_SALE_PRICE AS avg_sale_price
 FROM MAIN.CARS CARS
-LEFT JOIN "_S1" "_S1"
-  ON CARS."_id" = "_S1".CAR_ID
+LEFT JOIN "_s1" "_s1"
+  ON CARS."_id" = "_s1".CAR_ID
 WHERE
-  LOWER(CARS.make) LIKE '%fords%' OR LOWER(CARS.model) LIKE '%mustang%'
+  LOWER(CARS.MAKE) LIKE '%fords%' OR LOWER(CARS.MODEL) LIKE '%mustang%'

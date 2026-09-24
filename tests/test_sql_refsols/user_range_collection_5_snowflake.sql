@@ -1,11 +1,11 @@
 WITH sizes AS (
   SELECT
     1 + SEQ4() * 5 AS part_size
-  FROM TABLE(GENERATOR(ROWCOUNT => 12))
+  FROM TABLE(GENERATOR(ROWCOUNT => 12)) AS _0
 ), sizes_2 AS (
   SELECT
     1 + SEQ4() * 5 AS part_size
-  FROM TABLE(GENERATOR(ROWCOUNT => 12))
+  FROM TABLE(GENERATOR(ROWCOUNT => 12)) AS _1
 ), _s3 AS (
   SELECT
     sizes_2.part_size,

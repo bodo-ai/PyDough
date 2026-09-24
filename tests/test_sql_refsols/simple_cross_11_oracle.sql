@@ -1,14 +1,14 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT
-    o_orderdate AS O_ORDERDATE
+    O_ORDERDATE
   FROM TPCH.ORDERS
-), "_S1" AS (
+), "_s1" AS (
   SELECT
     MIN(O_ORDERDATE) AS MIN_O_ORDERDATE
-  FROM "_S0"
+  FROM "_s0"
 )
 SELECT
   COUNT(*) AS n
-FROM "_S0" "_S0"
-JOIN "_S1" "_S1"
-  ON "_S0".O_ORDERDATE = "_S1".MIN_O_ORDERDATE
+FROM "_s0" "_s0"
+JOIN "_s1" "_s1"
+  ON "_s0".O_ORDERDATE = "_s1".MIN_O_ORDERDATE

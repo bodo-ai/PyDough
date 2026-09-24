@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     o_custkey,
     o_totalprice,
-    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END DESC, o_orderdate DESC, CASE WHEN o_orderkey IS NULL THEN 1 ELSE 0 END, o_orderkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY o_custkey
+      ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END DESC, o_orderdate DESC, CASE WHEN o_orderkey IS NULL THEN 1 ELSE 0 END, o_orderkey
+    ) AS _w
   FROM tpch.ORDERS
 ), _s1 AS (
   SELECT

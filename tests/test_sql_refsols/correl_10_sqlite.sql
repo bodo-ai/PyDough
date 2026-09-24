@@ -14,6 +14,6 @@ FROM tpch.nation AS nation
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = SUBSTRING(nation.n_name, 1, 1) AND _u_0._u_2 = nation.n_regionkey
 WHERE
-  _u_0._u_1 IS NULL
+  NOT NOT _u_0._u_1 IS NULL
 ORDER BY
   1

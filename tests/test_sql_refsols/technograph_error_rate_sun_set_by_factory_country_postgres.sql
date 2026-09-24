@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    MAX(devices.de_production_country_id) AS anything_de_production_country_id,
+    ANY_VALUE(devices.de_production_country_id) AS anything_de_production_country_id,
     COUNT(incidents.in_device_id) AS count_in_device_id
   FROM main.devices AS devices
   JOIN main.products AS products

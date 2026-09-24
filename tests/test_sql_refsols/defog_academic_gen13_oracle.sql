@@ -1,23 +1,23 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    did AS DID,
+    DID,
     COUNT(*) AS N_ROWS
   FROM MAIN.DOMAIN_PUBLICATION
   GROUP BY
-    did
-), "_S3" AS (
+    DID
+), "_s3" AS (
   SELECT
-    did AS DID,
+    DID,
     COUNT(*) AS N_ROWS
   FROM MAIN.DOMAIN_KEYWORD
   GROUP BY
-    did
+    DID
 )
 SELECT
-  DOMAIN.did AS domain_id,
-  COALESCE("_S1".N_ROWS, 0) / NULLIF("_S3".N_ROWS, 0) AS ratio
+  DOMAIN.DID AS domain_id,
+  COALESCE("_s1".N_ROWS, 0) / NULLIF("_s3".N_ROWS, 0) AS ratio
 FROM MAIN.DOMAIN DOMAIN
-LEFT JOIN "_S1" "_S1"
-  ON DOMAIN.did = "_S1".DID
-LEFT JOIN "_S3" "_S3"
-  ON DOMAIN.did = "_S3".DID
+LEFT JOIN "_s1" "_s1"
+  ON DOMAIN.DID = "_s1".DID
+LEFT JOIN "_s3" "_s3"
+  ON DOMAIN.DID = "_s3".DID

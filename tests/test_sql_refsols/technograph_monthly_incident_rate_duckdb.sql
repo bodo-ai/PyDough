@@ -53,15 +53,24 @@ WITH _t2 AS (
     2
 )
 SELECT
-  CONCAT_WS(
-    '-',
-    year_ca_dt,
-    CASE
+  CASE
+    WHEN CASE
       WHEN LENGTH(CAST(month_ca_dt AS TEXT)) >= 2
       THEN SUBSTRING(CAST(month_ca_dt AS TEXT), 1, 2)
-      ELSE SUBSTRING(CONCAT('00', CAST(month_ca_dt AS TEXT)), -2)
-    END
-  ) AS month,
+      ELSE SUBSTRING('00' || CAST(month_ca_dt AS TEXT), -2)
+    END IS NULL
+    OR year_ca_dt IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      '-',
+      year_ca_dt,
+      CASE
+        WHEN LENGTH(CAST(month_ca_dt AS TEXT)) >= 2
+        THEN SUBSTRING(CAST(month_ca_dt AS TEXT), 1, 2)
+        ELSE SUBSTRING('00' || CAST(month_ca_dt AS TEXT), -2)
+      END
+    )
+  END AS month,
   ROUND((
     1000000.0 * COALESCE(sum_n_rows, 0)
   ) / COALESCE(sum_expr_3, 0), 2) AS ir

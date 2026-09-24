@@ -1,4 +1,4 @@
 SELECT
-  o_orderkey AS order_key,
-  RANK() OVER (ORDER BY o_orderpriority) AS rank
+  O_ORDERKEY AS order_key,
+  RANK() OVER (ORDER BY O_ORDERPRIORITY) AS rank
 FROM TPCH.ORDERS

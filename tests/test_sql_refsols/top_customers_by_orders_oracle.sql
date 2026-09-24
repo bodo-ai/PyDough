@@ -1,17 +1,17 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    o_custkey AS O_CUSTKEY,
+    O_CUSTKEY,
     COUNT(*) AS N_ROWS
   FROM TPCH.ORDERS
   GROUP BY
-    o_custkey
+    O_CUSTKEY
 )
 SELECT
-  CUSTOMER.c_custkey AS customer_key,
-  COALESCE("_S1".N_ROWS, 0) AS n_orders
+  CUSTOMER.C_CUSTKEY AS customer_key,
+  COALESCE("_s1".N_ROWS, 0) AS n_orders
 FROM TPCH.CUSTOMER CUSTOMER
-LEFT JOIN "_S1" "_S1"
-  ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
+LEFT JOIN "_s1" "_s1"
+  ON CUSTOMER.C_CUSTKEY = "_s1".O_CUSTKEY
 ORDER BY
   2 DESC NULLS LAST,
   1 NULLS FIRST

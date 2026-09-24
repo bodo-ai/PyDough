@@ -48,9 +48,9 @@ WITH _t2 AS (
         (
           ROW_NUMBER() OVER (ORDER BY expr_13 DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(expr_13) OVER () - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN expr_13
