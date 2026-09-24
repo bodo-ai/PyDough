@@ -61,7 +61,7 @@ def build_new_ref_name(name: str, idx: int) -> str:
         quote = name[0]
 
         if quote == name[-1] and quote in {'"', "`"}:
-            return f"{name[:-1]}_{idx}{name[-1]}"
+            return f"{name[:-1]}_{idx}{quote}"
 
     return f"{name}_{idx}"
 
