@@ -678,16 +678,18 @@ class RelTranslation:
             out_rel.condition = LiteralExpression(True, BooleanType())
 
         # If the join type is non-ANTI but the condition is always True,
-        # then just promote to an INNER join, and remove the filtering aspect
-        # from the cardinality in both directions
+        # then promote to an INNER join and force PLURAL_ACCESS cardinality
+        # in both directions: a literal True join condition has no key or
+        # predicate to justify a SINGULAR (at-most-one-match) guarantee, so
+        # PLURAL_ACCESS is the only sound assumption (see issue #558).
         if (
             join_type != JoinType.ANTI
             and isinstance(out_rel.condition, LiteralExpression)
             and bool(out_rel.condition.value)
         ):
             out_rel._join_type = JoinType.INNER
-            out_rel._cardinality = out_rel._cardinality.remove_filter()
-            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
+            out_rel._cardinality = JoinCardinality.PLURAL_ACCESS
+            out_rel._reverse_cardinality = JoinCardinality.PLURAL_ACCESS
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote

@@ -3,12 +3,12 @@ WITH "_t1" AS (
     CO_NAME
   FROM MAIN.COUNTRIES
   WHERE
-    NOT CO_NAME LIKE '%C%'
-), "_s5" AS (
+    NOT co_name LIKE '%C%'
+), "_S7" AS (
   SELECT DISTINCT
-    TRUNC(CAST(CALENDAR.CA_DT AS DATE), 'YEAR') AS START_OF_YEAR,
-    "_t3".CO_NAME
-  FROM "_t1" "_t3"
+    TRUNC(CAST(CALENDAR.ca_dt AS DATE), 'YEAR') AS START_OF_YEAR,
+    "_T4".CO_NAME
+  FROM "_T1" "_T4"
   JOIN MAIN.PRODUCTS PRODUCTS
     ON PRODUCTS.PR_NAME = 'AmethystCopper-I'
   JOIN MAIN.CALENDAR CALENDAR
@@ -16,11 +16,13 @@ WITH "_t1" AS (
     AND CALENDAR.CA_DT >= PRODUCTS.PR_RELEASE
 )
 SELECT
-  "_t1".CO_NAME AS country_name,
-  "_s5".START_OF_YEAR AS start_of_year
-FROM "_t1" "_t1"
-LEFT JOIN "_s5" "_s5"
-  ON "_s5".CO_NAME = "_t1".CO_NAME
+  "_T1".CO_NAME AS country_name,
+  "_S7".START_OF_YEAR AS start_of_year
+FROM "_T1" "_T1"
+JOIN MAIN.PRODUCTS PRODUCTS
+  ON PRODUCTS.pr_name = 'AmethystCopper-I'
+LEFT JOIN "_S7" "_S7"
+  ON "_S7".CO_NAME = "_T1".CO_NAME
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST
