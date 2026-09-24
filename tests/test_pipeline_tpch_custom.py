@@ -2642,6 +2642,94 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = ("
+                " TPCH"
+                " .CALCULATE(avg_cust_bal=AVG(customers.account_balance))"
+                " .customers"
+                " .CALCULATE(pct_diff=100.0*(account_balance-avg_cust_bal)/avg_cust_bal, nation_name=nation.name)"
+                " .PARTITION(name='nation_industry', by=(nation_name, market_segment))"
+                " .CALCULATE(market_segment, max_pct_diff=MAX(customers.pct_diff))"
+                " .PARTITION(name='industry', by=market_segment)"
+                " .CALCULATE(market_segment, avg_max_pct_diff=ROUND(AVG(nation_industry.max_pct_diff), 2))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "market_segment": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "avg_max_pct_diff": [122.27, 122.25, 122.3, 122.23, 122.25],
+                    }
+                ),
+                "global_double_partition",
+            ),
+            id="global_double_partition",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " TPCH"
+                " .CALCULATE(avg_cust_bal=AVG(customers.account_balance))"
+                " .customers"
+                " .CALCULATE(pct_diff=100.0*(account_balance-avg_cust_bal)/avg_cust_bal, nation_name=nation.name)"
+                " .PARTITION(name='nation_industry', by=(nation_name, market_segment))"
+                " .CALCULATE(market_segment, max_pct_diff=MAX(customers.pct_diff))"
+                " .PARTITION(name='industry', by=market_segment)"
+                " .CALCULATE(market_segment, avg_max_pct_diff=ROUND(AVG(nation_industry.max_pct_diff), 2), avg_bal=ROUND(avg_cust_bal, 2))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "market_segment": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "avg_max_pct_diff": [122.27, 122.25, 122.3, 122.23, 122.25],
+                        "avg_bal": [4495.51] * 5,
+                    }
+                ),
+                "global_double_partition_interweave_a",
+            ),
+            id="global_double_partition_interweave_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " TPCH"
+                " .CALCULATE(avg_cust_bal=AVG(customers.account_balance))"
+                " .customers"
+                " .CALCULATE(nation_name=nation.name)"
+                " .PARTITION(name='nation_industry', by=(nation_name, market_segment))"
+                " .CALCULATE(market_segment, pct_diff=100.0*(AVG(customers.account_balance)-avg_cust_bal)/avg_cust_bal)"
+                " .PARTITION(name='industry', by=market_segment)"
+                " .CALCULATE(market_segment, max_nation_pct_diff=ROUND(MAX(nation_industry.pct_diff), 2))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "market_segment": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "max_nation_pct_diff": [3.6, 2.87, 3.56, 4.45, 3.13],
+                    }
+                ),
+                "global_double_partition_interweave_b",
+            ),
+            id="global_double_partition_interweave_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_var_std,
                 "TPCH",
                 lambda: pd.DataFrame(
