@@ -32,6 +32,7 @@ import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
 from pydough.metadata import GraphMetadata
+from pydough.metadata.templates import TemplateMetadata
 from pydough.types import (
     ArrayType,
     BooleanType,
@@ -135,8 +136,16 @@ class UnqualifiedNode(ABC):
             )
 
     def __call__(self, *args, **kwargs):
+
+        available_templates: list[str] = []
+        if isinstance(self, UnqualifiedAccess) and isinstance(
+            self._parcel[0], UnqualifiedRoot
+        ):
+            _graph, _func_map, templates = self._parcel[0]._parcel
+            available_templates = list(templates.keys())
+
         raise pydough.active_session.error_builder.undefined_function_call(
-            self, *args, **kwargs
+            self, available_templates, *args, **kwargs
         )
 
     def __bool__(self):
@@ -537,19 +546,28 @@ class UnqualifiedRoot(UnqualifiedNode):
                 func_map[operator_name] = operator
         for operator_name in graph.get_function_names():
             func_map[operator_name] = graph.get_function(operator_name)
-        self._parcel: tuple[GraphMetadata, dict[str, pydop.PyDoughOperator]] = (
+        graph_templates: dict[str, TemplateMetadata] = graph.templates_definitions
+
+        self._parcel: tuple[
+            GraphMetadata, dict[str, pydop.PyDoughOperator], dict[str, TemplateMetadata]
+        ] = (
             graph,
             func_map,
+            graph_templates,
         )
 
     def __getattribute__(self, name: str) -> Any:
-        func_map: dict[str, pydop.PyDoughOperator] = super(
-            UnqualifiedNode, self
-        ).__getattribute__("_parcel")[1]
+        graph, func_map, templates = super(UnqualifiedNode, self).__getattribute__(
+            "_parcel"
+        )
         if name in func_map:
             return UnqualifiedOperator(func_map[name])
-        else:
-            return super().__getattribute__(name)
+
+        if name in templates:
+            # Templates execute immediately, so hand back the callable bound
+            # to *this* root's graph directly.
+            return templates[name].template_callable
+        return super().__getattribute__(name)
 
 
 class UnqualifiedLiteral(UnqualifiedNode):
