@@ -3827,3 +3827,26 @@ def division_with_iff_denom_false_branch():
     return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, 1, discount)
     )
+
+
+def cross_similar_partitions():
+    """
+    https://github.com/bodo-ai/PyDough/issues/561: CROSS
+    between two PARTITION results that both expose a term named "year"
+    (each PARTITION's own key) used to raise an AssertionError deep in
+    relational conversion. It now raises a clear PyDoughQDAGException at
+    qualification time instead, since "year" is ambiguous between the two
+    crossed collections (matching how this same ambiguity is already
+    handled elsewhere in PyDough)
+    """
+    a = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="a_years", by=year)
+        .CALCULATE(year=year, total_a=SUM(orders.total_price))
+    )
+    b = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="b_years", by=year)
+        .CALCULATE(other_year=year, total_b=COUNT(orders))
+    )
+    return a.CROSS(b).WHERE(year == other_year).CALCULATE(year, total_a, total_b)
