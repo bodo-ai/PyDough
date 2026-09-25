@@ -97,6 +97,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     bad_child_reuse_3,
     bad_child_reuse_4,
     bad_child_reuse_5,
+    cross_similar_partitions,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -6906,6 +6907,14 @@ def test_pipeline_e2e_simple_week(
 @pytest.mark.parametrize(
     "pydough_impl, columns, error_message",
     [
+        pytest.param(
+            cross_similar_partitions,
+            None,
+            re.escape(
+                "Unclear whether 'year' refers to a term of the current context or ancestor"
+            ),
+            id="cross_similar_partitions",
+        ),
         pytest.param(
             bad_slice_1,
             None,
