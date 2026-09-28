@@ -89,13 +89,21 @@ class HybridCorrelationExtractor:
                 rhs_expr = condition.args[1]
             else:
                 return False
-            if not isinstance(rhs_expr, HybridRefExpr):
+            if isinstance(rhs_expr, HybridRefExpr):
+                # A plain reference to a term of the current level: point to
+                # it from the bottom level via a back-reference.
+                rhs_expr = rhs_expr.shift_back(levels_from_bottom)
+            else:
+                # A compound expression: re-express it relative to the bottom
+                # level, then define it there as a new term and reference
+                # that term directly.
+                shifted_expr: HybridExpr = rhs_expr.shift_back(levels_from_bottom)
                 rhs_expr = self.translator.inject_expression(
-                    rhs_subtree, rhs_expr, True
+                    rhs_subtree, shifted_expr, True
                 )
                 assert isinstance(rhs_expr, HybridRefExpr)
                 reserved_rhs_names.add(rhs_expr.name)
-            new_equi_filters.append((lhs_expr, rhs_expr.shift_back(levels_from_bottom)))
+            new_equi_filters.append((lhs_expr, rhs_expr))
             return True
         return False
 
