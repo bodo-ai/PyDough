@@ -3831,10 +3831,8 @@ def division_with_iff_denom_false_branch():
 
 def partition_self_reference():
     """
-    Regression test for https://github.com/bodo-ai/PyDough/issues/562: a
-    PARTITION variable referenced inside its own CALCULATE (rather than
-    referencing the child being partitioned) used to crash with an internal
-    `IndexError` instead of a user-friendly "unrecognized term" error.
+    Test fix for the crash that happens when a PARTITION variable is referenced
+    inside its own CALCULATE.
     """
     c1 = customers.PARTITION(name="by_marketsegment", by=market_segment)
     return c1.CALCULATE(x=COUNT(c1))
