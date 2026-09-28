@@ -3827,3 +3827,14 @@ def division_with_iff_denom_false_branch():
     return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, 1, discount)
     )
+
+
+def partition_self_reference():
+    """
+    Regression test for https://github.com/bodo-ai/PyDough/issues/562: a
+    PARTITION variable referenced inside its own CALCULATE (rather than
+    referencing the child being partitioned) used to crash with an internal
+    `IndexError` instead of a user-friendly "unrecognized term" error.
+    """
+    c1 = customers.PARTITION(name="by_marketsegment", by=market_segment)
+    return c1.CALCULATE(x=COUNT(c1))

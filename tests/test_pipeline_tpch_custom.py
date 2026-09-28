@@ -123,6 +123,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_quarter_test,
     orders_versus_first_orders,
     part_reduced_size,
+    partition_self_reference,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -6906,6 +6907,16 @@ def test_pipeline_e2e_simple_week(
 @pytest.mark.parametrize(
     "pydough_impl, columns, error_message",
     [
+        pytest.param(
+            partition_self_reference,
+            None,
+            re.escape(
+                "Invalid self-reference: cannot access a PARTITION or its "
+                "underlying data from within a CALCULATE/expression defined "
+                "on that same PARTITION."
+            ),
+            id="partition_self_reference",
+        ),
         pytest.param(
             bad_slice_1,
             None,
