@@ -1053,9 +1053,19 @@ class Qualifier:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
                 term, qualified_child, children
             )
-            assert isinstance(qualified_term, Reference), (
-                "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
-            )
+            # Note: used `type(...) is Reference` (rather than `isinstance`)
+            # because `ChildReferenceExpression` (a term from a
+            # child collection) and `BackReferenceExpression` (a term from
+            # an ancestor) are both subclasses of `Reference`, but partition
+            # keys are only allowed to be direct, scalar references to a
+            # term of the collection being partitioned itself.
+            if type(qualified_term) is not Reference:
+                raise PyDoughQDAGException(
+                    f"Invalid partition key {term!r}: PARTITION only "
+                    "supports partition keys that are direct references to "
+                    "a scalar property of the collection being partitioned, "
+                    "not a literal, or a term from a child collection."
+                )
             child_ref: ChildReferenceExpression = ChildReferenceExpression(
                 qualified_child, 0, qualified_term.term_name
             )

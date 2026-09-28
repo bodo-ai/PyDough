@@ -123,6 +123,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_quarter_test,
     orders_versus_first_orders,
     part_reduced_size,
+    partition_by_child_reference,
+    partition_by_literal,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -7487,6 +7489,28 @@ def test_pipeline_e2e_simple_week(
                 "dataframe columns must be a non-empty list where each element must be a string"
             ),
             id="dataframe_collection_bad_17",
+        ),
+        pytest.param(
+            partition_by_literal,
+            None,
+            re.escape(
+                "Invalid partition key 1: PARTITION only supports partition "
+                "keys that are direct references to a scalar property of "
+                "the collection being partitioned, not a literal, or a "
+                "term from a child collection."
+            ),
+            id="partition_by_literal",
+        ),
+        pytest.param(
+            partition_by_child_reference,
+            None,
+            re.escape(
+                "Invalid partition key customer.key: PARTITION only "
+                "supports partition keys that are direct references to a "
+                "scalar property of the collection being partitioned, not "
+                "a literal, or a term from a child collection."
+            ),
+            id="partition_by_child_reference",
         ),
     ],
 )
