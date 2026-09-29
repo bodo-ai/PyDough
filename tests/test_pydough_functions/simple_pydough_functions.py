@@ -3827,3 +3827,15 @@ def division_with_iff_denom_false_branch():
     return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, 1, discount)
     )
+
+
+def iff_with_aggregates_on_different_collections():
+    """
+    Test for issue #560: an IFF whose branches are
+    aggregates over two different collections used to raise
+    `KeyError: 'agg_1'` during SQL generation when only one of the
+    two branches ended up referenced in the final output.
+    """
+    return TPCH.CALCULATE(res_is_nothing=0).CALCULATE(
+        output=IFF(res_is_nothing == 1, COUNT(customers), COUNT(suppliers))
+    )
