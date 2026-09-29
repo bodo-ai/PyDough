@@ -1556,7 +1556,13 @@ class HybridTranslator:
                         successor_hybrid, key, child_ref_mapping, False
                     )
                     partition.add_key(key_name, expr)
-                    key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                    # Note: uses `expr.name`, not `key_name`, since the
+                    # underlying CALCULATE may have internally renamed
+                    # `key_name` (e.g. to shadow a pre-existing term), and
+                    # `expr.name` reflects that actual, possibly-renamed
+                    # name within the child subtree.
+                    assert isinstance(expr, HybridChildRefExpr)
+                    key_exprs.append(HybridRefExpr(expr.name, expr.typ))
                 partition_child: HybridTree = successor_hybrid.children[
                     partition_child_idx
                 ].subtree

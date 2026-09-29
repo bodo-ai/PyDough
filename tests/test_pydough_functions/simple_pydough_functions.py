@@ -3827,3 +3827,30 @@ def division_with_iff_denom_false_branch():
     return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, 1, discount)
     )
+
+
+def partition_key_name_collision():
+    """
+    Test for fixing the problem with shadowing a collection's own column
+    with a same-named CALCULATE term
+    (`orders.CALCULATE(key=customer.key, ...)`, and `orders` already has its
+    own `key` column), then using that term as a PARTITION key,
+    used to cause a `RecursionError`, a `KeyError`, and a silent
+    wrong-grouping bug, all from the same name collision.
+    """
+    invoice_info = orders.CALCULATE(
+        order_year=YEAR(order_date),
+        key=customer.key,
+        order_total=total_price,
+    )
+    return (
+        invoice_info.PARTITION(
+            name="customer_groups",
+            by=(key),
+        )
+        .CALCULATE(
+            key,
+            total=SUM(invoice_info.order_total),
+        )
+        .WHERE(key <= 3)
+    )

@@ -123,6 +123,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_quarter_test,
     orders_versus_first_orders,
     part_reduced_size,
+    partition_key_name_collision,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -6736,6 +6737,20 @@ from .testing_utilities import (
                 "monthname_function_1",
             ),
             id="monthname_function_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_key_name_collision,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2],
+                        "total": [587762.91, 1028273.43],
+                    }
+                ),
+                "partition_key_name_collision",
+            ),
+            id="partition_key_name_collision",
         ),
     ],
 )
