@@ -6737,6 +6737,20 @@ from .testing_utilities import (
             ),
             id="monthname_function_1",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "# 'top' calculates 'cust_name' on customers\n"
+                "top = customers.CALCULATE(cust_name=name)\n"
+                "# Referencing 'customer.cust_name' from orders causes a lowering error\n"
+                "result = top.orders.CALCULATE(\n"
+                "   x=customer.cust_name\n"
+                ").PARTITION(name='g', by=x)\n",
+                "TPCH",
+                lambda: pd.DataFrame({}),
+                "parent_calc_access_error",
+            ),
+            id="parent_calc_access_error",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
