@@ -7,6 +7,7 @@ child is the input data.
 __all__ = ["PartitionBy"]
 
 
+import pydough
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import (
     BackReferenceExpression,
@@ -144,6 +145,14 @@ class PartitionBy(ChildOperator):
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name in self.ancestral_mapping:
+            # Verify that the ancestor name is not also one of this
+            # PARTITION's own keys, silently favoring one over the other
+            # would be ambiguous, so raise the same conflict error used by
+            # collections.
+            if term_name in self._key_name_indices:
+                raise pydough.active_session.error_builder.downstream_conflict(
+                    collection=self, term_name=term_name
+                )
             return BackReferenceExpression(
                 self, term_name, self.ancestral_mapping[term_name]
             )

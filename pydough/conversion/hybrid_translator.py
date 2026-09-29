@@ -1674,6 +1674,21 @@ class HybridTranslator:
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
                             source = source.pipeline[0].subtree
+                        if len(source.children) == 0:
+                            # This happens when a PARTITION (or its
+                            # underlying child data) is referenced by name
+                            # from within a CALCULATE/expression that is
+                            # itself defined on that same PARTITION (e.g.
+                            # `p = t.PARTITION(...); p.CALCULATE(x=COUNT(p))`),
+                            # which re-qualifies the PARTITION's own
+                            # definition against itself instead of the data
+                            # it was originally built from.
+                            raise PyDoughSQLException(
+                                "Invalid self-reference: cannot access a "
+                                "PARTITION or its underlying data from "
+                                "within a CALCULATE/expression defined on "
+                                "that same PARTITION."
+                            )
                         successor_hybrid = HybridTree(
                             HybridPartitionChild(source.children[0].subtree),
                             node.ancestral_mapping,

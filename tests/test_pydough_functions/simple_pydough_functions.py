@@ -3829,6 +3829,75 @@ def division_with_iff_denom_false_branch():
     )
 
 
+def iff_with_aggregates_on_different_collections():
+    """
+    Test for issue #560: an IFF whose branches are
+    aggregates over two different collections used to raise
+    `KeyError: 'agg_1'` during SQL generation when only one of the
+    two branches ended up referenced in the final output.
+    """
+    return TPCH.CALCULATE(res_is_nothing=0).CALCULATE(
+        output=IFF(res_is_nothing == 1, COUNT(customers), COUNT(suppliers))
+    )
+
+
+def cross_similar_partitions():
+    """
+    Test for issue #561: CROSS between two PARTITION results that
+    both expose a term named "year" (each PARTITION's own key) used to
+    raise an AssertionError deep in relational conversion.
+    It now raises a clear PyDoughQDAGException at qualification time instead,
+    since "year" is ambiguous between the two crossed collections
+    (matching how this same ambiguity is already handled elsewhere in PyDough)
+    """
+
+    a = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="a_years", by=year)
+        .CALCULATE(year=year, total_a=SUM(orders.total_price))
+    )
+    b = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="b_years", by=year)
+        .CALCULATE(other_year=year, total_b=COUNT(orders))
+    )
+    return a.CROSS(b).WHERE(year == other_year).CALCULATE(year, total_a, total_b)
+
+
+def partition_self_reference():
+    """
+    Test fix for the crash that happens when a PARTITION variable is referenced
+    inside its own CALCULATE.
+    """
+    c1 = customers.PARTITION(name="by_marketsegment", by=market_segment)
+    return c1.CALCULATE(x=COUNT(c1))
+
+
+def partition_by_literal():
+    """
+    Test that passing a bare Python literal as PARTITION's
+    `by=` argument is now giving a descriptive error message instead of
+    crashing with an unhandled `TypeError: 'int' object is not iterable`.
+    """
+    return (
+        customers.WHERE(account_balance > 0)
+        .PARTITION(name="all_group", by=1)
+        .CALCULATE(total=COUNT(customers))
+    )
+
+
+def partition_by_child_reference():
+    """
+    Test that passing a term from a child collection
+    (not a direct property of the collection being partitioned)
+    as PARTITION's `by=` argument is now giving a descriptive error message
+    instead of silently qualifying and producing an incorrect result.
+    """
+    return orders.PARTITION(name="by_cust_key", by=customer.key).CALCULATE(
+        total=COUNT(orders)
+    )
+
+
 def partition_key_name_collision():
     """
     Test for fixing the problem with shadowing a collection's own column

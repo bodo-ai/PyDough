@@ -378,15 +378,19 @@ class UnqualifiedNode(ABC):
     def PARTITION(
         self,
         name: str,
-        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        by: object | Iterable[object],
     ) -> "UnqualifiedPartition":
         """
         Method used to create a PARTITION node.
         """
+        keys_unqualified: list[UnqualifiedNode]
         if isinstance(by, UnqualifiedNode):
-            return UnqualifiedPartition(self, name, [by])
+            keys_unqualified = [by]
+        elif isinstance(by, Iterable):
+            keys_unqualified = [self.coerce_to_unqualified(key) for key in by]
         else:
-            return UnqualifiedPartition(self, name, list(by))
+            keys_unqualified = [self.coerce_to_unqualified(by)]
+        return UnqualifiedPartition(self, name, keys_unqualified)
 
     def CROSS(self, child: "UnqualifiedNode") -> "UnqualifiedCross":
         """
