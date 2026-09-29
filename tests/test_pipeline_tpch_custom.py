@@ -97,6 +97,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     bad_child_reuse_3,
     bad_child_reuse_4,
     bad_child_reuse_5,
+    cross_similar_partitions,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -113,6 +114,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     function_sampler,
     global_acctbal_breakdown,
     highest_priority_per_year,
+    iff_with_aggregates_on_different_collections,
     month_year_sliding_windows,
     n_orders_first_day,
     nation_acctbal_breakdown,
@@ -6738,6 +6740,15 @@ from .testing_utilities import (
             ),
             id="monthname_function_1",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                iff_with_aggregates_on_different_collections,
+                "TPCH",
+                lambda: pd.DataFrame({"output": [10000]}),
+                "iff_with_aggregates_on_different_collections",
+            ),
+            id="iff_with_aggregates_on_different_collections",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -6907,16 +6918,6 @@ def test_pipeline_e2e_simple_week(
 @pytest.mark.parametrize(
     "pydough_impl, columns, error_message",
     [
-        pytest.param(
-            partition_self_reference,
-            None,
-            re.escape(
-                "Invalid self-reference: cannot access a PARTITION or its "
-                "underlying data from within a CALCULATE/expression defined "
-                "on that same PARTITION."
-            ),
-            id="partition_self_reference",
-        ),
         pytest.param(
             bad_slice_1,
             None,
@@ -7498,6 +7499,24 @@ def test_pipeline_e2e_simple_week(
                 "dataframe columns must be a non-empty list where each element must be a string"
             ),
             id="dataframe_collection_bad_17",
+        ),
+        pytest.param(
+            cross_similar_partitions,
+            None,
+            re.escape(
+                "Unclear whether 'year' refers to a term of the current context or ancestor"
+            ),
+            id="cross_similar_partitions",
+        ),
+        pytest.param(
+            partition_self_reference,
+            None,
+            re.escape(
+                "Invalid self-reference: cannot access a PARTITION or its "
+                "underlying data from within a CALCULATE/expression defined "
+                "on that same PARTITION."
+            ),
+            id="partition_self_reference",
         ),
     ],
 )
