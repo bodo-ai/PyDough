@@ -125,6 +125,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_quarter_test,
     orders_versus_first_orders,
     part_reduced_size,
+    partition_by_child_reference,
+    partition_by_literal,
     partition_self_reference,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
@@ -7517,6 +7519,28 @@ def test_pipeline_e2e_simple_week(
                 "on that same PARTITION."
             ),
             id="partition_self_reference",
+        ),
+        pytest.param(
+            partition_by_literal,
+            None,
+            re.escape(
+                "Invalid partition key 1: PARTITION only supports partition "
+                "keys that are direct references to a scalar property of "
+                "the collection being partitioned, not a literal, or a "
+                "term from a child collection."
+            ),
+            id="partition_by_literal",
+        ),
+        pytest.param(
+            partition_by_child_reference,
+            None,
+            re.escape(
+                "Invalid partition key customer.key: PARTITION only "
+                "supports partition keys that are direct references to a "
+                "scalar property of the collection being partitioned, not "
+                "a literal, or a term from a child collection."
+            ),
+            id="partition_by_child_reference",
         ),
     ],
 )

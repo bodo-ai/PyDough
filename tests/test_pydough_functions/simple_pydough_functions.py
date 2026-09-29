@@ -3871,3 +3871,28 @@ def partition_self_reference():
     """
     c1 = customers.PARTITION(name="by_marketsegment", by=market_segment)
     return c1.CALCULATE(x=COUNT(c1))
+
+
+def partition_by_literal():
+    """
+    Test that passing a bare Python literal as PARTITION's
+    `by=` argument is now giving a descriptive error message instead of
+    crashing with an unhandled `TypeError: 'int' object is not iterable`.
+    """
+    return (
+        customers.WHERE(account_balance > 0)
+        .PARTITION(name="all_group", by=1)
+        .CALCULATE(total=COUNT(customers))
+    )
+
+
+def partition_by_child_reference():
+    """
+    Test that passing a term from a child collection
+    (not a direct property of the collection being partitioned)
+    as PARTITION's `by=` argument is now giving a descriptive error message
+    instead of silently qualifying and producing an incorrect result.
+    """
+    return orders.PARTITION(name="by_cust_key", by=customer.key).CALCULATE(
+        total=COUNT(orders)
+    )
