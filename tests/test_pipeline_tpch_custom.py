@@ -6771,9 +6771,9 @@ from .testing_utilities import (
                         ],
                     }
                 ),
-                "compount_ref_correlation_extraction",
+                "compound_ref_correlation_extraction",
             ),
-            id="compount_ref_correlation_extraction",
+            id="compound_ref_correlation_extraction",
         ),
     ],
 )
