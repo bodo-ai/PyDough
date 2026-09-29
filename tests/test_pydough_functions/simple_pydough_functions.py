@@ -3839,3 +3839,26 @@ def iff_with_aggregates_on_different_collections():
     return TPCH.CALCULATE(res_is_nothing=0).CALCULATE(
         output=IFF(res_is_nothing == 1, COUNT(customers), COUNT(suppliers))
     )
+
+
+def cross_similar_partitions():
+    """
+    Test for issue #561: CROSS between two PARTITION results that
+    both expose a term named "year" (each PARTITION's own key) used to
+    raise an AssertionError deep in relational conversion.
+    It now raises a clear PyDoughQDAGException at qualification time instead,
+    since "year" is ambiguous between the two crossed collections
+    (matching how this same ambiguity is already handled elsewhere in PyDough)
+    """
+
+    a = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="a_years", by=year)
+        .CALCULATE(year=year, total_a=SUM(orders.total_price))
+    )
+    b = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="b_years", by=year)
+        .CALCULATE(other_year=year, total_b=COUNT(orders))
+    )
+    return a.CROSS(b).WHERE(year == other_year).CALCULATE(year, total_a, total_b)
