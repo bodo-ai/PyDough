@@ -3862,3 +3862,12 @@ def cross_similar_partitions():
         .CALCULATE(other_year=year, total_b=COUNT(orders))
     )
     return a.CROSS(b).WHERE(year == other_year).CALCULATE(year, total_a, total_b)
+
+
+def partition_self_reference():
+    """
+    Test fix for the crash that happens when a PARTITION variable is referenced
+    inside its own CALCULATE.
+    """
+    c1 = customers.PARTITION(name="by_marketsegment", by=market_segment)
+    return c1.CALCULATE(x=COUNT(c1))
