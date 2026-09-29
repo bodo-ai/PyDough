@@ -3829,16 +3829,28 @@ def division_with_iff_denom_false_branch():
     )
 
 
+def iff_with_aggregates_on_different_collections():
+    """
+    Test for issue #560: an IFF whose branches are
+    aggregates over two different collections used to raise
+    `KeyError: 'agg_1'` during SQL generation when only one of the
+    two branches ended up referenced in the final output.
+    """
+    return TPCH.CALCULATE(res_is_nothing=0).CALCULATE(
+        output=IFF(res_is_nothing == 1, COUNT(customers), COUNT(suppliers))
+    )
+
+
 def cross_similar_partitions():
     """
-    https://github.com/bodo-ai/PyDough/issues/561: CROSS
-    between two PARTITION results that both expose a term named "year"
-    (each PARTITION's own key) used to raise an AssertionError deep in
-    relational conversion. It now raises a clear PyDoughQDAGException at
-    qualification time instead, since "year" is ambiguous between the two
-    crossed collections (matching how this same ambiguity is already
-    handled elsewhere in PyDough)
+    Test for issue #561: CROSS between two PARTITION results that
+    both expose a term named "year" (each PARTITION's own key) used to
+    raise an AssertionError deep in relational conversion.
+    It now raises a clear PyDoughQDAGException at qualification time instead,
+    since "year" is ambiguous between the two crossed collections
+    (matching how this same ambiguity is already handled elsewhere in PyDough)
     """
+
     a = (
         orders.CALCULATE(year=YEAR(order_date))
         .PARTITION(name="a_years", by=year)
