@@ -6770,8 +6770,8 @@ from .testing_utilities import (
                 "# Reproduce issue\n"
                 "result = cust_years.CALCULATE(\n"
                 "    year=year,\n"
-                "    bug=SUM(orders.WHERE(YEAR(order_date) == year).lines.extended_price),\n"
-                ").ORDER_BY(year.ASC()).TOP_K(5, by=bug.DESC())",
+                "    bug=SUM(orders.WHERE(YEAR(order_date) == year).lines.extended_price)\n"
+                ").TOP_K(5, by=bug.DESC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
