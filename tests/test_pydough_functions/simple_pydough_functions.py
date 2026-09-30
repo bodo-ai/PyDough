@@ -3896,3 +3896,11 @@ def partition_by_child_reference():
     return orders.PARTITION(name="by_cust_key", by=customer.key).CALCULATE(
         total=COUNT(orders)
     )
+
+
+def join_strings_too_few_values():
+    """
+    Test that calling JOIN_STRINGS with a delimiter and fewer than two
+    values to join is now giving a descriptive error message.
+    """
+    return orders.CALCULATE(cust_ids=JOIN_STRINGS(", ", customer.key))
