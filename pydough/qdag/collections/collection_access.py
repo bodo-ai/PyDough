@@ -105,6 +105,7 @@ class CollectionAccess(ChildAccess):
         return self._calc_property_order[expr_name]
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
+        # breakpoint()
         self.verify_term_exists(term_name)
 
         # Special handling of terms down-streamed from an ancestor CALCULATE

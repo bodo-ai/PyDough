@@ -3896,3 +3896,15 @@ def partition_by_child_reference():
     return orders.PARTITION(name="by_cust_key", by=customer.key).CALCULATE(
         total=COUNT(orders)
     )
+
+
+def parent_calc_access_error():
+    """
+    TODO
+    """
+    # 'top' calculates 'cust_name' on customers
+    top = customers.CALCULATE(cust_name=name)
+
+    # Referencing 'customer.cust_name' from orders causes a lowering error
+    result = top.orders.CALCULATE(x=customer.cust_name)
+    return result

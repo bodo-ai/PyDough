@@ -1918,6 +1918,7 @@ def convert_ast_to_relational(
         of `node` are included in the root in the correct order, and if it
         has an ordering then the relational root stores that information.
     """
+    # breakpoint()
     # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
     rel_translator: RelTranslation = RelTranslation(session)

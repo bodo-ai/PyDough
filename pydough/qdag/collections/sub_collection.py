@@ -94,6 +94,11 @@ class SubCollection(CollectionAccess):
     def tree_item_string(self) -> str:
         return f"SubCollection[{self.standalone_string}]"
 
+    @property
+    def all_terms(self) -> set[str]:
+        breakpoint()
+        return self._all_property_names - self._ancestral_mapping.keys()
+
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, SubCollection)

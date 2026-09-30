@@ -124,6 +124,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_info_per_priority,
     order_quarter_test,
     orders_versus_first_orders,
+    parent_calc_access_error,
     part_reduced_size,
     partition_by_child_reference,
     partition_by_literal,
@@ -6789,20 +6790,6 @@ from .testing_utilities import (
             ),
             id="compound_ref_correlation_extraction",
         ),
-        pytest.param(
-            PyDoughPandasTest(
-                "# 'top' calculates 'cust_name' on customers\n"
-                "top = customers.CALCULATE(cust_name=name)\n"
-                "# Referencing 'customer.cust_name' from orders causes a lowering error\n"
-                "result = top.orders.CALCULATE(\n"
-                "   x=customer.cust_name\n"
-                ").PARTITION(name='g', by=x)\n",
-                "TPCH",
-                lambda: pd.DataFrame({}),
-                "parent_calc_access_error",
-            ),
-            id="parent_calc_access_error",
-        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -7594,6 +7581,28 @@ def test_pipeline_e2e_simple_week(
             ),
             id="partition_by_child_reference",
         ),
+        pytest.param(
+            parent_calc_access_error,
+            None,
+            re.escape(
+                "Unrecognized term of "
+                "TPCH.customers.CALCULATE(cust_name=name).orders.customer: "
+                "'cust_name'. Did you mean: name, phone, key?"
+            ),
+            id="parent_calc_access_error",
+        ),
+        # pytest.param(
+        #     PyDoughPandasTest(
+        #         "main_context = orders.CALCULATE(or_clerk=clerk)\n"
+        #         "result = main_context.lines.CALCULATE(\n"
+        #         "   x=order.or_clerk\n"
+        #         ")",
+        #         "TPCH",
+        #         lambda: pd.DataFrame({}),
+        #         "parent_calc_access_error_2",
+        #     ),
+        #     id="parent_calc_access_error_2",
+        # ),
     ],
 )
 def test_pipeline_e2e_errors(

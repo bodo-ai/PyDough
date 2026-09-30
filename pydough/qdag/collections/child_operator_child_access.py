@@ -70,6 +70,10 @@ class ChildOperatorChildAccess(ChildAccess):
         return self.child_access.get_expression_position(expr_name)
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
+        breakpoint()
+        # TODO: Trying some verification to make sure that
+        # the term is access correctly when is inherited and when is through a
+        # join cannot be accessed like customer.inherited_term
         term = self.child_access.get_term(term_name)
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)

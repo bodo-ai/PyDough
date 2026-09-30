@@ -612,6 +612,7 @@ class Qualifier:
             # child is just a de-sugared invocation of the global context.
             return qualified_parent
         else:
+            # breakpoint()
             # Identify whether the access is an expression or a collection
             term = qualified_parent.get_term(name)
             if isinstance(term, PyDoughCollectionQDAG):
