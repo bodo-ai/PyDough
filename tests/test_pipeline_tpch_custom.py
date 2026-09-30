@@ -148,6 +148,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     region_orders_from_nations_richest,
     regional_first_order_best_line_part,
     regional_suppliers_percentile,
+    replace_non_string_arg,
     richest_customer_per_region,
     simple_cross_1,
     simple_cross_2,
@@ -6788,6 +6789,15 @@ from .testing_utilities import (
                 "compound_ref_correlation_extraction",
             ),
             id="compound_ref_correlation_extraction",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                replace_non_string_arg,
+                "TPCH",
+                lambda: pd.DataFrame({"clean_key": ["2", "3", "4", "5", "one"]}),
+                "replace_non_string_arg",
+            ),
+            id="replace_non_string_arg",
         ),
     ],
 )
