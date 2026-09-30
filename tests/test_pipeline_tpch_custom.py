@@ -6751,6 +6751,44 @@ from .testing_utilities import (
             ),
             id="iff_with_aggregates_on_different_collections",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "# Get order years\n"
+                "distinct_years = orders.CALCULATE(\n"
+                "    order_year=YEAR(order_date)\n"
+                ").PARTITION(\n"
+                "    name='years', by=order_year\n"
+                ").CALCULATE(\n"
+                "    year=order_year\n"
+                ")\n"
+                "# Get customer base\n"
+                "cust_base = customers.CALCULATE(\n"
+                "    c_id=key,\n"
+                ")\n"
+                "# CROSS join customer base with distinct years to get all combinations of customers and years\n"
+                "cust_years = cust_base.CROSS(distinct_years)\n"
+                "# Reproduce issue\n"
+                "result = cust_years.CALCULATE(\n"
+                "    year=year,\n"
+                "    bug=SUM(orders.WHERE(YEAR(order_date) == year).lines.extended_price)\n"
+                ").TOP_K(5, by=bug.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1996, 1996, 1996, 1996, 1996],
+                        "bug": [
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                        ],
+                    }
+                ),
+                "compound_ref_correlation_extraction",
+            ),
+            id="compound_ref_correlation_extraction",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
