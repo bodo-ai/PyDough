@@ -3,7 +3,15 @@ WITH _s5 AS (
     _s2.val AS cust_word
   FROM tpch.customer AS customer
   CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(
-    TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', '')),
+    TRIM(' ' FROM REPLACE(
+      CAST(REPLACE(
+        CAST(REPLACE(CAST(REPLACE(CAST(customer.c_comment AS TEXT), ';', '') AS TEXT), ',', '') AS TEXT),
+        ':',
+        ''
+      ) AS TEXT),
+      '.',
+      ''
+    )),
     ' '
   )) WITH ORDINALITY AS _s2(val, idx)
 ), _u_0 AS (
@@ -17,7 +25,15 @@ SELECT
   COUNT(DISTINCT _s0.val) AS n_double_words
 FROM tpch.supplier AS supplier
 CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(
-  TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(supplier.s_comment, ';', ''), ',', ''), ':', ''), '.', '')),
+  TRIM(' ' FROM REPLACE(
+    CAST(REPLACE(
+      CAST(REPLACE(CAST(REPLACE(CAST(supplier.s_comment AS TEXT), ';', '') AS TEXT), ',', '') AS TEXT),
+      ':',
+      ''
+    ) AS TEXT),
+    '.',
+    ''
+  )),
   ' '
 )) WITH ORDINALITY AS _s0(val, idx)
 LEFT JOIN _u_0 AS _u_0

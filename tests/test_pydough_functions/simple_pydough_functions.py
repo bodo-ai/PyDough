@@ -3924,3 +3924,17 @@ def isin_mixed_literal_list():
     the argument.
     """
     return orders.WHERE(ISIN(customer_key, (1, customer.key, 3)))
+
+
+def replace_non_string_arg():
+    """
+    Test that calling REPLACE with a non-string first argument (e.g. an
+    integer column) generates valid SQL for dialects like Postgres that
+    require an explicit cast to text, instead of generating SQL that fails
+    at runtime with a type mismatch.
+    """
+    return (
+        customers.WHERE(key <= 5)
+        .CALCULATE(clean_key=REPLACE(key, "1", "one"))
+        .ORDER_BY(key.ASC())
+    )
