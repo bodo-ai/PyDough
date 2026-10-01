@@ -1315,7 +1315,12 @@ class BaseTransformBindings:
         # to change when we support PyDough expressions like:
         # Collection.WHERE(ISIN(name, plural_subcollection.name))
         values = args[1]
-        assert isinstance(values, sqlglot_expressions.Array)
+        if not isinstance(values, sqlglot_expressions.Array):
+            raise PyDoughSQLException(
+                "Invalid argument for ISIN: second parameter must be a "
+                "collection of literal values (e.g. (1, 2, 3)), not a "
+                f"PyDough expression ({values.sql()!r})."
+            )
         return sqlglot_expressions.In(this=column, expressions=values.expressions)
 
     def convert_sqrt(
