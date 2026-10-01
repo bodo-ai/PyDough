@@ -115,6 +115,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     global_acctbal_breakdown,
     highest_priority_per_year,
     iff_with_aggregates_on_different_collections,
+    isin_mixed_literal_list,
+    isin_non_literal_arg,
+    join_strings_too_few_values,
     month_year_sliding_windows,
     n_orders_first_day,
     nation_acctbal_breakdown,
@@ -7589,6 +7592,34 @@ def test_pipeline_e2e_simple_week(
                 "a literal, or a term from a child collection."
             ),
             id="partition_by_child_reference",
+        ),
+        pytest.param(
+            join_strings_too_few_values,
+            None,
+            re.escape(
+                "Invalid operator invocation \"JOIN_STRINGS(', ', "
+                'customer.key)": Expected at least 3 arguments, received 2'
+            ),
+            id="join_strings_too_few_values",
+        ),
+        pytest.param(
+            isin_non_literal_arg,
+            None,
+            re.escape(
+                "Invalid argument for ISIN: second parameter must be a "
+                "collection of literal values (e.g. (1, 2, 3)), not a "
+                "PyDough expression ('o_custkey')."
+            ),
+            id="isin_non_literal_arg",
+        ),
+        pytest.param(
+            isin_mixed_literal_list,
+            None,
+            re.escape(
+                "Can only coerce a collection of literals to a literal, "
+                "not customer.key."
+            ),
+            id="isin_mixed_literal_list",
         ),
     ],
 )

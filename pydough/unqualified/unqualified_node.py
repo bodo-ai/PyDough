@@ -93,9 +93,11 @@ class UnqualifiedNode(ABC):
             typ: PyDoughType = UnknownType()
             for elem in obj:
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
-                assert isinstance(coerced_elem, UnqualifiedLiteral), (
-                    f"Can only coerce list of literals to a literal, not {elem}"
-                )
+                if not isinstance(coerced_elem, UnqualifiedLiteral):
+                    raise PyDoughUnqualifiedException(
+                        f"Can only coerce a collection of literals to a "
+                        f"literal, not {elem!r}."
+                    )
                 elems.append(coerced_elem)
             return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
