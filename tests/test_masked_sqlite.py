@@ -23,8 +23,6 @@ from tests.testing_utilities import (
     transform_and_exec_pydough,
 )
 
-pytestmark = pytest.mark.skip(reason="Getting stuck")
-
 
 @pytest.fixture(
     params=[
