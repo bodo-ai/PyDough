@@ -282,7 +282,7 @@ KEEP_IF = ExpressionFunctionOperator(
     "KEEP_IF", False, RequireNumArgs(2), SelectArgumentType(0)
 )
 JOIN_STRINGS = ExpressionFunctionOperator(
-    "JOIN_STRINGS", False, RequireMinArgs(1), ConstantType(StringType())
+    "JOIN_STRINGS", False, RequireMinArgs(3), ConstantType(StringType())
 )
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
 

@@ -121,7 +121,13 @@ class CollectionAccess(ChildAccess):
                 self, term_name, self.ancestral_mapping[term_name]
             )
 
-        if term_name in self.inherited_downstreamed_terms:
+        # Note: `term_name not in self.all_terms` guards against `term_name`
+        # also being a genuine local property, which would otherwise make
+        # the loop below recurse into itself forever. A local property
+        # always takes priority.
+        if term_name in self.inherited_downstreamed_terms and (
+            term_name not in self.all_terms
+        ):
             context: PyDoughCollectionQDAG = self
             while term_name not in context.all_terms:
                 if context is self:

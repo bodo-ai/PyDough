@@ -781,6 +781,20 @@ class PostgresTransformBindings(BaseTransformBindings):
         )
         return result
 
+    def convert_replace(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Postgres does not implicitly cast non-text arguments (e.g. an
+        # integer column) to text for REPLACE, unlike other dialects, so
+        # the first argument must be cast explicitly.
+        args = [
+            sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("TEXT")
+            ),
+            *args[1:],
+        ]
+        return super().convert_replace(args, types)
+
     def convert_user_generated_range(
         self,
         collection: RangeGeneratedCollection,

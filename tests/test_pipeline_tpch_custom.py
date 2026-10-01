@@ -115,6 +115,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     global_acctbal_breakdown,
     highest_priority_per_year,
     iff_with_aggregates_on_different_collections,
+    isin_mixed_literal_list,
+    isin_non_literal_arg,
+    join_strings_too_few_values,
     month_year_sliding_windows,
     n_orders_first_day,
     nation_acctbal_breakdown,
@@ -127,6 +130,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     part_reduced_size,
     partition_by_child_reference,
     partition_by_literal,
+    partition_key_name_collision,
     partition_self_reference,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
@@ -148,6 +152,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     region_orders_from_nations_richest,
     regional_first_order_best_line_part,
     regional_suppliers_percentile,
+    replace_non_string_arg,
     richest_customer_per_region,
     simple_cross_1,
     simple_cross_2,
@@ -6751,6 +6756,67 @@ from .testing_utilities import (
             ),
             id="iff_with_aggregates_on_different_collections",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "# Get order years\n"
+                "distinct_years = orders.CALCULATE(\n"
+                "    order_year=YEAR(order_date)\n"
+                ").PARTITION(\n"
+                "    name='years', by=order_year\n"
+                ").CALCULATE(\n"
+                "    year=order_year\n"
+                ")\n"
+                "# Get customer base\n"
+                "cust_base = customers.CALCULATE(\n"
+                "    c_id=key,\n"
+                ")\n"
+                "# CROSS join customer base with distinct years to get all combinations of customers and years\n"
+                "cust_years = cust_base.CROSS(distinct_years)\n"
+                "# Reproduce issue\n"
+                "result = cust_years.CALCULATE(\n"
+                "    year=year,\n"
+                "    bug=SUM(orders.WHERE(YEAR(order_date) == year).lines.extended_price)\n"
+                ").TOP_K(5, by=bug.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1996, 1996, 1996, 1996, 1996],
+                        "bug": [
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                        ],
+                    }
+                ),
+                "compound_ref_correlation_extraction",
+            ),
+            id="compound_ref_correlation_extraction",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                replace_non_string_arg,
+                "TPCH",
+                lambda: pd.DataFrame({"clean_key": ["2", "3", "4", "5", "one"]}),
+                "replace_non_string_arg",
+            ),
+            id="replace_non_string_arg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_key_name_collision,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2],
+                        "total": [587762.91, 1028273.43],
+                    }
+                ),
+                "partition_key_name_collision",
+            ),
+            id="partition_key_name_collision",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -7541,6 +7607,34 @@ def test_pipeline_e2e_simple_week(
                 "a literal, or a term from a child collection."
             ),
             id="partition_by_child_reference",
+        ),
+        pytest.param(
+            join_strings_too_few_values,
+            None,
+            re.escape(
+                "Invalid operator invocation \"JOIN_STRINGS(', ', "
+                'customer.key)": Expected at least 3 arguments, received 2'
+            ),
+            id="join_strings_too_few_values",
+        ),
+        pytest.param(
+            isin_non_literal_arg,
+            None,
+            re.escape(
+                "Invalid argument for ISIN: second parameter must be a "
+                "collection of literal values (e.g. (1, 2, 3)), not a "
+                "PyDough expression ('o_custkey')."
+            ),
+            id="isin_non_literal_arg",
+        ),
+        pytest.param(
+            isin_mixed_literal_list,
+            None,
+            re.escape(
+                "Can only coerce a collection of literals to a literal, "
+                "not customer.key."
+            ),
+            id="isin_mixed_literal_list",
         ),
     ],
 )

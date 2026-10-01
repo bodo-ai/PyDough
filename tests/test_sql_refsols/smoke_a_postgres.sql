@@ -16,10 +16,10 @@ SELECT
   TRIM('o' FROM SUBSTRING(p_name FROM 1 FOR 2)) AS c,
   LPAD(CAST(p_size AS TEXT), 3, '0') AS d,
   RPAD(CAST(p_size AS TEXT), 3, '0') AS e,
-  REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
-  REPLACE(LOWER(p_container), ' ', '') AS g,
+  REPLACE(CAST(p_mfgr AS TEXT), 'Manufacturer#', 'm') AS f,
+  REPLACE(CAST(LOWER(p_container) AS TEXT), ' ', '') AS g,
   CAST(CAST((
-    LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    LENGTH(p_name) - LENGTH(REPLACE(CAST(p_name AS TEXT), 'o', ''))
   ) AS DOUBLE PRECISION) AS BIGINT) + (
     CAST((
       POSITION('o' IN p_name) - 1

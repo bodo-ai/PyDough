@@ -16,10 +16,10 @@ SELECT
   RPAD(CAST(customer.c_name AS TEXT), 20, '-') AS rpad_name,
   TRIM(CHR(  10) || CHR(  9) || CHR(  13) || ' ' FROM customer.c_name) AS stripped,
   TRIM('aeiou' FROM customer.c_name) AS stripped_vowels,
-  REPLACE(customer.c_name, 'Corp', 'Inc') AS replaced_name,
-  REPLACE(customer.c_name, 'Ltd', '') AS removed_substr,
+  REPLACE(CAST(customer.c_name AS TEXT), 'Corp', 'Inc') AS replaced_name,
+  REPLACE(CAST(customer.c_name AS TEXT), 'Ltd', '') AS removed_substr,
   CAST(CAST((
-    LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
+    LENGTH(customer.c_name) - LENGTH(REPLACE(CAST(customer.c_name AS TEXT), 'e', ''))
   ) AS DOUBLE PRECISION) AS BIGINT) AS count_e,
   POSITION('Alex' IN customer.c_name) - 1 AS idx_Alex
 FROM tpch.customer AS customer
