@@ -3904,3 +3904,23 @@ def join_strings_too_few_values():
     values to join is now giving a descriptive error message.
     """
     return orders.CALCULATE(cust_ids=JOIN_STRINGS(", ", customer.key))
+
+
+def isin_non_literal_arg():
+    """
+    Test that passing a PyDough expression
+    (not a tuple/list of literals) to ISIN's second argument is giving
+    a descriptive error message instead of crashing with an unhandled
+    `AssertionError` during SQL generation.
+    """
+    return orders.WHERE(ISIN(customer_key, (customer.key)))
+
+
+def isin_mixed_literal_list():
+    """
+    Test that passing a tuple mixing literals with a PyDough expression
+    as ISIN's second argument is giving a descriptive error message
+    instead of crashing with an unhandled `AssertionError` while coercing
+    the argument.
+    """
+    return orders.WHERE(ISIN(customer_key, (1, customer.key, 3)))
