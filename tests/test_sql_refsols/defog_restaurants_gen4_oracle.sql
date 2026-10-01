@@ -1,11 +1,11 @@
 SELECT
-  city_name,
+  CITY_NAME AS city_name,
   COUNT(*) AS num_restaurants
 FROM MAIN.RESTAURANT
 WHERE
-  LOWER(food_type) = 'italian'
+  LOWER(FOOD_TYPE) = 'italian'
 GROUP BY
-  city_name
+  CITY_NAME
 ORDER BY
   2 DESC NULLS LAST,
   1 DESC NULLS LAST

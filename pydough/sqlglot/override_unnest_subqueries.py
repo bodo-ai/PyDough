@@ -243,6 +243,7 @@ def get_scope_external_columns(
             left, right = scope.union_scopes
             scope._external_columns = left.external_columns + right.external_columns
         else:
+            local_source_names = {name for name, _ in scope.references}
             scope._external_columns = [
                 c
                 for c in scope.columns
@@ -252,8 +253,8 @@ def get_scope_external_columns(
                 and not (
                     isinstance(dialect, OracleDialect) and c.this.this == "SYSTIMESTAMP"
                 )
-                and c.table not in scope.selected_sources
-                and c.table not in scope.semi_or_anti_join_tables
+                and c.text("table") not in local_source_names
+                and c.text("table") not in scope.semi_or_anti_join_tables
             ]
 
     return scope._external_columns

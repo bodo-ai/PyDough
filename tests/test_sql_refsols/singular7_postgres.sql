@@ -8,7 +8,7 @@ WITH _s3 AS (
 ), _t4 AS (
   SELECT
     partsupp.ps_suppkey,
-    MAX(part.p_name) AS anything_p_name,
+    ANY_VALUE(part.p_name) AS anything_p_name,
     COUNT(_s3.l_suppkey) AS count_l_suppkey
   FROM tpch.partsupp AS partsupp
   JOIN tpch.part AS part
@@ -23,7 +23,10 @@ WITH _s3 AS (
     ps_suppkey,
     anything_p_name,
     count_l_suppkey,
-    ROW_NUMBER() OVER (PARTITION BY ps_suppkey ORDER BY COALESCE(count_l_suppkey, 0) DESC, anything_p_name) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY ps_suppkey
+      ORDER BY COALESCE(CASE WHEN count_l_suppkey <> 0 THEN count_l_suppkey ELSE NULL END, 0) DESC, anything_p_name
+    ) AS _w
   FROM _t4
 ), _s5 AS (
   SELECT

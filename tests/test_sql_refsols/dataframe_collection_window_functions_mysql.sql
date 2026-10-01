@@ -7,7 +7,9 @@ WITH _t AS (
     customers_filters.mrk_segment,
     NATION.n_name,
     customers_filters.nation_name,
-    NTILE(1000) OVER (ORDER BY CASE WHEN CUSTOMER.c_acctbal IS NULL THEN 1 ELSE 0 END, CUSTOMER.c_acctbal) AS _w
+    NTILE(1000) OVER (
+      ORDER BY CASE WHEN CUSTOMER.c_acctbal IS NULL THEN 1 ELSE 0 END, CUSTOMER.c_acctbal
+    ) AS _w
   FROM (VALUES
     ROW('UNITED STATES', 'BUILDING'),
     ROW('JAPAN', 'AUTOMOBILE'),
@@ -34,11 +36,17 @@ WITH _t AS (
     o_custkey,
     (
       YEAR(o_orderdate) - YEAR(
-        LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate)
+        LAG(o_orderdate, 1) OVER (
+          PARTITION BY o_custkey
+          ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate
+        )
       )
     ) * 12 + (
       MONTH(o_orderdate) - MONTH(
-        LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate)
+        LAG(o_orderdate, 1) OVER (
+          PARTITION BY o_custkey
+          ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate
+        )
       )
     ) AS month_diff
   FROM tpch.ORDERS
@@ -52,7 +60,10 @@ WITH _t AS (
 ), _t6 AS (
   SELECT
     o_custkey,
-    o_totalprice - LEAD(o_totalprice, 1) OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate) AS price_diff
+    o_totalprice - LEAD(o_totalprice, 1) OVER (
+      PARTITION BY o_custkey
+      ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate
+    ) AS price_diff
   FROM tpch.ORDERS
 ), _s9 AS (
   SELECT
@@ -64,7 +75,10 @@ WITH _t AS (
 )
 SELECT
   _s6.anything_c_name COLLATE utf8mb4_bin AS name,
-  ROW_NUMBER() OVER (PARTITION BY _s6.anything_nation_name ORDER BY CASE WHEN _s6.anything_c_acctbal IS NULL THEN 1 ELSE 0 END DESC, _s6.anything_c_acctbal DESC) AS ranking_balance,
+  ROW_NUMBER() OVER (
+    PARTITION BY _s6.anything_nation_name
+    ORDER BY CASE WHEN _s6.anything_c_acctbal IS NULL THEN 1 ELSE 0 END DESC, _s6.anything_c_acctbal DESC
+  ) AS ranking_balance,
   COALESCE(_s6.count_o_custkey, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,

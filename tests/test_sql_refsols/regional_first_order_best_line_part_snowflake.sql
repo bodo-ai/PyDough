@@ -19,7 +19,10 @@ WITH _t3 AS (
     ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
     AND _t3.o_orderkey = lineitem.l_orderkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _t3.n_regionkey ORDER BY lineitem.l_quantity DESC, lineitem.l_linenumber) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _t3.n_regionkey
+      ORDER BY lineitem.l_quantity DESC, lineitem.l_linenumber
+    ) = 1
 ), _s9 AS (
   SELECT
     _t1.n_regionkey,

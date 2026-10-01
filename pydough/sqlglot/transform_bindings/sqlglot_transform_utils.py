@@ -221,6 +221,33 @@ class DateTimeUnit(Enum):
                 return "'%S'"
 
 
+def extract_int_literal(expr: SQLGlotExpression) -> int | None:
+    """
+    Extracts the integer value of a SQLGlot expression if it is an integer
+    literal, optionally wrapped in a unary minus (e.g. `sqlglot.exp.convert`
+    represents negative numbers as `Neg(Literal(...))` rather than a single
+    `Literal` with a negative value).
+
+    Args:
+        `expr`: The SQLGlot expression to extract an integer value from.
+
+    Returns:
+        The integer value of `expr`, or `None` if it is not an integer
+        literal (optionally negated).
+    """
+    negate: bool = False
+    if isinstance(expr, sqlglot_expressions.Neg):
+        negate = True
+        expr = expr.this
+    if not isinstance(expr, sqlglot_expressions.Literal):
+        return None
+    try:
+        value: int = int(expr.this)
+    except ValueError:
+        return None
+    return -value if negate else value
+
+
 def positive_index(
     string_expr: SQLGlotExpression, neg_index: int, is_zero_based: bool = False
 ) -> SQLGlotExpression:

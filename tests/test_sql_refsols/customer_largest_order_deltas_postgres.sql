@@ -8,8 +8,8 @@ WITH _s1 AS (
     EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_shipmode = 'AIR'
 ), _t5 AS (
   SELECT
-    MAX(orders.o_custkey) AS anything_o_custkey,
-    MAX(orders.o_orderdate) AS anything_o_orderdate,
+    ANY_VALUE(orders.o_custkey) AS anything_o_custkey,
+    ANY_VALUE(orders.o_orderdate) AS anything_o_orderdate,
     SUM(_s1.l_extendedprice * (
       1 - _s1.l_discount
     )) AS sum_r
@@ -39,7 +39,7 @@ WITH _s1 AS (
     customer.c_mktsegment = 'AUTOMOBILE'
 )
 SELECT
-  MAX(c_name) AS name,
+  ANY_VALUE(c_name) AS name,
   CASE
     WHEN ABS(MIN(revenue_delta)) > MAX(revenue_delta)
     THEN MIN(revenue_delta)

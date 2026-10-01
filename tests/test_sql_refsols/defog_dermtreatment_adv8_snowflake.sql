@@ -15,11 +15,7 @@ WITH _t0 AS (
     1
 )
 SELECT
-  CONCAT_WS(
-    '-',
-    YEAR(CAST(start_month AS TIMESTAMP)),
-    LPAD(MONTH(CAST(start_month AS TIMESTAMP)), 2, '0')
-  ) AS start_month,
+  CONCAT_WS('-', YEAR(start_month), LPAD(MONTH(start_month), 2, '0')) AS start_month,
   ndistinct_diag_id AS PMPD,
   n_rows AS PMTC
 FROM _t0

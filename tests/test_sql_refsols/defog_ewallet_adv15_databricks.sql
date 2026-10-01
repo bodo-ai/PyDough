@@ -6,8 +6,8 @@ WITH _s3 AS (
   JOIN defog.ewallet.merchants AS merchants
     ON (
       (
-        YEAR(TO_DATE(coupons.created_at)) - YEAR(TO_DATE(merchants.created_at))
-      ) * 12 + MONTH(TO_DATE(coupons.created_at)) - MONTH(TO_DATE(merchants.created_at))
+        YEAR(coupons.created_at) - YEAR(merchants.created_at)
+      ) * 12 + MONTH(coupons.created_at) - MONTH(merchants.created_at)
     ) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY

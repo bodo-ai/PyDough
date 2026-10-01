@@ -1,9 +1,9 @@
 SELECT
-  specialty,
+  SPECIALTY AS specialty,
   COUNT(*) AS num_doctors
 FROM MAIN.DOCTORS
 GROUP BY
-  specialty
+  SPECIALTY
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 2 ROWS ONLY

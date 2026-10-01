@@ -3,7 +3,6 @@ SELECT
   CASE WHEN COUNT(*) <> 0 THEN COALESCE(SUM(sales.sale_price), 0) ELSE NULL END AS total_revenue
 FROM defog.dealership.cars AS cars
 JOIN defog.dealership.sales AS sales
-  ON cars.id = sales.car_id
-  AND sales.sale_date >= DATEADD(DAY, -30, CURRENT_TIMESTAMP())
+  ON cars.id = sales.car_id AND sales.sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), -30)
 WHERE
   CONTAINS(LOWER(cars.make), 'toyota')

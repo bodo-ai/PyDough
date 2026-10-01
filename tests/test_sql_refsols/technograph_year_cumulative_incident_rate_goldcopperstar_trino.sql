@@ -59,19 +59,19 @@ SELECT
     2
   ) AS cum_ir,
   ROUND(
-    CAST((
+    (
       100.0 * (
         COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) AS DOUBLE) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt),
+    ) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt),
     2
   ) AS pct_bought_change,
   ROUND(
-    CAST((
+    (
       100.0 * (
         COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) AS DOUBLE) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt),
+    ) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt),
     2
   ) AS pct_incident_change,
   COALESCE(_s15.sum_n_rows, 0) AS bought,

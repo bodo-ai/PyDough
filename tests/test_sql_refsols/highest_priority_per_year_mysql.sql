@@ -20,7 +20,10 @@ WITH _t3 AS (
     o_orderpriority,
     year_o_orderdate,
     priority_pct,
-    ROW_NUMBER() OVER (PARTITION BY year_o_orderdate ORDER BY CASE WHEN priority_pct IS NULL THEN 1 ELSE 0 END DESC, priority_pct DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY year_o_orderdate
+      ORDER BY CASE WHEN priority_pct IS NULL THEN 1 ELSE 0 END DESC, priority_pct DESC
+    ) AS _w
   FROM _t2
 )
 SELECT

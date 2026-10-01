@@ -10,7 +10,7 @@ WITH _t1 AS (
     ON customer.c_custkey = orders.o_custkey AND orders.o_orderpriority = '1-URGENT'
 )
 SELECT
-  MAX(c_name) AS name,
+  ANY_VALUE(c_name) AS name,
   AVG(CAST(day_diff AS DECIMAL)) AS avg_diff
 FROM _t1
 GROUP BY

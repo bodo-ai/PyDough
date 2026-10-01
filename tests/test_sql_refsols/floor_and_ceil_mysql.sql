@@ -8,4 +8,4 @@ SELECT
   FLOOR(-6) AS floor_int_neg,
   CEIL(-6) AS ceil_int_neg
 FROM (VALUES
-  ROW(NULL)) AS _q_0(_col_0)
+  ROW(NULL)) AS _0(_col_0)

@@ -1,7 +1,7 @@
 SELECT
-  first_name,
-  last_name,
-  specialty
+  FIRST_NAME AS first_name,
+  LAST_NAME AS last_name,
+  SPECIALTY AS specialty
 FROM MAIN.DOCTORS
 WHERE
-  LOWER(first_name) LIKE 'j%' OR LOWER(last_name) LIKE '%son%'
+  LOWER(FIRST_NAME) LIKE 'j%' OR LOWER(LAST_NAME) LIKE '%son%'

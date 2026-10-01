@@ -1,37 +1,37 @@
-WITH "_S2" AS (
+WITH "_s2" AS (
   SELECT
-    ca_dt AS CA_DT
+    CA_DT
   FROM MAIN.CALENDAR
-), "_S3" AS (
+), "_s3" AS (
   SELECT
-    "_S0".CA_DT,
+    "_s0".CA_DT,
     COUNT(*) AS N_ROWS
-  FROM "_S2" "_S0"
+  FROM "_s2" "_s0"
   JOIN MAIN.DEVICES DEVICES
-    ON "_S0".CA_DT = TRUNC(CAST(CAST(DEVICES.de_purchase_ts AS DATE) AS DATE), 'DD')
+    ON "_s0".CA_DT = TRUNC(CAST(CAST(DEVICES.DE_PURCHASE_TS AS DATE) AS DATE), 'DD')
   GROUP BY
-    "_S0".CA_DT
-), "_S7" AS (
+    "_s0".CA_DT
+), "_s7" AS (
   SELECT
-    "_S4".CA_DT,
+    "_s4".CA_DT,
     COUNT(*) AS N_ROWS
-  FROM "_S2" "_S4"
+  FROM "_s2" "_s4"
   JOIN MAIN.INCIDENTS INCIDENTS
-    ON "_S4".CA_DT = TRUNC(CAST(CAST(INCIDENTS.in_error_report_ts AS DATE) AS DATE), 'DD')
+    ON "_s4".CA_DT = TRUNC(CAST(CAST(INCIDENTS.IN_ERROR_REPORT_TS AS DATE) AS DATE), 'DD')
   GROUP BY
-    "_S4".CA_DT
-), "_T1" AS (
+    "_s4".CA_DT
+), "_t1" AS (
   SELECT
-    EXTRACT(YEAR FROM CAST("_S2".CA_DT AS DATE)) AS YEAR_CA_DT,
-    SUM("_S3".N_ROWS) AS SUM_EXPR_3,
-    SUM("_S7".N_ROWS) AS SUM_N_ROWS
-  FROM "_S2" "_S2"
-  LEFT JOIN "_S3" "_S3"
-    ON "_S2".CA_DT = "_S3".CA_DT
-  LEFT JOIN "_S7" "_S7"
-    ON "_S2".CA_DT = "_S7".CA_DT
+    EXTRACT(YEAR FROM CAST("_s2".CA_DT AS DATE)) AS YEAR_CA_DT,
+    SUM("_s3".N_ROWS) AS SUM_EXPR_3,
+    SUM("_s7".N_ROWS) AS SUM_N_ROWS
+  FROM "_s2" "_s2"
+  LEFT JOIN "_s3" "_s3"
+    ON "_s2".CA_DT = "_s3".CA_DT
+  LEFT JOIN "_s7" "_s7"
+    ON "_s2".CA_DT = "_s7".CA_DT
   GROUP BY
-    EXTRACT(YEAR FROM CAST("_S2".CA_DT AS DATE))
+    EXTRACT(YEAR FROM CAST("_s2".CA_DT AS DATE))
 )
 SELECT
   YEAR_CA_DT AS yr,
@@ -57,7 +57,7 @@ SELECT
   ) AS pct_incident_change,
   SUM_EXPR_3 AS bought,
   COALESCE(SUM_N_ROWS, 0) AS incidents
-FROM "_T1"
+FROM "_t1"
 WHERE
   NOT SUM_EXPR_3 IS NULL AND SUM_EXPR_3 <> 0
 ORDER BY

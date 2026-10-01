@@ -1,5 +1,5 @@
 SELECT
-  MAX(coupons.code) AS coupon_code,
+  ANY_VALUE(coupons.code) AS coupon_code,
   COUNT(wallet_transactions_daily.txid) AS redemption_count,
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_discount
 FROM main.coupons AS coupons

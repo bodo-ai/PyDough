@@ -3,11 +3,16 @@ WITH _t AS (
     accounts.a_key,
     accounts.a_open_ts,
     branches.b_name,
-    ROW_NUMBER() OVER (PARTITION BY accounts.a_branchkey ORDER BY CAST(STRFTIME('%Y', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER) = 2021, CASE
-      WHEN accounts.a_key = 0
-      THEN 0
-      ELSE CASE WHEN accounts.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(accounts.a_key, 1 + INSTR(accounts.a_key, '-'), LENGTH(accounts.a_key) / 2) AS INTEGER)
-    END) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY accounts.a_branchkey
+      ORDER BY CAST(STRFTIME('%Y', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER) = 2021, CASE
+        WHEN accounts.a_key = 0
+        THEN 0
+        ELSE (
+          CASE WHEN accounts.a_key > 0 THEN 1 ELSE -1 END
+        ) * CAST(SUBSTRING(accounts.a_key, 1 + INSTR(accounts.a_key, '-'), LENGTH(accounts.a_key) / 2) AS INTEGER)
+      END
+    ) AS _w
   FROM crbnk.branches AS branches
   JOIN crbnk.accounts AS accounts
     ON accounts.a_branchkey = branches.b_key

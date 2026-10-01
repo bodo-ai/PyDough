@@ -3,7 +3,10 @@ WITH _t AS (
     classes.class_name,
     teaching.semester,
     teaching.teacher_id,
-    ROW_NUMBER() OVER (PARTITION BY classes.`key` ORDER BY CASE WHEN teaching.rating IS NULL THEN 1 ELSE 0 END DESC, teaching.rating DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY classes.`key`
+      ORDER BY CASE WHEN teaching.rating IS NULL THEN 1 ELSE 0 END DESC, teaching.rating DESC
+    ) AS _w
   FROM (VALUES
     ROW(15112, 'Programming Fundamentals', 'Python'),
     ROW(15122, 'Imperative Programming', 'C'),

@@ -1,6 +1,6 @@
 SELECT
   "key",
-  name
+  NAME AS name
 FROM NATIONS_T13
 ORDER BY
   1 NULLS FIRST

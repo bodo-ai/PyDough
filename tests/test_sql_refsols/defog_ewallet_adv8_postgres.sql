@@ -1,7 +1,7 @@
 SELECT
   wallet_transactions_daily.receiver_id AS merchants_id,
-  MAX(merchants.name) AS merchants_name,
-  MAX(merchants.category) AS category,
+  ANY_VALUE(merchants.name) AS merchants_name,
+  ANY_VALUE(merchants.category) AS category,
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_revenue,
   ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC) AS mrr
 FROM main.merchants AS merchants

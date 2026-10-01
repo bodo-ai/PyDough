@@ -5,11 +5,14 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY nation.n_regionkey
+            ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY nation.n_regionkey) - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END
@@ -20,9 +23,9 @@ WITH _t1 AS (
         (
           ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(customer.c_acctbal) OVER (PARTITION BY nation.n_regionkey) - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN customer.c_acctbal
@@ -31,11 +34,14 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY nation.n_regionkey
+            ORDER BY CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY nation.n_regionkey) - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END

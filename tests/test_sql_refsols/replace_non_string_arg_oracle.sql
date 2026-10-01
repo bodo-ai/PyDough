@@ -1,7 +1,7 @@
 SELECT
-  REPLACE(c_custkey, '1', 'one') AS clean_key
+  REPLACE(C_CUSTKEY, '1', 'one') AS clean_key
 FROM TPCH.CUSTOMER
 WHERE
-  c_custkey <= 5
+  C_CUSTKEY <= 5
 ORDER BY
-  c_custkey NULLS FIRST
+  C_CUSTKEY NULLS FIRST

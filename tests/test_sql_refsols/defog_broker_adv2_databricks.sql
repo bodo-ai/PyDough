@@ -4,7 +4,7 @@ WITH _s1 AS (
     COUNT(*) AS n_rows
   FROM defog.broker.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -10, CURRENT_TIMESTAMP()))
+    sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -10))
     AND sbtxtype = 'buy'
   GROUP BY
     1

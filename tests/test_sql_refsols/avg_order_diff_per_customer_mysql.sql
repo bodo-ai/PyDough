@@ -4,7 +4,10 @@ WITH _t1 AS (
     ORDERS.o_custkey,
     DATEDIFF(
       ORDERS.o_orderdate,
-      LAG(ORDERS.o_orderdate, 1) OVER (PARTITION BY ORDERS.o_custkey ORDER BY CASE WHEN ORDERS.o_orderdate IS NULL THEN 1 ELSE 0 END, ORDERS.o_orderdate)
+      LAG(ORDERS.o_orderdate, 1) OVER (
+        PARTITION BY ORDERS.o_custkey
+        ORDER BY CASE WHEN ORDERS.o_orderdate IS NULL THEN 1 ELSE 0 END, ORDERS.o_orderdate
+      )
     ) AS day_diff
   FROM tpch.CUSTOMER AS CUSTOMER
   JOIN tpch.NATION AS NATION

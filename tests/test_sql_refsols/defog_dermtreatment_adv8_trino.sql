@@ -11,11 +11,16 @@ WITH _t0 AS (
     1
 )
 SELECT
-  CONCAT_WS(
-    '-',
-    CAST(YEAR(CAST(start_month AS TIMESTAMP)) AS VARCHAR),
-    CAST(LPAD(CAST(MONTH(CAST(start_month AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
-  ) AS start_month,
+  CASE
+    WHEN CAST(LPAD(CAST(MONTH(CAST(start_month AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+    OR CAST(YEAR(CAST(start_month AS TIMESTAMP)) AS VARCHAR) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      '-',
+      CAST(YEAR(CAST(start_month AS TIMESTAMP)) AS VARCHAR),
+      CAST(LPAD(CAST(MONTH(CAST(start_month AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
+    )
+  END AS start_month,
   ndistinct_diag_id AS PMPD,
   n_rows AS PMTC
 FROM _t0

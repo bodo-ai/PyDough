@@ -2,10 +2,10 @@ WITH _s3 AS (
   SELECT
     a_2.x,
     COUNT_IF(CAST(b.y AS TEXT) LIKE (
-      CONCAT('%', CAST(a_2.x AS TEXT))
+      '%' || CAST(a_2.x AS TEXT)
     )) AS sum_expr,
     COUNT_IF(CAST(b.y AS TEXT) LIKE (
-      CONCAT(CAST(a_2.x AS TEXT), '%')
+      CAST(a_2.x AS TEXT) || '%'
     )) AS sum_expr_5
   FROM (VALUES
     (0),
@@ -520,8 +520,12 @@ WITH _s3 AS (
     (996),
     (998),
     (1000)) AS b(y)
-    ON CAST(b.y AS TEXT) LIKE CONCAT('%', CAST(a_2.x AS TEXT))
-    OR CAST(b.y AS TEXT) LIKE CONCAT(CAST(a_2.x AS TEXT), '%')
+    ON CAST(b.y AS TEXT) LIKE (
+      '%' || CAST(a_2.x AS TEXT)
+    )
+    OR CAST(b.y AS TEXT) LIKE (
+      CAST(a_2.x AS TEXT) || '%'
+    )
   GROUP BY
     1
 )

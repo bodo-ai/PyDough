@@ -16,7 +16,10 @@ WITH _t1 AS (
     ev_typ,
     user_region,
     ndistinct_search_id,
-    ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY CASE WHEN ndistinct_search_id IS NULL THEN 1 ELSE 0 END DESC, ndistinct_search_id DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY user_region
+      ORDER BY CASE WHEN ndistinct_search_id IS NULL THEN 1 ELSE 0 END DESC, ndistinct_search_id DESC
+    ) AS _w
   FROM _t1
 )
 SELECT

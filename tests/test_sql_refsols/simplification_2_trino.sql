@@ -45,6 +45,6 @@ SELECT
   NULL AS s43,
   NULL AS s44,
   NULL AS s45,
-  NULL AS s46,
+  CAST(COUNT(*) AS DOUBLE) / NULL AS s46,
   COALESCE(MAX(sbcustname), '') LIKE '%r%' AS s47
 FROM main.sbcustomer

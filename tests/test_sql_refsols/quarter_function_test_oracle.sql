@@ -151,4 +151,4 @@ SELECT
     ) / 3)
   ) AS q_diff12
 FROM (VALUES
-  (NULL)) AS "_Q_0"("_COL_0")
+  (NULL)) AS "_0"("_COL_0")

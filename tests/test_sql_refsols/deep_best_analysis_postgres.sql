@@ -41,7 +41,10 @@ WITH _t2 AS (
     partsupp.ps_partkey,
     supplier.s_nationkey,
     supplier.s_suppkey,
-    ROW_NUMBER() OVER (PARTITION BY _s8.n_regionkey ORDER BY partsupp.ps_availqty DESC, partsupp.ps_partkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY _s8.n_regionkey
+      ORDER BY partsupp.ps_availqty DESC, partsupp.ps_partkey
+    ) AS _w
   FROM _s4 AS _s8
   JOIN tpch.supplier AS supplier
     ON _s8.n_nationkey = supplier.s_nationkey

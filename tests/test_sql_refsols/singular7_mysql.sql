@@ -23,7 +23,14 @@ WITH _s3 AS (
     ps_suppkey,
     anything_p_name,
     count_l_suppkey,
-    ROW_NUMBER() OVER (PARTITION BY ps_suppkey ORDER BY COALESCE(count_l_suppkey, 0) DESC, CASE WHEN anything_p_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, anything_p_name COLLATE utf8mb4_bin) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY ps_suppkey
+      ORDER BY CASE
+        WHEN COALESCE(CASE WHEN count_l_suppkey <> 0 THEN count_l_suppkey ELSE NULL END, 0) IS NULL
+        THEN 1
+        ELSE 0
+      END DESC, COALESCE(CASE WHEN count_l_suppkey <> 0 THEN count_l_suppkey ELSE NULL END, 0) DESC, CASE WHEN anything_p_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, anything_p_name COLLATE utf8mb4_bin
+    ) AS _w
   FROM _t4
 ), _s5 AS (
   SELECT

@@ -23,7 +23,7 @@ WITH _t1 AS (
   FROM _t1 AS _t7
   CROSS JOIN _t5 AS _t8
   JOIN _s5 AS _s9
-    ON _s9.ca_dt < DATEADD(YEAR, 2, CAST(_t8.pr_release AS TIMESTAMP))
+    ON _s9.ca_dt < DATE_ADD(YEAR, 2, CAST(_t8.pr_release AS TIMESTAMP))
     AND _s9.ca_dt >= _t8.pr_release
   JOIN main.devices AS devices
     ON _s9.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
@@ -43,7 +43,7 @@ WITH _t1 AS (
   FROM _t1 AS _t4
   CROSS JOIN _t5 AS _t5
   JOIN _s5 AS _s5
-    ON _s5.ca_dt < DATEADD(YEAR, 2, CAST(_t5.pr_release AS TIMESTAMP))
+    ON _s5.ca_dt < DATE_ADD(YEAR, 2, CAST(_t5.pr_release AS TIMESTAMP))
     AND _s5.ca_dt >= _t5.pr_release
   LEFT JOIN _s17 AS _s17
     ON _s17.ca_dt = _s5.ca_dt AND _s17.co_name = _t4.co_name

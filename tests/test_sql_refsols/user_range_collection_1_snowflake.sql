@@ -1,7 +1,7 @@
 WITH sizes AS (
   SELECT
     1 + SEQ4() * 5 AS part_size
-  FROM TABLE(GENERATOR(ROWCOUNT => 20))
+  FROM TABLE(GENERATOR(ROWCOUNT => 20)) AS _0
 ), _s1 AS (
   SELECT
     p_size,

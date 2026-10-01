@@ -1,14 +1,14 @@
 WITH "_u_0" AS (
   SELECT
-    salesperson_id AS "_u_1"
+    SALESPERSON_ID AS "_u_1"
   FROM MAIN.SALES
   GROUP BY
-    salesperson_id
+    SALESPERSON_ID
 )
 SELECT
   SALESPERSONS."_id",
-  SALESPERSONS.first_name,
-  SALESPERSONS.last_name
+  SALESPERSONS.FIRST_NAME AS first_name,
+  SALESPERSONS.LAST_NAME AS last_name
 FROM MAIN.SALESPERSONS SALESPERSONS
 LEFT JOIN "_u_0" "_u_0"
   ON SALESPERSONS."_id" = "_u_0"."_u_1"

@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    MAX(cars.make) AS anything_make,
-    MAX(cars.model) AS anything_model,
+    ANY_VALUE(cars.make) AS anything_make,
+    ANY_VALUE(cars.model) AS anything_model,
     COUNT(sales.car_id) AS count_car_id
   FROM main.cars AS cars
   LEFT JOIN main.sales AS sales

@@ -1,19 +1,19 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    car_id AS CAR_ID,
-    is_in_inventory AS IS_IN_INVENTORY,
-    ROW_NUMBER() OVER (PARTITION BY car_id ORDER BY snapshot_date DESC) AS "_W"
+    CAR_ID,
+    IS_IN_INVENTORY,
+    ROW_NUMBER() OVER (PARTITION BY CAR_ID ORDER BY SNAPSHOT_DATE DESC) AS "_w"
   FROM MAIN.INVENTORY_SNAPSHOTS
 )
 SELECT
-  ANY_VALUE(CARS.make) AS make,
-  ANY_VALUE(CARS.model) AS model,
-  MAX(SALES.sale_price) AS highest_sale_price
+  ANY_VALUE(CARS.MAKE) AS make,
+  ANY_VALUE(CARS.MODEL) AS model,
+  MAX(SALES.SALE_PRICE) AS highest_sale_price
 FROM MAIN.CARS CARS
-JOIN "_T" "_T"
-  ON CARS."_id" = "_T".CAR_ID AND NOT "_T".IS_IN_INVENTORY AND "_T"."_W" = 1
+JOIN "_t" "_t"
+  ON CARS."_id" = "_t".CAR_ID AND NOT "_t".IS_IN_INVENTORY AND "_t"."_w" = 1
 LEFT JOIN MAIN.SALES SALES
-  ON CARS."_id" = SALES.car_id
+  ON CARS."_id" = SALES.CAR_ID
 GROUP BY
   CARS."_id"
 ORDER BY

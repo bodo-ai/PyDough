@@ -6,4 +6,4 @@ FROM (VALUES
   (1.5, -2.25, 0.0),
   (NULL, NULL, NULL),
   (1e999, 1e999, 1e999),
-  (-1e999, -1e999, -1e999)) AS infinty
+  (-1E+999, -1E+999, -1E+999)) AS infinty

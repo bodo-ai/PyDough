@@ -10,7 +10,7 @@ WITH _t4 AS (
 ), _s6 AS (
   SELECT
     _t4.l_partkey,
-    MAX(part.p_name) AS anything_p_name,
+    ANY_VALUE(part.p_name) AS anything_p_name,
     SUM(_t4.l_quantity) AS sum_l_quantity
   FROM tpch.part AS part
   JOIN _t4 AS _t4
@@ -24,8 +24,8 @@ WITH _t4 AS (
     1
 )
 SELECT
-  MAX(_s6.anything_p_name) AS name,
-  COALESCE(MAX(_s6.sum_l_quantity), 0) AS qty_95,
+  ANY_VALUE(_s6.anything_p_name) AS name,
+  COALESCE(ANY_VALUE(_s6.sum_l_quantity), 0) AS qty_95,
   COALESCE(SUM(_t6.l_quantity), 0) AS qty_96
 FROM _s6 AS _s6
 JOIN _t4 AS _t6
@@ -36,6 +36,6 @@ JOIN tpch.orders AS orders
 GROUP BY
   _t6.l_partkey
 ORDER BY
-  COALESCE(SUM(_t6.l_quantity), 0) - COALESCE(MAX(_s6.sum_l_quantity), 0) DESC NULLS LAST,
+  COALESCE(SUM(_t6.l_quantity), 0) - COALESCE(ANY_VALUE(_s6.sum_l_quantity), 0) DESC NULLS LAST,
   1 NULLS FIRST
 LIMIT 3

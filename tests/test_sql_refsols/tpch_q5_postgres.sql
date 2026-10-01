@@ -7,7 +7,7 @@ WITH _s11 AS (
     ON nation.n_nationkey = supplier.s_nationkey
 )
 SELECT
-  MAX(nation.n_name) AS N_NAME,
+  ANY_VALUE(nation.n_name) AS N_NAME,
   COALESCE(SUM(lineitem.l_extendedprice * (
     1 - lineitem.l_discount
   )), 0) AS REVENUE

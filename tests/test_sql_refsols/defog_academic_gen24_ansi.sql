@@ -13,7 +13,7 @@ WITH _s7 AS (
 SELECT
   publication.title
 FROM main.publication AS publication
-JOIN _s7 AS _s7
+SEMI JOIN _s7 AS _s7
   ON _s7.cid = publication.cid AND _s7.pid = publication.pid
 WHERE
   publication.year = 2020

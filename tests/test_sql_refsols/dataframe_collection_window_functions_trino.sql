@@ -63,7 +63,10 @@ WITH _t AS (
 )
 SELECT
   _s6.anything_c_name AS name,
-  ROW_NUMBER() OVER (PARTITION BY _s6.anything_nation_name ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST) AS ranking_balance,
+  ROW_NUMBER() OVER (
+    PARTITION BY _s6.anything_nation_name
+    ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST
+  ) AS ranking_balance,
   COALESCE(_s6.count_o_custkey, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,

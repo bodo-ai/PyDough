@@ -1,6 +1,6 @@
 WITH _s14 AS (
   SELECT
-    MAX(pr_release) AS anything_pr_release
+    ANY_VALUE(pr_release) AS anything_pr_release
   FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
@@ -59,19 +59,19 @@ SELECT
     2
   ) AS cum_ir,
   ROUND(
-    CAST(CAST((
+    CAST((
       100.0 * (
         COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt) AS DECIMAL),
+    ) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt) AS DECIMAL),
     2
   ) AS pct_bought_change,
   ROUND(
-    CAST(CAST((
+    CAST((
       100.0 * (
         COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt) AS DECIMAL),
+    ) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt) AS DECIMAL),
     2
   ) AS pct_incident_change,
   COALESCE(_s15.sum_n_rows, 0) AS bought,

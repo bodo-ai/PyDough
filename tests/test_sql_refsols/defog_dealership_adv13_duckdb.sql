@@ -26,7 +26,9 @@ WITH _s1 AS (
     (11)) AS months(n)
   JOIN _s1 AS _s1
     ON (
-      _s1.start_month + INTERVAL (months.n) MONTH
+      _s1.start_month + INTERVAL (
+        months.n
+      ) MONTH
     ) <= DATE_TRUNC('MONTH', CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS TIMESTAMP)) + INTERVAL '1' HOUR
   GROUP BY
     1

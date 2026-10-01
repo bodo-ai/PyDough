@@ -31,7 +31,7 @@ WITH _t3 AS (
       CAST(lineitem.l_receiptdate AS DATE) - CAST(_s3.min_o_orderdate AS DATE) + EXTRACT(DOW FROM CAST(_s3.min_o_orderdate AS TIMESTAMP)) - EXTRACT(DOW FROM CAST(lineitem.l_receiptdate AS TIMESTAMP))
     ) AS DOUBLE PRECISION) / 7 AS BIGINT) AS line_wk,
     _s2.ord_wk,
-    MAX(_s2.n_rows) AS anything_n_rows,
+    ANY_VALUE(_s2.n_rows) AS anything_n_rows,
     COUNT(*) AS n_rows
   FROM _s2 AS _s2
   CROSS JOIN _s3 AS _s3

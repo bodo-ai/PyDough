@@ -1,12 +1,12 @@
 SELECT
   NULLIF(COUNT(*), 0) AS n_transactions,
-  COALESCE(SUM(sbTransaction.sbtxamount), 0) AS total_amount
+  COALESCE(SUM(sbTransaction.sbTxAmount), 0) AS total_amount
 FROM broker.sbTransaction AS sbTransaction
 JOIN broker.sbCustomer AS sbCustomer
-  ON LOWER(sbCustomer.sbcustcountry) = 'usa'
-  AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
+  ON LOWER(sbCustomer.sbCustCountry) = 'usa'
+  AND sbCustomer.sbCustId = sbTransaction.sbTxCustId
 WHERE
-  sbTransaction.sbtxdatetime < CAST(DATE_SUB(
+  sbTransaction.sbTxDateTime < CAST(DATE_SUB(
     CURRENT_TIMESTAMP(),
     INTERVAL (
       (
@@ -14,7 +14,7 @@ WHERE
       ) % 7
     ) DAY
   ) AS DATE)
-  AND sbTransaction.sbtxdatetime >= DATE_SUB(
+  AND sbTransaction.sbTxDateTime >= DATE_SUB(
     CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (

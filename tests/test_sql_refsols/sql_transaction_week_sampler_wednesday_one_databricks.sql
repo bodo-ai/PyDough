@@ -1,33 +1,32 @@
 SELECT
   sbtxdatetime AS date_time,
-  DATEADD(
-    DAY,
+  DATE_ADD(
+    CAST(CAST(sbtxdatetime AS TIMESTAMP) AS DATE),
     -(
       (
-        DAYOFWEEK(TO_DATE(CAST(sbtxdatetime AS TIMESTAMP))) + 3
+        DAYOFWEEK(CAST(sbtxdatetime AS TIMESTAMP)) + 3
       ) % 7
-    ),
-    CAST(CAST(sbtxdatetime AS TIMESTAMP) AS DATE)
+    )
   ) AS sow,
   CASE
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 1
+    WHEN DAYOFWEEK(sbtxdatetime) = 1
     THEN 'Sunday'
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 2
+    WHEN DAYOFWEEK(sbtxdatetime) = 2
     THEN 'Monday'
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 3
+    WHEN DAYOFWEEK(sbtxdatetime) = 3
     THEN 'Tuesday'
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 4
+    WHEN DAYOFWEEK(sbtxdatetime) = 4
     THEN 'Wednesday'
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 5
+    WHEN DAYOFWEEK(sbtxdatetime) = 5
     THEN 'Thursday'
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 6
+    WHEN DAYOFWEEK(sbtxdatetime) = 6
     THEN 'Friday'
-    WHEN DAYOFWEEK(TO_DATE(sbtxdatetime)) = 7
+    WHEN DAYOFWEEK(sbtxdatetime) = 7
     THEN 'Saturday'
   END AS dayname,
   (
     (
-      DAYOFWEEK(TO_DATE(sbtxdatetime)) + 3
+      DAYOFWEEK(sbtxdatetime) + 3
     ) % 7
   ) + 1 AS dayofweek
 FROM main.sbtransaction

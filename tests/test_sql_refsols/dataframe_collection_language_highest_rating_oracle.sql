@@ -1,15 +1,15 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
     CLASSES.LANGUAGE,
     TEACHING.RATING,
     TEACHING.TEACHER_ID,
-    ROW_NUMBER() OVER (PARTITION BY CLASSES.LANGUAGE ORDER BY TEACHING.RATING DESC) AS "_W"
+    ROW_NUMBER() OVER (PARTITION BY CLASSES.LANGUAGE ORDER BY TEACHING.RATING DESC) AS "_w"
   FROM (VALUES
     (15112, 'Programming Fundamentals', 'Python'),
     (15122, 'Imperative Programming', 'C'),
     (15150, 'Functional Programming', 'SML'),
     (15210, 'Parallel Algorithms', 'SML'),
-    (15251, 'Theoretical CS', NULL)) AS CLASSES("KEY", CLASS_NAME, LANGUAGE)
+    (15251, 'Theoretical CS', NULL)) AS CLASSES("key", CLASS_NAME, LANGUAGE)
   JOIN (VALUES
     (15112, 1, '2020-09-01', 11.39),
     (15122, 2, '2020-09-01', 9.22),
@@ -41,16 +41,16 @@ WITH "_T" AS (
     (15150, 4, '2023-02-01', 9.73),
     (15210, 5, '2023-02-01', 0.12),
     (15251, 6, '2023-02-01', 4.99)) AS TEACHING(CLASS_KEY, TEACHER_ID, SEMESTER, RATING)
-    ON CLASSES."KEY" = TEACHING.CLASS_KEY
+    ON CLASSES."key" = TEACHING.CLASS_KEY
   WHERE
     NOT CLASSES.LANGUAGE IS NULL
 )
 SELECT
-  "_T".LANGUAGE AS language,
-  "_T".RATING AS rating,
+  "_t".LANGUAGE AS language,
+  "_t".RATING AS rating,
   TEACHERS.FIRST_NAME AS first_name,
   TEACHERS.LAST_NAME AS last_name
-FROM "_T" "_T"
+FROM "_t" "_t"
 LEFT JOIN (VALUES
   (1, 'Anil', 'Lee'),
   (2, 'Mike', 'Lee'),
@@ -64,6 +64,6 @@ LEFT JOIN (VALUES
   (10, 'Mike', 'Thomas'),
   (11, 'Ian', 'Thomas'),
   (12, 'David', 'Thomas')) AS TEACHERS(TID, FIRST_NAME, LAST_NAME)
-  ON TEACHERS.TID = "_T".TEACHER_ID
+  ON TEACHERS.TID = "_t".TEACHER_ID
 WHERE
-  "_T"."_W" = 1
+  "_t"."_w" = 1

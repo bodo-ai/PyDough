@@ -38,7 +38,7 @@ WITH _t2 AS (
     1
 ), _t5 AS (
   SELECT
-    MAX(users.us_country_id) AS anything_us_country_id,
+    ANY_VALUE(users.us_country_id) AS anything_us_country_id,
     COUNT(_s11.in_device_id) AS count_in_device_id
   FROM main.users AS users
   JOIN main.devices AS devices
