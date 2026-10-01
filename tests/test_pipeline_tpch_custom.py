@@ -117,6 +117,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     iff_with_aggregates_on_different_collections,
     isin_mixed_literal_list,
     isin_non_literal_arg,
+    join_strings_too_few_values,
     month_year_sliding_windows,
     n_orders_first_day,
     nation_acctbal_breakdown,
@@ -7581,6 +7582,15 @@ def test_pipeline_e2e_simple_week(
                 "a literal, or a term from a child collection."
             ),
             id="partition_by_child_reference",
+        ),
+        pytest.param(
+            join_strings_too_few_values,
+            None,
+            re.escape(
+                "Invalid operator invocation \"JOIN_STRINGS(', ', "
+                'customer.key)": Expected at least 3 arguments, received 2'
+            ),
+            id="join_strings_too_few_values",
         ),
         pytest.param(
             isin_non_literal_arg,

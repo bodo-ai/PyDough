@@ -3898,6 +3898,14 @@ def partition_by_child_reference():
     )
 
 
+def join_strings_too_few_values():
+    """
+    Test that calling JOIN_STRINGS with a delimiter and fewer than two
+    values to join is now giving a descriptive error message.
+    """
+    return orders.CALCULATE(cust_ids=JOIN_STRINGS(", ", customer.key))
+
+
 def isin_non_literal_arg():
     """
     Test that passing a PyDough expression
