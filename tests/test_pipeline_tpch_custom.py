@@ -130,6 +130,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     part_reduced_size,
     partition_by_child_reference,
     partition_by_literal,
+    partition_key_name_collision,
     partition_self_reference,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
@@ -6801,6 +6802,20 @@ from .testing_utilities import (
                 "replace_non_string_arg",
             ),
             id="replace_non_string_arg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_key_name_collision,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2],
+                        "total": [587762.91, 1028273.43],
+                    }
+                ),
+                "partition_key_name_collision",
+            ),
+            id="partition_key_name_collision",
         ),
     ],
 )

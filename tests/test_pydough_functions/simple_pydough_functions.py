@@ -3938,3 +3938,30 @@ def replace_non_string_arg():
         .CALCULATE(clean_key=REPLACE(key, "1", "one"))
         .ORDER_BY(key.ASC())
     )
+
+
+def partition_key_name_collision():
+    """
+    Test for fixing the problem with shadowing a collection's own column
+    with a same-named CALCULATE term
+    (`orders.CALCULATE(key=customer.key, ...)`, and `orders` already has its
+    own `key` column), then using that term as a PARTITION key,
+    used to cause a `RecursionError`, a `KeyError`, and a silent
+    wrong-grouping bug, all from the same name collision.
+    """
+    invoice_info = orders.CALCULATE(
+        order_year=YEAR(order_date),
+        key=customer.key,
+        order_total=total_price,
+    )
+    return (
+        invoice_info.PARTITION(
+            name="customer_groups",
+            by=(key),
+        )
+        .CALCULATE(
+            key,
+            total=SUM(invoice_info.order_total),
+        )
+        .WHERE(key <= 3)
+    )
