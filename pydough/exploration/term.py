@@ -158,12 +158,12 @@ def explain_term(
         if "Unrecognized term" in str(e):
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
-                f"  {str(e)}"
+                f"  {e!s}"
                 "This could mean you accessed a property using a name that does not exist, or\n"
                 "that you need to place your PyDough code into a context for it to make sense."
             )
         else:
-            raise e
+            raise
 
     if isinstance(qualified_node, PyDoughExpressionQDAG):
         lines.append(

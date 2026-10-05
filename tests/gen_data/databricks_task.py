@@ -668,16 +668,18 @@ def main(force: bool = False) -> None:
 
     from databricks import sql as dbsql
 
-    with dbsql.connect(
-        server_hostname=host,
-        http_path=http_path,
-        access_token=token,
-    ) as conn:
-        with conn.cursor() as cursor:
-            if init_only:
-                setup_tables(cursor)
-            else:
-                run_with_cursor(cursor, force=force)
+    with (
+        dbsql.connect(
+            server_hostname=host,
+            http_path=http_path,
+            access_token=token,
+        ) as conn,
+        conn.cursor() as cursor,
+    ):
+        if init_only:
+            setup_tables(cursor)
+        else:
+            run_with_cursor(cursor, force=force)
 
 
 if __name__ == "__main__":

@@ -38,12 +38,13 @@ The transformed code will look like this:
 
 ```python
 from pydough.unqualified import UnqualifiedRoot
+
 _ROOT = UnqualifiedRoot(pydough.active_session.metadata)
 
 result = _ROOT.Nations.CALCULATE(
     nation_name=_ROOT.name,
     region_name=_ROOT.region.name,
-    num_customers=_ROOT.COUNT(_ROOT.customers)
+    num_customers=_ROOT.COUNT(_ROOT.customers),
 )
 print(pydough.to_df(result))
 ```

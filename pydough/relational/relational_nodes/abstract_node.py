@@ -88,7 +88,7 @@ class RelationalNode(ABC):
         """
         return self.node_equals(other) and self.columns == other.columns
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, RelationalNode) and self.equals(other)
 
     def make_column_string(self, columns: dict[str, Any], compact: bool) -> str:
