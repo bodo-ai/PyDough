@@ -3997,5 +3997,5 @@ def shadowed_calc_term():
             key,
             x=MAX(customer.CALCULATE(cust_name=phone).orders.cust_name),
         )
-        .TOP_K(5, by=x)
+        .TOP_K(5, by=key.ASC())
     )

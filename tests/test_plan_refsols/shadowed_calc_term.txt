@@ -1,4 +1,4 @@
-ROOT(columns=[('key', o_orderkey), ('x', max_c_phone)], orderings=[(max_c_phone):asc_first], limit=5:numeric)
+ROOT(columns=[('key', o_orderkey), ('x', max_c_phone)], orderings=[(o_orderkey):asc_first], limit=5:numeric)
  JOIN(condition=t0.o_custkey == t1.c_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'max_c_phone': t1.max_c_phone, 'o_orderkey': t0.o_orderkey})
   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
   AGGREGATE(keys={'c_custkey': c_custkey}, aggregations={'max_c_phone': MAX(c_phone)})

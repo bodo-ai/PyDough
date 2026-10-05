@@ -15,5 +15,5 @@ FROM tpch.orders AS orders
 LEFT JOIN _s3 AS _s3
   ON _s3.c_custkey = orders.o_custkey
 ORDER BY
-  2 NULLS FIRST
+  1 NULLS FIRST
 LIMIT 5

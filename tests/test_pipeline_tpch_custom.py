@@ -6825,13 +6825,19 @@ from .testing_utilities import (
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "key": [105056, 428615, 847044, 918659, 1125219],
-                        "x": ["10-100-106-1617"] * 5,
+                        "key": [1, 2, 3, 4, 5],
+                        "x": [
+                            "23-644-998-4944",
+                            "20-715-308-7926",
+                            "25-884-345-1592",
+                            "20-500-807-1549",
+                            "30-452-969-2072",
+                        ],
                     }
                 ),
-                "shadowed_calc_term_exe",
+                "shadowed_calc_term",
             ),
-            id="shadowed_calc_term_exe",
+            id="shadowed_calc_term",
         ),
     ],
 )
