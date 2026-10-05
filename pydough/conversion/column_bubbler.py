@@ -42,7 +42,7 @@ def name_sort_key(name: str) -> tuple[bool, bool, str]:
         comparison).
     """
     return (
-        name.startswith("expr") or name.startswith("agg"),
+        name.startswith(("expr", "agg")),
         any(char.isdigit() for char in name),
         name,
     )
@@ -87,7 +87,7 @@ def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> lis
         if len(expr.inputs) == 0 and expr.op.function_name.lower() == "count":
             result.append("n_rows")
 
-    if not (current_name.startswith("agg") or current_name.startswith("expr")):
+    if not (current_name.startswith(("agg", "expr"))):
         if re.match(r"^(.*)_[0-9]+$", current_name):
             result.append(re.findall(r"^(.*)_[0-9]+$", current_name)[0])
     return result

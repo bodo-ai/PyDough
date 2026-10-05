@@ -563,7 +563,7 @@ class UnqualifiedRoot(UnqualifiedNode):
         )
 
     def __getattribute__(self, name: str) -> Any:
-        graph, func_map, templates = super(UnqualifiedNode, self).__getattribute__(
+        _graph, func_map, templates = super(UnqualifiedNode, self).__getattribute__(
             "_parcel"
         )
         if name in func_map:
