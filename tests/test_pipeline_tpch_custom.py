@@ -7662,7 +7662,10 @@ def test_pipeline_e2e_simple_week(
             parent_calc_access_error,
             None,
             re.escape(
-                "Unrecognized term of customer: 'cust_name'. Did you mean: name, phone, key?"
+                "Cannot access inherited term 'cust_name' through child collection "
+                "'customer' in customer.cust_name. Terms down-streamed from an "
+                "ancestor CALCULATE can only be referenced directly, "
+                "e.g. 'cust_name'."
             ),
             id="parent_calc_access_error",
         ),
