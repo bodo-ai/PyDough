@@ -6795,7 +6795,12 @@ from .testing_utilities import (
             PyDoughPandasTest(
                 shadowed_calc_term,
                 "TPCH",
-                lambda: pd.DataFrame({}),
+                lambda: pd.DataFrame(
+                    {
+                        "key": [105056, 428615, 847044, 918659, 1125219],
+                        "x": ["10-100-106-1617"] * 5,
+                    }
+                ),
                 "shadowed_calc_term_exe",
             ),
             id="shadowed_calc_term_exe",
@@ -7598,16 +7603,6 @@ def test_pipeline_e2e_simple_week(
                 "Unrecognized term of customer: 'cust_name'. Did you mean: name, phone, key?"
             ),
             id="parent_calc_access_error",
-        ),
-        pytest.param(
-            shadowed_calc_term,
-            None,
-            re.escape(
-                "Cannot access inherited term 'cust_name' through child collection "
-                "'customer' in customer.cust_name. Terms down-streamed from an "
-                "ancestor CALCULATE can only be referenced directly, e.g. 'cust_name'."
-            ),
-            id="shadowed_calc_term",
         ),
     ],
 )
