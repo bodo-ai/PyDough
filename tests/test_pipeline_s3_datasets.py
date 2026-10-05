@@ -219,23 +219,18 @@ result = california_schools.schools.CALCULATE(
                 r"""
 # Reusable expressions
 has_customer_expr = HAS(customer) == 1
-employee_name_expr = JOIN_STRINGS(' ', first_name, last_name)
 total_invoice_expr = SUM(customer.invoice.total)
 
 # Filter employees using HAS(...) == 1 and aggregate over a 2-level relationship
 result = employee.WHERE(has_customer_expr).CALCULATE(
-    employee_name=employee_name_expr,
+    employee_id=employee_id,
     total_invoice=total_invoice_expr,
-).ORDER_BY(employee_name.ASC())
+).ORDER_BY(employee_id.ASC())
                 """,
                 "chinook",
                 lambda: pd.DataFrame(
                     {
-                        "employee_name": [
-                            "Jane Peacock",
-                            "Margaret Park",
-                            "Steve Johnson",
-                        ],
+                        "employee_id": [3, 4, 5],
                         "total_invoice": [833.04, 775.40, 720.16],
                     }
                 ),

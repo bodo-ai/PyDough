@@ -1,0 +1,8 @@
+ROOT(columns=[('employee_id', EmployeeId), ('total_invoice', DEFAULT_TO(sum_sum_Total, 0:numeric))], orderings=[(EmployeeId):asc_first])
+ JOIN(condition=t0.EmployeeId == t1.anything_SupportRepId, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'EmployeeId': t0.EmployeeId, 'sum_sum_Total': t1.sum_sum_Total})
+  SCAN(table=main.Employee, columns={'EmployeeId': EmployeeId})
+  AGGREGATE(keys={'anything_SupportRepId': anything_SupportRepId}, aggregations={'sum_sum_Total': SUM(sum_Total)})
+   AGGREGATE(keys={'CustomerId': CustomerId_0}, aggregations={'anything_SupportRepId': ANYTHING(SupportRepId), 'sum_Total': SUM(Total)})
+    JOIN(condition=t0.CustomerId == t1.CustomerId, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'CustomerId_0': t0.CustomerId, 'SupportRepId': t0.SupportRepId, 'Total': t1.Total})
+     SCAN(table=main.Customer, columns={'CustomerId': CustomerId, 'SupportRepId': SupportRepId})
+     SCAN(table=main.Invoice, columns={'CustomerId': CustomerId, 'Total': Total})
