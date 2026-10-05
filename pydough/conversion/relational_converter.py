@@ -941,9 +941,11 @@ class RelTranslation:
                 for key_name in partition.key_names:
                     key_expr = partition.terms[key_name]
                     assert isinstance(key_expr, HybridChildRefExpr)
-                    hybrid_ref: HybridRefExpr = HybridRefExpr(
-                        key_expr.name, key_expr.typ
-                    )
+                    # Note: uses `key_name`, not `key_expr.name`, since the
+                    # goal is to expose the value under its QDAG-facing
+                    # name, which may differ from its (possibly-renamed)
+                    # name within the child subtree.
+                    hybrid_ref: HybridRefExpr = HybridRefExpr(key_name, key_expr.typ)
                     context.expressions[hybrid_ref] = context.expressions[key_expr]
         return context
 
