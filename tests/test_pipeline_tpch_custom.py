@@ -150,6 +150,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     regional_first_order_best_line_part,
     regional_suppliers_percentile,
     richest_customer_per_region,
+    shadowed_calc_term,
     simple_cross_1,
     simple_cross_2,
     simple_cross_3,
@@ -6790,6 +6791,15 @@ from .testing_utilities import (
             ),
             id="compound_ref_correlation_extraction",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                shadowed_calc_term,
+                "TPCH",
+                lambda: pd.DataFrame({}),
+                "shadowed_calc_term_exe",
+            ),
+            id="shadowed_calc_term_exe",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -7585,24 +7595,20 @@ def test_pipeline_e2e_simple_week(
             parent_calc_access_error,
             None,
             re.escape(
-                "Unrecognized term of "
-                "TPCH.customers.CALCULATE(cust_name=name).orders.customer: "
-                "'cust_name'. Did you mean: name, phone, key?"
+                "Unrecognized term of customer: 'cust_name'. Did you mean: name, phone, key?"
             ),
             id="parent_calc_access_error",
         ),
-        # pytest.param(
-        #     PyDoughPandasTest(
-        #         "main_context = orders.CALCULATE(or_clerk=clerk)\n"
-        #         "result = main_context.lines.CALCULATE(\n"
-        #         "   x=order.or_clerk\n"
-        #         ")",
-        #         "TPCH",
-        #         lambda: pd.DataFrame({}),
-        #         "parent_calc_access_error_2",
-        #     ),
-        #     id="parent_calc_access_error_2",
-        # ),
+        pytest.param(
+            shadowed_calc_term,
+            None,
+            re.escape(
+                "Cannot access inherited term 'cust_name' through child collection "
+                "'customer' in customer.cust_name. Terms down-streamed from an "
+                "ancestor CALCULATE can only be referenced directly, e.g. 'cust_name'."
+            ),
+            id="shadowed_calc_term",
+        ),
     ],
 )
 def test_pipeline_e2e_errors(
