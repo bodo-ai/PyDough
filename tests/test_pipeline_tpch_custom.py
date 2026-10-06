@@ -131,6 +131,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     part_reduced_size,
     partition_by_child_reference,
     partition_by_literal,
+    partition_child_inherited_term,
     partition_key_name_collision,
     partition_self_reference,
     parts_quantity_increase_95_96,
@@ -6838,6 +6839,27 @@ from .testing_utilities import (
                 "shadowed_calc_term",
             ),
             id="shadowed_calc_term",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_child_inherited_term,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_nations": [5, 5, 5, 5, 5],
+                    }
+                ),
+                "partition_child_inherited_term",
+            ),
+            id="partition_child_inherited_term",
         ),
     ],
 )

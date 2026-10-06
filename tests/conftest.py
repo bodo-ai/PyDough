@@ -3222,7 +3222,11 @@ def mock_server_setup():
             time.sleep(0.5)
     else:
         proc.terminate()
-        output, _ = proc.communicate()
+        try:
+            output, _ = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            output, _ = proc.communicate()
         raise RuntimeError(f"Mock server failed to start:\n{output}")
 
     yield server_url

@@ -3999,3 +3999,26 @@ def shadowed_calc_term():
         )
         .TOP_K(5, by=key.ASC())
     )
+
+
+def partition_child_inherited_term():
+    """
+    Pair every region with its nations via CROSS, partition the pairs by
+    region, and aggregate a term (`region_name`) that was down-streamed from
+    the regions CALCULATE *inside the partitioned data*. The PARTITION
+    context only exposes `rkey`, so accessing `nations.region_name` through
+    the partition child is valid (context_inherits is False).
+    """
+
+    return (
+        regions.CALCULATE(rkey=key, region_name=name)
+        .CROSS(nations)
+        .WHERE(region_key == rkey)
+        .PARTITION(name="region_groups", by=rkey)
+        .CALCULATE(
+            rkey,
+            region_name=MAX(nations.region_name),
+            n_nations=COUNT(nations),
+        )
+        .ORDER_BY(rkey.ASC())
+    )
