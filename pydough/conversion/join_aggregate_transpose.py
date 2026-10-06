@@ -289,13 +289,6 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # join.
         agg_input: RelationalNode = aggregate.inputs[0]
 
-        # # The aggregate's input columns get passed through to the new join as-is
-        # # (see below). An Aggregate's columns are themselves aggregation
-        # # CallExpressions, so passing those through here would
-        # # double-aggregate them.
-        # if isinstance(agg_input, Aggregate):
-        #     return None
-
         non_agg_input: RelationalNode = (
             join.inputs[1] if is_left_agg else join.inputs[0]
         )
