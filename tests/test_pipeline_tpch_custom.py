@@ -6749,6 +6749,38 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .region\n"
+                "   .CALCULATE(r_name=name, n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust)\n"
+                "   .TOP_K(3, by=(n.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "r_name": ["EUROPE"] * 3,
+                        "n_name": ["ROMANIA"] * 3,
+                        "c_industry": ["MACHINERY"] * 3,
+                        "c_name": [
+                            "Customer#000000043",
+                            "Customer#000000208",
+                            "Customer#000000372",
+                        ],
+                        "n": [1273] * 3,
+                    }
+                ),
+                "partition_name_above_below",
+            ),
+            id="partition_name_above_below",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 iff_with_aggregates_on_different_collections,
                 "TPCH",
                 lambda: pd.DataFrame({"output": [10000]}),

@@ -424,7 +424,10 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         Raises:
             `PyDoughException` if the term does not exist in the collection.
         """
-        if term_name not in self.all_terms:
+        if (
+            term_name not in self.all_terms
+            and term_name not in self.inherited_downstreamed_terms
+        ):
             raise pydough.active_session.error_builder.term_not_found(
                 collection=self, term_name=term_name
             )
