@@ -46,6 +46,8 @@ class GraphMetadata(AbstractMetadata):
         "pydough",
         "pd.DataFrame",
         "datetime",
+        "bool",
+        "tuple",
     }
     """
     Allowed types for template attributes and definitions in the graph.

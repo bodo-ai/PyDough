@@ -511,6 +511,47 @@ from tests.testing_utilities import (
             ),
             id="templates_no_attributes_api",
         ),
+        pytest.param(
+            # Test a template direct call with boolean and tuple parameter types
+            PyDoughPandasTest(
+                "result = rank_nations_customers((1,3), False)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                        ],
+                        "region_key": [1, 1, 1],
+                        "n_customers": [5975, 5999, 6020],
+                        "n_rank": [1, 2, 3],
+                    }
+                ),
+                "templates_tuple_bool_params",
+            ),
+            id="templates_tuple_bool_params",
+        ),
+        pytest.param(
+            # Test a template api call with boolean and tuple parameter types
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'rank_nations_customers',"
+                "   labels={'regions_tuple': 'Tuple 2', 'ranking_ties': 'True'}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["EGYPT", "FRANCE", "GERMANY"],
+                        "region_key": [4, 3, 3],
+                        "n_customers": [5995, 6100, 5908],
+                        "n_rank": [1, 2, 3],
+                    }
+                ),
+                "templates_tuple_bool_attr",
+            ),
+            id="templates_tuple_bool_attr",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:

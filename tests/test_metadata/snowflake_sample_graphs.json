@@ -958,6 +958,26 @@
             { "label": "Region 1", "value": "ASIA"},
             { "label": "Region 2", "value": "EUROPE"}
           ]
+        },
+        {
+          "name": "bool_attribute",
+          "usage": {},
+          "type": "bool",
+          "description": "A boolean attribute for filtering orders",
+          "options": [
+            { "label": "True", "value": true },
+            { "label": "False", "value": false }
+          ]
+        },
+        {
+          "name": "tuple_type_attribute",
+          "usage": {},
+          "type": "tuple",
+          "description": "A tuple attribute for filtering orders",
+          "options": [
+            { "label": "Tuple 1", "value": "(1, 2)"},
+            { "label": "Tuple 2", "value": "(3, 4)"}
+          ]
         }
       ],
       "definitions": [
@@ -1236,6 +1256,22 @@
             }
           },
           "source": "result = nations.WHERE((COUNT(customers.orders) >= {1}) & (region.name == {2})).CALCULATE(name, nation_region=region.name, n_orders=COUNT(customers.orders))",
+          "answer_variable": "result"
+        },
+        {
+          "name": "rank_nations_customers",
+          "description": "Counts the number of clientes for nations in a given region",
+          "parameters": {
+            "regions_tuple": {
+              "type": "tuple",
+              "description": "Selected regions"
+            },
+            "ranking_ties":{
+              "type": "bool",
+              "description": "Flag to allow or not ties in the ranking"
+            }
+          },
+          "source": "result = nations.WHERE(ISIN(region_key, {1})).CALCULATE(name, region_key, n_customers=COUNT(customers), n_rank=RANKING(by=(name.ASC(), COUNT(customers).DESC()), allow_ties={2})).TOP_K(3, by=n_rank)",
           "answer_variable": "result"
         }
       ]
