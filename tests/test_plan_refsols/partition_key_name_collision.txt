@@ -1,0 +1,4 @@
+ROOT(columns=[('key', o_custkey), ('total', DEFAULT_TO(sum_o_totalprice, 0:numeric))], orderings=[])
+ AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})
+  FILTER(condition=o_custkey <= 3:numeric, columns={'o_custkey': o_custkey, 'o_totalprice': o_totalprice})
+   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_totalprice': o_totalprice})

@@ -1,0 +1,3 @@
+ROOT(columns=[('clean_key', REPLACE(c_custkey, '1':string, 'one':string))], orderings=[(c_custkey):asc_first])
+ FILTER(condition=c_custkey <= 5:numeric, columns={'c_custkey': c_custkey})
+  SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
