@@ -1,23 +1,24 @@
-WITH "_T1" AS (
+WITH "_S3" AS (
   SELECT
-    CUSTOMER.c_name AS C_NAME,
-    ORDERS.o_custkey AS O_CUSTKEY,
-    TRUNC(CAST(CAST(ORDERS.o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(
-      CAST(CAST(LAG(ORDERS.o_orderdate, 1) OVER (PARTITION BY ORDERS.o_custkey ORDER BY ORDERS.o_orderdate) AS DATE) AS DATE),
+    o_custkey AS O_CUSTKEY,
+    TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(
+      CAST(CAST(LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS DATE) AS DATE),
       'DD'
     ) AS DAY_DIFF
-  FROM TPCH.CUSTOMER CUSTOMER
-  JOIN TPCH.NATION NATION
-    ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'JAPAN'
-  JOIN TPCH.ORDERS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey AND ORDERS.o_orderpriority = '1-URGENT'
+  FROM TPCH.ORDERS
+  WHERE
+    o_orderpriority = '1-URGENT'
 )
 SELECT
-  ANY_VALUE(C_NAME) AS name,
-  AVG(DAY_DIFF) AS avg_diff
-FROM "_T1"
+  ANY_VALUE(CUSTOMER.c_name) AS name,
+  AVG("_S3".DAY_DIFF) AS avg_diff
+FROM TPCH.CUSTOMER CUSTOMER
+JOIN TPCH.NATION NATION
+  ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'JAPAN'
+JOIN "_S3" "_S3"
+  ON CUSTOMER.c_custkey = "_S3".O_CUSTKEY
 GROUP BY
-  O_CUSTKEY
+  "_S3".O_CUSTKEY
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 5 ROWS ONLY

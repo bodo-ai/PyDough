@@ -1046,6 +1046,7 @@ S3_DATASETS = [
     "donor",
     "movielens",
     "california_schools",
+    "chinook",
 ]
 """
     Contains the name of all the custom datasets that will be used for testing.
@@ -1053,6 +1054,7 @@ S3_DATASETS = [
 """
 S3_DATASETS_SCRIPTS = {
     "world_development_indicators": "init_world_indicators_sqlite",
+    "chinook": "init_chinook_sqlite",
 }
 """
     Maps the datasets that need to be built with a sql script, with the name of
