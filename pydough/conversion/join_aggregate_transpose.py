@@ -288,6 +288,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # other input to the join, as these shall be the two inputs to the new
         # join.
         agg_input: RelationalNode = aggregate.inputs[0]
+
         non_agg_input: RelationalNode = (
             join.inputs[1] if is_left_agg else join.inputs[0]
         )
@@ -301,7 +302,9 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # conflicts.
         for col_name, col_expr in agg_input.columns.items():
             join_name = self.generate_name(col_name, new_join_columns)
-            new_join_columns[join_name] = add_input_name(col_expr, agg_alias)
+            new_join_columns[join_name] = ColumnReference(
+                col_name, col_expr.data_type, agg_alias
+            )
 
         # Add substitution remappings for the aggregate's output columns so that
         # they are correctly renamed as regular references in the final
