@@ -657,27 +657,27 @@ class Qualifier:
                         children, ref_num, name
                     )
 
-    def names_defined_in_child_chain(self, unqualified: UnqualifiedNode) -> set[str]:
+    def names_defined_in_child_chain(
+        self, qualified_node: PyDoughCollectionQDAG
+    ) -> set[str]:
         """
-        Walks the unqualified collection chain of a child access (e.g.
-        `customer.WHERE(...).CALCULATE(customer_name=name).orders.BEST(...)`)
-        down to the root, collecting every term name defined by a CALCULATE
-        that is part of the chain itself.
+        Walks the qualified node chain down to the root, collecting every term
+        name defined by a CALCULATE that is part of the chain itself.
 
         Args:
-            `unqualified`: the unqualified collection node to walk.
+            `qualified_node`: the qualified node to walk.
 
         Returns:
             The set of term names defined by CALCULATEs within the chain.
         """
         defined: set[str] = set()
-        node: UnqualifiedNode = unqualified
-        while not isinstance(node, UnqualifiedRoot):
-            if isinstance(node, UnqualifiedCalculate):
-                for term_name, _ in node._parcel[1]:
+        node: PyDoughCollectionQDAG = qualified_node
+        while not isinstance(node, GlobalContext):
+            if isinstance(node, PyDoughCollectionQDAG):
+                for term_name in node.calc_terms:
                     defined.add(term_name)
-            predecessor = node._parcel[0]
-            if not isinstance(predecessor, UnqualifiedNode):
+            predecessor = node.ancestor_context
+            if not predecessor:
                 break
             node = predecessor
         return defined
@@ -727,7 +727,7 @@ class Qualifier:
 
         # The child chain may redefine (shadow) the same name; then the
         # value comes from inside the child, so it is valid.
-        if name in self.names_defined_in_child_chain(unqualified_parent):
+        if name in self.names_defined_in_child_chain(qualified_parent):
             return
 
         raise PyDoughUnqualifiedException(
