@@ -34,6 +34,7 @@ from pydough.qdag import (
     SubCollection,
     WindowCall,
 )
+from pydough.qdag.collections.calculate import Calculate
 from pydough.types import PyDoughType
 from pydough.utilities import ExplodeSpec
 
@@ -658,28 +659,38 @@ class Qualifier:
                     )
 
     def names_defined_in_child_chain(
-        self, qualified_node: PyDoughCollectionQDAG
+        self,
+        qualified_node: PyDoughCollectionQDAG,
+        context: PyDoughCollectionQDAG,
     ) -> set[str]:
         """
-        Walks the qualified node chain down to the root, collecting every term
-        name defined by a CALCULATE that is part of the chain itself.
+        Walks the qualified chain of a child access up to (but not including)
+        the context the child is evaluated in, collecting every term name
+        defined by a CALCULATE that is part of the child chain itself.
 
         Args:
-            `qualified_node`: the qualified node to walk.
+            `qualified_node`: the qualified collection the term is accessed from.
+            `context`: the context the child chain is attached to; the walk
+            stops here so CALCULATEs from the enclosing context are ignored.
 
         Returns:
-            The set of term names defined by CALCULATEs within the chain.
+            The set of term names defined by CALCULATEs within the child chain.
         """
         defined: set[str] = set()
-        node: PyDoughCollectionQDAG = qualified_node
-        while not isinstance(node, GlobalContext):
-            if isinstance(node, PyDoughCollectionQDAG):
-                for term_name in node.calc_terms:
-                    defined.add(term_name)
-            predecessor = node.ancestor_context
-            if not predecessor:
-                break
-            node = predecessor
+        node: PyDoughCollectionQDAG | None = qualified_node
+        while (
+            node is not None
+            and node is not context
+            and not isinstance(node, GlobalContext)
+        ):
+            if isinstance(node, Calculate):
+                defined.update(name for name in node.calc_term_values.keys())
+            # Operators (CALCULATE, WHERE, SINGULAR, ...) step back through
+            # their preceding context; child accesses step up to their parent.
+            if node.preceding_context is not None:
+                node = node.preceding_context
+            else:
+                node = node.ancestor_context
         return defined
 
     def verify_not_inherited_through_child(
@@ -727,7 +738,7 @@ class Qualifier:
 
         # The child chain may redefine (shadow) the same name; then the
         # value comes from inside the child, so it is valid.
-        if name in self.names_defined_in_child_chain(qualified_parent):
+        if name in self.names_defined_in_child_chain(qualified_parent, context):
             return
 
         raise PyDoughUnqualifiedException(
