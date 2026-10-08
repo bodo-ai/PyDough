@@ -127,9 +127,11 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_info_per_priority,
     order_quarter_test,
     orders_versus_first_orders,
+    parent_calc_access_error,
     part_reduced_size,
     partition_by_child_reference,
     partition_by_literal,
+    partition_child_inherited_term,
     partition_key_name_collision,
     partition_self_reference,
     parts_quantity_increase_95_96,
@@ -154,6 +156,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     regional_suppliers_percentile,
     replace_non_string_arg,
     richest_customer_per_region,
+    shadowed_calc_term,
     simple_cross_1,
     simple_cross_2,
     simple_cross_3,
@@ -6817,6 +6820,47 @@ from .testing_utilities import (
             ),
             id="partition_key_name_collision",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                shadowed_calc_term,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3, 4, 5],
+                        "x": [
+                            "23-644-998-4944",
+                            "20-715-308-7926",
+                            "25-884-345-1592",
+                            "20-500-807-1549",
+                            "30-452-969-2072",
+                        ],
+                    }
+                ),
+                "shadowed_calc_term",
+            ),
+            id="shadowed_calc_term",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_child_inherited_term,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_nations": [5, 5, 5, 5, 5],
+                    }
+                ),
+                "partition_child_inherited_term",
+            ),
+            id="partition_child_inherited_term",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -7635,6 +7679,17 @@ def test_pipeline_e2e_simple_week(
                 "not customer.key."
             ),
             id="isin_mixed_literal_list",
+        ),
+        pytest.param(
+            parent_calc_access_error,
+            None,
+            re.escape(
+                "Cannot access inherited term 'cust_name' through child collection "
+                "'customer' in customer.cust_name. Terms down-streamed from an "
+                "ancestor CALCULATE can only be referenced directly, "
+                "e.g. 'cust_name'."
+            ),
+            id="parent_calc_access_error",
         ),
     ],
 )

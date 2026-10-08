@@ -34,6 +34,7 @@ from pydough.qdag import (
     SubCollection,
     WindowCall,
 )
+from pydough.qdag.collections.calculate import Calculate
 from pydough.types import PyDoughType
 from pydough.utilities import ExplodeSpec
 
@@ -638,6 +639,11 @@ class Qualifier:
                     typ: PyDoughType = context.get_expr(name).pydough_type
                     return self.builder.build_reference(context, name, typ)
                 else:
+                    # Accessing `child.name`: forbid reaching a down-streamed
+                    # (inherited) term through a child collection.
+                    self.verify_not_inherited_through_child(
+                        unqualified, unqualified_parent, qualified_parent, context, name
+                    )
                     # Otherwise, the access is a reference to a scalar attribute of
                     # a child collection node of the current context. Add this new
                     # child to the list of children, unless already present, then
@@ -651,6 +657,96 @@ class Qualifier:
                     return self.builder.build_child_reference_expression(
                         children, ref_num, name
                     )
+
+    def names_defined_in_child_chain(
+        self,
+        qualified_node: PyDoughCollectionQDAG,
+        context: PyDoughCollectionQDAG,
+    ) -> set[str]:
+        """
+        Walks the qualified chain of a child access up to (but not including)
+        the context the child is evaluated in, collecting every term name
+        defined by a CALCULATE that is part of the child chain itself.
+
+        Args:
+            `qualified_node`: the qualified collection the term is accessed from.
+            `context`: the context the child chain is attached to; the walk
+            stops here so CALCULATEs from the enclosing context are ignored.
+
+        Returns:
+            The set of term names defined by CALCULATEs within the child chain.
+        """
+        defined: set[str] = set()
+        node: PyDoughCollectionQDAG | None = qualified_node
+        while (
+            node is not None
+            and node is not context
+            and not isinstance(node, GlobalContext)
+        ):
+            if isinstance(node, Calculate):
+                defined.update(name for name in node.calc_term_values.keys())
+            # Operators (CALCULATE, WHERE, SINGULAR, ...) step back through
+            # their preceding context; child accesses step up to their parent.
+            if node.preceding_context is not None:
+                node = node.preceding_context
+            else:
+                node = node.ancestor_context
+        return defined
+
+    def verify_not_inherited_through_child(
+        self,
+        unqualified: UnqualifiedAccess,
+        unqualified_parent: UnqualifiedNode,
+        qualified_parent: PyDoughCollectionQDAG,
+        context: PyDoughCollectionQDAG,
+        name: str,
+    ) -> None:
+        """
+        Verifies that an expression accessed as `child.name` is not a term
+        that the child only has because it was down-streamed from the context
+        the child is being evaluated in. For example, in
+        `customers.CALCULATE(cust_name=name).orders.CALCULATE(x=customer.cust_name)`
+        `customer` only sees `cust_name` because it inherits it from the
+        enclosing context, so the access is invalid (use `cust_name` directly).
+
+        Accesses are still valid when the term comes from the child's own
+        data, e.g. a CALCULATE inside the child expression
+        (`customer.CALCULATE(customer_name=name).orders.customer_name`) or
+        inside the data of a PARTITION child (`pricing_collection.price`).
+
+        Raises:
+            `PyDoughUnqualifiedException` if the term is inherited from the
+            enclosing context through the child collection.
+        """
+        # Only terms the child inherits (not its own columns/calcs) matter.
+        is_inherited: bool = (
+            name in qualified_parent.ancestral_mapping
+            or name in qualified_parent.inherited_downstreamed_terms
+        )
+        if not is_inherited or name in qualified_parent.calc_terms:
+            return
+
+        # Only invalid if the term comes from the enclosing context. If the
+        # context itself does not inherit it, it originated inside the
+        # child's own data (e.g. a PARTITION child's partitioned data).
+        context_inherits: bool = (
+            name in context.ancestral_mapping
+            or name in context.inherited_downstreamed_terms
+        )
+        if not context_inherits:
+            return
+
+        # The child chain may redefine (shadow) the same name; then the
+        # value comes from inside the child, so it is valid.
+        if name in self.names_defined_in_child_chain(qualified_parent, context):
+            return
+
+        raise PyDoughUnqualifiedException(
+            f"Cannot access inherited term {name!r} through child collection "
+            f"{qualified_parent.standalone_string!r} in {unqualified!r}. "
+            f"Terms down-streamed from an ancestor CALCULATE can only be "
+            f"referenced directly, e.g. {name!r}."
+        )
 
     def qualify_calculate(
         self,

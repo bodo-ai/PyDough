@@ -3210,6 +3210,12 @@ def mock_server_setup():
 
     # Wait until server is ready
     for _ in range(20):
+        if proc.poll() is not None:
+            output, _ = proc.communicate()
+            raise RuntimeError(
+                f"Mock server exited with code {proc.returncode}:\n{output}"
+            )
+
         try:
             r: httpx.Response = httpx.get(server_url + "/health", timeout=1)
             if r.status_code == 200:
@@ -3218,7 +3224,12 @@ def mock_server_setup():
             time.sleep(0.5)
     else:
         proc.terminate()
-        raise RuntimeError("Mock server failed to start")
+        try:
+            output, _ = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            output, _ = proc.communicate()
+        raise RuntimeError(f"Mock server failed to start:\n{output}")
 
     yield server_url
 
