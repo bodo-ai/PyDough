@@ -29,9 +29,9 @@ WITH _s0 AS (
     ON CUSTOMER.c_nationkey = NATION.n_nationkey
 )
 SELECT
-  REGION.r_name COLLATE utf8mb4_bin AS r_name,
-  _s4.n_name COLLATE utf8mb4_bin AS n_name,
-  _s5.c_mktsegment COLLATE utf8mb4_bin AS c_industry,
+  REGION.r_name,
+  _s5.n_name,
+  _s5.c_mktsegment AS c_industry,
   _s5.c_name COLLATE utf8mb4_bin AS c_name,
   _s4.sum_n_rows AS n
 FROM _s4 AS _s4
@@ -41,8 +41,5 @@ JOIN tpch.REGION AS REGION
   ON REGION.r_regionkey = _s5.n_regionkey
 ORDER BY
   5 DESC,
-  1,
-  2,
-  3,
   4
 LIMIT 3

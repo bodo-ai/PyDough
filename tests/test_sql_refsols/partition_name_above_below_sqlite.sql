@@ -30,7 +30,7 @@ WITH _s0 AS (
 )
 SELECT
   region.r_name,
-  _s4.n_name,
+  _s5.n_name,
   _s5.c_mktsegment AS c_industry,
   _s5.c_name,
   _s4.sum_n_rows AS n

@@ -30,7 +30,7 @@ WITH "_S0" AS (
 )
 SELECT
   REGION.r_name,
-  "_S4".N_NAME AS n_name,
+  "_S5".N_NAME AS n_name,
   "_S5".C_MKTSEGMENT AS c_industry,
   "_S5".C_NAME AS c_name,
   "_S4".SUM_N_ROWS AS n
@@ -41,8 +41,5 @@ JOIN TPCH.REGION REGION
   ON REGION.r_regionkey = "_S5".N_REGIONKEY
 ORDER BY
   5 DESC NULLS LAST,
-  1 NULLS FIRST,
-  2 NULLS FIRST,
-  3 NULLS FIRST,
   4 NULLS FIRST
 FETCH FIRST 3 ROWS ONLY

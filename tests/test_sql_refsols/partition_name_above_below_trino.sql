@@ -30,7 +30,7 @@ WITH _s0 AS (
 )
 SELECT
   region.r_name,
-  _s4.n_name,
+  _s5.n_name,
   _s5.c_mktsegment AS c_industry,
   _s5.c_name,
   _s4.sum_n_rows AS n
@@ -41,8 +41,5 @@ JOIN tpch.region AS region
   ON _s5.n_regionkey = region.r_regionkey
 ORDER BY
   5 DESC,
-  1 NULLS FIRST,
-  2 NULLS FIRST,
-  3 NULLS FIRST,
   4 NULLS FIRST
 LIMIT 3
