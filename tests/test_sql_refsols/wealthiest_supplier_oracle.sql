@@ -1,13 +1,13 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    s_acctbal AS S_ACCTBAL,
-    s_name AS S_NAME,
-    ROW_NUMBER() OVER (ORDER BY s_acctbal DESC, s_name) AS "_W"
+    S_ACCTBAL,
+    S_NAME,
+    ROW_NUMBER() OVER (ORDER BY S_ACCTBAL DESC, S_NAME) AS "_w"
   FROM TPCH.SUPPLIER
 )
 SELECT
   S_NAME AS name,
   S_ACCTBAL AS account_balance
-FROM "_T"
+FROM "_t"
 WHERE
-  "_W" = 1
+  "_w" = 1

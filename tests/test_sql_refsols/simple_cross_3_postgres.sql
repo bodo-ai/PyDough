@@ -6,8 +6,8 @@ WITH _s1 AS (
   FROM tpch.nation
 )
 SELECT
-  MAX(_s1.n_name) AS supplier_nation,
-  MAX(_s5.n_name) AS customer_nation,
+  ANY_VALUE(_s1.n_name) AS supplier_nation,
+  ANY_VALUE(_s5.n_name) AS customer_nation,
   COUNT(*) AS nation_combinations
 FROM tpch.region AS region
 JOIN _s1 AS _s1

@@ -6,7 +6,7 @@ SELECT
   COUNT(*) OVER () AS n_nations
 FROM tpch.nation
 WHERE
-  NOT SUBSTRING(n_name, 1, 1) IN ('A', 'E', 'I', 'O', 'U')
+  NOT SUBSTR(n_name, 1, 1) IN ('A', 'E', 'I', 'O', 'U')
 ORDER BY
   n_regionkey NULLS FIRST,
   1 NULLS FIRST

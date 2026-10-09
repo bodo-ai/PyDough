@@ -1,3 +1,10 @@
+WITH _s1 AS (
+  SELECT
+    userid
+  FROM main.u2base
+  WHERE
+    rating = 2
+)
 SELECT
   CASE
     WHEN COUNT(*) > 0
@@ -7,5 +14,5 @@ SELECT
     ELSE 0.0
   END AS percentage_of_female_users
 FROM main.users AS users
-JOIN main.u2base AS u2base
-  ON u2base.rating = 2 AND u2base.userid = users.userid
+SEMI JOIN _s1 AS _s1
+  ON _s1.userid = users.userid

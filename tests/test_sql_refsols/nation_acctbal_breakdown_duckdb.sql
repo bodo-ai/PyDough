@@ -5,7 +5,10 @@ WITH _s3 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY c_nationkey
+            ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
           (
             COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
@@ -31,7 +34,10 @@ WITH _s3 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY c_nationkey
+            ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
           (
             COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0

@@ -16,7 +16,10 @@ WITH _t3 AS (
     AND lineitem.l_shipmode = 'RAIL'
     AND lineitem.l_tax = 0
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _t7.p_container ORDER BY lineitem.l_extendedprice DESC, lineitem.l_shipdate) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _t7.p_container
+      ORDER BY lineitem.l_extendedprice DESC, lineitem.l_shipdate
+    ) = 1
 ), _s3 AS (
   SELECT
     p_partkey,

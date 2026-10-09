@@ -6,8 +6,8 @@ WITH _t AS (
   FROM main.inventory_snapshots
 )
 SELECT
-  MAX(cars.make) AS make,
-  MAX(cars.model) AS model,
+  ANY_VALUE(cars.make) AS make,
+  ANY_VALUE(cars.model) AS model,
   MAX(sales.sale_price) AS highest_sale_price
 FROM main.cars AS cars
 JOIN _t AS _t

@@ -1,6 +1,6 @@
 SELECT
-  nkey,
-  nname
+  NKEY AS nkey,
+  NNAME AS nname
 FROM STEP2_T19
 ORDER BY
   1 NULLS FIRST

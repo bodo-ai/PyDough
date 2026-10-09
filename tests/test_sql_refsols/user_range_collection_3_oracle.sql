@@ -1,4 +1,4 @@
-WITH "_S5" AS (
+WITH "_s5" AS (
   SELECT
     A_2.X,
     COUNT(*) AS N_ROWS
@@ -522,7 +522,7 @@ WITH "_S5" AS (
 SELECT
   A.X AS x,
   COUNT(*) AS n_prefix,
-  ANY_VALUE("_S5".N_ROWS) AS n_suffix
+  ANY_VALUE("_s5".N_ROWS) AS n_suffix
 FROM (VALUES
   (0),
   (1),
@@ -1037,8 +1037,8 @@ JOIN (VALUES
   (998),
   (1000)) AS B(Y)
   ON TO_CHAR(B.Y) LIKE CONCAT(TO_CHAR(A.X), '%')
-JOIN "_S5" "_S5"
-  ON A.X = "_S5".X
+JOIN "_s5" "_s5"
+  ON A.X = "_s5".X
 GROUP BY
   A.X
 ORDER BY

@@ -1,9 +1,9 @@
 SELECT
-  LAG(r_name, 2) OVER (ORDER BY r_name) AS two_preceding,
-  LAG(r_name, 1) OVER (ORDER BY r_name) AS one_preceding,
-  r_name AS current_region,
-  LEAD(r_name, 1) OVER (ORDER BY r_name) AS one_following,
-  LEAD(r_name, 2) OVER (ORDER BY r_name) AS two_following
+  LAG(R_NAME, 2) OVER (ORDER BY R_NAME) AS two_preceding,
+  LAG(R_NAME, 1) OVER (ORDER BY R_NAME) AS one_preceding,
+  R_NAME AS current_region,
+  LEAD(R_NAME, 1) OVER (ORDER BY R_NAME) AS one_following,
+  LEAD(R_NAME, 2) OVER (ORDER BY R_NAME) AS two_following
 FROM TPCH.REGION
 ORDER BY
   3 NULLS FIRST

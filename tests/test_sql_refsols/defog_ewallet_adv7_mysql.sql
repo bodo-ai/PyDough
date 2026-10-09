@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     marketing_opt_in,
     user_id,
-    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY CASE WHEN created_at IS NULL THEN 1 ELSE 0 END DESC, created_at DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY user_id
+      ORDER BY CASE WHEN created_at IS NULL THEN 1 ELSE 0 END DESC, created_at DESC
+    ) AS _w
   FROM ewallet.user_setting_snapshot
 )
 SELECT

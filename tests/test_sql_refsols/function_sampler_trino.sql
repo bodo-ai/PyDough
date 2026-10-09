@@ -1,9 +1,15 @@
 SELECT
-  CONCAT_WS('-', region.r_name, nation.n_name, SUBSTRING(customer.c_name, 17)) AS a,
+  CASE
+    WHEN SUBSTR(customer.c_name, 17) IS NULL
+    OR nation.n_name IS NULL
+    OR region.r_name IS NULL
+    THEN NULL
+    ELSE CONCAT_WS('-', region.r_name, nation.n_name, SUBSTR(customer.c_name, 17))
+  END AS a,
   ROUND(customer.c_acctbal, 1) AS b,
-  CASE WHEN SUBSTRING(customer.c_phone, 1, 1) = '3' THEN customer.c_name ELSE NULL END AS c,
-  NOT CASE WHEN SUBSTRING(customer.c_phone, 2, 1) = '1' THEN customer.c_name ELSE NULL END IS NULL AS d,
-  CASE WHEN SUBSTRING(customer.c_phone, 15) = '7' THEN customer.c_name ELSE NULL END IS NULL AS e,
+  CASE WHEN SUBSTR(customer.c_phone, 1, 1) = '3' THEN customer.c_name ELSE NULL END AS c,
+  NOT CASE WHEN SUBSTR(customer.c_phone, 2, 1) = '1' THEN customer.c_name ELSE NULL END IS NULL AS d,
+  CASE WHEN SUBSTR(customer.c_phone, 15) = '7' THEN customer.c_name ELSE NULL END IS NULL AS e,
   ROUND(customer.c_acctbal, 0) AS f
 FROM tpch.region AS region
 JOIN tpch.nation AS nation

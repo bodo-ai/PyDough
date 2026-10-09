@@ -3,7 +3,13 @@ SELECT
   ANY_VALUE(merchants.name) AS merchants_name,
   ANY_VALUE(merchants.category) AS category,
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_revenue,
-  ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC) AS mrr
+  ROW_NUMBER() OVER (
+    ORDER BY CASE
+      WHEN COALESCE(SUM(wallet_transactions_daily.amount), 0) IS NULL
+      THEN 1
+      ELSE 0
+    END DESC, COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC
+  ) AS mrr
 FROM ewallet.merchants AS merchants
 JOIN ewallet.wallet_transactions_daily AS wallet_transactions_daily
   ON merchants.mid = wallet_transactions_daily.receiver_id

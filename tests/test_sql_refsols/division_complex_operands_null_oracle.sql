@@ -1,10 +1,10 @@
 SELECT
   (
-    l_extendedprice + l_tax
+    L_EXTENDEDPRICE + L_TAX
   ) / CASE WHEN (
-    l_discount * 2
-  ) <> 0 THEN l_discount * 2 ELSE NULL END AS computed_value
+    L_DISCOUNT * 2
+  ) <> 0 THEN L_DISCOUNT * 2 ELSE NULL END AS computed_value
 FROM TPCH.LINEITEM
 ORDER BY
-  l_discount NULLS FIRST
+  L_DISCOUNT NULLS FIRST
 FETCH FIRST 1 ROWS ONLY

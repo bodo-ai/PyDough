@@ -1,19 +1,19 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    o_orderkey AS O_ORDERKEY,
-    o_orderpriority AS O_ORDERPRIORITY,
-    o_totalprice AS O_TOTALPRICE,
-    ROW_NUMBER() OVER (PARTITION BY o_orderpriority ORDER BY o_totalprice DESC) AS "_W"
+    O_ORDERKEY,
+    O_ORDERPRIORITY,
+    O_TOTALPRICE,
+    ROW_NUMBER() OVER (PARTITION BY O_ORDERPRIORITY ORDER BY O_TOTALPRICE DESC) AS "_w"
   FROM TPCH.ORDERS
   WHERE
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) = 1992
+    EXTRACT(YEAR FROM CAST(O_ORDERDATE AS DATE)) = 1992
 )
 SELECT
   O_ORDERPRIORITY AS order_priority,
   O_ORDERKEY AS order_key,
   O_TOTALPRICE AS order_total_price
-FROM "_T"
+FROM "_t"
 WHERE
-  "_W" = 1
+  "_w" = 1
 ORDER BY
   1 NULLS FIRST

@@ -4,11 +4,16 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1') - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY '1'
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(1) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(1) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN 1
@@ -17,11 +22,16 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1') - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY '1'
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(2) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(2) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN 2
@@ -30,11 +40,16 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1') - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY -1 DESC
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(-1) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(-1) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN -1
@@ -43,11 +58,16 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1') - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY -3 DESC
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(-3) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(-3) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN -3
@@ -56,11 +76,16 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1') - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY '1'
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(0) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(0) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN 0
@@ -69,11 +94,16 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1') - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY '1'
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(0.5) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(0.5) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN 0.5
@@ -82,56 +112,106 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ORDER BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC
+          ) - 1.0
         ) - (
-          CAST((
-            COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) - 1.0
-          ) AS DOUBLE) / 2.0
+          (
+            COUNT(
+              LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) OVER (
+              PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+            ) - 1.0
+          ) / 2.0
         )
       ) < 1.0
       THEN LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))
       ELSE NULL
     END AS expr_79,
     CASE
-      WHEN FLOOR(0.9 * COUNT(1) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1')
+      WHEN FLOOR(
+        0.9 * COUNT(1) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY '1'
+      )
       THEN 1
       ELSE NULL
     END AS expr_80,
     CASE
-      WHEN FLOOR(0.8 * COUNT(2) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1')
+      WHEN FLOOR(
+        0.8 * COUNT(2) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY '1'
+      )
       THEN 2
       ELSE NULL
     END AS expr_81,
     CASE
       WHEN FLOOR(
-        0.7 * COUNT(-1) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))
-      ) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1')
+        0.7 * COUNT(-1) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY -1 DESC
+      )
       THEN -1
       ELSE NULL
     END AS expr_82,
     CASE
       WHEN FLOOR(
-        0.6 * COUNT(-3) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))
-      ) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1')
+        0.6 * COUNT(-3) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY -3 DESC
+      )
       THEN -3
       ELSE NULL
     END AS expr_83,
     CASE
-      WHEN FLOOR(0.5 * COUNT(0) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1')
+      WHEN FLOOR(
+        0.5 * COUNT(0) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY '1'
+      )
       THEN 0
       ELSE NULL
     END AS expr_84,
     CASE
       WHEN FLOOR(
-        0.4 * COUNT(0.5) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))
-      ) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY '1')
+        0.4 * COUNT(0.5) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY '1'
+      )
       THEN 0.5
       ELSE NULL
     END AS expr_85,
     CASE
       WHEN FLOOR(
-        0.2 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))
-      ) < ROW_NUMBER() OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) DESC)
+        0.2 * COUNT(
+          LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ) OVER (
+          PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        )
+      ) < ROW_NUMBER() OVER (
+        PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+        ORDER BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC
+      )
       THEN LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))
       ELSE NULL
     END AS expr_87

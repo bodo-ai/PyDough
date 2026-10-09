@@ -15,4 +15,4 @@ FROM _s0 AS _s0
 LEFT JOIN _u_0 AS _u_0
   ON _s0.a = _u_0._u_1
 WHERE
-  _u_0._u_1 IS NULL
+  NOT NOT _u_0._u_1 IS NULL

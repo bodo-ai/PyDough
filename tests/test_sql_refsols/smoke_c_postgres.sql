@@ -6,7 +6,7 @@ SELECT
   ROUND(CAST(AVG(CAST(ABS(c_acctbal) AS DECIMAL)) AS DECIMAL), 4) AS e,
   MIN(c_acctbal) AS f,
   MAX(c_acctbal) AS g,
-  MAX(SUBSTRING(c_name FROM 1 FOR 1)) AS h,
+  ANY_VALUE(SUBSTRING(c_name FROM 1 FOR 1)) AS h,
   COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END) AS i,
   CEIL(VAR_POP(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)) AS j,
   ROUND(CAST(VAR_SAMP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS DECIMAL), 4) AS k,

@@ -4,6 +4,6 @@ SELECT
   2.0 AS expr
 FROM keywords.`COUNT` AS `COUNT`
 JOIN keywords.`CAST` AS `CAST`
-  ON `CAST`.pk_field_name = `COUNT`.this
+  ON `CAST`.PK_FIELD_NAME = `COUNT`.this
 WHERE
   `COUNT`.node = 4071

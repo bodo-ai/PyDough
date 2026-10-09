@@ -1,6 +1,6 @@
 SELECT
-  name,
-  rating
+  NAME AS name,
+  RATING AS rating
 FROM MAIN.RESTAURANT
 ORDER BY
   2 DESC NULLS LAST,

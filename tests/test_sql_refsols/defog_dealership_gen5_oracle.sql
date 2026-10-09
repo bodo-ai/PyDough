@@ -1,20 +1,20 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    car_id AS CAR_ID,
-    is_in_inventory AS IS_IN_INVENTORY,
-    RANK() OVER (ORDER BY snapshot_date DESC) AS "_W"
+    CAR_ID,
+    IS_IN_INVENTORY,
+    RANK() OVER (ORDER BY SNAPSHOT_DATE DESC) AS "_w"
   FROM MAIN.INVENTORY_SNAPSHOTS
   WHERE
-    EXTRACT(MONTH FROM CAST(snapshot_date AS DATE)) = 3
-    AND EXTRACT(YEAR FROM CAST(snapshot_date AS DATE)) = 2023
+    EXTRACT(MONTH FROM CAST(SNAPSHOT_DATE AS DATE)) = 3
+    AND EXTRACT(YEAR FROM CAST(SNAPSHOT_DATE AS DATE)) = 2023
 )
 SELECT
   CARS."_id",
-  CARS.make,
-  CARS.model,
-  CARS.year
-FROM "_T" "_T"
+  CARS.MAKE AS make,
+  CARS.MODEL AS model,
+  CARS.YEAR AS year
+FROM "_t" "_t"
 JOIN MAIN.CARS CARS
-  ON CARS."_id" = "_T".CAR_ID
+  ON CARS."_id" = "_t".CAR_ID
 WHERE
-  "_T".IS_IN_INVENTORY AND "_T"."_W" = 1
+  "_t".IS_IN_INVENTORY AND "_t"."_w" = 1

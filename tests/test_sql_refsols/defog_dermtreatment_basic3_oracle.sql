@@ -1,19 +1,19 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    drug_id AS DRUG_ID,
-    AVG(tot_drug_amt) AS AVG_TOT_DRUG_AMT,
+    DRUG_ID,
+    AVG(TOT_DRUG_AMT) AS AVG_TOT_DRUG_AMT,
     COUNT(*) AS N_ROWS
   FROM MAIN.TREATMENTS
   GROUP BY
-    drug_id
+    DRUG_ID
 )
 SELECT
-  DRUGS.drug_name,
-  COALESCE("_S1".N_ROWS, 0) AS num_treatments,
-  "_S1".AVG_TOT_DRUG_AMT AS avg_drug_amount
+  DRUGS.DRUG_NAME AS drug_name,
+  COALESCE("_s1".N_ROWS, 0) AS num_treatments,
+  "_s1".AVG_TOT_DRUG_AMT AS avg_drug_amount
 FROM MAIN.DRUGS DRUGS
-LEFT JOIN "_S1" "_S1"
-  ON DRUGS.drug_id = "_S1".DRUG_ID
+LEFT JOIN "_s1" "_s1"
+  ON DRUGS.DRUG_ID = "_s1".DRUG_ID
 ORDER BY
   2 DESC NULLS LAST,
   3 DESC NULLS LAST,

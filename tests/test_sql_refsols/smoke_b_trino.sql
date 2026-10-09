@@ -1,15 +1,21 @@
 SELECT
   o_orderkey AS key,
-  CONCAT_WS(
-    '_',
-    CAST(YEAR(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR),
-    CAST(QUARTER(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR),
-    CAST(MONTH(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR),
-    CAST(DAY(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR)
-  ) AS a,
-  CONCAT_WS(
-    ':',
-    CASE
+  CASE
+    WHEN CAST(DAY(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR) IS NULL
+    OR CAST(MONTH(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR) IS NULL
+    OR CAST(QUARTER(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR) IS NULL
+    OR CAST(YEAR(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      '_',
+      CAST(YEAR(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR),
+      CAST(QUARTER(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR),
+      CAST(MONTH(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR),
+      CAST(DAY(CAST(o_orderdate AS TIMESTAMP)) AS VARCHAR)
+    )
+  END AS a,
+  CASE
+    WHEN CASE
       WHEN DAY_OF_WEEK(o_orderdate) = 1
       THEN 'Monday'
       WHEN DAY_OF_WEEK(o_orderdate) = 2
@@ -24,13 +30,38 @@ SELECT
       THEN 'Saturday'
       WHEN DAY_OF_WEEK(o_orderdate) = 7
       THEN 'Sunday'
-    END,
-    CAST((
+    END IS NULL
+    OR CAST((
       (
         DAY_OF_WEEK(o_orderdate) + 0
       ) % 7
-    ) AS VARCHAR)
-  ) AS b,
+    ) AS VARCHAR) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      ':',
+      CASE
+        WHEN DAY_OF_WEEK(o_orderdate) = 1
+        THEN 'Monday'
+        WHEN DAY_OF_WEEK(o_orderdate) = 2
+        THEN 'Tuesday'
+        WHEN DAY_OF_WEEK(o_orderdate) = 3
+        THEN 'Wednesday'
+        WHEN DAY_OF_WEEK(o_orderdate) = 4
+        THEN 'Thursday'
+        WHEN DAY_OF_WEEK(o_orderdate) = 5
+        THEN 'Friday'
+        WHEN DAY_OF_WEEK(o_orderdate) = 6
+        THEN 'Saturday'
+        WHEN DAY_OF_WEEK(o_orderdate) = 7
+        THEN 'Sunday'
+      END,
+      CAST((
+        (
+          DAY_OF_WEEK(o_orderdate) + 0
+        ) % 7
+      ) AS VARCHAR)
+    )
+  END AS b,
   DATE_ADD('DAY', -13, DATE_ADD('MONTH', 6, DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)))) AS c,
   DATE_ADD(
     'HOUR',
@@ -40,7 +71,13 @@ SELECT
   CAST('2025-01-01 12:35:00' AS TIMESTAMP) AS e,
   CAST('2025-07-22 12:00:00' AS TIMESTAMP) AS f,
   CAST('2025-01-01' AS DATE) AS g,
-  CONCAT_WS(';', CAST(12 AS VARCHAR), CAST(20 AS VARCHAR), CAST(6 AS VARCHAR)) AS h,
+  CASE
+    WHEN CAST(12 AS VARCHAR) IS NULL
+    OR CAST(20 AS VARCHAR) IS NULL
+    OR CAST(6 AS VARCHAR) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(';', CAST(12 AS VARCHAR), CAST(20 AS VARCHAR), CAST(6 AS VARCHAR))
+  END AS h,
   DATE_DIFF(
     'YEAR',
     CAST(DATE_TRUNC('YEAR', CAST('1993-05-25 12:45:36' AS TIMESTAMP)) AS TIMESTAMP),
@@ -103,12 +140,18 @@ SELECT
       CAST(o_orderdate AS TIMESTAMP)
     )
   ) AS q,
-  CONCAT_WS(
-    ':',
-    FORMAT_DATETIME(CAST(o_orderdate AS TIMESTAMP), 'MMM'),
-    FORMAT_DATETIME(DATE_ADD('MONTH', 3, CAST(o_orderdate AS TIMESTAMP)), 'MMM'),
-    FORMAT_DATETIME(DATE_ADD('MONTH', -2, CAST(o_orderdate AS TIMESTAMP)), 'MMM')
-  ) AS r
+  CASE
+    WHEN FORMAT_DATETIME(CAST(o_orderdate AS TIMESTAMP), 'MMM') IS NULL
+    OR FORMAT_DATETIME(DATE_ADD('MONTH', -2, CAST(o_orderdate AS TIMESTAMP)), 'MMM') IS NULL
+    OR FORMAT_DATETIME(DATE_ADD('MONTH', 3, CAST(o_orderdate AS TIMESTAMP)), 'MMM') IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      ':',
+      FORMAT_DATETIME(CAST(o_orderdate AS TIMESTAMP), 'MMM'),
+      FORMAT_DATETIME(DATE_ADD('MONTH', 3, CAST(o_orderdate AS TIMESTAMP)), 'MMM'),
+      FORMAT_DATETIME(DATE_ADD('MONTH', -2, CAST(o_orderdate AS TIMESTAMP)), 'MMM')
+    )
+  END AS r
 FROM tpch.orders
 WHERE
   STARTS_WITH(o_orderpriority, '3') AND o_clerk LIKE '%5' AND o_comment LIKE '%fo%'

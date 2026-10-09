@@ -1,5 +1,5 @@
 SELECT
-  MAX(nation.n_name) AS nation_name,
+  ANY_VALUE(nation.n_name) AS nation_name,
   COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS n_red_acctbal,
   COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS n_black_acctbal,
   PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY

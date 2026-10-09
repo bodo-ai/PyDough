@@ -1,3 +1,3 @@
 SELECT
-  SUM(rating > 4.5) / NULLIF(COUNT(*), 0) AS ratio
+  SUM(RATING > 4.5) / NULLIF(COUNT(*), 0) AS ratio
 FROM MAIN.RESTAURANT

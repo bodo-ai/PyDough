@@ -8,6 +8,14 @@ SELECT
 FROM dict AS dict
 JOIN shake AS shake
   ON dict.word = shake.lineword
-  AND shake.play IN ('much ado about nothing', 'henry viii', 'merry wives of windsor', 'romeo and juliet', 'pericles', 'king john', 'othello')
+  AND shake.play IN (
+    'much ado about nothing',
+    'henry viii',
+    'merry wives of windsor',
+    'romeo and juliet',
+    'pericles',
+    'king john',
+    'othello'
+  )
 WHERE
   LENGTH(dict.word) = 10 AND dict.pos = 'a.' AND dict.word < 'c'

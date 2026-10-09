@@ -8,7 +8,10 @@ WITH _t AS (
     SUPPLIER.s_comment,
     SUPPLIER.s_name,
     SUPPLIER.s_phone,
-    RANK() OVER (PARTITION BY PARTSUPP.ps_partkey ORDER BY CASE WHEN PARTSUPP.ps_supplycost IS NULL THEN 1 ELSE 0 END, PARTSUPP.ps_supplycost) AS _w
+    RANK() OVER (
+      PARTITION BY PARTSUPP.ps_partkey
+      ORDER BY CASE WHEN PARTSUPP.ps_supplycost IS NULL THEN 1 ELSE 0 END, PARTSUPP.ps_supplycost
+    ) AS _w
   FROM tpch.PART AS PART
   JOIN tpch.PARTSUPP AS PARTSUPP
     ON PART.p_partkey = PARTSUPP.ps_partkey

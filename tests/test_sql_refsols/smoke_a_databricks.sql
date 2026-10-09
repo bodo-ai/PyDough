@@ -1,17 +1,16 @@
 SELECT
   p_partkey AS key,
-  CAST(CAST(CONCAT_WS(
-    '',
-    SUBSTRING(
+  CAST(CAST(CASE
+    WHEN SUBSTRING(p_brand, 8) IS NULL
+    OR SUBSTRING(
       p_brand,
       CASE WHEN (
         LENGTH(p_brand) + -1
       ) < 1 THEN 1 ELSE (
         LENGTH(p_brand) + -1
       ) END
-    ),
-    SUBSTRING(p_brand, 8),
-    SUBSTRING(
+    ) IS NULL
+    OR SUBSTRING(
       p_brand,
       CASE WHEN (
         LENGTH(p_brand) + -1
@@ -31,8 +30,42 @@ SELECT
           LENGTH(p_brand) + -1
         ) END
       END
+    ) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      '',
+      SUBSTRING(
+        p_brand,
+        CASE WHEN (
+          LENGTH(p_brand) + -1
+        ) < 1 THEN 1 ELSE (
+          LENGTH(p_brand) + -1
+        ) END
+      ),
+      SUBSTRING(p_brand, 8),
+      SUBSTRING(
+        p_brand,
+        CASE WHEN (
+          LENGTH(p_brand) + -1
+        ) < 1 THEN 1 ELSE (
+          LENGTH(p_brand) + -1
+        ) END,
+        CASE
+          WHEN (
+            LENGTH(p_brand) + 0
+          ) < 1
+          THEN 0
+          ELSE (
+            LENGTH(p_brand) + 0
+          ) - CASE WHEN (
+            LENGTH(p_brand) + -1
+          ) < 1 THEN 1 ELSE (
+            LENGTH(p_brand) + -1
+          ) END
+        END
+      )
     )
-  ) AS DOUBLE) AS BIGINT) AS a,
+  END AS DOUBLE) AS BIGINT) AS a,
   UPPER(LEAST(SPLIT_PART(p_name, ' ', 2), SPLIT_PART(p_name, ' ', -1))) AS b,
   TRIM('o' FROM SUBSTRING(p_name, 1, 2)) AS c,
   LPAD(CAST(p_size AS STRING), 3, '0') AS d,

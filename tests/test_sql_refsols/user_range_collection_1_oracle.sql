@@ -1,16 +1,16 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    p_size AS P_SIZE,
+    P_SIZE,
     COUNT(*) AS N_ROWS
   FROM TPCH.PART
   WHERE
-    p_name LIKE '%turquoise%'
+    P_NAME LIKE '%turquoise%'
   GROUP BY
-    p_size
+    P_SIZE
 )
 SELECT
   SIZES.PART_SIZE AS part_size,
-  COALESCE("_S1".N_ROWS, 0) AS n_parts
+  COALESCE("_s1".N_ROWS, 0) AS n_parts
 FROM (VALUES
   (1),
   (6),
@@ -32,5 +32,5 @@ FROM (VALUES
   (86),
   (91),
   (96)) AS SIZES(PART_SIZE)
-LEFT JOIN "_S1" "_S1"
-  ON SIZES.PART_SIZE = "_S1".P_SIZE
+LEFT JOIN "_s1" "_s1"
+  ON SIZES.PART_SIZE = "_s1".P_SIZE

@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    MAX(organization.continent) AS anything_continent,
+    ANY_VALUE(organization.continent) AS anything_continent,
     COUNT(author.oid) AS count_oid
   FROM main.organization AS organization
   LEFT JOIN main.author AS author

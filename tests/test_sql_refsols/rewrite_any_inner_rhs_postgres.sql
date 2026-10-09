@@ -8,7 +8,7 @@ WITH _u_0 AS (
     1
 )
 SELECT
-  MAX(customer.c_name) AS any_customer
+  ANY_VALUE(customer.c_name) AS any_customer
 FROM tpch.customer AS customer
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = customer.c_custkey

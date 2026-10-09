@@ -4,7 +4,10 @@ WITH _t AS (
     customer.c_name,
     nation.n_name,
     region.r_name,
-    ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal DESC NULLS FIRST, customer.c_name) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY nation.n_regionkey
+      ORDER BY customer.c_acctbal DESC NULLS FIRST, customer.c_name
+    ) AS _w
   FROM tpch.region AS region
   JOIN tpch.nation AS nation
     ON nation.n_regionkey = region.r_regionkey

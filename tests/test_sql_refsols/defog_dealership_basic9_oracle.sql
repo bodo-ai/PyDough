@@ -1,9 +1,9 @@
 SELECT
-  state,
+  STATE AS state,
   COUNT(*) AS total_signups
 FROM MAIN.CUSTOMERS
 GROUP BY
-  state
+  STATE
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 2 ROWS ONLY

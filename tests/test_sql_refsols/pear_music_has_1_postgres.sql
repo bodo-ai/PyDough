@@ -1,6 +1,6 @@
 WITH _s3 AS (
   SELECT
-    MAX(customer.supportrepid) AS anything_supportrepid,
+    ANY_VALUE(customer.supportrepid) AS anything_supportrepid,
     SUM(invoice.total) AS sum_total
   FROM main.customer AS customer
   LEFT JOIN main.invoice AS invoice

@@ -18,9 +18,9 @@ WITH _t AS (
 ), _s6 AS (
   SELECT
     _t.c_custkey AS o_custkey,
-    MAX(_t.c_acctbal) AS anything_c_acctbal,
-    MAX(_t.c_name) AS anything_c_name,
-    MAX(_t.nation_name) AS anything_nation_name,
+    ANY_VALUE(_t.c_acctbal) AS anything_c_acctbal,
+    ANY_VALUE(_t.c_name) AS anything_c_name,
+    ANY_VALUE(_t.nation_name) AS anything_nation_name,
     COUNT(orders.o_custkey) AS count_o_custkey
   FROM _t AS _t
   LEFT JOIN tpch.orders AS orders

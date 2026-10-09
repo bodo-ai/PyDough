@@ -1,13 +1,13 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    balance AS BALANCE,
-    user_id AS USER_ID,
-    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY updated_at DESC) AS "_W"
+    BALANCE,
+    USER_ID,
+    ROW_NUMBER() OVER (PARTITION BY USER_ID ORDER BY UPDATED_AT DESC) AS "_w"
   FROM MAIN.WALLET_USER_BALANCE_DAILY
 )
 SELECT
   USER_ID AS user_id,
   BALANCE AS latest_balance
-FROM "_T"
+FROM "_t"
 WHERE
-  "_W" = 1
+  "_w" = 1

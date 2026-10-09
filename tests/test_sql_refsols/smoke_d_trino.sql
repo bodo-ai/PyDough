@@ -14,7 +14,11 @@ SELECT
   SUM(customer.c_acctbal) OVER (ORDER BY customer.c_custkey ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS l,
   ROUND(AVG(CAST(customer.c_acctbal AS DOUBLE)) OVER (), 2) AS m,
   ROUND(
-    AVG(CAST(customer.c_acctbal AS DOUBLE)) OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_custkey ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+    AVG(CAST(customer.c_acctbal AS DOUBLE)) OVER (
+      PARTITION BY customer.c_nationkey
+      ORDER BY customer.c_custkey
+      ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+    ),
     2
   ) AS n,
   COUNT(CASE WHEN customer.c_acctbal > 0 THEN customer.c_acctbal ELSE NULL END) OVER () AS o,

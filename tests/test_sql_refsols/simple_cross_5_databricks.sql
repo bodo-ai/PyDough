@@ -41,13 +41,14 @@ WITH _t1 AS (
     1,
     2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s0.p_size ORDER BY CASE
-      WHEN (
-        NOT sum_l_quantity IS NULL AND sum_l_quantity > 0
-      )
-      THEN COALESCE(sum_l_quantity, 0)
-      ELSE NULL
-    END DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _s0.p_size
+      ORDER BY CASE
+        WHEN COALESCE(sum_l_quantity, 0) > 0
+        THEN COALESCE(sum_l_quantity, 0)
+        ELSE NULL
+      END DESC NULLS FIRST
+    ) = 1
 )
 SELECT
   _s6.p_size AS part_size,

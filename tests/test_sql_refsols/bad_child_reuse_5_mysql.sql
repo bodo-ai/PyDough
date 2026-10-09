@@ -35,7 +35,7 @@ FROM _s2 AS _s2
 LEFT JOIN _u_0 AS _u_0
   ON _s2.c_custkey = _u_0._u_1
 WHERE
-  _u_0._u_1 IS NULL
+  NOT NOT _u_0._u_1 IS NULL
 ORDER BY
   _s2.c_acctbal DESC,
   1 DESC

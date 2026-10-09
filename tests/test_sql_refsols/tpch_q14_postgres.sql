@@ -1,5 +1,5 @@
 SELECT
-  (
+  CAST((
     100.0 * COALESCE(
       SUM(
         CASE
@@ -12,7 +12,7 @@ SELECT
       ),
       0
     )
-  ) / COALESCE(SUM(lineitem.l_extendedprice * (
+  ) AS DOUBLE PRECISION) / COALESCE(SUM(lineitem.l_extendedprice * (
     1 - lineitem.l_discount
   )), 0) AS PROMO_REVENUE
 FROM tpch.lineitem AS lineitem

@@ -1,7 +1,7 @@
 SELECT
-  SUBSTRING(c_phone, 1, 3) AS country_code,
-  SUBSTRING(c_name, 2) AS name_without_first_char,
-  SUBSTRING(
+  SUBSTR(c_phone, 1, 3) AS country_code,
+  SUBSTR(c_name, 2) AS name_without_first_char,
+  SUBSTR(
     c_phone,
     CASE WHEN (
       LENGTH(c_phone) + 0
@@ -9,7 +9,7 @@ SELECT
       LENGTH(c_phone) + 0
     ) END
   ) AS last_digit,
-  SUBSTRING(
+  SUBSTR(
     c_name,
     2,
     CASE
@@ -30,7 +30,7 @@ SELECT
       END
     END
   ) AS name_without_start_and_end_char,
-  SUBSTRING(
+  SUBSTR(
     c_phone,
     1,
     CASE WHEN (
@@ -39,7 +39,7 @@ SELECT
       LENGTH(c_phone) + -5
     ) END
   ) AS phone_without_last_5_chars,
-  SUBSTRING(
+  SUBSTR(
     c_name,
     CASE WHEN (
       LENGTH(c_name) + -1

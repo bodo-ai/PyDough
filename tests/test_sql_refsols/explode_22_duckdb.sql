@@ -7,4 +7,6 @@ FROM tpch.region AS region, LATERAL (
     GENERATE_SUBSCRIPTS(['A', 'E', 'I'], 1) - 1 AS _col_1
 ) AS _s0(val, idx)
 WHERE
-  region.r_name LIKE CONCAT('%', _s0.val, '%')
+  region.r_name LIKE (
+    '%' || _s0.val || '%'
+  )

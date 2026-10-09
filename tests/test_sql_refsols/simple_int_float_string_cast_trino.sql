@@ -22,4 +22,4 @@ SELECT
   '0.0' AS s8,
   'abc def' AS s9
 FROM (VALUES
-  (NULL)) AS _q_0(_col_0)
+  (NULL)) AS _0(_col_0)

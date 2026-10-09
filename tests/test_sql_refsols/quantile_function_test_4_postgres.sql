@@ -16,8 +16,8 @@ WITH _s0 AS (
     ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000272'
 )
 SELECT
-  MAX(region.r_name) AS region_name,
-  MAX(_s0.n_name) AS nation_name,
+  ANY_VALUE(region.r_name) AS region_name,
+  ANY_VALUE(_s0.n_name) AS nation_name,
   PERCENTILE_DISC(0.0) WITHIN GROUP (ORDER BY
     _s5.o_totalprice) AS orders_min,
   PERCENTILE_DISC(0.01) WITHIN GROUP (ORDER BY

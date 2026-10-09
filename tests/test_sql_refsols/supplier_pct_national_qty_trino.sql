@@ -33,9 +33,9 @@ SELECT
   anything_s_name AS supplier_name,
   anything_n_name AS nation_name,
   COALESCE(sum_l_quantity, 0) AS supplier_quantity,
-  (
+  CAST((
     100.0 * COALESCE(sum_l_quantity, 0)
-  ) / CASE
+  ) AS DOUBLE) / CASE
     WHEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey) > 0
     THEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey)
     ELSE NULL

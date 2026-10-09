@@ -3,7 +3,10 @@ WITH _s3 AS (
     o_custkey,
     DATEDIFF(
       o_orderdate,
-      LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate)
+      LAG(o_orderdate, 1) OVER (
+        PARTITION BY o_custkey
+        ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate
+      )
     ) AS day_diff
   FROM tpch.ORDERS
   WHERE

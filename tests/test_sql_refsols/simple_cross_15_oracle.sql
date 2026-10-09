@@ -1,33 +1,33 @@
-WITH "_T1" AS (
+WITH "_t1" AS (
   SELECT
-    r_name AS R_NAME
+    R_NAME
   FROM TPCH.REGION
-), "_S0" AS (
+), "_s0" AS (
   SELECT DISTINCT
     CASE WHEN R_NAME LIKE '%A%' THEN 'A' ELSE '*' END AS A
-  FROM "_T1"
-), "_S1" AS (
+  FROM "_t1"
+), "_s1" AS (
   SELECT DISTINCT
     CASE WHEN R_NAME LIKE '%E%' THEN 'E' ELSE '*' END AS E
-  FROM "_T1"
-), "_S3" AS (
+  FROM "_t1"
+), "_s3" AS (
   SELECT DISTINCT
     CASE WHEN R_NAME LIKE '%I%' THEN 'I' ELSE '*' END AS I
-  FROM "_T1"
-), "_S5" AS (
+  FROM "_t1"
+), "_s5" AS (
   SELECT DISTINCT
     CASE WHEN R_NAME LIKE '%O%' THEN 'O' ELSE '*' END AS O
-  FROM "_T1"
+  FROM "_t1"
 )
 SELECT
-  "_S0".A AS a,
-  "_S1".E AS e,
-  "_S3".I AS i,
-  "_S5".O AS o
-FROM "_S0" "_S0"
-CROSS JOIN "_S1" "_S1"
-CROSS JOIN "_S3" "_S3"
-CROSS JOIN "_S5" "_S5"
+  "_s0".A AS a,
+  "_s1".E AS e,
+  "_s3".I AS i,
+  "_s5".O AS o
+FROM "_s0" "_s0"
+CROSS JOIN "_s1" "_s1"
+CROSS JOIN "_s3" "_s3"
+CROSS JOIN "_s5" "_s5"
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST,

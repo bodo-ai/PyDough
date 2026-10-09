@@ -21,8 +21,8 @@ WITH _s0 AS (
     supplier.s_acctbal < 0
 )
 SELECT
-  MAX(_s0.r_name) AS supplier_region,
-  MAX(_s1.r_name) AS customer_region,
+  ANY_VALUE(_s0.r_name) AS supplier_region,
+  ANY_VALUE(_s1.r_name) AS customer_region,
   COUNT(*) AS region_combinations
 FROM _s0 AS _s0
 CROSS JOIN _s0 AS _s1

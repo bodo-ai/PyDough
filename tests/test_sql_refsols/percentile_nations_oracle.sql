@@ -1,5 +1,5 @@
 SELECT
-  n_name AS name,
-  NTILE(5) OVER (ORDER BY n_name) AS p1,
-  NTILE(5) OVER (ORDER BY n_name) AS p2
+  N_NAME AS name,
+  NTILE(5) OVER (ORDER BY N_NAME) AS p1,
+  NTILE(5) OVER (ORDER BY N_NAME) AS p2
 FROM TPCH.NATION

@@ -16,4 +16,4 @@ FROM defog.dermtreatment.doctors AS doctors
 LEFT JOIN _t1 AS _t1
   ON _t1.doc_id = doctors.doc_id
 WHERE
-  doctors.year_reg = EXTRACT(YEAR FROM CAST(ADD_MONTHS(CURRENT_TIMESTAMP(), -24) AS TIMESTAMP))
+  doctors.year_reg = EXTRACT(YEAR FROM ADD_MONTHS(CURRENT_TIMESTAMP(), -24))

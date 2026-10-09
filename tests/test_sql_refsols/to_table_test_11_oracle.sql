@@ -1,7 +1,7 @@
 SELECT
-  pkey,
-  pname,
-  psize
+  PKEY AS pkey,
+  PNAME AS pname,
+  PSIZE AS psize
 FROM PARTS_SUMMARY_T11
 ORDER BY
   3 DESC NULLS LAST,

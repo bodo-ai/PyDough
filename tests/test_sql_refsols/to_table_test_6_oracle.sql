@@ -1,6 +1,6 @@
 SELECT
-  okey,
-  total
+  OKEY AS okey,
+  TOTAL AS total
 FROM EXPENSIVE_ORDERS_T6
 ORDER BY
   2 DESC NULLS LAST

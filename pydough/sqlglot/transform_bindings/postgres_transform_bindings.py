@@ -9,6 +9,8 @@ from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
+from sqlglot.dialects.dialect import _with_strict_time_inverse
+from sqlglot.dialects.postgres import Postgres as PostgresDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import (
     Identifier,
@@ -18,6 +20,7 @@ from sqlglot.expressions import (
     TableAlias,
     Unnest,
 )
+from sqlglot.trie import new_trie
 
 import pydough.pydough_operators as pydop
 from pydough.relational.relational_expressions.literal_expression import (
@@ -35,7 +38,22 @@ from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    extract_int_literal,
 )
+
+# PyDough Change: sqlglot dropped the "AM"/"PM" entries from
+# `Postgres.TIME_MAPPING` (present in 26.7.0, missing as of 30.18.0), which
+# broke translating the strftime `%p` specifier (e.g. `STRING(x, "%H:%M%p")`)
+# into Postgres's native `TO_CHAR` format. Restore them, along with the
+# derived INVERSE_TIME_MAPPING/INVERSE_TIME_TRIE structures sqlglot computes
+# once at class-definition time (mutating TIME_MAPPING alone has no effect,
+# since those aren't recomputed lazily).
+PostgresDialect.TIME_MAPPING["AM"] = "%p"
+PostgresDialect.TIME_MAPPING["PM"] = "%p"
+PostgresDialect.INVERSE_TIME_MAPPING = _with_strict_time_inverse(
+    {v: k for k, v in PostgresDialect.TIME_MAPPING.items()}
+)
+PostgresDialect.INVERSE_TIME_TRIE = new_trie(PostgresDialect.INVERSE_TIME_MAPPING)
 
 
 class PostgresTransformBindings(BaseTransformBindings):
@@ -397,11 +415,11 @@ class PostgresTransformBindings(BaseTransformBindings):
                 division_literal: int = 3600 if unit == DateTimeUnit.HOUR else 60
 
                 date1_truc: SQLGlotExpression = sqlglot_expressions.TimestampTrunc(
-                    this=date1, unit=unit
+                    this=date1, unit=sqlglot_expressions.Var(this=unit.value)
                 )
 
                 date2_truc: SQLGlotExpression = sqlglot_expressions.TimestampTrunc(
-                    this=date2, unit=unit
+                    this=date2, unit=sqlglot_expressions.Var(this=unit.value)
                 )
 
                 sub_dates: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -534,46 +552,24 @@ class PostgresTransformBindings(BaseTransformBindings):
 
         start_idx: int | None = None
         if not isinstance(start, sqlglot_expressions.Null):
-            if isinstance(start, sqlglot_expressions.Literal):
-                try:
-                    start_idx = int(start.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the start index being integer literal or absent."
-                    )
-            else:
+            start_idx = extract_int_literal(start)
+            if start_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the start index being integer literal or absent."
                 )
 
         stop_idx: int | None = None
         if not isinstance(stop, sqlglot_expressions.Null):
-            if isinstance(stop, sqlglot_expressions.Literal):
-                try:
-                    stop_idx = int(stop.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the stop index being integer literal or absent."
-                    )
-            else:
+            stop_idx = extract_int_literal(stop)
+            if stop_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the stop index being integer literal or absent."
                 )
 
         step_idx: int | None = None
         if not isinstance(step, sqlglot_expressions.Null):
-            if isinstance(step, sqlglot_expressions.Literal):
-                try:
-                    step_idx = int(step.this)
-                    if step_idx != 1:
-                        raise ValueError(
-                            "SLICE function currently only supports the step being integer literal 1 or absent."
-                        )
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the step being integer literal 1 or absent."
-                    )
-            else:
+            step_idx = extract_int_literal(step)
+            if step_idx is None or step_idx != 1:
                 raise ValueError(
                     "SLICE function currently only supports the step being integer literal 1 or absent."
                 )

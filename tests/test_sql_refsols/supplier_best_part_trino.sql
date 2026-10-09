@@ -16,7 +16,10 @@ WITH _s2 AS (
     _s2.n_rows,
     part.p_name,
     _s2.sum_l_quantity,
-    ROW_NUMBER() OVER (PARTITION BY _s2.l_suppkey ORDER BY COALESCE(_s2.sum_l_quantity, 0) DESC NULLS FIRST) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY _s2.l_suppkey
+      ORDER BY COALESCE(_s2.sum_l_quantity, 0) DESC NULLS FIRST
+    ) AS _w
   FROM _s2 AS _s2
   JOIN tpch.part AS part
     ON _s2.l_partkey = part.p_partkey

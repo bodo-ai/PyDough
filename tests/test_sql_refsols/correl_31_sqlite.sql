@@ -7,9 +7,12 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY nation.n_nationkey ORDER BY lineitem.l_extendedprice * (
-            1 - lineitem.l_discount
-          ) DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY nation.n_nationkey
+            ORDER BY lineitem.l_extendedprice * (
+              1 - lineitem.l_discount
+            ) DESC
+          ) - 1.0
         ) - (
           CAST((
             COUNT(lineitem.l_extendedprice * (

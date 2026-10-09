@@ -7,7 +7,7 @@ WITH _s3 AS (
     o_orderpriority = '1-URGENT'
 )
 SELECT
-  MAX(customer.c_name) AS name,
+  ANY_VALUE(customer.c_name) AS name,
   AVG(CAST(_s3.day_diff AS DECIMAL)) AS avg_diff
 FROM tpch.customer AS customer
 JOIN tpch.nation AS nation

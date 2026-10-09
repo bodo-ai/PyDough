@@ -1,10 +1,10 @@
 SELECT
-  ins_type AS insurance_type,
-  AVG(height_cm) AS avg_height,
-  AVG(weight_kg) AS avg_weight
+  INS_TYPE AS insurance_type,
+  AVG(HEIGHT_CM) AS avg_height,
+  AVG(WEIGHT_KG) AS avg_weight
 FROM MAIN.PATIENTS
 GROUP BY
-  ins_type
+  INS_TYPE
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 3 ROWS ONLY
