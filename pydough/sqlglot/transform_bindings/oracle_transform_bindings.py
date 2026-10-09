@@ -1041,9 +1041,9 @@ class OracleTransformBindings(BaseTransformBindings):
         match unit:
             case DateTimeUnit.QUARTER:
                 # TRUNC(o_orderdate, 'Q')
-                # PyDough Change: this must be a string literal, not a Var -
-                # Oracle's TRUNC(date, format) format model is a quoted
-                # string, unlike EXTRACT's bare unit name.
+                # format must be a string literal
+                # This is a quirk of Oracle's TRUNC function,
+                # which expects the format as a string literal.
                 return sqlglot_expressions.Anonymous(
                     this="TRUNC",
                     expressions=[

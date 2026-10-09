@@ -1,26 +1,24 @@
-WITH _t1 AS (
+WITH _s3 AS (
   SELECT
-    CUSTOMER.c_name,
-    ORDERS.o_custkey,
+    o_custkey,
     DATEDIFF(
-      ORDERS.o_orderdate,
-      LAG(ORDERS.o_orderdate, 1) OVER (
-        PARTITION BY ORDERS.o_custkey
-        ORDER BY CASE WHEN ORDERS.o_orderdate IS NULL THEN 1 ELSE 0 END, ORDERS.o_orderdate
-      )
+      o_orderdate,
+      LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY CASE WHEN o_orderdate IS NULL THEN 1 ELSE 0 END, o_orderdate)
     ) AS day_diff
-  FROM tpch.CUSTOMER AS CUSTOMER
-  JOIN tpch.NATION AS NATION
-    ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'JAPAN'
-  JOIN tpch.ORDERS AS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey AND ORDERS.o_orderpriority = '1-URGENT'
+  FROM tpch.ORDERS
+  WHERE
+    o_orderpriority = '1-URGENT'
 )
 SELECT
-  ANY_VALUE(c_name) AS name,
-  AVG(day_diff) AS avg_diff
-FROM _t1
+  ANY_VALUE(CUSTOMER.c_name) AS name,
+  AVG(_s3.day_diff) AS avg_diff
+FROM tpch.CUSTOMER AS CUSTOMER
+JOIN tpch.NATION AS NATION
+  ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'JAPAN'
+JOIN _s3 AS _s3
+  ON CUSTOMER.c_custkey = _s3.o_custkey
 GROUP BY
-  o_custkey
+  _s3.o_custkey
 ORDER BY
   2 DESC
 LIMIT 5
