@@ -1,12 +1,6 @@
 """
 Overridden version of the simplify.py file from sqlglot.
 
-SQLGlot rewrote its `simplify` optimizer pass from a set of free functions
-into a `Simplifier` class. Rather than re-forking the whole (much larger)
-class, this module subclasses `Simplifier` and overrides only the methods
-PyDough customizes: `_simplify` (to splice in extra pre/post-order rewrite
-rules) and `simplify_datetrunc` (to guard against `datetime.datetime`
-values).
 """
 
 from __future__ import annotations
@@ -47,8 +41,13 @@ if t.TYPE_CHECKING:
 
 class PyDoughSimplifier(Simplifier):
     """
-    PyDough's overridden version of sqlglot's `Simplifier`, adding extra
-    pre/post-order rewrite rules on top of the stock ones.
+    SQLGlot rewrote its `simplify` optimizer pass from a set of free functions
+    into a `Simplifier` class. Rather than re-forking the whole (much larger)
+    class, PyDough just subclasses `Simplifier` and overrides only the methods
+    `_simplify` (to splice in extra pre/post-order rewrite
+    rules) and `simplify_datetrunc` (to guard against `datetime.datetime`
+    values), adding extra pre/post-order rewrite rules on top of the
+    stock ones.
     """
 
     def _simplify(
