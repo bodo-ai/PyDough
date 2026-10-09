@@ -33,7 +33,10 @@ WITH _s1 AS (
 ), _s3 AS (
   SELECT
     anything_o_custkey,
-    COALESCE(sum_r, 0) - LAG(COALESCE(sum_r, 0), 1) OVER (PARTITION BY anything_o_custkey ORDER BY CASE WHEN anything_o_orderdate IS NULL THEN 1 ELSE 0 END, anything_o_orderdate) AS revenue_delta
+    COALESCE(sum_r, 0) - LAG(COALESCE(sum_r, 0), 1) OVER (
+      PARTITION BY anything_o_custkey
+      ORDER BY CASE WHEN anything_o_orderdate IS NULL THEN 1 ELSE 0 END, anything_o_orderdate
+    ) AS revenue_delta
   FROM _t
   WHERE
     NOT _w IS NULL

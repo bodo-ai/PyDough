@@ -36,11 +36,7 @@ WITH _s1 AS (
     NOT _w IS NULL
 )
 SELECT
-<<<<<<< HEAD
-  ANY_VALUE(c_name) AS name,
-=======
-  MAX(customer.c_name) AS name,
->>>>>>> 4867111585f8e9dcf48b9d829dc38efab694d6a8
+  ANY_VALUE(customer.c_name) AS name,
   CASE
     WHEN ABS(MIN(_s3.revenue_delta)) > MAX(_s3.revenue_delta)
     THEN MIN(_s3.revenue_delta)

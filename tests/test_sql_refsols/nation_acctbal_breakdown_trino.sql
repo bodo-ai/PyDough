@@ -5,22 +5,14 @@ WITH _s3 AS (
     CASE
       WHEN ABS(
         (
-<<<<<<< HEAD
           ROW_NUMBER() OVER (
-            PARTITION BY customer.c_nationkey
-            ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC
+            PARTITION BY c_nationkey
+            ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC
           ) - 1.0
         ) - (
           (
-            COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY customer.c_nationkey) - 1.0
-          ) / 2.0
-=======
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
-        ) - (
-          CAST((
             COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS DOUBLE) / 2.0
->>>>>>> 4867111585f8e9dcf48b9d829dc38efab694d6a8
+          ) / 2.0
         )
       ) < 1.0
       THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
@@ -31,15 +23,9 @@ WITH _s3 AS (
         (
           ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY c_acctbal DESC) - 1.0
         ) - (
-<<<<<<< HEAD
           (
-            COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) - 1.0
-          ) / 2.0
-=======
-          CAST((
             COUNT(c_acctbal) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS DOUBLE) / 2.0
->>>>>>> 4867111585f8e9dcf48b9d829dc38efab694d6a8
+          ) / 2.0
         )
       ) < 1.0
       THEN c_acctbal
@@ -48,22 +34,14 @@ WITH _s3 AS (
     CASE
       WHEN ABS(
         (
-<<<<<<< HEAD
           ROW_NUMBER() OVER (
-            PARTITION BY customer.c_nationkey
-            ORDER BY CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END DESC
+            PARTITION BY c_nationkey
+            ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC
           ) - 1.0
         ) - (
           (
-            COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY customer.c_nationkey) - 1.0
-          ) / 2.0
-=======
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
-        ) - (
-          CAST((
             COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS DOUBLE) / 2.0
->>>>>>> 4867111585f8e9dcf48b9d829dc38efab694d6a8
+          ) / 2.0
         )
       ) < 1.0
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
