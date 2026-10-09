@@ -1,0 +1,3 @@
+ROOT(columns=[('name', lower_n_name)], orderings=[(lower_n_name):asc_first])
+ AGGREGATE(keys={'lower_n_name': LOWER(n_name)}, aggregations={})
+  SCAN(table=tpch.NATION, columns={'n_name': n_name})
