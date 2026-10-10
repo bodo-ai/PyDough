@@ -1,0 +1,1573 @@
+[
+  {
+    "name": "chinook",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "album",
+        "type": "simple table",
+        "table path": "main.Album",
+        "unique properties": [
+          "album_id"
+        ],
+        "properties": [
+          {
+            "name": "album_id",
+            "type": "table column",
+            "column name": "AlbumId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the album.",
+            "synonyms": [
+              "album_id"
+            ]
+          },
+          {
+            "name": "title",
+            "type": "table column",
+            "column name": "Title",
+            "data type": "string",
+            "sample values": [
+              "Heart of the Night",
+              "The Cream Of Clapton",
+              "Van Halen III",
+              "Minha Historia",
+              "Chill: Brazil (Disc 2)"
+            ],
+            "description": "Title of the album.",
+            "synonyms": [
+              "title"
+            ]
+          },
+          {
+            "name": "artist_id",
+            "type": "table column",
+            "column name": "ArtistId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the artist collection who created the album; every album always matches an artist.",
+            "synonyms": [
+              "artist_id"
+            ]
+          }
+        ],
+        "description": "Represents music or audio albums produced by recording artists, containing one or more tracks.",
+        "synonyms": [
+          "album"
+        ],
+        "extra semantic info": {
+          "album_id": "Primary key uniquely identifying each album.",
+          "artist_id": "Foreign key referencing the artist who created the album; every album always matches an artist.",
+          "title": "The commercial title of the album release.",
+          "track_relationship": "One-to-many relationship with 'track'; an album groups multiple track records."
+        }
+      },
+      {
+        "name": "artist",
+        "type": "simple table",
+        "table path": "main.Artist",
+        "unique properties": [
+          "artist_id"
+        ],
+        "properties": [
+          {
+            "name": "artist_id",
+            "type": "table column",
+            "column name": "ArtistId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the artist.",
+            "synonyms": [
+              "artist_id"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "Name",
+            "data type": "string",
+            "sample values": [
+              "Legi\u00e3o Urbana",
+              "Ben Harper",
+              "Incognito",
+              "Chico Buarque",
+              "Dhani Harrison & Jakob Dylan"
+            ],
+            "description": "Name of the artist.",
+            "synonyms": [
+              "name"
+            ]
+          }
+        ],
+        "description": "Represents musical artists, bands, or performers who release albums within the catalog.",
+        "synonyms": [
+          "artist"
+        ],
+        "extra semantic info": {
+          "artist_id": "Primary key uniquely identifying each artist or musical entity.",
+          "name": "The display name of the artist or band.",
+          "album_relationship": "One-to-many relationship with 'album'; an artist can have zero, one, or multiple released albums."
+        }
+      },
+      {
+        "name": "customer",
+        "type": "simple table",
+        "table path": "main.Customer",
+        "unique properties": [
+          "customer_id"
+        ],
+        "properties": [
+          {
+            "name": "customer_id",
+            "type": "table column",
+            "column name": "CustomerId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the customer.",
+            "synonyms": [
+              "customer_id"
+            ]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "FirstName",
+            "data type": "string",
+            "sample values": [
+              "Martha",
+              "Edward",
+              "Victor",
+              "Manoj",
+              "Heather"
+            ],
+            "description": "First name of the customer.",
+            "synonyms": [
+              "first_name"
+            ]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "LastName",
+            "data type": "string",
+            "sample values": [
+              "Sampaio",
+              "Mu\u00f1oz",
+              "W\u00f3jcik",
+              "Hansen",
+              "Harris"
+            ],
+            "description": "Last name of the customer.",
+            "synonyms": [
+              "last_name"
+            ]
+          },
+          {
+            "name": "company",
+            "type": "table column",
+            "column name": "Company",
+            "data type": "string",
+            "sample values": [
+              "Apple Inc.",
+              "Telus",
+              "Embraer - Empresa Brasileira de Aeron...",
+              "Banco do Brasil S.A.",
+              "Woodstock Discos"
+            ],
+            "description": "Company name associated with the customer.",
+            "synonyms": [
+              "company"
+            ]
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "Address",
+            "data type": "string",
+            "sample values": [
+              "202 Hoxton Street",
+              "3,Raj Bhavan Road",
+              "Rua dos Campe\u00f5es Europeus de Viena, 4350",
+              "1 Microsoft Way",
+              "1033 N Park Ave"
+            ],
+            "description": "Street address of the customer.",
+            "synonyms": [
+              "address"
+            ]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "City",
+            "data type": "string",
+            "sample values": [
+              "Budapest",
+              "Porto",
+              "Reno",
+              "London",
+              "Paris"
+            ],
+            "description": "City where the customer is located.",
+            "synonyms": [
+              "city"
+            ]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "State",
+            "data type": "string",
+            "sample values": [
+              "SP",
+              "RM",
+              "CA",
+              "VV",
+              "AB"
+            ],
+            "description": "State or region where the customer is located.",
+            "synonyms": [
+              "state"
+            ]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "Country",
+            "data type": "string",
+            "sample values": [
+              "Argentina",
+              "Spain",
+              "Italy",
+              "Hungary",
+              "India"
+            ],
+            "description": "Country where the customer is located.",
+            "synonyms": [
+              "country"
+            ]
+          },
+          {
+            "name": "postal_code",
+            "type": "table column",
+            "column name": "PostalCode",
+            "data type": "string",
+            "sample values": [
+              "K2P 1L7",
+              "X1A 1N6",
+              "110017",
+              "75002",
+              "V6C 1G8"
+            ],
+            "description": "Postal code of the customer's address.",
+            "synonyms": [
+              "postal_code"
+            ]
+          },
+          {
+            "name": "phone",
+            "type": "table column",
+            "column name": "Phone",
+            "data type": "string",
+            "sample values": [
+              "+1 (617) 522-1333",
+              "+91 0124 39883988",
+              "+55 (21) 2271-7000",
+              "+31 020 6223130",
+              "+44 020 7976 5722"
+            ],
+            "description": "Phone number of the customer.",
+            "synonyms": [
+              "phone"
+            ]
+          },
+          {
+            "name": "fax",
+            "type": "table column",
+            "column name": "Fax",
+            "data type": "string",
+            "sample values": [
+              "+1 (780) 434-5565",
+              "+1 (408) 996-1011",
+              "+55 (21) 2271-7070",
+              "+1 (650) 253-0000",
+              "+420 2 4172 5555"
+            ],
+            "description": "Fax number of the customer.",
+            "synonyms": [
+              "fax"
+            ]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "Email",
+            "data type": "string",
+            "sample values": [
+              "ladislav_kovacs@apple.hu",
+              "johngordon22@yahoo.com",
+              "enrique_munoz@yahoo.es",
+              "wyatt.girard@yahoo.fr",
+              "nschroder@surfeu.de"
+            ],
+            "description": "Email address of the customer.",
+            "synonyms": [
+              "email"
+            ]
+          },
+          {
+            "name": "support_rep_id",
+            "type": "table column",
+            "column name": "SupportRepId",
+            "data type": "numeric",
+            "sample values": [
+              3,
+              5,
+              4
+            ],
+            "description": "Identifier linking to the employee collection (employee_id) representing the assigned sales support representative.",
+            "synonyms": [
+              "support_rep_id"
+            ]
+          }
+        ],
+        "description": "Stores profile and contact details of registered digital media customers who purchase tracks and receive sales support.",
+        "synonyms": [
+          "customer"
+        ],
+        "extra semantic info": {
+          "customer_id": "Primary key uniquely identifying each customer.",
+          "support_rep_id": "Foreign key referencing 'employee_id' in the employee collection, identifying the dedicated sales support representative.",
+          "geographic_info": "Includes address, city, state, country, and postal_code for location-based customer segmentation.",
+          "invoice_relationship": "One-to-many relationship linking a customer to all billing records ('invoice').",
+          "customer_name": "Full name created by concatenating customer.first_name and customer.last_name with a space.",
+          "favorite_customer": "The customer record(s) having the maximum sum of associated invoice.total amounts."
+        }
+      },
+      {
+        "name": "employee",
+        "type": "simple table",
+        "table path": "main.Employee",
+        "unique properties": [
+          "employee_id"
+        ],
+        "properties": [
+          {
+            "name": "employee_id",
+            "type": "table column",
+            "column name": "EmployeeId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the employee.",
+            "synonyms": [
+              "employee_id"
+            ]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "LastName",
+            "data type": "string",
+            "sample values": [
+              "Adams",
+              "King",
+              "Johnson",
+              "Edwards",
+              "Callahan"
+            ],
+            "description": "Last name of the employee.",
+            "synonyms": [
+              "last_name"
+            ]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "FirstName",
+            "data type": "string",
+            "sample values": [
+              "Nancy",
+              "Jane",
+              "Laura",
+              "Steve",
+              "Michael"
+            ],
+            "description": "First name of the employee.",
+            "synonyms": [
+              "first_name"
+            ]
+          },
+          {
+            "name": "title",
+            "type": "table column",
+            "column name": "Title",
+            "data type": "string",
+            "sample values": [
+              "General Manager",
+              "Sales Support Agent",
+              "IT Manager",
+              "IT Staff",
+              "Sales Manager"
+            ],
+            "description": "Job title of the employee.",
+            "synonyms": [
+              "title"
+            ]
+          },
+          {
+            "name": "reports_to",
+            "type": "table column",
+            "column name": "ReportsTo",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              6
+            ],
+            "description": "Self-referencing identifier linking to the employee collection (employee_id) for the direct manager; null for top-level leadership.",
+            "synonyms": [
+              "reports_to"
+            ]
+          },
+          {
+            "name": "birth_date",
+            "type": "table column",
+            "column name": "BirthDate",
+            "data type": "datetime",
+            "sample values": [
+              "1958-12-08T00:00:00",
+              "1962-02-18T00:00:00",
+              "1973-08-29T00:00:00",
+              "1965-03-03T00:00:00",
+              "1947-09-19T00:00:00"
+            ],
+            "description": "Date of birth of the employee (format: YYYY-MM-DDTHH:MM:SS).",
+            "synonyms": [
+              "birth_date"
+            ]
+          },
+          {
+            "name": "hire_date",
+            "type": "table column",
+            "column name": "HireDate",
+            "data type": "datetime",
+            "sample values": [
+              "2002-08-14T00:00:00",
+              "2002-04-01T00:00:00",
+              "2003-10-17T00:00:00",
+              "2002-05-01T00:00:00",
+              "2003-05-03T00:00:00"
+            ],
+            "description": "Date the employee was hired (format: YYYY-MM-DDTHH:MM:SS).",
+            "synonyms": [
+              "hire_date"
+            ]
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "Address",
+            "data type": "string",
+            "sample values": [
+              "5827 Bowness Road NW",
+              "825 8 Ave SW",
+              "1111 6 Ave SW",
+              "7727B 41 Ave",
+              "590 Columbia Boulevard West"
+            ],
+            "description": "Street address of the employee.",
+            "synonyms": [
+              "address"
+            ]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "City",
+            "data type": "string",
+            "sample values": [
+              "Lethbridge",
+              "Edmonton",
+              "Calgary"
+            ],
+            "description": "City where the employee resides.",
+            "synonyms": [
+              "city"
+            ]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "State",
+            "data type": "string",
+            "sample values": [
+              "AB"
+            ],
+            "description": "State or province where the employee resides.",
+            "synonyms": [
+              "state"
+            ]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "Country",
+            "data type": "string",
+            "sample values": [
+              "Canada"
+            ],
+            "description": "Country where the employee resides.",
+            "synonyms": [
+              "country"
+            ]
+          },
+          {
+            "name": "postal_code",
+            "type": "table column",
+            "column name": "PostalCode",
+            "data type": "string",
+            "sample values": [
+              "T2P 5M5",
+              "T3B 1Y7",
+              "T1K 5N8",
+              "T5K 2N1",
+              "T1H 1Y8"
+            ],
+            "description": "Postal code of the employee's address.",
+            "synonyms": [
+              "postal_code"
+            ]
+          },
+          {
+            "name": "phone",
+            "type": "table column",
+            "column name": "Phone",
+            "data type": "string",
+            "sample values": [
+              "+1 (403) 467-3351",
+              "1 (780) 836-9987",
+              "+1 (780) 428-9482",
+              "+1 (403) 456-9986",
+              "+1 (403) 262-3443"
+            ],
+            "description": "Phone number of the employee.",
+            "synonyms": [
+              "phone"
+            ]
+          },
+          {
+            "name": "fax",
+            "type": "table column",
+            "column name": "Fax",
+            "data type": "string",
+            "sample values": [
+              "+1 (403) 456-8485",
+              "1 (780) 836-9543",
+              "+1 (403) 263-4289",
+              "+1 (780) 428-3457",
+              "+1 (403) 262-6712"
+            ],
+            "description": "Fax number of the employee.",
+            "synonyms": [
+              "fax"
+            ]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "Email",
+            "data type": "string",
+            "sample values": [
+              "michael@chinookcorp.com",
+              "robert@chinookcorp.com",
+              "margaret@chinookcorp.com",
+              "andrew@chinookcorp.com",
+              "laura@chinookcorp.com"
+            ],
+            "description": "Email address of the employee.",
+            "synonyms": [
+              "email"
+            ]
+          }
+        ],
+        "description": "Maintains personnel records for company staff, including organizational hierarchy, job titles, and customer support assignments.",
+        "synonyms": [
+          "employee"
+        ],
+        "extra semantic info": {
+          "employee_id": "Primary key uniquely identifying each company employee.",
+          "reports_to": "Self-referencing foreign key pointing to another 'employee_id' representing the direct manager (null for top-level leadership).",
+          "support_rep_role": "Employees linked to customers serve as sales support representatives ('support_rep_id' in customer).",
+          "employee_2": "Reverse relationship representing the employee's direct manager."
+        }
+      },
+      {
+        "name": "genre",
+        "type": "simple table",
+        "table path": "main.Genre",
+        "unique properties": [
+          "genre_id"
+        ],
+        "properties": [
+          {
+            "name": "genre_id",
+            "type": "table column",
+            "column name": "GenreId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the genre.",
+            "synonyms": [
+              "genre_id"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "Name",
+            "data type": "string",
+            "sample values": [
+              "Heavy Metal",
+              "TV Shows",
+              "Latin",
+              "Electronica/Dance",
+              "R&B/Soul"
+            ],
+            "description": "Name of the music or media genre.",
+            "synonyms": [
+              "name"
+            ]
+          }
+        ],
+        "description": "A lookup catalog of music and video categories (e.g., Rock, Jazz, TV Shows) used to classify tracks.",
+        "synonyms": [
+          "genre"
+        ],
+        "extra semantic info": {
+          "genre_id": "Primary key uniquely identifying each category or genre.",
+          "name": "The genre classification name applied across media items.",
+          "track_relationship": "One-to-many relationship with 'track'; a genre classifies multiple individual tracks.",
+          "music_sector": "Filter criteria or grouping mechanism for specific musical genres (e.g., filtering genre.name IN ('Blues', 'Rock'))."
+        }
+      },
+      {
+        "name": "invoice",
+        "type": "simple table",
+        "table path": "main.Invoice",
+        "unique properties": [
+          "invoice_id"
+        ],
+        "properties": [
+          {
+            "name": "invoice_id",
+            "type": "table column",
+            "column name": "InvoiceId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the invoice.",
+            "synonyms": [
+              "invoice_id"
+            ]
+          },
+          {
+            "name": "customer_id",
+            "type": "table column",
+            "column name": "CustomerId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the customer collection billed for the invoice; every invoice matches exactly one customer.",
+            "synonyms": [
+              "customer_id"
+            ]
+          },
+          {
+            "name": "invoice_date",
+            "type": "table column",
+            "column name": "InvoiceDate",
+            "data type": "datetime",
+            "sample values": [
+              "2023-07-30T00:00:00",
+              "2022-02-09T00:00:00",
+              "2024-08-28T00:00:00",
+              "2022-03-29T00:00:00",
+              "2022-01-18T00:00:00"
+            ],
+            "description": "Date the invoice was generated (format: YYYY-MM-DDTHH:MM:SS).",
+            "synonyms": [
+              "invoice_date"
+            ]
+          },
+          {
+            "name": "billing_address",
+            "type": "table column",
+            "column name": "BillingAddress",
+            "data type": "string",
+            "sample values": [
+              "202 Hoxton Street",
+              "Rua dos Campe\u00f5es Europeus de Viena, 4350",
+              "3,Raj Bhavan Road",
+              "1 Microsoft Way",
+              "1033 N Park Ave"
+            ],
+            "description": "Billing street address for the invoice.",
+            "synonyms": [
+              "billing_address"
+            ]
+          },
+          {
+            "name": "billing_city",
+            "type": "table column",
+            "column name": "BillingCity",
+            "data type": "string",
+            "sample values": [
+              "Porto",
+              "Budapest",
+              "Reno",
+              "London",
+              "Paris"
+            ],
+            "description": "Billing city for the invoice.",
+            "synonyms": [
+              "billing_city"
+            ]
+          },
+          {
+            "name": "billing_state",
+            "type": "table column",
+            "column name": "BillingState",
+            "data type": "string",
+            "sample values": [
+              "SP",
+              "RM",
+              "CA",
+              "VV",
+              "AB"
+            ],
+            "description": "Billing state or province for the invoice.",
+            "synonyms": [
+              "billing_state"
+            ]
+          },
+          {
+            "name": "billing_country",
+            "type": "table column",
+            "column name": "BillingCountry",
+            "data type": "string",
+            "sample values": [
+              "Argentina",
+              "Spain",
+              "Italy",
+              "Hungary",
+              "India"
+            ],
+            "description": "Billing country for the invoice.",
+            "synonyms": [
+              "billing_country"
+            ]
+          },
+          {
+            "name": "billing_postal_code",
+            "type": "table column",
+            "column name": "BillingPostalCode",
+            "data type": "string",
+            "sample values": [
+              "K2P 1L7",
+              "X1A 1N6",
+              "110017",
+              "75002",
+              "V6C 1G8"
+            ],
+            "description": "Billing postal code for the invoice.",
+            "synonyms": [
+              "billing_postal_code"
+            ]
+          },
+          {
+            "name": "total",
+            "type": "table column",
+            "column name": "Total",
+            "data type": "numeric",
+            "sample values": [
+              8.94,
+              9.91,
+              15.86,
+              25.86,
+              10.91
+            ],
+            "description": "Total monetary amount of the invoice.",
+            "synonyms": [
+              "total"
+            ]
+          }
+        ],
+        "description": "Represents customer billing transactions and sales orders, capturing transaction dates, billing addresses, and monetary totals.",
+        "synonyms": [
+          "invoice"
+        ],
+        "extra semantic info": {
+          "invoice_id": "Primary key uniquely identifying each billing invoice.",
+          "customer_id": "Foreign key referencing the purchasing customer; every invoice always matches exactly one customer.",
+          "total": "Monetary sum representing the total billed amount for all line items on this invoice.",
+          "line_items": "One-to-many relationship linking each invoice to its specific purchased items in 'invoice_line'."
+        }
+      },
+      {
+        "name": "invoice_line",
+        "type": "simple table",
+        "table path": "main.InvoiceLine",
+        "unique properties": [
+          "invoice_line_id"
+        ],
+        "properties": [
+          {
+            "name": "invoice_line_id",
+            "type": "table column",
+            "column name": "InvoiceLineId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the invoice line item.",
+            "synonyms": [
+              "invoice_line_id"
+            ]
+          },
+          {
+            "name": "invoice_id",
+            "type": "table column",
+            "column name": "InvoiceId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the parent invoice collection containing this line item.",
+            "synonyms": [
+              "invoice_id"
+            ]
+          },
+          {
+            "name": "track_id",
+            "type": "table column",
+            "column name": "TrackId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the track collection for the media track sold.",
+            "synonyms": [
+              "track_id"
+            ]
+          },
+          {
+            "name": "unit_price",
+            "type": "table column",
+            "column name": "UnitPrice",
+            "data type": "numeric",
+            "sample values": [
+              1.99,
+              0.99
+            ],
+            "description": "Price per unit of the track; multiply by quantity to calculate the line item total.",
+            "synonyms": [
+              "unit_price"
+            ]
+          },
+          {
+            "name": "quantity",
+            "type": "table column",
+            "column name": "Quantity",
+            "data type": "numeric",
+            "sample values": [
+              1
+            ],
+            "description": "Quantity of the track purchased.",
+            "synonyms": [
+              "quantity"
+            ]
+          }
+        ],
+        "description": "Represents individual line items on an invoice, detailing each track sold, unit price, and purchased quantity.",
+        "synonyms": [
+          "invoice_line"
+        ],
+        "extra semantic info": {
+          "invoice_line_id": "Primary key uniquely identifying the specific line item entry.",
+          "invoice_id": "Foreign key connecting the line item to its parent invoice.",
+          "track_id": "Foreign key connecting the line item to the media track sold.",
+          "pricing_rule": "Line total can be computed as 'unit_price' * 'quantity'.",
+          "line_revenue": "Calculated field: quantity * unit_price representing gross revenue generated per item."
+        }
+      },
+      {
+        "name": "media_type",
+        "type": "simple table",
+        "table path": "main.MediaType",
+        "unique properties": [
+          "media_type_id"
+        ],
+        "properties": [
+          {
+            "name": "media_type_id",
+            "type": "table column",
+            "column name": "MediaTypeId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the media type.",
+            "synonyms": [
+              "media_type_id"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "Name",
+            "data type": "string",
+            "sample values": [
+              "AAC audio file",
+              "Protected MPEG-4 video file",
+              "MPEG audio file",
+              "Protected AAC audio file",
+              "Purchased AAC audio file"
+            ],
+            "description": "Name or format of the media type.",
+            "synonyms": [
+              "name"
+            ]
+          }
+        ],
+        "description": "A lookup reference table defining digital audio and video container formats and encodings (e.g., MPEG, AAC).",
+        "synonyms": [
+          "media_type"
+        ],
+        "extra semantic info": {
+          "media_type_id": "Primary key uniquely identifying each media format.",
+          "name": "Descriptive format label, indicating container type and DRM status (e.g., 'Protected AAC audio file').",
+          "track_relationship": "One-to-many relationship with 'track'; each track references exactly one media type."
+        }
+      },
+      {
+        "name": "playlist",
+        "type": "simple table",
+        "table path": "main.Playlist",
+        "unique properties": [
+          "playlist_id"
+        ],
+        "properties": [
+          {
+            "name": "playlist_id",
+            "type": "table column",
+            "column name": "PlaylistId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the playlist.",
+            "synonyms": [
+              "playlist_id"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "Name",
+            "data type": "string",
+            "sample values": [
+              "TV Shows",
+              "Movies",
+              "Music Videos",
+              "Classical",
+              "Audiobooks"
+            ],
+            "description": "Name of the playlist.",
+            "synonyms": [
+              "name"
+            ]
+          }
+        ],
+        "description": "Represents curated or user-created collections of media tracks, such as playlists, video queues, or audiobooks.",
+        "synonyms": [
+          "playlist"
+        ],
+        "extra semantic info": {
+          "playlist_id": "Primary key uniquely identifying each playlist.",
+          "name": "The descriptive title given to the playlist.",
+          "track_association": "Associates with individual tracks via the 'playlist_track' bridge collection."
+        }
+      },
+      {
+        "name": "playlist_track",
+        "type": "simple table",
+        "table path": "main.PlaylistTrack",
+        "unique properties": [
+          [
+            "playlist_id",
+            "track_id"
+          ]
+        ],
+        "properties": [
+          {
+            "name": "playlist_id",
+            "type": "table column",
+            "column name": "PlaylistId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              3,
+              5,
+              8,
+              9
+            ],
+            "description": "Identifier linking to the parent playlist collection.",
+            "synonyms": [
+              "playlist_id"
+            ]
+          },
+          {
+            "name": "track_id",
+            "type": "table column",
+            "column name": "TrackId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the track collection included in the playlist.",
+            "synonyms": [
+              "track_id"
+            ]
+          }
+        ],
+        "description": "A many-to-many association table linking playlists to the individual tracks contained within them.",
+        "synonyms": [
+          "playlist_track"
+        ],
+        "extra semantic info": {
+          "composite_key": "Unique identification is defined by the composite pair [playlist_id, track_id].",
+          "playlist_id": "Foreign key referencing the parent playlist.",
+          "track_id": "Foreign key referencing the associated media track."
+        }
+      },
+      {
+        "name": "track",
+        "type": "simple table",
+        "table path": "main.Track",
+        "unique properties": [
+          "track_id"
+        ],
+        "properties": [
+          {
+            "name": "track_id",
+            "type": "table column",
+            "column name": "TrackId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Unique identifier for the track.",
+            "synonyms": [
+              "track_id"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "Name",
+            "data type": "string",
+            "sample values": [
+              "Anyway, Anyhow, Anywhere",
+              "N\u00e3o Sou Mais Disso",
+              "I Still Haven't Found What I'm Lookin...",
+              "El Corazon Manda",
+              "I Believe"
+            ],
+            "description": "Name of the track.",
+            "synonyms": [
+              "name"
+            ]
+          },
+          {
+            "name": "album_id",
+            "type": "table column",
+            "column name": "AlbumId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the album collection that includes the track; can be null for standalone media.",
+            "synonyms": [
+              "album_id"
+            ]
+          },
+          {
+            "name": "media_type_id",
+            "type": "table column",
+            "column name": "MediaTypeId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the media_type collection representing the technical format/encoding of the file.",
+            "synonyms": [
+              "media_type_id"
+            ]
+          },
+          {
+            "name": "genre_id",
+            "type": "table column",
+            "column name": "GenreId",
+            "data type": "numeric",
+            "sample values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "Identifier linking to the genre collection categorizing the track by style or category.",
+            "synonyms": [
+              "genre_id"
+            ]
+          },
+          {
+            "name": "composer",
+            "type": "table column",
+            "column name": "Composer",
+            "data type": "string",
+            "sample values": [
+              "Aldir Blanc/Jayme Vignoli",
+              "Alex Van Halen/David Lee Roth/Edward ...",
+              "Grazielle/Roque Ferreira",
+              "Adriano Bernandes/Edmar Neves",
+              "Bi Ribeira/Herbert Vianna/Jo\u00e3o Barone"
+            ],
+            "description": "Composer or writer of the track.",
+            "synonyms": [
+              "composer"
+            ]
+          },
+          {
+            "name": "milliseconds",
+            "type": "table column",
+            "column name": "Milliseconds",
+            "data type": "numeric",
+            "sample values": [
+              407980,
+              264829,
+              464039,
+              285492,
+              319111
+            ],
+            "description": "Duration of the track in milliseconds.",
+            "synonyms": [
+              "milliseconds"
+            ]
+          },
+          {
+            "name": "bytes_",
+            "type": "table column",
+            "column name": "Bytes",
+            "data type": "numeric",
+            "sample values": [
+              7366142,
+              8044864,
+              7032960,
+              16501316,
+              6877994
+            ],
+            "description": "",
+            "synonyms": [
+              "bytes"
+            ]
+          },
+          {
+            "name": "unit_price",
+            "type": "table column",
+            "column name": "UnitPrice",
+            "data type": "numeric",
+            "sample values": [
+              1.99,
+              0.99
+            ],
+            "description": "Price per unit of the track.",
+            "synonyms": [
+              "unit_price"
+            ]
+          }
+        ],
+        "description": "Represents individual songs, episodes, or audio/video tracks available for purchase in the digital store catalog.",
+        "synonyms": [
+          "track"
+        ],
+        "extra semantic info": {
+          "track_id": "Primary key uniquely identifying each track.",
+          "album_id": "Foreign key referencing the album the track belongs to; can be null for standalone media.",
+          "media_type_id": "Foreign key referencing the technical format/encoding of the file.",
+          "genre_id": "Foreign key categorizing the track by style or category.",
+          "milliseconds": "Duration of the track formatted in milliseconds.",
+          "bytes_": "Physical file size in bytes; mapped from column 'bytes' to avoid reserved keyword conflicts.",
+          "unit_price": "Standard catalog unit purchase price for the track."
+        }
+      }
+    ],
+    "relationships": [
+      {
+        "name": "album",
+        "type": "simple join",
+        "parent collection": "artist",
+        "child collection": "album",
+        "keys": {
+          "artist_id": [
+            "artist_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Albums created by the artist."
+      },
+      {
+        "name": "artist",
+        "type": "reverse",
+        "original parent": "artist",
+        "original property": "album",
+        "singular": true,
+        "always matches": true,
+        "description": "The artist who created the album."
+      },
+      {
+        "name": "customer",
+        "type": "simple join",
+        "parent collection": "employee",
+        "child collection": "customer",
+        "keys": {
+          "employee_id": [
+            "support_rep_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Customers assigned to the employee for support."
+      },
+      {
+        "name": "employee",
+        "type": "reverse",
+        "original parent": "employee",
+        "original property": "customer",
+        "singular": true,
+        "always matches": false,
+        "description": "The support representative assigned to the customer."
+      },
+      {
+        "name": "employee",
+        "type": "simple join",
+        "parent collection": "employee",
+        "child collection": "employee",
+        "keys": {
+          "employee_id": [
+            "reports_to"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Employees who report directly to the employee."
+      },
+      {
+        "name": "employee_2",
+        "type": "reverse",
+        "original parent": "employee",
+        "original property": "employee",
+        "singular": true,
+        "always matches": false,
+        "description": "The manager the employee reports to."
+      },
+      {
+        "name": "invoice",
+        "type": "simple join",
+        "parent collection": "customer",
+        "child collection": "invoice",
+        "keys": {
+          "customer_id": [
+            "customer_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Invoices billed to the customer."
+      },
+      {
+        "name": "customer",
+        "type": "reverse",
+        "original parent": "customer",
+        "original property": "invoice",
+        "singular": true,
+        "always matches": true,
+        "description": "The customer billed for the invoice."
+      },
+      {
+        "name": "invoice_line",
+        "type": "simple join",
+        "parent collection": "invoice",
+        "child collection": "invoice_line",
+        "keys": {
+          "invoice_id": [
+            "invoice_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Line items associated with the invoice."
+      },
+      {
+        "name": "invoice",
+        "type": "reverse",
+        "original parent": "invoice",
+        "original property": "invoice_line",
+        "singular": true,
+        "always matches": true,
+        "description": "The invoice containing this line item."
+      },
+      {
+        "name": "invoice_line",
+        "type": "simple join",
+        "parent collection": "track",
+        "child collection": "invoice_line",
+        "keys": {
+          "track_id": [
+            "track_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Invoice line items where the track was purchased."
+      },
+      {
+        "name": "track",
+        "type": "reverse",
+        "original parent": "track",
+        "original property": "invoice_line",
+        "singular": true,
+        "always matches": true,
+        "description": "The track purchased in this line item."
+      },
+      {
+        "name": "playlist_track",
+        "type": "simple join",
+        "parent collection": "playlist",
+        "child collection": "playlist_track",
+        "keys": {
+          "playlist_id": [
+            "playlist_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Track associations belonging to the playlist."
+      },
+      {
+        "name": "playlist",
+        "type": "reverse",
+        "original parent": "playlist",
+        "original property": "playlist_track",
+        "singular": true,
+        "always matches": true,
+        "description": "The playlist containing this track entry."
+      },
+      {
+        "name": "playlist_track",
+        "type": "simple join",
+        "parent collection": "track",
+        "child collection": "playlist_track",
+        "keys": {
+          "track_id": [
+            "track_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Playlist associations containing the track."
+      },
+      {
+        "name": "track",
+        "type": "reverse",
+        "original parent": "track",
+        "original property": "playlist_track",
+        "singular": true,
+        "always matches": true,
+        "description": "The track referenced in this playlist entry."
+      },
+      {
+        "name": "track",
+        "type": "simple join",
+        "parent collection": "album",
+        "child collection": "track",
+        "keys": {
+          "album_id": [
+            "album_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Tracks included in the album."
+      },
+      {
+        "name": "album",
+        "type": "reverse",
+        "original parent": "album",
+        "original property": "track",
+        "singular": true,
+        "always matches": false,
+        "description": "The album that includes the track."
+      },
+      {
+        "name": "track",
+        "type": "simple join",
+        "parent collection": "genre",
+        "child collection": "track",
+        "keys": {
+          "genre_id": [
+            "genre_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Tracks classified under this genre."
+      },
+      {
+        "name": "genre",
+        "type": "reverse",
+        "original parent": "genre",
+        "original property": "track",
+        "singular": true,
+        "always matches": false,
+        "description": "The genre of the track."
+      },
+      {
+        "name": "track",
+        "type": "simple join",
+        "parent collection": "media_type",
+        "child collection": "track",
+        "keys": {
+          "media_type_id": [
+            "media_type_id"
+          ]
+        },
+        "singular": false,
+        "always matches": false,
+        "description": "Tracks formatted in this media type."
+      },
+      {
+        "name": "media_type",
+        "type": "reverse",
+        "original parent": "media_type",
+        "original property": "track",
+        "singular": true,
+        "always matches": true,
+        "description": "The media type format of the track."
+      }
+    ],
+    "functions": [],
+    "additional definitions": [
+      "bad bunny|Sum of the 'total' property across all records in the 'invoice' collection.",
+      "funny cat|Count of unique 'customer_id' records in the 'customer' collection.",
+      "period|Default temporal window filtering invoice_date between 2000-01-01 and 2099-12-31."
+    ],
+    "verified pydough analysis": [],
+    "extra semantic info": {
+      "customer_annual_revenue_share": "For each customer and year, the ratio of that customer's total invoice spend in the given year relative to their total cumulative spend across all recorded years.",
+      "customer_annual_revenue": "For each customer and year, the total invoice spend for that customer in that year.",
+      "customer_total_revenue": "For each customer, the total invoice spend across all recorded years.",
+      "customer_yearly_market_share": "The ratio of a customer's yearly spend relative to total revenue generated by all customers in that same year.",
+      "customer_relative_efficiency": "For each customer and year, the ratio of that customer's total invoice spend in the given year relative to their total cumulative spend across all recorded years, expressed as a percentage.",
+      "customer_absolute_revenue": "For each customer and year, the total invoice spend for that customer in that year, along with the total invoice spend for all customers in that year, allowing for comparison of individual customer performance against the overall customer base.",
+      "Customer Lifetime Value (LTV)": "Total cumulative sum of invoice.total attributed to a single customer_id across all time.",
+      "Average Order Value (AOV)": "The average total amount per purchase, calculated as SUM(invoice.total) / COUNT(DISTINCT invoice_id).",
+      "Sales Rep Performance / Sales Attribution": "The total invoice revenue attributed to each employee (support_rep_id) based on the customers they support, allowing for evaluation of individual sales rep performance.",
+      "Artist Total Sales": "Total gross revenue generated by an artist, calculated by summing invoice_line.quantity * invoice_line.unit_price for all tracks linked via album to the artist_id.",
+      "Track Popularity": "The total quantity of an individual track sold across all invoice_lines.",
+      "Customer Churn Risk / Recency": "The elapsed time in days between the current date and a customer's most recent invoice_date."
+    }
+  }
+]

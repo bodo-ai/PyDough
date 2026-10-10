@@ -1,20 +1,21 @@
-WITH _t1 AS (
+WITH _s3 AS (
   SELECT
-    customer.c_name,
-    orders.o_custkey,
-    CAST(orders.o_orderdate AS DATE) - CAST(LAG(orders.o_orderdate, 1) OVER (PARTITION BY orders.o_custkey ORDER BY orders.o_orderdate) AS DATE) AS day_diff
-  FROM tpch.customer AS customer
-  JOIN tpch.nation AS nation
-    ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'JAPAN'
-  JOIN tpch.orders AS orders
-    ON customer.c_custkey = orders.o_custkey AND orders.o_orderpriority = '1-URGENT'
+    o_custkey,
+    CAST(o_orderdate AS DATE) - CAST(LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS DATE) AS day_diff
+  FROM tpch.orders
+  WHERE
+    o_orderpriority = '1-URGENT'
 )
 SELECT
-  MAX(c_name) AS name,
-  AVG(CAST(day_diff AS DECIMAL)) AS avg_diff
-FROM _t1
+  MAX(customer.c_name) AS name,
+  AVG(CAST(_s3.day_diff AS DECIMAL)) AS avg_diff
+FROM tpch.customer AS customer
+JOIN tpch.nation AS nation
+  ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'JAPAN'
+JOIN _s3 AS _s3
+  ON _s3.o_custkey = customer.c_custkey
 GROUP BY
-  o_custkey
+  _s3.o_custkey
 ORDER BY
   2 DESC NULLS LAST
 LIMIT 5

@@ -214,6 +214,30 @@ result = california_schools.schools.CALCULATE(
             ),
             id="california_schools_quoted_alias",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                r"""
+# Reusable expressions
+has_customer_expr = HAS(customer) == 1
+total_invoice_expr = SUM(customer.invoice.total)
+
+# Filter employees using HAS(...) == 1 and aggregate over a 2-level relationship
+result = employee.WHERE(has_customer_expr).CALCULATE(
+    employee_id=employee_id,
+    total_invoice=total_invoice_expr,
+).ORDER_BY(employee_id.ASC())
+                """,
+                "chinook",
+                lambda: pd.DataFrame(
+                    {
+                        "employee_id": [3, 4, 5],
+                        "total_invoice": [833.04, 775.40, 720.16],
+                    }
+                ),
+                "pear_music_has_1",
+            ),
+            id="pear_music_has_1",
+        ),
     ],
 )
 def s3_datasets_test_data(request) -> PyDoughPandasTest:
