@@ -1700,7 +1700,7 @@ class HybridTranslator:
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
                         partition_child_idx = child_ref_mapping[0]
-                        for key_name in node.calc_terms:
+                        for key_name in sorted(node.calc_terms, key=str):
                             key = node.get_expr(key_name)
                             expr = self.make_hybrid_expr(
                                 successor_hybrid, key, child_ref_mapping, False
