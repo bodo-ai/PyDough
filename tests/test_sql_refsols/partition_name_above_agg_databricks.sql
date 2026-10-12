@@ -53,7 +53,7 @@ SELECT
   _s5.c_mktsegment AS c_industry,
   ANY_VALUE(_s5.c_name) AS c_name,
   ANY_VALUE(_s4.sum_n_rows) AS n,
-  COALESCE(CASE WHEN agg_1 <> 0 THEN COUNT(_s7.c_nationkey) ELSE NULL END, 0) AS n_seg
+  COUNT(_s7.c_nationkey) AS n_seg
 FROM _s4 AS _s4
 JOIN _s5 AS _s5
   ON _s4.c_mktsegment = _s5.c_mktsegment AND _s4.n_name = _s5.n_name

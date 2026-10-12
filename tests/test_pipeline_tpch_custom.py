@@ -6776,6 +6776,7 @@ from .testing_utilities import (
                     }
                 ),
                 "partition_name_above_below",
+                order_sensitive=True,
             ),
             id="partition_name_above_below",
         ),
@@ -6796,18 +6797,19 @@ from .testing_utilities import (
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "r_name": ["EUROPE"] * 3,
-                        "n_name": ["ROMANIA"] * 3,
-                        "c_industry": ["MACHINERY"] * 3,
+                        "n_name": ["IRAN", "INDIA", "ROMANIA"],
+                        "c_industry": ["HOUSEHOLD", "BUILDING", "MACHINERY"],
                         "c_name": [
-                            "Customer#000000043",
-                            "Customer#000000208",
-                            "Customer#000000372",
+                            "Customer#000148059",
+                            "Customer#000147495",
+                            "Customer#000149094",
                         ],
-                        "n": [1273] * 3,
+                        "n_cust": [144, 129, 129],
+                        "n_seg": [20736, 16641, 16641],
                     }
                 ),
                 "partition_name_above_agg",
+                order_sensitive=True,
             ),
             id="partition_name_above_agg",
         ),
