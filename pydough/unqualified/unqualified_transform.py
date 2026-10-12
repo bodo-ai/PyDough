@@ -677,9 +677,16 @@ def call_template(
             f"No attributes available for template '{name}' in the current active session"
         )
 
-    missing_params: list[str] = [
-        p for p in calling_template.parameters if p not in labels
-    ]
+    template_kwargs: dict[str, dict[str, str | int | float | bool]] = {}
+    param_list: set[str] = set(calling_template.parameters.keys())
+
+    missing_params: list[str] = []
+
+    for param in param_list:
+        if param not in labels and calling_template.parameters[param].default is None:
+            # It's a missing param
+            missing_params.append(param)
+
     if missing_params:
         missing_params_str: str = ", ".join(missing_params)
         raise ValueError(
@@ -687,20 +694,18 @@ def call_template(
             f"parameter(s): {missing_params_str}"
         )
 
-    template_kwargs: dict[str, dict[str, str | int | float]] = {}
-
     for arg_name, label in labels.items():
         if arg_name not in calling_template.parameters:
-            template_params: list[str] = list(calling_template.parameters.keys())
-            template_params_str: str = ", ".join(template_params)
+            template_params_str: str = ", ".join(param_list)
 
             raise ValueError(
-                f"Template {name!r} doesn't have a paramater called {arg_name!r}. Did you mean: {template_params_str}"
+                f"Template {name!r} doesn't have a paramater called "
+                f"{arg_name!r}. Did you mean: {template_params_str}"
             )
         # Use this arg type to check the option value
         arg_type: str = calling_template.parameters[arg_name].type
 
-        kwarg: dict[str, str | int | float] | None = None
+        kwarg: dict[str, str | int | float | bool] | None = None
 
         for attr_name, attribute in available_attributes.items():
             if label in attribute.options:

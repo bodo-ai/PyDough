@@ -978,6 +978,13 @@
             { "label": "Tuple 1", "value": "(1, 2)"},
             { "label": "Tuple 2", "value": "(3, 4)"}
           ]
+        },
+        {
+          "name": "region_names",
+          "usage": { "orders_with_defaults": ["region_name"] },
+          "type": "str",
+          "description": "Regions",
+          "options": [{ "label": "Europe Region", "value": "EUROPE" }]
         }
       ],
       "definitions": [
@@ -1272,6 +1279,29 @@
             }
           },
           "source": "result = nations.WHERE(ISIN(region_key, {1})).CALCULATE(name, region_key, n_customers=COUNT(customers), n_rank=RANKING(by=(name.ASC(), COUNT(customers).DESC()), allow_ties={2})).TOP_K(3, by=n_rank)",
+          "answer_variable": "result"
+        },
+        {
+          "name": "orders_with_defaults",
+          "description": "Top orders in a region, filtered by priority, price range and an extra condition",
+          "parameters": {
+            "region_name": { "type": "str", "description": "Region of the order's customer"},
+            "priorities": { "type": "list", "description": "Order priorities to include", "default": "['1-URGENT', '2-HIGH']" },
+            "selected_columns": { "type": "dict", "description": "Columns to select", "default": "{'or_key': key, 'or_priority': order_priority, 'or_price': total_price}" },
+            "top_n": { "type": "int", "description": "Number of orders to return", "default": 3 },
+            "only_fulfilled": { "type": "bool", "description": "Keep only fulfilled ('F') orders", "default": false },
+            "extra_condition": { "type": "pydough", "description": "Additional filter expression", "default": "(total_price > 0)" }
+          },
+          "source": "selected = orders.WHERE(\n    (customer.nation.region.name == {1})\n    & ISIN(order_priority, {2})\n    & {6}\n)\nif {5}:\n    selected = selected.WHERE(order_status == 'F')\nresult = selected.CALCULATE(**{3}).TOP_K({4}, by=(total_price.DESC(), key.ASC()))\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "default_mutation_probe",
+          "description": "Mutates its list default, to catch defaults shared between calls",
+          "parameters": {
+            "items": { "type": "list", "description": "Items", "default": "['UNITED STATES', 'MEXICO']" }
+          },
+          "source": "{1}.append('CANADA')\nresult = {1}\n",
           "answer_variable": "result"
         }
       ]

@@ -552,6 +552,53 @@ from tests.testing_utilities import (
             ),
             id="templates_tuple_bool_attr",
         ),
+        pytest.param(
+            # Testing templates with defaults values
+            PyDoughPandasTest(
+                "result = orders_with_defaults('ASIA')\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "or_key": [1395745, 2121671, 413762],
+                        "or_priority": ["1-URGENT", "2-HIGH", "2-HIGH"],
+                        "or_price": [502742.76, 497529.23, 496620.48],
+                    }
+                ),
+                "templates_default_params",
+            ),
+            id="templates_default_params",
+        ),
+        pytest.param(
+            # Testing templates with defaults values through api
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'orders_with_defaults',\n"
+                "   labels={'region_name': 'Europe Region'}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "or_key": [2185667, 4676257, 1905157],
+                        "or_priority": ["1-URGENT", "2-HIGH", "2-HIGH"],
+                        "or_price": [511359.88, 490133.06, 483987.93],
+                    }
+                ),
+                "templates_default_params_api",
+            ),
+            id="templates_default_params_api",
+        ),
+        pytest.param(
+            # Testing templates with defaults values through api
+            PyDoughPandasTest(
+                "list_country = default_mutation_probe()\n"
+                "list_country_2 = default_mutation_probe()\n"
+                "result = TPCH.CALCULATE(n_customers=COUNT(customers.WHERE(ISIN(nation.name, list_country_2))))\n",
+                "TPCH",
+                lambda: pd.DataFrame({"n_customers": [12003]}),
+                "templates_mutuable_defaults",
+            ),
+            id="templates_mutuable_defaults",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:
@@ -642,6 +689,7 @@ def test_pipeline_e2e_tpch_templates(
             "The label 'Month' is not available for parameter 'arg_year' on template 'orders_revenue_by'",
             id="restricted_template_parameter_api",
         ),
+        # TODO: Add test for required_parameter after optional parameter (with default value)
     ],
 )
 def test_pipeline_e2e_tpch_templates_errors(
