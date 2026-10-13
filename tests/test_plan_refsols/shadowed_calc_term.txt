@@ -1,0 +1,7 @@
+ROOT(columns=[('key', o_orderkey), ('x', max_c_phone)], orderings=[(o_orderkey):asc_first], limit=5:numeric)
+ JOIN(condition=t0.o_custkey == t1.c_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'max_c_phone': t1.max_c_phone, 'o_orderkey': t0.o_orderkey})
+  SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
+  AGGREGATE(keys={'c_custkey': c_custkey}, aggregations={'max_c_phone': MAX(c_phone)})
+   JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_custkey': t0.c_custkey, 'c_phone': t0.c_phone})
+    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_phone': c_phone})
+    SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey})
