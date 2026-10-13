@@ -4022,3 +4022,19 @@ def partition_child_inherited_term():
         )
         .ORDER_BY(rkey.ASC())
     )
+
+
+def chained_partition_transformed_key():
+    """
+    Test for fixing the problem with chaining a second PARTITION on top of a
+    PARTITION whose key comes from a CALCULATE that redefines a term using
+    its own old value (e.g. `name=LOWER(name)`), used to cause an unhandled
+    `KeyError` during relational conversion.
+    """
+    return (
+        nations.CALCULATE(name=LOWER(name))
+        .PARTITION(name="a", by=name)
+        .PARTITION(name="b", by=name)
+        .CALCULATE(name)
+        .ORDER_BY(name.ASC())
+    )
