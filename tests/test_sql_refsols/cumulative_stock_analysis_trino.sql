@@ -28,9 +28,7 @@ SELECT
     IF(
       sbtransaction.sbtxtype = 'buy',
       sbtransaction.sbtxshares,
-      (
-        -1
-      ) * sbtransaction.sbtxshares
+      -1 * sbtransaction.sbtxshares
     )
   ) OVER (
     ORDER BY sbtransaction.sbtxdatetime

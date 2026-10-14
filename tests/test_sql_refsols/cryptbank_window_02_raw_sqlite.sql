@@ -8,9 +8,7 @@ WITH _t AS (
       ORDER BY CAST(STRFTIME('%Y', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER) = 2021, CASE
         WHEN accounts.a_key = 0
         THEN 0
-        ELSE (
-          CASE WHEN accounts.a_key > 0 THEN 1 ELSE -1 END
-        ) * CAST(SUBSTRING(accounts.a_key, 1 + INSTR(accounts.a_key, '-'), LENGTH(accounts.a_key) / 2) AS INTEGER)
+        ELSE CASE WHEN accounts.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(accounts.a_key, 1 + INSTR(accounts.a_key, '-'), LENGTH(accounts.a_key) / 2) AS INTEGER)
       END
     ) AS _w
   FROM crbnk.branches AS branches

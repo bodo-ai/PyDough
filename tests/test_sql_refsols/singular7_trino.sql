@@ -25,7 +25,7 @@ WITH _s3 AS (
     count_l_suppkey,
     ROW_NUMBER() OVER (
       PARTITION BY ps_suppkey
-      ORDER BY COALESCE(CASE WHEN count_l_suppkey <> 0 THEN count_l_suppkey ELSE NULL END, 0) DESC NULLS FIRST, anything_p_name
+      ORDER BY COALESCE(NULLIF(count_l_suppkey, 0), 0) DESC NULLS FIRST, anything_p_name
     ) AS _w
   FROM _t4
 ), _s5 AS (

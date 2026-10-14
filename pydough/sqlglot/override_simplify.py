@@ -66,6 +66,21 @@ class PyDoughSimplifier(Simplifier):
             if not isinstance(node, SIMPLIFIABLE):
                 if isinstance(node, exp.Query):
                     self.simplify(node, constant_propagation, coalesce_simplification)
+                else:
+                    # PyDough Change: `Simplifier.simplify()`'s outer walk
+                    # prunes descent as soon as it finds a Condition-typed
+                    # node (e.g. exp.Window), relying on this loop to reach
+                    # its children. But non-SIMPLIFIABLE nodes like Window
+                    # hit this branch and were never pushing their children
+                    # onto the stack, so expressions nested inside them (e.g.
+                    # a CASE inside a window function's PARTITION BY) were
+                    # never visited at all. Push the children through so they
+                    # still get simplified.
+                    pre_transformation_stack.extend(
+                        n
+                        for n in node.iter_expressions(reverse=True)
+                        if not n.meta_get(FINAL)
+                    )
                 continue
 
             parent = node.parent
@@ -221,6 +236,28 @@ class PyDoughSimplifier(Simplifier):
                 return _parenthesize_nested_connector(simplified, expression.parent)
 
         return expression
+
+    def _simplify_binary(self, expression: exp.Expr, a: exp.Expr, b: exp.Expr):
+        result = super()._simplify_binary(expression, a, b)
+        if result is not None:
+            return result
+
+        #### Start of PyDough Change ####
+        # Upstream narrowed NULL-propagation for binary expressions (e.g.
+        # `1 / NULL`) to only fire when the expression's parent is an
+        # `exp.If`, losing the general case that sqlglot's old free-function
+        # `simplify.py` always handled (any binary op with a NULL operand,
+        # other than null-safe comparisons, simplifies to NULL). Restore the
+        # original, unconditional behavior.
+        if (
+            not isinstance(expression, exp.Is)
+            and not isinstance(expression, self.NULL_OK)
+            and (is_null(a) or is_null(b))
+        ):
+            return exp.null()
+        #### End of PyDough Change ####
+
+        return result
 
 
 def simplify(

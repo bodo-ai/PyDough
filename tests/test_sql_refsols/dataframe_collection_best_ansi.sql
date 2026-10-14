@@ -20,9 +20,7 @@ WITH _s1 AS (
   QUALIFY
     ROW_NUMBER() OVER (
       PARTITION BY orders.o_orderkey
-      ORDER BY orders.o_totalprice + (
-        orders.o_totalprice * _s1.tax_rate
-      ) NULLS LAST
+      ORDER BY orders.o_totalprice + orders.o_totalprice * _s1.tax_rate NULLS LAST
     ) = 1
 )
 SELECT

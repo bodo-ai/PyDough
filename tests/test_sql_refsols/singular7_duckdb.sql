@@ -21,7 +21,7 @@ WITH _s3 AS (
   QUALIFY
     ROW_NUMBER() OVER (
       PARTITION BY partsupp.ps_suppkey
-      ORDER BY COALESCE(CASE WHEN COUNT(_s3.l_suppkey) <> 0 THEN COUNT(_s3.l_suppkey) ELSE NULL END, 0) DESC NULLS FIRST, ANY_VALUE(part.p_name)
+      ORDER BY COUNT(_s3.l_suppkey) DESC NULLS FIRST, ANY_VALUE(part.p_name)
     ) = 1
 )
 SELECT

@@ -5,7 +5,15 @@ SELECT
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_revenue,
   ROW_NUMBER() OVER (
     ORDER BY CASE
-      WHEN COALESCE(SUM(wallet_transactions_daily.amount), 0) IS NULL
+      WHEN (
+        (
+          NOT SUM(wallet_transactions_daily.amount) IS NULL
+          AND COALESCE(SUM(wallet_transactions_daily.amount)) IS NULL
+        )
+        OR (
+          SUM(wallet_transactions_daily.amount) IS NULL AND 0 IS NULL
+        )
+      )
       THEN 1
       ELSE 0
     END DESC, COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC

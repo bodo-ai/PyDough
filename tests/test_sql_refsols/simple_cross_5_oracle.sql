@@ -48,7 +48,14 @@ WITH "_t1" AS (
     ROW_NUMBER() OVER (
       PARTITION BY P_SIZE
       ORDER BY CASE
-        WHEN COALESCE(SUM_L_QUANTITY, 0) > 0
+        WHEN (
+          (
+            NOT SUM_L_QUANTITY IS NULL AND COALESCE(SUM_L_QUANTITY) > 0
+          )
+          OR (
+            SUM_L_QUANTITY IS NULL AND 0 > 0
+          )
+        )
         THEN COALESCE(SUM_L_QUANTITY, 0)
         ELSE NULL
       END DESC

@@ -200,11 +200,15 @@ def has_seq4_or_table(expr: Scope) -> bool:
     for e in expr.walk():
         # PYDOUGH CHANGE: sqlglot now parses SEQ4() and TABLE(...) into
         # dedicated expression classes (Seq4, TableFromRows) instead of
-        # falling back to a generic Anonymous function call, so both forms
-        # need to be checked for.
+        # falling back to a generic Anonymous function call. By the time
+        # this runs, `apply_sqlglot_optimizer` has already round-tripped the
+        # expression through `.sql()` + `parse_one()` once, so even the
+        # occurrences PyDough constructs by hand as `exp.Anonymous(this="SEQ4")`
+        # (see `sf_transform_bindings.py`) have already been re-parsed into
+        # the dedicated classes by this point, making the old Anonymous-based
+        # check dead code (verified empirically: removing it doesn't change
+        # any reference SQL or break any test).
         if isinstance(e, (exp.Seq4, exp.TableFromRows)):
-            return True
-        if isinstance(e, exp.Anonymous) and e.this.upper() in {"SEQ4", "TABLE"}:
             return True
     return False
 

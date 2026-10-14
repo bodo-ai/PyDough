@@ -18,7 +18,18 @@ WITH _s2 AS (
     _s2.sum_l_quantity,
     ROW_NUMBER() OVER (
       PARTITION BY _s2.l_suppkey
-      ORDER BY CASE WHEN COALESCE(_s2.sum_l_quantity, 0) IS NULL THEN 1 ELSE 0 END DESC, COALESCE(_s2.sum_l_quantity, 0) DESC
+      ORDER BY CASE
+        WHEN (
+          (
+            NOT _s2.sum_l_quantity IS NULL AND COALESCE(_s2.sum_l_quantity) IS NULL
+          )
+          OR (
+            _s2.sum_l_quantity IS NULL AND 0 IS NULL
+          )
+        )
+        THEN 1
+        ELSE 0
+      END DESC, COALESCE(_s2.sum_l_quantity, 0) DESC
     ) AS _w
   FROM _s2 AS _s2
   JOIN tpch.PART AS PART

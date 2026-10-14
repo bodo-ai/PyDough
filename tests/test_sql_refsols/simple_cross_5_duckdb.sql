@@ -44,7 +44,9 @@ WITH _t1 AS (
     ROW_NUMBER() OVER (
       PARTITION BY _s0.p_size
       ORDER BY CASE
-        WHEN COALESCE(SUM(lineitem.l_quantity), 0) > 0
+        WHEN (
+          NOT SUM(lineitem.l_quantity) IS NULL AND SUM(lineitem.l_quantity) > 0
+        )
         THEN COALESCE(SUM(lineitem.l_quantity), 0)
         ELSE NULL
       END DESC NULLS FIRST

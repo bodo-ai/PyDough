@@ -15,9 +15,7 @@ WITH _t1 AS (
   QUALIFY
     ROW_NUMBER() OVER (
       PARTITION BY orders.o_orderkey
-      ORDER BY orders.o_totalprice + (
-        orders.o_totalprice * priority_taxes.tax_rate
-      )
+      ORDER BY orders.o_totalprice + orders.o_totalprice * priority_taxes.tax_rate
     ) = 1
 )
 SELECT

@@ -28,9 +28,7 @@ SELECT
     CASE
       WHEN sbtransaction.sbtxtype = 'buy'
       THEN sbtransaction.sbtxshares
-      ELSE (
-        -1
-      ) * sbtransaction.sbtxshares
+      ELSE -1 * sbtransaction.sbtxshares
     END
   ) OVER (
     ORDER BY sbtransaction.sbtxdatetime

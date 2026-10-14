@@ -7,9 +7,7 @@ WITH _t AS (
     priority_taxes.column2 AS tax_rate,
     ROW_NUMBER() OVER (
       PARTITION BY orders.o_orderkey
-      ORDER BY orders.o_totalprice + (
-        orders.o_totalprice * priority_taxes.column2
-      )
+      ORDER BY orders.o_totalprice + orders.o_totalprice * priority_taxes.column2
     ) AS _w
   FROM tpch.orders AS orders
   JOIN (VALUES
