@@ -642,6 +642,7 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
                         field = field.with_type(pa.string())
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
+                arrow_table = arrow_table.cast(schema)
 
                 # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
@@ -750,6 +751,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                         field = field.with_type(pa.string())
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
+                arrow_table = arrow_table.cast(schema)
 
                 # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
