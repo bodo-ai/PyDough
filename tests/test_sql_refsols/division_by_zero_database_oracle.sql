@@ -1,6 +1,6 @@
 SELECT
-  l_extendedprice / l_discount AS computed_value
+  L_EXTENDEDPRICE / L_DISCOUNT AS computed_value
 FROM TPCH.LINEITEM
 ORDER BY
-  l_discount NULLS FIRST
+  L_DISCOUNT NULLS FIRST
 FETCH FIRST 1 ROWS ONLY

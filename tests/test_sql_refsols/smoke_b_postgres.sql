@@ -1,15 +1,21 @@
 SELECT
   o_orderkey AS key,
-  CONCAT_WS(
-    '_',
-    EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)),
-    EXTRACT(QUARTER FROM CAST(o_orderdate AS TIMESTAMP)),
-    EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)),
-    EXTRACT(DAY FROM CAST(o_orderdate AS TIMESTAMP))
-  ) AS a,
-  CONCAT_WS(
-    ':',
-    CASE
+  CASE
+    WHEN EXTRACT(DAY FROM CAST(o_orderdate AS TIMESTAMP)) IS NULL
+    OR EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) IS NULL
+    OR EXTRACT(QUARTER FROM CAST(o_orderdate AS TIMESTAMP)) IS NULL
+    OR EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      '_',
+      EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)),
+      EXTRACT(QUARTER FROM CAST(o_orderdate AS TIMESTAMP)),
+      EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)),
+      EXTRACT(DAY FROM CAST(o_orderdate AS TIMESTAMP))
+    )
+  END AS a,
+  CASE
+    WHEN CASE
       WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 0
       THEN 'Sunday'
       WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 1
@@ -24,9 +30,30 @@ SELECT
       THEN 'Friday'
       WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 6
       THEN 'Saturday'
-    END,
-    EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP))
-  ) AS b,
+    END IS NULL
+    OR EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      ':',
+      CASE
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 0
+        THEN 'Sunday'
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 1
+        THEN 'Monday'
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 2
+        THEN 'Tuesday'
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 3
+        THEN 'Wednesday'
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 4
+        THEN 'Thursday'
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 5
+        THEN 'Friday'
+        WHEN EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) = 6
+        THEN 'Saturday'
+      END,
+      EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP))
+    )
+  END AS b,
   DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)) + INTERVAL '6 MONTH' - INTERVAL '13 DAY' AS c,
   DATE_TRUNC('QUARTER', CAST(o_orderdate AS TIMESTAMP)) + INTERVAL '1 YEAR' + INTERVAL '25 HOUR' AS d,
   CAST('2025-01-01 12:35:00' AS TIMESTAMP) AS e,
@@ -61,12 +88,18 @@ SELECT
     'DAY',
     CAST(o_orderdate AS TIMESTAMP) - CAST(EXTRACT(DOW FROM CAST(o_orderdate AS TIMESTAMP)) || ' days' AS INTERVAL)
   ) AS q,
-  CONCAT_WS(
-    ':',
-    TO_CHAR(o_orderdate, 'Mon'),
-    TO_CHAR(CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3 MONTH', 'Mon'),
-    TO_CHAR(CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2 MONTH', 'Mon')
-  ) AS r
+  CASE
+    WHEN TO_CHAR(CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3 MONTH', 'Mon') IS NULL
+    OR TO_CHAR(CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2 MONTH', 'Mon') IS NULL
+    OR TO_CHAR(o_orderdate, 'Mon') IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      ':',
+      TO_CHAR(o_orderdate, 'Mon'),
+      TO_CHAR(CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3 MONTH', 'Mon'),
+      TO_CHAR(CAST(o_orderdate AS TIMESTAMP) - INTERVAL '2 MONTH', 'Mon')
+    )
+  END AS r
 FROM tpch.orders
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

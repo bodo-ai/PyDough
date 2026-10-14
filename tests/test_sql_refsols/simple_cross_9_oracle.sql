@@ -1,24 +1,24 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT
-    r_name AS R_NAME,
-    r_regionkey AS R_REGIONKEY
+    R_NAME,
+    R_REGIONKEY
   FROM TPCH.REGION
-), "_S1" AS (
+), "_s1" AS (
   SELECT
-    n_name AS N_NAME,
-    n_regionkey AS N_REGIONKEY
+    N_NAME,
+    N_REGIONKEY
   FROM TPCH.NATION
 )
 SELECT
-  "_S1".N_NAME AS n1,
-  "_S5".N_NAME AS n2
-FROM "_S0" "_S0"
-JOIN "_S1" "_S1"
-  ON "_S0".R_REGIONKEY = "_S1".N_REGIONKEY
-JOIN "_S0" "_S3"
-  ON "_S0".R_NAME = "_S3".R_NAME
-JOIN "_S1" "_S5"
-  ON "_S1".N_NAME <> "_S5".N_NAME AND "_S3".R_REGIONKEY = "_S5".N_REGIONKEY
+  "_s1".N_NAME AS n1,
+  "_s5".N_NAME AS n2
+FROM "_s0" "_s0"
+JOIN "_s1" "_s1"
+  ON "_s0".R_REGIONKEY = "_s1".N_REGIONKEY
+JOIN "_s0" "_s3"
+  ON "_s0".R_NAME = "_s3".R_NAME
+JOIN "_s1" "_s5"
+  ON "_s1".N_NAME <> "_s5".N_NAME AND "_s3".R_REGIONKEY = "_s5".N_REGIONKEY
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST

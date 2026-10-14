@@ -1,8 +1,8 @@
 SELECT
-  SUM(LOWER(food_type) = 'vegan') / NULLIF(SUM(LOWER(food_type) <> 'vegan'), 0) AS ratio
+  SUM(LOWER(FOOD_TYPE) = 'vegan') / NULLIF(SUM(LOWER(FOOD_TYPE) <> 'vegan'), 0) AS ratio
 FROM MAIN.RESTAURANT
 WHERE
-  LOWER(city_name) = 'san francisco'
+  LOWER(CITY_NAME) = 'san francisco'
   AND (
-    LOWER(food_type) <> 'vegan' OR LOWER(food_type) = 'vegan'
+    LOWER(FOOD_TYPE) <> 'vegan' OR LOWER(FOOD_TYPE) = 'vegan'
   )

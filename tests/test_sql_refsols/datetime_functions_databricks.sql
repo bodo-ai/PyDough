@@ -19,32 +19,30 @@ SELECT
   DATEDIFF(DAY, CAST(o_orderdate AS DATE), CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE)) AS dd_col_str,
   DATEDIFF(DAY, CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE), CAST(o_orderdate AS DATE)) AS dd_str_col,
   (
-    YEAR(TO_DATE(o_orderdate)) - YEAR(TO_DATE(CAST('1995-10-10 00:00:00' AS TIMESTAMP)))
-  ) * 12 + MONTH(TO_DATE(o_orderdate)) - MONTH(TO_DATE(CAST('1995-10-10 00:00:00' AS TIMESTAMP))) AS dd_pd_col,
-  YEAR(TO_DATE(CAST('1992-01-01 12:30:45' AS TIMESTAMP))) - YEAR(TO_DATE(o_orderdate)) AS dd_col_dt,
+    YEAR(o_orderdate) - YEAR(CAST('1995-10-10 00:00:00' AS TIMESTAMP))
+  ) * 12 + MONTH(o_orderdate) - MONTH(CAST('1995-10-10 00:00:00' AS TIMESTAMP)) AS dd_pd_col,
+  YEAR(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) - YEAR(o_orderdate) AS dd_col_dt,
   CAST(DATEDIFF(
     DAY,
-    DATEADD(
-      DAY,
+    DATE_ADD(
+      CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(CAST('1992-01-01' AS TIMESTAMP))) + -1
+          DAYOFWEEK(CAST('1992-01-01' AS TIMESTAMP)) + -1
         ) % 7
-      ),
-      CAST(CAST('1992-01-01' AS TIMESTAMP) AS DATE)
+      )
     ),
-    DATEADD(
-      DAY,
+    DATE_ADD(
+      CAST(CAST('1992-01-01 12:30:45' AS TIMESTAMP) AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(CAST('1992-01-01 12:30:45' AS TIMESTAMP))) + -1
+          DAYOFWEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) + -1
         ) % 7
-      ),
-      CAST(CAST('1992-01-01 12:30:45' AS TIMESTAMP) AS DATE)
+      )
     )
   ) / 7 AS BIGINT) AS dd_dt_str,
   (
-    DAYOFWEEK(TO_DATE(o_orderdate)) + -1
+    DAYOFWEEK(o_orderdate) + -1
   ) % 7 AS dow_col,
   3 AS dow_str1,
   4 AS dow_str2,
@@ -56,19 +54,19 @@ SELECT
   3 AS dow_dt,
   2 AS dow_pd,
   CASE
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 1
+    WHEN DAYOFWEEK(o_orderdate) = 1
     THEN 'Sunday'
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 2
+    WHEN DAYOFWEEK(o_orderdate) = 2
     THEN 'Monday'
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 3
+    WHEN DAYOFWEEK(o_orderdate) = 3
     THEN 'Tuesday'
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 4
+    WHEN DAYOFWEEK(o_orderdate) = 4
     THEN 'Wednesday'
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 5
+    WHEN DAYOFWEEK(o_orderdate) = 5
     THEN 'Thursday'
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 6
+    WHEN DAYOFWEEK(o_orderdate) = 6
     THEN 'Friday'
-    WHEN DAYOFWEEK(TO_DATE(o_orderdate)) = 7
+    WHEN DAYOFWEEK(o_orderdate) = 7
     THEN 'Saturday'
   END AS dayname_col,
   'Monday' AS dayname_str1,

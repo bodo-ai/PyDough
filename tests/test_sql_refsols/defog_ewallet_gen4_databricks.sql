@@ -33,4 +33,4 @@ SELECT
 FROM _s4 AS _s4
 JOIN _t1 AS _s5
   ON _s4.merchant_id = _s5.merchant_id
-  AND _s5.start_date <= DATEADD(YEAR, 1, CAST(_s4.anything_created_at AS TIMESTAMP))
+  AND _s5.start_date <= DATE_ADD(YEAR, 1, CAST(_s4.anything_created_at AS TIMESTAMP))

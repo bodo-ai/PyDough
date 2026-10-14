@@ -1,9 +1,9 @@
 WITH "_u_0" AS (
   SELECT
-    customer_id AS "_u_1"
+    CUSTOMER_ID AS "_u_1"
   FROM MAIN.SALES
   GROUP BY
-    customer_id
+    CUSTOMER_ID
 )
 SELECT
   CUSTOMERS."_id"

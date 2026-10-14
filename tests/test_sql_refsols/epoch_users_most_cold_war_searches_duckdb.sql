@@ -3,7 +3,9 @@ WITH _t1 AS (
     ANY_VALUE(searches.search_user_id) AS anything_search_user_id
   FROM searches AS searches
   JOIN events AS events
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+    ON LOWER(searches.search_string) LIKE (
+      '%' || LOWER(events.ev_name) || '%'
+    )
   JOIN eras AS eras
     ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))
     AND eras.er_name = 'Cold War'

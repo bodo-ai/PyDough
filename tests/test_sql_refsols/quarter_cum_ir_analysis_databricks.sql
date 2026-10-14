@@ -28,7 +28,7 @@ WITH _t1 AS (
   FROM _t4 AS _t7
   CROSS JOIN _t2 AS _t8
   JOIN _s5 AS _s9
-    ON _s9.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t7.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s9.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t7.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s9.ca_dt >= _t7.pr_release
   JOIN main.devices AS devices
     ON _s9.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
@@ -42,7 +42,7 @@ WITH _t1 AS (
   FROM _t4 AS _t4
   CROSS JOIN _t2 AS _t5
   JOIN _s5 AS _s5
-    ON _s5.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t4.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s5.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t4.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s5.ca_dt >= _t4.pr_release
   LEFT JOIN _s13 AS _s13
     ON _s13.ca_dt = _s5.ca_dt
@@ -54,7 +54,7 @@ WITH _t1 AS (
   FROM _t4 AS _t14
   CROSS JOIN _t2 AS _t15
   JOIN _s5 AS _s21
-    ON _s21.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t14.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s21.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t14.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s21.ca_dt >= _t14.pr_release
 ), _s29 AS (
   SELECT
@@ -62,7 +62,7 @@ WITH _t1 AS (
   FROM _t4 AS _t16
   CROSS JOIN _t2 AS _t17
   JOIN _s5 AS _s27
-    ON _s27.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t16.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s27.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t16.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s27.ca_dt >= _t16.pr_release
 ), _s35 AS (
   SELECT

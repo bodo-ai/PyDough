@@ -1,19 +1,34 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(start_dt AS TIMESTAMP)),
-      CASE
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(start_dt AS TIMESTAMP)) IS NULL
+      OR CASE
         WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT)) >= 2
         THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT), 1, 2)
         ELSE SUBSTRING(
-          CONCAT('00', CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT)),
+          '00' || CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT),
           (
             2 * -1
           )
         )
-      END
-    ) AS treatment_month,
+      END IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(start_dt AS TIMESTAMP)),
+        CASE
+          WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT)) >= 2
+          THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT), 1, 2)
+          ELSE SUBSTRING(
+            '00' || CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT),
+            (
+              2 * -1
+            )
+          )
+        END
+      )
+    END AS treatment_month,
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
   FROM main.treatments
   WHERE
@@ -23,20 +38,35 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(treatments.start_dt AS TIMESTAMP)),
-      CASE
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(treatments.start_dt AS TIMESTAMP)) IS NULL
+      OR CASE
         WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT)) >= 2
         THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT), 1, 2)
         ELSE SUBSTRING(
-          CONCAT('00', CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT)),
+          '00' || CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT),
           (
             2 * -1
           )
         )
-      END
-    ) AS treatment_month,
+      END IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(treatments.start_dt AS TIMESTAMP)),
+        CASE
+          WHEN LENGTH(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT)) >= 2
+          THEN SUBSTRING(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT), 1, 2)
+          ELSE SUBSTRING(
+            '00' || CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT),
+            (
+              2 * -1
+            )
+          )
+        END
+      )
+    END AS treatment_month,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
   FROM main.treatments AS treatments
   JOIN main.drugs AS drugs

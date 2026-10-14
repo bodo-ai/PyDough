@@ -58,7 +58,10 @@ WITH _t2 AS (
 )
 SELECT
   _s6.anything_c_name AS name,
-  ROW_NUMBER() OVER (PARTITION BY _s6.anything_nation_name ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST) AS ranking_balance,
+  ROW_NUMBER() OVER (
+    PARTITION BY _s6.anything_nation_name
+    ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST
+  ) AS ranking_balance,
   COALESCE(_s6.count_o_custkey, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,
@@ -68,7 +71,10 @@ SELECT
     THEN TRUE
     ELSE FALSE
   END AS above_avg,
-  COUNT(_s6.anything_c_acctbal) OVER (ORDER BY _s6.anything_c_acctbal NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_poorer,
+  COUNT(_s6.anything_c_acctbal) OVER (
+    ORDER BY _s6.anything_c_acctbal NULLS LAST
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS n_poorer,
   _s6.anything_c_acctbal / COUNT(*) OVER () AS ratio
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7

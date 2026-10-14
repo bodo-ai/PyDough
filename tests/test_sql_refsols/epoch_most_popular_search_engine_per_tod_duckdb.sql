@@ -11,7 +11,10 @@ WITH _t1 AS (
     1,
     2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY times.t_name ORDER BY COUNT(*) DESC NULLS FIRST, searches.search_engine) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY times.t_name
+      ORDER BY COUNT(*) DESC NULLS FIRST, searches.search_engine
+    ) = 1
 )
 SELECT
   t_name AS tod,

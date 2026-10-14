@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    MAX(treatments.diag_id) AS anything_diag_id,
-    MAX(treatments.patient_id) AS anything_patient_id,
+    ANY_VALUE(treatments.diag_id) AS anything_diag_id,
+    ANY_VALUE(treatments.patient_id) AS anything_patient_id,
     MAX(outcomes.day100_itch_vas) AS max_day100_itch_vas
   FROM main.treatments AS treatments
   JOIN main.outcomes AS outcomes

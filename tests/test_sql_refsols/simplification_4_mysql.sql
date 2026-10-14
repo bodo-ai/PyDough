@@ -1,11 +1,13 @@
 WITH _t AS (
   SELECT
-    sbtxdatetime AS sbTxDateTime,
-    ROW_NUMBER() OVER (ORDER BY CASE WHEN sbtxdatetime IS NULL THEN 1 ELSE 0 END DESC, sbtxdatetime DESC) AS _w,
-    ROW_NUMBER() OVER (ORDER BY CASE WHEN sbtxdatetime IS NULL THEN 1 ELSE 0 END, sbtxdatetime) AS _w_2
+    sbTxDateTime,
+    ROW_NUMBER() OVER (
+      ORDER BY CASE WHEN sbTxDateTime IS NULL THEN 1 ELSE 0 END DESC, sbTxDateTime DESC
+    ) AS _w,
+    ROW_NUMBER() OVER (ORDER BY CASE WHEN sbTxDateTime IS NULL THEN 1 ELSE 0 END, sbTxDateTime) AS _w_2
   FROM main.sbTransaction
   WHERE
-    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
+    EXTRACT(YEAR FROM CAST(sbTxDateTime AS DATETIME)) = 2023
 )
 SELECT
   sbTxDateTime AS date_time,

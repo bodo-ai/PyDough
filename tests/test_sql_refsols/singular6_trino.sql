@@ -3,9 +3,12 @@ WITH _t AS (
     lineitem.l_receiptdate,
     lineitem.l_suppkey,
     orders.o_custkey,
-    ROW_NUMBER() OVER (PARTITION BY orders.o_custkey ORDER BY lineitem.l_receiptdate, lineitem.l_extendedprice * (
-      1 - lineitem.l_discount
-    ) DESC NULLS FIRST) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY orders.o_custkey
+      ORDER BY lineitem.l_receiptdate, lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) DESC NULLS FIRST
+    ) AS _w
   FROM tpch.orders AS orders
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey

@@ -4,6 +4,6 @@ FROM defog.ewallet.wallet_transactions_daily
 WHERE
   (
     (
-      YEAR(TO_DATE(CURRENT_TIMESTAMP())) - YEAR(TO_DATE(created_at))
-    ) * 12 + MONTH(TO_DATE(CURRENT_TIMESTAMP())) - MONTH(TO_DATE(created_at))
+      YEAR(CURRENT_TIMESTAMP()) - YEAR(created_at)
+    ) * 12 + MONTH(CURRENT_TIMESTAMP()) - MONTH(created_at)
   ) = 1

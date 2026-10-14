@@ -13,9 +13,9 @@ WITH _s7 AS (
     AND lineitem.l_shipmode = 'SHIP'
 ), _t0 AS (
   SELECT
-    MAX(nation.n_name) AS anything_n_name,
-    MAX(supplier.s_name) AS anything_s_name,
-    MAX(supplier.s_nationkey) AS anything_s_nationkey,
+    ANY_VALUE(nation.n_name) AS anything_n_name,
+    ANY_VALUE(supplier.s_name) AS anything_s_name,
+    ANY_VALUE(supplier.s_nationkey) AS anything_s_nationkey,
     SUM(_s7.l_quantity) AS sum_l_quantity
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
@@ -33,9 +33,9 @@ SELECT
   anything_s_name AS supplier_name,
   anything_n_name AS nation_name,
   COALESCE(sum_l_quantity, 0) AS supplier_quantity,
-  (
+  CAST((
     100.0 * COALESCE(sum_l_quantity, 0)
-  ) / CASE
+  ) AS DOUBLE PRECISION) / CASE
     WHEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey) > 0
     THEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey)
     ELSE NULL

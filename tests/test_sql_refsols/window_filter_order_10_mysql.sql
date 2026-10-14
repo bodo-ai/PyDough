@@ -18,7 +18,7 @@ WITH _s1 AS (
   LEFT JOIN _u_0 AS _u_0
     ON ORDERS.o_custkey = _u_0._u_1
   WHERE
-    ORDERS.o_clerk = 'Clerk#000000001' AND _u_0._u_1 IS NULL
+    NOT NOT _u_0._u_1 IS NULL AND ORDERS.o_clerk = 'Clerk#000000001'
 )
 SELECT
   COUNT(*) AS n

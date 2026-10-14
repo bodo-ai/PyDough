@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     accounts.a_custkey,
     transactions.t_amount,
-    ROW_NUMBER() OVER (PARTITION BY transactions.t_sourceaccount ORDER BY DATETIME(transactions.t_ts, '+54321 seconds')) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY transactions.t_sourceaccount
+      ORDER BY DATETIME(transactions.t_ts, '+54321 seconds')
+    ) AS _w
   FROM crbnk.accounts AS accounts
   JOIN crbnk.transactions AS transactions
     ON transactions.t_sourceaccount = CASE

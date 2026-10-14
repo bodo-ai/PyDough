@@ -11,11 +11,11 @@ WITH _s1 AS (
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  (
+  CAST((
     100.0 * (
       COALESCE(_s1.sum_sbtxamount, 0) - COALESCE(_s1.sum_expr, 0)
     )
-  ) / NULLIF(_s1.sum_sbtxamount, 0) AS SPM
+  ) AS DOUBLE PRECISION) / NULLIF(_s1.sum_sbtxamount, 0) AS SPM
 FROM main.sbticker AS sbticker
 JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid

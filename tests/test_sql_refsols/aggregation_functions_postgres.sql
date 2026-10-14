@@ -9,7 +9,7 @@ WITH _s1 AS (
   SELECT
     PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
       customer.c_acctbal) AS agg_7,
-    MAX(customer.c_acctbal) AS anything_c_acctbal,
+    ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
     AVG(CAST(customer.c_acctbal AS DECIMAL)) AS avg_c_acctbal,
     COUNT(customer.c_acctbal) AS count_c_acctbal,
     MAX(customer.c_acctbal) AS max_c_acctbal,
