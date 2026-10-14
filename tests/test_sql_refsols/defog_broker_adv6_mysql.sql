@@ -11,20 +11,7 @@ SELECT
   sbCustomer.sbCustName AS name,
   _s1.n_rows AS num_tx,
   COALESCE(_s1.sum_sbTxAmount, 0) AS total_amount,
-  RANK() OVER (
-    ORDER BY CASE
-      WHEN (
-        (
-          NOT _s1.sum_sbTxAmount IS NULL AND COALESCE(_s1.sum_sbTxAmount) IS NULL
-        )
-        OR (
-          _s1.sum_sbTxAmount IS NULL AND 0 IS NULL
-        )
-      )
-      THEN 1
-      ELSE 0
-    END DESC, COALESCE(_s1.sum_sbTxAmount, 0) DESC
-  ) AS cust_rank
+  RANK() OVER (ORDER BY COALESCE(_s1.sum_sbTxAmount, 0) DESC) AS cust_rank
 FROM broker.sbCustomer AS sbCustomer
 JOIN _s1 AS _s1
   ON _s1.sbTxCustId = sbCustomer.sbCustId

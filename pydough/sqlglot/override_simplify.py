@@ -281,13 +281,28 @@ def simplify(
     Returns:
         sqlglot.Expression: simplified expression
     """
-    return PyDoughSimplifier(dialect=dialect).simplify(
-        expression,
-        constant_propagation=constant_propagation,
-        # PyDough always ran the coalesce-simplification rule (it wasn't
-        # optional prior to sqlglot introducing this flag).
-        coalesce_simplification=True,
-    )
+    simplifier = PyDoughSimplifier(dialect=dialect)
+
+    #### Start of PyDough Change ####
+    # `simplify()` can converge one iteration too early for expressions
+    # reached via our `_simplify` patch above, leaving behind invalid
+    # intermediate SQL (e.g. a `COALESCE(x)` missing its default argument).
+    # Re-running cleans this up, and is a no-op once truly converged.
+    previous_sql: str | None = None
+    for _ in range(5):
+        expression = simplifier.simplify(
+            expression,
+            constant_propagation=constant_propagation,
+            # PyDough always ran the coalesce-simplification rule (it wasn't
+            # optional prior to sqlglot introducing this flag).
+            coalesce_simplification=True,
+        )
+        current_sql = expression.sql(dialect=dialect)
+        if current_sql == previous_sql:
+            break
+        previous_sql = current_sql
+    return expression
+    #### End of PyDough Change ####
 
 
 def rewrite_case_to_nullif(expr: exp.Expression) -> exp.Expression:

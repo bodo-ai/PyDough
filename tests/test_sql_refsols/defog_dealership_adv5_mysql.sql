@@ -12,20 +12,7 @@ SELECT
   salespersons.last_name,
   COALESCE(_s1.sum_sale_price, 0) AS total_sales,
   _s1.n_rows AS num_sales,
-  RANK() OVER (
-    ORDER BY CASE
-      WHEN (
-        (
-          NOT _s1.sum_sale_price IS NULL AND COALESCE(_s1.sum_sale_price) IS NULL
-        )
-        OR (
-          _s1.sum_sale_price IS NULL AND 0 IS NULL
-        )
-      )
-      THEN 1
-      ELSE 0
-    END DESC, COALESCE(_s1.sum_sale_price, 0) DESC
-  ) AS sales_rank
+  RANK() OVER (ORDER BY COALESCE(_s1.sum_sale_price, 0) DESC) AS sales_rank
 FROM dealership.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id

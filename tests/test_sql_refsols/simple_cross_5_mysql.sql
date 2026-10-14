@@ -50,12 +50,7 @@ WITH _t1 AS (
       ORDER BY CASE
         WHEN CASE
           WHEN (
-            (
-              NOT sum_l_quantity IS NULL AND COALESCE(sum_l_quantity) > 0
-            )
-            OR (
-              sum_l_quantity IS NULL AND 0 > 0
-            )
+            NOT sum_l_quantity IS NULL AND sum_l_quantity > 0
           )
           THEN COALESCE(sum_l_quantity, 0)
           ELSE NULL
@@ -64,12 +59,7 @@ WITH _t1 AS (
         ELSE 0
       END DESC, CASE
         WHEN (
-          (
-            NOT sum_l_quantity IS NULL AND COALESCE(sum_l_quantity) > 0
-          )
-          OR (
-            sum_l_quantity IS NULL AND 0 > 0
-          )
+          NOT sum_l_quantity IS NULL AND sum_l_quantity > 0
         )
         THEN COALESCE(sum_l_quantity, 0)
         ELSE NULL

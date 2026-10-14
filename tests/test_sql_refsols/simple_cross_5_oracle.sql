@@ -49,12 +49,7 @@ WITH "_t1" AS (
       PARTITION BY P_SIZE
       ORDER BY CASE
         WHEN (
-          (
-            NOT SUM_L_QUANTITY IS NULL AND COALESCE(SUM_L_QUANTITY) > 0
-          )
-          OR (
-            SUM_L_QUANTITY IS NULL AND 0 > 0
-          )
+          NOT SUM_L_QUANTITY IS NULL AND SUM_L_QUANTITY > 0
         )
         THEN COALESCE(SUM_L_QUANTITY, 0)
         ELSE NULL
