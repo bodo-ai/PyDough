@@ -3,7 +3,7 @@ ROOT(columns=[('company_name', supname), ('color_name', colorname), ('color_hex'
   SCAN(table=SUPLS, columns={'supid': supid, 'supname': supname})
   PROJECT(columns={'anything_chex': anything_chex, 'colorname': colorname, 'supid': supid, 'total_profit': DEFAULT_TO(sum_prc, 0:numeric)})
    FILTER(condition=1:numeric == RANKING(args=[], partition=[supid], order=[(DEFAULT_TO(sum_prc, 0:numeric)):desc_first, (colorname):asc_last], allow_ties=False), columns={'anything_chex': anything_chex, 'colorname': colorname, 'sum_prc': sum_prc, 'supid': supid})
-    JOIN(condition=t0.supid == t1.comid, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'anything_chex': t1.anything_chex, 'colorname': t1.colorname, 'sum_prc': t1.sum_prc, 'supid': t0.supid})
+    JOIN(condition=t0.supid == t1.comid, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'anything_chex': t1.anything_chex, 'colorname': t1.colorname, 'sum_prc': t1.sum_prc, 'supid': t0.supid})
      SCAN(table=SUPLS, columns={'supid': supid})
      AGGREGATE(keys={'colorname': colorname, 'comid': comid}, aggregations={'anything_chex': ANYTHING(chex), 'sum_prc': SUM(prc)})
       JOIN(condition=t0.identname == t1.colid, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'chex': t0.chex, 'colorname': t0.colorname, 'comid': t1.comid, 'prc': t1.prc})

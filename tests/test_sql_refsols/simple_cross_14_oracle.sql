@@ -1,19 +1,23 @@
-WITH "_S1" AS (
+WITH "_s5" AS (
   SELECT
-    n_regionkey AS N_REGIONKEY,
+    NATION.N_REGIONKEY,
     COUNT(*) AS N_ROWS
-  FROM TPCH.NATION
+  FROM TPCH.NATION NATION
+  CROSS JOIN (VALUES
+    (NULL)) AS "_1"("_COL_0")
   WHERE
-    SUBSTR(n_name, 1, 1) IN ('A', 'B', 'C')
+    SUBSTR(NATION.N_NAME, 1, 1) IN ('A', 'B', 'C')
   GROUP BY
-    n_regionkey
+    NATION.N_REGIONKEY
 )
 SELECT
-  REGION.r_name AS region_name,
+  REGION.R_NAME AS region_name,
   'foo' AS x,
-  COALESCE("_S1".N_ROWS, 0) AS n
+  COALESCE("_s5".N_ROWS, 0) AS n
 FROM TPCH.REGION REGION
-LEFT JOIN "_S1" "_S1"
-  ON REGION.r_regionkey = "_S1".N_REGIONKEY
+CROSS JOIN (VALUES
+  (NULL)) AS "_0"("_COL_0")
+LEFT JOIN "_s5" "_s5"
+  ON REGION.R_REGIONKEY = "_s5".N_REGIONKEY
 ORDER BY
   1 NULLS FIRST

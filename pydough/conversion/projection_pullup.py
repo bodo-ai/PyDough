@@ -35,6 +35,37 @@ from pydough.types import BooleanType, NumericType
 from .merge_projects import merge_adjacent_projects
 
 
+def build_new_ref_name(name: str, idx: int) -> str:
+    """
+    Build a new reference name by appending an index suffix.
+
+    For quoted identifiers, the suffix is added to the identifier content
+    before the closing quote. Escaped quote characters inside the identifier
+    are preserved.
+
+    Args:
+        `name`: Identifier that is being modified
+        `idx`: Index being added to the identifier
+
+    Returns:
+        The new ref name with the index added
+
+    Examples:
+        name       -> name_1
+        "column name" -> "column name_1"
+        "column ""name""\" -> "column ""name""_1"
+        `column` -> `column_1`
+
+    """
+    if len(name) >= 2:
+        quote = name[0]
+
+        if quote == name[-1] and quote in {'"', "`"}:
+            return f"{name[:-1]}_{idx}{quote}"
+
+    return f"{name}_{idx}"
+
+
 def widen_columns(
     node: RelationalNode,
 ) -> dict[RelationalExpression, RelationalExpression]:
@@ -83,7 +114,8 @@ def widen_columns(
                 idx: int = 0
                 while new_name in node.columns:
                     idx += 1
-                    new_name = f"{name}_{idx}"
+                    new_name = build_new_ref_name(name, idx)
+
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
                 existing_vals[ref_expr] = new_ref

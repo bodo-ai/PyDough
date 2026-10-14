@@ -9,7 +9,10 @@ WITH _t2 AS (
     c_acctbal,
     c_custkey,
     c_nationkey,
-    ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal IS NULL THEN 1 ELSE 0 END DESC, c_acctbal DESC, CASE WHEN c_custkey IS NULL THEN 1 ELSE 0 END, c_custkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY c_nationkey
+      ORDER BY CASE WHEN c_acctbal IS NULL THEN 1 ELSE 0 END DESC, c_acctbal DESC, CASE WHEN c_custkey IS NULL THEN 1 ELSE 0 END, c_custkey
+    ) AS _w
   FROM _t2
 ), _s4 AS (
   SELECT
@@ -21,7 +24,10 @@ WITH _t2 AS (
     _s5.c_acctbal,
     _s4.n_nationkey,
     _s4.n_regionkey,
-    ROW_NUMBER() OVER (PARTITION BY _s4.n_regionkey ORDER BY CASE WHEN _s5.c_acctbal IS NULL THEN 1 ELSE 0 END DESC, _s5.c_acctbal DESC, CASE WHEN _s5.c_custkey IS NULL THEN 1 ELSE 0 END, _s5.c_custkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY _s4.n_regionkey
+      ORDER BY CASE WHEN _s5.c_acctbal IS NULL THEN 1 ELSE 0 END DESC, _s5.c_acctbal DESC, CASE WHEN _s5.c_custkey IS NULL THEN 1 ELSE 0 END, _s5.c_custkey
+    ) AS _w
   FROM _s4 AS _s4
   JOIN _t2 AS _s5
     ON _s4.n_nationkey = _s5.c_nationkey
@@ -41,7 +47,10 @@ WITH _t2 AS (
     PARTSUPP.ps_partkey,
     SUPPLIER.s_nationkey,
     SUPPLIER.s_suppkey,
-    ROW_NUMBER() OVER (PARTITION BY _s8.n_regionkey ORDER BY CASE WHEN PARTSUPP.ps_availqty IS NULL THEN 1 ELSE 0 END DESC, PARTSUPP.ps_availqty DESC, CASE WHEN PARTSUPP.ps_partkey IS NULL THEN 1 ELSE 0 END, PARTSUPP.ps_partkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY _s8.n_regionkey
+      ORDER BY CASE WHEN PARTSUPP.ps_availqty IS NULL THEN 1 ELSE 0 END DESC, PARTSUPP.ps_availqty DESC, CASE WHEN PARTSUPP.ps_partkey IS NULL THEN 1 ELSE 0 END, PARTSUPP.ps_partkey
+    ) AS _w
   FROM _s4 AS _s8
   JOIN tpch.SUPPLIER AS SUPPLIER
     ON SUPPLIER.s_nationkey = _s8.n_nationkey
@@ -55,7 +64,10 @@ WITH _t2 AS (
     ps_partkey,
     s_nationkey,
     s_suppkey,
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY CASE WHEN ps_availqty IS NULL THEN 1 ELSE 0 END DESC, ps_availqty DESC, CASE WHEN s_suppkey IS NULL THEN 1 ELSE 0 END, s_suppkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY n_regionkey
+      ORDER BY CASE WHEN ps_availqty IS NULL THEN 1 ELSE 0 END DESC, ps_availqty DESC, CASE WHEN s_suppkey IS NULL THEN 1 ELSE 0 END, s_suppkey
+    ) AS _w
   FROM _t_3
   WHERE
     _w = 1
@@ -73,7 +85,9 @@ WITH _t2 AS (
   SELECT
     c_custkey,
     c_nationkey,
-    ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal IS NULL THEN 1 ELSE 0 END DESC, c_acctbal DESC, CASE WHEN c_custkey IS NULL THEN 1 ELSE 0 END, c_custkey) AS _w
+    ROW_NUMBER() OVER (
+      ORDER BY CASE WHEN c_acctbal IS NULL THEN 1 ELSE 0 END DESC, c_acctbal DESC, CASE WHEN c_custkey IS NULL THEN 1 ELSE 0 END, c_custkey
+    ) AS _w
   FROM _t2
 ), _s15 AS (
   SELECT

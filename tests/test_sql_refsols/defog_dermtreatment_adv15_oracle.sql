@@ -1,36 +1,36 @@
 WITH "_u_0" AS (
   SELECT
-    drug_id AS "_u_1"
+    DRUG_ID AS "_u_1"
   FROM MAIN.TREATMENTS
   WHERE
-    NOT end_dt IS NULL
+    NOT END_DT IS NULL
   GROUP BY
-    drug_id
-), "_S3" AS (
+    DRUG_ID
+), "_s3" AS (
   SELECT
-    drug_id AS DRUG_ID,
+    DRUG_ID,
     AVG(
-      tot_drug_amt / CASE
+      TOT_DRUG_AMT / CASE
         WHEN (
-          TRUNC(CAST(CAST(end_dt AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(start_dt AS DATE) AS DATE), 'DD')
+          TRUNC(CAST(CAST(END_DT AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(START_DT AS DATE) AS DATE), 'DD')
         ) <> 0
-        THEN TRUNC(CAST(CAST(end_dt AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(start_dt AS DATE) AS DATE), 'DD')
+        THEN TRUNC(CAST(CAST(END_DT AS DATE) AS DATE), 'DD') - TRUNC(CAST(CAST(START_DT AS DATE) AS DATE), 'DD')
         ELSE NULL
       END
     ) AS AVG_DDD
   FROM MAIN.TREATMENTS
   WHERE
-    NOT end_dt IS NULL
+    NOT END_DT IS NULL
   GROUP BY
-    drug_id
+    DRUG_ID
 )
 SELECT
-  DRUGS.drug_name,
-  "_S3".AVG_DDD AS avg_ddd
+  DRUGS.DRUG_NAME AS drug_name,
+  "_s3".AVG_DDD AS avg_ddd
 FROM MAIN.DRUGS DRUGS
 LEFT JOIN "_u_0" "_u_0"
-  ON DRUGS.drug_id = "_u_0"."_u_1"
-LEFT JOIN "_S3" "_S3"
-  ON DRUGS.drug_id = "_S3".DRUG_ID
+  ON DRUGS.DRUG_ID = "_u_0"."_u_1"
+LEFT JOIN "_s3" "_s3"
+  ON DRUGS.DRUG_ID = "_s3".DRUG_ID
 WHERE
   NOT "_u_0"."_u_1" IS NULL

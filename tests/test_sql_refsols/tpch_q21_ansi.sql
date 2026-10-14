@@ -24,18 +24,23 @@ WITH _t5 AS (
     1,
     2,
     3
-), _s11 AS (
+), _s9 AS (
   SELECT
-    _t3.anything_l_suppkey
-  FROM _t3 AS _t3
-  JOIN _t5 AS _t6
-    ON _t3.l_linenumber = _t6.l_linenumber
-    AND _t3.l_orderkey = _t6.l_orderkey
-    AND _t3.o_orderkey = _t6.l_orderkey
+    _t6.l_linenumber,
+    _t6.l_orderkey
+  FROM _t5 AS _t6
   JOIN tpch.lineitem AS lineitem
     ON _t6.l_orderkey = lineitem.l_orderkey
     AND _t6.l_suppkey <> lineitem.l_suppkey
     AND lineitem.l_commitdate < lineitem.l_receiptdate
+), _s11 AS (
+  SELECT
+    _t3.anything_l_suppkey
+  FROM _t3 AS _t3
+  ANTI JOIN _s9 AS _s9
+    ON _s9.l_linenumber = _t3.l_linenumber
+    AND _s9.l_orderkey = _t3.l_orderkey
+    AND _s9.l_orderkey = _t3.o_orderkey
   WHERE
     _t3.anything_o_orderstatus = 'F'
 )

@@ -1556,7 +1556,13 @@ class HybridTranslator:
                         successor_hybrid, key, child_ref_mapping, False
                     )
                     partition.add_key(key_name, expr)
-                    key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                    # Note: uses `expr.name`, not `key_name`, since the
+                    # underlying CALCULATE may have internally renamed
+                    # `key_name` (e.g. to shadow a pre-existing term), and
+                    # `expr.name` reflects that actual, possibly-renamed
+                    # name within the child subtree.
+                    assert isinstance(expr, HybridChildRefExpr)
+                    key_exprs.append(HybridRefExpr(expr.name, expr.typ))
                 partition_child: HybridTree = successor_hybrid.children[
                     partition_child_idx
                 ].subtree
@@ -1668,6 +1674,21 @@ class HybridTranslator:
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
                             source = source.pipeline[0].subtree
+                        if len(source.children) == 0:
+                            # This happens when a PARTITION (or its
+                            # underlying child data) is referenced by name
+                            # from within a CALCULATE/expression that is
+                            # itself defined on that same PARTITION (e.g.
+                            # `p = t.PARTITION(...); p.CALCULATE(x=COUNT(p))`),
+                            # which re-qualifies the PARTITION's own
+                            # definition against itself instead of the data
+                            # it was originally built from.
+                            raise PyDoughSQLException(
+                                "Invalid self-reference: cannot access a "
+                                "PARTITION or its underlying data from "
+                                "within a CALCULATE/expression defined on "
+                                "that same PARTITION."
+                            )
                         successor_hybrid = HybridTree(
                             HybridPartitionChild(source.children[0].subtree),
                             node.ancestral_mapping,
@@ -1679,16 +1700,19 @@ class HybridTranslator:
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
                         partition_child_idx = child_ref_mapping[0]
-                        successor_hybrid.children[
-                            partition_child_idx
-                        ].subtree.squish_backrefs_into_correl(None, 1)
-                        for key_name in node.calc_terms:
+                        for key_name in sorted(node.calc_terms, key=str):
                             key = node.get_expr(key_name)
                             expr = self.make_hybrid_expr(
                                 successor_hybrid, key, child_ref_mapping, False
                             )
                             partition.add_key(key_name, expr)
-                            key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                            # Note: uses `expr.name`, not `key_name`, since the
+                            # underlying CALCULATE may have internally renamed
+                            # `key_name` (e.g. to shadow a pre-existing term),
+                            # and `expr.name` reflects that actual,
+                            # possibly-renamed name within the child subtree.
+                            assert isinstance(expr, HybridChildRefExpr)
+                            key_exprs.append(HybridRefExpr(expr.name, expr.typ))
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs

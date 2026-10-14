@@ -5,7 +5,10 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY NATION.n_regionkey ORDER BY CASE WHEN CUSTOMER.c_acctbal >= 0 THEN CUSTOMER.c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY NATION.n_regionkey
+            ORDER BY CASE WHEN CUSTOMER.c_acctbal >= 0 THEN CUSTOMER.c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
           (
             COUNT(CASE WHEN CUSTOMER.c_acctbal >= 0 THEN CUSTOMER.c_acctbal ELSE NULL END) OVER (PARTITION BY NATION.n_regionkey) - 1.0
@@ -31,7 +34,10 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY NATION.n_regionkey ORDER BY CASE WHEN CUSTOMER.c_acctbal < 0 THEN CUSTOMER.c_acctbal ELSE NULL END DESC) - 1.0
+          ROW_NUMBER() OVER (
+            PARTITION BY NATION.n_regionkey
+            ORDER BY CASE WHEN CUSTOMER.c_acctbal < 0 THEN CUSTOMER.c_acctbal ELSE NULL END DESC
+          ) - 1.0
         ) - (
           (
             COUNT(CASE WHEN CUSTOMER.c_acctbal < 0 THEN CUSTOMER.c_acctbal ELSE NULL END) OVER (PARTITION BY NATION.n_regionkey) - 1.0

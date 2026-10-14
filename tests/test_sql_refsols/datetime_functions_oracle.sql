@@ -5,25 +5,25 @@ SELECT
   SYS_EXTRACT_UTC(SYSTIMESTAMP) + NUMTODSINTERVAL(1, 'hour') AS ts_now_4,
   TO_DATE('2025-01-01', 'YYYY-MM-DD') AS ts_now_5,
   TO_DATE('1995-10-08', 'YYYY-MM-DD') AS ts_now_6,
-  EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) AS year_col,
+  EXTRACT(YEAR FROM CAST(O_ORDERDATE AS DATE)) AS year_col,
   2020 AS year_py,
   1995 AS year_pd,
-  EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) AS month_col,
+  EXTRACT(MONTH FROM CAST(O_ORDERDATE AS DATE)) AS month_col,
   2 AS month_str,
   1 AS month_dt,
-  EXTRACT(DAY FROM CAST(o_orderdate AS DATE)) AS day_col,
+  EXTRACT(DAY FROM CAST(O_ORDERDATE AS DATE)) AS day_col,
   25 AS day_str,
   23 AS hour_str,
   59 AS minute_str,
   59 AS second_ts,
-  TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') - TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') AS dd_col_str,
-  TRUNC(CAST(CAST(o_orderdate AS DATE) AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') AS dd_str_col,
+  TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') - TRUNC(CAST(CAST(O_ORDERDATE AS DATE) AS DATE), 'DD') AS dd_col_str,
+  TRUNC(CAST(CAST(O_ORDERDATE AS DATE) AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') AS dd_str_col,
   (
-    EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
+    EXTRACT(YEAR FROM CAST(O_ORDERDATE AS DATE)) - EXTRACT(YEAR FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
   ) * 12 + (
-    EXTRACT(MONTH FROM CAST(o_orderdate AS DATE)) - EXTRACT(MONTH FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
+    EXTRACT(MONTH FROM CAST(O_ORDERDATE AS DATE)) - EXTRACT(MONTH FROM TO_DATE('1995-10-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
   ) AS dd_pd_col,
-  EXTRACT(YEAR FROM TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS')) - EXTRACT(YEAR FROM CAST(o_orderdate AS DATE)) AS dd_col_dt,
+  EXTRACT(YEAR FROM TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS')) - EXTRACT(YEAR FROM CAST(O_ORDERDATE AS DATE)) AS dd_col_dt,
   FLOOR(
     (
       TRUNC(CAST(TO_DATE('1992-01-01 12:30:45', 'YYYY-MM-DD HH24:MI:SS') AS DATE), 'DD') - TRUNC(CAST(TO_DATE('1992-01-01', 'YYYY-MM-DD') AS DATE), 'DD') + (
@@ -41,7 +41,7 @@ SELECT
     ) / 7
   ) AS dd_dt_str,
   MOD((
-    TO_CHAR(o_orderdate, 'D') + -1
+    TO_CHAR(O_ORDERDATE, 'D') + -1
   ), 7) AS dow_col,
   3 AS dow_str1,
   4 AS dow_str2,
@@ -53,19 +53,19 @@ SELECT
   3 AS dow_dt,
   2 AS dow_pd,
   CASE
-    WHEN TO_CHAR(o_orderdate, 'D') = 1
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 1
     THEN 'Sunday'
-    WHEN TO_CHAR(o_orderdate, 'D') = 2
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 2
     THEN 'Monday'
-    WHEN TO_CHAR(o_orderdate, 'D') = 3
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 3
     THEN 'Tuesday'
-    WHEN TO_CHAR(o_orderdate, 'D') = 4
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 4
     THEN 'Wednesday'
-    WHEN TO_CHAR(o_orderdate, 'D') = 5
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 5
     THEN 'Thursday'
-    WHEN TO_CHAR(o_orderdate, 'D') = 6
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 6
     THEN 'Friday'
-    WHEN TO_CHAR(o_orderdate, 'D') = 7
+    WHEN TO_CHAR(O_ORDERDATE, 'D') = 7
     THEN 'Saturday'
   END AS dayname_col,
   'Monday' AS dayname_str1,
@@ -75,7 +75,7 @@ SELECT
   'Friday' AS dayname_str5,
   'Saturday' AS dayname_str6,
   'Sunday' AS dayname_dt,
-  TO_CHAR(o_orderdate, 'Mon') AS monthname_col,
+  TO_CHAR(O_ORDERDATE, 'Mon') AS monthname_col,
   TO_CHAR(TO_DATE('1995-03-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str1,
   TO_CHAR(TO_DATE('1995-05-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str2,
   TO_CHAR(TO_DATE('1995-06-27', 'YYYY-MM-DD'), 'Mon') AS monthname_str3,

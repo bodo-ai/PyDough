@@ -1,19 +1,19 @@
 SELECT
   REGEXP_SUBSTR(
-    sbcustname,
+    SBCUSTNAME,
     '(.*?)(' || REGEXP_REPLACE(' ', '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
     1,
     CASE
       WHEN (
-        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
+        LENGTH(SBCUSTNAME) - LENGTH(REPLACE(SBCUSTNAME, ' '))
       ) + 1 >= (
-        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
+        LENGTH(SBCUSTNAME) - LENGTH(REPLACE(SBCUSTNAME, ' '))
       ) + 1
       AND (
-        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
+        LENGTH(SBCUSTNAME) - LENGTH(REPLACE(SBCUSTNAME, ' '))
       ) >= 0
       THEN (
-        LENGTH(sbcustname) - LENGTH(REPLACE(sbcustname, ' '))
+        LENGTH(SBCUSTNAME) - LENGTH(REPLACE(SBCUSTNAME, ' '))
       ) + 1
       ELSE NULL
     END,
@@ -22,4 +22,4 @@ SELECT
   ) AS last_name
 FROM MAIN.SBCUSTOMER
 WHERE
-  sbcustname = 'Alex Rodriguez'
+  SBCUSTNAME = 'Alex Rodriguez'

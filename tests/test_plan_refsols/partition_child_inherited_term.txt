@@ -1,0 +1,5 @@
+ROOT(columns=[('rkey', r_regionkey), ('region_name', max_r_name), ('n_nations', n_rows)], orderings=[(r_regionkey):asc_first])
+ AGGREGATE(keys={'r_regionkey': r_regionkey}, aggregations={'max_r_name': MAX(r_name), 'n_rows': COUNT()})
+  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
+   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
+   SCAN(table=tpch.NATION, columns={'n_regionkey': n_regionkey})

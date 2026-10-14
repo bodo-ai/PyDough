@@ -4,7 +4,7 @@ WITH _s1 AS (
     receiver_id
   FROM defog.ewallet.wallet_transactions_daily
   WHERE
-    created_at >= DATE_TRUNC('DAY', DATEADD(DAY, -150, CURRENT_TIMESTAMP()))
+    created_at >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -150))
     AND receiver_type = 1
 )
 SELECT

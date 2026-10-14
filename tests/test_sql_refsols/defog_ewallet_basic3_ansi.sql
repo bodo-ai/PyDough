@@ -1,6 +1,12 @@
+WITH _s1 AS (
+  SELECT
+    receiver_id
+  FROM main.wallet_transactions_daily
+  WHERE
+    receiver_type = 1
+)
 SELECT
   merchants.mid AS merchant
 FROM main.merchants AS merchants
-JOIN main.wallet_transactions_daily AS wallet_transactions_daily
-  ON merchants.mid = wallet_transactions_daily.receiver_id
-  AND wallet_transactions_daily.receiver_type = 1
+SEMI JOIN _s1 AS _s1
+  ON _s1.receiver_id = merchants.mid

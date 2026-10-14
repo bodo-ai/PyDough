@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.READ_LLM_FIXTURES_ROLE }}
           aws-region: us-east-2

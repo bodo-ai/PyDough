@@ -160,6 +160,11 @@ def apply_sqlglot_optimizer(
     if not isinstance(dialect, SnowflakeDialect):
         kwargs["dialect"] = dialect
 
+    # Protect Oracle-reserved-word identifiers from being upper-cased by
+    # qualify's normalize_identifiers step, before quote_oracle_identifiers
+    # (below) has a chance to quote them with their original casing intact.
+    protect_oracle_reserved_identifiers(glot_expr, dialect)
+
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
     glot_expr = qualify(glot_expr, **kwargs)
 
@@ -453,7 +458,7 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
     if isinstance(expr, Select) and (
         expr.args.get("joins") is None or len(expr.args.get("joins")) == 0
     ):
-        from_clause = expr.args.get("from")
+        from_clause = expr.args.get("from_")
         # Only remove aliases if there is a table in the FROM clause as opposed
         # to a subquery.
         if from_clause is not None and isinstance(from_clause.this, Table):
@@ -603,12 +608,55 @@ _ORACLE_RESERVED_ALIASES: frozenset[str] = frozenset(
 )
 
 
-def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -> None:
+def _oracle_identifier_needs_quoting(name: str) -> bool:
     """
-    Add quotes to Identifiers that are invalid as unquoted Oracle identifiers:
+    Checks whether a raw identifier name is invalid as an unquoted Oracle
+    identifier:
     - Identifiers starting with '_' (Oracle syntax restriction)
     - Oracle reserved words used as column aliases (e.g. COMMENT, KEY, SIZE)
       which cause ORA-00923 parse errors, especially in CTAS statements.
+    """
+    return name.startswith("_") or name.lower() in _ORACLE_RESERVED_ALIASES
+
+
+def protect_oracle_reserved_identifiers(
+    expr: SQLGlotExpression, dialect: SQLGlotDialect
+) -> None:
+    """
+    Marks Identifiers that will need Oracle quoting (see
+    `_oracle_identifier_needs_quoting`) as case-sensitive, so that the
+    `qualify` step's `normalize_identifiers` pass (which upper-cases any
+    identifier not already marked quoted/case-sensitive) does not clobber
+    their original casing before `quote_oracle_identifiers` gets a chance to
+    quote them. Must run before `qualify` for the same reason.
+
+    Note: This only is required for the Oracle dialect.
+
+    Args:
+        expr: The SQLGlot expression to visit.
+        dialect: The dialect being generated for.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    if not isinstance(dialect, OracleDialect):
+        return
+
+    if isinstance(expr, sqlglot_expressions.Identifier):
+        if not expr.quoted and _oracle_identifier_needs_quoting(expr.this):
+            expr.meta["case_sensitive"] = True
+        # Identifiers are leaf nodes, so no recursion is needed
+        return
+
+    # Recursively visit the subexpressions.
+    for arg in expr.iter_expressions():
+        protect_oracle_reserved_identifiers(arg, dialect)
+
+
+def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -> None:
+    """
+    Add quotes to Identifiers that are invalid as unquoted Oracle identifiers
+    (see `_oracle_identifier_needs_quoting`).
 
     Note: This only is required for the Oracle dialect.
 
@@ -623,10 +671,7 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
         return
 
     if isinstance(expr, sqlglot_expressions.Identifier):
-        needs_quoting = expr.this.startswith("_") or (
-            expr.this.lower() in _ORACLE_RESERVED_ALIASES
-        )
-        if needs_quoting:
+        if _oracle_identifier_needs_quoting(expr.this):
             new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
             expr.replace(new_identifier)
             # Identifiers are leaf nodes, so no recursion is needed

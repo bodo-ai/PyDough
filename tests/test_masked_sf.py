@@ -25,6 +25,8 @@ from .testing_sf_masked_utilities import (
     sf_masked_context,  # noqa: F401
 )
 
+pytestmark = pytest.mark.skip(reason="MFA authentication required")
+
 
 @pytest.fixture(
     params=[

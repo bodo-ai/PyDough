@@ -41,11 +41,11 @@ SELECT
   CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose AS avg_close,
   max_max_sbdphigh AS max_high,
   min_min_sbdplow AS min_low,
-  CAST((
+  (
     (
       CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose
     ) - LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) AS REAL) / NULLIF(
+  ) / NULLIF(
     LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month),
     0
   ) AS momc

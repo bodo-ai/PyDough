@@ -4,23 +4,25 @@ WITH _t1 AS (
   FROM main.countries
   WHERE
     NOT CONTAINS(co_name, 'C')
-), _s5 AS (
+), _s7 AS (
   SELECT DISTINCT
     TRUNC(CAST(calendar.ca_dt AS TIMESTAMP), 'YEAR') AS start_of_year,
-    _t3.co_name
-  FROM _t1 AS _t3
+    _t4.co_name
+  FROM _t1 AS _t4
   JOIN main.products AS products
     ON products.pr_name = 'AmethystCopper-I'
   JOIN main.calendar AS calendar
-    ON calendar.ca_dt < DATEADD(YEAR, 2, CAST(products.pr_release AS TIMESTAMP))
+    ON calendar.ca_dt < DATE_ADD(YEAR, 2, CAST(products.pr_release AS TIMESTAMP))
     AND calendar.ca_dt >= products.pr_release
 )
 SELECT
   _t1.co_name AS country_name,
-  _s5.start_of_year
+  _s7.start_of_year
 FROM _t1 AS _t1
-LEFT JOIN _s5 AS _s5
-  ON _s5.co_name = _t1.co_name
+JOIN main.products AS products
+  ON products.pr_name = 'AmethystCopper-I'
+LEFT JOIN _s7 AS _s7
+  ON _s7.co_name = _t1.co_name
 ORDER BY
   1,
   2

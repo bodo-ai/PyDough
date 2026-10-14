@@ -1,32 +1,32 @@
 WITH _s0 AS (
   SELECT DISTINCT
-    sbtickerexchange AS sbTickerExchange
+    sbTickerExchange
   FROM main.sbTicker
 ), _s9 AS (
   SELECT
-    sbCustomer.sbcustid AS sbCustId,
+    sbCustomer.sbCustId,
     _s2.sbTickerExchange,
     COUNT(*) AS n_rows
   FROM _s0 AS _s2
   CROSS JOIN main.sbCustomer AS sbCustomer
   JOIN main.sbTransaction AS sbTransaction
-    ON sbCustomer.sbcustid = sbTransaction.sbtxcustid
+    ON sbCustomer.sbCustId = sbTransaction.sbTxCustId
   JOIN main.sbTicker AS sbTicker
-    ON _s2.sbTickerExchange = sbTicker.sbtickerexchange
-    AND sbTicker.sbtickerid = sbTransaction.sbtxtickerid
+    ON _s2.sbTickerExchange = sbTicker.sbTickerExchange
+    AND sbTicker.sbTickerId = sbTransaction.sbTxTickerId
   GROUP BY
     1,
     2
 )
 SELECT
-  sbCustomer.sbcuststate COLLATE utf8mb4_bin AS state,
+  sbCustomer.sbCustState COLLATE utf8mb4_bin AS state,
   _s0.sbTickerExchange COLLATE utf8mb4_bin AS exchange,
   COALESCE(SUM(_s9.n_rows), 0) AS n
 FROM _s0 AS _s0
 CROSS JOIN main.sbCustomer AS sbCustomer
 LEFT JOIN _s9 AS _s9
   ON _s0.sbTickerExchange = _s9.sbTickerExchange
-  AND _s9.sbCustId = sbCustomer.sbcustid
+  AND _s9.sbCustId = sbCustomer.sbCustId
 GROUP BY
   1,
   2

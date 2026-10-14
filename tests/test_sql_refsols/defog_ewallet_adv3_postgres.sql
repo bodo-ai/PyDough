@@ -1,5 +1,5 @@
 SELECT
-  MAX(merchants.name) AS merchant_name,
+  ANY_VALUE(merchants.name) AS merchant_name,
   COUNT(*) AS total_coupons
 FROM main.merchants AS merchants
 JOIN main.coupons AS coupons

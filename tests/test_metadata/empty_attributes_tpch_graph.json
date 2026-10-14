@@ -1,0 +1,19 @@
+[
+    {
+        "name": "TPCH",
+        "version": "V2",
+        "collections": [],
+        "relationships": [],
+        "templates": {
+            "definitions": [
+                {
+                    "name": "current_date",
+                    "description": "It filters customers based on conditions and selecting the given columns",
+                    "parameters": {},
+                    "source": "result = TPCH.CALCULATE(current_year=YEAR(DATETIME('now')), current_month=MONTHNAME(DATETIME('now')), current_day=DAYNAME(DATETIME('now')))",
+                    "answer_variable": "result"
+                }
+            ]
+        }
+    }
+]

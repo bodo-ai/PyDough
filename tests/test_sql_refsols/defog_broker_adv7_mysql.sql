@@ -2,17 +2,17 @@ WITH _s2 AS (
   SELECT
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 2, '0')
+      EXTRACT(YEAR FROM CAST(sbCustJoinDate AS DATETIME)),
+      LPAD(EXTRACT(MONTH FROM CAST(sbCustJoinDate AS DATETIME)), 2, '0')
     ) AS month,
     COUNT(*) AS n_rows
   FROM broker.sbCustomer
   WHERE
-    sbcustjoindate < STR_TO_DATE(
+    sbCustJoinDate < STR_TO_DATE(
       CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
       '%Y %c %e'
     )
-    AND sbcustjoindate >= STR_TO_DATE(
+    AND sbCustJoinDate >= STR_TO_DATE(
       CONCAT(
         YEAR(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' ',
@@ -27,21 +27,21 @@ WITH _s2 AS (
   SELECT
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)), 2, '0')
+      EXTRACT(YEAR FROM CAST(sbCustomer.sbCustJoinDate AS DATETIME)),
+      LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbCustJoinDate AS DATETIME)), 2, '0')
     ) AS month,
-    AVG(sbTransaction.sbtxamount) AS avg_sbTxAmount
+    AVG(sbTransaction.sbTxAmount) AS avg_sbTxAmount
   FROM broker.sbCustomer AS sbCustomer
   JOIN broker.sbTransaction AS sbTransaction
-    ON EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
-    AND EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
-    AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
+    ON EXTRACT(MONTH FROM CAST(sbCustomer.sbCustJoinDate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbTransaction.sbTxDateTime AS DATETIME))
+    AND EXTRACT(YEAR FROM CAST(sbCustomer.sbCustJoinDate AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbTransaction.sbTxDateTime AS DATETIME))
+    AND sbCustomer.sbCustId = sbTransaction.sbTxCustId
   WHERE
-    sbCustomer.sbcustjoindate < STR_TO_DATE(
+    sbCustomer.sbCustJoinDate < STR_TO_DATE(
       CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
       '%Y %c %e'
     )
-    AND sbCustomer.sbcustjoindate >= STR_TO_DATE(
+    AND sbCustomer.sbCustJoinDate >= STR_TO_DATE(
       CONCAT(
         YEAR(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' ',

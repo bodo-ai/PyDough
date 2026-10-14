@@ -1,0 +1,3 @@
+SELECT
+  COUNT(*) AS output
+FROM TPCH.SUPPLIER

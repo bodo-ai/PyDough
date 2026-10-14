@@ -3,15 +3,18 @@ WITH _t AS (
     LINEITEM.l_receiptdate,
     LINEITEM.l_suppkey,
     ORDERS.o_custkey,
-    ROW_NUMBER() OVER (PARTITION BY ORDERS.o_custkey ORDER BY CASE WHEN LINEITEM.l_receiptdate IS NULL THEN 1 ELSE 0 END, LINEITEM.l_receiptdate, CASE
-      WHEN LINEITEM.l_extendedprice * (
+    ROW_NUMBER() OVER (
+      PARTITION BY ORDERS.o_custkey
+      ORDER BY CASE WHEN LINEITEM.l_receiptdate IS NULL THEN 1 ELSE 0 END, LINEITEM.l_receiptdate, CASE
+        WHEN LINEITEM.l_extendedprice * (
+          1 - LINEITEM.l_discount
+        ) IS NULL
+        THEN 1
+        ELSE 0
+      END DESC, LINEITEM.l_extendedprice * (
         1 - LINEITEM.l_discount
-      ) IS NULL
-      THEN 1
-      ELSE 0
-    END DESC, LINEITEM.l_extendedprice * (
-      1 - LINEITEM.l_discount
-    ) DESC) AS _w
+      ) DESC
+    ) AS _w
   FROM tpch.ORDERS AS ORDERS
   JOIN tpch.LINEITEM AS LINEITEM
     ON LINEITEM.l_orderkey = ORDERS.o_orderkey

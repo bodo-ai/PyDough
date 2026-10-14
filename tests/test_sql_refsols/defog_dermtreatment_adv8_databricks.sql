@@ -11,7 +11,12 @@ WITH _t0 AS (
     1
 )
 SELECT
-  CONCAT_WS('-', EXTRACT(YEAR FROM start_month), LPAD(EXTRACT(MONTH FROM start_month), 2, '0')) AS start_month,
+  CASE
+    WHEN EXTRACT(YEAR FROM start_month) IS NULL
+    OR LPAD(EXTRACT(MONTH FROM start_month), 2, '0') IS NULL
+    THEN NULL
+    ELSE CONCAT_WS('-', EXTRACT(YEAR FROM start_month), LPAD(EXTRACT(MONTH FROM start_month), 2, '0'))
+  END AS start_month,
   ndistinct_diag_id AS PMPD,
   n_rows AS PMTC
 FROM _t0

@@ -525,6 +525,9 @@ class TrinoTransformBindings(BaseTransformBindings):
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         assert 2 <= len(args) <= 3
+        # Need to manually ensure that the first argument is a string, since
+        # REPLACE in Trino does not support implicit type conversion.
+        args = [self.ensure_string(args[0], types[0]), *args[1:]]
         delim_arg: SQLGlotExpression = args[1]
         if (
             isinstance(delim_arg, sqlglot_expressions.Literal)

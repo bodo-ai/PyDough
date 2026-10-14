@@ -250,6 +250,14 @@ def invalid_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def invalid_templates_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the invalid templates.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/invalid_templates.json"
+
+
+@pytest.fixture(scope="session")
 def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
@@ -487,6 +495,20 @@ def sample_graphs(
     file.
     """
     return get_sample_graph(sample_graph_names)
+
+
+@pytest.fixture(scope="session")
+def get_empty_tpch_graph() -> graph_fetcher:
+    """
+    Returns an empty TPCH graph with defined template
+    """
+
+    @cache
+    def impl() -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/empty_attributes_tpch_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name="TPCH")
+
+    return impl
 
 
 @pytest.fixture(scope="session")
@@ -1017,13 +1039,22 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators", "menu", "donor", "movielens"]
+S3_DATASETS = [
+    "synthea",
+    "world_development_indicators",
+    "menu",
+    "donor",
+    "movielens",
+    "california_schools",
+    "chinook",
+]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
 """
 S3_DATASETS_SCRIPTS = {
     "world_development_indicators": "init_world_indicators_sqlite",
+    "chinook": "init_chinook_sqlite",
 }
 """
     Maps the datasets that need to be built with a sql script, with the name of
@@ -3179,6 +3210,12 @@ def mock_server_setup():
 
     # Wait until server is ready
     for _ in range(20):
+        if proc.poll() is not None:
+            output, _ = proc.communicate()
+            raise RuntimeError(
+                f"Mock server exited with code {proc.returncode}:\n{output}"
+            )
+
         try:
             r: httpx.Response = httpx.get(server_url + "/health", timeout=1)
             if r.status_code == 200:
@@ -3187,7 +3224,12 @@ def mock_server_setup():
             time.sleep(0.5)
     else:
         proc.terminate()
-        raise RuntimeError("Mock server failed to start")
+        try:
+            output, _ = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            output, _ = proc.communicate()
+        raise RuntimeError(f"Mock server failed to start:\n{output}")
 
     yield server_url
 
@@ -3384,7 +3426,7 @@ def tpch_custom_test_data_dialect_replacements(
                             "d17": ["02"],  # HH12
                             "d18": ["30"],  # MI
                             "d19": ["45"],  # SS
-                            "d20": ["P.M."],  # AM
+                            "d20": ["PM"],  # AM
                         }
                     ),
                     "string_format_specifiers",

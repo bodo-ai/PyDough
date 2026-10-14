@@ -97,6 +97,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     bad_child_reuse_3,
     bad_child_reuse_4,
     bad_child_reuse_5,
+    chained_partition_transformed_key,
+    cross_similar_partitions,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -113,6 +115,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     function_sampler,
     global_acctbal_breakdown,
     highest_priority_per_year,
+    iff_with_aggregates_on_different_collections,
+    isin_mixed_literal_list,
+    isin_non_literal_arg,
+    join_strings_too_few_values,
     month_year_sliding_windows,
     n_orders_first_day,
     nation_acctbal_breakdown,
@@ -122,7 +128,13 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     order_info_per_priority,
     order_quarter_test,
     orders_versus_first_orders,
+    parent_calc_access_error,
     part_reduced_size,
+    partition_by_child_reference,
+    partition_by_literal,
+    partition_child_inherited_term,
+    partition_key_name_collision,
+    partition_self_reference,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -143,7 +155,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     region_orders_from_nations_richest,
     regional_first_order_best_line_part,
     regional_suppliers_percentile,
+    replace_non_string_arg,
     richest_customer_per_region,
+    shadowed_calc_term,
     simple_cross_1,
     simple_cross_2,
     simple_cross_3,
@@ -2642,6 +2656,94 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = ("
+                " TPCH"
+                " .CALCULATE(avg_cust_bal=AVG(customers.account_balance))"
+                " .customers"
+                " .CALCULATE(pct_diff=100.0*(account_balance-avg_cust_bal)/avg_cust_bal, nation_name=nation.name)"
+                " .PARTITION(name='nation_industry', by=(nation_name, market_segment))"
+                " .CALCULATE(market_segment, max_pct_diff=MAX(customers.pct_diff))"
+                " .PARTITION(name='industry', by=market_segment)"
+                " .CALCULATE(market_segment, avg_max_pct_diff=ROUND(AVG(nation_industry.max_pct_diff), 2))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "market_segment": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "avg_max_pct_diff": [122.27, 122.25, 122.3, 122.23, 122.25],
+                    }
+                ),
+                "global_double_partition",
+            ),
+            id="global_double_partition",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " TPCH"
+                " .CALCULATE(avg_cust_bal=AVG(customers.account_balance))"
+                " .customers"
+                " .CALCULATE(pct_diff=100.0*(account_balance-avg_cust_bal)/avg_cust_bal, nation_name=nation.name)"
+                " .PARTITION(name='nation_industry', by=(nation_name, market_segment))"
+                " .CALCULATE(market_segment, max_pct_diff=MAX(customers.pct_diff))"
+                " .PARTITION(name='industry', by=market_segment)"
+                " .CALCULATE(market_segment, avg_max_pct_diff=ROUND(AVG(nation_industry.max_pct_diff), 2), avg_bal=ROUND(avg_cust_bal, 2))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "market_segment": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "avg_max_pct_diff": [122.27, 122.25, 122.3, 122.23, 122.25],
+                        "avg_bal": [4495.51] * 5,
+                    }
+                ),
+                "global_double_partition_interweave_a",
+            ),
+            id="global_double_partition_interweave_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " TPCH"
+                " .CALCULATE(avg_cust_bal=AVG(customers.account_balance))"
+                " .customers"
+                " .CALCULATE(nation_name=nation.name)"
+                " .PARTITION(name='nation_industry', by=(nation_name, market_segment))"
+                " .CALCULATE(market_segment, pct_diff=100.0*(AVG(customers.account_balance)-avg_cust_bal)/avg_cust_bal)"
+                " .PARTITION(name='industry', by=market_segment)"
+                " .CALCULATE(market_segment, max_nation_pct_diff=ROUND(MAX(nation_industry.pct_diff), 2))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "market_segment": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "max_nation_pct_diff": [3.6, 2.87, 3.56, 4.45, 3.13],
+                    }
+                ),
+                "global_double_partition_interweave_b",
+            ),
+            id="global_double_partition_interweave_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_var_std,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -3476,6 +3578,126 @@ from .testing_utilities import (
                 "double_cross",
             ),
             id="double_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "manufacture_counts = parts.PARTITION(name='manufacturers', by=manufacturer).CALCULATE(manufacturer, n_parts=COUNT(parts))\n"
+                "industry_counts = customers.PARTITION(name='industries', by=market_segment).CALCULATE(industry=market_segment, n_custs=COUNT(customers))\n"
+                "result = ("
+                "    manufacture_counts"
+                "    .CROSS(industry_counts)"
+                "    .CALCULATE(manufacturer, n_parts, industry, n_custs)"
+                ")\n"
+                "",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "manufacturer": ["Manufacturer#1"] * 5
+                        + ["Manufacturer#2"] * 5
+                        + ["Manufacturer#3"] * 5
+                        + ["Manufacturer#4"] * 5
+                        + ["Manufacturer#5"] * 5,
+                        "n_parts": [40084] * 5
+                        + [39636] * 5
+                        + [40304] * 5
+                        + [39841] * 5
+                        + [40135] * 5,
+                        "industry": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ]
+                        * 5,
+                        "n_custs": [29752, 30142, 29968, 30189, 29949] * 5,
+                    }
+                ),
+                "pcrossp_a",
+            ),
+            id="pcrossp_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "manufacture_counts = parts.PARTITION(name='manufacturers', by=manufacturer).CALCULATE(manufacturer, n_parts=COUNT(parts))\n"
+                "industry_counts = customers.PARTITION(name='industries', by=market_segment).CALCULATE(industry=market_segment, n_custs=COUNT(customers))\n"
+                "result = ("
+                "    industry_counts"
+                "    .CROSS(manufacture_counts)"
+                "    .CALCULATE(manufacturer, n_parts, industry, n_custs)"
+                ")\n"
+                "",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "manufacturer": ["Manufacturer#1"] * 5
+                        + ["Manufacturer#2"] * 5
+                        + ["Manufacturer#3"] * 5
+                        + ["Manufacturer#4"] * 5
+                        + ["Manufacturer#5"] * 5,
+                        "n_parts": [40084] * 5
+                        + [39636] * 5
+                        + [40304] * 5
+                        + [39841] * 5
+                        + [40135] * 5,
+                        "industry": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ]
+                        * 5,
+                        "n_custs": [29752, 30142, 29968, 30189, 29949] * 5,
+                    }
+                ),
+                "pcrossp_b",
+            ),
+            id="pcrossp_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "order_groupings = orders.CALCULATE(c_nation=customer.nation.name, o_year=YEAR(order_date)).WHERE(ISIN(c_nation, ['CANADA', 'ARGENTINA'])).PARTITION(name='order_groupings', by=[c_nation, o_year]).CALCULATE(c_nation, o_year)\n"
+                "supplier_groupings = suppliers.CALCULATE(s_nation=nation.name).WHERE(ISIN(s_nation, ['CANADA', 'ARGENTINA'])).PARTITION(name='order_groupings', by=s_nation).CALCULATE(s_nation)\n"
+                "result = ("
+                "    order_groupings"
+                "    .CROSS(supplier_groupings)"
+                "    .WHERE(c_nation == s_nation)"
+                "    .CALCULATE(c_nation, o_year)"
+                ")\n"
+                "",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "c_nation": ["ARGENTINA"] * 7 + ["CANADA"] * 7,
+                        "o_year": [1992, 1993, 1994, 1995, 1996, 1997, 1998] * 2,
+                    }
+                ),
+                "pcrossp_c",
+            ),
+            id="pcrossp_c",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "order_groupings = orders.CALCULATE(c_nation=customer.nation.name, o_year=YEAR(order_date)).WHERE(ISIN(c_nation, ['CANADA', 'ARGENTINA'])).PARTITION(name='order_groupings', by=[c_nation, o_year]).CALCULATE(c_nation, o_year)\n"
+                "supplier_groupings = suppliers.CALCULATE(s_nation=nation.name).WHERE(ISIN(s_nation, ['CANADA', 'ARGENTINA'])).PARTITION(name='order_groupings', by=s_nation).CALCULATE(s_nation)\n"
+                "result = ("
+                "    supplier_groupings"
+                "    .CROSS(order_groupings)"
+                "    .WHERE(c_nation == s_nation)"
+                "    .CALCULATE(c_nation, o_year)"
+                ")\n"
+                "",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "c_nation": ["ARGENTINA"] * 7 + ["CANADA"] * 7,
+                        "o_year": [1992, 1993, 1994, 1995, 1996, 1997, 1998] * 2,
+                    }
+                ),
+                "pcrossp_d",
+            ),
+            id="pcrossp_d",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -6529,6 +6751,156 @@ from .testing_utilities import (
             ),
             id="monthname_function_1",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                iff_with_aggregates_on_different_collections,
+                "TPCH",
+                lambda: pd.DataFrame({"output": [10000]}),
+                "iff_with_aggregates_on_different_collections",
+            ),
+            id="iff_with_aggregates_on_different_collections",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "# Get order years\n"
+                "distinct_years = orders.CALCULATE(\n"
+                "    order_year=YEAR(order_date)\n"
+                ").PARTITION(\n"
+                "    name='years', by=order_year\n"
+                ").CALCULATE(\n"
+                "    year=order_year\n"
+                ")\n"
+                "# Get customer base\n"
+                "cust_base = customers.CALCULATE(\n"
+                "    c_id=key,\n"
+                ")\n"
+                "# CROSS join customer base with distinct years to get all combinations of customers and years\n"
+                "cust_years = cust_base.CROSS(distinct_years)\n"
+                "# Reproduce issue\n"
+                "result = cust_years.CALCULATE(\n"
+                "    year=year,\n"
+                "    bug=SUM(orders.WHERE(YEAR(order_date) == year).lines.extended_price)\n"
+                ").TOP_K(5, by=bug.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1996, 1996, 1996, 1996, 1996],
+                        "bug": [
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                            3.502894e10,
+                        ],
+                    }
+                ),
+                "compound_ref_correlation_extraction",
+            ),
+            id="compound_ref_correlation_extraction",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                replace_non_string_arg,
+                "TPCH",
+                lambda: pd.DataFrame({"clean_key": ["2", "3", "4", "5", "one"]}),
+                "replace_non_string_arg",
+            ),
+            id="replace_non_string_arg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_key_name_collision,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2],
+                        "total": [587762.91, 1028273.43],
+                    }
+                ),
+                "partition_key_name_collision",
+            ),
+            id="partition_key_name_collision",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                shadowed_calc_term,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3, 4, 5],
+                        "x": [
+                            "23-644-998-4944",
+                            "20-715-308-7926",
+                            "25-884-345-1592",
+                            "20-500-807-1549",
+                            "30-452-969-2072",
+                        ],
+                    }
+                ),
+                "shadowed_calc_term",
+            ),
+            id="shadowed_calc_term",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_child_inherited_term,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "rkey": [0, 1, 2, 3, 4],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_nations": [5, 5, 5, 5, 5],
+                    }
+                ),
+                "partition_child_inherited_term",
+            ),
+            id="partition_child_inherited_term",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                chained_partition_transformed_key,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "algeria",
+                            "argentina",
+                            "brazil",
+                            "canada",
+                            "china",
+                            "egypt",
+                            "ethiopia",
+                            "france",
+                            "germany",
+                            "india",
+                            "indonesia",
+                            "iran",
+                            "iraq",
+                            "japan",
+                            "jordan",
+                            "kenya",
+                            "morocco",
+                            "mozambique",
+                            "peru",
+                            "romania",
+                            "russia",
+                            "saudi arabia",
+                            "united kingdom",
+                            "united states",
+                            "vietnam",
+                        ],
+                    }
+                ),
+                "chained_partition_transformed_key",
+            ),
+            id="chained_partition_transformed_key",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -7279,6 +7651,85 @@ def test_pipeline_e2e_simple_week(
                 "dataframe columns must be a non-empty list where each element must be a string"
             ),
             id="dataframe_collection_bad_17",
+        ),
+        pytest.param(
+            cross_similar_partitions,
+            None,
+            re.escape(
+                "Unclear whether 'year' refers to a term of the current context or ancestor"
+            ),
+            id="cross_similar_partitions",
+        ),
+        pytest.param(
+            partition_self_reference,
+            None,
+            re.escape(
+                "Invalid self-reference: cannot access a PARTITION or its "
+                "underlying data from within a CALCULATE/expression defined "
+                "on that same PARTITION."
+            ),
+            id="partition_self_reference",
+        ),
+        pytest.param(
+            partition_by_literal,
+            None,
+            re.escape(
+                "Invalid partition key 1: PARTITION only supports partition "
+                "keys that are direct references to a scalar property of "
+                "the collection being partitioned, not a literal, or a "
+                "term from a child collection."
+            ),
+            id="partition_by_literal",
+        ),
+        pytest.param(
+            partition_by_child_reference,
+            None,
+            re.escape(
+                "Invalid partition key customer.key: PARTITION only "
+                "supports partition keys that are direct references to a "
+                "scalar property of the collection being partitioned, not "
+                "a literal, or a term from a child collection."
+            ),
+            id="partition_by_child_reference",
+        ),
+        pytest.param(
+            join_strings_too_few_values,
+            None,
+            re.escape(
+                "Invalid operator invocation \"JOIN_STRINGS(', ', "
+                'customer.key)": Expected at least 3 arguments, received 2'
+            ),
+            id="join_strings_too_few_values",
+        ),
+        pytest.param(
+            isin_non_literal_arg,
+            None,
+            re.escape(
+                "Invalid argument for ISIN: second parameter must be a "
+                "collection of literal values (e.g. (1, 2, 3)), not a "
+                "PyDough expression ('o_custkey')."
+            ),
+            id="isin_non_literal_arg",
+        ),
+        pytest.param(
+            isin_mixed_literal_list,
+            None,
+            re.escape(
+                "Can only coerce a collection of literals to a literal, "
+                "not customer.key."
+            ),
+            id="isin_mixed_literal_list",
+        ),
+        pytest.param(
+            parent_calc_access_error,
+            None,
+            re.escape(
+                "Cannot access inherited term 'cust_name' through child collection "
+                "'customer' in customer.cust_name. Terms down-streamed from an "
+                "ancestor CALCULATE can only be referenced directly, "
+                "e.g. 'cust_name'."
+            ),
+            id="parent_calc_access_error",
         ),
     ],
 )

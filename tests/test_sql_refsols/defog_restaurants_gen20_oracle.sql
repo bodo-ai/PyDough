@@ -1,19 +1,19 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT
-    city_name AS CITY_NAME,
+    CITY_NAME,
     COUNT(*) AS N_ROWS
   FROM MAIN.RESTAURANT
   GROUP BY
-    city_name
+    CITY_NAME
 )
 SELECT
-  GEOGRAPHIC.region AS rest_region,
-  SUM("_S0".N_ROWS) AS n_restaurants
-FROM "_S0" "_S0"
+  GEOGRAPHIC.REGION AS rest_region,
+  SUM("_s0".N_ROWS) AS n_restaurants
+FROM "_s0" "_s0"
 JOIN MAIN.GEOGRAPHIC GEOGRAPHIC
-  ON GEOGRAPHIC.city_name = "_S0".CITY_NAME
+  ON GEOGRAPHIC.CITY_NAME = "_s0".CITY_NAME
 GROUP BY
-  GEOGRAPHIC.region
+  GEOGRAPHIC.REGION
 ORDER BY
   2 DESC NULLS LAST,
   1 NULLS FIRST

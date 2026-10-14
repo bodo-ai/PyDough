@@ -32,6 +32,7 @@ import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
 from pydough.metadata import GraphMetadata
+from pydough.metadata.templates import TemplateMetadata
 from pydough.types import (
     ArrayType,
     BooleanType,
@@ -92,9 +93,11 @@ class UnqualifiedNode(ABC):
             typ: PyDoughType = UnknownType()
             for elem in obj:
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
-                assert isinstance(coerced_elem, UnqualifiedLiteral), (
-                    f"Can only coerce list of literals to a literal, not {elem}"
-                )
+                if not isinstance(coerced_elem, UnqualifiedLiteral):
+                    raise PyDoughUnqualifiedException(
+                        f"Can only coerce a collection of literals to a "
+                        f"literal, not {elem!r}."
+                    )
                 elems.append(coerced_elem)
             return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
@@ -135,8 +138,16 @@ class UnqualifiedNode(ABC):
             )
 
     def __call__(self, *args, **kwargs):
+
+        available_templates: list[str] = []
+        if isinstance(self, UnqualifiedAccess) and isinstance(
+            self._parcel[0], UnqualifiedRoot
+        ):
+            _graph, _func_map, templates = self._parcel[0]._parcel
+            available_templates = list(templates.keys())
+
         raise pydough.active_session.error_builder.undefined_function_call(
-            self, *args, **kwargs
+            self, available_templates, *args, **kwargs
         )
 
     def __bool__(self):
@@ -369,15 +380,19 @@ class UnqualifiedNode(ABC):
     def PARTITION(
         self,
         name: str,
-        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        by: object | Iterable[object],
     ) -> "UnqualifiedPartition":
         """
         Method used to create a PARTITION node.
         """
+        keys_unqualified: list[UnqualifiedNode]
         if isinstance(by, UnqualifiedNode):
-            return UnqualifiedPartition(self, name, [by])
+            keys_unqualified = [by]
+        elif isinstance(by, Iterable):
+            keys_unqualified = [self.coerce_to_unqualified(key) for key in by]
         else:
-            return UnqualifiedPartition(self, name, list(by))
+            keys_unqualified = [self.coerce_to_unqualified(by)]
+        return UnqualifiedPartition(self, name, keys_unqualified)
 
     def CROSS(self, child: "UnqualifiedNode") -> "UnqualifiedCross":
         """
@@ -537,19 +552,28 @@ class UnqualifiedRoot(UnqualifiedNode):
                 func_map[operator_name] = operator
         for operator_name in graph.get_function_names():
             func_map[operator_name] = graph.get_function(operator_name)
-        self._parcel: tuple[GraphMetadata, dict[str, pydop.PyDoughOperator]] = (
+        graph_templates: dict[str, TemplateMetadata] = graph.templates_definitions
+
+        self._parcel: tuple[
+            GraphMetadata, dict[str, pydop.PyDoughOperator], dict[str, TemplateMetadata]
+        ] = (
             graph,
             func_map,
+            graph_templates,
         )
 
     def __getattribute__(self, name: str) -> Any:
-        func_map: dict[str, pydop.PyDoughOperator] = super(
-            UnqualifiedNode, self
-        ).__getattribute__("_parcel")[1]
+        graph, func_map, templates = super(UnqualifiedNode, self).__getattribute__(
+            "_parcel"
+        )
         if name in func_map:
             return UnqualifiedOperator(func_map[name])
-        else:
-            return super().__getattribute__(name)
+
+        if name in templates:
+            # Templates execute immediately, so hand back the callable bound
+            # to *this* root's graph directly.
+            return templates[name].template_callable
+        return super().__getattribute__(name)
 
 
 class UnqualifiedLiteral(UnqualifiedNode):

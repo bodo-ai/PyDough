@@ -128,6 +128,16 @@ class DuckDBTransformBindings(BaseTransformBindings):
             [StringType(), *types[1:]],
         )
 
+    def convert_replace(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # DuckDB's REPLACE only accepts VARCHAR; cast the first argument if
+        # it is not already a string type.
+        return super().convert_replace(
+            [self.ensure_string(args[0], types[0]), *args[1:]],
+            [StringType(), *types[1:]],
+        )
+
     def generate_dataframe_array_expression(
         self, items: list[SQLGlotExpression], inner_type: PyDoughType
     ) -> SQLGlotExpression:

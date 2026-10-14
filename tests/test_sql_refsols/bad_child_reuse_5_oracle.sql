@@ -1,22 +1,22 @@
-WITH "_T2" AS (
+WITH "_t2" AS (
   SELECT
-    o_custkey AS O_CUSTKEY
+    O_CUSTKEY
   FROM TPCH.ORDERS
-), "_S1" AS (
+), "_s1" AS (
   SELECT
     O_CUSTKEY,
     COUNT(*) AS N_ROWS
-  FROM "_T2"
+  FROM "_t2"
   GROUP BY
     O_CUSTKEY
-), "_S2" AS (
+), "_s2" AS (
   SELECT
-    CUSTOMER.c_acctbal AS C_ACCTBAL,
-    CUSTOMER.c_custkey AS C_CUSTKEY,
-    "_S1".N_ROWS
+    CUSTOMER.C_ACCTBAL,
+    CUSTOMER.C_CUSTKEY,
+    "_s1".N_ROWS
   FROM TPCH.CUSTOMER CUSTOMER
-  LEFT JOIN "_S1" "_S1"
-    ON CUSTOMER.c_custkey = "_S1".O_CUSTKEY
+  LEFT JOIN "_s1" "_s1"
+    ON CUSTOMER.C_CUSTKEY = "_s1".O_CUSTKEY
   ORDER BY
     1 DESC NULLS LAST,
     2 DESC NULLS LAST
@@ -24,18 +24,18 @@ WITH "_T2" AS (
 ), "_u_0" AS (
   SELECT
     O_CUSTKEY AS "_u_1"
-  FROM "_T2"
+  FROM "_t2"
   GROUP BY
     O_CUSTKEY
 )
 SELECT
-  "_S2".C_CUSTKEY AS cust_key,
-  COALESCE("_S2".N_ROWS, 0) AS n_orders
-FROM "_S2" "_S2"
+  "_s2".C_CUSTKEY AS cust_key,
+  COALESCE("_s2".N_ROWS, 0) AS n_orders
+FROM "_s2" "_s2"
 LEFT JOIN "_u_0" "_u_0"
-  ON "_S2".C_CUSTKEY = "_u_0"."_u_1"
+  ON "_s2".C_CUSTKEY = "_u_0"."_u_1"
 WHERE
   "_u_0"."_u_1" IS NULL
 ORDER BY
-  "_S2".C_ACCTBAL DESC NULLS LAST,
+  "_s2".C_ACCTBAL DESC NULLS LAST,
   1 DESC NULLS LAST

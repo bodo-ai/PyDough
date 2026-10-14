@@ -4,7 +4,10 @@ WITH _t2 AS (
     o_totalprice
   FROM tpch.orders
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_orderdate DESC NULLS FIRST, o_orderkey NULLS LAST) <= 5
+    ROW_NUMBER() OVER (
+      PARTITION BY o_custkey
+      ORDER BY o_orderdate DESC NULLS FIRST, o_orderkey NULLS LAST
+    ) <= 5
 ), _s1 AS (
   SELECT
     o_custkey,

@@ -14,7 +14,7 @@ WITH _t1 AS (
   SELECT
     merchants.mid AS merchant_id,
     _s1.min_start_date,
-    MAX(merchants.created_at) AS anything_created_at,
+    ANY_VALUE(merchants.created_at) AS anything_created_at,
     MAX(coupons.cid) AS max_cid
   FROM main.merchants AS merchants
   LEFT JOIN _s1 AS _s1

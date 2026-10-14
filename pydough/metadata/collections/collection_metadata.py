@@ -1,5 +1,5 @@
 """
-Base definition of PyDough metadaata for collections.
+Base definition of PyDough metadata for collections.
 """
 
 from abc import abstractmethod

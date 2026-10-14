@@ -17,11 +17,14 @@ WITH _s1 AS (
   FROM _s1 AS _s1
   CROSS JOIN LATERAL SPLIT_TO_TABLE(_s1.comment, '.') AS _s0
   CROSS JOIN LATERAL SPLIT_TO_TABLE(_s0.value, ',') AS _s2
-  CROSS JOIN LATERAL SPLIT_TO_TABLE(_s2.value, ' ') AS _s4, LATERAL FLATTEN(REGEXP_EXTRACT_ALL(_s4.value, '.{1}')) AS _s6(seq, key, path, index, value, this)
+  CROSS JOIN LATERAL SPLIT_TO_TABLE(_s2.value, ' ') AS _s4, LATERAL FLATTEN(REGEXP_SUBSTR_ALL(_s4.value, '.{1}')) AS _s6(seq, key, path, index, value, this)
   WHERE
     _s6.value <> ''
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s2.index - 1, _s0.index - 1, _s1.key, _s4.index - 1 ORDER BY _s6.index) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY _s2.index - 1, _s0.index - 1, _s1.key, _s4.index - 1
+      ORDER BY _s6.index
+    ) = 1
 )
 SELECT
   key,

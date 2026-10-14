@@ -1,27 +1,27 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT
-    ev_dt AS EV_DT,
-    ev_key AS EV_KEY
+    EV_DT,
+    EV_KEY
   FROM EVENTS
 ), "_u_0" AS (
   SELECT
-    "_S2".EV_KEY AS "_u_1"
-  FROM "_S0" "_S2"
+    "_s2".EV_KEY AS "_u_1"
+  FROM "_s0" "_s2"
   JOIN ERAS ERAS
-    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST("_S2".EV_DT AS DATE))
-    AND ERAS.er_name = 'Cold War'
-    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST("_S2".EV_DT AS DATE))
+    ON ERAS.ER_END_YEAR > EXTRACT(YEAR FROM CAST("_s2".EV_DT AS DATE))
+    AND ERAS.ER_NAME = 'Cold War'
+    AND ERAS.ER_START_YEAR <= EXTRACT(YEAR FROM CAST("_s2".EV_DT AS DATE))
   GROUP BY
-    "_S2".EV_KEY
+    "_s2".EV_KEY
 )
 SELECT
-  COUNT(DISTINCT "_S0".EV_KEY) AS n_events
-FROM "_S0" "_S0"
+  COUNT(DISTINCT "_s0".EV_KEY) AS n_events
+FROM "_s0" "_s0"
 JOIN TIMES TIMES
-  ON TIMES.t_end_hour > EXTRACT(HOUR FROM CAST("_S0".EV_DT AS TIMESTAMP))
-  AND TIMES.t_name = 'Pre-Dawn'
-  AND TIMES.t_start_hour <= EXTRACT(HOUR FROM CAST("_S0".EV_DT AS TIMESTAMP))
+  ON TIMES.T_END_HOUR > EXTRACT(HOUR FROM CAST("_s0".EV_DT AS TIMESTAMP))
+  AND TIMES.T_NAME = 'Pre-Dawn'
+  AND TIMES.T_START_HOUR <= EXTRACT(HOUR FROM CAST("_s0".EV_DT AS TIMESTAMP))
 LEFT JOIN "_u_0" "_u_0"
-  ON "_S0".EV_KEY = "_u_0"."_u_1"
+  ON "_s0".EV_KEY = "_u_0"."_u_1"
 WHERE
   NOT "_u_0"."_u_1" IS NULL

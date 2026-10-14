@@ -42,6 +42,7 @@ from .sqlglot_transform_utils import (
     apply_parens,
     create_constant_table,
     current_ts_pattern,
+    extract_int_literal,
     generate_dataframe_rows,
     generate_range_rows,
     offset_pattern,
@@ -773,46 +774,24 @@ class BaseTransformBindings:
 
         start_idx: int | None = None
         if not isinstance(start, sqlglot_expressions.Null):
-            if isinstance(start, sqlglot_expressions.Literal):
-                try:
-                    start_idx = int(start.this)
-                except ValueError:
-                    raise PyDoughSQLException(
-                        "SLICE function currently only supports the start index being integer literal or absent."
-                    )
-            else:
+            start_idx = extract_int_literal(start)
+            if start_idx is None:
                 raise PyDoughSQLException(
                     "SLICE function currently only supports the start index being integer literal or absent."
                 )
 
         stop_idx: int | None = None
         if not isinstance(stop, sqlglot_expressions.Null):
-            if isinstance(stop, sqlglot_expressions.Literal):
-                try:
-                    stop_idx = int(stop.this)
-                except ValueError:
-                    raise PyDoughSQLException(
-                        "SLICE function currently only supports the stop index being integer literal or absent."
-                    )
-            else:
+            stop_idx = extract_int_literal(stop)
+            if stop_idx is None:
                 raise PyDoughSQLException(
                     "SLICE function currently only supports the stop index being integer literal or absent."
                 )
 
         step_idx: int | None = None
         if not isinstance(step, sqlglot_expressions.Null):
-            if isinstance(step, sqlglot_expressions.Literal):
-                try:
-                    step_idx = int(step.this)
-                    if step_idx != 1:
-                        raise PyDoughSQLException(
-                            "SLICE function currently only supports the step being integer literal 1 or absent."
-                        )
-                except ValueError:
-                    raise PyDoughSQLException(
-                        "SLICE function currently only supports the step being integer literal 1 or absent."
-                    )
-            else:
+            step_idx = extract_int_literal(step)
+            if step_idx is None or step_idx != 1:
                 raise PyDoughSQLException(
                     "SLICE function currently only supports the step being integer literal 1 or absent."
                 )
@@ -1315,7 +1294,12 @@ class BaseTransformBindings:
         # to change when we support PyDough expressions like:
         # Collection.WHERE(ISIN(name, plural_subcollection.name))
         values = args[1]
-        assert isinstance(values, sqlglot_expressions.Array)
+        if not isinstance(values, sqlglot_expressions.Array):
+            raise PyDoughSQLException(
+                "Invalid argument for ISIN: second parameter must be a "
+                "collection of literal values (e.g. (1, 2, 3)), not a "
+                f"PyDough expression ({values.sql()!r})."
+            )
         return sqlglot_expressions.In(this=column, expressions=values.expressions)
 
     def convert_sqrt(

@@ -27,7 +27,9 @@ WITH _u_0 AS (
 SELECT
   CAST(min_year_start_dt AS CHAR) COLLATE utf8mb4_bin AS year,
   n_rows AS number_of_new_patients,
-  n_rows - LAG(n_rows, 1) OVER (ORDER BY CASE WHEN min_year_start_dt IS NULL THEN 1 ELSE 0 END, min_year_start_dt) AS npi
+  n_rows - LAG(n_rows, 1) OVER (
+    ORDER BY CASE WHEN min_year_start_dt IS NULL THEN 1 ELSE 0 END, min_year_start_dt
+  ) AS npi
 FROM _t0
 ORDER BY
   1

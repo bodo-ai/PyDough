@@ -1,5 +1,5 @@
 SELECT
-  MAX(users.username) AS username,
+  ANY_VALUE(users.username) AS username,
   COUNT(*) AS total_unread_notifs
 FROM main.users AS users
 JOIN main.notifications AS notifications
