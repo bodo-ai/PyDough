@@ -5,7 +5,7 @@ keywords = ["analytics"]
 description = "Analytics DSL for Python"
 readme = "README.md"
 authors = [{name = "Bodo.ai"}]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -51,7 +51,7 @@ dev = [
 ]
 
 [project.optional-dependencies]
-snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
+snowflake = ["snowflake-connector-python[pandas]==4.7.1"]
 trino = ["trino"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
