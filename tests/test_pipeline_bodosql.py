@@ -518,13 +518,12 @@ def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
     date/timestamp into a real datetime dtype.
 
     SQLite has no native date type, so `pd.read_sql_query` reads date columns
-    back as plain ISO-8601 strings. If those are written into an Iceberg
+    back as plain ISO-8601 strings. When those are written into an Iceberg
     table as a string column, BodoSQL's file-pruning statistics can't
     correctly compare them against a DATE/TIMESTAMP literal in a query (it
-    can silently prune away every file, producing wrong/empty results -- see
-    the bug behind `tpch_q15`). A column is only converted if every
-    non-null value parses successfully, so free-text/code columns are left
-    alone.
+    can silently prune away every file, producing wrong/empty results).
+    A column is only converted if every non-null value parses successfully,
+    so free-text/code columns are left alone.
     """
     for col_name in df.columns:
         if df[col_name].dtype == object:
@@ -2709,6 +2708,8 @@ def test_bodosql_e2e_tpch(
         "tpch_q20": "BodoSQL Iceberg STARTSWITH read bug",
         "smoke_b": "BodoSQL Iceberg STARTSWITH read bug",
         "smoke_c": "Unknown Bodo/BodoSQL typing bug with array concatenation",
+        "tpch_q15": "Flaky since Bodo 2026.10: joins two independently-computed "
+        "SUM(...) CTEs",
     }
     if tpch_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[tpch_pipeline_test_data.test_name])
