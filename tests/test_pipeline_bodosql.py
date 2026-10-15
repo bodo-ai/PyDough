@@ -523,15 +523,13 @@ def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
     correctly compare them against a DATE/TIMESTAMP literal in a query (it
     can silently prune away every file, producing wrong/empty results).
     A column is only converted if every non-null value parses successfully,
-    so free-text/code columns are left alone.
+    so free-text/code columns are left alone. An all-null column is also
+    left alone (it would trivially "parse" as dates, since there is
+    nothing to check), so the separate null -> string handling each
+    caller does afterward still applies to it.
 
     Columns with no time-of-day component are converted to a plain date
-    (PyArrow `date32`) rather than a timestamp: BodoSQL represents Iceberg
-    `timestamp` columns as timezone-aware internally, and its filter
-    pushdown doesn't support timezone-aware timestamps yet
-    (`BodoError: Filter pushdown on Timezone-aware timestamp not yet
-    supported`). Plain dates have no timezone concept, so they sidestep
-    that limitation entirely.
+    (PyArrow `date32`) rather than a timestamp.
     """
     for col_name in df.columns:
         if df[col_name].dtype == object and df[col_name].notna().any():
