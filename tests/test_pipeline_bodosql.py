@@ -515,7 +515,7 @@ def bodosql_sample_contexts(
 def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
     """
     Mutates `df` in place, converting any string column that is actually a
-    date/timestamp into a real datetime dtype.
+    date/timestamp into a real date/datetime dtype.
 
     SQLite has no native date type, so `pd.read_sql_query` reads date columns
     back as plain ISO-8601 strings. When those are written into an Iceberg
@@ -524,15 +524,27 @@ def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
     can silently prune away every file, producing wrong/empty results).
     A column is only converted if every non-null value parses successfully,
     so free-text/code columns are left alone.
+
+    Columns with no time-of-day component are converted to a plain date
+    (PyArrow `date32`) rather than a timestamp: BodoSQL represents Iceberg
+    `timestamp` columns as timezone-aware internally, and its filter
+    pushdown doesn't support timezone-aware timestamps yet
+    (`BodoError: Filter pushdown on Timezone-aware timestamp not yet
+    supported`). Plain dates have no timezone concept, so they sidestep
+    that limitation entirely.
     """
     for col_name in df.columns:
         if df[col_name].dtype == object and df[col_name].notna().any():
             parsed = pd.to_datetime(df[col_name], format="ISO8601", errors="coerce")
             if parsed.notna().equals(df[col_name].notna()):
-                # Iceberg format v2 only supports microsecond timestamp
-                # precision, not the nanosecond precision pandas/PyArrow
-                # default to.
-                df[col_name] = parsed.astype("datetime64[us]")
+                non_null = parsed.dropna()
+                if non_null.eq(non_null.dt.normalize()).all():
+                    df[col_name] = parsed.dt.date
+                else:
+                    # Iceberg format v2 only supports microsecond timestamp
+                    # precision, not the nanosecond precision pandas/PyArrow
+                    # default to.
+                    df[col_name] = parsed.astype("datetime64[us]")
 
 
 @pytest.fixture(scope="session")
@@ -2767,7 +2779,6 @@ def test_bodosql_e2e_defog(
 
     # Skip any of these tests due to various errors/gaps.
     tests_skipped: dict[str, str] = {
-        "broker_basic4": "Unknown Bodo typing issue with join state involving dictionary vs string arrays as join keys",
         "dealership_adv4": "NA mask are different in new Bodo version",
         "ewallet_adv4": "NA mask are different in new Bodo version",
         "dealership_adv13": "BodoSQL Java heap space OOM compiling DATE_TRUNC/CURRENT_TIMESTAMP query",
