@@ -526,7 +526,7 @@ def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
     so free-text/code columns are left alone.
     """
     for col_name in df.columns:
-        if df[col_name].dtype == object:
+        if df[col_name].dtype == object and df[col_name].notna().any():
             parsed = pd.to_datetime(df[col_name], format="ISO8601", errors="coerce")
             if parsed.notna().equals(df[col_name].notna()):
                 # Iceberg format v2 only supports microsecond timestamp
