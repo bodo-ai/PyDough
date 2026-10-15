@@ -2783,6 +2783,17 @@ def test_bodosql_e2e_defog(
         "ewallet_adv4": "NA mask are different in new Bodo version",
         "dealership_adv13": "BodoSQL Java heap space OOM compiling DATE_TRUNC/CURRENT_TIMESTAMP query",
         "dealership_adv14": "BodoSQL Java heap space OOM compiling DATEDIFF/CURRENT_TIMESTAMP query",
+        "broker_adv16": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_adv2": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_adv8": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_adv9": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_basic1": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_basic2": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv11": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv13": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv2": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv9": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_basic10": "BodoSQL timezone-aware timestamp filter pushdown not supported",
     }
     if defog_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[defog_pipeline_test_data.test_name])
