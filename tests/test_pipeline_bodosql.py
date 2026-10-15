@@ -674,13 +674,15 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
                     schema=schema,
                 )
 
-                # Evolve the table spec to partition on the specified keys, if
-                # it has any.
-                if partitions:
-                    spec = iceberg_table.update_spec()
-                    for column_name, transform in partitions:
-                        spec.add_field(column_name, transform)
-                    spec.commit()
+                # NOTE: the partition spec is deliberately *not* set up here.
+                # It is applied further below, after the CREATE OR REPLACE
+                # step, because that step can trigger schema evolution for
+                # any column whose type changed (e.g. a date-like string
+                # column that got parsed into a real timestamp above), which
+                # invalidates the field IDs an earlier-committed partition
+                # spec would reference (pyiceberg raises errors like
+                # "Cannot create identity partition sourced from different
+                # field in schema").
 
                 # Load the data into the Iceberg table.
                 iceberg_table.append(arrow_table)
@@ -692,12 +694,22 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
 
         # Use BodoSQL to replace each table with itself. Since BodoSQL is doing
         # the write, it will produce the puffin files containing the needed
-        # sketches for NDV estimates, but since it is writing to the same
-        # location it will keep the partitions.
+        # sketches for NDV estimates.
         for schema_name, table_name in gen_tables:
             defog_bc.sql(
                 f"CREATE OR REPLACE TABLE {schema_name}.{table_name} AS SELECT * FROM {schema_name}.{table_name}"
             )
+
+        # Evolve each table's spec to partition on its specified keys, if it
+        # has any, now that the table's schema is final.
+        for schema_name, tables in defog_databases.items():
+            for table_name, partitions in tables.items():
+                if partitions:
+                    iceberg_table = dircat.load_table(f"{schema_name}.{table_name}")
+                    spec = iceberg_table.update_spec()
+                    for column_name, transform in partitions:
+                        spec.add_field(column_name, transform)
+                    spec.commit()
 
     except Exception as e:
         # If any error occurs during the setup, clean up by deleting the
@@ -784,13 +796,14 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                     schema=schema,
                 )
 
-                # Evolve the table spec to partition on the specified keys, if
-                # it has any.
-                if partitions:
-                    spec = iceberg_table.update_spec()
-                    for column_name, transform in partitions:
-                        spec.add_field(column_name, transform)
-                    spec.commit()
+                # NOTE: the partition spec is deliberately *not* set up here.
+                # It is applied further below, after the CREATE OR REPLACE
+                # step, because that step can trigger schema evolution for
+                # any column whose type changed (e.g. a date-like string
+                # column that got parsed into a real timestamp above), which
+                # invalidates the field IDs an earlier-committed partition
+                # spec would reference (pyiceberg raises
+                # "Cannot find source column for partition field").
 
                 # Load the data into the Iceberg table.
                 iceberg_table.append(arrow_table)
@@ -809,8 +822,8 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
 
     # If regenerating the database, use BodoSQL to replace each table with
     # itself. Since BodoSQL is doing the write, it will produce the puffin files
-    # containing the needed sketches, but since it is writing to the same
-    # location it will keep the partitions.
+    # containing the needed sketches. The partition spec for each table is
+    # then (re)applied afterward, against the table's final schema.
     if regenerate_iceberg_tpch:
         try:
             # For each temp table, populate the real Iceberg version from it.
@@ -818,6 +831,18 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                 tpch_bc.sql(
                     f"CREATE OR REPLACE TABLE SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name} AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name}"
                 )
+
+            # Evolve each table's spec to partition on its specified keys,
+            # if it has any, now that the table's schema is final.
+            for table_name, partitions in tpch_tables.items():
+                if partitions:
+                    iceberg_table = dircat.load_table(
+                        f"SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name}"
+                    )
+                    spec = iceberg_table.update_spec()
+                    for column_name, transform in partitions:
+                        spec.add_field(column_name, transform)
+                    spec.commit()
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
             # warehouse directory if it was created.
