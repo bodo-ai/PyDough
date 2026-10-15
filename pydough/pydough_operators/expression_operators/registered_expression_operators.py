@@ -42,6 +42,7 @@ __all__ = [
     "LEQ",
     "LET",
     "LIKE",
+    "LISTOF",
     "LOWER",
     "LPAD",
     "MAX",
@@ -95,6 +96,7 @@ __all__ = [
 
 from pydough.pydough_operators.type_inference import (
     AllowAny,
+    ArrayOfType,
     ConstantType,
     RequireArgRange,
     RequireCollection,
@@ -167,6 +169,9 @@ MEDIAN = ExpressionFunctionOperator(
 )
 QUANTILE = ExpressionFunctionOperator(
     "QUANTILE", True, RequireNumArgs(2), ConstantType(NumericType())
+)
+LISTOF = ExpressionFunctionOperator(
+    "LISTOF", True, RequireNumArgs(1), ArrayOfType(SelectArgumentType(0))
 )
 POWER = ExpressionFunctionOperator(
     "POWER", False, RequireNumArgs(2), ConstantType(NumericType())
@@ -277,7 +282,7 @@ KEEP_IF = ExpressionFunctionOperator(
     "KEEP_IF", False, RequireNumArgs(2), SelectArgumentType(0)
 )
 JOIN_STRINGS = ExpressionFunctionOperator(
-    "JOIN_STRINGS", False, RequireMinArgs(1), ConstantType(StringType())
+    "JOIN_STRINGS", False, RequireMinArgs(3), ConstantType(StringType())
 )
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
 

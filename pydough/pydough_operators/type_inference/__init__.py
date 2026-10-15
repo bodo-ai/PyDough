@@ -5,6 +5,7 @@ type inference.
 
 __all__ = [
     "AllowAny",
+    "ArrayOfType",
     "ConstantType",
     "ExpressionTypeDeducer",
     "RequireArgRange",
@@ -19,6 +20,7 @@ __all__ = [
 ]
 
 from .expression_type_deducer import (
+    ArrayOfType,
     ConstantType,
     ExpressionTypeDeducer,
     SelectArgumentType,

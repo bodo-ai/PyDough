@@ -3,102 +3,66 @@ SELECT
   UPPER(
     CASE
       WHEN (
-        -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + -1
-      ) > 1
-      THEN NULL
-      WHEN (
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
         ) AS DOUBLE) AS BIGINT) + 1
-      ) < 1
-      THEN NULL
+      ) < ABS(1)
+      THEN ''
       ELSE SPLIT_PART(p_name, ' ', 1)
     END
   ) AS c1,
   UPPER(
     CASE
       WHEN (
-        -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + -1
-      ) > 2
-      THEN NULL
-      WHEN (
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
         ) AS DOUBLE) AS BIGINT) + 1
-      ) < 2
-      THEN NULL
+      ) < ABS(2)
+      THEN ''
       ELSE SPLIT_PART(p_name, ' ', 2)
     END
   ) AS c2,
   UPPER(
     CASE
       WHEN (
-        -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + -1
-      ) > 3
-      THEN NULL
-      WHEN (
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
         ) AS DOUBLE) AS BIGINT) + 1
-      ) < 3
-      THEN NULL
+      ) < ABS(3)
+      THEN ''
       ELSE SPLIT_PART(p_name, ' ', 3)
     END
   ) AS c3,
   UPPER(
     CASE
       WHEN (
-        -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + -1
-      ) > 4
-      THEN NULL
-      WHEN (
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
         ) AS DOUBLE) AS BIGINT) + 1
-      ) < 4
-      THEN NULL
+      ) < ABS(4)
+      THEN ''
       ELSE SPLIT_PART(p_name, ' ', 4)
     END
   ) AS c4,
   UPPER(
     CASE
       WHEN (
-        -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + -1
-      ) > 5
-      THEN NULL
-      WHEN (
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
         ) AS DOUBLE) AS BIGINT) + 1
-      ) < 5
-      THEN NULL
+      ) < ABS(5)
+      THEN ''
       ELSE SPLIT_PART(p_name, ' ', 5)
     END
   ) AS c5,
   UPPER(
     CASE
       WHEN (
-        -CAST(CAST((
-          LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
-        ) AS DOUBLE) AS BIGINT) + -1
-      ) > 6
-      THEN NULL
-      WHEN (
         CAST(CAST((
           LENGTH(p_name) - LENGTH(REPLACE(p_name, ' ', ''))
         ) AS DOUBLE) AS BIGINT) + 1
-      ) < 6
-      THEN NULL
+      ) < ABS(6)
+      THEN ''
       ELSE SPLIT_PART(p_name, ' ', 6)
     END
   ) AS c6

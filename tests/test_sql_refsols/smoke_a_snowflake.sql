@@ -35,8 +35,8 @@ SELECT
   ) AS BIGINT) AS a,
   UPPER(LEAST(SPLIT_PART(p_name, ' ', 2), SPLIT_PART(p_name, ' ', -1))) AS b,
   TRIM(SUBSTRING(p_name, 1, 2), 'o') AS c,
-  LPAD(CAST(p_size AS TEXT), 3, '0') AS d,
-  RPAD(CAST(p_size AS TEXT), 3, '0') AS e,
+  LPAD(CAST(p_size AS VARCHAR), 3, '0') AS d,
+  RPAD(CAST(p_size AS VARCHAR), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
   CAST((

@@ -1,20 +1,20 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    car_id AS CAR_ID,
+    CAR_ID,
     COUNT(*) AS N_ROWS,
-    SUM(sale_price) AS SUM_SALE_PRICE
+    SUM(SALE_PRICE) AS SUM_SALE_PRICE
   FROM MAIN.SALES
   GROUP BY
-    car_id
+    CAR_ID
 )
 SELECT
-  CARS.make,
-  CARS.model,
-  COALESCE("_S1".N_ROWS, 0) AS total_sales,
-  COALESCE("_S1".SUM_SALE_PRICE, 0) AS total_revenue
+  CARS.MAKE AS make,
+  CARS.MODEL AS model,
+  COALESCE("_s1".N_ROWS, 0) AS total_sales,
+  COALESCE("_s1".SUM_SALE_PRICE, 0) AS total_revenue
 FROM MAIN.CARS CARS
-LEFT JOIN "_S1" "_S1"
-  ON CARS."_id" = "_S1".CAR_ID
+LEFT JOIN "_s1" "_s1"
+  ON CARS."_id" = "_s1".CAR_ID
 ORDER BY
   4 DESC NULLS LAST
 FETCH FIRST 5 ROWS ONLY

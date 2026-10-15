@@ -1,18 +1,18 @@
-WITH "_S1" AS (
+WITH "_s1" AS (
   SELECT
-    jid AS JID,
+    JID,
     COUNT(*) AS N_ROWS
   FROM MAIN.PUBLICATION
   GROUP BY
-    jid
+    JID
 )
 SELECT
-  JOURNAL.name,
-  JOURNAL.jid AS journal_id,
-  COALESCE("_S1".N_ROWS, 0) AS num_publications
+  JOURNAL.NAME AS name,
+  JOURNAL.JID AS journal_id,
+  COALESCE("_s1".N_ROWS, 0) AS num_publications
 FROM MAIN.JOURNAL JOURNAL
-LEFT JOIN "_S1" "_S1"
-  ON JOURNAL.jid = "_S1".JID
+LEFT JOIN "_s1" "_s1"
+  ON JOURNAL.JID = "_s1".JID
 ORDER BY
   3 DESC NULLS LAST,
   1 NULLS FIRST

@@ -15,17 +15,17 @@ jobs:
 
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-2
           role-to-assume: arn:aws:iam::427443013497:role/PyDoughBuildWheelRole
           role-session-name: PyDoughBuildWheelSession
           role-skip-session-tagging: true
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: "0.6.0"
 
@@ -54,7 +54,7 @@ jobs:
           pattern: pydough-wheel*
           path: .
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python_version }}
 

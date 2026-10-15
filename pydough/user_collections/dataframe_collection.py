@@ -31,6 +31,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.types as pa_types
 
+from pydough.types.array_type import ArrayType
 from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
@@ -205,15 +206,19 @@ class DataframeGeneratedCollection(PyDoughUserGeneratedCollection):
             or pa.types.is_duration(field_type)
         ):
             return DatetimeType()
+
+        elif pa_types.is_list(field_type) or pa.types.is_large_list(field_type):
+            inner_type: PyDoughType = (
+                DataframeGeneratedCollection.match_pyarrow_pydough_types(
+                    field_type.value_type, field_name
+                )
+            )
+            return ArrayType(inner_type)
+
         # Unsupported types
         elif pa.types.is_binary(field_type) or pa.types.is_large_binary(field_type):
             raise ValueError(
                 f"Binaries in column '{field_name}', are not supported for dataframe collections"
-            )
-
-        elif pa_types.is_list(field_type) or pa.types.is_large_list(field_type):
-            raise ValueError(
-                f"Arrays in column '{field_name}', are not supported for dataframe collections"
             )
 
         elif pa_types.is_struct(field_type):

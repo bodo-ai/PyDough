@@ -28,6 +28,7 @@ from .sqlglot_transform_utils import (
     create_constant_table,
     expand_std,
     expand_variance,
+    extract_int_literal,
     generate_range_rows,
 )
 
@@ -88,6 +89,16 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="JSON_ARRAYAGG", expressions=args)
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.JSONArray(expressions=items)
+
     def convert_sum(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -136,46 +147,24 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         start_idx: int | None = None
         if not isinstance(start, sqlglot_expressions.Null):
-            if isinstance(start, sqlglot_expressions.Literal):
-                try:
-                    start_idx = int(start.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the start index being integer literal or absent."
-                    )
-            else:
+            start_idx = extract_int_literal(start)
+            if start_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the start index being integer literal or absent."
                 )
 
         stop_idx: int | None = None
         if not isinstance(stop, sqlglot_expressions.Null):
-            if isinstance(stop, sqlglot_expressions.Literal):
-                try:
-                    stop_idx = int(stop.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the stop index being integer literal or absent."
-                    )
-            else:
+            stop_idx = extract_int_literal(stop)
+            if stop_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the stop index being integer literal or absent."
                 )
 
         step_idx: int | None = None
         if not isinstance(step, sqlglot_expressions.Null):
-            if isinstance(step, sqlglot_expressions.Literal):
-                try:
-                    step_idx = int(step.this)
-                    if step_idx != 1:
-                        raise ValueError(
-                            "SLICE function currently only supports the step being integer literal 1 or absent."
-                        )
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the step being integer literal 1 or absent."
-                    )
-            else:
+            step_idx = extract_int_literal(step)
+            if step_idx is None or step_idx != 1:
                 raise ValueError(
                     "SLICE function currently only supports the step being integer literal 1 or absent."
                 )
@@ -294,18 +283,18 @@ class MySQLTransformBindings(BaseTransformBindings):
         """
         GETPART(str, delim, idx) ->
             CASE
-                WHEN LENGTH(str) = 0 THEN NULL
+                WHEN LENGTH(str) = 0 THEN ''
                 WHEN LENGTH(delim) = 0 THEN
                     CASE
                         WHEN ABS(idx) = 1 THEN str
-                        ELSE NULL
+                        ELSE ''
                     END
                 WHEN idx > 0 AND idx <= (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
                     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, -1)
                 WHEN idx < 0 AND -idx <= (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
                     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, 1)
                 WHEN idx = 0 THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, 1), delim, -1)
-                ELSE NULL
+                ELSE ''
             END
         """
 
@@ -315,6 +304,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         literal_1: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
         literal_neg_1: SQLGlotExpression = sqlglot_expressions.Literal.number(-1)
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+        empty_str: SQLGlotExpression = sqlglot_expressions.Literal.string("")
 
         # (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
         difference: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -380,7 +370,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                         this=sqlglot_expressions.Length(this=string_expr),
                         expression=literal_0,
                     ),
-                    true=sqlglot_expressions.Null(),
+                    true=empty_str,
                 ),
                 sqlglot_expressions.If(
                     this=sqlglot_expressions.EQ(
@@ -397,7 +387,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                                 true=string_expr,
                             )
                         ],
-                        default=sqlglot_expressions.Null(),
+                        default=empty_str,
                     ),
                 ),
                 sqlglot_expressions.If(
@@ -428,7 +418,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                     true=zero_index_case,
                 ),
             ],
-            default=sqlglot_expressions.Null(),
+            default=empty_str,
         )
         return result
 

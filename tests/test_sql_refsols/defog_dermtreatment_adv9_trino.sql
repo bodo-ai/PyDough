@@ -1,10 +1,16 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      CAST(YEAR(CAST(start_dt AS TIMESTAMP)) AS VARCHAR),
-      CAST(LPAD(CAST(MONTH(CAST(start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
-    ) AS treatment_month,
+    CASE
+      WHEN '-' IS NULL
+      OR CAST(YEAR(CAST(start_dt AS TIMESTAMP)) AS VARCHAR) IS NULL
+      OR CAST(LPAD(CAST(MONTH(CAST(start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        CAST(YEAR(CAST(start_dt AS TIMESTAMP)) AS VARCHAR),
+        CAST(LPAD(CAST(MONTH(CAST(start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
+      )
+    END AS treatment_month,
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
   FROM cassandra.defog.treatments
   WHERE
@@ -14,11 +20,17 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      CAST(YEAR(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR),
-      CAST(LPAD(CAST(MONTH(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
-    ) AS treatment_month,
+    CASE
+      WHEN '-' IS NULL
+      OR CAST(YEAR(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR) IS NULL
+      OR CAST(LPAD(CAST(MONTH(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        CAST(YEAR(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR),
+        CAST(LPAD(CAST(MONTH(CAST(treatments.start_dt AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
+      )
+    END AS treatment_month,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
   FROM cassandra.defog.treatments AS treatments
   JOIN postgres.main.drugs AS drugs

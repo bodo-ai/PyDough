@@ -1,13 +1,13 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    marketing_opt_in AS MARKETING_OPT_IN,
-    user_id AS USER_ID,
-    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS "_W"
+    MARKETING_OPT_IN,
+    USER_ID,
+    ROW_NUMBER() OVER (PARTITION BY USER_ID ORDER BY CREATED_AT DESC) AS "_w"
   FROM MAIN.USER_SETTING_SNAPSHOT
 )
 SELECT
-  USERS.uid,
-  "_T".MARKETING_OPT_IN AS marketing_opt_in
+  USERS.UID AS uid,
+  "_t".MARKETING_OPT_IN AS marketing_opt_in
 FROM MAIN.USERS USERS
-JOIN "_T" "_T"
-  ON USERS.uid = "_T".USER_ID AND "_T"."_W" = 1
+JOIN "_t" "_t"
+  ON USERS.UID = "_t".USER_ID AND "_t"."_w" = 1

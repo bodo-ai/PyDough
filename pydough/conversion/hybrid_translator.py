@@ -26,6 +26,7 @@ from pydough.qdag import (
     ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    Explode,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -69,6 +70,7 @@ from .hybrid_filter_merger import HybridFilterMerger
 from .hybrid_operations import (
     HybridCalculate,
     HybridCollectionAccess,
+    HybridExplode,
     HybridFilter,
     HybridLimit,
     HybridNoop,
@@ -1240,7 +1242,10 @@ class HybridTranslator:
         name: str
         expr: HybridExpr
         for collation in collations:
-            if type(collation.expr) is Reference:
+            if (
+                type(collation.expr) is Reference
+                and collation.expr.term_name in hybrid.pipeline[-1].terms
+            ):
                 name = collation.expr.term_name
             else:
                 name = self.get_ordering_name(hybrid)
@@ -1334,6 +1339,9 @@ class HybridTranslator:
                 join_keys = []
             case HybridRoot():
                 # A root does not need to be joined to its parent
+                join_keys = []
+            case HybridExplode():
+                # An explode operator does not need to be joined to its parent
                 join_keys = []
             case HybridUserGeneratedCollection():
                 # A user-generated collection does not need to be joined to its parent
@@ -1448,6 +1456,21 @@ class HybridTranslator:
                 )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
+            case Explode():
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, is_aggregate
+                )
+                expr = self.make_hybrid_expr(
+                    hybrid, node.data, child_ref_mapping, False
+                )
+                explode_operator = HybridExplode(
+                    expr.shift_back(1),
+                    node.explode_spec,
+                    [term.shift_back(1) for term in hybrid.pipeline[-1].unique_exprs],
+                )
+                successor_hybrid = HybridTree(explode_operator, node.ancestral_mapping)
+                hybrid.add_successor(successor_hybrid)
+                return successor_hybrid
             case PartitionChild():
                 hybrid = self.make_hybrid_tree(
                     node.ancestor_context, parent, is_aggregate
@@ -1533,7 +1556,13 @@ class HybridTranslator:
                         successor_hybrid, key, child_ref_mapping, False
                     )
                     partition.add_key(key_name, expr)
-                    key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                    # Note: uses `expr.name`, not `key_name`, since the
+                    # underlying CALCULATE may have internally renamed
+                    # `key_name` (e.g. to shadow a pre-existing term), and
+                    # `expr.name` reflects that actual, possibly-renamed
+                    # name within the child subtree.
+                    assert isinstance(expr, HybridChildRefExpr)
+                    key_exprs.append(HybridRefExpr(expr.name, expr.typ))
                 partition_child: HybridTree = successor_hybrid.children[
                     partition_child_idx
                 ].subtree
@@ -1626,10 +1655,40 @@ class HybridTranslator:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
                                 )
+                    case Explode():
+                        expr = self.make_hybrid_expr(
+                            parent, node.child_access.data, child_ref_mapping, False
+                        )
+                        explode_operator = HybridExplode(
+                            HybridCorrelExpr(expr),
+                            node.child_access.explode_spec,
+                            [
+                                HybridCorrelExpr(term)
+                                for term in parent.pipeline[-1].unique_exprs
+                            ],
+                        )
+                        successor_hybrid = HybridTree(
+                            explode_operator, node.ancestral_mapping
+                        )
                     case PartitionChild():
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
                             source = source.pipeline[0].subtree
+                        if len(source.children) == 0:
+                            # This happens when a PARTITION (or its
+                            # underlying child data) is referenced by name
+                            # from within a CALCULATE/expression that is
+                            # itself defined on that same PARTITION (e.g.
+                            # `p = t.PARTITION(...); p.CALCULATE(x=COUNT(p))`),
+                            # which re-qualifies the PARTITION's own
+                            # definition against itself instead of the data
+                            # it was originally built from.
+                            raise PyDoughSQLException(
+                                "Invalid self-reference: cannot access a "
+                                "PARTITION or its underlying data from "
+                                "within a CALCULATE/expression defined on "
+                                "that same PARTITION."
+                            )
                         successor_hybrid = HybridTree(
                             HybridPartitionChild(source.children[0].subtree),
                             node.ancestral_mapping,
@@ -1641,16 +1700,19 @@ class HybridTranslator:
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
                         partition_child_idx = child_ref_mapping[0]
-                        successor_hybrid.children[
-                            partition_child_idx
-                        ].subtree.squish_backrefs_into_correl(None, 1)
-                        for key_name in node.calc_terms:
+                        for key_name in sorted(node.calc_terms, key=str):
                             key = node.get_expr(key_name)
                             expr = self.make_hybrid_expr(
                                 successor_hybrid, key, child_ref_mapping, False
                             )
                             partition.add_key(key_name, expr)
-                            key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                            # Note: uses `expr.name`, not `key_name`, since the
+                            # underlying CALCULATE may have internally renamed
+                            # `key_name` (e.g. to shadow a pre-existing term),
+                            # and `expr.name` reflects that actual,
+                            # possibly-renamed name within the child subtree.
+                            assert isinstance(expr, HybridChildRefExpr)
+                            key_exprs.append(HybridRefExpr(expr.name, expr.typ))
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs

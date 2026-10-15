@@ -5,21 +5,8 @@ WITH _t2 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY nation.n_nationkey, SUBSTRING(
-            supplier.s_phone,
-            CASE
-              WHEN (
-                LENGTH(supplier.s_phone) + 0
-              ) < 1
-              THEN 1
-              ELSE (
-                LENGTH(supplier.s_phone) + 0
-              )
-            END
-          ) ORDER BY supplier.s_acctbal DESC) - 1.0
-        ) - (
-          CAST((
-            COUNT(supplier.s_acctbal) OVER (PARTITION BY nation.n_nationkey, SUBSTRING(
+          ROW_NUMBER() OVER (
+            PARTITION BY nation.n_nationkey, SUBSTRING(
               supplier.s_phone,
               CASE
                 WHEN (
@@ -30,7 +17,25 @@ WITH _t2 AS (
                   LENGTH(supplier.s_phone) + 0
                 )
               END
-            )) - 1.0
+            )
+            ORDER BY supplier.s_acctbal DESC
+          ) - 1.0
+        ) - (
+          CAST((
+            COUNT(supplier.s_acctbal) OVER (
+              PARTITION BY nation.n_nationkey, SUBSTRING(
+                supplier.s_phone,
+                CASE
+                  WHEN (
+                    LENGTH(supplier.s_phone) + 0
+                  ) < 1
+                  THEN 1
+                  ELSE (
+                    LENGTH(supplier.s_phone) + 0
+                  )
+                END
+              )
+            ) - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0

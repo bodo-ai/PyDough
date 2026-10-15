@@ -3,7 +3,7 @@ WITH _u_0 AS (
     notifications.user_id AS _u_1
   FROM defog.ewallet.notifications AS notifications
   JOIN defog.ewallet.users AS users
-    ON notifications.created_at <= DATEADD(YEAR, 1, CAST(users.created_at AS TIMESTAMP))
+    ON notifications.created_at <= DATE_ADD(YEAR, 1, CAST(users.created_at AS TIMESTAMP))
     AND notifications.created_at >= users.created_at
     AND notifications.user_id = users.uid
   GROUP BY

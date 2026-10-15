@@ -1,24 +1,24 @@
-WITH "_T1" AS (
+WITH "_t1" AS (
   SELECT
-    c_acctbal AS C_ACCTBAL,
-    c_mktsegment AS C_MKTSEGMENT,
-    c_name AS C_NAME,
+    C_ACCTBAL,
+    C_MKTSEGMENT,
+    C_NAME,
     CASE
-      WHEN FLOOR(0.8 * COUNT(c_acctbal) OVER ()) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST)
-      THEN c_acctbal
+      WHEN FLOOR(0.8 * COUNT(C_ACCTBAL) OVER ()) < ROW_NUMBER() OVER (ORDER BY C_ACCTBAL DESC NULLS LAST)
+      THEN C_ACCTBAL
       ELSE NULL
     END AS EXPR_30,
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST) - 1.0
+          ROW_NUMBER() OVER (ORDER BY C_ACCTBAL DESC NULLS LAST) - 1.0
         ) - (
           (
-            COUNT(c_acctbal) OVER () - 1.0
+            COUNT(C_ACCTBAL) OVER () - 1.0
           ) / 2.0
         )
       ) < 1.0
-      THEN c_acctbal
+      THEN C_ACCTBAL
       ELSE NULL
     END AS EXPR_31
   FROM TPCH.CUSTOMER
@@ -56,4 +56,4 @@ SELECT
   SUM(CASE WHEN C_ACCTBAL > 1000 THEN C_ACCTBAL ELSE NULL END IS NULL) AS p,
   MAX(EXPR_30) AS q,
   AVG(EXPR_31) AS r
-FROM "_T1"
+FROM "_t1"

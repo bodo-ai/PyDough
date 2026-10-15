@@ -38,6 +38,7 @@ from pydough.relational import (
     ColumnReference,
     CorrelatedReference,
     EmptySingleton,
+    Explode,
     ExpressionSortInfo,
     Filter,
     GeneratedTable,
@@ -82,6 +83,7 @@ from .hybrid_operations import (
     HybridCalculate,
     HybridChildPullUp,
     HybridCollectionAccess,
+    HybridExplode,
     HybridFilter,
     HybridLimit,
     HybridNoop,
@@ -676,16 +678,18 @@ class RelTranslation:
             out_rel.condition = LiteralExpression(True, BooleanType())
 
         # If the join type is non-ANTI but the condition is always True,
-        # then just promote to an INNER join, and remove the filtering aspect
-        # from the cardinality in both directions
+        # then promote to an INNER join and force PLURAL_ACCESS cardinality
+        # in both directions: a literal True join condition has no key or
+        # predicate to justify a SINGULAR (at-most-one-match) guarantee, so
+        # PLURAL_ACCESS is the only sound assumption (see issue #558).
         if (
             join_type != JoinType.ANTI
             and isinstance(out_rel.condition, LiteralExpression)
             and bool(out_rel.condition.value)
         ):
             out_rel._join_type = JoinType.INNER
-            out_rel._cardinality = out_rel._cardinality.remove_filter()
-            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
+            out_rel._cardinality = JoinCardinality.PLURAL_ACCESS
+            out_rel._reverse_cardinality = JoinCardinality.PLURAL_ACCESS
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -937,9 +941,11 @@ class RelTranslation:
                 for key_name in partition.key_names:
                     key_expr = partition.terms[key_name]
                     assert isinstance(key_expr, HybridChildRefExpr)
-                    hybrid_ref: HybridRefExpr = HybridRefExpr(
-                        key_expr.name, key_expr.typ
-                    )
+                    # Note: uses `key_name`, not `key_expr.name`, since the
+                    # goal is to expose the value under its QDAG-facing
+                    # name, which may differ from its (possibly-renamed)
+                    # name within the child subtree.
+                    hybrid_ref: HybridRefExpr = HybridRefExpr(key_name, key_expr.typ)
                     context.expressions[hybrid_ref] = context.expressions[key_expr]
         return context
 
@@ -1402,6 +1408,41 @@ class RelTranslation:
         # expressions mapping
         return TranslationOutput(child_result.relational_node, new_expressions)
 
+    def translate_explode(
+        self, operation: HybridExplode, context: TranslationOutput
+    ) -> TranslationOutput:
+        """
+        Converts an HybridExplode operation into the relational tree for the
+        EXPLODE operation, which unnests a collection column into multiple rows,
+        with the exploded values appearing in separate rows.
+        """
+        exploded_data: RelationalExpression = self.translate_expression(
+            operation.explode_data.shift_back(-1), context
+        )
+        input_mapping: dict[str, RelationalExpression] = {
+            name: ColumnReference(name, expr.data_type)
+            for name, expr in context.relational_node.columns.items()
+        }
+        new_node: RelationalNode = Explode(
+            context.relational_node,
+            exploded_data,
+            operation.explode_spec,
+            input_mapping,
+        )
+        new_expressions: dict[HybridExpr, ColumnReference] = {}
+        for hybrid_expr, rel_expr in context.expressions.items():
+            new_expressions[hybrid_expr.shift_back(1)] = rel_expr
+        new_expressions[
+            HybridRefExpr(operation.explode_spec.value_name, operation.explode_data.typ)
+        ] = ColumnReference(
+            operation.explode_spec.value_name, operation.explode_data.typ
+        )
+        if operation.explode_spec.index_name is not None:
+            new_expressions[
+                HybridRefExpr(operation.explode_spec.index_name, NumericType())
+            ] = ColumnReference(operation.explode_spec.index_name, NumericType())
+        return TranslationOutput(new_node, new_expressions)
+
     def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
         """
         Converts a HybridRoot node into a relational tree. This method shifts
@@ -1582,6 +1623,9 @@ class RelTranslation:
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
+            case HybridExplode():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_explode(operation, context)
             case HybridChildPullUp():
                 assert context is None, "Malformed HybridTree pattern."
                 result = self.translate_child_pullup(operation)

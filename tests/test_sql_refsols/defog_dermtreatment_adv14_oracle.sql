@@ -1,5 +1,5 @@
 SELECT
-  AVG(weight_kg) AS CAW_male
+  AVG(WEIGHT_KG) AS CAW_male
 FROM MAIN.PATIENTS
 WHERE
-  gender = 'Male'
+  GENDER = 'Male'

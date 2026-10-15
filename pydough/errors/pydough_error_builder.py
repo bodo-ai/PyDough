@@ -2,7 +2,7 @@
 Definition of the base class for creating exceptions in PyDough.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from pydough.errors import (
     PyDoughException,
@@ -255,8 +255,23 @@ class PyDoughErrorBuilder:
             f"Failed to convert expression {call.to_string(True)} to SQL: {error}"
         )
 
+    def sql_call_dialect_unsupported(
+        self, operator: Union["PyDoughOperator", "str"], dialect: str
+    ) -> PyDoughException:
+        """
+        Creates an exception for when a SQL dialect does not allow converting
+        a certain feature to SQL.
+
+        Args:
+            `operator`: The function operator that is not supported.
+            `dialect`: The SQL dialect in which the feature is not supported.
+        """
+        return PyDoughSQLException(
+            f"Cannot convert function {operator} to SQL using dialect {dialect}"
+        )
+
     def undefined_function_call(
-        self, node: "UnqualifiedNode", *args, **kwargs
+        self, node: "UnqualifiedNode", available_templates: list[str], *args, **kwargs
     ) -> PyDoughException:
         """
         Creates an exception for when a function call is made on an unqualified
@@ -281,7 +296,7 @@ class PyDoughErrorBuilder:
         ):
             suggestions: list[str] = find_possible_name_matches(
                 term_name=node._parcel[1],
-                candidates=set(node._parcel[0]._parcel[1]),
+                candidates=set(node._parcel[0]._parcel[1]) | set(available_templates),
                 atol=2,
                 rtol=0.1,
                 min_names=3,

@@ -1,10 +1,16 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
-    ) AS month,
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)) IS NULL
+      OR LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)), 2, '0') IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
+        LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
+      )
+    END AS month,
     COUNT(*) AS n_rows
   FROM defog.broker.sbcustomer
   WHERE
@@ -14,11 +20,17 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')
-    ) AS month,
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) IS NULL
+      OR LPAD(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0') IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
+        LPAD(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')
+      )
+    END AS month,
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
   FROM defog.broker.sbcustomer AS sbcustomer
   JOIN defog.broker.sbtransaction AS sbtransaction

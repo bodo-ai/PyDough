@@ -3,67 +3,67 @@ SELECT
   UPPER(
     CASE
       WHEN CHAR_LENGTH(p_name) = 0
-      THEN NULL
+      THEN ''
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
       ) >= 0
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 1), ' ', -1)
-      ELSE NULL
+      ELSE ''
     END
   ) AS c1,
   UPPER(
     CASE
       WHEN CHAR_LENGTH(p_name) = 0
-      THEN NULL
+      THEN ''
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
       ) >= 1
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 2), ' ', -1)
-      ELSE NULL
+      ELSE ''
     END
   ) AS c2,
   UPPER(
     CASE
       WHEN CHAR_LENGTH(p_name) = 0
-      THEN NULL
+      THEN ''
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
       ) >= 2
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 3), ' ', -1)
-      ELSE NULL
+      ELSE ''
     END
   ) AS c3,
   UPPER(
     CASE
       WHEN CHAR_LENGTH(p_name) = 0
-      THEN NULL
+      THEN ''
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
       ) >= 3
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 4), ' ', -1)
-      ELSE NULL
+      ELSE ''
     END
   ) AS c4,
   UPPER(
     CASE
       WHEN CHAR_LENGTH(p_name) = 0
-      THEN NULL
+      THEN ''
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
       ) >= 4
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 5), ' ', -1)
-      ELSE NULL
+      ELSE ''
     END
   ) AS c5,
   UPPER(
     CASE
       WHEN CHAR_LENGTH(p_name) = 0
-      THEN NULL
+      THEN ''
       WHEN (
         CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
       ) >= 5
       THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 6), ' ', -1)
-      ELSE NULL
+      ELSE ''
     END
   ) AS c6
 FROM tpch.PART

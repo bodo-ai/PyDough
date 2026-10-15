@@ -79,7 +79,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "EXTRA_GRAPH_FIELDS",
             re.escape(
-                "graph 'EXTRA_GRAPH_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'collections', 'extra semantic info', 'functions', 'name', 'relationships', 'verified pydough analysis', 'version']"
+                "graph 'EXTRA_GRAPH_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'attributes', 'collections', 'extra semantic info', 'functions', 'name', 'relationships', 'templates', 'verified pydough analysis', 'version']"
             ),
             id="EXTRA_GRAPH_FIELDS",
         ),

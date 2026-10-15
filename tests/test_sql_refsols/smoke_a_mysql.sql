@@ -21,21 +21,21 @@ SELECT
     LEAST(
       CASE
         WHEN CHAR_LENGTH(p_name) = 0
-        THEN NULL
+        THEN ''
         WHEN (
           CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
         ) >= 1
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', 2), ' ', -1)
-        ELSE NULL
+        ELSE ''
       END,
       CASE
         WHEN CHAR_LENGTH(p_name) = 0
-        THEN NULL
+        THEN ''
         WHEN (
           CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, ' ', ''))
         ) + 1 >= ABS(-1)
         THEN SUBSTRING_INDEX(SUBSTRING_INDEX(p_name, ' ', -1), ' ', 1)
-        ELSE NULL
+        ELSE ''
       END COLLATE utf8mb4_bin
     )
   ) AS b,

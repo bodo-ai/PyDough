@@ -10,7 +10,7 @@ from collections.abc import Iterable
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
-from pydough.errors import PyDoughUnqualifiedException
+from pydough.errors import PyDoughQDAGException, PyDoughUnqualifiedException
 from pydough.metadata import GeneralJoinMetadata, GraphMetadata
 from pydough.pydough_operators.expression_operators import (
     ExpressionFunctionOperator,
@@ -34,7 +34,9 @@ from pydough.qdag import (
     SubCollection,
     WindowCall,
 )
+from pydough.qdag.collections.calculate import Calculate
 from pydough.types import PyDoughType
+from pydough.utilities import ExplodeSpec
 
 from .unqualified_node import (
     UnqualifiedAccess,
@@ -43,6 +45,7 @@ from .unqualified_node import (
     UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedCross,
+    UnqualifiedExplode,
     UnqualifiedGeneratedCollection,
     UnqualifiedLiteral,
     UnqualifiedNode,
@@ -546,6 +549,7 @@ class Qualifier:
                 | UnqualifiedWhere()
                 | UnqualifiedOrderBy()
                 | UnqualifiedTopK()
+                | UnqualifiedExplode()
             ):
                 raise PyDoughUnqualifiedException(
                     "Collection accesses are currently unsupported in PyDough general join conditions"
@@ -635,6 +639,11 @@ class Qualifier:
                     typ: PyDoughType = context.get_expr(name).pydough_type
                     return self.builder.build_reference(context, name, typ)
                 else:
+                    # Accessing `child.name`: forbid reaching a down-streamed
+                    # (inherited) term through a child collection.
+                    self.verify_not_inherited_through_child(
+                        unqualified, unqualified_parent, qualified_parent, context, name
+                    )
                     # Otherwise, the access is a reference to a scalar attribute of
                     # a child collection node of the current context. Add this new
                     # child to the list of children, unless already present, then
@@ -648,6 +657,96 @@ class Qualifier:
                     return self.builder.build_child_reference_expression(
                         children, ref_num, name
                     )
+
+    def names_defined_in_child_chain(
+        self,
+        qualified_node: PyDoughCollectionQDAG,
+        context: PyDoughCollectionQDAG,
+    ) -> set[str]:
+        """
+        Walks the qualified chain of a child access up to (but not including)
+        the context the child is evaluated in, collecting every term name
+        defined by a CALCULATE that is part of the child chain itself.
+
+        Args:
+            `qualified_node`: the qualified collection the term is accessed from.
+            `context`: the context the child chain is attached to; the walk
+            stops here so CALCULATEs from the enclosing context are ignored.
+
+        Returns:
+            The set of term names defined by CALCULATEs within the child chain.
+        """
+        defined: set[str] = set()
+        node: PyDoughCollectionQDAG | None = qualified_node
+        while (
+            node is not None
+            and node is not context
+            and not isinstance(node, GlobalContext)
+        ):
+            if isinstance(node, Calculate):
+                defined.update(name for name in node.calc_term_values.keys())
+            # Operators (CALCULATE, WHERE, SINGULAR, ...) step back through
+            # their preceding context; child accesses step up to their parent.
+            if node.preceding_context is not None:
+                node = node.preceding_context
+            else:
+                node = node.ancestor_context
+        return defined
+
+    def verify_not_inherited_through_child(
+        self,
+        unqualified: UnqualifiedAccess,
+        unqualified_parent: UnqualifiedNode,
+        qualified_parent: PyDoughCollectionQDAG,
+        context: PyDoughCollectionQDAG,
+        name: str,
+    ) -> None:
+        """
+        Verifies that an expression accessed as `child.name` is not a term
+        that the child only has because it was down-streamed from the context
+        the child is being evaluated in. For example, in
+        `customers.CALCULATE(cust_name=name).orders.CALCULATE(x=customer.cust_name)`
+        `customer` only sees `cust_name` because it inherits it from the
+        enclosing context, so the access is invalid (use `cust_name` directly).
+
+        Accesses are still valid when the term comes from the child's own
+        data, e.g. a CALCULATE inside the child expression
+        (`customer.CALCULATE(customer_name=name).orders.customer_name`) or
+        inside the data of a PARTITION child (`pricing_collection.price`).
+
+        Raises:
+            `PyDoughUnqualifiedException` if the term is inherited from the
+            enclosing context through the child collection.
+        """
+        # Only terms the child inherits (not its own columns/calcs) matter.
+        is_inherited: bool = (
+            name in qualified_parent.ancestral_mapping
+            or name in qualified_parent.inherited_downstreamed_terms
+        )
+        if not is_inherited or name in qualified_parent.calc_terms:
+            return
+
+        # Only invalid if the term comes from the enclosing context. If the
+        # context itself does not inherit it, it originated inside the
+        # child's own data (e.g. a PARTITION child's partitioned data).
+        context_inherits: bool = (
+            name in context.ancestral_mapping
+            or name in context.inherited_downstreamed_terms
+        )
+        if not context_inherits:
+            return
+
+        # The child chain may redefine (shadow) the same name; then the
+        # value comes from inside the child, so it is valid.
+        if name in self.names_defined_in_child_chain(qualified_parent, context):
+            return
+
+        raise PyDoughUnqualifiedException(
+            f"Cannot access inherited term {name!r} through child collection "
+            f"{qualified_parent.standalone_string!r} in {unqualified!r}. "
+            f"Terms down-streamed from an ancestor CALCULATE can only be "
+            f"referenced directly, e.g. {name!r}."
+        )
 
     def qualify_calculate(
         self,
@@ -907,6 +1006,7 @@ class Qualifier:
                 | UnqualifiedWhere()
                 | UnqualifiedTopK()
                 | UnqualifiedOrderBy()
+                | UnqualifiedExplode()
                 | UnqualifiedSingular()
                 | UnqualifiedPartition()
                 | UnqualifiedBest()
@@ -985,6 +1085,8 @@ class Qualifier:
                 build_node[0] = UnqualifiedBest(build_node[0], *node._parcel[1:])
             case UnqualifiedCross():
                 build_node[0] = UnqualifiedCross(build_node[0], *node._parcel[1:])
+            case UnqualifiedExplode():
+                build_node[0] = UnqualifiedExplode(build_node[0], *node._parcel[1:])
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
@@ -1047,9 +1149,19 @@ class Qualifier:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
                 term, qualified_child, children
             )
-            assert isinstance(qualified_term, Reference), (
-                "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
-            )
+            # Note: used `type(...) is Reference` (rather than `isinstance`)
+            # because `ChildReferenceExpression` (a term from a
+            # child collection) and `BackReferenceExpression` (a term from
+            # an ancestor) are both subclasses of `Reference`, but partition
+            # keys are only allowed to be direct, scalar references to a
+            # term of the collection being partitioned itself.
+            if type(qualified_term) is not Reference:
+                raise PyDoughQDAGException(
+                    f"Invalid partition key {term!r}: PARTITION only "
+                    "supports partition keys that are direct references to "
+                    "a scalar property of the collection being partitioned, "
+                    "not a literal, or a term from a child collection."
+                )
             child_ref: ChildReferenceExpression = ChildReferenceExpression(
                 qualified_child, 0, qualified_term.term_name
             )
@@ -1272,6 +1384,53 @@ class Qualifier:
 
         return qualified_child
 
+    def qualify_explode(
+        self,
+        unqualified: UnqualifiedExplode,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedExplode` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedExplode instance to be transformed.
+            `context`: the collection QDAG whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified EXPLODE node.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        data_raw: UnqualifiedNode = unqualified._parcel[1]
+        name: str = unqualified._parcel[2]
+        explode_spec: ExplodeSpec = unqualified._parcel[3]
+
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+
+        # Qualify the data being explored with regards to the table being
+        # exploded storing any children built along the way.
+        children: list[PyDoughCollectionQDAG] = []
+        qualified_data = self.qualify_expression(data_raw, qualified_parent, children)
+        if len(children) > 0:
+            raise PyDoughQDAGException(
+                f"Invalid data argument to explode: {data_raw!r} (explode does not currently support exploding data from a child collection; make sure to store the data to be exploded in a column of the parent collection before calling explode)"
+            )
+        # Use the qualified children & terms to create a new EXPLODE node.
+        answer: PyDoughCollectionQDAG = self.builder.build_explode(
+            qualified_parent,
+            qualified_data,
+            name,
+            explode_spec,
+        )
+        if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+            answer = ChildOperatorChildAccess(answer)
+        return answer
+
     def qualify_generated_collection(
         self,
         unqualified: UnqualifiedGeneratedCollection,
@@ -1369,6 +1528,8 @@ class Qualifier:
                 answer = self.qualify_best(unqualified, context, is_child)
             case UnqualifiedCross():
                 answer = self.qualify_cross(unqualified, context, is_child)
+            case UnqualifiedExplode():
+                answer = self.qualify_explode(unqualified, context, is_child)
             case UnqualifiedGeneratedCollection():
                 answer = self.qualify_generated_collection(
                     unqualified, context, is_child

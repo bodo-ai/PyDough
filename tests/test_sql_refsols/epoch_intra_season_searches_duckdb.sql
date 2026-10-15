@@ -20,7 +20,9 @@ WITH _s0 AS (
     OR _s2.s_month2 = EXTRACT(MONTH FROM CAST(searches.search_ts AS TIMESTAMP))
     OR _s2.s_month3 = EXTRACT(MONTH FROM CAST(searches.search_ts AS TIMESTAMP))
   JOIN _s5 AS _s5
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(_s5.ev_name), '%')
+    ON LOWER(searches.search_string) LIKE (
+      '%' || LOWER(_s5.ev_name) || '%'
+    )
   JOIN _s0 AS _s7
     ON _s2.s_name = _s7.s_name
     AND (
@@ -63,7 +65,9 @@ WITH _s0 AS (
     OR _s10.s_month2 = EXTRACT(MONTH FROM CAST(_s11.ev_dt AS TIMESTAMP))
     OR _s10.s_month3 = EXTRACT(MONTH FROM CAST(_s11.ev_dt AS TIMESTAMP))
   JOIN searches AS searches
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(_s11.ev_name), '%')
+    ON LOWER(searches.search_string) LIKE (
+      '%' || LOWER(_s11.ev_name) || '%'
+    )
   JOIN _s0 AS _s15
     ON _s15.s_month1 = EXTRACT(MONTH FROM CAST(searches.search_ts AS TIMESTAMP))
     OR _s15.s_month2 = EXTRACT(MONTH FROM CAST(searches.search_ts AS TIMESTAMP))

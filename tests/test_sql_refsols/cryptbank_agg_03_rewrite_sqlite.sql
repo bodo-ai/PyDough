@@ -4,7 +4,10 @@ WITH _t AS (
     accounts.a_type,
     customers.c_fname,
     customers.c_lname,
-    ROW_NUMBER() OVER (PARTITION BY SUBSTRING(accounts.a_type, -1) || SUBSTRING(accounts.a_type, 1, LENGTH(accounts.a_type) - 1) ORDER BY SQRT(accounts.a_balance) DESC) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY SUBSTRING(accounts.a_type, -1) || SUBSTRING(accounts.a_type, 1, LENGTH(accounts.a_type) - 1)
+      ORDER BY SQRT(accounts.a_balance) DESC
+    ) AS _w
   FROM crbnk.accounts AS accounts
   JOIN crbnk.customers AS customers
     ON accounts.a_custkey = (

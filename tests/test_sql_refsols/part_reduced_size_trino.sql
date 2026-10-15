@@ -11,7 +11,11 @@ WITH _s0 AS (
 SELECT
   CAST(_s0.p_size AS DOUBLE) / 2.5 AS reduced_size,
   CAST(CAST(_s0.p_retailprice AS DOUBLE) AS BIGINT) AS retail_price_int,
-  CONCAT_WS('', 'old size: ', CAST(_s0.p_size AS VARCHAR)) AS message,
+  CASE
+    WHEN CAST(_s0.p_size AS VARCHAR) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS('', 'old size: ', CAST(_s0.p_size AS VARCHAR))
+  END AS message,
   lineitem.l_discount AS discount,
   DATE_FORMAT(lineitem.l_receiptdate, '%d-%m-%Y') AS date_dmy,
   DATE_FORMAT(lineitem.l_receiptdate, '%m/%d') AS date_md,

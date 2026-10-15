@@ -11,7 +11,9 @@ from abc import ABC, abstractmethod
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
+from .explode import Explode
 from .filter import Filter
+from .generated_table import GeneratedTable
 from .join import Join
 from .limit import Limit
 from .project import Project
@@ -121,10 +123,19 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_generated_table(self, generated_table) -> None:
+    def visit_generated_table(self, generated_table: GeneratedTable) -> None:
         """
         Visit a GeneratedTable node.
 
         Args:
             `generated_table`: The generated table node to visit.
+        """
+
+    @abstractmethod
+    def visit_explode(self, explode: Explode) -> None:
+        """
+        Visit an Explode node.
+
+        Args:
+            `explode`: The explode node to visit.
         """

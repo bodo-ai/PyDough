@@ -13,7 +13,10 @@ WITH _t AS (
   SELECT
     lineitem.l_partkey,
     _t.n_regionkey,
-    ROW_NUMBER() OVER (PARTITION BY _t.n_regionkey ORDER BY lineitem.l_quantity DESC NULLS FIRST, lineitem.l_linenumber) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY _t.n_regionkey
+      ORDER BY lineitem.l_quantity DESC NULLS FIRST, lineitem.l_linenumber
+    ) AS _w
   FROM _t AS _t
   JOIN tpch.lineitem AS lineitem
     ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992

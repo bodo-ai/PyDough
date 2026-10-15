@@ -42,6 +42,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -1053,7 +1054,23 @@ def transform_and_exec_pydough(
         return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
     else:
         # Otherwise, transform the function with the decorator and call it.
-        return init_pydough_context(graph)(pydough_impl)(**kwargs)
+
+        # Temporarily set the active session so testing with functions
+        # can resolve templates directly or with pydough.call_template api via
+        # pydough.active_session.metadata, and so functions like
+        # pydough.to_table can access session info during execution.
+        old_session = pydough.active_session
+        try:
+            if session is not None:
+                pydough.active_session = session
+            else:
+                pydough.active_session.metadata = graph
+            return init_pydough_context(graph)(pydough_impl)(**kwargs)
+        finally:
+            if session is not None:
+                pydough.active_session = old_session
+            else:
+                pydough.active_session.metadata = old_session.metadata
 
 
 @dataclass
@@ -1287,6 +1304,18 @@ class PyDoughPandasTest:
     If True, does not run the test as part of SQL testing.
     """
 
+    skipped_dialects: set[str] | None = None
+    """
+    If provided, contains the names of all dialects to skip when running the
+    test in SQL or E2E mode.
+    """
+
+    ignore_array_order: bool = False
+    """
+    If True, when comparing results, ignores order of elements within array
+    columns.
+    """
+
     fix_output_dialect: str = "sqlite"
     """
     Dialect name to update output
@@ -1386,6 +1415,14 @@ class PyDoughPandasTest:
         if self.skip_sql:
             pytest.skip(f"Skipping SQL text test for {self.test_name}")
 
+        if (
+            self.skipped_dialects is not None
+            and database.dialect.name in self.skipped_dialects
+        ):
+            pytest.skip(
+                f"Skipping SQL text test for {self.test_name} on {database.dialect.name} dialect"
+            )
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
 
@@ -1478,6 +1515,14 @@ class PyDoughPandasTest:
             `table_name_prefix`: Prefix to prepend to table names in to_table calls.
                 Used for Snowflake cross-database writes (e.g., "E2E_TESTS_DB.PUBLIC.").
         """
+        if (
+            self.skipped_dialects is not None
+            and database.dialect.name in self.skipped_dialects
+        ):
+            pytest.skip(
+                f"Skipping E2E test for {self.test_name} on {database.dialect.name} dialect"
+            )
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
 
@@ -1544,6 +1589,27 @@ class PyDoughPandasTest:
             for col_name in result.columns:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
+                )
+
+        # Internally sort any array columns so there is no ambiguity in ordering
+        # within arrays caused by how different dialects group array values.
+        if self.ignore_array_order and len(result) > 1 and len(refsol) > 1:
+            for col in result.columns:
+                result[col] = result[col].apply(
+                    lambda x: (
+                        sorted(x)
+                        if isinstance(x, (list, np.ndarray))
+                        or (hasattr(x, "__iter__") and not isinstance(x, str))
+                        else x
+                    )
+                )
+                refsol[col] = refsol[col].apply(
+                    lambda x: (
+                        sorted(x)
+                        if isinstance(x, (list, np.ndarray))
+                        or (hasattr(x, "__iter__") and not isinstance(x, str))
+                        else x
+                    )
                 )
 
         # Perform the comparison between the result and the reference solution
@@ -1619,7 +1685,7 @@ class PyDoughPandasTest:
             "to_table did not return an UnqualifiedGeneratedCollection as expected"
         )
         # Access the inner PyDoughUserGeneratedCollection to get columns
-        inner_collection = collection.user_collection
+        inner_collection = collection._parcel[0]
         assert isinstance(inner_collection, ViewGeneratedCollection), (
             "to_table did not return a ViewGeneratedCollection as expected"
         )
@@ -1749,17 +1815,12 @@ def harmonize_types(column_a, column_b):
             lambda x: pd.NA if pd.isna(x) else float(x)
         )
 
-    # String vs None. Convert to empty string.
-    if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
-        isinstance(elem, (str, NoneType)) for elem in column_b
-    ):
-        return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
-            lambda x: "" if pd.isna(x) else str(x)
-        )
-
     # float vs None. Convert to nullable floats
-    if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
-        isinstance(elem, (float, NoneType)) for elem in column_b
+    if (
+        all(isinstance(elem, (float, NoneType)) for elem in column_a)
+        and all(isinstance(elem, (float, NoneType)) for elem in column_b)
+        and len(column_a) > 0
+        and len(column_b) > 0
     ):
         return column_a.astype("Float64"), column_b.astype("Float64")
 
@@ -1826,6 +1887,25 @@ def harmonize_types(column_a, column_b):
         and any(isinstance(elem, datetime.date) for elem in column_a)
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else x.date())
+
+    # For array types, harmonize the inner arrays
+    if (
+        pd.api.types.is_object_dtype(column_a)
+        and pd.api.types.is_object_dtype(column_b)
+        and any(isinstance(col, (list, np.ndarray)) for col in column_a)
+        and any(isinstance(col, (list, np.ndarray)) for col in column_b)
+    ):
+        for i in range(len(column_a)):
+            if isinstance(column_a[i], (list, np.ndarray)) and isinstance(
+                column_b[i], (list, np.ndarray)
+            ):
+                column_a[i], column_b[i] = harmonize_types(
+                    pd.Series(column_a[i]), pd.Series(column_b[i])
+                )
+                # After harmonizing types, convert back to list for comparison,
+                # but ensure that NAT is converted to None.
+                column_a[i] = [None if pd.isna(x) else x for x in column_a[i].tolist()]
+                column_b[i] = [None if pd.isna(x) else x for x in column_b[i].tolist()]
 
     # datetime64 with different resolutions or timezone awareness.
     # e.g. DuckDB returns us, Databricks returns tz-aware UTC,

@@ -44,11 +44,6 @@ def test_pipeline_until_sql_tpch(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
-    if (
-        tpch_pipeline_test_data.test_name == "dataframe_collection_inf"
-        and empty_context_database.dialect == DatabaseDialect.MYSQL
-    ):
-        pytest.skip("Skipping test as MySQL does not support Infinity values.")
 
     file_path: str = get_sql_test_filename(
         tpch_pipeline_test_data.test_name, empty_context_database.dialect

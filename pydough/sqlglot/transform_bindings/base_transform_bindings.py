@@ -23,22 +23,26 @@ from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.types import (
+    ArrayType,
     BooleanType,
     DatetimeType,
     NumericType,
     PyDoughType,
     StringType,
+    UnknownType,
 )
 from pydough.user_collections.dataframe_collection import DataframeGeneratedCollection
 from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 from pydough.user_collections.view_collection import ViewGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
     create_constant_table,
     current_ts_pattern,
+    extract_int_literal,
     generate_dataframe_rows,
     generate_range_rows,
     offset_pattern,
@@ -265,6 +269,8 @@ class BaseTransformBindings:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
                 )
+            case pydop.LISTOF:
+                return self.convert_listof(args, types)
             case pydop.STARTSWITH:
                 return self.convert_startswith(args, types)
             case pydop.ENDSWITH:
@@ -441,6 +447,17 @@ class BaseTransformBindings:
                 return sqlglot_expressions.CountIf(this=args[0])
             case _:
                 return sqlglot_expressions.Sum(this=args[0])
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a LISTOF function call to its SQLGlot equivalent. Some dialects
+        do not support this functionality.
+        """
+        raise self._visitor._session.error_builder.sql_call_dialect_unsupported(
+            pydop.LISTOF, self._visitor._session.database.dialect.name
+        )
 
     def convert_find(
         self,
@@ -757,46 +774,24 @@ class BaseTransformBindings:
 
         start_idx: int | None = None
         if not isinstance(start, sqlglot_expressions.Null):
-            if isinstance(start, sqlglot_expressions.Literal):
-                try:
-                    start_idx = int(start.this)
-                except ValueError:
-                    raise PyDoughSQLException(
-                        "SLICE function currently only supports the start index being integer literal or absent."
-                    )
-            else:
+            start_idx = extract_int_literal(start)
+            if start_idx is None:
                 raise PyDoughSQLException(
                     "SLICE function currently only supports the start index being integer literal or absent."
                 )
 
         stop_idx: int | None = None
         if not isinstance(stop, sqlglot_expressions.Null):
-            if isinstance(stop, sqlglot_expressions.Literal):
-                try:
-                    stop_idx = int(stop.this)
-                except ValueError:
-                    raise PyDoughSQLException(
-                        "SLICE function currently only supports the stop index being integer literal or absent."
-                    )
-            else:
+            stop_idx = extract_int_literal(stop)
+            if stop_idx is None:
                 raise PyDoughSQLException(
                     "SLICE function currently only supports the stop index being integer literal or absent."
                 )
 
         step_idx: int | None = None
         if not isinstance(step, sqlglot_expressions.Null):
-            if isinstance(step, sqlglot_expressions.Literal):
-                try:
-                    step_idx = int(step.this)
-                    if step_idx != 1:
-                        raise PyDoughSQLException(
-                            "SLICE function currently only supports the step being integer literal 1 or absent."
-                        )
-                except ValueError:
-                    raise PyDoughSQLException(
-                        "SLICE function currently only supports the step being integer literal 1 or absent."
-                    )
-            else:
+            step_idx = extract_int_literal(step)
+            if step_idx is None or step_idx != 1:
                 raise PyDoughSQLException(
                     "SLICE function currently only supports the step being integer literal 1 or absent."
                 )
@@ -1299,7 +1294,12 @@ class BaseTransformBindings:
         # to change when we support PyDough expressions like:
         # Collection.WHERE(ISIN(name, plural_subcollection.name))
         values = args[1]
-        assert isinstance(values, sqlglot_expressions.Array)
+        if not isinstance(values, sqlglot_expressions.Array):
+            raise PyDoughSQLException(
+                "Invalid argument for ISIN: second parameter must be a "
+                "collection of literal values (e.g. (1, 2, 3)), not a "
+                f"PyDough expression ({values.sql()!r})."
+            )
         return sqlglot_expressions.In(this=column, expressions=values.expressions)
 
     def convert_sqrt(
@@ -2058,7 +2058,8 @@ class BaseTransformBindings:
                     '' AS part,
                     FIRST_ARGUMENT AS rest,
                     SECOND_ARGUMENT AS delim,
-                    THIRD_ARGUMENT AS idx
+                    THIRD_ARGUMENT AS idx,
+                    0 AS is_last -- Flag to indicate if this is the last part
                 UNION ALL
                 SELECT
                     part_index + 1 AS part_index,
@@ -2073,26 +2074,33 @@ class BaseTransformBindings:
                         ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
                     END AS rest,
                     delim,
-                    idx
+                    idx,
+                    CASE
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
+                        THEN 1
+                        ELSE 0
+                    END AS is_last
                 FROM _s0
                 WHERE
-                    rest <> ''
+                    is_last = 0
             )
-            SELECT _s0.part
-            FROM _s0
-            CROSS JOIN (
-                SELECT COUNT(*) - 1 AS total_parts
+            SELECT COALESCE((
+                SELECT _s0.part
                 FROM _s0
-            ) AS _s1
-            WHERE
-                _s0.part_index <> 0
-                AND _s0.part_index = CASE
-                    WHEN _s0.idx > 0
-                    THEN _s0.idx
-                    WHEN _s0.idx < 0
-                    THEN _s1.total_parts + _s0.idx + 1
-                    ELSE 1
-                END
+                CROSS JOIN (
+                    SELECT COUNT(*) - 1 AS total_parts
+                    FROM _s0
+                ) AS _s1
+                WHERE
+                    _s0.part_index <> 0
+                    AND _s0.part_index = CASE
+                        WHEN _s0.idx > 0
+                        THEN _s0.idx
+                        WHEN _s0.idx < 0
+                        THEN _s1.total_parts + _s0.idx + 1
+                        ELSE 1
+                    END
+            ), '')
         )
         ```
 
@@ -2137,6 +2145,9 @@ class BaseTransformBindings:
         rest: SQLGlotExpression = sqlglot_expressions.Identifier(
             this="rest", quoted=False
         )
+        is_last: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="is_last", quoted=False
+        )
 
         # Literals definitions
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
@@ -2162,6 +2173,7 @@ class BaseTransformBindings:
         #   input AS rest,
         #   delim AS delim,
         #   idx AS idx
+        #   0 AS is_last
         select_union_params: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Alias(this=literal_0, alias=part_index),
@@ -2178,6 +2190,7 @@ class BaseTransformBindings:
                     this=args[2],  # the third arg, the index
                     alias=idx,
                 ),
+                sqlglot_expressions.Alias(this=literal_0, alias=is_last),
             ]
         )
 
@@ -2221,6 +2234,15 @@ class BaseTransformBindings:
         new_rest_case: SQLGlotExpression = (
             sqlglot_expressions.Case().when(delim_cond, literal_empty).else_(new_rest)
         )
+        # is_last = 1 when this recursive step found no more delimiter (or
+        # the delimiter is empty), meaning `part` computed above is the
+        # final segment of the string; used to stop recursion at exactly
+        # the right point instead of relying on `rest = ''`, which can't
+        # distinguish "no parts left" from "one more empty part is owed"
+        # (e.g. when the delimiter occurs at the very end of the string).
+        new_is_last_case: SQLGlotExpression = (
+            sqlglot_expressions.Case().when(delim_cond, literal_1).else_(literal_0)
+        )
 
         # Second half of the recursive CTE:
         # SELECT
@@ -2228,7 +2250,8 @@ class BaseTransformBindings:
         #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1) END AS part,
         #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN '' ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim)) END AS rest,
         #   delim,
-        #   idx
+        #   idx,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN 1 ELSE 0 END AS is_last
         # FROM split_parts
         select_union_split_parts: SQLGlotExpression = (
             sqlglot_expressions.Select(
@@ -2245,10 +2268,16 @@ class BaseTransformBindings:
                     sqlglot_expressions.Alias(this=new_rest_case, alias=rest),
                     delim,
                     idx,
+                    sqlglot_expressions.Alias(this=new_is_last_case, alias=is_last),
                 ],
             )
             .from_(split_parts_table_name)
-            .where(sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty))
+            .where(
+                sqlglot_expressions.EQ(
+                    this=sqlglot_expressions.Column(this=is_last),
+                    expression=literal_0,
+                )
+            )
         )
 
         # Union the two halves to create the recursive CTE:
@@ -2326,7 +2355,10 @@ class BaseTransformBindings:
         # a subquery so the single column of the scalar subquery is used as the
         # answer.
         result = result.with_(split_parts_table_name, split_parts_union, recursive=True)
-        result = sqlglot_expressions.Subquery(this=result)
+        result = sqlglot_expressions.Coalesce(
+            this=sqlglot_expressions.Subquery(this=result),
+            expressions=[literal_empty],
+        )
 
         return result
 
@@ -2407,6 +2439,42 @@ class BaseTransformBindings:
             .select(sqlglot_expressions.Star())
             .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
         )
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+        subquery_alias: str,
+    ) -> SQLGlotExpression:
+        """
+        Converts a PyDough EXPLODE operation call to a SQLGlot expression that
+        unravels an array or string into multiple rows (i.e. a lateral join).
+
+        Args:
+            `input_expr`: The subquery containing the data being exploded.
+            `explode_expr`: The expression to explode (e.g., an array or string
+            column).
+            `explode_spec`: The specification of how to explode the data.
+            `exprs`: The list of SQLGlot expressions representing the columns of
+            the data besides the exploded output.
+            `val_index`: The index within `exprs` that should be used to store
+            the exploded data in the output. If None, not included.
+            `idx_index`: The index within `exprs` that should be used to store
+            the exploded data's index in the output. If None, not included.
+            `lateral_alias`: A name given to a LATERAL operator, if needed, to
+            avoid name collisions.
+            `subquery_alias`: A name given to the data before the LATERAL
+            operator, if needed, to avoid name collisions.
+
+        Returns:
+            A SQLGlotExpression representing the exploded data.
+        """
+        raise PyDoughSQLException("EXPLODE is not supported in this dialect")
 
     def convert_user_generated_collection(
         self,
@@ -2540,6 +2608,16 @@ class BaseTransformBindings:
         (None, NaN, BooleanType, StringType) meaning that this representation
         works through all current dialects.
         """
+        if isinstance(item, list):
+            inner_type: PyDoughType
+            if isinstance(item_type, ArrayType):
+                inner_type = item_type.elem_type
+            else:
+                inner_type = UnknownType()
+            inner_items: list[SQLGlotExpression] = [
+                self.generate_dataframe_item_expression(i, inner_type) for i in item
+            ]
+            return self.generate_dataframe_array_expression(inner_items, inner_type)
 
         if item is None or pd.isna(item):
             return sqlglot_expressions.Null()
@@ -2553,6 +2631,22 @@ class BaseTransformBindings:
 
             case _:  # Specific dialect expression
                 return self.generate_dataframe_item_dialect_expression(item, item_type)
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Generate the sqlglot expression for an array of items with given pydough type.
+
+        Args:
+            `items` : The list of SQLGlotExpressions representing the items in the array.
+            `inner_type` : The mapped PydDough type for the items in the array.
+        Returns:
+            A SQLGlotExpression representing the array of items.
+        """
+        raise self._visitor._session.error_builder.sql_call_dialect_unsupported(
+            "LITERAL ARRAY", self._visitor._session.database.dialect.name
+        )
 
     def generate_dataframe_item_dialect_expression(
         self, item: Any, item_type: PyDoughType

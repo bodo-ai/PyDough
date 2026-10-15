@@ -1,7 +1,12 @@
+WITH _s1 AS (
+  SELECT
+    doc_id
+  FROM main.treatments
+)
 SELECT
   doctors.doc_id,
   doctors.first_name,
   doctors.last_name
 FROM main.doctors AS doctors
-JOIN main.treatments AS treatments
-  ON doctors.doc_id = treatments.doc_id
+SEMI JOIN _s1 AS _s1
+  ON _s1.doc_id = doctors.doc_id

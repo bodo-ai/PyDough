@@ -28,27 +28,26 @@ WITH _s1 AS (
   FROM _t5
   QUALIFY
     NOT LAG(COALESCE(sum_r, 0), 1) OVER (PARTITION BY anything_o_custkey ORDER BY anything_o_orderdate) IS NULL
-), _t1 AS (
+), _s3 AS (
   SELECT
-    _t4.anything_o_custkey,
-    customer.c_name,
-    COALESCE(_t4.sum_r, 0) - LAG(COALESCE(_t4.sum_r, 0), 1) OVER (PARTITION BY _t4.anything_o_custkey ORDER BY _t4.anything_o_orderdate) AS revenue_delta
-  FROM tpch.customer AS customer
-  JOIN _t4 AS _t4
-    ON _t4.anything_o_custkey = customer.c_custkey
-  WHERE
-    customer.c_mktsegment = 'AUTOMOBILE'
+    anything_o_custkey,
+    COALESCE(sum_r, 0) - LAG(COALESCE(sum_r, 0), 1) OVER (PARTITION BY anything_o_custkey ORDER BY anything_o_orderdate) AS revenue_delta
+  FROM _t4
 )
 SELECT
-  ANY_VALUE(c_name) AS name,
+  ANY_VALUE(customer.c_name) AS name,
   CASE
-    WHEN ABS(MIN(revenue_delta)) > MAX(revenue_delta)
-    THEN MIN(revenue_delta)
-    ELSE MAX(revenue_delta)
+    WHEN ABS(MIN(_s3.revenue_delta)) > MAX(_s3.revenue_delta)
+    THEN MIN(_s3.revenue_delta)
+    ELSE MAX(_s3.revenue_delta)
   END AS largest_diff
-FROM _t1
+FROM tpch.customer AS customer
+JOIN _s3 AS _s3
+  ON _s3.anything_o_custkey = customer.c_custkey
+WHERE
+  customer.c_mktsegment = 'AUTOMOBILE'
 GROUP BY
-  anything_o_custkey
+  _s3.anything_o_custkey
 ORDER BY
   2 DESC
 LIMIT 5

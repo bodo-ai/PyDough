@@ -16,9 +16,13 @@ FROM _s0 AS _s0
 JOIN _s1 AS _s1
   ON _s0.user_id = _s1.search_user_id
 JOIN events AS events
-  ON LOWER(_s1.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+  ON LOWER(_s1.search_string) LIKE (
+    '%' || LOWER(events.ev_name) || '%'
+  )
 JOIN _s1 AS _s5
-  ON LOWER(_s5.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+  ON LOWER(_s5.search_string) LIKE (
+    '%' || LOWER(events.ev_name) || '%'
+  )
 JOIN _s0 AS _s7
   ON _s0.user_name <> _s7.user_name AND _s5.search_user_id = _s7.user_id
 GROUP BY

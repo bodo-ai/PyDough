@@ -250,6 +250,14 @@ def invalid_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def invalid_templates_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the invalid templates.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/invalid_templates.json"
+
+
+@pytest.fixture(scope="session")
 def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
@@ -371,6 +379,20 @@ def get_sample_graph(
 
 
 @pytest.fixture(scope="session")
+def tpch_graph(get_sample_graph: graph_fetcher) -> GraphMetadata:
+    """The TPCH graph metadata, loaded once per test session."""
+    return get_sample_graph("TPCH")
+
+
+@pytest.fixture(scope="session")
+def tpch_session(tpch_graph: GraphMetadata) -> PyDoughSession:
+    """A PyDoughSession loaded with the TPCH graph (no DB connection needed)."""
+    session = PyDoughSession()
+    session.metadata = tpch_graph
+    return session
+
+
+@pytest.fixture(scope="session")
 def get_sf_sample_graph(
     sf_sample_graph_path: str,
     valid_sample_graph_names: set[str],
@@ -473,6 +495,20 @@ def sample_graphs(
     file.
     """
     return get_sample_graph(sample_graph_names)
+
+
+@pytest.fixture(scope="session")
+def get_empty_tpch_graph() -> graph_fetcher:
+    """
+    Returns an empty TPCH graph with defined template
+    """
+
+    @cache
+    def impl() -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/empty_attributes_tpch_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name="TPCH")
+
+    return impl
 
 
 @pytest.fixture(scope="session")
@@ -601,7 +637,7 @@ def sqlite_people_jobs() -> DatabaseConnection:
         )
     """
     sqlite3_empty_connection: DatabaseConnection = DatabaseConnection(
-        sqlite3.connect(":memory:")
+        sqlite3.connect(":memory:"), DatabaseDialect.SQLITE
     )
     cursor: sqlite3.Cursor = sqlite3_empty_connection.connection.cursor()
     cursor.execute(create_table_1)
@@ -662,7 +698,10 @@ def sqlite_tpch_db_context(sqlite_tpch_db) -> DatabaseContext:
     """
     Return a DatabaseContext for the SQLite TPCH database.
     """
-    return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(sqlite_tpch_db, DatabaseDialect.SQLITE),
+        DatabaseDialect.SQLITE,
+    )
 
 
 @pytest.fixture
@@ -871,7 +910,9 @@ def sqlite_defog_connection() -> DatabaseContext:
     subprocess.run("cd tests/gen_data; bash setup_defog.sh", shell=True)
     path: str = os.path.join(base_dir, "tests/gen_data/defog.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(scope="session")
@@ -888,7 +929,9 @@ def sqlite_epoch_connection() -> DatabaseContext:
     )
     path: str = os.path.join(base_dir, "tests/gen_data/epoch.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(scope="session")
@@ -912,7 +955,9 @@ def sqlite_technograph_connection() -> DatabaseContext:
     gen_technograph_records(cursor)
 
     # Return the database context.
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(
@@ -948,7 +993,9 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     path: str = os.path.join(base_dir, "tests/gen_data/cryptbank.db")
     connection: sqlite3.Connection = sqlite3.connect(":memory:")
     connection.execute(f"attach database '{path}' as CRBNK")
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    return DatabaseContext(
+        DatabaseConnection(connection, DatabaseDialect.SQLITE), DatabaseDialect.SQLITE
+    )
 
 
 @pytest.fixture(scope="session")
@@ -984,18 +1031,30 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
         connection = sqlite3.connect(":memory:")
         connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
 
-        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+        return DatabaseContext(
+            DatabaseConnection(connection, DatabaseDialect.SQLITE),
+            DatabaseDialect.SQLITE,
+        )
 
     return _impl
 
 
-S3_DATASETS = ["synthea", "world_development_indicators", "menu", "donor", "movielens"]
+S3_DATASETS = [
+    "synthea",
+    "world_development_indicators",
+    "menu",
+    "donor",
+    "movielens",
+    "california_schools",
+    "chinook",
+]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
 """
 S3_DATASETS_SCRIPTS = {
     "world_development_indicators": "init_world_indicators_sqlite",
+    "chinook": "init_chinook_sqlite",
 }
 """
     Maps the datasets that need to be built with a sql script, with the name of
@@ -1166,17 +1225,30 @@ def sqlite_s3_datasets_connection(
         file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
         connection = sqlite3.connect(file_path)
 
-        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+        return DatabaseContext(
+            DatabaseConnection(connection, DatabaseDialect.SQLITE),
+            DatabaseDialect.SQLITE,
+        )
 
     return _impl
 
 
-SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]
+SF_ENVS = [
+    "SF_USERNAME",
+    "SF_ACCOUNT",
+    "SF_PRIVATE_KEY_FILE",
+    "SF_PRIVATE_KEY_FILE_PWD",
+]
 """
     Snowflake environment variables required for connection.
     SF_USERNAME: The username for the Snowflake account.
-    SF_PASSWORD: The password for the Snowflake account.
     SF_ACCOUNT: The account identifier for the Snowflake account.
+    Password authentication is no longer supported for Bodo's account.
+    Instead we need:
+        - SF_PRIVATE_KEY_FILE: Path to the private key file for key pair (JWT)
+            authentication. 
+        - SF_PRIVATE_KEY_FILE_PWD: is also required because in our case the key
+            is encrypted. 
 """
 
 
@@ -1188,6 +1260,25 @@ def is_snowflake_env_set() -> bool:
         bool: True if all required Snowflake environment variables are set, False otherwise.
     """
     return all(os.getenv(env) for env in SF_ENVS)
+
+
+def get_snowflake_auth_kwargs() -> dict[str, str]:
+    """
+    Build the authentication keyword arguments for connecting to Snowflake
+    using key pair (JWT) authentication.
+
+    Returns:
+        dict[str, str]: Keyword arguments to merge into the Snowflake
+        connection parameters (`authenticator` + `private_key_file` [+
+        `private_key_file_pwd` if the key is encrypted]).
+    """
+    auth_kwargs = {
+        "authenticator": "snowflake_jwt",
+        "private_key_file": os.environ["SF_PRIVATE_KEY_FILE"],
+    }
+    if passphrase := os.getenv("SF_PRIVATE_KEY_FILE_PWD"):
+        auth_kwargs["private_key_file_pwd"] = passphrase
+    return auth_kwargs
 
 
 @pytest.fixture(scope="session")
@@ -1205,16 +1296,15 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
         import snowflake.connector as sf_connector
 
         warehouse = "DEMO_WH"
-        password = os.getenv("SF_PASSWORD")
         username = os.getenv("SF_USERNAME")
         account = os.getenv("SF_ACCOUNT")
         connection: sf_connector.connection.SnowflakeConnection = sf_connector.connect(
             user=username,
-            password=password,
             account=account,
             warehouse=warehouse,
             database=database_name,
             schema=schema_name,
+            **get_snowflake_auth_kwargs(),
         )
 
         with connection.cursor() as cur:
@@ -1262,17 +1352,16 @@ def sf_params_tpch_db_context() -> DatabaseContext:
     sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
     sf_tpch_schema = "TPCH_SF1"
     warehouse = "DEMO_WH"
-    password = os.getenv("SF_PASSWORD")
     username = os.getenv("SF_USERNAME")
     account = os.getenv("SF_ACCOUNT")
     return load_database_context(
         "snowflake",
         user=username,
-        password=password,
         account=account,
         warehouse=warehouse,
         database=sf_tpch_db,
         schema=sf_tpch_schema,
+        **get_snowflake_auth_kwargs(),
     )
 
 
@@ -1511,7 +1600,10 @@ def duckdb_tpch_db_context(duckdb_tpch_db) -> DatabaseContext:
     Returns:
         DatabaseContext: The DuckDB TPCH database context.
     """
-    return DatabaseContext(DatabaseConnection(duckdb_tpch_db), DatabaseDialect.DUCKDB)
+    return DatabaseContext(
+        DatabaseConnection(duckdb_tpch_db, DatabaseDialect.DUCKDB),
+        DatabaseDialect.DUCKDB,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -1546,7 +1638,9 @@ def duckdb_defog_connection(sqlite_defog_connection: DatabaseContext):
     for (table,) in tables:
         conn.execute(f"CREATE TABLE {table} AS SELECT * FROM _defog_src.{table};")
     conn.execute("DETACH _defog_src;")
-    return DatabaseContext(DatabaseConnection(conn), DatabaseDialect.DUCKDB)
+    return DatabaseContext(
+        DatabaseConnection(conn, DatabaseDialect.DUCKDB), DatabaseDialect.DUCKDB
+    )
 
 
 @pytest.fixture(scope="session")
@@ -2437,7 +2531,8 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         # database context in the result.
         gen_pagerank_records(connection, nodes, edges)
         result[name] = DatabaseContext(
-            DatabaseConnection(connection), DatabaseDialect.SQLITE
+            DatabaseConnection(connection, DatabaseDialect.SQLITE),
+            DatabaseDialect.SQLITE,
         )
     return result
 
@@ -3059,23 +3154,23 @@ def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
                 lambda: pd.DataFrame(
                     {
                         "k": [1, 2, 3, 4],
-                        "p1": ["Customer", "000000002", None, None],
+                        "p1": ["Customer", "000000002", "", ""],
                         "p2": ["Customer#", "", "", ""],
-                        "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", None, None],
-                        "p4": ["E", "XSTf4", None, None],
+                        "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", "", ""],
+                        "p4": ["E", "XSTf4", "", ""],
                         "p5": ["25", "768", "748", "5944"],
                         "p6": ["2988", "687", "719", "14"],
                         "p7": ["to", "accounts.", "eat", "regular"],
                         "p8": ["e", "boldly:", "even", "ideas"],
-                        "p9": ["IVhzIApeRb ot,c,E", None, None, None],
-                        "p10": ["BUILDING", "M", "AUT", None],
-                        "p11": ["Customer#", "2", None, None],
-                        "p12": ["*^%3$#", "##2$#&", "^%1$$", None],
-                        "p13": ["Customer#000000001", None, None, None],
-                        "p14": [None, None, None, None],
+                        "p9": ["IVhzIApeRb ot,c,E", "", "", ""],
+                        "p10": ["BUILDING", "M", "AUT", ""],
+                        "p11": ["Customer#", "2", "", ""],
+                        "p12": ["*^%3$#", "##2$#&", "^%1$$", ""],
+                        "p13": ["Customer#000000001", "", "", ""],
+                        "p14": ["", "", "", ""],
                         "p15": ["Customer", "Customer", "Customer", "Customer"],
-                        "p16": ["", "", None, None],
-                        "p17": [None, "68", "48", None],
+                        "p16": ["", "", "", ""],
+                        "p17": ["", "68", "48", ""],
                     }
                 ),
                 "get_part_test",
@@ -3115,6 +3210,12 @@ def mock_server_setup():
 
     # Wait until server is ready
     for _ in range(20):
+        if proc.poll() is not None:
+            output, _ = proc.communicate()
+            raise RuntimeError(
+                f"Mock server exited with code {proc.returncode}:\n{output}"
+            )
+
         try:
             r: httpx.Response = httpx.get(server_url + "/health", timeout=1)
             if r.status_code == 200:
@@ -3123,7 +3224,12 @@ def mock_server_setup():
             time.sleep(0.5)
     else:
         proc.terminate()
-        raise RuntimeError("Mock server failed to start")
+        try:
+            output, _ = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            output, _ = proc.communicate()
+        raise RuntimeError(f"Mock server failed to start:\n{output}")
 
     yield server_url
 
@@ -3320,7 +3426,7 @@ def tpch_custom_test_data_dialect_replacements(
                             "d17": ["02"],  # HH12
                             "d18": ["30"],  # MI
                             "d19": ["45"],  # SS
-                            "d20": ["P.M."],  # AM
+                            "d20": ["PM"],  # AM
                         }
                     ),
                     "string_format_specifiers",
@@ -3458,6 +3564,59 @@ def tpch_custom_test_data_dialect_replacements(
                 }
             ),
             "simple_dataframe_collection_3",
+        )
+
+    if test.test_name == "extract_colors" and dialect == DatabaseDialect.ORACLE:
+        return PyDoughPandasTest(
+            test.pydough_function,
+            test.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "key": list(range(1, 6)),
+                    "c1": ["GOLDENROD", "BLUSH", "SPRING", "CORNFLOWER", "FOREST"],
+                    "c2": ["LAVENDER", "THISTLE", "GREEN", "CHOCOLATE", "BROWN"],
+                    "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
+                    "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
+                    "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
+                    "c6": [None] * 5,
+                }
+            ),
+            test.test_name,
+        )
+
+    if (
+        test.test_name == "dataframe_collection_strings"
+        and dialect == DatabaseDialect.ORACLE
+    ):
+        return PyDoughPandasTest(
+            test.pydough_function,
+            test.graph_name,
+            lambda: pd.DataFrame(
+                {
+                    "normal_strings": [
+                        "hello",
+                        "world",
+                        "pydough",
+                        None,
+                        "test_string",
+                    ],
+                    "empty_string": [
+                        None,
+                        "not_empty",
+                        None,
+                        None,
+                        " ",
+                    ],
+                    "special_characters": [
+                        "'simple quoted'",
+                        '"double quoted"',
+                        "unicode_ß_ç_ü",
+                        None,
+                        "tap_space\tnewline_\n_test",
+                    ],
+                }
+            ),
+            test.test_name,
         )
 
     return test

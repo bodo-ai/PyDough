@@ -59,6 +59,124 @@ def dumb_aggregation():
     )
 
 
+def good_explode_01():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=True,
+        is_distinct=False,
+    )
+
+
+def good_explode_02():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=True,
+        is_distinct=True,
+    )
+
+
+def good_explode_03():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=False,
+        is_distinct=False,
+    )
+
+
+def good_explode_04():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="array",
+        filtering=False,
+        is_distinct=True,
+    )
+
+
+def good_explode_05():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=True,
+        is_distinct=False,
+    )
+
+
+def good_explode_06():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=True,
+        is_distinct=True,
+    )
+
+
+def good_explode_07():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=False,
+        is_distinct=False,
+    )
+
+
+def good_explode_08():
+    return nations.EXPLODE(
+        name,
+        "exploded_nation",
+        value_name="v",
+        index_name="i",
+        version="string",
+        delimiter=" ",
+        filtering=False,
+        is_distinct=True,
+    )
+
+
+def good_explode_09():
+    return (
+        nations.CALCULATE(region_name=region.name)
+        .EXPLODE(
+            name,
+            "exploded_nation",
+            value_name="v",
+            index_name="i",
+            version="string",
+            delimiter=" ",
+            filtering=True,
+            is_distinct=False,
+        )
+        .WHERE(v[:1] != region_name[:1])
+        .customers
+    )
+
+
 def simple_collation():
     return (
         suppliers.CALCULATE(
@@ -3708,4 +3826,215 @@ def division_with_iff_denom_false_branch():
     """Test: x / IFF(cond, fallback, y) - division by IFF where divisor is in false branch"""
     return lines.TOP_K(1, by=discount.ASC()).CALCULATE(
         computed_value=extended_price / IFF(discount > 0, 1, discount)
+    )
+
+
+def iff_with_aggregates_on_different_collections():
+    """
+    Test for issue #560: an IFF whose branches are
+    aggregates over two different collections used to raise
+    `KeyError: 'agg_1'` during SQL generation when only one of the
+    two branches ended up referenced in the final output.
+    """
+    return TPCH.CALCULATE(res_is_nothing=0).CALCULATE(
+        output=IFF(res_is_nothing == 1, COUNT(customers), COUNT(suppliers))
+    )
+
+
+def cross_similar_partitions():
+    """
+    Test for issue #561: CROSS between two PARTITION results that
+    both expose a term named "year" (each PARTITION's own key) used to
+    raise an AssertionError deep in relational conversion.
+    It now raises a clear PyDoughQDAGException at qualification time instead,
+    since "year" is ambiguous between the two crossed collections
+    (matching how this same ambiguity is already handled elsewhere in PyDough)
+    """
+
+    a = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="a_years", by=year)
+        .CALCULATE(year=year, total_a=SUM(orders.total_price))
+    )
+    b = (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="b_years", by=year)
+        .CALCULATE(other_year=year, total_b=COUNT(orders))
+    )
+    return a.CROSS(b).WHERE(year == other_year).CALCULATE(year, total_a, total_b)
+
+
+def partition_self_reference():
+    """
+    Test fix for the crash that happens when a PARTITION variable is referenced
+    inside its own CALCULATE.
+    """
+    c1 = customers.PARTITION(name="by_marketsegment", by=market_segment)
+    return c1.CALCULATE(x=COUNT(c1))
+
+
+def partition_by_literal():
+    """
+    Test that passing a bare Python literal as PARTITION's
+    `by=` argument is now giving a descriptive error message instead of
+    crashing with an unhandled `TypeError: 'int' object is not iterable`.
+    """
+    return (
+        customers.WHERE(account_balance > 0)
+        .PARTITION(name="all_group", by=1)
+        .CALCULATE(total=COUNT(customers))
+    )
+
+
+def partition_by_child_reference():
+    """
+    Test that passing a term from a child collection
+    (not a direct property of the collection being partitioned)
+    as PARTITION's `by=` argument is now giving a descriptive error message
+    instead of silently qualifying and producing an incorrect result.
+    """
+    return orders.PARTITION(name="by_cust_key", by=customer.key).CALCULATE(
+        total=COUNT(orders)
+    )
+
+
+def join_strings_too_few_values():
+    """
+    Test that calling JOIN_STRINGS with a delimiter and fewer than two
+    values to join is now giving a descriptive error message.
+    """
+    return orders.CALCULATE(cust_ids=JOIN_STRINGS(", ", customer.key))
+
+
+def isin_non_literal_arg():
+    """
+    Test that passing a PyDough expression
+    (not a tuple/list of literals) to ISIN's second argument is giving
+    a descriptive error message instead of crashing with an unhandled
+    `AssertionError` during SQL generation.
+    """
+    return orders.WHERE(ISIN(customer_key, (customer.key)))
+
+
+def isin_mixed_literal_list():
+    """
+    Test that passing a tuple mixing literals with a PyDough expression
+    as ISIN's second argument is giving a descriptive error message
+    instead of crashing with an unhandled `AssertionError` while coercing
+    the argument.
+    """
+    return orders.WHERE(ISIN(customer_key, (1, customer.key, 3)))
+
+
+def replace_non_string_arg():
+    """
+    Test that calling REPLACE with a non-string first argument (e.g. an
+    integer column) generates valid SQL for dialects like Postgres that
+    require an explicit cast to text, instead of generating SQL that fails
+    at runtime with a type mismatch.
+    """
+    return (
+        customers.WHERE(key <= 5)
+        .CALCULATE(clean_key=REPLACE(key, "1", "one"))
+        .ORDER_BY(key.ASC())
+    )
+
+
+def partition_key_name_collision():
+    """
+    Test for fixing the problem with shadowing a collection's own column
+    with a same-named CALCULATE term
+    (`orders.CALCULATE(key=customer.key, ...)`, and `orders` already has its
+    own `key` column), then using that term as a PARTITION key,
+    used to cause a `RecursionError`, a `KeyError`, and a silent
+    wrong-grouping bug, all from the same name collision.
+    """
+    invoice_info = orders.CALCULATE(
+        order_year=YEAR(order_date),
+        key=customer.key,
+        order_total=total_price,
+    )
+    return (
+        invoice_info.PARTITION(
+            name="customer_groups",
+            by=(key),
+        )
+        .CALCULATE(
+            key,
+            total=SUM(invoice_info.order_total),
+        )
+        .WHERE(key <= 3)
+    )
+
+
+def parent_calc_access_error():
+    """
+    Test that a child collection's CALCULATE cannot reference a term
+    defined in a parent collection's CALCULATE, and that doing so raises a
+    descriptive error message instead of silently qualifying and producing an
+    error later.
+    """
+    # 'top' calculates 'cust_name' on customers
+    top = customers.CALCULATE(cust_name=name)
+
+    # Referencing 'customer.cust_name' from orders causes a lowering error
+    result = top.orders.CALCULATE(
+        correct_usage=cust_name, incorrect_usage=customer.cust_name
+    )
+    return result
+
+
+def shadowed_calc_term():
+    """
+    The child `customer.CALCULATE(cust_name=phone).orders` redefines `cust_name`
+    as `phone`, and `.orders.cust_name` then reads it. Within that child, the nearest
+    definition is the inner one, so the value really comes from the child's own
+    data.
+    """
+    return (
+        customers.CALCULATE(cust_name=name)
+        .orders.CALCULATE(
+            key,
+            x=MAX(customer.CALCULATE(cust_name=phone).orders.cust_name),
+        )
+        .TOP_K(5, by=key.ASC())
+    )
+
+
+def partition_child_inherited_term():
+    """
+    Pair every region with its nations via CROSS, partition the pairs by
+    region, and aggregate a term (`region_name`) that was down-streamed from
+    the regions CALCULATE *inside the partitioned data*. The PARTITION
+    context only exposes `rkey`, so accessing `nations.region_name` through
+    the partition child is valid (context_inherits is False).
+    """
+
+    return (
+        regions.CALCULATE(rkey=key, region_name=name)
+        .CROSS(nations)
+        .WHERE(region_key == rkey)
+        .PARTITION(name="region_groups", by=rkey)
+        .CALCULATE(
+            rkey,
+            region_name=MAX(nations.region_name),
+            n_nations=COUNT(nations),
+        )
+        .ORDER_BY(rkey.ASC())
+    )
+
+
+def chained_partition_transformed_key():
+    """
+    Test for fixing the problem with chaining a second PARTITION on top of a
+    PARTITION whose key comes from a CALCULATE that redefines a term using
+    its own old value (e.g. `name=LOWER(name)`), used to cause an unhandled
+    `KeyError` during relational conversion.
+    """
+    return (
+        nations.CALCULATE(name=LOWER(name))
+        .PARTITION(name="a", by=name)
+        .PARTITION(name="b", by=name)
+        .CALCULATE(name)
+        .ORDER_BY(name.ASC())
     )

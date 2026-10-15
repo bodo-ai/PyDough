@@ -8,7 +8,7 @@ WITH _s1 AS (
   SELECT
     1 AS "_"
   FROM tpch.orders AS orders
-  JOIN _s1 AS _s1
+  ANTI JOIN _s1 AS _s1
     ON _s1.c_custkey = orders.o_custkey
   WHERE
     orders.o_clerk = 'Clerk#000000001'

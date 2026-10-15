@@ -1,7 +1,7 @@
 SELECT
   (
-    100.0 * SUM(LOWER(school_metro) = 'suburban')
+    100.0 * SUM(LOWER(SCHOOL_METRO) = 'suburban')
   ) / COUNT(*) AS percentage_suburban
 FROM MAIN.PROJECTS
 WHERE
-  LOWER(school_city) = 'santa barbara'
+  LOWER(SCHOOL_CITY) = 'santa barbara'

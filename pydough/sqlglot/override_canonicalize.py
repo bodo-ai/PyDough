@@ -34,7 +34,7 @@ def canonicalize(
     def _canonicalize(expression: exp.Expression) -> exp.Expression:
         expression = fix_expression_type(expression, dialect)  # PyDough change
         expression = add_text_to_concat(expression)
-        expression = replace_date_funcs(expression)
+        expression = replace_date_funcs(expression, dialect=dialect)
         expression = coerce_type(expression, dialect.PROMOTE_TO_INFERRED_DATETIME_TYPE)
         expression = remove_redundant_casts(expression)
         expression = ensure_bools(expression, _replace_int_predicate)

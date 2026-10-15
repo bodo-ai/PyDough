@@ -1,6 +1,6 @@
 SELECT
-  city_name,
+  CITY_NAME AS city_name,
   COUNT(*) AS total_count
 FROM MAIN.LOCATION
 GROUP BY
-  city_name
+  CITY_NAME

@@ -1,0 +1,4 @@
+ROOT(columns=[('name', name), ('letter', letter)], orderings=[])
+ FILTER(condition=CONTAINS(name, letter), columns={'letter': letter, 'name': name})
+  EXPLODE(['A', 'E', 'I']:array[unknown], value_name='letter', index_name='idx', version='array', filtering=True, is_distinct=False, columns={'idx': idx, 'letter': letter, 'name': name})
+   SCAN(table=tpch.REGION, columns={'name': r_name})

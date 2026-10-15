@@ -1,19 +1,19 @@
-WITH "_T1" AS (
+WITH "_t1" AS (
   SELECT
-    sbtxcustid AS SBTXCUSTID,
+    SBTXCUSTID,
     COUNT(*) AS N_ROWS,
-    SUM(sbtxstatus = 'success') AS SUM_EXPR
+    SUM(SBTXSTATUS = 'success') AS SUM_EXPR
   FROM MAIN.SBTRANSACTION
   GROUP BY
-    sbtxcustid
+    SBTXCUSTID
 )
 SELECT
-  SBCUSTOMER.sbcustname AS name,
+  SBCUSTOMER.SBCUSTNAME AS name,
   (
-    100.0 * COALESCE("_T1".SUM_EXPR, 0)
-  ) / "_T1".N_ROWS AS success_rate
+    100.0 * COALESCE("_t1".SUM_EXPR, 0)
+  ) / "_t1".N_ROWS AS success_rate
 FROM MAIN.SBCUSTOMER SBCUSTOMER
-JOIN "_T1" "_T1"
-  ON SBCUSTOMER.sbcustid = "_T1".SBTXCUSTID AND "_T1".N_ROWS >= 5
+JOIN "_t1" "_t1"
+  ON SBCUSTOMER.SBCUSTID = "_t1".SBTXCUSTID AND "_t1".N_ROWS >= 5
 ORDER BY
   2 NULLS FIRST

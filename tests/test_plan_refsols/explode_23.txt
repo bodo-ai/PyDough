@@ -1,0 +1,3 @@
+ROOT(columns=[('idx', idx), ('letter', letter)], orderings=[])
+ EXPLODE('ALPHABET':string, value_name='letter', index_name='idx', version='string', delimiter='', filtering=True, is_distinct=False, columns={'idx': idx, 'letter': letter})
+  EMPTYSINGLETON()

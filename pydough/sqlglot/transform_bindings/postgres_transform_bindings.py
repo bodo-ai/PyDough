@@ -8,23 +8,52 @@ import math
 from typing import Any
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot import parse_one
+from sqlglot.dialects.dialect import _with_strict_time_inverse
+from sqlglot.dialects.postgres import Postgres as PostgresDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import (
+    Identifier,
+    Lateral,
+    Select,
+    Subquery,
+    TableAlias,
+    Unnest,
+)
+from sqlglot.trie import new_trie
 
 import pydough.pydough_operators as pydop
 from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
-from pydough.types import PyDoughType
+from pydough.types import PyDoughType, StringType
+from pydough.types.boolean_type import BooleanType
 from pydough.types.datetime_type import DatetimeType
 from pydough.types.numeric_type import NumericType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.utilities import ExplodeSpec
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    extract_int_literal,
 )
+
+# PyDough Change: sqlglot dropped the "AM"/"PM" entries from
+# `Postgres.TIME_MAPPING` (present in 26.7.0, missing as of 30.18.0), which
+# broke translating the strftime `%p` specifier (e.g. `STRING(x, "%H:%M%p")`)
+# into Postgres's native `TO_CHAR` format. Restore them, along with the
+# derived INVERSE_TIME_MAPPING/INVERSE_TIME_TRIE structures sqlglot computes
+# once at class-definition time (mutating TIME_MAPPING alone has no effect,
+# since those aren't recomputed lazily).
+PostgresDialect.TIME_MAPPING["AM"] = "%p"
+PostgresDialect.TIME_MAPPING["PM"] = "%p"
+PostgresDialect.INVERSE_TIME_MAPPING = _with_strict_time_inverse(
+    {v: k for k, v in PostgresDialect.TIME_MAPPING.items()}
+)
+PostgresDialect.INVERSE_TIME_TRIE = new_trie(PostgresDialect.INVERSE_TIME_MAPPING)
 
 
 class PostgresTransformBindings(BaseTransformBindings):
@@ -64,6 +93,148 @@ class PostgresTransformBindings(BaseTransformBindings):
             )
 
         return super().convert_call_to_sqlglot(operator, args, types)
+
+    def convert_explode(
+        self,
+        input_expr: SQLGlotExpression,
+        explode_expr: SQLGlotExpression,
+        explode_spec: ExplodeSpec,
+        exprs: list[SQLGlotExpression],
+        val_index: int | None,
+        idx_index: int | None,
+        lateral_alias: str,
+        subquery_alias: str,
+    ) -> SQLGlotExpression:
+        """
+        What the final SQL will look like for array explosion:
+
+        ```
+        SELECT ..., L.val AS value, L.idx - 1 AS index
+        FROM (...) AS S
+        CROSS JOIN LATERAL UNNEST(explode_expr) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (regular):
+
+        ```
+        SELECT ..., L.val AS value, L.idx - 1 AS index
+        FROM (...) AS S,
+        CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(explode_expr, delimiter)) WITH ORDINALITY AS L(val, idx)
+        ```
+
+        What the final SQL will look like for string explosion (no delimiter):
+
+        ```
+        SELECT ..., L.val AS value, L.idx - 1 AS index
+        FROM (...) AS S,
+        CROSS JOIN LATERAL UNNEST(REGEXP_SPLIT_TO_ARRAY(explode_expr, '')) WITH ORDINALITY AS L(val, idx)
+        ```
+        """
+        column_exprs: list[SQLGlotExpression] = [*exprs]
+        if val_index is not None:
+            column_exprs[val_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Column(
+                    this=sqlglot_expressions.Identifier(this="val"),
+                    table=sqlglot_expressions.Identifier(this=lateral_alias),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.value_name),
+            )
+        if idx_index is not None and explode_spec.index_name is not None:
+            column_exprs[idx_index] = sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Column(
+                        this=sqlglot_expressions.Identifier(this="idx"),
+                        table=sqlglot_expressions.Identifier(this=lateral_alias),
+                    ),
+                    expression=sqlglot_expressions.Literal.number(1),
+                ),
+                alias=sqlglot_expressions.Identifier(this=explode_spec.index_name),
+            )
+
+        if explode_spec.version == "string":
+            assert explode_spec.delimiter is not None, (
+                "Delimiter must be provided for string explode."
+            )
+            if explode_spec.delimiter == "":
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="REGEXP_SPLIT_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(""),
+                    ],
+                )
+            else:
+                explode_expr = sqlglot_expressions.Anonymous(
+                    this="STRING_TO_ARRAY",
+                    expressions=[
+                        explode_expr,
+                        sqlglot_expressions.Literal.string(explode_spec.delimiter),
+                    ],
+                )
+        explode_op: SQLGlotExpression
+        if val_index is None:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                    ],
+                ),
+            )
+        else:
+            explode_op = Unnest(
+                expressions=[explode_expr],
+                offset=sqlglot_expressions.Literal.number(1),
+                alias=TableAlias(
+                    this=Identifier(this=lateral_alias),
+                    columns=[
+                        sqlglot_expressions.Identifier(this="val"),
+                        sqlglot_expressions.Identifier(this="idx"),
+                    ],
+                ),
+            )
+        result = (
+            Select()
+            .select(*column_exprs)
+            .from_(
+                Subquery(
+                    this=input_expr,
+                    alias=TableAlias(this=Identifier(this=subquery_alias)),
+                )
+            )
+            .join(Lateral(this=explode_op))
+        )
+
+        return result
+
+    def convert_listof(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="ARRAY_AGG", expressions=args)
+
+    def generate_dataframe_array_expression(
+        self, items: list[SQLGlotExpression], inner_type: PyDoughType
+    ) -> SQLGlotExpression:
+        if len(items) == 0:
+            # Convoluted way to generate empty array literal in Postgres using
+            # SQLGlot, to work around Postgres's typing rules.
+            inner_term: str
+            match inner_type:
+                case BooleanType():
+                    inner_term = "true"
+                case StringType():
+                    inner_term = "''"
+                case NumericType():
+                    inner_term = "0"
+                case DatetimeType():
+                    inner_term = "CAST('1970-01-01' AS TIMESTAMP)"
+                case _:
+                    raise ValueError(
+                        f"Cannot support empty array of type {inner_type} in Postgres."
+                    )
+            return parse_one(f"(ARRAY[{inner_term}])[1:0]")
+        return sqlglot_expressions.Array(expressions=items)
 
     def convert_get_part(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
@@ -244,11 +415,11 @@ class PostgresTransformBindings(BaseTransformBindings):
                 division_literal: int = 3600 if unit == DateTimeUnit.HOUR else 60
 
                 date1_truc: SQLGlotExpression = sqlglot_expressions.TimestampTrunc(
-                    this=date1, unit=unit
+                    this=date1, unit=sqlglot_expressions.Var(this=unit.value)
                 )
 
                 date2_truc: SQLGlotExpression = sqlglot_expressions.TimestampTrunc(
-                    this=date2, unit=unit
+                    this=date2, unit=sqlglot_expressions.Var(this=unit.value)
                 )
 
                 sub_dates: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -381,46 +552,24 @@ class PostgresTransformBindings(BaseTransformBindings):
 
         start_idx: int | None = None
         if not isinstance(start, sqlglot_expressions.Null):
-            if isinstance(start, sqlglot_expressions.Literal):
-                try:
-                    start_idx = int(start.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the start index being integer literal or absent."
-                    )
-            else:
+            start_idx = extract_int_literal(start)
+            if start_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the start index being integer literal or absent."
                 )
 
         stop_idx: int | None = None
         if not isinstance(stop, sqlglot_expressions.Null):
-            if isinstance(stop, sqlglot_expressions.Literal):
-                try:
-                    stop_idx = int(stop.this)
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the stop index being integer literal or absent."
-                    )
-            else:
+            stop_idx = extract_int_literal(stop)
+            if stop_idx is None:
                 raise ValueError(
                     "SLICE function currently only supports the stop index being integer literal or absent."
                 )
 
         step_idx: int | None = None
         if not isinstance(step, sqlglot_expressions.Null):
-            if isinstance(step, sqlglot_expressions.Literal):
-                try:
-                    step_idx = int(step.this)
-                    if step_idx != 1:
-                        raise ValueError(
-                            "SLICE function currently only supports the step being integer literal 1 or absent."
-                        )
-                except ValueError:
-                    raise ValueError(
-                        "SLICE function currently only supports the step being integer literal 1 or absent."
-                    )
-            else:
+            step_idx = extract_int_literal(step)
+            if step_idx is None or step_idx != 1:
                 raise ValueError(
                     "SLICE function currently only supports the step being integer literal 1 or absent."
                 )
@@ -631,6 +780,20 @@ class PostgresTransformBindings(BaseTransformBindings):
             is_left=False,
         )
         return result
+
+    def convert_replace(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Postgres does not implicitly cast non-text arguments (e.g. an
+        # integer column) to text for REPLACE, unlike other dialects, so
+        # the first argument must be cast explicitly.
+        args = [
+            sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("TEXT")
+            ),
+            *args[1:],
+        ]
+        return super().convert_replace(args, types)
 
     def convert_user_generated_range(
         self,

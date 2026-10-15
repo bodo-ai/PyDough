@@ -6,9 +6,9 @@ SELECT
   COALESCE(SUM(CAST(sbcustpostalcode AS INT)), 0) AS a4,
   MIN(sbcustphone) AS a5,
   MAX(sbcustphone) AS a6,
-  MAX(LOWER(sbcuststate)) AS a7,
-  MAX(LOWER(sbcuststate)) AS a8,
-  MAX(LOWER(sbcuststate)) AS a9
+  ANY_VALUE(LOWER(sbcuststate)) AS a7,
+  ANY_VALUE(LOWER(sbcuststate)) AS a8,
+  ANY_VALUE(LOWER(sbcuststate)) AS a9
 FROM main.sbcustomer
 GROUP BY
   1

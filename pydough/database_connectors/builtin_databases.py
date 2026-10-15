@@ -101,7 +101,7 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
     if "database" not in kwargs:
         raise PyDoughSessionException("SQLite connection requires a database path.")
     connection: sqlite3.Connection = sqlite3.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, DatabaseDialect.SQLITE)
 
 
 def load_snowflake_connection(**kwargs) -> DatabaseConnection:
@@ -133,22 +133,24 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
     connection: snowflake.connector.connection.SnowflakeConnection
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in DatabaseConnection
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.SNOWFLAKE)
     # Snowflake connection requires specific parameters:
-    # user, password, account.
-    # Raise an error if any of these are missing.
+    # user, account, and either password or private_key_file (key pair/JWT
+    # authentication). Raise an error if any of these are missing.
     # NOTE: database, schema, and warehouse are optional and
     # will default to the user's settings.
     # See: https://docs.snowflake.com/en/developer-guide/python-connector/python-connector-api#label-snowflake-connector-methods-connect
-    required_keys = ["user", "password", "account"]
-    if not all(key in kwargs for key in required_keys):
+    required_keys = ["user", "account"]
+    if not all(key in kwargs for key in required_keys) or not (
+        "password" in kwargs or "private_key_file" in kwargs
+    ):
         raise ValueError(
-            "Snowflake connection requires the following arguments: "
-            + ", ".join(required_keys)
+            "Snowflake connection requires 'user', 'account', and either "
+            "'password' or 'private_key_file'"
         )
     # Create a Snowflake connection using the provided keyword arguments
     connection = snowflake.connector.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, DatabaseDialect.SNOWFLAKE)
 
 
 def load_trino_connection(**kwargs) -> DatabaseConnection:
@@ -179,7 +181,7 @@ def load_trino_connection(**kwargs) -> DatabaseConnection:
 
     connection = kwargs.pop("connection", None)
     if connection:
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, dialect=DatabaseDialect.TRINO)
     required_keys = ["user", "host", "port"]
     if not all(key in kwargs for key in required_keys):
         raise ValueError(
@@ -188,7 +190,7 @@ def load_trino_connection(**kwargs) -> DatabaseConnection:
         )
     # Create a Trino connection using the provided keyword arguments
     connection = trino.dbapi.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, dialect=DatabaseDialect.TRINO)
 
 
 def load_mysql_connection(**kwargs) -> DatabaseConnection:
@@ -233,7 +235,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.MYSQL)
 
     # MySQL connection requires specific parameters:
     # user, password, database.
@@ -268,7 +270,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     while attempt <= attempts:
         try:
             connection = mysql.connector.connect(**kwargs)
-            return DatabaseConnection(connection)
+            return DatabaseConnection(connection, DatabaseDialect.MYSQL)
 
         except (OSError, mysql.connector.Error) as err:
             if attempt >= attempts:
@@ -324,7 +326,7 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.POSTGRES)
 
     # Postgres connection requires specific parameters:
     # user, password, dbname.
@@ -358,7 +360,7 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
     while attempt <= attempts:
         try:
             connection = psycopg2.connect(**kwargs)
-            return DatabaseConnection(connection)
+            return DatabaseConnection(connection, DatabaseDialect.POSTGRES)
 
         except (OSError, psycopg2.Error) as err:
             if attempt >= attempts:
@@ -412,7 +414,7 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
         assert isinstance(connection, oracledb.Connection)
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.ORACLE)
 
     # Oracle connection requires specific parameters:
     # user, password, host and service_name.
@@ -450,7 +452,7 @@ def load_oracle_connection(**kwargs) -> DatabaseConnection:
     while attempt <= attempts:
         try:
             connection = oracledb.connect(**kwargs)
-            return DatabaseConnection(connection)
+            return DatabaseConnection(connection, DatabaseDialect.ORACLE)
 
         except (OSError, oracledb.Error) as err:
             if attempt >= attempts:
@@ -493,7 +495,7 @@ def load_databricks_connection(**kwargs) -> DatabaseConnection:
         )
 
     if connection := kwargs.pop("connection", None):
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.DATABRICKS)
 
     required_keys = ["server_hostname", "http_path", "access_token"]
     if not all(key in kwargs for key in required_keys):
@@ -503,7 +505,7 @@ def load_databricks_connection(**kwargs) -> DatabaseConnection:
         )
 
     connection = sql.connect(**kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, DatabaseDialect.DATABRICKS)
 
 
 def load_duckdb_connection(**kwargs) -> DatabaseConnection:
@@ -528,11 +530,11 @@ def load_duckdb_connection(**kwargs) -> DatabaseConnection:
         )
 
     if connection := kwargs.pop("connection", None):
-        return DatabaseConnection(connection)
+        return DatabaseConnection(connection, DatabaseDialect.DUCKDB)
 
     database = kwargs.pop("database", ":memory:")
     connection = duckdb.connect(database=database, **kwargs)
-    return DatabaseConnection(connection)
+    return DatabaseConnection(connection, DatabaseDialect.DUCKDB)
 
 
 def load_bodosql_context(**kwargs) -> "BodoSQLContext":

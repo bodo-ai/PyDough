@@ -1,0 +1,132 @@
+{
+  "pydough": "result = pydough.dataframe_collection('scores', my_df, ['row_id']).WHERE(score > 3).CALCULATE(row_id, score)",
+  "explain_output": {
+    "error": false,
+    "query_summary": "Accesses user-generated collection 'scores', filtered to rows where score > 3, selecting row_id, score.",
+    "steps": [
+      {
+        "order": 1,
+        "type": "GlobalContext",
+        "description": "Entry point: the graph-level context.",
+        "debug": {
+          "available_terms": {
+            "expressions": [],
+            "collections": [
+              "customers",
+              "lines",
+              "nations",
+              "orders",
+              "parts",
+              "regions",
+              "suppliers",
+              "supply_records"
+            ]
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 2,
+        "type": "UserGeneratedCollection",
+        "description": "Accesses user-generated DataFrame collection 'scores' (5 row(s), columns: row_id, score).",
+        "name": "scores",
+        "kind": "dataframe",
+        "row_count": 5,
+        "columns": [
+          "row_id",
+          "score"
+        ],
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "row_id",
+              "score"
+            ],
+            "collections": []
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 3,
+        "type": "Where",
+        "description": "Filters rows to those matching the given conditions.",
+        "conditions": [
+          {
+            "kind": "BinaryOp",
+            "text": "score > 3",
+            "operator": ">",
+            "left": {
+              "kind": "Reference",
+              "term_name": "score"
+            },
+            "right": {
+              "kind": "Literal",
+              "text": "3",
+              "value": 3,
+              "data_type": "numeric"
+            }
+          }
+        ],
+        "condition_summary": "score > 3",
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "row_id",
+              "score"
+            ],
+            "collections": []
+          }
+        },
+        "notes": []
+      },
+      {
+        "order": 4,
+        "type": "Calculate",
+        "description": "Adds computed expressions to the collection.",
+        "terms": [
+          "row_id",
+          "score"
+        ],
+        "term_details": {
+          "row_id": {
+            "kind": "Reference",
+            "term_name": "row_id"
+          },
+          "score": {
+            "kind": "Reference",
+            "term_name": "score"
+          }
+        },
+        "debug": {
+          "available_terms": {
+            "expressions": [
+              "row_id",
+              "score"
+            ],
+            "collections": []
+          }
+        },
+        "notes": []
+      }
+    ],
+    "schema": {
+      "source_collection": "scores",
+      "available_expressions": [
+        "row_id",
+        "score"
+      ],
+      "output_columns": [
+        "row_id",
+        "score"
+      ],
+      "column_types": {
+        "row_id": "numeric",
+        "score": "numeric"
+      },
+      "ordering": [],
+      "limit": null
+    }
+  },
+  "explain_output_md": "dataframe_where_calculate.md"
+}

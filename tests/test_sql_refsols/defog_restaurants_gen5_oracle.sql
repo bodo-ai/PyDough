@@ -1,9 +1,9 @@
 SELECT
-  city_name,
+  CITY_NAME AS city_name,
   COUNT(*) AS num_restaurants
 FROM MAIN.LOCATION
 GROUP BY
-  city_name
+  CITY_NAME
 ORDER BY
   2 DESC NULLS LAST,
   1 DESC NULLS LAST

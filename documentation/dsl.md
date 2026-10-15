@@ -19,10 +19,12 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [SINGULAR](#singular)
    * [BEST](#best)
    * [CROSS](#cross)
+   * [EXPLODE](#explode)
 - [User Generated Collections](#user-generated-collections)
     * [range_collection](#range_collection)
     * [dataframe_collection](#dataframe_collection)
     * [View/Table Collections (via to_table)](#view_collection)
+- [PyDough Templates](#templates)
 - [Larger Examples](#larger-examples)
    * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
    * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
@@ -36,7 +38,7 @@ This page describes the specification of the PyDough DSL. The specification incl
 ## Example Graph
 
 The examples in this document use a metadata graph (named `GRAPH`) with the following collections:
-- `People`: records of every known person. Scalar properties: `first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`.
+- `People`: records of every known person. Scalar properties: `first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`, `phone_numbers`.
 - `Addresses`: records of every known address. Scalar properties: `address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`.
 - `Packages`: records of every known package. Scalar properties: `package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`.
 
@@ -1536,6 +1538,147 @@ People.CALCULATE(Packages=COUNT(People.packages)).CROSS(Packages)
 People.CROSS(Addresses).current_address
 ```
 
+<!-- TOC --><a name="explode"></a>
+### EXPLODE
+
+A PyDough operation that explodes each row from a collection into multiple rows, i.e. from flattening a column of array data, or by splitting up a string column on a delimiter. The outputted collection will be a sub-collection of the original context containing the exploded data, and an optional indexed column keeping track of the indices of each value of the exploded data within a single row. This newly generated sub-collection has no other sub-collections from the original collection. The syntax for this operation is `collection.EXPLODE(...)`. `EXPLODE` has the following arguments:
+- `data` (required): the expression from the current context being exploded (either an array or string). This expression cannot reference any sub-collections of the current context.
+- `name` (required): the name of the collection created from the explosion operation (similar to `PARTITION`).
+- `value_name` (required): a string literal declaring the name of the new column that will be used to store the exploded data.
+- `index_name` (optional): a string literal declaring the name of the new column that will be used to store the indices of the exploded data.  If not provided, this column is not generated. The `index_name` is required if `is_distinct` is False. The indices are 0-indexed.
+- `version` (optional, default=`"array"`): either `"array"` or `"string"`, stating whether the data to explode is an array being flattened or a string being split on a delimiter.
+- `delimiter` (optional): a string literal indicating the delimiter that should be used to split up the string if `version="string"`. If `delimiter` is an empty string, the string will be split into individual characters.
+- `filtering` (optional, default=`True`): `True` if it is possible for not every row in the original collection to be preserved in the exploded sub-collection (i.e. if one of the arrays is empty), and `False` otherwise.
+- `is_distinct` (optional, default=`False`): `True` if each row of the exploded data is unique within the set of all other values from that same original row of unexploded data, and `False` otherwise. An `index_name` can only be omitted if `is_distinct` is `True`.
+
+> [!IMPORTANT]
+> This feature is only supported in certain dialects. It is currently supported for Snowflake, DataBricks, DuckDB, Postgres and Trino.
+
+**Good Example #1**: List out every phone number had by every person (assuming `phone_numbers` is an array of strings).
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', is_distinct=True)
+```
+
+**Good Example #2**: For each person, find the first phone number they have (assuming `phone_numbers` is an array of strings).
+
+```py
+%%pydough
+People.CALCULATE(first_name, last_name)
+      .EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name='idx', is_distinct=True)
+      .WHERE(idx == 0)
+      .CALCULATE(first_name, last_name, phone_number)
+```
+
+**Good Example #3**: For each person, count how many phone numbers they have (assuming `phone_numbers` is an array of strings).
+```py
+%%pydough
+exploded_numbers = EXPLODE(phone_numbers, "numbers", value_name='phone_number', is_distinct=True)
+People.CALCULATE(first_name, last_name, n_phone_numbers=COUNT(exploded_numbers))
+```
+
+**Good Example #4**: List out every phone number had by every person (assuming `phone_numbers` is a string of comma separated values).
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', version="string", delimiter=",", is_distinct=True)
+```
+
+**Good Example #5**: List the number of times each character of the alphabet used within first names of people.
+
+```py
+%%pydough
+People.EXPLODE(LOWER(first_name), "characters", value_name='char', index_name="idx", version="string", delimiter="")
+      .PARTITION(name='letters', by=char)
+      .CALCULATE(char, n_uses=COUNT(characters))
+```
+
+**Data Example**:
+
+Suppose we have the following collection of data `thesaurus` containing words and some of their synonyms in an array:
+| word    | synonyms                       |
+|---------|--------------------------------|
+| 'wise'  | ['sage', 'insightful', 'keen'] |
+| 'old'   | ['elderly', 'ancient']         |
+| 'my'    | []                             |
+| 'large' | ['big']                        |
+
+Now suppose the following PyDough code is used to transform `thesaurus` using the `EXPLODE` operator (note: `filtering=True` because one of the rows is an empty array):
+```py
+%%pydough
+thesaurus.CALCULATE(word)
+         .EXPLODE(synonyms, "words", value_name='synonym', index_name='syn_idx', filtering=True)
+         .CALCULATE(word, syn_idx, synonym)
+```
+
+The result would be the following table:
+| word    | syn_idx | synonym      |
+|---------|---------|--------------|
+| 'wise'  | 0       | 'sage'       |
+| 'wise'  | 1       | 'insightful' |
+| 'wise'  | 2       | 'keen'       |
+| 'old'   | 0       | 'elderly'    |
+| 'old'   | 1       | 'ancient'    |
+| 'large' | 0       | 'big'        |
+
+**Bad Example #1**: Missing the `name`.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, value_name='phone_number', index_name="idx")
+```
+
+**Bad Example #2**: Missing the `value_name`.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", index_name="idx")
+```
+
+**Bad Example #3**: Missing the `index_name` when `is_distinct=True` is not provided.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number')
+```
+
+**Bad Example #4**: Providing an invalid `version`
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx", version="party")
+```
+
+**Bad Example #5**: Missing the `delimiter` when `version="string"`
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx", version="string")
+```
+
+**Bad Example #6**: Not providing a string literal for the delimiter.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx", version="string", delimiter=first_name)
+```
+
+**Bad Example #7**: Attempting to access a sub-collection after exploding.
+
+```py
+%%pydough
+People.EXPLODE(phone_numbers, "numbers", value_name='phone_number', index_name="idx")
+      .packages
+```
+
+**Bad Example #8**: Accessing a sub-collection when declaring the data to explode.
+
+```py
+%%pydough
+People.EXPLODE(LISTOF(packages.package_cost), "costs", value_name='cost', index_name="idx")
+```
+
 <!-- TOC --><a name="user-generated-collections"></a>
 ## User Generated Collections
 
@@ -1605,11 +1748,16 @@ The supported PyDough types for `dataframe_collection` are:
 - `NumericType`: includes float, integer, infinity, Nan.
 - `BooleanType`: True or False.
 - `StringType`: alphanumeric characters.
-- `Datetype`: date and datetime.
+- `DateType`: date and datetime.
+- `ArrayType`: arrays of data.
 - `UnknownType`: used for all `None` columns.
 
 Note: MySQL by default does not support infinity values. When PyDough detects 
 infinity value with `DatabaseDiatect.MYSQL` an error will be raised.
+
+> [!IMPORTANT]
+> `ArrayType` is only supported for certain dialects: Trino, Postgres, DuckDB, Databricks.
+> Postgres has a limited ability to support rows with an empty array, depending on the type of the column. These sorts of array literals are only supported when the overall column type is an array of booleans, numbers, strings, or datetime values.
 
 #### Example 1
 
@@ -1775,6 +1923,258 @@ Result:
 1           9    1
 2          12    1
 ``` 
+
+<!-- TOC --><a name="templates"></a>
+## PyDough Templates
+
+Once a template is registered in metadata (see [Templates](metadata#templates) for how to define one), it can be used in two ways:
+
+- **Directly**, as an ordinary PyDough function call, passing raw literal/PyDough values as arguments.
+- **Through the API**, via [`pydough.call_template`](usage#call_template_api), passing `user-facing` labels instead of raw values.
+
+Both approaches ultimately call the same generated function and produce the same result — the only difference is how the arguments are supplied. Regardless of which is used, the result of a template call can be treated like any other PyDough value: chained into further PyDough operations, passed into another template, or (if the template's `answer_variable` is a plain literal) used directly in Python.
+
+<!-- TOC --><a name="using-templates-direct"></a>
+### Calling a Template Directly
+
+A loaded template behaves like any other PyDough function — call it by name, passing values positionally in the order its `parameters` were defined (see [Parameter Numeration](#template-parameter-numeration)).
+
+Example: using the `orders_filter_count` template directly, with a raw PyDough filter condition, to find the top 5 customers by number of orders placed in 1996 above a price of 3000:
+
+Template definition:
+```json
+{
+    "name": "orders_filter_count",
+    "description": "Counts the number of orders placed that satisfied the given condition.",
+    "parameters": {
+        "orders_filter": {
+            "type": "pydough",
+            "description": "Condition(s) for the order to make it count"
+        }
+    },
+    "source": "result = COUNT(orders.WHERE({1}))",
+    "answer_variable": "result"
+}
+```
+
+```python
+customers.CALCULATE(
+    key,
+    n_orders=orders_filter_count(
+        (total_price > 3000) & (YEAR(order_date) == 1996)
+    ),
+).TOP_K(5, by=(n_orders.DESC(), key.ASC()))
+```
+
+<!-- TOC --><a name="using-templates-api"></a>
+### Calling a Template via `pydough.call_template`
+
+Instead of passing raw values, `pydough.call_template` looks up each argument by a user-facing **label**, resolving it to the underlying value through the graph's [attributes](metadata#template-attributes). See [`pydough.call_template`](usage#call_template_api) for the full parameter/error reference.
+
+Example: using the `orders_filter_count` template via the API, with the label `"High priority"` resolving to a PyDough filter condition:
+
+```python
+result = customers.CALCULATE(
+    key,
+    n_orders=pydough.call_template(
+        "orders_filter_count", labels={"orders_filter": "High priority"}
+    ),
+).TOP_K(5, by=(n_orders.DESC(), key.ASC()))
+
+pydough.to_df(result)
+```
+
+Because `call_template` returns an ordinary `UnqualifiedNode` (or literal), its result can be used exactly like any other PyDough value — including inside a filter, as shown here to find the nations with the most customers who have placed an order above 3000:
+
+```python
+selected_orders = pydough.call_template(
+    "orders_filter_count", labels={"orders_filter": "Price above 3000"}
+)
+result = nations.CALCULATE(
+    name, n_customers=COUNT(customers.WHERE(selected_orders > 0))
+).TOP_K(3, by=(n_customers.DESC(), name.ASC()))
+
+pydough.to_df(result)
+```
+
+<!-- TOC --><a name="using-templates-follow-up"></a>
+### Chaining Templates Together
+
+The result of one template call can be fed directly into another template as an argument, letting templates build on each other without needing to re-express the earlier result in raw PyDough. It works the same way whether the first call was made directly or through the API.
+
+Example: calling `orders_revenue_by` via the API to partition order revenue for 1997 by month, then passing that result into `top_bottom_comparison` to find the highest- and lowest-performing months:
+
+Template definitions:
+```json
+{ 
+    "name": "orders_revenue_by",
+    "description": "Calculates the revenue of orders in a given year, partitioned by a specified dimension.",
+    "parameters": {
+        "arg_year": {
+            "type": "int", 
+            "description": "The year for which to calculate the revenue of orders."
+        },
+        "arg_dimension": {
+            "type": "pydough",
+            "description": "The dimension by which to partition the revenue calculation."
+        }
+    },
+    "source": "result = orders.WHERE(({1} == YEAR(order_date))).CALCULATE(revenue=order_revenue(), dimension=({2})).PARTITION(name=\"orders_groups\", by=dimension).CALCULATE(dimension, segment_revenue=SUM(orders.revenue))\n",
+    "answer_variable": "result"
+},
+{
+    "name": "top_bottom_comparison",
+    "description": "Compares the top and bottom groups of a partitioned orders",
+    "parameters": {
+        "arg_partitioned_orders": {
+            "type": "pydough",
+            "description": "The partitioned orders to compare."
+        },
+        "arg_calculation": {
+            "type": "pydough",
+            "description": "The metric by which to compare the groups."
+        }
+    },
+    "source": "result = {1}.CALCULATE(dimension, segment_revenue, comparison_value={2}).WHERE(ABSENT(PREV(segment_revenue, by=segment_revenue.DESC())) | ABSENT(NEXT(segment_revenue, by=segment_revenue.DESC())) )",
+    "answer_variable": "result"
+}
+``` 
+
+```python
+orders_segmentation = pydough.call_template(
+    "orders_revenue_by", labels={"arg_year": "Year 1997", "arg_dimension": "Month"}
+)
+
+final_result = top_bottom_comparison(orders_segmentation, AVG(orders.revenue))
+
+pydough.to_df(final_result)
+```
+
+<!-- TOC --><a name="using-templates-literal"></a>
+### Templates Returning Literals
+
+Not every template needs to return a PyDough collection/expression — a template's `answer_variable` can just as easily hold a plain literal (see [Definition Field: `source`](metadata#template-source)). Its result can then be used as an ordinary Python/PyDough value, such as a threshold in a later filter.
+
+Example: calling `multiply_by_2` via the API to compute a minimum account balance from a label, then using that value directly in a `WHERE`:
+
+Template definition:
+```json
+{
+    "name": "multiply_by_2",
+    "description": "Receives an integer and return its multiplication by 2.",
+    "parameters": {
+    "base_number": {
+        "type": "int",
+        "description": "Number being multiply by 2"
+    }
+    },
+    "source": "result = {1} * 2\n",
+    "answer_variable": "result"
+}
+```
+
+```python
+min_account_balance = pydough.call_template(
+    "multiply_by_2", labels={"base_number": "Year 1992"}
+)
+
+selected_customers = customers.WHERE(account_balance >= min_account_balance)
+final_result = TPCH.CALCULATE(n_custs=COUNT(selected_customers))
+
+pydough.to_df(final_result)
+```
+
+<!-- TOC --><a name="using-templates-dataframe"></a>
+### Templates Producing a User-Generated Collection
+
+A template's `source` can also produce a **user-generated collection** — e.g. one built from an in-memory `pd.DataFrame` via `pydough.dataframe_collection` — rather than deriving from the graph itself. This works like any other template, but the `pd.DataFrame` and `list` typed parameters let you wrap external, ad hoc data into a a proper collection and combine it with the rest of the graph (e.g. via `CROSS`, `WHERE`, `CALCULATE`) just as if it were a regular collection.
+
+Example template definition, wrapping a `pd.DataFrame` into a named dataframe collection with a list of unique columns:
+
+```json
+{
+  "name": "dataframe_input_collection",
+  "description": "Generates a dataframe collection from the given parameters",
+  "parameters": {
+    "collection_name": {
+      "type": "str",
+      "description": "Name for the generated dataframe collection"
+    },
+    "new_df": {
+      "type": "pd.DataFrame",
+      "description": "New dataframe to create the collection with"
+    },
+    "unique_columns": {
+      "type": "list",
+      "description": "List of unique column names for the dataframe collection"
+    }
+  },
+  "source": "result = pydough.dataframe_collection({1}, {2}, {3})",
+  "answer_variable": "result"
+}
+```
+
+Example usage: calling `dataframe_input_collection` directly with an input DataFrame, then crossing the resulting collection with a filtered set of orders:
+
+```python
+input_df = pd.DataFrame(
+    {
+        "cust_id": [1, 2, 3],
+        "customer_name": ["customer_1", "customer_2", "customer_3"],
+    }
+)
+
+df_collection = dataframe_input_collection(
+    "customers_collection", input_df, ["cust_id"]
+)
+
+selected_orders = orders.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(key, clerk)
+
+(
+    df_collection.CALCULATE(cust_id, customer_name)
+    .CROSS(selected_orders)
+    .WHERE(cust_id == key)
+    .CALCULATE(cust_id, customer_name, key, clerk)
+)
+```
+
+<!-- TOC --><a name="using-templates-recursive"></a>
+### Recursive Templates
+
+A template's `source` can call itself, since it is compiled into a regular Python function (see [Definition Field: `source`](metadata#template-source)). Recursive templates are called the same way as any other template — directly or via the API — with no special handling needed at the call site.
+
+Example: calling the recursive `cumulative_orders_counter` template directly, with different `base_year`/`last_year` ranges:
+
+Template definition:
+```json
+{
+    "name": "cumulative_orders_counter",
+    "description": "Calculates the cumulative counter of all orders placed from a base year through a given last year. Recursively sums the current year's counter and the cumulative counter of all next years.",
+    "parameters": {
+        "base_year": { 
+            "type": "int", 
+            "description": "The year through which to calculate cumulative revenue." 
+        },
+        "last_year": { 
+            "type": "int", 
+            "description": "The earliest year to include in the cumulation (recursion base case)." 
+        }
+    },
+    "source": "assert base_year <= last_year\nif {1} == {2}:\n  result = COUNT(orders.WHERE(YEAR(order_date) == base_year))\nelse:\n result = (\n COUNT(orders.WHERE(YEAR(order_date) == base_year)) + cumulative_orders_counter(base_year + 1, last_year))\n",
+    "answer_variable": "result"
+}
+```
+
+```python
+result = TPCH.CALCULATE(
+    y_1994=cumulative_orders_counter(1994, 1994),
+    y_1994_1996=cumulative_orders_counter(1994, 1996),
+    y_1994_1998=cumulative_orders_counter(1994, 1998),
+)
+
+pydough.to_df(result)
+```
+
 
 <!-- TOC --><a name="larger-examples"></a>
 ## Larger Examples
