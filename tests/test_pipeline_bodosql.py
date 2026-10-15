@@ -512,6 +512,30 @@ def bodosql_sample_contexts(
     }
 
 
+def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
+    """
+    Mutates `df` in place, converting any string column that is actually a
+    date/timestamp into a real datetime dtype.
+
+    SQLite has no native date type, so `pd.read_sql_query` reads date columns
+    back as plain ISO-8601 strings. If those are written into an Iceberg
+    table as a string column, BodoSQL's file-pruning statistics can't
+    correctly compare them against a DATE/TIMESTAMP literal in a query (it
+    can silently prune away every file, producing wrong/empty results -- see
+    the bug behind `tpch_q15`). A column is only converted if every
+    non-null value parses successfully, so free-text/code columns are left
+    alone.
+    """
+    for col_name in df.columns:
+        if df[col_name].dtype == object:
+            parsed = pd.to_datetime(df[col_name], format="ISO8601", errors="coerce")
+            if parsed.notna().equals(df[col_name].notna()):
+                # Iceberg format v2 only supports microsecond timestamp
+                # precision, not the nanosecond precision pandas/PyArrow
+                # default to.
+                df[col_name] = parsed.astype("datetime64[us]")
+
+
 @pytest.fixture(scope="session")
 def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLContext:
     """
@@ -628,6 +652,7 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
                 df: pd.DataFrame = pd.read_sql_query(
                     f"SELECT * FROM main.{table_name}", defog_conn
                 )
+                _parse_date_like_string_columns(df)
                 arrow_table: PyArrowTable = pa.Table.from_pandas(df)
 
                 # Replace any NULL columns with string type for BodoSQL's
@@ -737,6 +762,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                 df: pd.DataFrame = pd.read_sql_query(
                     f"SELECT * FROM main.{table_name}", tpch_conn
                 )
+                _parse_date_like_string_columns(df)
                 arrow_table: PyArrowTable = pa.Table.from_pandas(df)
 
                 # Replace any NULL columns with string type for BodoSQL's
@@ -2718,6 +2744,8 @@ def test_bodosql_e2e_defog(
         "broker_basic4": "Unknown Bodo typing issue with join state involving dictionary vs string arrays as join keys",
         "dealership_adv4": "NA mask are different in new Bodo version",
         "ewallet_adv4": "NA mask are different in new Bodo version",
+        "dealership_adv13": "BodoSQL Java heap space OOM compiling DATE_TRUNC/CURRENT_TIMESTAMP query",
+        "dealership_adv14": "BodoSQL Java heap space OOM compiling DATEDIFF/CURRENT_TIMESTAMP query",
     }
     if defog_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[defog_pipeline_test_data.test_name])
