@@ -95,7 +95,7 @@ def test_get_logger_propagation(monkeypatch):
     buf = StringIO()
     custom_handler = logging.StreamHandler(buf)
     # Create the pydough logger with the custom handler (default name is pydough)
-    logger1 = get_logger(default_level=logging.WARN, handlers=[custom_handler])
+    logger1 = get_logger(default_level=logging.WARNING, handlers=[custom_handler])
     # Avoid interference from root handlers
     logger1.propagate = False
     # Create new logger that will propagate messages to logger1 handlers

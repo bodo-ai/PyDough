@@ -8,7 +8,7 @@ import logging
 import re
 import sys
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import numpy as np
@@ -4403,16 +4403,16 @@ from .testing_utilities import (
                     {
                         "idx": [1, 2, 3, 4],
                         "arr_d": [
-                            [datetime(2020, 1, 1, 0, 0, 0)],
+                            [datetime(2020, 1, 1, 0, 0, 0, tzinfo=UTC)],
                             [],
                             [
-                                datetime(2021, 6, 15, 0, 0, 0),
-                                datetime(2022, 12, 31, 0, 0, 0),
+                                datetime(2021, 6, 15, 0, 0, 0, tzinfo=UTC),
+                                datetime(2022, 12, 31, 0, 0, 0, tzinfo=UTC),
                             ],
                             [
-                                datetime(1999, 7, 4, 0, 0, 0),
+                                datetime(1999, 7, 4, 0, 0, 0, tzinfo=UTC),
                                 None,
-                                datetime(2000, 1, 1, 0, 0, 0),
+                                datetime(2000, 1, 1, 0, 0, 0, tzinfo=UTC),
                             ],
                         ],
                         "arr_t": [
@@ -6744,7 +6744,7 @@ from .testing_utilities import (
                         "month_name_col": ["May", "Jul", "Feb", "Feb", "Jan"],
                         "month_col_added": ["Aug", "Oct", "May", "May", "Apr"],
                         "month_str_subs": ["May", "May", "May", "May", "May"],
-                        "month_now": [datetime.now().strftime("%b")] * 5,
+                        "month_now": [datetime.now(tz=UTC).strftime("%b")] * 5,
                     }
                 ),
                 "monthname_function_1",
@@ -8669,9 +8669,7 @@ def test_pipeline_to_table_ddl(
     # that reference attached databases.
     # SQLite the only one that supports temporary views.
     # So the view will be created as TEMPORARY.
-    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp:
-        expected_create_statement += " TEMPORARY"
-    elif temp:
+    if db_context.dialect == DatabaseDialect.SQLITE and as_view and not temp or temp:
         expected_create_statement += " TEMPORARY"
 
     expected_create_statement += table_or_view

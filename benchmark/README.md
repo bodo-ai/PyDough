@@ -26,10 +26,10 @@ The generated `.csv` file has the format described in `Metrics` section. A new f
 from benchmarker import Benchmarker
 
 benchmarker = Benchmarker(
-    postgres_conn=conn,           # psycopg2 (or compatible) connection
-    questions_path="./",          # directory containing the questions file
-    filename="questions",         # questions filename (without .csv extension)
-    export_metrics=False,         # write metrics CSV on completion
+    postgres_conn=conn,  # psycopg2 (or compatible) connection
+    questions_path="./",  # directory containing the questions file
+    filename="questions",  # questions filename (without .csv extension)
+    export_metrics=False,  # write metrics CSV on completion
 )
 ```
 
