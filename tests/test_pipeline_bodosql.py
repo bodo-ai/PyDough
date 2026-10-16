@@ -512,6 +512,39 @@ def bodosql_sample_contexts(
     }
 
 
+def _parse_date_like_string_columns(df: pd.DataFrame) -> None:
+    """
+    Mutates `df` in place, converting any string column that is actually a
+    date/timestamp into a real date/datetime dtype.
+
+    SQLite has no native date type, so `pd.read_sql_query` reads date columns
+    back as plain ISO-8601 strings. When those are written into an Iceberg
+    table as a string column, BodoSQL's file-pruning statistics can't
+    correctly compare them against a DATE/TIMESTAMP literal in a query (it
+    can silently prune away every file, producing wrong/empty results).
+    A column is only converted if every non-null value parses successfully,
+    so free-text/code columns are left alone. An all-null column is also
+    left alone (it would trivially "parse" as dates, since there is
+    nothing to check), so the separate null -> string handling each
+    caller does afterward still applies to it.
+
+    Columns with no time-of-day component are converted to a plain date
+    (PyArrow `date32`) rather than a timestamp.
+    """
+    for col_name in df.columns:
+        if df[col_name].dtype == object and df[col_name].notna().any():
+            parsed = pd.to_datetime(df[col_name], format="ISO8601", errors="coerce")
+            if parsed.notna().equals(df[col_name].notna()):
+                non_null = parsed.dropna()
+                if non_null.eq(non_null.dt.normalize()).all():
+                    df[col_name] = parsed.dt.date
+                else:
+                    # Iceberg format v2 only supports microsecond timestamp
+                    # precision, not the nanosecond precision pandas/PyArrow
+                    # default to.
+                    df[col_name] = parsed.astype("datetime64[us]")
+
+
 @pytest.fixture(scope="session")
 def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLContext:
     """
@@ -628,6 +661,7 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
                 df: pd.DataFrame = pd.read_sql_query(
                     f"SELECT * FROM main.{table_name}", defog_conn
                 )
+                _parse_date_like_string_columns(df)
                 arrow_table: PyArrowTable = pa.Table.from_pandas(df)
 
                 # Replace any NULL columns with string type for BodoSQL's
@@ -642,6 +676,7 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
                         field = field.with_type(pa.string())
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
+                arrow_table = arrow_table.cast(schema)
 
                 # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
@@ -649,13 +684,15 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
                     schema=schema,
                 )
 
-                # Evolve the table spec to partition on the specified keys, if
-                # it has any.
-                if partitions:
-                    spec = iceberg_table.update_spec()
-                    for column_name, transform in partitions:
-                        spec.add_field(column_name, transform)
-                    spec.commit()
+                # NOTE: the partition spec is deliberately *not* set up here.
+                # It is applied further below, after the CREATE OR REPLACE
+                # step, because that step can trigger schema evolution for
+                # any column whose type changed (e.g. a date-like string
+                # column that got parsed into a real timestamp above), which
+                # invalidates the field IDs an earlier-committed partition
+                # spec would reference (pyiceberg raises errors like
+                # "Cannot create identity partition sourced from different
+                # field in schema").
 
                 # Load the data into the Iceberg table.
                 iceberg_table.append(arrow_table)
@@ -667,12 +704,22 @@ def bodosql_defog_context(bodosql_setup, sqlite_defog_connection) -> BodoSQLCont
 
         # Use BodoSQL to replace each table with itself. Since BodoSQL is doing
         # the write, it will produce the puffin files containing the needed
-        # sketches for NDV estimates, but since it is writing to the same
-        # location it will keep the partitions.
+        # sketches for NDV estimates.
         for schema_name, table_name in gen_tables:
             defog_bc.sql(
                 f"CREATE OR REPLACE TABLE {schema_name}.{table_name} AS SELECT * FROM {schema_name}.{table_name}"
             )
+
+        # Evolve each table's spec to partition on its specified keys, if it
+        # has any, now that the table's schema is final.
+        for schema_name, tables in defog_databases.items():
+            for table_name, partitions in tables.items():
+                if partitions:
+                    iceberg_table = dircat.load_table(f"{schema_name}.{table_name}")
+                    spec = iceberg_table.update_spec()
+                    for column_name, transform in partitions:
+                        spec.add_field(column_name, transform)
+                    spec.commit()
 
     except Exception as e:
         # If any error occurs during the setup, clean up by deleting the
@@ -736,6 +783,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                 df: pd.DataFrame = pd.read_sql_query(
                     f"SELECT * FROM main.{table_name}", tpch_conn
                 )
+                _parse_date_like_string_columns(df)
                 arrow_table: PyArrowTable = pa.Table.from_pandas(df)
 
                 # Replace any NULL columns with string type for BodoSQL's
@@ -750,6 +798,7 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                         field = field.with_type(pa.string())
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
+                arrow_table = arrow_table.cast(schema)
 
                 # Create the Iceberg table definition for the table.
                 iceberg_table: IcebergTable = dircat.create_table(
@@ -757,13 +806,14 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                     schema=schema,
                 )
 
-                # Evolve the table spec to partition on the specified keys, if
-                # it has any.
-                if partitions:
-                    spec = iceberg_table.update_spec()
-                    for column_name, transform in partitions:
-                        spec.add_field(column_name, transform)
-                    spec.commit()
+                # NOTE: the partition spec is deliberately *not* set up here.
+                # It is applied further below, after the CREATE OR REPLACE
+                # step, because that step can trigger schema evolution for
+                # any column whose type changed (e.g. a date-like string
+                # column that got parsed into a real timestamp above), which
+                # invalidates the field IDs an earlier-committed partition
+                # spec would reference (pyiceberg raises
+                # "Cannot find source column for partition field").
 
                 # Load the data into the Iceberg table.
                 iceberg_table.append(arrow_table)
@@ -782,8 +832,8 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
 
     # If regenerating the database, use BodoSQL to replace each table with
     # itself. Since BodoSQL is doing the write, it will produce the puffin files
-    # containing the needed sketches, but since it is writing to the same
-    # location it will keep the partitions.
+    # containing the needed sketches. The partition spec for each table is
+    # then (re)applied afterward, against the table's final schema.
     if regenerate_iceberg_tpch:
         try:
             # For each temp table, populate the real Iceberg version from it.
@@ -791,6 +841,18 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                 tpch_bc.sql(
                     f"CREATE OR REPLACE TABLE SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name} AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name}"
                 )
+
+            # Evolve each table's spec to partition on its specified keys,
+            # if it has any, now that the table's schema is final.
+            for table_name, partitions in tpch_tables.items():
+                if partitions:
+                    iceberg_table = dircat.load_table(
+                        f"SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.{table_name}"
+                    )
+                    spec = iceberg_table.update_spec()
+                    for column_name, transform in partitions:
+                        spec.add_field(column_name, transform)
+                    spec.commit()
         except Exception as e:
             # If any error occurs during the setup, clean up by deleting the
             # warehouse directory if it was created.
@@ -2681,6 +2743,8 @@ def test_bodosql_e2e_tpch(
         "tpch_q20": "BodoSQL Iceberg STARTSWITH read bug",
         "smoke_b": "BodoSQL Iceberg STARTSWITH read bug",
         "smoke_c": "Unknown Bodo/BodoSQL typing bug with array concatenation",
+        "tpch_q15": "Flaky since Bodo 2026.10: joins two independently-computed "
+        "SUM(...) CTEs",
     }
     if tpch_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[tpch_pipeline_test_data.test_name])
@@ -2713,9 +2777,21 @@ def test_bodosql_e2e_defog(
 
     # Skip any of these tests due to various errors/gaps.
     tests_skipped: dict[str, str] = {
-        "broker_basic4": "Unknown Bodo typing issue with join state involving dictionary vs string arrays as join keys",
         "dealership_adv4": "NA mask are different in new Bodo version",
         "ewallet_adv4": "NA mask are different in new Bodo version",
+        "dealership_adv13": "BodoSQL Java heap space OOM compiling DATE_TRUNC/CURRENT_TIMESTAMP query",
+        "dealership_adv14": "BodoSQL Java heap space OOM compiling DATEDIFF/CURRENT_TIMESTAMP query",
+        "broker_adv16": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_adv2": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_adv8": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_adv9": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_basic1": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "broker_basic2": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv11": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv13": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv2": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_adv9": "BodoSQL timezone-aware timestamp filter pushdown not supported",
+        "ewallet_basic10": "BodoSQL timezone-aware timestamp filter pushdown not supported",
     }
     if defog_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[defog_pipeline_test_data.test_name])
