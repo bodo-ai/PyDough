@@ -841,7 +841,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "INVALID_ATTRIBUTE_TYPE",
             re.escape(
-                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str']"
+                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['bool', 'datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str', 'tuple']"
             ),
             id="invalid_attribute_type",
         ),
@@ -861,7 +861,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "INVALID_ATTRIBUTE_OPTION_VALUE",
             re.escape(
-                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings, integers or floats (not a mix, and no other type)."
+                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings, integers, floats or booleans (not a mix, and no other type)."
             ),
             id="invalid_option_value",
         ),
@@ -881,7 +881,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "MIXED_TYPE_ATTRIBUTE_OPTIONS",
             re.escape(
-                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings, integers or floats (not a mix, and no other type)."
+                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings, integers, floats or booleans (not a mix, and no other type)."
             ),
             id="mixed_type_options",
         ),
@@ -958,7 +958,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "TEMPLATE_INVALID_PARAMETER_TYPE",
             re.escape(
-                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str']"
+                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['bool', 'datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str', 'tuple']"
             ),
             id="invalid_template_param_type",
         ),
