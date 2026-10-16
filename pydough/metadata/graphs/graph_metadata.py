@@ -293,6 +293,64 @@ class GraphMetadata(AbstractMetadata):
             )
         self.templates_attributes[new_attribute.name] = new_attribute
 
+    def resolve_label(
+        self,
+        template_name: str,
+        arg_name: str,
+        arg_type: str,
+        searched_label: str,
+        match_types: bool = True,
+    ) -> str | int | float | bool:
+        """
+        Resolves one label to its value for parameter `arg_name` of
+        `template_name`, validating the attribute's `usage` and type along the way.
+
+        Args:
+            `template_name`: Name of the template that is receiving the value
+            `arg_name`: Name of the template argument for the searched label
+            `arg_type`: Type of the argument
+            `searched_label`: Label being searched
+            `match_types`: Flag determine if the types must match, used when resolving
+            a label from a list of labels
+
+        Returns:
+            The found value
+
+        Raises:
+            ValueError if the label is not found, the types doesn't match or
+            the label found is restricted through the attribute's usage
+        """
+        for attr_name, attribute in self.templates_attributes.items():
+            if searched_label not in attribute.options:
+                continue
+
+            # Validate if the attribute is available for this template and argument
+            if attribute.usage != {} and (
+                template_name not in attribute.usage
+                or (
+                    attribute.usage[template_name] != []
+                    and arg_name not in attribute.usage[template_name]
+                )
+            ):
+                raise ValueError(
+                    f"The label {searched_label!r} is not available for parameter "
+                    f"'{arg_name}' on template '{template_name}'"
+                )
+
+            # Types must match if the the label is used directly, not for list of
+            # labels
+            if match_types and attribute.type != arg_type:
+                raise ValueError(
+                    f"The type of '{attr_name}' attribute doesn't match the "
+                    f"argument '{arg_name}'s type"
+                )
+
+            return attribute.options[searched_label]
+
+        raise ValueError(
+            f"Label {searched_label!r} not found in any attribute's options"
+        )
+
     def add_template_definition(
         self, name: str, new_template: AbstractMetadata
     ) -> None:

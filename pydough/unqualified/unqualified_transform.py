@@ -21,7 +21,7 @@ from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughSessionException, PyDoughUnqualifiedException
 from pydough.errors.error_utils import find_possible_name_matches
 from pydough.metadata import GraphMetadata
-from pydough.metadata.templates import AttributeMetadata, TemplateMetadata
+from pydough.metadata.templates import TemplateMetadata
 
 from .unqualified_node import UnqualifiedNode
 
@@ -600,40 +600,53 @@ def _execute_source(
 
 def call_template(
     name: str,
-    labels: dict[str, str],
+    labels: dict[str, str | list[str]],
 ) -> Any:
     """
     Invokes a named PyDough template using user-facing labels instead of
-    raw PyDough syntax, returning the resulting unqualified (unexecuted)
-    node.
+    raw PyDough syntax, and returns the result of the call.
 
-    Each entry in `labels` maps a template parameter name to a label string
-    that is looked up in the active session's graph attributes (via each
-    attribute's `options`) to resolve it to a concrete value and type. The
-    resolved arguments are used to build a call to the template as PyDough
-    source text, which is then parsed and executed via `_execute_source` to
-    produce the corresponding result, which can be an `UnqualifiedNode`
-    or any other type.
+    Each entry in `labels` maps a template parameter name to a label (or a
+    list of labels) that is looked up in the active session's graph
+    attributes, via each attribute's `options`, to resolve it to a concrete
+    value. The resolved arguments are used to build a call to the template
+    as PyDough source text, which is then parsed and executed via
+    `_execute_source`. Parameters that define a default value can be left
+    out of `labels`, in which case the template's default is used.
 
     Args:
         `name`: the name of the template to call, as registered in
         `pydough.active_session.metadata.templates_definitions`.
-        `labels`: a mapping of template parameter name to a label string
-        (e.g. `{"arg_year": "Year 1998", "arg_dimension": "Customer Market
-        Segment"}`). Each label must appear in the `options` of exactly
-        one attribute in the active session's graph, and that attribute's
-        type must match the corresponding template parameter's type.
+        `labels`: a mapping of template parameter name to either a single
+        label string or, for parameters of type `list`, a list of label
+        strings (e.g. `{"arg_year": "Year 1998", "arg_dimensions":
+        ["Customer Region", "Month"]}`).
+            - Each label must appear in the `options` of exactly one
+            attribute in the active session's graph.
+            - That attribute's type must match the type of the template
+            parameter, and its `usage` must allow the template and parameter
+            being called (an empty `usage` allows any).
+            - When a list of labels is given, the value of each label is
+            resolved separately and the resulting lists are concatenated in
+            order. Duplicates are kept, and an empty list of labels resolves
+            to an empty list.
+            - Every parameter without a default value must have an entry.
 
     Returns:
-        The `UnqualifiedNode` produced by calling the template with the
-        resolved arguments, ready for further chaining or execution
-        (e.g. `.to_df()`).
+        The result of calling the template with the resolved arguments. This
+        is usually an `UnqualifiedNode`, ready for further chaining or
+        execution (e.g. `pydough.to_df(...)`), but it can be any other type
+        if the template returns a literal, such as an `int`, `str` or `dict`.
 
     Raises:
-        `ValueError`: if no metadata is loaded in the active session, if a
-        label's attribute type doesn't match the template parameter's
-        expected type, or if a label isn't found in any attribute's
-        options.
+        `ValueError`: if no metadata is loaded in the active session, if the
+        template does not exist, if `labels` contains a name that is not a
+        parameter of the template, if a parameter without a default value
+        has no label, if a label is not found in any attribute's options, if
+        the label's attribute `usage` does not allow it for this template
+        and parameter, if the attribute's type does not match the
+        parameter's type, or if a list of labels is given for a parameter
+        whose type is not `list`.
     """
 
     import pydough
@@ -643,9 +656,11 @@ def call_template(
             f"No metadata loaded in the current active session; cannot call template {name!r}."
         )
 
-    if name not in pydough.active_session.metadata.templates_definitions:
+    active_metadata: GraphMetadata = pydough.active_session.metadata
+
+    if name not in active_metadata.templates_definitions:
         available_templates: list[str] = list(
-            pydough.active_session.metadata.templates_definitions.keys()
+            active_metadata.templates_definitions.keys()
         )
         suggestions: list[str] = find_possible_name_matches(
             term_name=name,
@@ -665,14 +680,9 @@ def call_template(
             error_message += f" Did you mean: {suggestions_str}?"
         raise ValueError(error_message)
 
-    calling_template: TemplateMetadata = (
-        pydough.active_session.metadata.templates_definitions[name]
-    )
+    calling_template: TemplateMetadata = active_metadata.templates_definitions[name]
 
-    available_attributes: dict[str, AttributeMetadata] = (
-        pydough.active_session.metadata.templates_attributes
-    )
-    if len(labels) > 0 and len(available_attributes) == 0:
+    if len(labels) > 0 and len(active_metadata.templates_attributes) == 0:
         raise ValueError(
             f"No attributes available for template '{name}' in the current active session"
         )
@@ -705,36 +715,40 @@ def call_template(
         # Use this arg type to check the option value
         arg_type: str = calling_template.parameters[arg_name].type
 
-        kwarg: dict[str, str | int | float | bool] | None = None
+        value: str | int | float | bool
 
-        for attr_name, attribute in available_attributes.items():
-            if label in attribute.options:
-                # Check if the attribute is available for this template and argument
-                if attribute.usage != {} and (
-                    name not in attribute.usage
-                    or (
-                        attribute.usage[name] != []
-                        and arg_name not in attribute.usage[name]
+        if isinstance(label, (tuple, list)):
+            # A list of labels is only meaningful for list-typed parameters
+            if arg_type != "list":
+                raise ValueError(
+                    f"Parameter {arg_name!r} of template {name!r} has type "
+                    f"{arg_type!r}; a list of labels is only supported for "
+                    "parameters of type 'list'."
+                )
+
+            if not all(isinstance(lbl, str) for lbl in label):
+                raise ValueError(
+                    f"Every entry in the list of labels for parameter "
+                    f"{arg_name!r} must be a string."
+                )
+
+            resolved: list[str] = [
+                str(
+                    active_metadata.resolve_label(
+                        name, arg_name, arg_type, searched_label, False
                     )
-                ):
-                    raise ValueError(
-                        f"The label {label!r} is not available for parameter '{arg_name}' on template '{name}'"
-                    )
+                )
+                for searched_label in label
+            ]
 
-                # Types must match
-                if attribute.type != arg_type:
-                    raise ValueError(
-                        f"The type of '{attr_name}' attribute doesn't match the argument '{arg_name}'s type"
-                    )
+            # Concatenate the list literals as source text. An empty list of
+            # labels becomes an empty list value.
+            value = f"[{', '.join(f'{v}' for v in resolved)}]" if resolved else "[]"
+        else:
+            # Search the label as usual
+            value = active_metadata.resolve_label(name, arg_name, arg_type, label)
 
-                kwarg = {"type": attribute.type, "value": attribute.options[label]}
-                # No more search for this label
-                break
-
-        if kwarg is None:
-            raise ValueError(f"Label {label!r} not found in any attribute's options")
-
-        template_kwargs[arg_name] = kwarg
+        template_kwargs[arg_name] = {"type": arg_type, "value": value}
 
     # Build call
     template_call: str = (

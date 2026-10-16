@@ -599,6 +599,28 @@ from tests.testing_utilities import (
             ),
             id="templates_mutuable_defaults",
         ),
+        pytest.param(
+            # Testing list of labels for a template
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "    'orders_dimensions_counter',\n"
+                "    labels={\n"
+                "        'conditions': ['Price above 3000'],\n"
+                "        'order_dimensions': ['CUSTOMER MARKET', 'CUSTOMER NATION']\n"
+                "    }\n"
+                ").TOP_K(3, by=n_orders)\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "or_mkt_segment": ["MACHINERY", "HOUSEHOLD", "AUTOMOBILE"],
+                        "cust_nation": ["PERU", "KENYA", "INDIA"],
+                        "n_orders": [10790, 11004, 11058],
+                    }
+                ),
+                "templates_list_labels_api",
+            ),
+            id="templates_list_labels_api",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:
