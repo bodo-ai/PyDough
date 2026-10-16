@@ -4403,16 +4403,16 @@ from .testing_utilities import (
                     {
                         "idx": [1, 2, 3, 4],
                         "arr_d": [
-                            [datetime(2020, 1, 1, 0, 0, 0, tzinfo=UTC)],
+                            [datetime(2020, 1, 1, 0, 0, 0)],
                             [],
                             [
-                                datetime(2021, 6, 15, 0, 0, 0, tzinfo=UTC),
-                                datetime(2022, 12, 31, 0, 0, 0, tzinfo=UTC),
+                                datetime(2021, 6, 15, 0, 0, 0),
+                                datetime(2022, 12, 31, 0, 0, 0),
                             ],
                             [
-                                datetime(1999, 7, 4, 0, 0, 0, tzinfo=UTC),
+                                datetime(1999, 7, 4, 0, 0, 0),
                                 None,
-                                datetime(2000, 1, 1, 0, 0, 0, tzinfo=UTC),
+                                datetime(2000, 1, 1, 0, 0, 0),
                             ],
                         ],
                         "arr_t": [
