@@ -877,8 +877,22 @@
           ]
         },
         {
+          "name": "order_dimensions_tuples",
+          "usage": {"orders_dimensions_counter": ["order_dimensions"]},
+          "type": "tuple",
+          "description": "The dimension by which to partition the orders calculation.",
+          "options": [
+            {"value": "(or_mkt_segment, customer.market_segment)", "label": "CUSTOMER MARKET"},
+            {"value": "(cust_nation, customer.nation.name)", "label": "CUSTOMER NATION"},
+            {"value": "(cust_region, customer.nation.name)", "label": "CUSTOMER REGION"},
+            {"value": "(or_priority, order_priority)", "label": "ORDER PRIORITY"},
+            {"value": "(or_month, MONTHNAME(order_date))", "label": "ORDER MONTH"},
+            {"value": "(or_clerk, clerk)", "label": "ORDER CLERK"}
+          ]
+        },
+        {
           "name": "order_filter_condition",
-          "usage": {"orders_filter_count": ["orders_filter"]},
+          "usage": {"orders_filter_count": ["orders_filter"], "orders_dimensions_counter": ["conditions"]},
           "type": "pydough",
           "description": "Condition(s) by which orders can be filtered",
           "options": [
@@ -989,6 +1003,33 @@
             { "label": "Region 1", "value": "ASIA"},
             { "label": "Region 2", "value": "EUROPE"}
           ]
+        },
+        {
+          "name": "bool_attribute",
+          "usage": {},
+          "type": "bool",
+          "description": "A boolean attribute for filtering orders",
+          "options": [
+            { "label": "True", "value": true },
+            { "label": "False", "value": false }
+          ]
+        },
+        {
+          "name": "tuple_type_attribute",
+          "usage": {},
+          "type": "tuple",
+          "description": "A tuple attribute for filtering orders",
+          "options": [
+            { "label": "Tuple 1", "value": "(1, 2)"},
+            { "label": "Tuple 2", "value": "(3, 4)"}
+          ]
+        },
+        {
+          "name": "region_names",
+          "usage": { "orders_with_defaults": ["region_name"] },
+          "type": "str",
+          "description": "Regions",
+          "options": [{ "label": "Europe Region", "value": "EUROPE" }]
         }
       ],
       "definitions": [
@@ -1267,6 +1308,55 @@
             }
           },
           "source": "result = nations.WHERE((COUNT(customers.orders) >= {1}) & (region.name == {2})).CALCULATE(name, nation_region=region.name, n_orders=COUNT(customers.orders))",
+          "answer_variable": "result"
+        },
+        {
+          "name": "rank_nations_customers",
+          "description": "Counts the number of clientes for nations in a given region",
+          "parameters": {
+            "regions_tuple": {
+              "type": "tuple",
+              "description": "Selected regions"
+            },
+            "ranking_ties":{
+              "type": "bool",
+              "description": "Flag to allow or not ties in the ranking"
+            }
+          },
+          "source": "result = nations.WHERE(ISIN(region_key, {1})).CALCULATE(name, region_key, n_customers=COUNT(customers), n_rank=RANKING(by=(name.ASC(), COUNT(customers).DESC()), allow_ties={2})).TOP_K(3, by=n_rank)",
+          "answer_variable": "result"
+        },
+        {
+          "name": "orders_with_defaults",
+          "description": "Top orders in a region, filtered by priority, price range and an extra condition",
+          "parameters": {
+            "region_name": { "type": "str", "description": "Region of the order's customer"},
+            "priorities": { "type": "list", "description": "Order priorities to include", "default": "['1-URGENT', '2-HIGH']" },
+            "selected_columns": { "type": "dict", "description": "Columns to select", "default": "{'or_key': key, 'or_priority': order_priority, 'or_price': total_price}" },
+            "top_n": { "type": "int", "description": "Number of orders to return", "default": 3 },
+            "only_fulfilled": { "type": "bool", "description": "Keep only fulfilled ('F') orders", "default": false },
+            "extra_condition": { "type": "pydough", "description": "Additional filter expression", "default": "(total_price > 0)" }
+          },
+          "source": "selected = orders.WHERE(\n    (customer.nation.region.name == {1})\n    & ISIN(order_priority, {2})\n    & {6}\n)\nif {5}:\n    selected = selected.WHERE(order_status == 'F')\nresult = selected.CALCULATE(**{3}).TOP_K({4}, by=(total_price.DESC(), key.ASC()))\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "default_mutation_probe",
+          "description": "Mutates its list default, to catch defaults shared between calls",
+          "parameters": {
+            "items": { "type": "list", "description": "Items", "default": "['UNITED STATES', 'MEXICO']" }
+          },
+          "source": "{1}.append('CANADA')\nresult = {1}\n",
+          "answer_variable": "result"
+        },
+        {
+          "name": "orders_dimensions_counter",
+          "description": "Count how many orders there are for the given filters in the required dimension",
+          "parameters": {
+            "conditions": {"type": "list", "description": "Filters to apply"},
+            "order_dimensions": {"type": "list", "description": "Dimensions required"}
+          },
+          "source": "terms_calc = {}\npart_dim = []\n\nresult = orders\n\nif {1}:\n    conds_expr = {1}[0]\n    for condition in {1}[1:]:\n        conds_expr = conds_expr & condition\n    result.WHERE(conds_expr)\n\nif {2}:\n    for dim_name, expr in {2}:\n        terms_calc[repr(dim_name)] = expr\n        part_dim.append(dim_name)\n    result = result.CALCULATE(**terms_calc)\n\nresult = result.PARTITION(name=\"partition_dimensions\", by=part_dim).CALCULATE(\n    *part_dim,\n    n_orders=COUNT(orders)\n)",
           "answer_variable": "result"
         }
       ]

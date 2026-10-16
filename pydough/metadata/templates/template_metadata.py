@@ -12,6 +12,9 @@ from typing import Any
 from pydough.errors.error_types import PyDoughMetadataException
 from pydough.errors.error_utils import (
     NoExtraKeys,
+    extract_bool,
+    extract_float,
+    extract_integer,
     extract_object,
     extract_string,
     is_valid_name,
@@ -43,6 +46,12 @@ class TemplateParameter:
     Detail of what this parameter represents inside the template or how it is used
     """
 
+    default: str | int | float | bool | None
+    """
+    Default value for the parameter, if any. If not provided, the parameter is
+    required.
+    """
+
 
 class TemplateMetadata(AbstractMetadata):
     """
@@ -64,7 +73,7 @@ class TemplateMetadata(AbstractMetadata):
         name: str,
         graph: GraphMetadata,
         description: str,
-        parameters: dict[str, dict[str, str]],
+        parameters: dict[str, dict[str, str | int | float | bool]],
         source: str,
         answer_variable: str = "result",
     ):
@@ -167,11 +176,9 @@ class TemplateMetadata(AbstractMetadata):
         # Validates the name for the template
         is_valid_name.verify(name, error_name)
 
-        description: str = extract_string(
-            definition_json, "description", graph.error_name
-        )
+        description: str = extract_string(definition_json, "description", error_name)
         answer_variable: str = extract_string(
-            definition_json, "answer_variable", graph.error_name
+            definition_json, "answer_variable", error_name
         )
         error_answer_var: str = (
             f"Answer variable {answer_variable!r} of template {name!r} "
@@ -242,7 +249,24 @@ class TemplateMetadata(AbstractMetadata):
                 "description",
                 f"All parameters must have description in {template_name!r}",
             )
-            new_param = TemplateParameter(param_name, param_type, param_description)
+
+            param_default: str | int | float | bool | None = None
+            if "default" in arg:
+                param_default = (
+                    extract_integer(arg, "default", error_param_name)
+                    if param_type == "int"
+                    else extract_float(arg, "default", error_param_name)
+                    if param_type == "float"
+                    else extract_bool(arg, "default", error_param_name)
+                    if param_type == "bool"
+                    # For string, pydough, list and dict types the value should
+                    # be a string
+                    else extract_string(arg, "default", error_param_name)
+                )
+
+            new_param = TemplateParameter(
+                param_name, param_type, param_description, param_default
+            )
 
             template_params[param_name] = new_param
 
@@ -327,14 +351,36 @@ class TemplateMetadata(AbstractMetadata):
         # Parsing arguments
         arg_names: list[str] = list(self.parameters.keys())
         args_parts: list[str] = []
+        default_prelude: list[str] = []
+        default_seen: bool = False
 
-        part: str
         for key, spec in self.parameters.items():
-            part = f"{key}: {spec.type}" if spec.type != "pydough" else f"{key}"
+            annotation: str = "" if spec.type == "pydough" else spec.type
+
+            if spec.default is not None:
+                default_seen = True
+                if spec.type in ["str", "int", "float", "bool"]:
+                    # repr() handles quoting/escaping for str and renders int/float/bool correctly
+                    part = f"{key}: {annotation} = {spec.default!r}"
+                else:
+                    # Code-valued default: None sentinel in the signature, real
+                    # value built per call in the function body.
+                    ann = f": {annotation} | None" if annotation else ""
+                    part = f"{key}{ann} = None"
+                    default_prelude.append(
+                        f"if {key} is None:\n    {key} = {spec.default}"
+                    )
+            elif default_seen:
+                raise PyDoughMetadataException(
+                    f"Required parameter {key!r} cannot follow an optional parameter "
+                    f"in template {self.name!r} in graph {self.graph.name!r}."
+                )
+            else:
+                part = f"{key}: {annotation}" if annotation else key
+
             args_parts.append(part)
         template_args: str = ", ".join(args_parts)
 
-        # --- Replace {1}, {2}, ... with the corresponding parameter name ---
         def _replace_placeholder(match: re.Match) -> str:
             index = int(match.group(1))
             if not (1 <= index <= len(arg_names)):
@@ -346,12 +392,16 @@ class TemplateMetadata(AbstractMetadata):
 
         substituted_code = re.sub(r"\{(\d+)\}", _replace_placeholder, self.source)
 
-        # --- Indent and assemble the final template ---
-        indented_code: str = textwrap.indent(substituted_code.strip(), "    ")
+        # Defaults are built before the user's source runs, and are not run through
+        # the placeholder substitution, so braces in a dict default are safe.
+        body: str = "\n".join(default_prelude + [substituted_code.strip()])
+        indented_code: str = textwrap.indent(body, "    ")
 
-        template_str: str = f"def {self.name}({template_args}):\n{indented_code}\n    return {self.answer_variable}\n"
-
-        return template_str
+        return (
+            f"def {self.name}({template_args}):\n"
+            f"{indented_code}\n"
+            f"    return {self.answer_variable}\n"
+        )
 
     def create_template_call(
         self, kwargs: dict[str, dict[str, str | int | float]] | None = None

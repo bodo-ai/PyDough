@@ -731,7 +731,9 @@ The currently supported types are:
 | `str` | A string literal. |
 | `int` | An integer literal. |
 | `float` | A floating-point literal. |
+| `bool` | A boolean literal. |
 | `list` | A Python list literal. Written as a [string](#attribute-options-list-dict) in attribute options. |
+| `tuple` | A Python tuple literal. Written as a [string](#attribute-options-list-dict) in attribute options.|
 | `dict` | A Python dict literal. Written as a [string](#attribute-options-list-dict) in attribute options. |
 | `pydough` | A raw, untyped PyDough expression/snippet (e.g. a column reference, a `CALCULATE` call, or the output of another template). |
 | `pd.DataFrame` | A pandas DataFrame. |

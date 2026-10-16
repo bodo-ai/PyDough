@@ -511,6 +511,198 @@ from tests.testing_utilities import (
             ),
             id="templates_no_attributes_api",
         ),
+        pytest.param(
+            # Test a template direct call with boolean and tuple parameter types
+            PyDoughPandasTest(
+                "result = rank_nations_customers((1,3), False)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                        ],
+                        "region_key": [1, 1, 1],
+                        "n_customers": [5975, 5999, 6020],
+                        "n_rank": [1, 2, 3],
+                    }
+                ),
+                "templates_tuple_bool_params",
+            ),
+            id="templates_tuple_bool_params",
+        ),
+        pytest.param(
+            # Test a template api call with boolean and tuple parameter types
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'rank_nations_customers',"
+                "   labels={'regions_tuple': 'Tuple 2', 'ranking_ties': 'True'}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["EGYPT", "FRANCE", "GERMANY"],
+                        "region_key": [4, 3, 3],
+                        "n_customers": [5995, 6100, 5908],
+                        "n_rank": [1, 2, 3],
+                    }
+                ),
+                "templates_tuple_bool_attr",
+            ),
+            id="templates_tuple_bool_attr",
+        ),
+        pytest.param(
+            # Testing templates with defaults values
+            PyDoughPandasTest(
+                "result = orders_with_defaults('ASIA')\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "or_key": [1395745, 2121671, 413762],
+                        "or_priority": ["1-URGENT", "2-HIGH", "2-HIGH"],
+                        "or_price": [502742.76, 497529.23, 496620.48],
+                    }
+                ),
+                "templates_default_params",
+            ),
+            id="templates_default_params",
+        ),
+        pytest.param(
+            # Testing templates with defaults values through api
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "   'orders_with_defaults',\n"
+                "   labels={'region_name': 'Europe Region'}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "or_key": [2185667, 4676257, 1905157],
+                        "or_priority": ["1-URGENT", "2-HIGH", "2-HIGH"],
+                        "or_price": [511359.88, 490133.06, 483987.93],
+                    }
+                ),
+                "templates_default_params_api",
+            ),
+            id="templates_default_params_api",
+        ),
+        pytest.param(
+            # Testing templates with defaults values through api
+            PyDoughPandasTest(
+                "list_country = default_mutation_probe()\n"
+                "list_country_2 = default_mutation_probe()\n"
+                "result = TPCH.CALCULATE(n_customers=COUNT(customers.WHERE(ISIN(nation.name, list_country_2))))\n",
+                "TPCH",
+                lambda: pd.DataFrame({"n_customers": [12003]}),
+                "templates_mutuable_defaults",
+            ),
+            id="templates_mutuable_defaults",
+        ),
+        pytest.param(
+            # Testing list of labels for a template
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "    'orders_dimensions_counter',\n"
+                "    labels={\n"
+                "        'conditions': ['Price above 3000'],\n"
+                "        'order_dimensions': ['CUSTOMER MARKET', 'CUSTOMER NATION']\n"
+                "    }\n"
+                ").TOP_K(3, by=n_orders)\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "or_mkt_segment": ["MACHINERY", "HOUSEHOLD", "AUTOMOBILE"],
+                        "cust_nation": ["PERU", "KENYA", "INDIA"],
+                        "n_orders": [10790, 11004, 11058],
+                    }
+                ),
+                "templates_list_labels_api",
+            ),
+            id="templates_list_labels_api",
+        ),
+        pytest.param(
+            # Testing labels and values api call
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "    'orders_revenue_by',\n"
+                "    labels={\n"
+                "        'arg_dimension': 'Customer Market Segment'\n"
+                "    },\n"
+                "   values={'arg_year': 1998}"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "dimension": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "segmnet_revenue": [
+                            3.839372e09,
+                            3.943587e09,
+                            3.897561e09,
+                            3.877929e09,
+                            3.875373e09,
+                        ],
+                    }
+                ),
+                "templates_labels_values_api",
+            ),
+            id="templates_labels_values_api",
+        ),
+        pytest.param(
+            # Testing dataframe values api call
+            PyDoughPandasTest(
+                "import pandas as pd\n"
+                "customers_df = pd.DataFrame({'key': [1, 2, 3], 'name': ['John', 'James', 'Michael']})\n"
+                "result = pydough.call_template(\n"
+                "   'dataframe_input_collection',\n"
+                "   values={'collection_name': 'df_name', 'new_df': customers_df, 'unique_columns': ['key']}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "name": ["John", "James", "Michael"],
+                    }
+                ),
+                "templates_df_values_api",
+            ),
+            id="templates_df_values_api",
+        ),
+        pytest.param(
+            # Testing dict, datetime values api call
+            PyDoughPandasTest(
+                "import pandas as pd\n"
+                "cutoff_datetime = pd.to_datetime('1997-01-01')\n"
+                "customer_selection = {'cust_key': key, 'cust_market': market_segment, 'cust_balance': account_balance, 'n_orders': COUNT(orders)}\n"
+                "result = pydough.call_template(\n"
+                "   'filter_users_conditions',\n"
+                "   values={'account_balance_threshold': 5000, 'column_selection': customer_selection, 'orders_cutoff': cutoff_datetime}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [95488, 24740, 103760, 117725, 142663],
+                        "cust_market": [
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                            "HOUSEHOLD",
+                        ],
+                        "cust_balance": [5000.09, 5000.23, 5000.29, 5000.42, 5000.48],
+                        "n_orderss": [28, 12, 12, 15, 23],
+                    }
+                ),
+                "templates_dict_datetime_values_api",
+            ),
+            id="templates_dict_datetime_values_api",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:
@@ -579,7 +771,7 @@ def test_pipeline_e2e_tpch_templates(
             "result = pydough.call_template('orders_filter_count', labels={'no_param': 'LABEL 1'})",
             None,
             re.escape(
-                "Template 'orders_filter_count' is missing a label for the following parameter(s): orders_filter"
+                "Template 'orders_filter_count' doesn't have a paramater called 'no_param'. Did you mean: orders_filter"
             ),
             id="wrong_template_arguments_api",
         ),
@@ -649,7 +841,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "INVALID_ATTRIBUTE_TYPE",
             re.escape(
-                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str']"
+                "Invalid type 'invalid_type' for attribute 'attr1' in graph 'INVALID_ATTRIBUTE_TYPE'. Must be one of: ['bool', 'datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str', 'tuple']"
             ),
             id="invalid_attribute_type",
         ),
@@ -669,7 +861,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "INVALID_ATTRIBUTE_OPTION_VALUE",
             re.escape(
-                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings, integers or floats (not a mix, and no other type)."
+                "Option in attribute 'attr1' in graph 'INVALID_ATTRIBUTE_OPTION_VALUE' 'value' fields must be either all strings, integers, floats or booleans (not a mix, and no other type)."
             ),
             id="invalid_option_value",
         ),
@@ -689,7 +881,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "MIXED_TYPE_ATTRIBUTE_OPTIONS",
             re.escape(
-                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings, integers or floats (not a mix, and no other type)."
+                "Option in attribute 'attr1' in graph 'MIXED_TYPE_ATTRIBUTE_OPTIONS' 'value' fields must be either all strings, integers, floats or booleans (not a mix, and no other type)."
             ),
             id="mixed_type_options",
         ),
@@ -766,7 +958,7 @@ def test_pipeline_e2e_tpch_templates_errors(
         pytest.param(
             "TEMPLATE_INVALID_PARAMETER_TYPE",
             re.escape(
-                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str']"
+                "Invalid type 'invalid_type' for the parameter 'parameter_1' of template 'template_1' in graph 'TEMPLATE_INVALID_PARAMETER_TYPE'. Must be one of: ['bool', 'datetime', 'dict', 'float', 'int', 'list', 'pd.DataFrame', 'pydough', 'str', 'tuple']"
             ),
             id="invalid_template_param_type",
         ),
@@ -814,6 +1006,13 @@ def test_pipeline_e2e_tpch_templates_errors(
                 "Placeholder {3} in pydough_code has no matching argument (only 2 args provided)."
             ),
             id="invalid_source_placeholder",
+        ),
+        pytest.param(
+            "TEMPLATE_INVALID_DEFAULT_PARAM_POSITION",
+            re.escape(
+                "Required parameter 'parameter_2' cannot follow an optional parameter in template 'template_1' in graph 'TEMPLATE_INVALID_DEFAULT_PARAM_POSITION'."
+            ),
+            id="invalid_default_param_position",
         ),
     ],
 )
