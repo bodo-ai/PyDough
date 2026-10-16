@@ -2137,7 +2137,7 @@ selected_orders = orders.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(key, clerk)
 <!-- TOC --><a name="using-templates-recursive"></a>
 ### Recursive Templates
 
-A template's `source` can call itself, since it is compiled into a regular Python function (see [Definition Field: `source`](metadata#template-source)). Recursive templates are called the same way as any other template — directly or via the API — with no special handling needed at the call site.
+A template's `source` can call itself, since it is compiled into a regular Python function (see [Definition Field: `source`](metadata.md#template-source)). Recursive templates are called the same way as any other template — directly or via the API — with no special handling needed at the call site.
 
 Example: calling the recursive `cumulative_orders_counter` template directly, with different `base_year`/`last_year` ranges:
 
