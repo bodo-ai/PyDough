@@ -56,12 +56,12 @@ SELECT
     ABS(CAST(sbcustpostalcode AS INT))) AS s26,
   MIN(rank) AS s27,
   MAX(rank) AS s28,
-  MAX(rsum1) AS s29,
+  ANY_VALUE(rsum1) AS s29,
   ROUND(CAST(SUM(rsum2) AS DECIMAL), 2) AS s30,
-  MAX(ravg1) AS s31,
+  ANY_VALUE(ravg1) AS s31,
   ROUND(CAST(SUM(ravg2) AS DECIMAL), 2) AS s32,
-  MAX(rcnt1) AS s33,
+  ANY_VALUE(rcnt1) AS s33,
   ROUND(CAST(SUM(rcnt2) AS DECIMAL), 2) AS s34,
-  MAX(rsiz1) AS s35,
+  ANY_VALUE(rsiz1) AS s35,
   ROUND(CAST(SUM(rsiz2) AS DECIMAL), 2) AS s36
 FROM _t1

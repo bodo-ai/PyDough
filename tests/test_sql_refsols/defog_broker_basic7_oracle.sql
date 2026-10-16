@@ -1,9 +1,9 @@
 SELECT
-  sbtxstatus AS status,
+  SBTXSTATUS AS status,
   COUNT(*) AS num_transactions
 FROM MAIN.SBTRANSACTION
 GROUP BY
-  sbtxstatus
+  SBTXSTATUS
 ORDER BY
   2 DESC NULLS LAST
 FETCH FIRST 3 ROWS ONLY

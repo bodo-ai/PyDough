@@ -1,7 +1,7 @@
 WITH sizes AS (
   SELECT
     1 + SEQ4() AS part_size
-  FROM TABLE(GENERATOR(ROWCOUNT => 10))
+  FROM TABLE(GENERATOR(ROWCOUNT => 10)) AS _0
 ), _t0 AS (
   SELECT
     part.p_name,

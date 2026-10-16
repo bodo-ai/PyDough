@@ -9,9 +9,12 @@ WITH _t2 AS (
   WHERE
     orders.o_clerk = 'Clerk#000000017'
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY orders.o_custkey ORDER BY lineitem.l_receiptdate NULLS LAST, lineitem.l_extendedprice * (
-      1 - lineitem.l_discount
-    ) DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY orders.o_custkey
+      ORDER BY lineitem.l_receiptdate NULLS LAST, lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) DESC NULLS FIRST
+    ) = 1
 )
 SELECT
   customer.c_name AS name,

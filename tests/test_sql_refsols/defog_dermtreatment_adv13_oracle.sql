@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS PIC_female
 FROM MAIN.PATIENTS
 WHERE
-  gender = 'Female' AND ins_type = 'private'
+  GENDER = 'Female' AND INS_TYPE = 'private'

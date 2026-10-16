@@ -1,6 +1,6 @@
 SELECT
-  title,
-  citation_num
+  TITLE AS title,
+  CITATION_NUM AS citation_num
 FROM MAIN.PUBLICATION
 ORDER BY
   2 DESC NULLS LAST

@@ -13,6 +13,10 @@ WITH _t2 AS (
   FROM main.outcomes
   WHERE
     NOT day100_pasi_score IS NULL
+), _s1 AS (
+  SELECT
+    treatment_id
+  FROM _t3
 ), _s3 AS (
   SELECT
     ins_type,
@@ -23,12 +27,16 @@ WITH _t2 AS (
     _s3.ins_type,
     COUNT(DISTINCT _t2.patient_id) AS ndistinct_patient_id
   FROM _t2 AS _t2
-  JOIN _t3 AS _t3
-    ON _t2.treatment_id = _t3.treatment_id
+  SEMI JOIN _s1 AS _s1
+    ON _s1.treatment_id = _t2.treatment_id
   JOIN _s3 AS _s3
     ON _s3.patient_id = _t2.patient_id
   GROUP BY
     1
+), _s5 AS (
+  SELECT
+    treatment_id
+  FROM _t3
 ), _s9 AS (
   SELECT
     treatment_id,
@@ -42,8 +50,8 @@ WITH _t2 AS (
     SUM(_s9.sum_day100_pasi_score) / SUM(_s9.count_day100_pasi_score) AS avg_day100_pasi_score,
     _s7.ins_type
   FROM _t2 AS _t6
-  JOIN _t3 AS _t7
-    ON _t6.treatment_id = _t7.treatment_id
+  SEMI JOIN _s5 AS _s5
+    ON _s5.treatment_id = _t6.treatment_id
   JOIN _s3 AS _s7
     ON _s7.patient_id = _t6.patient_id
   JOIN _s9 AS _s9

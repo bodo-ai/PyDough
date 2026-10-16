@@ -1,10 +1,16 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      CAST(YEAR(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR),
-      CAST(LPAD(CAST(MONTH(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
-    ) AS month,
+    CASE
+      WHEN '-' IS NULL
+      OR CAST(YEAR(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR) IS NULL
+      OR CAST(LPAD(CAST(MONTH(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        CAST(YEAR(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR),
+        CAST(LPAD(CAST(MONTH(CAST(sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
+      )
+    END AS month,
     COUNT(*) AS n_rows
   FROM mongo.defog.sbcustomer
   WHERE
@@ -14,11 +20,17 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      CAST(YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR),
-      CAST(LPAD(CAST(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
-    ) AS month,
+    CASE
+      WHEN '-' IS NULL
+      OR CAST(YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR) IS NULL
+      OR CAST(LPAD(CAST(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        CAST(YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR),
+        CAST(LPAD(CAST(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
+      )
+    END AS month,
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
   FROM mongo.defog.sbcustomer AS sbcustomer
   JOIN mysql.broker.sbtransaction AS sbtransaction

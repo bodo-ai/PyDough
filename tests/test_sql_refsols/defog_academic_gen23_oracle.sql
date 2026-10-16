@@ -1,15 +1,15 @@
 WITH "_u_0" AS (
   SELECT
-    oid AS "_u_1"
+    OID AS "_u_1"
   FROM MAIN.ORGANIZATION
   GROUP BY
-    oid
+    OID
 )
 SELECT
-  AUTHOR.name,
-  AUTHOR.aid AS author_id
+  AUTHOR.NAME AS name,
+  AUTHOR.AID AS author_id
 FROM MAIN.AUTHOR AUTHOR
 LEFT JOIN "_u_0" "_u_0"
-  ON AUTHOR.oid = "_u_0"."_u_1"
+  ON AUTHOR.OID = "_u_0"."_u_1"
 WHERE
   "_u_0"."_u_1" IS NULL

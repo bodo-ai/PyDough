@@ -1,10 +1,16 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(start_dt AS TIMESTAMP)),
-      LPAD(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT), 2, '0')
-    ) AS treatment_month,
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(start_dt AS TIMESTAMP)) IS NULL
+      OR LPAD(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT), 2, '0') IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(start_dt AS TIMESTAMP)),
+        LPAD(CAST(EXTRACT(MONTH FROM CAST(start_dt AS TIMESTAMP)) AS TEXT), 2, '0')
+      )
+    END AS treatment_month,
     COUNT(DISTINCT patient_id) AS ndistinct_patient_id
   FROM main.treatments
   WHERE
@@ -14,11 +20,17 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(treatments.start_dt AS TIMESTAMP)),
-      LPAD(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT), 2, '0')
-    ) AS treatment_month,
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(treatments.start_dt AS TIMESTAMP)) IS NULL
+      OR LPAD(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT), 2, '0') IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(treatments.start_dt AS TIMESTAMP)),
+        LPAD(CAST(EXTRACT(MONTH FROM CAST(treatments.start_dt AS TIMESTAMP)) AS TEXT), 2, '0')
+      )
+    END AS treatment_month,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
   FROM main.treatments AS treatments
   JOIN main.drugs AS drugs

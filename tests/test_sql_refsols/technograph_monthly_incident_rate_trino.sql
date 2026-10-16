@@ -53,11 +53,16 @@ WITH _t2 AS (
     2
 )
 SELECT
-  CONCAT_WS(
-    '-',
-    CAST(year_ca_dt AS VARCHAR),
-    CAST(LPAD(CAST(month_ca_dt AS VARCHAR), 2, '0') AS VARCHAR)
-  ) AS month,
+  CASE
+    WHEN CAST(LPAD(CAST(month_ca_dt AS VARCHAR), 2, '0') AS VARCHAR) IS NULL
+    OR CAST(year_ca_dt AS VARCHAR) IS NULL
+    THEN NULL
+    ELSE CONCAT_WS(
+      '-',
+      CAST(year_ca_dt AS VARCHAR),
+      CAST(LPAD(CAST(month_ca_dt AS VARCHAR), 2, '0') AS VARCHAR)
+    )
+  END AS month,
   ROUND((
     1000000.0 * COALESCE(sum_n_rows, 0)
   ) / COALESCE(sum_expr_3, 0), 2) AS ir

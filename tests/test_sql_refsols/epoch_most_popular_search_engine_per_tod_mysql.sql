@@ -15,7 +15,10 @@ WITH _t2 AS (
     search_engine,
     t_name,
     n_rows,
-    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY CASE WHEN n_rows IS NULL THEN 1 ELSE 0 END DESC, n_rows DESC, CASE WHEN search_engine COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, search_engine COLLATE utf8mb4_bin) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY t_name
+      ORDER BY CASE WHEN n_rows IS NULL THEN 1 ELSE 0 END DESC, n_rows DESC, CASE WHEN search_engine COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, search_engine COLLATE utf8mb4_bin
+    ) AS _w
   FROM _t2
 )
 SELECT

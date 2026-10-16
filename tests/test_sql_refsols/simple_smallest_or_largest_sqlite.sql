@@ -18,4 +18,4 @@ SELECT
   MAX('', 'alphabet soup', 'Hello World') AS l8,
   NULL AS l9
 FROM (VALUES
-  (NULL)) AS _q_0
+  (NULL)) AS _0

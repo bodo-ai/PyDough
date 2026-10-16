@@ -1,7 +1,7 @@
 WITH months AS (
   SELECT
     SEQ4() AS n
-  FROM TABLE(GENERATOR(ROWCOUNT => 12))
+  FROM TABLE(GENERATOR(ROWCOUNT => 12)) AS _0
 ), _s1 AS (
   SELECT
     DATE_TRUNC('MONTH', CAST(payment_date AS TIMESTAMP)) AS start_month,

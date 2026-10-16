@@ -1,5 +1,5 @@
 SELECT
-  MAX(conference.name) AS name,
+  ANY_VALUE(conference.name) AS name,
   COUNT(publication.cid) AS num_publications
 FROM main.conference AS conference
 LEFT JOIN main.publication AS publication

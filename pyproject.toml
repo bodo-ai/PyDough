@@ -5,7 +5,7 @@ keywords = ["analytics"]
 description = "Analytics DSL for Python"
 readme = "README.md"
 authors = [{name = "Bodo.ai"}]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -20,12 +20,11 @@ classifiers = [
 
 # Note: sqlite is included in the standard library, so it doesn't need to be 
 # listed here.
-# There is a bug in some unit tests when run with sqlglot>=26.8.0
-# As of August 2026 LLM team work requires pyarrow=22.0.0, but 
-# BodoSQL requires latest version of pyarrow. 
-# So we are not specifying any version for pyarrow here to avoid conflicts and 
+# As of August 2026 LLM team work requires pyarrow=22.0.0, but
+# BodoSQL requires latest version of pyarrow.
+# So we are not specifying any version for pyarrow here to avoid conflicts and
 # allow other packages to specify their own version of pyarrow.
-dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab", "pyarrow"]
+dependencies = ["pytz", "sqlglot==30.18.0", "pandas>=2.0.0", "jupyterlab", "pyarrow"]
 
 [project.urls]
 # TODO: Add homepage + documentation when docs are live.
@@ -52,12 +51,12 @@ dev = [
 ]
 
 [project.optional-dependencies]
-snowflake = ["snowflake-connector-python[pandas]==4.1.1"]
+snowflake = ["snowflake-connector-python[pandas]==4.7.3"]
 trino = ["trino"]
 mysql = ["mysql-connector-python==9.5.0"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
-bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.10.0"]
+bodosql = ["bodo>=2026.2", "bodosql>=2026.2", "pyiceberg[pyiceberg-core]==0.12.0"]
 oracle = ["oracledb==3.4.2"]
 databricks = ["databricks-sql-connector==4.2.6"]
 duckdb = ["duckdb>=1.5.4"]
@@ -71,6 +70,15 @@ source = "vcs"
 
 [tool.ruff]
 unsafe-fixes = true
+# Ruff 0.16 expanded its default rule set from 59 to 413 rules. Pin `select`
+# back to the pre-0.16 defaults so `extend-select` below continues to extend
+# the same small baseline instead of the much larger new default.
+lint.select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+]
 lint.extend-select = [
     "I",   # isort
     "UP",  # pyupgrade

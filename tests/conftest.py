@@ -1046,6 +1046,7 @@ S3_DATASETS = [
     "donor",
     "movielens",
     "california_schools",
+    "chinook",
 ]
 """
     Contains the name of all the custom datasets that will be used for testing.
@@ -1053,6 +1054,7 @@ S3_DATASETS = [
 """
 S3_DATASETS_SCRIPTS = {
     "world_development_indicators": "init_world_indicators_sqlite",
+    "chinook": "init_chinook_sqlite",
 }
 """
     Maps the datasets that need to be built with a sql script, with the name of
@@ -3208,6 +3210,12 @@ def mock_server_setup():
 
     # Wait until server is ready
     for _ in range(20):
+        if proc.poll() is not None:
+            output, _ = proc.communicate()
+            raise RuntimeError(
+                f"Mock server exited with code {proc.returncode}:\n{output}"
+            )
+
         try:
             r: httpx.Response = httpx.get(server_url + "/health", timeout=1)
             if r.status_code == 200:
@@ -3216,7 +3224,12 @@ def mock_server_setup():
             time.sleep(0.5)
     else:
         proc.terminate()
-        raise RuntimeError("Mock server failed to start")
+        try:
+            output, _ = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            output, _ = proc.communicate()
+        raise RuntimeError(f"Mock server failed to start:\n{output}")
 
     yield server_url
 
@@ -3413,7 +3426,7 @@ def tpch_custom_test_data_dialect_replacements(
                             "d17": ["02"],  # HH12
                             "d18": ["30"],  # MI
                             "d19": ["45"],  # SS
-                            "d20": ["P.M."],  # AM
+                            "d20": ["PM"],  # AM
                         }
                     ),
                     "string_format_specifiers",

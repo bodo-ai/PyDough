@@ -1,17 +1,17 @@
-WITH "_T0" AS (
+WITH "_t0" AS (
   SELECT
-    city_name AS CITY_NAME,
-    name AS NAME,
+    CITY_NAME,
+    NAME,
     COUNT(*) AS N_ROWS
   FROM MAIN.RESTAURANT
   GROUP BY
-    city_name,
-    name
+    CITY_NAME,
+    NAME
 )
 SELECT
   CITY_NAME AS city_name,
   NAME AS name,
   N_ROWS AS n_restaurants
-FROM "_T0"
+FROM "_t0"
 WHERE
   N_ROWS > 1

@@ -1,12 +1,8 @@
-WITH _t2 AS (
-  SELECT
-    o_custkey
-  FROM tpch.orders
-), _s1 AS (
+WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM _t2
+  FROM tpch.orders
   GROUP BY
     1
 ), _s2 AS (
@@ -26,7 +22,7 @@ SELECT
   _s2.c_custkey AS cust_key,
   COALESCE(_s2.n_rows, 0) AS n_orders
 FROM _s2 AS _s2
-JOIN _t2 AS _s3
+ANTI JOIN _t2 AS _s3
   ON _s2.c_custkey = _s3.o_custkey
 ORDER BY
   _s2.c_acctbal DESC,

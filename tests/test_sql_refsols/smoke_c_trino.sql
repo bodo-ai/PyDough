@@ -13,9 +13,9 @@ WITH _t1 AS (
         (
           ROW_NUMBER() OVER (ORDER BY c_acctbal DESC) - 1.0
         ) - (
-          CAST((
+          (
             COUNT(c_acctbal) OVER () - 1.0
-          ) AS DOUBLE) / 2.0
+          ) / 2.0
         )
       ) < 1.0
       THEN c_acctbal
@@ -31,7 +31,7 @@ SELECT
   ROUND(AVG(ABS(c_acctbal)), 4) AS e,
   MIN(c_acctbal) AS f,
   MAX(c_acctbal) AS g,
-  ARBITRARY(SUBSTRING(c_name, 1, 1)) AS h,
+  ARBITRARY(SUBSTR(c_name, 1, 1)) AS h,
   COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END) AS i,
   CEIL(VAR_POP(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)) AS j,
   ROUND(VARIANCE(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END), 4) AS k,

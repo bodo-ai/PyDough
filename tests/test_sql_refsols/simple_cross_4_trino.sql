@@ -9,7 +9,7 @@ WITH _s2 AS (
     COUNT(*) AS n_rows
   FROM _s2 AS _s0
   JOIN tpch.region AS region
-    ON SUBSTRING(_s0.r_name, 1, 1) = SUBSTRING(region.r_name, 1, 1)
+    ON SUBSTR(_s0.r_name, 1, 1) = SUBSTR(region.r_name, 1, 1)
     AND _s0.r_name <> region.r_name
   GROUP BY
     1

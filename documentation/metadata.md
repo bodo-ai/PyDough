@@ -510,7 +510,7 @@ Below are several examples the JSON for such deducers:
 <!-- TOC --><a name="templates"></a>
 ## Templates
 
-A template registers a reusable, **parametrized function** in metadata, which becomes available for later use either as a normal PyDough function call or through the `pydough.call_template()` API using user-readable **labels** instead of raw values. Know more about templates' usage [here](dsl#pydough-templates)
+A template registers a reusable, **parametrized function** in metadata, which becomes available for later use either as a normal PyDough function call or through the `pydough.call_template()` API using user-readable **labels** instead of raw values. Know more about templates' usage [here](dsl.md#pydough-templates)
 
 Despite the name, a template is not limited to a single PyDough expression — its `source` is effectively the **body of a Python function**. It can contain PyDough collection/expression code, arbitrary Python control flow (`if`/`else`, `assert`, loops), plain Python/PyDough literals (`int`, `str`, `dict`, …), and even recursive calls back into itself. See [Definition Field: `source`](#template-source) for details and an example.
 
@@ -774,14 +774,13 @@ def cumulative_orders_counter(base_year: int, last_year: int):
     if base_year == last_year:
         result = COUNT(orders.WHERE(YEAR(order_date) == base_year))
     else:
-        result = (
-            COUNT(orders.WHERE(YEAR(order_date) == base_year))
-            + cumulative_orders_counter(base_year + 1, last_year)
-        )
+        result = COUNT(
+            orders.WHERE(YEAR(order_date) == base_year)
+        ) + cumulative_orders_counter(base_year + 1, last_year)
     return result
 ```
 
-You can find more how to use templates, along with more examples, [here](dsl#pydough-templates).
+You can find more how to use templates, along with more examples, [here](dsl.md#pydough-templates).
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings

@@ -6,7 +6,6 @@ relational tree to build the final SQL query.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 __all__ = ["RelationalExpression"]
 
@@ -68,8 +67,8 @@ class RelationalExpression(ABC):
             and self.data_type == other.data_type
         )
 
-    def __eq__(self, other: Any) -> bool:
-        return self.equals(other)
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, RelationalExpression) and self.equals(other)
 
     @abstractmethod
     def to_string(self, compact: bool = False) -> str:

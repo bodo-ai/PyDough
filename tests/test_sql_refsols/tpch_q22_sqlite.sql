@@ -23,7 +23,7 @@ JOIN tpch.customer AS customer
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = customer.c_custkey
 WHERE
-  _u_0._u_1 IS NULL
+  NOT NOT _u_0._u_1 IS NULL
 GROUP BY
   1
 ORDER BY

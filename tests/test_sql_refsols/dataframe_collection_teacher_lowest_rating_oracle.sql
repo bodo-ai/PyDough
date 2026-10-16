@@ -1,10 +1,10 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
     TEACHING.CLASS_KEY,
     TEACHERS.FIRST_NAME,
     TEACHERS.LAST_NAME,
     TEACHING.RATING,
-    ROW_NUMBER() OVER (PARTITION BY TEACHERS.TID ORDER BY TEACHING.RATING DESC) AS "_W"
+    ROW_NUMBER() OVER (PARTITION BY TEACHERS.TID ORDER BY TEACHING.RATING DESC) AS "_w"
   FROM (VALUES
     (1, 'Anil', 'Lee'),
     (2, 'Mike', 'Lee'),
@@ -52,17 +52,17 @@ WITH "_T" AS (
     ON TEACHERS.TID = TEACHING.TEACHER_ID
 )
 SELECT
-  "_T".FIRST_NAME AS first_name,
-  "_T".LAST_NAME AS last_name,
-  "_T".RATING AS rating,
+  "_t".FIRST_NAME AS first_name,
+  "_t".LAST_NAME AS last_name,
+  "_t".RATING AS rating,
   CLASSES.CLASS_NAME AS class_name
-FROM "_T" "_T"
+FROM "_t" "_t"
 LEFT JOIN (VALUES
   (15112, 'Programming Fundamentals', 'Python'),
   (15122, 'Imperative Programming', 'C'),
   (15150, 'Functional Programming', 'SML'),
   (15210, 'Parallel Algorithms', 'SML'),
-  (15251, 'Theoretical CS', NULL)) AS CLASSES("KEY", CLASS_NAME, LANGUAGE)
-  ON CLASSES."KEY" = "_T".CLASS_KEY
+  (15251, 'Theoretical CS', NULL)) AS CLASSES("key", CLASS_NAME, LANGUAGE)
+  ON CLASSES."key" = "_t".CLASS_KEY
 WHERE
-  "_T"."_W" = 1
+  "_t"."_w" = 1

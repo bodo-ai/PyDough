@@ -8,7 +8,10 @@ WITH _s3 AS (
 ), _t AS (
   SELECT
     SUPPLIER.s_name,
-    NTILE(1000) OVER (PARTITION BY NATION.n_regionkey ORDER BY CASE WHEN _s3.n_rows IS NULL THEN 1 ELSE 0 END, _s3.n_rows, CASE WHEN SUPPLIER.s_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, SUPPLIER.s_name COLLATE utf8mb4_bin) AS _w
+    NTILE(1000) OVER (
+      PARTITION BY NATION.n_regionkey
+      ORDER BY CASE WHEN _s3.n_rows IS NULL THEN 1 ELSE 0 END, _s3.n_rows, CASE WHEN SUPPLIER.s_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, SUPPLIER.s_name COLLATE utf8mb4_bin
+    ) AS _w
   FROM tpch.NATION AS NATION
   JOIN tpch.SUPPLIER AS SUPPLIER
     ON NATION.n_nationkey = SUPPLIER.s_nationkey

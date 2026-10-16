@@ -1,8 +1,8 @@
 SELECT
-  MIN(sbDailyPrice.sbdpclose) AS lowest_price
+  MIN(sbDailyPrice.sbDpClose) AS lowest_price
 FROM broker.sbDailyPrice AS sbDailyPrice
 JOIN broker.sbTicker AS sbTicker
-  ON sbDailyPrice.sbdptickerid = sbTicker.sbtickerid
-  AND sbTicker.sbtickersymbol = 'VTI'
+  ON sbDailyPrice.sbDpTickerId = sbTicker.sbTickerId
+  AND sbTicker.sbTickerSymbol = 'VTI'
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), sbDailyPrice.sbdpdate) <= 7
+  DATEDIFF(CURRENT_TIMESTAMP(), sbDailyPrice.sbDpDate) <= 7

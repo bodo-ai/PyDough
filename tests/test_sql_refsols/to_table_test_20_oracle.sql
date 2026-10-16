@@ -1,5 +1,5 @@
 SELECT
-  num
+  NUM AS num
 FROM NUMS_T20
 WHERE
-  num > 2
+  NUM > 2
