@@ -68,7 +68,7 @@ class RelationalExpression(ABC):
         )
 
     def __eq__(self, other: object) -> bool:
-        return self.equals(other)
+        return isinstance(other, RelationalExpression) and self.equals(other)
 
     @abstractmethod
     def to_string(self, compact: bool = False) -> str:
