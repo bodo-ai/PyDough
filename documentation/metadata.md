@@ -772,10 +772,9 @@ def cumulative_orders_counter(base_year: int, last_year: int):
     if base_year == last_year:
         result = COUNT(orders.WHERE(YEAR(order_date) == base_year))
     else:
-        result = (
-            COUNT(orders.WHERE(YEAR(order_date) == base_year))
-            + cumulative_orders_counter(base_year + 1, last_year)
-        )
+        result = COUNT(
+            orders.WHERE(YEAR(order_date) == base_year)
+        ) + cumulative_orders_counter(base_year + 1, last_year)
     return result
 ```
 

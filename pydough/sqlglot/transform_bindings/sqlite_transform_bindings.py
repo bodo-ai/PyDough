@@ -97,11 +97,10 @@ class SQLiteTransformBindings(BaseTransformBindings):
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         assert len(args) == 3
-        if not isinstance(args[0], sqlglot_expressions.Literal):
-            raise PyDoughSQLException(
-                f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
-            )
-        elif not args[0].is_string:
+        if (
+            not isinstance(args[0], sqlglot_expressions.Literal)
+            or not args[0].is_string
+        ):
             raise PyDoughSQLException(
                 f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
             )

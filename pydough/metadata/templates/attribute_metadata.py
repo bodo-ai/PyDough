@@ -111,7 +111,7 @@ class AttributeMetadata(AbstractMetadata):
     def create_error_name(name: str, graph_error_name: str):
         return f"Template attribute {name!r} in {graph_error_name}"
 
-    def add_attribute_option(self, label: str, value: str | int | float) -> None:
+    def add_attribute_option(self, label: str, value: str | float) -> None:
         """
         Add an option to the list of options
         """
@@ -210,9 +210,7 @@ class AttributeMetadata(AbstractMetadata):
 
             graph_labels: dict[str, str] = graph.get_all_labels()
             if label in graph_labels or label in new_attribute.options:
-                by_attribute: str = (
-                    graph_labels[label] if label in graph_labels else attribute_name
-                )
+                by_attribute: str = graph_labels.get(label, attribute_name)
                 raise PyDoughMetadataException(
                     f"Duplicate option label: {label!r} for attribute {attribute_name!r}. "
                     f"The label is already in use by attribute {by_attribute!r} "

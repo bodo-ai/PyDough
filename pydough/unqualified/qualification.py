@@ -684,7 +684,7 @@ class Qualifier:
             and not isinstance(node, GlobalContext)
         ):
             if isinstance(node, Calculate):
-                defined.update(name for name in node.calc_term_values.keys())
+                defined.update(name for name in node.calc_term_values)
             # Operators (CALCULATE, WHERE, SINGULAR, ...) step back through
             # their preceding context; child accesses step up to their parent.
             if node.preceding_context is not None:

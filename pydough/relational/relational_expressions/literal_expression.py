@@ -36,9 +36,9 @@ class LiteralExpression(RelationalExpression):
 
     def to_string(self, compact: bool = False) -> str:
         if compact:
-            return f"{repr(self.value)}:{self.data_type.json_string}"
+            return f"{self.value!r}:{self.data_type.json_string}"
         else:
-            return f"Literal(value={repr(self.value)}, type={self.data_type})"
+            return f"Literal(value={self.value!r}, type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (
