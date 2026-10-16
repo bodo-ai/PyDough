@@ -1135,6 +1135,10 @@ class HybridTranslator:
                 expr_name = hybrid.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
                 )
+                if expr_name not in hybrid.pipeline[-1].terms:
+                    raise KeyError(
+                        f"Expression name {expr_name!r} not found in the terms of the pipeline: {', '.join(hybrid.pipeline[-1].terms)}"
+                    )
                 return HybridRefExpr(expr_name, expr.pydough_type)
             case ExpressionFunctionCall():
                 if expr.operator.is_aggregation and inside_agg:
@@ -1482,9 +1486,15 @@ class HybridTranslator:
                 while isinstance(src_tree.pipeline[0], HybridPartitionChild):
                     src_tree = src_tree.pipeline[0].subtree
                 subtree = src_tree.children[0].subtree
+                # Build a new ancestral mapping for the successor hybrid tree.
+                # by combining the ancestral terms of the unpartitioned data
+                # with the ancestral terms of the node itself, where the heights
+                # have different meanings due to the eventual conversion into
+                # BACK references varying depending on whether it comes from
+                # the PartitionChild node or from the main ancestry.
                 successor_hybrid = HybridTree(
                     HybridPartitionChild(subtree),
-                    node.ancestral_mapping,
+                    dict.fromkeys(subtree.ancestral_mapping, 0),
                 )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
@@ -1691,7 +1701,9 @@ class HybridTranslator:
                             )
                         successor_hybrid = HybridTree(
                             HybridPartitionChild(source.children[0].subtree),
-                            node.ancestral_mapping,
+                            dict.fromkeys(
+                                source.children[0].subtree.ancestral_mapping, 0
+                            ),
                         )
                     case PartitionBy():
                         partition = HybridPartition()
@@ -1744,6 +1756,7 @@ class HybridTranslator:
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
                         )
                 self.define_root_link(parent, successor_hybrid, is_aggregate)
+                successor_hybrid.combine_ancestral_mappings(parent.ancestral_mapping)
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
