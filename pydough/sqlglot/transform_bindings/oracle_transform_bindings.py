@@ -7,7 +7,7 @@ __all__ = ["OracleTransformBindings"]
 
 import datetime
 import math
-from typing import Any
+from typing import Any, ClassVar
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -52,7 +52,7 @@ class OracleTransformBindings(BaseTransformBindings):
     def values_alias_column(self) -> bool:
         return False
 
-    ORACLE_STRFTIME_MAPPING: dict[str, str] = {
+    ORACLE_STRFTIME_MAPPING: ClassVar[dict[str, str]] = {
         "%Y": "YYYY",
         "%m": "MM",
         "%d": "DD",
@@ -70,7 +70,7 @@ class OracleTransformBindings(BaseTransformBindings):
     supported; additional tokens may be added as needed.
     """
 
-    PYDOP_TO_ORACLE_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
+    PYDOP_TO_ORACLE_FUNC: ClassVar[dict[pydop.PyDoughExpressionOperator, str]] = {
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
     }
@@ -545,7 +545,7 @@ class OracleTransformBindings(BaseTransformBindings):
             ELSE
                 REGEXP_SUBSTR(
                     str,
-                    '(.*?)(' || REGEXP_REPLACE(delim, '([][(){}.*+?^$|\#-])', '\\\1') || '|$)',
+                    '(.*?)(' || REGEXP_REPLACE(delim, '([][(){}.*+?^$|\\#-])', '\\\1') || '|$)',
                     1,
                     CASE
                         WHEN
