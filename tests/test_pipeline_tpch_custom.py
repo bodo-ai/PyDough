@@ -8,7 +8,7 @@ import logging
 import re
 import sys
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 import numpy as np
@@ -6744,7 +6744,7 @@ from .testing_utilities import (
                         "month_name_col": ["May", "Jul", "Feb", "Feb", "Jan"],
                         "month_col_added": ["Aug", "Oct", "May", "May", "Apr"],
                         "month_str_subs": ["May", "May", "May", "May", "May"],
-                        "month_now": [datetime.now(tz=UTC).strftime("%b")] * 5,
+                        "month_now": [datetime.now().strftime("%b")] * 5,
                     }
                 ),
                 "monthname_function_1",
