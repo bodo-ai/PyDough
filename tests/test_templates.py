@@ -621,6 +621,88 @@ from tests.testing_utilities import (
             ),
             id="templates_list_labels_api",
         ),
+        pytest.param(
+            # Testing labels and values api call
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "    'orders_revenue_by',\n"
+                "    labels={\n"
+                "        'arg_dimension': 'Customer Market Segment'\n"
+                "    },\n"
+                "   values={'arg_year': 1998}"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "dimension": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ],
+                        "segmnet_revenue": [
+                            3.839372e09,
+                            3.943587e09,
+                            3.897561e09,
+                            3.877929e09,
+                            3.875373e09,
+                        ],
+                    }
+                ),
+                "templates_labels_values_api",
+            ),
+            id="templates_labels_values_api",
+        ),
+        pytest.param(
+            # Testing dataframe values api call
+            PyDoughPandasTest(
+                "import pandas as pd\n"
+                "customers_df = pd.DataFrame({'key': [1, 2, 3], 'name': ['John', 'James', 'Michael']})\n"
+                "result = pydough.call_template(\n"
+                "   'dataframe_input_collection',\n"
+                "   values={'collection_name': 'df_name', 'new_df': customers_df, 'unique_columns': ['key']}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "name": ["John", "James", "Michael"],
+                    }
+                ),
+                "templates_df_values_api",
+            ),
+            id="templates_df_values_api",
+        ),
+        pytest.param(
+            # Testing dict, datetime values api call
+            PyDoughPandasTest(
+                "import pandas as pd\n"
+                "cutoff_datetime = pd.to_datetime('1997-01-01')\n"
+                "customer_selection = {'cust_key': key, 'cust_market': market_segment, 'cust_balance': account_balance, 'n_orders': COUNT(orders)}\n"
+                "result = pydough.call_template(\n"
+                "   'filter_users_conditions',\n"
+                "   values={'account_balance_threshold': 5000, 'column_selection': customer_selection, 'orders_cutoff': cutoff_datetime}\n"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [95488, 24740, 103760, 117725, 142663],
+                        "cust_market": [
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                            "HOUSEHOLD",
+                        ],
+                        "cust_balance": [5000.09, 5000.23, 5000.29, 5000.42, 5000.48],
+                        "n_orderss": [28, 12, 12, 15, 23],
+                    }
+                ),
+                "templates_dict_datetime_values_api",
+            ),
+            id="templates_dict_datetime_values_api",
+        ),
     ]
 )
 def tpch_templates_test_data(request) -> PyDoughPandasTest:
@@ -689,7 +771,7 @@ def test_pipeline_e2e_tpch_templates(
             "result = pydough.call_template('orders_filter_count', labels={'no_param': 'LABEL 1'})",
             None,
             re.escape(
-                "Template 'orders_filter_count' is missing a label for the following parameter(s): orders_filter"
+                "Template 'orders_filter_count' doesn't have a paramater called 'no_param'. Did you mean: orders_filter"
             ),
             id="wrong_template_arguments_api",
         ),
@@ -711,7 +793,6 @@ def test_pipeline_e2e_tpch_templates(
             "The label 'Month' is not available for parameter 'arg_year' on template 'orders_revenue_by'",
             id="restricted_template_parameter_api",
         ),
-        # TODO: Add test for required_parameter after optional parameter (with default value)
     ],
 )
 def test_pipeline_e2e_tpch_templates_errors(
@@ -925,6 +1006,13 @@ def test_pipeline_e2e_tpch_templates_errors(
                 "Placeholder {3} in pydough_code has no matching argument (only 2 args provided)."
             ),
             id="invalid_source_placeholder",
+        ),
+        pytest.param(
+            "TEMPLATE_INVALID_DEFAULT_PARAM_POSITION",
+            re.escape(
+                "Required parameter 'parameter_2' cannot follow an optional parameter in template 'template_1' in graph 'TEMPLATE_INVALID_DEFAULT_PARAM_POSITION'."
+            ),
+            id="invalid_default_param_position",
         ),
     ],
 )

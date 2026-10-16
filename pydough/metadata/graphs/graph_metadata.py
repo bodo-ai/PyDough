@@ -2,7 +2,10 @@
 Definition of PyDough metadata for a graph.
 """
 
+from datetime import date
 from typing import TYPE_CHECKING
+
+import pandas as pd
 
 from pydough.errors import PyDoughMetadataException
 from pydough.errors.error_utils import HasType, is_valid_name
@@ -37,18 +40,24 @@ class GraphMetadata(AbstractMetadata):
     Fields allowed in the JSON object describing a graph.
     """
 
-    ALLOWED_TYPES: set[str] = {
-        "str",
-        "int",
-        "float",
-        "list",
-        "dict",
-        "pydough",
-        "pd.DataFrame",
-        "datetime",
-        "bool",
-        "tuple",
+    TYPE_CLASSES: dict[str, tuple[type, ...]] = {
+        "str": (str,),
+        "int": (int,),
+        "float": (int, float),  # an int is fine where a float is expected
+        "bool": (bool,),
+        "list": (list,),
+        "tuple": (tuple,),
+        "dict": (dict,),
+        "datetime": (date,),  # datetime is a subclass of date
+        "pd.DataFrame": (pd.DataFrame,),
+        "pydough": (object,),  # any value is valid for a pydough parameter
     }
+    """
+    Allowed types for template attributes and parameters, mapped to the
+    Python classes a raw value of that type may be an instance of.
+    """
+
+    ALLOWED_TYPES: set[str] = set(TYPE_CLASSES)
     """
     Allowed types for template attributes and definitions in the graph.
     """
@@ -258,10 +267,34 @@ class GraphMetadata(AbstractMetadata):
             `type_str`: the type name to validate.
 
         Returns:
-            Bool: True if type_str is a valid type name, False otherwise.
+            True if type_str is a valid type name, False otherwise.
         """
 
         return type_str in self.ALLOWED_TYPES
+
+    @staticmethod
+    def value_matches_type(value: object, type_name: str) -> bool:
+        """
+        Whether a raw Python value is acceptable for a template parameter of
+        the given type.
+
+        Args:
+            `value`: The value being checked
+            `type_name`: Name of the type which the value must match
+
+        Returns:
+            True if the value is the same type as type_name, False otherwise.
+        """
+        classes: tuple[type, ...] | None = GraphMetadata.TYPE_CLASSES.get(type_name)
+        if classes is None:
+            return False
+
+        # bool is a subclass of int, so True would pass for int and float
+        # parameters without this check.
+        if isinstance(value, bool) and int in classes and bool not in classes:
+            return False
+
+        return isinstance(value, classes)
 
     def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
         """

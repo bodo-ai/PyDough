@@ -600,7 +600,8 @@ def _execute_source(
 
 def call_template(
     name: str,
-    labels: dict[str, str | list[str]],
+    labels: dict[str, str | list[str]] | None = None,
+    values: dict[str, Any] | None = None,
 ) -> Any:
     """
     Invokes a named PyDough template using user-facing labels instead of
@@ -648,7 +649,6 @@ def call_template(
         parameter's type, or if a list of labels is given for a parameter
         whose type is not `list`.
     """
-
     import pydough
 
     if pydough.active_session.metadata is None:
@@ -682,6 +682,9 @@ def call_template(
 
     calling_template: TemplateMetadata = active_metadata.templates_definitions[name]
 
+    labels = labels or {}
+    values = values or {}
+
     if len(labels) > 0 and len(active_metadata.templates_attributes) == 0:
         raise ValueError(
             f"No attributes available for template '{name}' in the current active session"
@@ -690,28 +693,37 @@ def call_template(
     template_kwargs: dict[str, dict[str, str | int | float | bool]] = {}
     param_list: set[str] = set(calling_template.parameters.keys())
 
-    missing_params: list[str] = []
+    # Every name must be a real parameter, whether it came as a label or a value
+    for arg_name in (*labels, *values):
+        if arg_name not in param_list:
+            raise ValueError(
+                f"Template {name!r} doesn't have a paramater called "
+                f"{arg_name!r}. Did you mean: {', '.join(sorted(param_list))}"
+            )
 
-    for param in param_list:
-        if param not in labels and calling_template.parameters[param].default is None:
-            # It's a missing param
-            missing_params.append(param)
-
-    if missing_params:
-        missing_params_str: str = ", ".join(missing_params)
+    # A parameter is supplied either as a label or as a value, never both
+    both: list[str] = sorted(set(labels) & set(values))
+    if both:
         raise ValueError(
-            f"Template {name!r} is missing a label for the following "
-            f"parameter(s): {missing_params_str}"
+            f"Parameter(s) {', '.join(both)} of template {name!r} were given "
+            "both as a label and as a value. Use only one of them."
+        )
+
+    # Every parameter must be covered by a label, a value or a default
+    missing_params: list[str] = [
+        param
+        for param in sorted(param_list)
+        if param not in labels
+        and param not in values
+        and calling_template.parameters[param].default is None
+    ]
+    if missing_params:
+        raise ValueError(
+            f"Template {name!r} is missing a label or value for the following "
+            f"parameter(s): {', '.join(missing_params)}"
         )
 
     for arg_name, label in labels.items():
-        if arg_name not in calling_template.parameters:
-            template_params_str: str = ", ".join(param_list)
-
-            raise ValueError(
-                f"Template {name!r} doesn't have a paramater called "
-                f"{arg_name!r}. Did you mean: {template_params_str}"
-            )
         # Use this arg type to check the option value
         arg_type: str = calling_template.parameters[arg_name].type
 
@@ -750,6 +762,23 @@ def call_template(
 
         template_kwargs[arg_name] = {"type": arg_type, "value": value}
 
+        # Raw values are handed to the call through the environment, by name.
+
+    values_env: dict[str, Any] = {}
+    for arg_name, raw_value in values.items():
+        arg_type = calling_template.parameters[arg_name].type
+        if not GraphMetadata.value_matches_type(raw_value, arg_type):
+            raise ValueError(
+                f"The value given for parameter {arg_name!r} of template "
+                f"{name!r} has type {type(raw_value).__name__!r}, which does "
+                f"not match the parameter's type {arg_type!r}."
+            )
+        ref_name: str = f"_tpl_value_{arg_name}"
+        values_env[ref_name] = raw_value
+        # Any type other than "str" is inserted as raw source text, which here
+        # is just the bare name of the environment entry.
+        template_kwargs[arg_name] = {"type": "pydough", "value": ref_name}
+
     # Build call
     template_call: str = (
         f"result = {calling_template.create_template_call(template_kwargs)}"
@@ -762,11 +791,12 @@ def call_template(
         name: calling_template.template_callable,
         "pd": pd,
         "datetime": datetime,
+        **values_env,
     }
 
     result = _execute_source(
         source=template_call,
-        metadata=pydough.active_session.metadata,
+        metadata=active_metadata,
         environment=templates_env,
         return_unqualified=False,
     )
