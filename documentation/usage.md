@@ -1036,7 +1036,7 @@ ORDER BY
 <!-- TOC --><a name="call_template_api"></a>
 ### `pydough.call_template`
 
-The `call_template` API invokes a previously registered [template](metadata#templates) using user-facing **labels** instead of raw PyDough/Python values. Each label is resolved against the `options` of the graph's [attributes](metadata#template-attributes) to find the concrete value (and its type) to pass into the template, after which the template is called like a normal PyDough function and the result is returned.
+The `call_template` API invokes a previously registered [template](metadata.md#templates) using user-facing **labels** instead of raw PyDough/Python values. Each label is resolved against the `options` of the graph's [attributes](metadata.md#template-attributes) to find the concrete value (and its type) to pass into the template, after which the template is called like a normal PyDough function and the result is returned.
 
 #### Syntax
 ```python
@@ -1051,7 +1051,7 @@ def call_template(
 
 #### Return value
 
-The return type is `Any`, not necessarily an `UnqualifiedNode`. Because a template's `source` is a full Python function body (see [Definition Field: `source`](metadata#template-source)), the result of calling it can be an `UnqualifiedNode` (on which `explain()`, `to_sql()`, or `to_df()` can be called), or it can be a plain literal (`int`, `str`, `dict`, etc.) if that's what the template's `answer_variable` ultimately holds.
+The return type is `Any`, not necessarily an `UnqualifiedNode`. Because a template's `source` is a full Python function body (see [Definition Field: `source`](metadata.md#template-source)), the result of calling it can be an `UnqualifiedNode` (on which `explain()`, `to_sql()`, or `to_df()` can be called), or it can be a plain literal (`int`, `str`, `dict`, etc.) if that's what the template's `answer_variable` ultimately holds.
 
 #### Resolution process
 
@@ -1059,7 +1059,7 @@ For each `(arg_name, label)` pair in `labels`, `call_template` does the followin
 
 1. Confirms `arg_name` is a real parameter of the named template; if not, raises an error listing the template's actual parameter names as suggestions.
 2. Searches every attribute registered in the active session's graph for one whose `options` contains `label`.
-3. If a match is found, verifies that the matching attribute is allowed to supply this template/parameter combination, based on the attribute's [`usage`](metadata#attribute-usage-restriction) field.
+3. If a match is found, verifies that the matching attribute is allowed to supply this template/parameter combination, based on the attribute's [`usage`](metadata.md#attribute-usage-restriction) field.
 4. Verifies that the matching attribute's `type` matches the template parameter's `type`.
 5. Resolves `label` to its corresponding `value`, to be substituted into the generated call.
 
@@ -1082,7 +1082,7 @@ Once every entry in `labels` has been resolved, the template is invoked with the
 
 #### Example
 
-Using the `orders_revenue_by` template and the `years` / `order_dimensions` attributes shown [here](metadata#templates):
+Using the `orders_revenue_by` template and the `years` / `order_dimensions` attributes shown [here](metadata.md#templates):
 
 ```python
 import pydough
