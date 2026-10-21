@@ -48,7 +48,7 @@ from pydough.qdag import (
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
-from pydough.types import BooleanType, NumericType
+from pydough.types import BooleanType, NumericType, PyDoughType, UnknownType
 
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_correlation_extraction import HybridCorrelationExtractor
@@ -438,11 +438,11 @@ class HybridTranslator:
                     or subtree.ancestral_mapping[name] == 0
                 ):
                     continue
-                hybrid_back_expr = self.make_hybrid_expr(
+                hybrid_back_expr = self.translate_back_reference(
                     subtree,
-                    child.get_expr(name),
-                    {},
-                    False,
+                    name,
+                    subtree.ancestral_mapping[name],
+                    UnknownType(),  # TODO: get the correct type
                 )
                 back_exprs[name] = hybrid_back_expr
             if len(back_exprs):
@@ -987,7 +987,7 @@ class HybridTranslator:
             )
 
     def translate_back_reference(
-        self, hybrid: HybridTree, expr: BackReferenceExpression
+        self, hybrid: HybridTree, expr_name: str, back_levels: int, typ: PyDoughType
     ) -> HybridExpr:
         """
         Perform the logic used to translate a BACK reference in QDAG into a
@@ -997,18 +997,19 @@ class HybridTranslator:
 
         Args:
             `hybrid`: the hybrid tree that should be used to derive the
-            translation of `expr`, as it is the context in which the `expr`
-            will live.
-            `expr`: the BACK reference to be converted.
+            translation of the expression, as it is the context in which the
+            expression,
+            `expr_name`: the name of the expression that will be converted.
+            `back_levels`: the number of levels to step back in the hybrid tree
+            to find the ancestor.
+            `typ`: the PyDoughType of the expression.
 
         Returns:
-            The HybridExpr node corresponding to `expr`.
+            The HybridExpr node corresponding to the back reference.
         """
-        back_levels: int = 0
         correl_levels: int = 0
         new_stack: list[HybridTree] = []
         ancestor_tree: HybridTree = hybrid
-        expr_name: str = expr.term_name
         # Start with the current context and hunt for an ancestor with
         # that name pinned by a CALCULATE (so it is in the ancestral
         # mapping), and make sure it is within the height bounds of the
@@ -1018,12 +1019,8 @@ class HybridTranslator:
         # outward, since this is how many CORREL() layers we need to
         # wrap the final expression in.
         while True:
-            if (
-                expr.term_name in ancestor_tree.ancestral_mapping
-                and ancestor_tree.ancestral_mapping[expr.term_name]
-                < ancestor_tree.get_tree_height()
-            ):
-                back_levels = ancestor_tree.ancestral_mapping[expr.term_name]
+            current_height: int = ancestor_tree.get_tree_height()
+            if back_levels < current_height:
                 for _ in range(back_levels):
                     assert ancestor_tree.parent is not None
                     ancestor_tree = ancestor_tree.parent
@@ -1034,9 +1031,10 @@ class HybridTranslator:
             elif len(self.stack) > 0:
                 ancestor_tree = self.stack.pop()
                 new_stack.append(ancestor_tree)
+                back_levels -= current_height
                 correl_levels += 1
             else:
-                raise ValueError("Cannot find ancestor with name " + str(expr))
+                raise ValueError("Cannot find ancestor with name " + str(expr_name))
         for tree in reversed(new_stack):
             self.stack.append(tree)
 
@@ -1044,9 +1042,9 @@ class HybridTranslator:
         # on how many back levels it is from the identified ancestor.
         result: HybridExpr
         if back_levels == 0:
-            result = HybridRefExpr(expr_name, expr.pydough_type)
+            result = HybridRefExpr(expr_name, typ)
         else:
-            result = HybridBackRefExpr(expr_name, back_levels, expr.pydough_type)
+            result = HybridBackRefExpr(expr_name, back_levels, typ)
 
         # Then, wrap it in the necessary number of CORREL() layers.
         for _ in range(correl_levels):
@@ -1082,7 +1080,6 @@ class HybridTranslator:
         child_connection: HybridConnection
         args: list[HybridExpr] = []
         hybrid_arg: HybridExpr
-        collection: PyDoughCollectionQDAG
         match expr:
             case PartitionKey() | CollationExpression():
                 return self.make_hybrid_expr(
@@ -1112,32 +1109,27 @@ class HybridTranslator:
                 else:
                     return HybridRefExpr(expr.term_name, expr.pydough_type)
             case BackReferenceExpression():
-                return self.translate_back_reference(hybrid, expr)
+                return self.translate_back_reference(
+                    hybrid, expr.term_name, expr.back_levels, expr.pydough_type
+                )
 
             case Reference():
                 if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
-                    collection = expr.collection
-                    while (
-                        isinstance(collection, PartitionChild)
-                        and expr.term_name in collection.child_access.ancestral_mapping
-                    ):
-                        collection = collection.child_access
-                    return self.make_hybrid_expr(
+                    return self.translate_back_reference(
                         hybrid,
-                        BackReferenceExpression(
-                            collection,
-                            expr.term_name,
-                            hybrid.ancestral_mapping[expr.term_name],
-                        ),
-                        child_ref_mapping,
-                        inside_agg,
+                        expr.term_name,
+                        hybrid.ancestral_mapping.get(expr.term_name, 0),
+                        expr.pydough_type,
                     )
                 expr_name = hybrid.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
                 )
-                if expr_name not in hybrid.pipeline[-1].terms:
+                if (
+                    expr_name not in hybrid.pipeline[-1].terms
+                    and expr_name not in hybrid.ancestral_mapping
+                ):
                     raise KeyError(
-                        f"Expression name {expr_name!r} not found in the terms of the pipeline: {', '.join(hybrid.pipeline[-1].terms)}"
+                        f"Expression name {expr_name!r} not found in the terms of the pipeline: {', '.join(hybrid.pipeline[-1].terms | hybrid.ancestral_mapping)}"
                     )
                 return HybridRefExpr(expr_name, expr.pydough_type)
             case ExpressionFunctionCall():
@@ -1426,7 +1418,7 @@ class HybridTranslator:
             case GlobalContext():
                 if node.ancestor_context is None:
                     # No ancestor context, so this is the root of the hybrid tree.
-                    return HybridTree(HybridRoot(), node.ancestral_mapping)
+                    return HybridTree(HybridRoot(), {})
                 else:
                     # For CROSS operations, need to create a hybrid tree for the
                     # ancestor context, which is the context of the CROSS.
@@ -1435,12 +1427,12 @@ class HybridTranslator:
                     )
                     # Create a new hybrid tree for the current global context, which
                     # will be the a successor of the hybrid tree for the ancestor context.
-                    successor_hybrid = HybridTree(HybridRoot(), node.ancestral_mapping)
+                    successor_hybrid = HybridTree(HybridRoot(), {})
                     hybrid.add_successor(successor_hybrid)
                     return successor_hybrid
             case TableCollection() | SubCollection():
                 collection_access = HybridCollectionAccess(node)
-                successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
+                successor_hybrid = HybridTree(collection_access, {})
                 # If accessing a sub-collection with a general join condition,
                 # populate the general_condition field of the sub-collection
                 # access with the general join condition converted from a QDAG
@@ -1472,7 +1464,10 @@ class HybridTranslator:
                     node.explode_spec,
                     [term.shift_back(1) for term in hybrid.pipeline[-1].unique_exprs],
                 )
-                successor_hybrid = HybridTree(explode_operator, node.ancestral_mapping)
+                successor_hybrid = HybridTree(explode_operator, {})
+                successor_hybrid.ancestral_mapping[node.explode_spec.value_name] = 0
+                if node.explode_spec.index_name:
+                    successor_hybrid.ancestral_mapping[node.explode_spec.index_name] = 0
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case PartitionChild():
@@ -1556,7 +1551,7 @@ class HybridTranslator:
                     node.ancestor_context, parent, is_aggregate
                 )
                 partition: HybridPartition = HybridPartition()
-                successor_hybrid = HybridTree(partition, node.ancestral_mapping)
+                successor_hybrid = HybridTree(partition, {})
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
@@ -1627,7 +1622,7 @@ class HybridTranslator:
                     )
                 hybrid_collection = HybridUserGeneratedCollection(node)
                 # Create a new hybrid tree for the user-generated collection.
-                successor_hybrid = HybridTree(hybrid_collection, node.ancestral_mapping)
+                successor_hybrid = HybridTree(hybrid_collection, {})
                 hybrid = self.make_hybrid_tree(
                     node.ancestor_context, parent, is_aggregate
                 )
@@ -1638,10 +1633,7 @@ class HybridTranslator:
                 match node.child_access:
                     case TableCollection() | SubCollection():
                         collection_access = HybridCollectionAccess(node.child_access)
-                        successor_hybrid = HybridTree(
-                            collection_access,
-                            node.ancestral_mapping,
-                        )
+                        successor_hybrid = HybridTree(collection_access, {})
                         if isinstance(node.child_access, SubCollection):
                             sub_property: SubcollectionRelationshipMetadata = (
                                 node.child_access.subcollection_property
@@ -1677,9 +1669,14 @@ class HybridTranslator:
                                 for term in parent.pipeline[-1].unique_exprs
                             ],
                         )
-                        successor_hybrid = HybridTree(
-                            explode_operator, node.ancestral_mapping
-                        )
+                        successor_hybrid = HybridTree(explode_operator, {})
+                        successor_hybrid.ancestral_mapping[
+                            node.child_access.explode_spec.value_name
+                        ] = 0
+                        if node.child_access.explode_spec.index_name:
+                            successor_hybrid.ancestral_mapping[
+                                node.child_access.explode_spec.index_name
+                            ] = 0
                     case PartitionChild():
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
@@ -1707,7 +1704,12 @@ class HybridTranslator:
                         )
                     case PartitionBy():
                         partition = HybridPartition()
-                        successor_hybrid = HybridTree(partition, node.ancestral_mapping)
+                        successor_hybrid = HybridTree(partition, {})
+                        # This step needs to be done before the children are
+                        # populated.
+                        successor_hybrid.combine_ancestral_mappings(
+                            parent.ancestral_mapping
+                        )
                         self.populate_children(
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
@@ -1731,9 +1733,7 @@ class HybridTranslator:
                         # This is a special case where the child access
                         # is a global context, which means that the child is
                         # a separate top-level computation (hybrid tree).
-                        successor_hybrid = HybridTree(
-                            HybridRoot(), node.ancestral_mapping
-                        )
+                        successor_hybrid = HybridTree(HybridRoot(), {})
                     case PyDoughUserGeneratedCollectionQDag():
                         # A user-generated collection is a special case of a collection
                         # access that is not a sub-collection, but rather a user-defined
@@ -1742,9 +1742,7 @@ class HybridTranslator:
                             node.child_access
                         )
                         # Create a new hybrid tree for the user-generated collection.
-                        successor_hybrid = HybridTree(
-                            hybrid_collection, node.ancestral_mapping
-                        )
+                        successor_hybrid = HybridTree(hybrid_collection, {})
                     case _:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"

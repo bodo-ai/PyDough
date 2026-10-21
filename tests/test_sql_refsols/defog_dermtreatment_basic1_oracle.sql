@@ -8,24 +8,26 @@ WITH "_S1" AS (
     start_dt >= TRUNC(ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -6), 'DD')
   GROUP BY
     doc_id
-), "_T1" AS (
+), "_S3" AS (
   SELECT
     DOCTORS.specialty AS SPECIALTY,
     SUM("_S1".N_ROWS) AS SUM_N_ROWS,
     SUM("_S1".SUM_TOT_DRUG_AMT) AS SUM_SUM_TOT_DRUG_AMT
   FROM MAIN.DOCTORS DOCTORS
-  LEFT JOIN "_S1" "_S1"
+  JOIN "_S1" "_S1"
     ON DOCTORS.doc_id = "_S1".DOC_ID
   GROUP BY
     DOCTORS.specialty
 )
 SELECT
-  SPECIALTY AS specialty,
-  SUM_N_ROWS AS num_treatments,
-  COALESCE(SUM_SUM_TOT_DRUG_AMT, 0) AS total_drug_amount
-FROM "_T1"
-WHERE
-  SUM_N_ROWS <> 0
+  DOCTORS.specialty,
+  ANY_VALUE("_S3".SUM_N_ROWS) AS num_treatments,
+  COALESCE(ANY_VALUE("_S3".SUM_SUM_TOT_DRUG_AMT), 0) AS total_drug_amount
+FROM MAIN.DOCTORS DOCTORS
+JOIN "_S3" "_S3"
+  ON DOCTORS.specialty = "_S3".SPECIALTY
+GROUP BY
+  DOCTORS.specialty
 ORDER BY
   3 DESC NULLS LAST
 FETCH FIRST 3 ROWS ONLY

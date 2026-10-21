@@ -1,21 +1,35 @@
-WITH "_T1" AS (
+WITH "_S2" AS (
+  SELECT DISTINCT
+    make AS MAKE,
+    model AS MODEL
+  FROM MAIN.CARS
+  WHERE
+    LOWER(vin_number) LIKE '%m5%'
+), "_S1" AS (
   SELECT
-    ANY_VALUE(CARS.make) AS ANYTHING_MAKE,
-    ANY_VALUE(CARS.model) AS ANYTHING_MODEL,
-    COUNT(SALES.car_id) AS COUNT_CAR_ID
+    car_id AS CAR_ID,
+    COUNT(*) AS N_ROWS
+  FROM MAIN.SALES
+  GROUP BY
+    car_id
+), "_S3" AS (
+  SELECT
+    CARS.make AS MAKE,
+    CARS.model AS MODEL,
+    SUM("_S1".N_ROWS) AS SUM_N_ROWS
   FROM MAIN.CARS CARS
-  LEFT JOIN MAIN.SALES SALES
-    ON CARS."_id" = SALES.car_id
+  JOIN "_S1" "_S1"
+    ON CARS."_id" = "_S1".CAR_ID
   WHERE
     LOWER(CARS.vin_number) LIKE '%m5%'
   GROUP BY
-    CARS."_id"
+    CARS.make,
+    CARS.model
 )
 SELECT
-  ANYTHING_MAKE AS make,
-  ANYTHING_MODEL AS model,
-  COALESCE(SUM(COUNT_CAR_ID), 0) AS num_sales
-FROM "_T1"
-GROUP BY
-  ANYTHING_MAKE,
-  ANYTHING_MODEL
+  "_S2".MAKE AS make,
+  "_S2".MODEL AS model,
+  COALESCE("_S3".SUM_N_ROWS, 0) AS num_sales
+FROM "_S2" "_S2"
+LEFT JOIN "_S3" "_S3"
+  ON "_S2".MAKE = "_S3".MAKE AND "_S2".MODEL = "_S3".MODEL

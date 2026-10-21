@@ -1060,6 +1060,7 @@ def cryptbank_pipeline_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
+@pytest.mark.server
 def test_pipeline_until_relational_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,
     masked_graphs: graph_fetcher,
@@ -1082,6 +1083,7 @@ def test_pipeline_until_relational_cryptbank(
         )
 
 
+@pytest.mark.server
 def test_pipeline_until_sql_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,
     masked_graphs: graph_fetcher,
@@ -1111,6 +1113,7 @@ def test_pipeline_until_sql_cryptbank(
 
 
 @pytest.mark.execute
+@pytest.mark.server
 def test_pipeline_e2e_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,
     masked_graphs: graph_fetcher,
@@ -1131,6 +1134,7 @@ def test_pipeline_e2e_cryptbank(
         )
 
 
+@pytest.mark.server
 @pytest.mark.parametrize(
     ["pydough_code", "batch_requests"],
     [

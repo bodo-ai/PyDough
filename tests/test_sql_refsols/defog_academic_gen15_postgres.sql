@@ -1,18 +1,25 @@
-WITH _t1 AS (
+WITH _s2 AS (
   SELECT
-    MAX(organization.continent) AS anything_continent,
-    COUNT(author.oid) AS count_oid
+    continent,
+    COUNT(*) AS n_rows
+  FROM main.organization
+  GROUP BY
+    1
+), _s3 AS (
+  SELECT
+    organization.continent,
+    COUNT(*) AS n_rows
   FROM main.organization AS organization
-  LEFT JOIN main.author AS author
+  JOIN main.author AS author
     ON author.oid = organization.oid
   GROUP BY
-    organization.oid
+    1
 )
 SELECT
-  anything_continent AS continent,
-  CAST(COALESCE(SUM(count_oid), 0) AS DOUBLE PRECISION) / COUNT(*) AS ratio
-FROM _t1
-GROUP BY
-  1
+  _s2.continent,
+  CAST(COALESCE(_s3.n_rows, 0) AS DOUBLE PRECISION) / NULLIF(_s2.n_rows, 0) AS ratio
+FROM _s2 AS _s2
+LEFT JOIN _s3 AS _s3
+  ON _s2.continent = _s3.continent
 ORDER BY
   2 DESC NULLS LAST

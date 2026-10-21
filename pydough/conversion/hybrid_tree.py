@@ -254,8 +254,6 @@ class HybridTree:
         current level and counting upward.
         """
         parent_height: int = 0 if self.parent is None else self.parent.get_tree_height()
-        if isinstance(self.pipeline[0], HybridPartitionChild):
-            return parent_height + self.pipeline[0].subtree.get_tree_height()
         return parent_height + 1
 
     def add_operation(self, operation: HybridOperation) -> None:
@@ -769,10 +767,7 @@ class HybridTree:
         terms in, such as when propagating from a partition child access.
         """
         for name, level in parent_mapping.items():
-            if name not in self.ancestral_mapping:
-                self.ancestral_mapping[name] = level + 1
-            else:
-                assert self.ancestral_mapping[name] == level + 1
+            self.ancestral_mapping[name] = level + 1
 
     def always_exists(self) -> bool:
         """
