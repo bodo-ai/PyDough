@@ -1,29 +1,29 @@
-WITH "_T1" AS (
+WITH "_t1" AS (
   SELECT
-    n_name AS N_NAME,
-    n_nationkey AS N_NATIONKEY
+    N_NAME,
+    N_NATIONKEY
   FROM TPCH.NATION
   WHERE
-    n_name IN ('CANADA', 'ARGENTINA')
-), "_S6" AS (
+    N_NAME IN ('CANADA', 'ARGENTINA')
+), "_s6" AS (
   SELECT DISTINCT
-    EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATE)) AS YEAR_O_ORDERDATE,
-    "_T1".N_NAME
+    EXTRACT(YEAR FROM CAST(ORDERS.O_ORDERDATE AS DATE)) AS YEAR_O_ORDERDATE,
+    "_t1".N_NAME
   FROM TPCH.ORDERS ORDERS
   JOIN TPCH.CUSTOMER CUSTOMER
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey
-  JOIN "_T1" "_T1"
-    ON CUSTOMER.c_nationkey = "_T1".N_NATIONKEY
-), "_S7" AS (
+    ON CUSTOMER.C_CUSTKEY = ORDERS.O_CUSTKEY
+  JOIN "_t1" "_t1"
+    ON CUSTOMER.C_NATIONKEY = "_t1".N_NATIONKEY
+), "_s7" AS (
   SELECT DISTINCT
-    "_T3".N_NAME
+    "_t3".N_NAME
   FROM TPCH.SUPPLIER SUPPLIER
-  JOIN "_T1" "_T3"
-    ON SUPPLIER.s_nationkey = "_T3".N_NATIONKEY
+  JOIN "_t1" "_t3"
+    ON SUPPLIER.S_NATIONKEY = "_t3".N_NATIONKEY
 )
 SELECT
-  "_S6".N_NAME AS c_nation,
-  "_S6".YEAR_O_ORDERDATE AS o_year
-FROM "_S6" "_S6"
-JOIN "_S7" "_S7"
-  ON "_S6".N_NAME = "_S7".N_NAME
+  "_s6".N_NAME AS c_nation,
+  "_s6".YEAR_O_ORDERDATE AS o_year
+FROM "_s6" "_s6"
+JOIN "_s7" "_s7"
+  ON "_s6".N_NAME = "_s7".N_NAME

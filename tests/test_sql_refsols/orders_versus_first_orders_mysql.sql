@@ -9,7 +9,10 @@ WITH _s4 AS (
     CUSTOMER.c_custkey,
     CUSTOMER.c_name,
     _s3.o_orderdate,
-    ROW_NUMBER() OVER (PARTITION BY _s3.o_custkey ORDER BY CASE WHEN _s3.o_orderdate IS NULL THEN 1 ELSE 0 END, _s3.o_orderdate, CASE WHEN _s3.o_orderkey IS NULL THEN 1 ELSE 0 END, _s3.o_orderkey) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY _s3.o_custkey
+      ORDER BY CASE WHEN _s3.o_orderdate IS NULL THEN 1 ELSE 0 END, _s3.o_orderdate, CASE WHEN _s3.o_orderkey IS NULL THEN 1 ELSE 0 END, _s3.o_orderkey
+    ) AS _w
   FROM tpch.CUSTOMER AS CUSTOMER
   JOIN tpch.NATION AS NATION
     ON CUSTOMER.c_nationkey = NATION.n_nationkey AND NATION.n_name = 'VIETNAM'

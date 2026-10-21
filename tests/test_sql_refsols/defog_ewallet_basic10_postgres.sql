@@ -8,7 +8,7 @@ WITH _s1 AS (
     AND receiver_type = 1
 )
 SELECT
-  MAX(merchants.name) AS merchant_name,
+  ANY_VALUE(merchants.name) AS merchant_name,
   COUNT(_s1.receiver_id) AS total_transactions,
   COALESCE(SUM(_s1.amount), 0) AS total_amount
 FROM main.merchants AS merchants

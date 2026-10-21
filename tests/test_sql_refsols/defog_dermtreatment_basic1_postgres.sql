@@ -21,8 +21,8 @@ WITH _s1 AS (
 )
 SELECT
   doctors.specialty,
-  MAX(_s3.sum_n_rows) AS num_treatments,
-  COALESCE(MAX(_s3.sum_sum_tot_drug_amt), 0) AS total_drug_amount
+  ANY_VALUE(_s3.sum_n_rows) AS num_treatments,
+  COALESCE(ANY_VALUE(_s3.sum_sum_tot_drug_amt), 0) AS total_drug_amount
 FROM main.doctors AS doctors
 JOIN _s3 AS _s3
   ON _s3.specialty = doctors.specialty

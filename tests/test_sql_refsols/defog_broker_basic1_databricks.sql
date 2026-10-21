@@ -9,7 +9,7 @@ WITH _s2 AS (
     SUM(sbtxamount) AS sum_sbtxamount
   FROM defog.broker.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -30, CURRENT_TIMESTAMP()))
+    sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -30))
   GROUP BY
     1
 ), _s3 AS (

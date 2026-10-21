@@ -1,5 +1,5 @@
 SELECT
-  sbtxstatus AS status,
+  sbTxStatus AS status,
   COUNT(*) AS num_transactions
 FROM broker.sbTransaction
 GROUP BY

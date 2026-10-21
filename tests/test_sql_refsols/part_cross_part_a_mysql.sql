@@ -1,10 +1,10 @@
 WITH _s0 AS (
   SELECT DISTINCT
-    sbtickerexchange AS sbTickerExchange
+    sbTickerExchange
   FROM main.sbTicker
 ), _s1 AS (
   SELECT DISTINCT
-    sbcuststate AS sbCustState
+    sbCustState
   FROM main.sbCustomer
 ), _s11 AS (
   SELECT
@@ -14,12 +14,12 @@ WITH _s0 AS (
   FROM _s0 AS _s2
   CROSS JOIN _s1 AS _s3
   JOIN main.sbCustomer AS sbCustomer
-    ON _s3.sbCustState = sbCustomer.sbcuststate
+    ON _s3.sbCustState = sbCustomer.sbCustState
   JOIN main.sbTransaction AS sbTransaction
-    ON sbCustomer.sbcustid = sbTransaction.sbtxcustid
+    ON sbCustomer.sbCustId = sbTransaction.sbTxCustId
   JOIN main.sbTicker AS sbTicker
-    ON _s2.sbTickerExchange = sbTicker.sbtickerexchange
-    AND sbTicker.sbtickerid = sbTransaction.sbtxtickerid
+    ON _s2.sbTickerExchange = sbTicker.sbTickerExchange
+    AND sbTicker.sbTickerId = sbTransaction.sbTxTickerId
   GROUP BY
     1,
     2

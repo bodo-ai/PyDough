@@ -1,30 +1,30 @@
 SELECT
-  LOWER(CUSTOMER.c_name) AS lowercase_name,
-  UPPER(CUSTOMER.c_name) AS uppercase_name,
-  LENGTH(CUSTOMER.c_name) AS name_length,
-  CUSTOMER.c_name LIKE 'A%' AS starts_with_A,
-  CUSTOMER.c_name LIKE '%z' AS ends_with_z,
-  CUSTOMER.c_name LIKE '%sub%' AS contains_sub,
-  CUSTOMER.c_name LIKE '%test%' AS matches_like,
-  NVL(CUSTOMER.c_name, '') || '::' || NVL(NATION.n_name, '') AS joined_string,
+  LOWER(CUSTOMER.C_NAME) AS lowercase_name,
+  UPPER(CUSTOMER.C_NAME) AS uppercase_name,
+  LENGTH(CUSTOMER.C_NAME) AS name_length,
+  CUSTOMER.C_NAME LIKE 'A%' AS starts_with_A,
+  CUSTOMER.C_NAME LIKE '%z' AS ends_with_z,
+  CUSTOMER.C_NAME LIKE '%sub%' AS contains_sub,
+  CUSTOMER.C_NAME LIKE '%test%' AS matches_like,
+  NVL(CUSTOMER.C_NAME, '') || '::' || NVL(NATION.N_NAME, '') AS joined_string,
   NULL AS join_nulls,
-  LPAD(CUSTOMER.c_name, 20, '*') AS lpad_name,
-  RPAD(CUSTOMER.c_name, 20, '-') AS rpad_name,
+  LPAD(CUSTOMER.C_NAME, 20, '*') AS lpad_name,
+  RPAD(CUSTOMER.C_NAME, 20, '-') AS rpad_name,
   RTRIM(
-    LTRIM(CUSTOMER.c_name, CONCAT(CHR(10), CHR(9), CHR(13), ' ')),
-    CONCAT(CHR(10), CHR(9), CHR(13), ' ')
+    LTRIM(CUSTOMER.C_NAME, CONCAT(CHR(  10), CHR(  9), CHR(  13), ' ')),
+    CONCAT(CHR(  10), CHR(  9), CHR(  13), ' ')
   ) AS stripped,
-  RTRIM(LTRIM(CUSTOMER.c_name, 'aeiou'), 'aeiou') AS stripped_vowels,
-  REPLACE(CUSTOMER.c_name, 'Corp', 'Inc') AS replaced_name,
-  REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
+  RTRIM(LTRIM(CUSTOMER.C_NAME, 'aeiou'), 'aeiou') AS stripped_vowels,
+  REPLACE(CUSTOMER.C_NAME, 'Corp', 'Inc') AS replaced_name,
+  REPLACE(CUSTOMER.C_NAME, 'Ltd', '') AS removed_substr,
   CASE
-    WHEN LENGTH(CUSTOMER.c_name) = 0 OR LENGTH(CUSTOMER.c_name) IS NULL
+    WHEN LENGTH(CUSTOMER.C_NAME) = 0 OR LENGTH(CUSTOMER.C_NAME) IS NULL
     THEN 0
     ELSE CAST((
-      LENGTH(CUSTOMER.c_name) - NVL(LENGTH(REPLACE(CUSTOMER.c_name, 'e', '')), 0)
+      LENGTH(CUSTOMER.C_NAME) - NVL(LENGTH(REPLACE(CUSTOMER.C_NAME, 'e', '')), 0)
     ) AS INT)
   END AS count_e,
-  INSTR(CUSTOMER.c_name, 'Alex') - 1 AS idx_Alex
+  INSTR(CUSTOMER.C_NAME, 'Alex') - 1 AS idx_Alex
 FROM TPCH.CUSTOMER CUSTOMER
 JOIN TPCH.NATION NATION
-  ON CUSTOMER.c_nationkey = NATION.n_nationkey
+  ON CUSTOMER.C_NATIONKEY = NATION.N_NATIONKEY

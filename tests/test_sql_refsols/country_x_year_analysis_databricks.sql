@@ -28,7 +28,7 @@ WITH _t1 AS (
   FROM _t1 AS _t4
   CROSS JOIN _t5 AS _t5
   JOIN _s5 AS _s5
-    ON _s5.ca_dt < DATEADD(YEAR, 2, CAST(_t5.pr_release AS TIMESTAMP))
+    ON _s5.ca_dt < DATE_ADD(YEAR, 2, CAST(_t5.pr_release AS TIMESTAMP))
     AND _s5.ca_dt >= _t5.pr_release
 ), _s15 AS (
   SELECT DISTINCT
@@ -37,7 +37,7 @@ WITH _t1 AS (
   FROM _t1 AS _t10
   CROSS JOIN _t5 AS _t11
   JOIN _s5 AS _s13
-    ON _s13.ca_dt < DATEADD(YEAR, 2, CAST(_t11.pr_release AS TIMESTAMP))
+    ON _s13.ca_dt < DATE_ADD(YEAR, 2, CAST(_t11.pr_release AS TIMESTAMP))
     AND _s13.ca_dt >= _t11.pr_release
 ), _s21 AS (
   SELECT
@@ -46,7 +46,7 @@ WITH _t1 AS (
   FROM _t1 AS _t12
   CROSS JOIN _t5 AS _t13
   JOIN _s5 AS _s19
-    ON _s19.ca_dt < DATEADD(YEAR, 2, CAST(_t13.pr_release AS TIMESTAMP))
+    ON _s19.ca_dt < DATE_ADD(YEAR, 2, CAST(_t13.pr_release AS TIMESTAMP))
     AND _s19.ca_dt >= _t13.pr_release
 ), _s29 AS (
   SELECT

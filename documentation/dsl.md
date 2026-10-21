@@ -397,10 +397,7 @@ So far, many different kinds of expressions have been noted in the examples for 
 
 ```py
 # Referencing scalar properties of the current collection
-People.CALCULATE(
-    first_name,
-    last_name
-)
+People.CALCULATE(first_name, last_name)
 
 # Referencing scalar properties of a singular sub-collection
 People.CALCULATE(
@@ -411,8 +408,8 @@ People.CALCULATE(
 # Referencing properties from the CALCULATE an ancestor collection
 # (see down-streaming for more details)
 Addresses.CALCULATE(zip_code).current_occupants.CALCULATE(email).packages.CALCULATE(
-    email,    # <- refers to the `email` from `current_occupants`
-    zip_code, # <- refers to the `zip_code` from `Addresses`
+    email,  # <- refers to the `email` from `current_occupants`
+    zip_code,  # <- refers to the `zip_code` from `Addresses`
 )
 
 # Invoking normal functions/operations on other singular data
@@ -435,6 +432,7 @@ customers.CALCULATE(
 from pandas import Timestamp
 from datetime import date
 from decimal import Decimal
+
 customers.CALCULATE(
     a=0,
     b=3.14,
@@ -1927,17 +1925,17 @@ Result:
 <!-- TOC --><a name="templates"></a>
 ## PyDough Templates
 
-Once a template is registered in metadata (see [Templates](metadata#templates) for how to define one), it can be used in two ways:
+Once a template is registered in metadata (see [Templates](metadata.md#templates) for how to define one), it can be used in two ways:
 
 - **Directly**, as an ordinary PyDough function call, passing raw literal/PyDough values as arguments.
-- **Through the API**, via [`pydough.call_template`](usage#call_template_api), passing `user-facing` labels instead of raw values.
+- **Through the API**, via [`pydough.call_template`](usage.md#call_template_api), passing `user-facing` labels instead of raw values.
 
 Both approaches ultimately call the same generated function and produce the same result — the only difference is how the arguments are supplied. Regardless of which is used, the result of a template call can be treated like any other PyDough value: chained into further PyDough operations, passed into another template, or (if the template's `answer_variable` is a plain literal) used directly in Python.
 
 <!-- TOC --><a name="using-templates-direct"></a>
 ### Calling a Template Directly
 
-A loaded template behaves like any other PyDough function — call it by name, passing values positionally in the order its `parameters` were defined (see [Parameter Numeration](#template-parameter-numeration)).
+A loaded template behaves like any other PyDough function — call it by name, passing values positionally in the order its `parameters` were defined (see [Parameter Numeration](metadata.md#template-parameter-numeration)).
 
 Example: using the `orders_filter_count` template directly, with a raw PyDough filter condition, to find the top 5 customers by number of orders placed in 1996 above a price of 3000:
 
@@ -1960,16 +1958,14 @@ Template definition:
 ```python
 customers.CALCULATE(
     key,
-    n_orders=orders_filter_count(
-        (total_price > 3000) & (YEAR(order_date) == 1996)
-    ),
+    n_orders=orders_filter_count((total_price > 3000) & (YEAR(order_date) == 1996)),
 ).TOP_K(5, by=(n_orders.DESC(), key.ASC()))
 ```
 
 <!-- TOC --><a name="using-templates-api"></a>
 ### Calling a Template via `pydough.call_template`
 
-Instead of passing raw values, `pydough.call_template` looks up each argument by a user-facing **label**, resolving it to the underlying value through the graph's [attributes](metadata#template-attributes). See [`pydough.call_template`](usage#call_template_api) for the full parameter/error reference.
+Instead of passing raw values, `pydough.call_template` looks up each argument by a user-facing **label**, resolving it to the underlying value through the graph's [attributes](metadata.md#template-attributes). See [`pydough.call_template`](usage.md#call_template_api) for the full parameter/error reference.
 
 Example: using the `orders_filter_count` template via the API, with the label `"High priority"` resolving to a PyDough filter condition:
 
@@ -2053,7 +2049,7 @@ pydough.to_df(final_result)
 <!-- TOC --><a name="using-templates-literal"></a>
 ### Templates Returning Literals
 
-Not every template needs to return a PyDough collection/expression — a template's `answer_variable` can just as easily hold a plain literal (see [Definition Field: `source`](metadata#template-source)). Its result can then be used as an ordinary Python/PyDough value, such as a threshold in a later filter.
+Not every template needs to return a PyDough collection/expression — a template's `answer_variable` can just as easily hold a plain literal (see [Definition Field: `source`](metadata.md#template-source)). Its result can then be used as an ordinary Python/PyDough value, such as a threshold in a later filter.
 
 Example: calling `multiply_by_2` via the API to compute a minimum account balance from a label, then using that value directly in a `WHERE`:
 
@@ -2141,7 +2137,7 @@ selected_orders = orders.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(key, clerk)
 <!-- TOC --><a name="using-templates-recursive"></a>
 ### Recursive Templates
 
-A template's `source` can call itself, since it is compiled into a regular Python function (see [Definition Field: `source`](metadata#template-source)). Recursive templates are called the same way as any other template — directly or via the API — with no special handling needed at the call site.
+A template's `source` can call itself, since it is compiled into a regular Python function (see [Definition Field: `source`](metadata.md#template-source)). Recursive templates are called the same way as any other template — directly or via the API — with no special handling needed at the call site.
 
 Example: calling the recursive `cumulative_orders_counter` template directly, with different `base_year`/`last_year` ranges:
 

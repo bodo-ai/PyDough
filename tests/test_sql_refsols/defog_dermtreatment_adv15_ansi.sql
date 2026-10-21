@@ -1,4 +1,10 @@
-WITH _s3 AS (
+WITH _s1 AS (
+  SELECT
+    drug_id
+  FROM main.treatments
+  WHERE
+    NOT end_dt IS NULL
+), _s3 AS (
   SELECT
     drug_id,
     AVG(
@@ -14,7 +20,7 @@ SELECT
   drugs.drug_name,
   _s3.avg_ddd
 FROM main.drugs AS drugs
-JOIN main.treatments AS treatments
-  ON NOT treatments.end_dt IS NULL AND drugs.drug_id = treatments.drug_id
+SEMI JOIN _s1 AS _s1
+  ON _s1.drug_id = drugs.drug_id
 LEFT JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id

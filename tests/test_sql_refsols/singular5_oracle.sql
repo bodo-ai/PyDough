@@ -1,26 +1,29 @@
-WITH "_T" AS (
+WITH "_t" AS (
   SELECT
-    LINEITEM.l_shipdate AS L_SHIPDATE,
-    PART.p_container AS P_CONTAINER,
-    ROW_NUMBER() OVER (PARTITION BY PART.p_container ORDER BY LINEITEM.l_extendedprice DESC, LINEITEM.l_shipdate) AS "_W"
+    LINEITEM.L_SHIPDATE,
+    PART.P_CONTAINER,
+    ROW_NUMBER() OVER (
+      PARTITION BY PART.P_CONTAINER
+      ORDER BY LINEITEM.L_EXTENDEDPRICE DESC, LINEITEM.L_SHIPDATE
+    ) AS "_w"
   FROM TPCH.PART PART
   JOIN TPCH.LINEITEM LINEITEM
-    ON LINEITEM.l_partkey = PART.p_partkey
-    AND LINEITEM.l_shipmode = 'RAIL'
-    AND LINEITEM.l_tax = 0
+    ON LINEITEM.L_PARTKEY = PART.P_PARTKEY
+    AND LINEITEM.L_SHIPMODE = 'RAIL'
+    AND LINEITEM.L_TAX = 0
   WHERE
-    PART.p_brand = 'Brand#13'
+    PART.P_BRAND = 'Brand#13'
 )
 SELECT
-  PART.p_container AS container,
-  ANY_VALUE("_T".L_SHIPDATE) AS highest_price_ship_date
+  PART.P_CONTAINER AS container,
+  ANY_VALUE("_t".L_SHIPDATE) AS highest_price_ship_date
 FROM TPCH.PART PART
-JOIN "_T" "_T"
-  ON PART.p_container = "_T".P_CONTAINER AND "_T"."_W" = 1
+JOIN "_t" "_t"
+  ON PART.P_CONTAINER = "_t".P_CONTAINER AND "_t"."_w" = 1
 WHERE
-  PART.p_brand = 'Brand#13'
+  PART.P_BRAND = 'Brand#13'
 GROUP BY
-  PART.p_container
+  PART.P_CONTAINER
 ORDER BY
   2 NULLS FIRST,
   1 NULLS FIRST

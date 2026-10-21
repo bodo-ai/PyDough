@@ -1,25 +1,25 @@
 WITH _s2 AS (
   SELECT DISTINCT
-    sbcustcountry AS sbCustCountry
+    sbCustCountry
   FROM broker.sbCustomer
 ), _s1 AS (
   SELECT
-    sbtxcustid AS sbTxCustId,
+    sbTxCustId,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbTxAmount
+    SUM(sbTxAmount) AS sum_sbTxAmount
   FROM broker.sbTransaction
   WHERE
-    sbtxdatetime >= CAST(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '30' DAY) AS DATE)
+    sbTxDateTime >= CAST(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '30' DAY) AS DATE)
   GROUP BY
     1
 ), _s3 AS (
   SELECT
-    sbCustomer.sbcustcountry AS sbCustCountry,
+    sbCustomer.sbCustCountry,
     SUM(_s1.n_rows) AS sum_n_rows,
     SUM(_s1.sum_sbTxAmount) AS sum_sum_sbTxAmount
   FROM broker.sbCustomer AS sbCustomer
   JOIN _s1 AS _s1
-    ON _s1.sbTxCustId = sbCustomer.sbcustid
+    ON _s1.sbTxCustId = sbCustomer.sbCustId
   GROUP BY
     1
 )

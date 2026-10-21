@@ -1714,13 +1714,19 @@ class HybridTranslator:
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
                         partition_child_idx = child_ref_mapping[0]
-                        for key_name in node.calc_terms:
+                        for key_name in sorted(node.calc_terms, key=str):
                             key = node.get_expr(key_name)
                             expr = self.make_hybrid_expr(
                                 successor_hybrid, key, child_ref_mapping, False
                             )
                             partition.add_key(key_name, expr)
-                            key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                            # Note: uses `expr.name`, not `key_name`, since the
+                            # underlying CALCULATE may have internally renamed
+                            # `key_name` (e.g. to shadow a pre-existing term),
+                            # and `expr.name` reflects that actual,
+                            # possibly-renamed name within the child subtree.
+                            assert isinstance(expr, HybridChildRefExpr)
+                            key_exprs.append(HybridRefExpr(expr.name, expr.typ))
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs

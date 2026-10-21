@@ -1,8 +1,8 @@
-WITH "_S0" AS (
+WITH "_s0" AS (
   SELECT
     MAX("WHERE") AS MAX_WHERE
   FROM KEYWORDS."PARTITION"
-), "_S1" AS (
+), "_s1" AS (
   SELECT
     AVG("= ""QUOTE""") AS AVG_QUOTE,
     COUNT("`cast`") AS COUNT_CAST,
@@ -12,11 +12,11 @@ WITH "_S0" AS (
   FROM KEYWORDS."""QUOTED TABLE_NAME"""
 )
 SELECT
-  "_S0".MAX_WHERE AS max_where,
-  "_S1".MIN_QUOTE AS min_quote,
-  "_S1".MAX_NAME AS max_name,
-  "_S1".COUNT_CAST AS count_cast,
-  "_S1".AVG_QUOTE AS quote_avg,
-  COALESCE("_S1".SUM_NAME, 0) AS sum_name
-FROM "_S0" "_S0"
-CROSS JOIN "_S1" "_S1"
+  "_s0".MAX_WHERE AS max_where,
+  "_s1".MIN_QUOTE AS min_quote,
+  "_s1".MAX_NAME AS max_name,
+  "_s1".COUNT_CAST AS count_cast,
+  "_s1".AVG_QUOTE AS quote_avg,
+  COALESCE("_s1".SUM_NAME, 0) AS sum_name
+FROM "_s0" "_s0"
+CROSS JOIN "_s1" "_s1"

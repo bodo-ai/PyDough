@@ -22,4 +22,4 @@ SELECT
   CAST('0.0' AS TEXT) AS s8,
   CAST('abc def' AS TEXT) AS s9
 FROM (VALUES
-  (NULL)) AS _q_0(_col_0)
+  (NULL)) AS _0(_col_0)

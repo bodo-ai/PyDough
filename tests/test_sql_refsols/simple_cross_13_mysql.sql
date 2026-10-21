@@ -7,4 +7,4 @@ SELECT
   'fizzbuzz' AS f,
   'yay' AS g
 FROM (VALUES
-  ROW(NULL)) AS _q_0(_col_0)
+  ROW(NULL)) AS _0(_col_0)

@@ -4,7 +4,7 @@ WITH _s5 AS (
     COUNT(*) AS n_rows
   FROM tpch.NATION AS NATION
   CROSS JOIN (VALUES
-    ROW(NULL)) AS _q_1(_col_0)
+    ROW(NULL)) AS _1(_col_0)
   WHERE
     SUBSTRING(NATION.n_name, 1, 1) IN ('A', 'B', 'C')
   GROUP BY
@@ -16,7 +16,7 @@ SELECT
   COALESCE(_s5.n_rows, 0) AS n
 FROM tpch.REGION AS REGION
 CROSS JOIN (VALUES
-  ROW(NULL)) AS _q_0(_col_0)
+  ROW(NULL)) AS _0(_col_0)
 LEFT JOIN _s5 AS _s5
   ON REGION.r_regionkey = _s5.n_regionkey
 ORDER BY

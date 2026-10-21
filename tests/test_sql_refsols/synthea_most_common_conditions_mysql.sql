@@ -1,8 +1,8 @@
 SELECT
-  conditions.description COLLATE utf8mb4_bin AS condition_description
+  conditions.DESCRIPTION COLLATE utf8mb4_bin AS condition_description
 FROM main.patients AS patients
 JOIN main.conditions AS conditions
-  ON conditions.patient = patients.patient
+  ON conditions.PATIENT = patients.patient
 WHERE
   patients.ethnicity = 'italian' AND patients.gender = 'F'
 GROUP BY

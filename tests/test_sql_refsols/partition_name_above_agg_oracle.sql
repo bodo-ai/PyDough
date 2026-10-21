@@ -1,67 +1,67 @@
-WITH "_T4" AS (
+WITH "_t4" AS (
   SELECT
-    c_acctbal AS C_ACCTBAL,
-    c_mktsegment AS C_MKTSEGMENT,
-    c_nationkey AS C_NATIONKEY
+    C_ACCTBAL,
+    C_MKTSEGMENT,
+    C_NATIONKEY
   FROM TPCH.CUSTOMER
   WHERE
-    c_acctbal < 0
-), "_S0" AS (
+    C_ACCTBAL < 0
+), "_s0" AS (
   SELECT
     C_MKTSEGMENT,
     C_NATIONKEY,
     COUNT(*) AS N_ROWS
-  FROM "_T4"
+  FROM "_t4"
   GROUP BY
     C_MKTSEGMENT,
     C_NATIONKEY
-), "_S1" AS (
+), "_s1" AS (
   SELECT
-    n_name AS N_NAME,
-    n_nationkey AS N_NATIONKEY
+    N_NAME,
+    N_NATIONKEY
   FROM TPCH.NATION
-), "_S4" AS (
+), "_s4" AS (
   SELECT
-    "_S0".C_MKTSEGMENT,
-    "_S1".N_NAME,
-    SUM("_S0".N_ROWS) AS SUM_N_ROWS
-  FROM "_S0" "_S0"
-  JOIN "_S1" "_S1"
-    ON "_S0".C_NATIONKEY = "_S1".N_NATIONKEY
+    "_s0".C_MKTSEGMENT,
+    "_s1".N_NAME,
+    SUM("_s0".N_ROWS) AS SUM_N_ROWS
+  FROM "_s0" "_s0"
+  JOIN "_s1" "_s1"
+    ON "_s0".C_NATIONKEY = "_s1".N_NATIONKEY
   GROUP BY
-    "_S0".C_MKTSEGMENT,
-    "_S1".N_NAME
-), "_S5" AS (
+    "_s0".C_MKTSEGMENT,
+    "_s1".N_NAME
+), "_s5" AS (
   SELECT
-    CUSTOMER.c_mktsegment AS C_MKTSEGMENT,
-    CUSTOMER.c_name AS C_NAME,
-    "_S3".N_NAME,
-    "_S3".N_NATIONKEY
+    CUSTOMER.C_MKTSEGMENT,
+    CUSTOMER.C_NAME,
+    "_s3".N_NAME,
+    "_s3".N_NATIONKEY
   FROM TPCH.CUSTOMER CUSTOMER
-  JOIN "_S1" "_S3"
-    ON CUSTOMER.c_nationkey = "_S3".N_NATIONKEY
+  JOIN "_s1" "_s3"
+    ON CUSTOMER.C_NATIONKEY = "_s3".N_NATIONKEY
   WHERE
-    CUSTOMER.c_acctbal < 0
-), "_S7" AS (
+    CUSTOMER.C_ACCTBAL < 0
+), "_s7" AS (
   SELECT
     C_MKTSEGMENT,
     C_NATIONKEY
-  FROM "_T4"
+  FROM "_t4"
 )
 SELECT
-  ANY_VALUE("_S5".N_NAME) AS n_name,
-  "_S5".C_MKTSEGMENT AS c_industry,
-  ANY_VALUE("_S5".C_NAME) AS c_name,
-  ANY_VALUE("_S4".SUM_N_ROWS) AS n,
-  COUNT("_S7".C_NATIONKEY) AS n_seg
-FROM "_S4" "_S4"
-JOIN "_S5" "_S5"
-  ON "_S4".C_MKTSEGMENT = "_S5".C_MKTSEGMENT AND "_S4".N_NAME = "_S5".N_NAME
-LEFT JOIN "_S7" "_S7"
-  ON "_S5".C_MKTSEGMENT = "_S7".C_MKTSEGMENT AND "_S5".N_NATIONKEY = "_S7".C_NATIONKEY
+  ANY_VALUE("_s5".N_NAME) AS n_name,
+  "_s5".C_MKTSEGMENT AS c_industry,
+  ANY_VALUE("_s5".C_NAME) AS c_name,
+  ANY_VALUE("_s4".SUM_N_ROWS) AS n,
+  COUNT("_s7".C_NATIONKEY) AS n_seg
+FROM "_s4" "_s4"
+JOIN "_s5" "_s5"
+  ON "_s4".C_MKTSEGMENT = "_s5".C_MKTSEGMENT AND "_s4".N_NAME = "_s5".N_NAME
+LEFT JOIN "_s7" "_s7"
+  ON "_s5".C_MKTSEGMENT = "_s7".C_MKTSEGMENT AND "_s5".N_NATIONKEY = "_s7".C_NATIONKEY
 GROUP BY
-  "_S5".C_MKTSEGMENT,
-  "_S5".N_NATIONKEY
+  "_s5".C_MKTSEGMENT,
+  "_s5".N_NATIONKEY
 ORDER BY
   4 DESC NULLS LAST,
   3 NULLS FIRST

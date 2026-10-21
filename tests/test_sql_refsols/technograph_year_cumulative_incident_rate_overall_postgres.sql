@@ -14,7 +14,7 @@ WITH _s2 AS (
 ), _s6 AS (
   SELECT
     EXTRACT(YEAR FROM CAST(_s2.ca_dt AS TIMESTAMP)) AS year_ca_dt,
-    MAX(_s3.n_rows) AS anything_n_rows
+    ANY_VALUE(_s3.n_rows) AS anything_n_rows
   FROM _s2 AS _s2
   JOIN _s3 AS _s3
     ON _s3.year_ca_dt = EXTRACT(YEAR FROM CAST(_s2.ca_dt AS TIMESTAMP))
@@ -37,19 +37,19 @@ SELECT
     2
   ) AS cum_ir,
   ROUND(
-    CAST(CAST((
+    CAST((
       100.0 * (
         COALESCE(_s6.anything_n_rows, 0) - LAG(COALESCE(_s6.anything_n_rows, 0), 1) OVER (ORDER BY _s6.year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s6.anything_n_rows, 0), 1) OVER (ORDER BY _s6.year_ca_dt) AS DECIMAL),
+    ) / LAG(COALESCE(_s6.anything_n_rows, 0), 1) OVER (ORDER BY _s6.year_ca_dt) AS DECIMAL),
     2
   ) AS pct_bought_change,
   ROUND(
-    CAST(CAST((
+    CAST((
       100.0 * (
         COALESCE(_s7.n_rows, 0) - LAG(COALESCE(_s7.n_rows, 0), 1) OVER (ORDER BY _s6.year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s7.n_rows, 0), 1) OVER (ORDER BY _s6.year_ca_dt) AS DECIMAL),
+    ) / LAG(COALESCE(_s7.n_rows, 0), 1) OVER (ORDER BY _s6.year_ca_dt) AS DECIMAL),
     2
   ) AS pct_incident_change,
   COALESCE(_s6.anything_n_rows, 0) AS bought,

@@ -11,7 +11,7 @@ WITH _s0 AS (
     COUNT(*) AS n_rows
   FROM sale
   WHERE
-    discounted
+    discounted AND TRUE
   GROUP BY
     1
 )

@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     lineitem.l_shipdate,
     part.p_container,
-    ROW_NUMBER() OVER (PARTITION BY part.p_container ORDER BY lineitem.l_extendedprice DESC NULLS FIRST, lineitem.l_shipdate) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY part.p_container
+      ORDER BY lineitem.l_extendedprice DESC NULLS FIRST, lineitem.l_shipdate
+    ) AS _w
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey

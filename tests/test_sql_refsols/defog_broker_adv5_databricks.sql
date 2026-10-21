@@ -1,10 +1,16 @@
 WITH _s0 AS (
   SELECT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)), 2, '0')
-    ) AS month,
+    CASE
+      WHEN '-' IS NULL
+      OR EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)) IS NULL
+      OR LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)), 2, '0') IS NULL
+      THEN NULL
+      ELSE CONCAT_WS(
+        '-',
+        EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)),
+        LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)), 2, '0')
+      )
+    END AS month,
     sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,
     MAX(sbdphigh) AS max_sbdphigh,

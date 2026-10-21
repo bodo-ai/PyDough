@@ -66,11 +66,7 @@ You can access user collections through `pydough` and call them with the require
 ```python
 import pydough
 
-my_range = pydough.range_collection(
-        "simple_range",
-        "col1",
-        1, 10, 2
-    )
+my_range = pydough.range_collection("simple_range", "col1", 1, 10, 2)
 ```
 Output:
 ```

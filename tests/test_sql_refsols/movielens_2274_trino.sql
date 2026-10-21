@@ -8,13 +8,9 @@ WITH _u_0 AS (
     1
 )
 SELECT
-  IF(
-    COUNT(*) > 0,
-    CAST((
-      100.0 * COUNT_IF(LOWER(users.u_gender) = 'f')
-    ) AS DOUBLE) / COUNT(*),
-    0.0
-  ) AS percentage_of_female_users
+  IF(COUNT(*) > 0, (
+    100.0 * COUNT_IF(LOWER(users.u_gender) = 'f')
+  ) / COUNT(*), 0.0) AS percentage_of_female_users
 FROM main.users AS users
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = users.userid

@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     LINEITEM.l_shipdate,
     PART.p_container,
-    ROW_NUMBER() OVER (PARTITION BY PART.p_container ORDER BY CASE WHEN LINEITEM.l_extendedprice IS NULL THEN 1 ELSE 0 END DESC, LINEITEM.l_extendedprice DESC, CASE WHEN LINEITEM.l_shipdate IS NULL THEN 1 ELSE 0 END, LINEITEM.l_shipdate) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY PART.p_container
+      ORDER BY CASE WHEN LINEITEM.l_extendedprice IS NULL THEN 1 ELSE 0 END DESC, LINEITEM.l_extendedprice DESC, CASE WHEN LINEITEM.l_shipdate IS NULL THEN 1 ELSE 0 END, LINEITEM.l_shipdate
+    ) AS _w
   FROM tpch.PART AS PART
   JOIN tpch.LINEITEM AS LINEITEM
     ON LINEITEM.l_partkey = PART.p_partkey

@@ -1,4 +1,4 @@
 SELECT
   "key",
-  name
+  NAME AS name
 FROM TOP_NATIONS_T15

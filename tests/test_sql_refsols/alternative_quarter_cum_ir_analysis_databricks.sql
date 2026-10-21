@@ -20,7 +20,7 @@ WITH _s2 AS (
     TRUNC(CAST(_s2.ca_dt AS TIMESTAMP), 'QUARTER') AS quarter
   FROM _s2 AS _s2
   JOIN _t2 AS _t2
-    ON _s2.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t2.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s2.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t2.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s2.ca_dt >= _t2.pr_release
   CROSS JOIN _t3 AS _t3
 ), _t7 AS (
@@ -43,7 +43,7 @@ WITH _s2 AS (
     COUNT(DISTINCT incidents.in_device_id) AS ndistinct_in_device_id
   FROM _s2 AS _s6
   JOIN _t2 AS _t5
-    ON _s6.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t5.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s6.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t5.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s6.ca_dt >= _t5.pr_release
   CROSS JOIN _t3 AS _t6
   JOIN main.incidents AS incidents
@@ -60,7 +60,7 @@ WITH _s2 AS (
     COUNT(*) AS n_rows
   FROM _s2 AS _s20
   JOIN _t2 AS _t10
-    ON _s20.ca_dt < TRUNC(DATEADD(YEAR, 2, CAST(_t10.pr_release AS TIMESTAMP)), 'QUARTER')
+    ON _s20.ca_dt < TRUNC(DATE_ADD(YEAR, 2, CAST(_t10.pr_release AS TIMESTAMP)), 'QUARTER')
     AND _s20.ca_dt >= _t10.pr_release
   CROSS JOIN _t3 AS _t11
   JOIN main.devices AS devices

@@ -10,18 +10,16 @@ WITH _t1 AS (
 )
 SELECT
   sbtxdatetime AS date_time,
-  DATEADD(
-    DAY,
-    -56,
-    DATEADD(
-      DAY,
+  DATE_ADD(
+    DATE_ADD(
+      CAST(CAST(sbtxdatetime AS TIMESTAMP) AS DATE),
       -(
         (
-          DAYOFWEEK(TO_DATE(CAST(sbtxdatetime AS TIMESTAMP))) + 5
+          DAYOFWEEK(CAST(sbtxdatetime AS TIMESTAMP)) + 5
         ) % 7
-      ),
-      CAST(CAST(sbtxdatetime AS TIMESTAMP) AS DATE)
-    )
+      )
+    ),
+    -56
   ) AS s00,
   FALSE AS s01,
   EXTRACT(MONTH FROM CAST(sbtxdatetime AS TIMESTAMP)) IN (1, 2, 3) AS s02,

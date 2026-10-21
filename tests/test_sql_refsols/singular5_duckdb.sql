@@ -10,7 +10,10 @@ WITH _t3 AS (
   WHERE
     part.p_brand = 'Brand#13'
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY part.p_container ORDER BY lineitem.l_extendedprice DESC NULLS FIRST, lineitem.l_shipdate) = 1
+    ROW_NUMBER() OVER (
+      PARTITION BY part.p_container
+      ORDER BY lineitem.l_extendedprice DESC NULLS FIRST, lineitem.l_shipdate
+    ) = 1
 )
 SELECT
   part.p_container AS container,

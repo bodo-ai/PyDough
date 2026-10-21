@@ -135,12 +135,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         assert from_alias is None, "Alias is only allowed for subqueries"
         from_result = from_value
     from_result = From(this=from_result)
-    query: Select = Select(
-        **{
-            "expressions": expressions,
-            "from": from_result,
-        }
-    )
+    query: Select = Select(expressions=expressions, from_=from_result)
     if "where" in kwargs:
         query = query.where(kwargs.pop("where"))
     if "group_by" in kwargs:

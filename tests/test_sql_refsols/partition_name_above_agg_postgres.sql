@@ -49,10 +49,10 @@ WITH _t4 AS (
   FROM _t4
 )
 SELECT
-  MAX(_s5.n_name) AS n_name,
+  ANY_VALUE(_s5.n_name) AS n_name,
   _s5.c_mktsegment AS c_industry,
-  MAX(_s5.c_name) AS c_name,
-  MAX(_s4.sum_n_rows) AS n,
+  ANY_VALUE(_s5.c_name) AS c_name,
+  ANY_VALUE(_s4.sum_n_rows) AS n,
   COUNT(_s7.c_nationkey) AS n_seg
 FROM _s4 AS _s4
 JOIN _s5 AS _s5

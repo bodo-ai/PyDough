@@ -12,7 +12,7 @@ WITH _t1 AS (
   JOIN main.products AS products
     ON products.pr_name = 'AmethystCopper-I'
   JOIN main.calendar AS calendar
-    ON calendar.ca_dt < DATEADD(YEAR, 2, CAST(products.pr_release AS TIMESTAMP))
+    ON calendar.ca_dt < DATE_ADD(YEAR, 2, CAST(products.pr_release AS TIMESTAMP))
     AND calendar.ca_dt >= products.pr_release
 )
 SELECT

@@ -45,7 +45,7 @@ WITH _t5 AS (
     AND _t3.l_orderkey = _u_0._u_2
     AND _t3.o_orderkey = _u_0._u_2
   WHERE
-    _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+    NOT NOT _u_0._u_1 IS NULL AND _t3.anything_o_orderstatus = 'F'
 )
 SELECT
   ANY_VALUE(SUPPLIER.s_name) COLLATE utf8mb4_bin AS S_NAME,

@@ -2,7 +2,10 @@ WITH _t AS (
   SELECT
     customer.c_custkey,
     nation.n_regionkey,
-    ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC, customer.c_name) AS _w
+    ROW_NUMBER() OVER (
+      PARTITION BY customer.c_nationkey
+      ORDER BY customer.c_acctbal DESC, customer.c_name
+    ) AS _w
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
