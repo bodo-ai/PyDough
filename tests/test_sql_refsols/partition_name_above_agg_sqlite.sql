@@ -1,4 +1,4 @@
-WITH _t4 AS (
+WITH _t3 AS (
   SELECT
     c_acctbal,
     c_mktsegment,
@@ -11,7 +11,7 @@ WITH _t4 AS (
     c_mktsegment,
     c_nationkey,
     COUNT(*) AS n_rows
-  FROM _t4
+  FROM _t3
   GROUP BY
     1,
     2
@@ -45,23 +45,24 @@ WITH _t4 AS (
 ), _s7 AS (
   SELECT
     c_mktsegment,
-    c_nationkey
-  FROM _t4
+    c_nationkey,
+    COUNT(*) AS n_rows
+  FROM _t3
+  GROUP BY
+    1,
+    2
 )
 SELECT
-  MAX(_s5.n_name) AS n_name,
+  _s5.n_name,
   _s5.c_mktsegment AS c_industry,
-  MAX(_s5.c_name) AS c_name,
-  MAX(_s4.sum_n_rows) AS n,
-  COUNT(_s7.c_nationkey) AS n_seg
+  _s5.c_name,
+  _s4.sum_n_rows AS n,
+  COALESCE(_s7.n_rows, 0) AS n_seg
 FROM _s4 AS _s4
 JOIN _s5 AS _s5
   ON _s4.c_mktsegment = _s5.c_mktsegment AND _s4.n_name = _s5.n_name
 LEFT JOIN _s7 AS _s7
   ON _s5.c_mktsegment = _s7.c_mktsegment AND _s5.n_nationkey = _s7.c_nationkey
-GROUP BY
-  _s5.n_nationkey,
-  2
 ORDER BY
   4 DESC,
   3

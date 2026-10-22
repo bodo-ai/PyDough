@@ -1,4 +1,4 @@
-WITH "_t4" AS (
+WITH "_t3" AS (
   SELECT
     C_ACCTBAL,
     C_MKTSEGMENT,
@@ -11,7 +11,7 @@ WITH "_t4" AS (
     C_MKTSEGMENT,
     C_NATIONKEY,
     COUNT(*) AS N_ROWS
-  FROM "_t4"
+  FROM "_t3"
   GROUP BY
     C_MKTSEGMENT,
     C_NATIONKEY
@@ -45,23 +45,24 @@ WITH "_t4" AS (
 ), "_s7" AS (
   SELECT
     C_MKTSEGMENT,
+    C_NATIONKEY,
+    COUNT(*) AS N_ROWS
+  FROM "_t3"
+  GROUP BY
+    C_MKTSEGMENT,
     C_NATIONKEY
-  FROM "_t4"
 )
 SELECT
-  ANY_VALUE("_s5".N_NAME) AS n_name,
+  "_s5".N_NAME AS n_name,
   "_s5".C_MKTSEGMENT AS c_industry,
-  ANY_VALUE("_s5".C_NAME) AS c_name,
-  ANY_VALUE("_s4".SUM_N_ROWS) AS n,
-  COUNT("_s7".C_NATIONKEY) AS n_seg
+  "_s5".C_NAME AS c_name,
+  "_s4".SUM_N_ROWS AS n,
+  COALESCE("_s7".N_ROWS, 0) AS n_seg
 FROM "_s4" "_s4"
 JOIN "_s5" "_s5"
   ON "_s4".C_MKTSEGMENT = "_s5".C_MKTSEGMENT AND "_s4".N_NAME = "_s5".N_NAME
 LEFT JOIN "_s7" "_s7"
   ON "_s5".C_MKTSEGMENT = "_s7".C_MKTSEGMENT AND "_s5".N_NATIONKEY = "_s7".C_NATIONKEY
-GROUP BY
-  "_s5".C_MKTSEGMENT,
-  "_s5".N_NATIONKEY
 ORDER BY
   4 DESC NULLS LAST,
   3 NULLS FIRST

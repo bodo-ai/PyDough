@@ -586,6 +586,11 @@ class HybridTree:
             self
         )
 
+        # If the existing data will be plural with regards to its children,
+        # force the reverse join to be plural
+        if not self.is_reverse_singular():
+            reverse_cardinality = reverse_cardinality.add_plural()
+
         # Augment the reverse cardinality if the parent does not always exist.
         if not reverse_cardinality.filters:
             if len(self.pipeline) == 1 and isinstance(
@@ -883,6 +888,39 @@ class HybridTree:
                 return False
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.is_singular()
+
+    def is_reverse_singular(self) -> bool:
+        """
+        The same as `is_singular`, but traversing in the opposite direction
+        to determine if the top of the tree will return a single record with
+        regards to the bottom of the tree.
+        """
+        if self.parent is None:
+            return True
+        match self.pipeline[0]:
+            case HybridCollectionAccess():
+                if isinstance(self.pipeline[0].collection, TableCollection):
+                    pass
+                else:
+                    assert isinstance(self.pipeline[0].collection, SubCollection)
+                    meta_cardinality: JoinCardinality = (
+                        self.infer_metadata_reverse_cardinality(
+                            self.pipeline[0].collection.subcollection_property
+                        )
+                    )
+                    if not meta_cardinality.singular:
+                        return False
+            case HybridPartitionChild():
+                if not self.pipeline[0].subtree.is_reverse_singular():
+                    return False
+            case HybridChildPullUp():
+                if not self.children[
+                    self.pipeline[0].child_idx
+                ].subtree.is_reverse_singular():
+                    return False
+            case _:
+                pass
+        return self.parent.is_reverse_singular()
 
     def equals_ignoring_successors(self, other: "HybridTree") -> bool:
         """
