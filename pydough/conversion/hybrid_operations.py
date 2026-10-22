@@ -186,7 +186,7 @@ class HybridPartitionChild(HybridOperation):
         )
 
     def __repr__(self):
-        return repr(self.subtree)
+        return "PARTITION_CHILD"
 
 
 class HybridCalculate(HybridOperation):
