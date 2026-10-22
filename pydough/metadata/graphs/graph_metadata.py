@@ -12,7 +12,11 @@ from pydough.errors.error_utils import HasType, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
 
 if TYPE_CHECKING:
-    from pydough.metadata.templates import AttributeMetadata, TemplateMetadata
+    from pydough.metadata.templates import (
+        AttributeMetadata,
+        ParamType,
+        TemplateMetadata,
+    )
     from pydough.pydough_operators import (
         ExpressionFunctionOperator,
     )
@@ -333,7 +337,7 @@ class GraphMetadata(AbstractMetadata):
         arg_type: str,
         searched_label: str,
         match_types: bool = True,
-    ) -> str | int | float | bool:
+    ) -> tuple[str, "ParamType"]:
         """
         Resolves one label to its value for parameter `arg_name` of
         `template_name`, validating the attribute's `usage` and type along the way.
@@ -344,7 +348,7 @@ class GraphMetadata(AbstractMetadata):
             `arg_type`: Type of the argument
             `searched_label`: Label being searched
             `match_types`: Flag determine if the types must match, used when resolving
-            a label from a list of labels
+             a single label. For list of labels matching types is not required
 
         Returns:
             The found value
@@ -378,7 +382,7 @@ class GraphMetadata(AbstractMetadata):
                     f"argument '{arg_name}'s type"
                 )
 
-            return attribute.options[searched_label]
+            return attribute.type, attribute.options[searched_label]
 
         raise ValueError(
             f"Label {searched_label!r} not found in any attribute's options"

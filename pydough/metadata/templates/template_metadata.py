@@ -2,12 +2,14 @@
 Base definition of PyDough metadata for template definition.
 """
 
+__all__ = ["ParamType"]
+
 import ast
 import re
 import textwrap
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeAlias
 
 from pydough.errors.error_types import PyDoughMetadataException
 from pydough.errors.error_utils import (
@@ -21,6 +23,8 @@ from pydough.errors.error_utils import (
 )
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs.graph_metadata import GraphMetadata
+
+ParamType: TypeAlias = str | int | float | bool
 
 
 @dataclass
@@ -46,7 +50,7 @@ class TemplateParameter:
     Detail of what this parameter represents inside the template or how it is used
     """
 
-    default: str | int | float | bool | None
+    default: ParamType | None
     """
     Default value for the parameter, if any. If not provided, the parameter is
     required.
@@ -73,7 +77,7 @@ class TemplateMetadata(AbstractMetadata):
         name: str,
         graph: GraphMetadata,
         description: str,
-        parameters: dict[str, dict[str, str | int | float | bool]],
+        parameters: dict[str, dict[str, ParamType]],
         source: str,
         answer_variable: str = "result",
     ):
@@ -250,7 +254,7 @@ class TemplateMetadata(AbstractMetadata):
                 f"All parameters must have description in {template_name!r}",
             )
 
-            param_default: str | int | float | bool | None = None
+            param_default: ParamType | None = None
             if "default" in arg:
                 param_default = (
                     extract_integer(arg, "default", error_param_name)
@@ -404,7 +408,7 @@ class TemplateMetadata(AbstractMetadata):
         )
 
     def create_template_call(
-        self, kwargs: dict[str, dict[str, str | int | float]] | None = None
+        self, kwargs: dict[str, dict[str, ParamType]] | None = None
     ) -> str:
         """
         Builds the Python source code for a call to this template, without

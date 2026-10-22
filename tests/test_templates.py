@@ -614,12 +614,33 @@ from tests.testing_utilities import (
                     {
                         "or_mkt_segment": ["MACHINERY", "HOUSEHOLD", "AUTOMOBILE"],
                         "cust_nation": ["PERU", "KENYA", "INDIA"],
-                        "n_orders": [10790, 11004, 11058],
+                        "n_orders": [10742, 10943, 11012],
                     }
                 ),
                 "templates_list_labels_api",
             ),
             id="templates_list_labels_api",
+        ),
+        pytest.param(
+            # Testing list of string labels for a template
+            PyDoughPandasTest(
+                "result = pydough.call_template(\n"
+                "    'generate_df_collection',\n"
+                "    labels={\n"
+                "        'col1': ['Region 1', 'Region 2']\n"
+                "    },\n"
+                "   values={'collection_name': 'collection_1'}"
+                ")\n",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "names": ["ASIA", "EUROPE"],
+                        "idx": [0, 1],
+                    }
+                ),
+                "templates_list_str_labels_api",
+            ),
+            id="templates_list_str_labels_api",
         ),
         pytest.param(
             # Testing labels and values api call

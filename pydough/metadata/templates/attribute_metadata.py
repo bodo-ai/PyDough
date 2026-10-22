@@ -21,6 +21,8 @@ from pydough.errors.error_utils import (
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
 
+from .template_metadata import ParamType
+
 
 class AttributeMetadata(AbstractMetadata):
     """
@@ -90,7 +92,7 @@ class AttributeMetadata(AbstractMetadata):
         return self._type
 
     @property
-    def options(self) -> dict[str, str | int | float]:
+    def options(self) -> dict[str, ParamType]:
         """
         List with all options of the attribute
         """
@@ -201,7 +203,7 @@ class AttributeMetadata(AbstractMetadata):
 
         for option in attr_options:
             label: str = extract_string(option, "label", option_error_name)
-            value: str | int | float | bool = (
+            value: ParamType = (
                 extract_string(option, "value", option_error_name)
                 if all_strings
                 else (

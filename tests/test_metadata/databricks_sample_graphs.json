@@ -965,7 +965,7 @@
         },
         {
           "name": "parameter_unrestriected_attribute",
-          "usage": {"orders_nations": []},
+          "usage": {"orders_nations": [], "generate_df_collection": ["col1"]},
           "type": "str",
           "description": "Some integer values that can be used freely",
           "options": [
@@ -1325,7 +1325,7 @@
             "conditions": {"type": "list", "description": "Filters to apply"},
             "order_dimensions": {"type": "list", "description": "Dimensions required"}
           },
-          "source": "terms_calc = {}\npart_dim = []\n\nresult = orders\n\nif {1}:\n    conds_expr = {1}[0]\n    for condition in {1}[1:]:\n        conds_expr = conds_expr & condition\n    result.WHERE(conds_expr)\n\nif {2}:\n    for dim_name, expr in {2}:\n        terms_calc[repr(dim_name)] = expr\n        part_dim.append(dim_name)\n    result = result.CALCULATE(**terms_calc)\n\nresult = result.PARTITION(name=\"partition_dimensions\", by=part_dim).CALCULATE(\n    *part_dim,\n    n_orders=COUNT(orders)\n)",
+          "source": "terms_calc = {}\npart_dim = []\n\nresult = orders\n\nif {1}:\n    conds_expr = {1}[0]\n    for condition in {1}[1:]:\n        conds_expr = conds_expr & condition\n    result = result.WHERE(conds_expr)\n\nif {2}:\n    for dim_name, expr in {2}:\n        terms_calc[repr(dim_name)] = expr\n        part_dim.append(dim_name)\n    result = result.CALCULATE(**terms_calc)\n\nresult = result.PARTITION(name=\"partition_dimensions\", by=part_dim).CALCULATE(\n    *part_dim,\n    n_orders=COUNT(orders)\n)",
           "answer_variable": "result"
         }
       ]

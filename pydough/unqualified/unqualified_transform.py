@@ -22,6 +22,7 @@ from pydough.errors import PyDoughSessionException, PyDoughUnqualifiedException
 from pydough.errors.error_utils import find_possible_name_matches
 from pydough.metadata import GraphMetadata
 from pydough.metadata.templates import TemplateMetadata
+from pydough.metadata.templates.template_metadata import ParamType
 
 from .unqualified_node import UnqualifiedNode
 
@@ -690,7 +691,7 @@ def call_template(
             f"No attributes available for template '{name}' in the current active session"
         )
 
-    template_kwargs: dict[str, dict[str, str | int | float | bool]] = {}
+    template_kwargs: dict[str, dict[str, ParamType]] = {}
     param_list: set[str] = set(calling_template.parameters.keys())
 
     # Every name must be a real parameter, whether it came as a label or a value
@@ -727,7 +728,7 @@ def call_template(
         # Use this arg type to check the option value
         arg_type: str = calling_template.parameters[arg_name].type
 
-        value: str | int | float | bool
+        value: ParamType
 
         if isinstance(label, (tuple, list)):
             # A list of labels is only meaningful for list-typed parameters
@@ -744,21 +745,24 @@ def call_template(
                     f"{arg_name!r} must be a string."
                 )
 
-            resolved: list[str] = [
-                str(
-                    active_metadata.resolve_label(
-                        name, arg_name, arg_type, searched_label, False
-                    )
+            resolved: list[str] = []
+            for searched_label in label:
+                attr_type, raw_value = active_metadata.resolve_label(
+                    name, arg_name, arg_type, searched_label, False
                 )
-                for searched_label in label
-            ]
+                # Only str options need quoting; the other types are already source text
+                resolved.append(
+                    repr(raw_value) if attr_type == "str" else str(raw_value)
+                )
+
+            value = f"[{', '.join(resolved)}]" if resolved else "[]"
 
             # Concatenate the list literals as source text. An empty list of
             # labels becomes an empty list value.
-            value = f"[{', '.join(f'{v}' for v in resolved)}]" if resolved else "[]"
+            value = f"[{', '.join(f'{v}' for v in resolved)}]"
         else:
             # Search the label as usual
-            value = active_metadata.resolve_label(name, arg_name, arg_type, label)
+            _, value = active_metadata.resolve_label(name, arg_name, arg_type, label)
 
         template_kwargs[arg_name] = {"type": arg_type, "value": value}
 
