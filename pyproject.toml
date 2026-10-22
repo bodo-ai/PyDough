@@ -5,7 +5,7 @@ keywords = ["analytics"]
 description = "Analytics DSL for Python"
 readme = "README.md"
 authors = [{name = "Bodo.ai"}]
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.15"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 # Note: sqlite is included in the standard library, so it doesn't need to be 
