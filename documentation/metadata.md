@@ -654,6 +654,7 @@ Every JSON object describing a template definition has the following fields:
 `parameters` is a JSON object (map) keyed by parameter name. Each value is a JSON object with the following fields:
 - `type` (required): `"int"`, `"pydough"`, etc. `"pydough"` signals the value is a raw expression rather than a literal. [See supported types](#template-supported-types) for more.
 - `description` (required): a semantic description of the parameter's purpose.
+- `default` (optional): default value for this parameter if no value or label is provided. Default value works similarly to option's `value` in attributes, more about the supported type [here](#templates-supported-types).
 
 <!-- TOC --><a name="template-parameter-numeration"></a>
 ##### Parameter Numeration
@@ -720,7 +721,7 @@ Example: template named `order_revenue` used on the previous example:
 
 
 <!-- TOC --><a name="template-supported-types"></a>
-### Supported Types
+### Template Supported Types
 
 Both the `type` field of an [attribute](#template-attributes) and the `type` field of a [template parameter](#template-parameters) draw from the same fixed set of supported types. When an attribute is used to supply a value for a parameter, their `type`s must match.
 
