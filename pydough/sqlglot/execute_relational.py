@@ -343,7 +343,7 @@ def replace_keys_with_indices(
                         expr_idx = expressions.index(order_expr.this)
                     else:
                         expr_idx = aliases.index(order_expr.this.name.lower())
-                    order_list[idx].set(
+                    order_expr.set(
                         "this",
                         sqlglot_expressions.convert(expr_idx + 1),
                     )
@@ -361,7 +361,7 @@ def replace_keys_with_indices(
                         expr_idx = aliases.index(collate.this.this.name.lower())
                     # Remove the COLLATE from the order expression, but change
                     # the original expression to include the collate.
-                    order_list[idx].set(
+                    order_expr.set(
                         "this",
                         sqlglot_expressions.convert(expr_idx + 1),
                     )
@@ -494,11 +494,12 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
     if isinstance(expr, Select) and expr.args.get("expressions") is not None:
         for i in range(len(expr.expressions)):
             cur_expr = expr.expressions[i]
-            if isinstance(cur_expr, Alias) and isinstance(
-                cur_expr.args.get("this"), Column
+            if (
+                isinstance(cur_expr, Alias)
+                and isinstance(cur_expr.args.get("this"), Column)
+                and cur_expr.alias == cur_expr.this.name
             ):
-                if cur_expr.alias == cur_expr.this.name:
-                    expr.expressions[i] = cur_expr.this
+                expr.expressions[i] = cur_expr.this
 
     # Recursively visit the AST.
     for arg in expr.args.values():
@@ -661,12 +662,13 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
     if not isinstance(dialect, OracleDialect):
         return
 
-    if isinstance(expr, sqlglot_expressions.Identifier):
-        if _oracle_identifier_needs_quoting(expr.this):
-            new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
-            expr.replace(new_identifier)
-            # Identifiers are leaf nodes, so no recursion is needed
-            return
+    if isinstance(
+        expr, sqlglot_expressions.Identifier
+    ) and _oracle_identifier_needs_quoting(expr.this):
+        new_identifier = sqlglot_expressions.Identifier(this=expr.this, quoted=True)
+        expr.replace(new_identifier)
+        # Identifiers are leaf nodes, so no recursion is needed
+        return
 
     # Recursively visit the subexpressions.
     for arg in expr.iter_expressions():

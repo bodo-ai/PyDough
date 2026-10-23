@@ -510,7 +510,7 @@ Below are several examples the JSON for such deducers:
 <!-- TOC --><a name="templates"></a>
 ## Templates
 
-A template registers a reusable, **parametrized function** in metadata, which becomes available for later use either as a normal PyDough function call or through the `pydough.call_template()` API using user-readable **labels** instead of raw values. Know more about templates' usage [here](dsl#pydough-templates)
+A template registers a reusable, **parametrized function** in metadata, which becomes available for later use either as a normal PyDough function call or through the `pydough.call_template()` API using user-readable **labels** instead of raw values. Know more about templates' usage [here](dsl.md#pydough-templates)
 
 Despite the name, a template is not limited to a single PyDough expression — its `source` is effectively the **body of a Python function**. It can contain PyDough collection/expression code, arbitrary Python control flow (`if`/`else`, `assert`, loops), plain Python/PyDough literals (`int`, `str`, `dict`, …), and even recursive calls back into itself. See [Definition Field: `source`](#template-source) for details and an example.
 
@@ -654,6 +654,7 @@ Every JSON object describing a template definition has the following fields:
 `parameters` is a JSON object (map) keyed by parameter name. Each value is a JSON object with the following fields:
 - `type` (required): `"int"`, `"pydough"`, etc. `"pydough"` signals the value is a raw expression rather than a literal. [See supported types](#template-supported-types) for more.
 - `description` (required): a semantic description of the parameter's purpose.
+- `default` (optional): default value for this parameter if no value or label is provided. Default value works similarly to option's `value` in attributes, more about the supported type [here](#templates-supported-types).
 
 <!-- TOC --><a name="template-parameter-numeration"></a>
 ##### Parameter Numeration
@@ -720,7 +721,7 @@ Example: template named `order_revenue` used on the previous example:
 
 
 <!-- TOC --><a name="template-supported-types"></a>
-### Supported Types
+### Template Supported Types
 
 Both the `type` field of an [attribute](#template-attributes) and the `type` field of a [template parameter](#template-parameters) draw from the same fixed set of supported types. When an attribute is used to supply a value for a parameter, their `type`s must match.
 
@@ -731,7 +732,9 @@ The currently supported types are:
 | `str` | A string literal. |
 | `int` | An integer literal. |
 | `float` | A floating-point literal. |
+| `bool` | A boolean literal. |
 | `list` | A Python list literal. Written as a [string](#attribute-options-list-dict) in attribute options. |
+| `tuple` | A Python tuple literal. Written as a [string](#attribute-options-list-dict) in attribute options.|
 | `dict` | A Python dict literal. Written as a [string](#attribute-options-list-dict) in attribute options. |
 | `pydough` | A raw, untyped PyDough expression/snippet (e.g. a column reference, a `CALCULATE` call, or the output of another template). |
 | `pd.DataFrame` | A pandas DataFrame. |
@@ -772,14 +775,13 @@ def cumulative_orders_counter(base_year: int, last_year: int):
     if base_year == last_year:
         result = COUNT(orders.WHERE(YEAR(order_date) == base_year))
     else:
-        result = (
-            COUNT(orders.WHERE(YEAR(order_date) == base_year))
-            + cumulative_orders_counter(base_year + 1, last_year)
-        )
+        result = COUNT(
+            orders.WHERE(YEAR(order_date) == base_year)
+        ) + cumulative_orders_counter(base_year + 1, last_year)
     return result
 ```
 
-You can find more how to use templates, along with more examples, [here](dsl#pydough-templates).
+You can find more how to use templates, along with more examples, [here](dsl.md#pydough-templates).
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
