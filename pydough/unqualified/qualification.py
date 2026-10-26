@@ -11,7 +11,11 @@ import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughQDAGException, PyDoughUnqualifiedException
-from pydough.metadata import GeneralJoinMetadata, GraphMetadata
+from pydough.metadata import (
+    GeneralJoinMetadata,
+    GraphMetadata,
+    PyDoughExpressionColumnMetadata,
+)
 from pydough.pydough_operators.expression_operators import (
     ExpressionFunctionOperator,
     ExpressionWindowOperator,
@@ -559,6 +563,28 @@ class Qualifier:
                     f"Unsupported unqualified node in general join conditions: {condition.__class__.__name__}"
                 )
 
+    def qualify_expression_column(
+        self,
+        context: PyDoughCollectionQDAG,
+        children: list[PyDoughCollectionQDAG],
+        column_property: PyDoughExpressionColumnMetadata,
+    ) -> PyDoughExpressionQDAG:
+        # Create Python code for deriving the join condition and storing it in
+        # a variable called '_answer'.
+        condition_statement = transform_cell(
+            f"_answer = ({column_property.expression})", self.graph.name, set()
+        )
+        # Execute the Python code in an environment containing the graph.
+        local_env: dict[str, object] = {self.graph.name: self.graph}
+        exec(condition_statement, {}, local_env)
+        # Extract the answer from the local environment as an unqualified node.
+        assert "_answer" in local_env
+        value = local_env.get("_answer")
+        assert isinstance(value, UnqualifiedNode), (
+            "Expected the PyDough expression column to be a valid PyDough expression"
+        )
+        return self.qualify_expression(value, context, children)
+
     def qualify_access(
         self,
         unqualified: UnqualifiedAccess,
@@ -633,6 +659,14 @@ class Qualifier:
                 return answer
             else:
                 assert isinstance(term, PyDoughExpressionQDAG)
+                # In the case that it is a PyDough expression column, ensure the
+                # pydough expression is properly parsed and attached.
+                if isinstance(term, ColumnProperty) and isinstance(
+                    term.column_property, PyDoughExpressionColumnMetadata
+                ):
+                    return self.qualify_expression_column(
+                        qualified_parent, children, term.column_property
+                    )
                 if isinstance(unqualified_parent, UnqualifiedRoot):
                     # If at the root, the access must be a reference to a scalar
                     # attribute accessible in the current context.

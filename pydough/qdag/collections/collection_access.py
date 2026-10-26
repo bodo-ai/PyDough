@@ -11,6 +11,7 @@ from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     PropertyMetadata,
+    PyDoughExpressionColumnMetadata,
     SimpleTableMetadata,
     TableColumnMetadata,
 )
@@ -148,15 +149,20 @@ class CollectionAccess(ChildAccess):
         from .sub_collection import SubCollection
 
         property = self.collection.get_property(term_name)
-        assert isinstance(property, PropertyMetadata)
-        if isinstance(property, SubcollectionRelationshipMetadata):
-            return SubCollection(property, self)
-        elif isinstance(property, TableColumnMetadata):
-            return ColumnProperty(property)
-        else:
-            raise NotImplementedError(
-                f"Unsupported property type for collection access: {property.__class__.name}"
-            )
+        match property:
+            case SubcollectionRelationshipMetadata():
+                return SubCollection(property, self)
+            case TableColumnMetadata():
+                return ColumnProperty(property)
+            case PyDoughExpressionColumnMetadata():
+                # This is a temporary measure, as the qualifier should expand
+                # this into the underlying PyDough expression.
+                # return ColumnProperty(property)
+                raise NotImplementedError("TODO: FIX THIS")
+            case _:
+                raise NotImplementedError(
+                    f"Unsupported property type for collection access: {property.__class__.__name__}"
+                )
 
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"

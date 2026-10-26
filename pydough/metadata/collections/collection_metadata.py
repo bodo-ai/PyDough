@@ -224,7 +224,11 @@ class CollectionMetadata(AbstractMetadata):
             collection.
         """
         from pydough.errors import PyDoughMetadataException
-        from pydough.metadata import MaskedTableColumnMetadata, TableColumnMetadata
+        from pydough.metadata import (
+            MaskedTableColumnMetadata,
+            PyDoughExpressionColumnMetadata,
+            TableColumnMetadata,
+        )
 
         for property_json in properties_json:
             # Extract the name/type, and create the string used to identify
@@ -242,6 +246,10 @@ class CollectionMetadata(AbstractMetadata):
                     )
                 case "masked table column":
                     MaskedTableColumnMetadata.parse_from_json(
+                        self, property_name, property_json
+                    )
+                case "pydough expression column":
+                    PyDoughExpressionColumnMetadata.parse_from_json(
                         self, property_name, property_json
                     )
                 case _:
