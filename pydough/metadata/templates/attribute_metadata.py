@@ -8,16 +8,20 @@ from pydough.errors.error_utils import (
     NoExtraKeys,
     attributes_usage_predicate,
     extract_array,
+    extract_bool,
     extract_float,
     extract_integer,
     extract_object,
     extract_string,
+    is_bool,
     is_float,
     is_integer,
     is_string,
 )
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
+
+from .template_metadata import ParamType
 
 
 class AttributeMetadata(AbstractMetadata):
@@ -88,7 +92,7 @@ class AttributeMetadata(AbstractMetadata):
         return self._type
 
     @property
-    def options(self) -> dict[str, str | int | float]:
+    def options(self) -> dict[str, ParamType]:
         """
         List with all options of the attribute
         """
@@ -189,22 +193,25 @@ class AttributeMetadata(AbstractMetadata):
         all_strings = all(is_string.accept(v) for v in option_values)
         all_integers = all(is_integer.accept(v) for v in option_values)
         all_floats = all(is_float.accept(v) for v in option_values)
+        all_bools = all(is_bool.accept(v) for v in option_values)
 
-        if not (all_strings or all_integers or all_floats):
+        if not (all_strings or all_integers or all_floats or all_bools):
             raise PyDoughMetadataException(
                 f"{option_error_name} 'value' fields must be either all strings, "
-                f"integers or floats (not a mix, and no other type)."
+                f"integers, floats or booleans (not a mix, and no other type)."
             )
 
         for option in attr_options:
             label: str = extract_string(option, "label", option_error_name)
-            value: str | int | float = (
+            value: ParamType = (
                 extract_string(option, "value", option_error_name)
                 if all_strings
                 else (
                     extract_integer(option, "value", option_error_name)
                     if all_integers
                     else extract_float(option, "value", option_error_name)
+                    if all_floats
+                    else extract_bool(option, "value", option_error_name)
                 )
             )
 

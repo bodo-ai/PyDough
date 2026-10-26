@@ -1,21 +1,35 @@
-WITH _t1 AS (
+WITH _s2 AS (
+  SELECT DISTINCT
+    make,
+    model
+  FROM dealership.cars
+  WHERE
+    LOWER(vin_number) LIKE '%m5%'
+), _s1 AS (
   SELECT
-    ANY_VALUE(cars.make) AS anything_make,
-    ANY_VALUE(cars.model) AS anything_model,
-    COUNT(sales.car_id) AS count_car_id
+    car_id,
+    COUNT(*) AS n_rows
+  FROM dealership.sales
+  GROUP BY
+    1
+), _s3 AS (
+  SELECT
+    cars.make,
+    cars.model,
+    SUM(_s1.n_rows) AS sum_n_rows
   FROM dealership.cars AS cars
-  LEFT JOIN dealership.sales AS sales
-    ON cars._id = sales.car_id
+  JOIN _s1 AS _s1
+    ON _s1.car_id = cars._id
   WHERE
     LOWER(cars.vin_number) LIKE '%m5%'
   GROUP BY
-    cars._id
+    1,
+    2
 )
 SELECT
-  anything_make AS make,
-  anything_model AS model,
-  COALESCE(SUM(count_car_id), 0) AS num_sales
-FROM _t1
-GROUP BY
-  1,
-  2
+  _s2.make,
+  _s2.model,
+  COALESCE(_s3.sum_n_rows, 0) AS num_sales
+FROM _s2 AS _s2
+LEFT JOIN _s3 AS _s3
+  ON _s2.make = _s3.make AND _s2.model = _s3.model

@@ -647,5 +647,32 @@
                 }
             ]
         }
+    },
+    {
+        "name": "TEMPLATE_INVALID_DEFAULT_PARAM_POSITION",
+        "version": "V2",
+        "relationships": [],
+        "collections": [],
+        "templates":{
+            "definitions": [
+                {
+                    "name": "template_1",
+                    "description": "Generic description.",
+                    "parameters": {
+                        "parameter_1": {
+                            "type": "str",
+                            "description": "Generic description",
+                            "default": "string"
+                        },
+                        "parameter_2": {
+                            "type": "str",
+                            "description": "Generic description 2"
+                        }
+                    },
+                    "source": "result = {2} == 'string'",
+                    "answer_variable": "result"
+                }
+            ]
+        }
     }
 ]

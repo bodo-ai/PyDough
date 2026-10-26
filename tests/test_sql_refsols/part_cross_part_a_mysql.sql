@@ -2,13 +2,19 @@ WITH _s0 AS (
   SELECT DISTINCT
     sbTickerExchange
   FROM main.sbTicker
-), _s9 AS (
+), _s1 AS (
+  SELECT DISTINCT
+    sbCustState
+  FROM main.sbCustomer
+), _s11 AS (
   SELECT
-    sbCustomer.sbCustId,
+    _s3.sbCustState,
     _s2.sbTickerExchange,
     COUNT(*) AS n_rows
   FROM _s0 AS _s2
-  CROSS JOIN main.sbCustomer AS sbCustomer
+  CROSS JOIN _s1 AS _s3
+  JOIN main.sbCustomer AS sbCustomer
+    ON _s3.sbCustState = sbCustomer.sbCustState
   JOIN main.sbTransaction AS sbTransaction
     ON sbCustomer.sbCustId = sbTransaction.sbTxCustId
   JOIN main.sbTicker AS sbTicker
@@ -19,17 +25,14 @@ WITH _s0 AS (
     2
 )
 SELECT
-  sbCustomer.sbCustState COLLATE utf8mb4_bin AS state,
+  _s1.sbCustState COLLATE utf8mb4_bin AS state,
   _s0.sbTickerExchange COLLATE utf8mb4_bin AS exchange,
-  COALESCE(SUM(_s9.n_rows), 0) AS n
+  COALESCE(_s11.n_rows, 0) AS n
 FROM _s0 AS _s0
-CROSS JOIN main.sbCustomer AS sbCustomer
-LEFT JOIN _s9 AS _s9
-  ON _s0.sbTickerExchange = _s9.sbTickerExchange
-  AND _s9.sbCustId = sbCustomer.sbCustId
-GROUP BY
-  1,
-  2
+CROSS JOIN _s1 AS _s1
+LEFT JOIN _s11 AS _s11
+  ON _s0.sbTickerExchange = _s11.sbTickerExchange
+  AND _s1.sbCustState = _s11.sbCustState
 ORDER BY
   1,
   2
