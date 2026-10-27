@@ -21,6 +21,7 @@ from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    PyDoughExpressionProperty,
     Reference,
 )
 
@@ -155,10 +156,7 @@ class CollectionAccess(ChildAccess):
             case TableColumnMetadata():
                 return ColumnProperty(property)
             case PyDoughExpressionColumnMetadata():
-                # This is a temporary measure, as the qualifier should expand
-                # this into the underlying PyDough expression.
-                # return ColumnProperty(property)
-                raise NotImplementedError("TODO: FIX THIS")
+                return PyDoughExpressionProperty(property)
             case _:
                 raise NotImplementedError(
                     f"Unsupported property type for collection access: {property.__class__.__name__}"

@@ -25,6 +25,7 @@ __all__ = [
     "PartitionChild",
     "PartitionKey",
     "PyDoughCollectionQDAG",
+    "PyDoughExpressionProperty",
     "PyDoughExpressionQDAG",
     "PyDoughQDAG",
     "PyDoughQDAGException",
@@ -73,4 +74,5 @@ from .expressions import (
     SidedReference,
     WindowCall,
 )
+from .expressions.pydough_expression_property import PyDoughExpressionProperty
 from .node_builder import AstNodeBuilder

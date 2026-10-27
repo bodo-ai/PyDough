@@ -39,6 +39,9 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.qdag.collections.calculate import Calculate
+from pydough.qdag.expressions.pydough_expression_property import (
+    PyDoughExpressionProperty,
+)
 from pydough.types import PyDoughType
 from pydough.utilities import ExplodeSpec
 
@@ -661,11 +664,9 @@ class Qualifier:
                 assert isinstance(term, PyDoughExpressionQDAG)
                 # In the case that it is a PyDough expression column, ensure the
                 # pydough expression is properly parsed and attached.
-                if isinstance(term, ColumnProperty) and isinstance(
-                    term.column_property, PyDoughExpressionColumnMetadata
-                ):
+                if isinstance(term, PyDoughExpressionProperty):
                     return self.qualify_expression_column(
-                        qualified_parent, children, term.column_property
+                        qualified_parent, children, term.expression_metadata
                     )
                 if isinstance(unqualified_parent, UnqualifiedRoot):
                     # If at the root, the access must be a reference to a scalar
