@@ -4038,3 +4038,17 @@ def chained_partition_transformed_key():
         .CALCULATE(name)
         .ORDER_BY(name.ASC())
     )
+
+
+def group_by_key_repeated_alias():
+    """
+    Test for fixing the problem with a GROUP BY key being referenced more
+    than once in the final SELECT clause (e.g. once as its own term and
+    again under a different alias).
+    """
+    grouped = customers.CALCULATE(nat_key=nation_key).PARTITION(name="g", by=nat_key)
+    return grouped.CALCULATE(
+        key=nat_key,
+        key_again=nat_key,
+        cnt=COUNT(customers),
+    ).ORDER_BY(key.ASC())
