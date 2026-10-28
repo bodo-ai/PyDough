@@ -6754,6 +6754,106 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .region\n"
+                "   .CALCULATE(r_name=name, n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust)\n"
+                "   .TOP_K(3, by=(n.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "r_name": ["EUROPE"] * 3,
+                        "n_name": ["ROMANIA"] * 3,
+                        "c_industry": ["MACHINERY"] * 3,
+                        "c_name": [
+                            "Customer#000000043",
+                            "Customer#000000208",
+                            "Customer#000000372",
+                        ],
+                        "n": [1273] * 3,
+                    }
+                ),
+                "partition_name_above_below",
+                order_sensitive=True,
+            ),
+            id="partition_name_above_below",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .WHERE(account_balance < 0)\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .CALCULATE(n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust, n_seg=COUNT(customers.WHERE((account_balance < 0) & (market_segment==cmkt))))\n"
+                "   .TOP_K(3, by=(n_cust.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_name": ["IRAN"] * 3,
+                        "c_industry": ["HOUSEHOLD"] * 3,
+                        "c_name": [
+                            "Customer#000002005",
+                            "Customer#000002193",
+                            "Customer#000002658",
+                        ],
+                        "n_cust": [144] * 3,
+                        "n_seg": [144] * 3,
+                    }
+                ),
+                "partition_name_above_agg",
+                order_sensitive=True,
+            ),
+            id="partition_name_above_agg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .WHERE(account_balance < 0)\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .BEST(per='nation_industry_group', by=cnam.ASC())\n"
+                "   .CALCULATE(n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust, n_seg=COUNT(customers.WHERE((account_balance < 0) & (market_segment==cmkt))))\n"
+                "   .TOP_K(3, by=(n_cust.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_name": ["IRAN", "CANADA", "ROMANIA"],
+                        "c_industry": ["HOUSEHOLD", "BUILDING", "MACHINERY"],
+                        "c_name": [
+                            "Customer#000002005",
+                            "Customer#000000064",
+                            "Customer#000000372",
+                        ],
+                        "n_cust": [144, 129, 129],
+                        "n_seg": [144, 129, 129],
+                    }
+                ),
+                "partition_name_above_uni_agg",
+                order_sensitive=True,
+            ),
+            id="partition_name_above_uni_agg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 iff_with_aggregates_on_different_collections,
                 "TPCH",
                 lambda: pd.DataFrame({"output": [10000]}),

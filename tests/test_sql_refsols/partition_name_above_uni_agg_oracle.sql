@@ -1,0 +1,80 @@
+WITH "_t5" AS (
+  SELECT
+    C_ACCTBAL,
+    C_MKTSEGMENT,
+    C_NATIONKEY
+  FROM TPCH.CUSTOMER
+  WHERE
+    C_ACCTBAL < 0
+), "_s0" AS (
+  SELECT
+    C_MKTSEGMENT,
+    C_NATIONKEY,
+    COUNT(*) AS N_ROWS
+  FROM "_t5"
+  GROUP BY
+    C_MKTSEGMENT,
+    C_NATIONKEY
+), "_s1" AS (
+  SELECT
+    N_NAME,
+    N_NATIONKEY
+  FROM TPCH.NATION
+), "_s4" AS (
+  SELECT
+    "_s0".C_MKTSEGMENT,
+    "_s1".N_NAME,
+    SUM("_s0".N_ROWS) AS SUM_N_ROWS
+  FROM "_s0" "_s0"
+  JOIN "_s1" "_s1"
+    ON "_s0".C_NATIONKEY = "_s1".N_NATIONKEY
+  GROUP BY
+    "_s0".C_MKTSEGMENT,
+    "_s1".N_NAME
+), "_s5" AS (
+  SELECT
+    CUSTOMER.C_MKTSEGMENT,
+    CUSTOMER.C_NAME,
+    "_s3".N_NAME,
+    "_s3".N_NATIONKEY
+  FROM TPCH.CUSTOMER CUSTOMER
+  JOIN "_s1" "_s3"
+    ON CUSTOMER.C_NATIONKEY = "_s3".N_NATIONKEY
+  WHERE
+    CUSTOMER.C_ACCTBAL < 0
+), "_t" AS (
+  SELECT
+    "_s5".C_MKTSEGMENT AS CMKT_7,
+    "_s5".N_NAME AS NNAM_10,
+    "_s5".C_NAME,
+    "_s5".N_NATIONKEY,
+    "_s4".SUM_N_ROWS,
+    ROW_NUMBER() OVER (PARTITION BY "_s5".C_MKTSEGMENT, "_s4".N_NAME ORDER BY "_s5".C_NAME) AS "_w"
+  FROM "_s4" "_s4"
+  JOIN "_s5" "_s5"
+    ON "_s4".C_MKTSEGMENT = "_s5".C_MKTSEGMENT AND "_s4".N_NAME = "_s5".N_NAME
+), "_s7" AS (
+  SELECT
+    C_MKTSEGMENT,
+    C_NATIONKEY,
+    COUNT(*) AS N_ROWS
+  FROM "_t5"
+  GROUP BY
+    C_MKTSEGMENT,
+    C_NATIONKEY
+)
+SELECT
+  "_t".NNAM_10 AS n_name,
+  "_t".CMKT_7 AS c_industry,
+  "_t".C_NAME AS c_name,
+  "_t".SUM_N_ROWS AS n,
+  COALESCE("_s7".N_ROWS, 0) AS n_seg
+FROM "_t" "_t"
+LEFT JOIN "_s7" "_s7"
+  ON "_s7".C_MKTSEGMENT = "_t".CMKT_7 AND "_s7".C_NATIONKEY = "_t".N_NATIONKEY
+WHERE
+  "_t"."_w" = 1
+ORDER BY
+  4 DESC NULLS LAST,
+  3 NULLS FIRST
+FETCH FIRST 3 ROWS ONLY
