@@ -600,16 +600,34 @@ class Qualifier:
             # along the way.
             children: list[PyDoughCollectionQDAG] = []
             qualified_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
+            has_virtual: bool = False
             # Qualify each column defined as a PyDoughExpressionColumnMetadata
             # instance.
-            for name, meta in original_collection.collection.properties.items():
+            for name, meta in sorted(
+                original_collection.collection.properties.items(),
+                key=lambda item: original_collection.collection.definition_order[
+                    item[0]
+                ],
+            ):
                 if isinstance(meta, PyDoughExpressionColumnMetadata):
                     qualified_term = self.qualify_expression_column(
                         collection, children, meta
                     )
                     qualified_terms.append((name, qualified_term))
+                    has_virtual = True
+                elif not meta.is_subcollection:
+                    # Add the other terms to the calculate anyways so the
+                    # CALCULATE order is constant.
+                    qualified_terms.append(
+                        (
+                            name,
+                            self.builder.build_reference(
+                                collection, name, collection.get_expr(name).pydough_type
+                            ),
+                        )
+                    )
             # If any terms were built, wrap the answer in a calculate.
-            if len(qualified_terms) > 0:
+            if has_virtual:
                 return self.builder.build_calculate(
                     collection, children, qualified_terms
                 )
@@ -1216,9 +1234,7 @@ class Qualifier:
             # an ancestor) are both subclasses of `Reference`, but partition
             # keys are only allowed to be direct, scalar references to a
             # term of the collection being partitioned itself.
-            if (not isinstance(qualified_term, Reference)) or isinstance(
-                qualified_term, ChildReferenceExpression
-            ):
+            if type(qualified_term) is not Reference:
                 raise PyDoughQDAGException(
                     f"Invalid partition key {term!r}: PARTITION only "
                     "supports partition keys that are direct references to "

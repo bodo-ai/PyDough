@@ -695,6 +695,30 @@ result = (
             ),
             id="pydough_expression_column_02",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .TOP_K(3, by=_id)
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "_id": [102921, 107723, 110882],
+                        "name": ["GoldSky-II", "EmeraldCarbon-V", "SapphireBolt-IV"],
+                        "category": ["accessory", "accessory", "laptop"],
+                        "brand": ["OrangeRectangle", "OrangeRectangle", "AstralSea"],
+                        "production_cost": [8.72, 5.25, 4084.88],
+                        "release_date": ["2023-05-30", "2015-03-04", "2016-10-18"],
+                        "brand_cat": ["OA", "OA", "AL"],
+                    }
+                ),
+                "pydough_expression_column_03",
+            ),
+            id="pydough_expression_column_03",
+        ),
     ],
 )
 def technograph_pipeline_test_data(request) -> PyDoughPandasTest:
