@@ -25,6 +25,7 @@ from pydough.qdag import (
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
+    CollectionAccess,
     ColumnProperty,
     ExpressionFunctionCall,
     GlobalContext,
@@ -39,9 +40,6 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.qdag.collections.calculate import Calculate
-from pydough.qdag.expressions.pydough_expression_property import (
-    PyDoughExpressionProperty,
-)
 from pydough.types import PyDoughType
 from pydough.utilities import ExplodeSpec
 
@@ -588,6 +586,36 @@ class Qualifier:
         )
         return self.qualify_expression(value, context, children)
 
+    def add_virtual_properties(
+        self, collection: PyDoughCollectionQDAG
+    ) -> PyDoughCollectionQDAG:
+        """
+        TODO
+        """
+        original_collection: PyDoughCollectionQDAG = collection
+        while isinstance(original_collection, ChildOperatorChildAccess):
+            original_collection = original_collection.child_access
+        if isinstance(original_collection, CollectionAccess):
+            # Qualify all of the CALCULATE terms, storing the children built
+            # along the way.
+            children: list[PyDoughCollectionQDAG] = []
+            qualified_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
+            # Qualify each column defined as a PyDoughExpressionColumnMetadata
+            # instance.
+            for name, meta in original_collection.collection.properties.items():
+                if isinstance(meta, PyDoughExpressionColumnMetadata):
+                    qualified_term = self.qualify_expression_column(
+                        collection, children, meta
+                    )
+                    qualified_terms.append((name, qualified_term))
+            # If any terms were built, wrap the answer in a calculate.
+            if len(qualified_terms) > 0:
+                return self.builder.build_calculate(
+                    collection, children, qualified_terms
+                )
+
+        return collection
+
     def qualify_access(
         self,
         unqualified: UnqualifiedAccess,
@@ -651,6 +679,7 @@ class Qualifier:
                 answer: PyDoughCollectionQDAG = self.builder.build_child_access(
                     name, qualified_parent
                 )
+
                 # In the case that it is a general join condition access,
                 # qualify the join condition at this time.
                 if isinstance(answer, SubCollection) and isinstance(
@@ -659,15 +688,12 @@ class Qualifier:
                     self.parse_general_condition(answer)
                 if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
                     answer = ChildOperatorChildAccess(answer)
-                return answer
+
+                # If the answer is a collection containing columns defined as
+                # PyDough expressions, append a CALCULATE to the collection.
+                return self.add_virtual_properties(answer)
             else:
                 assert isinstance(term, PyDoughExpressionQDAG)
-                # In the case that it is a PyDough expression column, ensure the
-                # pydough expression is properly parsed and attached.
-                if isinstance(term, PyDoughExpressionProperty):
-                    return self.qualify_expression_column(
-                        qualified_parent, children, term.expression_metadata
-                    )
                 if isinstance(unqualified_parent, UnqualifiedRoot):
                     # If at the root, the access must be a reference to a scalar
                     # attribute accessible in the current context.
@@ -1190,7 +1216,9 @@ class Qualifier:
             # an ancestor) are both subclasses of `Reference`, but partition
             # keys are only allowed to be direct, scalar references to a
             # term of the collection being partitioned itself.
-            if type(qualified_term) is not Reference:
+            if (not isinstance(qualified_term, Reference)) or isinstance(
+                qualified_term, ChildReferenceExpression
+            ):
                 raise PyDoughQDAGException(
                     f"Invalid partition key {term!r}: PARTITION only "
                     "supports partition keys that are direct references to "

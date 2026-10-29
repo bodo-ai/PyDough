@@ -1112,7 +1112,6 @@ class HybridTranslator:
                 return self.translate_back_reference(
                     hybrid, expr.term_name, expr.back_levels, expr.pydough_type
                 )
-
             case Reference():
                 if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
                     return self.translate_back_reference(
@@ -1444,7 +1443,7 @@ class HybridTranslator:
                     collection_access.general_condition = self.make_hybrid_expr(
                         successor_hybrid,
                         node.general_condition,
-                        {},
+                        child_ref_mapping,
                         False,
                     )
                 hybrid = self.make_hybrid_tree(
@@ -1646,7 +1645,7 @@ class HybridTranslator:
                                     self.make_hybrid_expr(
                                         successor_hybrid,
                                         node.child_access.general_condition,
-                                        {},
+                                        child_ref_mapping,
                                         False,
                                     )
                                 )

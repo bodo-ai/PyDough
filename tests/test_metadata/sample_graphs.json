@@ -1933,6 +1933,15 @@
             "data type": "datetime",
             "description": "The date when the product was first released to the market",
             "synonyms": ["date made public", "date launched", "date first available"]
+          },
+          {
+            "name": "brand_cat",
+            "type": "pydough expression column",
+            "data type": "string",
+            "expression": "JOIN_STRINGS('', brand[:1], UPPER(category[:1]))",
+            "description": "The first letter of the brand combined with the first letter of the category, all uppercase, as a unique identifier for the combination of the two",
+            "sample values": ["OL", "AT", "DA", "ZP"],
+            "synonyms": ["brand and category", "combination identifier"]
           }
         ],
         "description": "The products available in the system",

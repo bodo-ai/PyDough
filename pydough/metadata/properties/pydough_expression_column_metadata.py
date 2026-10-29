@@ -13,7 +13,6 @@ from pydough.errors.error_utils import (
     NoExtraKeys,
     extract_string,
     is_string,
-    is_valid_sql_name,
 )
 from pydough.metadata.collections import CollectionMetadata
 from pydough.types import PyDoughType, parse_type_from_string
@@ -109,7 +108,6 @@ class PyDoughExpressionColumnMetadata(ScalarAttributeMetadata):
         except PyDoughTypeException as e:
             raise PyDoughMetadataException(*e.args)
         expression: str = extract_string(property_json, "expression", error_name)
-        is_valid_sql_name.verify(expression, error_name)
 
         NoExtraKeys(PyDoughExpressionColumnMetadata.allowed_fields).verify(
             property_json, error_name

@@ -21,7 +21,6 @@ from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
     ColumnProperty,
-    PyDoughExpressionProperty,
     Reference,
 )
 
@@ -59,6 +58,10 @@ class CollectionAccess(ChildAccess):
             self._all_property_names.add(property_name)
             property = collection.get_property(property_name)
             assert isinstance(property, PropertyMetadata)
+            if isinstance(property, PyDoughExpressionColumnMetadata):
+                # PyDoughExpression columns are handled separately, as they are
+                # added into a later CALCULATE
+                continue
             if not property.is_subcollection:
                 self._calc_property_names.add(property_name)
                 self._calc_property_order[property_name] = len(
@@ -155,8 +158,6 @@ class CollectionAccess(ChildAccess):
                 return SubCollection(property, self)
             case TableColumnMetadata():
                 return ColumnProperty(property)
-            case PyDoughExpressionColumnMetadata():
-                return PyDoughExpressionProperty(property)
             case _:
                 raise NotImplementedError(
                     f"Unsupported property type for collection access: {property.__class__.__name__}"
