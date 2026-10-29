@@ -1,0 +1,2 @@
+ROOT(columns=[('_id', pr_id), ('name', pr_name), ('category', pr_type), ('brand', pr_brand), ('production_cost', pr_prodcost), ('release_date', pr_release), ('brand_cat', JOIN_STRINGS('':string, SLICE(pr_brand, None:unknown, 1:numeric, None:unknown), UPPER(SLICE(pr_type, None:unknown, 1:numeric, None:unknown))))], orderings=[(pr_id):asc_first], limit=3:numeric)
+ SCAN(table=main.PRODUCTS, columns={'pr_brand': pr_brand, 'pr_id': pr_id, 'pr_name': pr_name, 'pr_prodcost': pr_prodcost, 'pr_release': pr_release, 'pr_type': pr_type})
