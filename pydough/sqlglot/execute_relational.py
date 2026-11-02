@@ -44,7 +44,7 @@ from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
-from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
+from sqlglot.optimizer.scope import traverse_scope
 
 import pydough
 from pydough.configs import PyDoughSession
@@ -372,29 +372,20 @@ def replace_keys_with_indices(
 
         # Replace GROUP BY keys that are in the select clause with indices.
         # Oracle does not support indices in the GROUP BY, for this dialect this
-        # step is skipped
+        # step is skipped. Always use an index rather than falling back to the
+        # alias name when a key repeats in the select clause: an alias can
+        # collide with a real column name shared by multiple joined tables
+        # (e.g. `customer_id` on both `customer` and `invoice`), which makes
+        # the alias reference ambiguous even though the ordinal position is
+        # always unambiguous.
         if expression.args.get("group") is not None and not isinstance(
             dialect, OracleDialect
         ):
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
-                # Only replace with the index if the key expression appears in
-                # the select list exactly once. Otherwise, replace with the
-                # alias.
                 if key_expr in expressions:
                     expr_idx = expressions.index(key_expr)
-                    n_match: int = 0
-                    for select_elem in expressions:
-                        if not select_elem.find(sqlglot_expressions.AggFunc):
-                            for exp in walk_in_scope(select_elem):
-                                if exp == key_expr:
-                                    n_match += 1
-                    if n_match <= 1:
-                        keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
-                    elif isinstance(expression.expressions[expr_idx], Alias):
-                        keys_list[idx] = sqlglot_expressions.Identifier(
-                            this=expression.expressions[expr_idx].alias, quoted=False
-                        )
+                    keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
             keys_list.sort(key=repr)
 
     # Now iterate through all window functions and replace any ordering keys

@@ -229,14 +229,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             sentinel_join_name: str | None = None
             if existing_sentinel is not None:
-                # If there is an existing sentinel column from before, use it.
-                for col_name, col_expr in join.columns.items():
-                    if (
-                        isinstance(col_expr, ColumnReference)
-                        and col_expr.name == existing_sentinel
-                    ):
-                        sentinel_join_name = col_name
-                        break
+                sentinel_join_name = existing_sentinel
             else:
                 # Otherwise, create a new COUNT(*) column for that purpose.
                 agg_name = self.generate_name("n_rows", aggregate.columns)

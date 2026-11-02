@@ -1,0 +1,3 @@
+ROOT(columns=[('key', c_nationkey), ('key_again', c_nationkey), ('cnt', n_rows)], orderings=[(c_nationkey):asc_first])
+ AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'n_rows': COUNT()})
+  SCAN(table=tpch.CUSTOMER, columns={'c_nationkey': c_nationkey})

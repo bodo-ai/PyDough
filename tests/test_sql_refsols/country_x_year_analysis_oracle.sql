@@ -4,6 +4,12 @@ WITH "_t1" AS (
   FROM MAIN.COUNTRIES
   WHERE
     NOT CO_NAME LIKE '%C%'
+), "_t2" AS (
+  SELECT
+    PR_NAME
+  FROM MAIN.PRODUCTS
+  WHERE
+    PR_NAME = 'AmethystCopper-I'
 ), "_t5" AS (
   SELECT
     PR_NAME,
@@ -15,51 +21,66 @@ WITH "_t1" AS (
   SELECT
     CA_DT
   FROM MAIN.CALENDAR
-), "_s17" AS (
+), "_s7" AS (
+  SELECT DISTINCT
+    TRUNC(CAST("_s5".CA_DT AS DATE), 'YEAR') AS START_OF_YEAR,
+    "_t4".CO_NAME
+  FROM "_t1" "_t4"
+  CROSS JOIN "_t5" "_t5"
+  JOIN "_s5" "_s5"
+    ON "_s5".CA_DT < ADD_MONTHS(CAST("_t5".PR_RELEASE AS DATE), 24)
+    AND "_s5".CA_DT >= "_t5".PR_RELEASE
+), "_s15" AS (
+  SELECT DISTINCT
+    TRUNC(CAST("_s13".CA_DT AS DATE), 'YEAR') AS START_OF_YEAR,
+    "_t10".CO_NAME
+  FROM "_t1" "_t10"
+  CROSS JOIN "_t5" "_t11"
+  JOIN "_s5" "_s13"
+    ON "_s13".CA_DT < ADD_MONTHS(CAST("_t11".PR_RELEASE AS DATE), 24)
+    AND "_s13".CA_DT >= "_t11".PR_RELEASE
+), "_s21" AS (
   SELECT
-    "_s9".CA_DT,
+    "_s19".CA_DT,
+    "_t12".CO_NAME
+  FROM "_t1" "_t12"
+  CROSS JOIN "_t5" "_t13"
+  JOIN "_s5" "_s19"
+    ON "_s19".CA_DT < ADD_MONTHS(CAST("_t13".PR_RELEASE AS DATE), 24)
+    AND "_s19".CA_DT >= "_t13".PR_RELEASE
+), "_s29" AS (
+  SELECT
     "_t7".CO_NAME,
+    "_s15".START_OF_YEAR,
     COUNT(*) AS N_ROWS
   FROM "_t1" "_t7"
-  CROSS JOIN "_t5" "_t8"
-  JOIN "_s5" "_s9"
-    ON "_s9".CA_DT < ADD_MONTHS(CAST("_t8".PR_RELEASE AS DATE), 24)
-    AND "_s9".CA_DT >= "_t8".PR_RELEASE
+  CROSS JOIN "_t2" "_t8"
+  LEFT JOIN "_s15" "_s15"
+    ON "_s15".CO_NAME = "_t7".CO_NAME
+  JOIN "_s21" "_s21"
+    ON "_s15".START_OF_YEAR = TRUNC(CAST("_s21".CA_DT AS DATE), 'YEAR')
+    AND "_s21".CO_NAME = "_t7".CO_NAME
   JOIN MAIN.DEVICES DEVICES
-    ON "_s9".CA_DT = TRUNC(CAST(CAST(DEVICES.DE_PURCHASE_TS AS DATE) AS DATE), 'DD')
+    ON "_s21".CA_DT = TRUNC(CAST(CAST(DEVICES.DE_PURCHASE_TS AS DATE) AS DATE), 'DD')
   JOIN MAIN.PRODUCTS PRODUCTS
     ON DEVICES.DE_PRODUCT_ID = PRODUCTS.PR_ID AND PRODUCTS.PR_NAME = 'AmethystCopper-I'
   JOIN MAIN.COUNTRIES COUNTRIES
     ON COUNTRIES.CO_ID = DEVICES.DE_PURCHASE_COUNTRY_ID
     AND COUNTRIES.CO_NAME = "_t7".CO_NAME
   GROUP BY
-    "_s9".CA_DT,
-    "_t7".CO_NAME
-), "_s19" AS (
-  SELECT
-    TRUNC(CAST("_s5".CA_DT AS DATE), 'YEAR') AS START_OF_YEAR,
-    "_t4".CO_NAME,
-    SUM("_s17".N_ROWS) AS SUM_N_ROWS
-  FROM "_t1" "_t4"
-  CROSS JOIN "_t5" "_t5"
-  JOIN "_s5" "_s5"
-    ON "_s5".CA_DT < ADD_MONTHS(CAST("_t5".PR_RELEASE AS DATE), 24)
-    AND "_s5".CA_DT >= "_t5".PR_RELEASE
-  LEFT JOIN "_s17" "_s17"
-    ON "_s17".CA_DT = "_s5".CA_DT AND "_s17".CO_NAME = "_t4".CO_NAME
-  GROUP BY
-    TRUNC(CAST("_s5".CA_DT AS DATE), 'YEAR'),
-    "_t4".CO_NAME
+    "_t7".CO_NAME,
+    "_s15".START_OF_YEAR
 )
 SELECT
   "_t1".CO_NAME AS country_name,
-  "_s19".START_OF_YEAR AS start_of_year,
-  COALESCE("_s19".SUM_N_ROWS, 0) AS n_purchases
+  "_s7".START_OF_YEAR AS start_of_year,
+  COALESCE("_s29".N_ROWS, 0) AS n_purchases
 FROM "_t1" "_t1"
-JOIN MAIN.PRODUCTS PRODUCTS
-  ON PRODUCTS.PR_NAME = 'AmethystCopper-I'
-LEFT JOIN "_s19" "_s19"
-  ON "_s19".CO_NAME = "_t1".CO_NAME
+CROSS JOIN "_t2" "_t2"
+LEFT JOIN "_s7" "_s7"
+  ON "_s7".CO_NAME = "_t1".CO_NAME
+LEFT JOIN "_s29" "_s29"
+  ON "_s29".CO_NAME = "_t1".CO_NAME AND "_s29".START_OF_YEAR = "_s7".START_OF_YEAR
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST
