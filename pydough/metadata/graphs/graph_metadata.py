@@ -2,14 +2,21 @@
 Definition of PyDough metadata for a graph.
 """
 
+from datetime import date
 from typing import TYPE_CHECKING
+
+import pandas as pd
 
 from pydough.errors import PyDoughMetadataException
 from pydough.errors.error_utils import HasType, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
 
 if TYPE_CHECKING:
-    from pydough.metadata.templates import AttributeMetadata, TemplateMetadata
+    from pydough.metadata.templates import (
+        AttributeMetadata,
+        ParamType,
+        TemplateMetadata,
+    )
     from pydough.pydough_operators import (
         ExpressionFunctionOperator,
     )
@@ -37,16 +44,24 @@ class GraphMetadata(AbstractMetadata):
     Fields allowed in the JSON object describing a graph.
     """
 
-    ALLOWED_TYPES: set[str] = {
-        "str",
-        "int",
-        "float",
-        "list",
-        "dict",
-        "pydough",
-        "pd.DataFrame",
-        "datetime",
+    TYPE_CLASSES: dict[str, tuple[type, ...]] = {
+        "str": (str,),
+        "int": (int,),
+        "float": (int, float),  # an int is fine where a float is expected
+        "bool": (bool,),
+        "list": (list,),
+        "tuple": (tuple,),
+        "dict": (dict,),
+        "datetime": (date,),  # datetime is a subclass of date
+        "pd.DataFrame": (pd.DataFrame,),
+        "pydough": (object,),  # any value is valid for a pydough parameter
     }
+    """
+    Allowed types for template attributes and parameters, mapped to the
+    Python classes a raw value of that type may be an instance of.
+    """
+
+    ALLOWED_TYPES: set[str] = set(TYPE_CLASSES)
     """
     Allowed types for template attributes and definitions in the graph.
     """
@@ -256,10 +271,34 @@ class GraphMetadata(AbstractMetadata):
             `type_str`: the type name to validate.
 
         Returns:
-            Bool: True if type_str is a valid type name, False otherwise.
+            True if type_str is a valid type name, False otherwise.
         """
 
         return type_str in self.ALLOWED_TYPES
+
+    @staticmethod
+    def value_matches_type(value: object, type_name: str) -> bool:
+        """
+        Whether a raw Python value is acceptable for a template parameter of
+        the given type.
+
+        Args:
+            `value`: The value being checked
+            `type_name`: Name of the type which the value must match
+
+        Returns:
+            True if the value is the same type as type_name, False otherwise.
+        """
+        classes: tuple[type, ...] | None = GraphMetadata.TYPE_CLASSES.get(type_name)
+        if classes is None:
+            return False
+
+        # bool is a subclass of int, so True would pass for int and float
+        # parameters without this check.
+        if isinstance(value, bool) and int in classes and bool not in classes:
+            return False
+
+        return isinstance(value, classes)
 
     def add_template_attribute(self, new_attribute: AbstractMetadata) -> None:
         """
@@ -290,6 +329,64 @@ class GraphMetadata(AbstractMetadata):
                 f"Duplicate attributes: {new_attribute.error_name} versus {self.templates_attributes[new_attribute.name].error_name}"
             )
         self.templates_attributes[new_attribute.name] = new_attribute
+
+    def resolve_label(
+        self,
+        template_name: str,
+        arg_name: str,
+        arg_type: str,
+        searched_label: str,
+        match_types: bool = True,
+    ) -> tuple[str, "ParamType"]:
+        """
+        Resolves one label to its value for parameter `arg_name` of
+        `template_name`, validating the attribute's `usage` and type along the way.
+
+        Args:
+            `template_name`: Name of the template that is receiving the value
+            `arg_name`: Name of the template argument for the searched label
+            `arg_type`: Type of the argument
+            `searched_label`: Label being searched
+            `match_types`: Flag determine if the types must match, used when resolving
+             a single label. For list of labels matching types is not required
+
+        Returns:
+            The found value
+
+        Raises:
+            ValueError if the label is not found, the types doesn't match or
+            the label found is restricted through the attribute's usage
+        """
+        for attr_name, attribute in self.templates_attributes.items():
+            if searched_label not in attribute.options:
+                continue
+
+            # Validate if the attribute is available for this template and argument
+            if attribute.usage != {} and (
+                template_name not in attribute.usage
+                or (
+                    attribute.usage[template_name] != []
+                    and arg_name not in attribute.usage[template_name]
+                )
+            ):
+                raise ValueError(
+                    f"The label {searched_label!r} is not available for parameter "
+                    f"'{arg_name}' on template '{template_name}'"
+                )
+
+            # Types must match if the the label is used directly, not for list of
+            # labels
+            if match_types and attribute.type != arg_type:
+                raise ValueError(
+                    f"The type of '{attr_name}' attribute doesn't match the "
+                    f"argument '{arg_name}'s type"
+                )
+
+            return attribute.type, attribute.options[searched_label]
+
+        raise ValueError(
+            f"Label {searched_label!r} not found in any attribute's options"
+        )
 
     def add_template_definition(
         self, name: str, new_template: AbstractMetadata
