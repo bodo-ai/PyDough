@@ -394,7 +394,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         error_message: str = f"Unrecognized term of {self.to_string()}: {term_name!r}."
         suggestions: list[str] = find_possible_name_matches(
             term_name=term_name,
-            candidates=self.all_terms,
+            candidates=self.all_terms | self.inherited_downstreamed_terms,
             atol=atol,
             rtol=rtol,
             min_names=min_names,
@@ -424,7 +424,10 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         Raises:
             `PyDoughException` if the term does not exist in the collection.
         """
-        if term_name not in self.all_terms:
+        if (
+            term_name not in self.all_terms
+            and term_name not in self.inherited_downstreamed_terms
+        ):
             raise pydough.active_session.error_builder.term_not_found(
                 collection=self, term_name=term_name
             )
