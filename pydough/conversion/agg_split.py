@@ -28,6 +28,8 @@ from pydough.relational.rel_util import (
 )
 from pydough.types import NumericType
 
+from .conversion_helpers import build_new_ref_name
+
 partial_aggregates: dict[
     pydop.PyDoughExpressionOperator,
     tuple[pydop.PyDoughExpressionOperator, pydop.PyDoughExpressionOperator],
@@ -192,7 +194,7 @@ def transpose_aggregate_join(
         bottom_name: str = name
         idx: int = 0
         while bottom_name in join.columns:
-            bottom_name = f"{name}_{idx}"
+            bottom_name = build_new_ref_name(name, idx)
             idx += 1
         # Build the aggregation calls for before/after the join, and place them
         # in the dictionaries that will build the new aggregate nodes.

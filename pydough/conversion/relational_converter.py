@@ -64,6 +64,7 @@ from pydough.types.pydough_type import PyDoughType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .column_bubbler import bubble_column_names
+from .conversion_helpers import build_new_ref_name
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
@@ -186,7 +187,7 @@ class RelTranslation:
         new_name: str = name
         while new_name in existing_names:
             self.dummy_idx += 1
-            new_name = f"{name}_{self.dummy_idx}"
+            new_name = build_new_ref_name(name, self.dummy_idx)
         return new_name
 
     def get_correlated_name(self, context: TranslationOutput) -> str:
@@ -725,7 +726,7 @@ class RelTranslation:
                 old_name: str = old_reference.name
                 new_name: str = old_name
                 while new_name in join_columns:
-                    new_name = f"{old_name}_{self.dummy_idx}"
+                    new_name = build_new_ref_name(old_name, self.dummy_idx)
                     self.dummy_idx += 1
                 new_reference: ColumnReference = ColumnReference(
                     new_name, old_reference.data_type
