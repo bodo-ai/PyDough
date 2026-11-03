@@ -7,7 +7,7 @@ __all__ = ["build_new_ref_name"]
 
 
 def build_new_ref_name(name: str, idx: int) -> str:
-    """
+    '''
     Build a new reference name by appending an index suffix.
 
     For quoted identifiers, the suffix is added to the identifier content
@@ -24,10 +24,10 @@ def build_new_ref_name(name: str, idx: int) -> str:
     Examples:
         name       -> name_1
         "column name" -> "column name_1"
-        "column ""name""\" -> "column ""name""_1"
+        "column ""name""" -> "column ""name""_1"
         `column` -> `column_1`
 
-    """
+    '''
     if len(name) >= 2:
         quote = name[0]
 
