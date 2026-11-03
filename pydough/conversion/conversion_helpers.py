@@ -1,5 +1,6 @@
 """
-TODO
+This file contains helper functions used on multiple parts of the
+PyDough conversion step.
 """
 
 __all__ = ["build_new_ref_name"]
