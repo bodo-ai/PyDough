@@ -8527,6 +8527,75 @@ def test_pipeline_e2e_errors(
             ),
             id="to_table_test_25",
         ),
+        # Test 26: Materializes a PARTITION with
+        # a composite unique key (year, month) via to_table,
+        # then regroups by a proper subset of that key (year alone).
+        # The composite key must be preserved as a single multi-column
+        # uniqueness constraint, not flattened into independent single-column
+        # keys.
+        pytest.param(
+            PyDoughPandasTest(
+                "monthly = orders.WHERE(ISIN(order_date, (lo_date, hi_date)))"
+                ".CALCULATE(oyear=YEAR(order_date), omonth=MONTH(order_date))"
+                ".PARTITION(name='monthly_t26', by=(oyear, omonth))"
+                ".CALCULATE(oyear, omonth, n=COUNT(orders), tot=SUM(orders.total_price))\n"
+                "monthly_tmp = pydough.to_table(monthly, name='monthly_orders_t26', replace=True)\n"
+                "result = (\n"
+                "    monthly_tmp\n"
+                "    .PARTITION(name='yearly_t26', by=oyear)\n"
+                "    .CALCULATE(oyear, n=SUM(monthly_tmp.n), tot=SUM(monthly_tmp.tot))\n"
+                "    .ORDER_BY(oyear.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oyear": [1998],
+                        "n": [1239],
+                        "tot": [186673915.16],
+                    }
+                ),
+                "to_table_test_26",
+                skipped_dialects={"BODOSQL"},
+                kwargs={
+                    "lo_date": date(1998, 7, 31),
+                    "hi_date": date(1998, 8, 1),
+                },
+            ),
+            id="to_table_test_26",
+        ),
+        # Test 27: Same as test 26, but confirms a materialized single-column
+        # unique key is still handled correctly (sanity check alongside the
+        # composite-key fix in test 26).
+        pytest.param(
+            PyDoughPandasTest(
+                "yearly = orders.WHERE(ISIN(order_date, (lo_date, hi_date)))"
+                ".CALCULATE(oyear=YEAR(order_date))"
+                ".PARTITION(name='yearly_t27', by=oyear)"
+                ".CALCULATE(oyear, n=COUNT(orders), tot=SUM(orders.total_price))\n"
+                "yearly_tmp = pydough.to_table(yearly, name='yearly_orders_t27', replace=True)\n"
+                "result = (\n"
+                "    yearly_tmp\n"
+                "    .PARTITION(name='regroup_t27', by=oyear)\n"
+                "    .CALCULATE(oyear, n=SUM(yearly_tmp.n), tot=SUM(yearly_tmp.tot))\n"
+                "    .ORDER_BY(oyear.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oyear": [1998],
+                        "n": [1239],
+                        "tot": [186673915.16],
+                    }
+                ),
+                "to_table_test_27",
+                skipped_dialects={"BODOSQL"},
+                kwargs={
+                    "lo_date": date(1998, 7, 31),
+                    "hi_date": date(1998, 8, 1),
+                },
+            ),
+            id="to_table_test_27",
+        ),
     ],
 )
 def tpch_custom_pipeline_to_table_test_data(request) -> PyDoughPandasTest:
