@@ -16,12 +16,14 @@ from pydough.metadata import (
     GraphMetadata,
     PyDoughExpressionColumnMetadata,
 )
+from pydough.metadata.properties.property_metadata import PropertyMetadata
 from pydough.pydough_operators.expression_operators import (
     ExpressionFunctionOperator,
     ExpressionWindowOperator,
 )
 from pydough.qdag import (
     AstNodeBuilder,
+    ChildAccess,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
@@ -595,14 +597,24 @@ class Qualifier:
         original_collection: PyDoughCollectionQDAG = collection
         while isinstance(original_collection, ChildOperatorChildAccess):
             original_collection = original_collection.child_access
-        if isinstance(original_collection, CollectionAccess):
+        if isinstance(original_collection, CollectionAccess) and any(
+            isinstance(meta, PyDoughExpressionColumnMetadata)
+            for meta in original_collection.collection.properties.values()
+        ):
             # Qualify all of the CALCULATE terms, storing the children built
             # along the way.
             children: list[PyDoughCollectionQDAG] = []
             qualified_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
-            has_virtual: bool = False
+            # Build a copy of the context but with an empty ancestry mapping.
+            assert isinstance(collection, ChildAccess)
+            stripped_collection: PyDoughCollectionQDAG = collection.clone_with_parent(
+                collection.ancestor_context
+            )
+            stripped_collection.ancestral_mapping.clear()
             # Qualify each column defined as a PyDoughExpressionColumnMetadata
-            # instance.
+            # instance, using the stripped collection as the context since the
+            # expression in the metadata should only be defined relative to the
+            # current collection, and thus ignores any ancestral terms.
             for name, meta in sorted(
                 original_collection.collection.properties.items(),
                 key=lambda item: original_collection.collection.definition_order[
@@ -611,26 +623,35 @@ class Qualifier:
             ):
                 if isinstance(meta, PyDoughExpressionColumnMetadata):
                     qualified_term = self.qualify_expression_column(
-                        collection, children, meta
+                        stripped_collection, children, meta
                     )
                     qualified_terms.append((name, qualified_term))
-                    has_virtual = True
-                elif not meta.is_subcollection:
-                    # Add the other terms to the calculate anyways so the
-                    # CALCULATE order is constant.
-                    qualified_terms.append(
-                        (
-                            name,
-                            self.builder.build_reference(
-                                collection, name, collection.get_expr(name).pydough_type
-                            ),
+
+            # Wrap the collection in a calculate to add the now-defined terms.
+            answer: Calculate = self.builder.build_calculate(
+                collection, children, qualified_terms
+            )
+            # Manually replace the ancestral mapping to prevent any terms
+            # from being pinned by the new calculate
+            answer._ancestral_mapping = answer.preceding_context.ancestral_mapping
+            # Manually replace the calc term indices with an updated mapping
+            # that includes the virtual properties
+            new_indices: dict[str, int] = {}
+            for property_name in sorted(
+                original_collection.collection.get_property_names(),
+                key=lambda name: original_collection.collection.definition_order[name],
+            ):
+                property = original_collection.collection.get_property(property_name)
+                assert isinstance(property, PropertyMetadata)
+                if not property.is_subcollection:
+                    new_indices[property_name] = len(new_indices)
+                    if property_name not in answer.calc_term_values:
+                        answer._calc_term_values[property_name] = answer.get_expr(
+                            property_name
                         )
-                    )
-            # If any terms were built, wrap the answer in a calculate.
-            if has_virtual:
-                return self.builder.build_calculate(
-                    collection, children, qualified_terms
-                )
+            answer._calc_term_indices = new_indices
+            answer._calc_terms = set(new_indices)
+            return answer
 
         return collection
 

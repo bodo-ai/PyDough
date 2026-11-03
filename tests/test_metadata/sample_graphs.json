@@ -1942,6 +1942,33 @@
             "description": "The first letter of the brand combined with the first letter of the category, all uppercase, as a unique identifier for the combination of the two",
             "sample values": ["OL", "AT", "DA", "ZP"],
             "synonyms": ["brand and category", "combination identifier"]
+          },
+          {
+            "name": "release_year",
+            "type": "pydough expression column",
+            "data type": "numeric",
+            "expression": "YEAR(release_date)",
+            "description": "The year the product was first released to the market",
+            "sample values": [2013, 2014, 2020, 2022, 2024],
+            "synonyms": ["year of release", "year"]
+          },
+          {
+            "name": "release_fiscal_quarter",
+            "type": "pydough expression column",
+            "data type": "string",
+            "expression": "JOIN_STRINGS('', STRING(YEAR(release_date)), 'Q', STRING(QUARTER(release_date)))",
+            "description": "The fiscal quarter the product was first released to the market",
+            "sample values": ["2015Q1", "2023Q2", "2016Q4"],
+            "synonyms": ["fiscal quarter of release", "quarter"]
+          },
+          {
+            "name": "n_devices",
+            "type": "pydough expression column",
+            "data type": "numeric",
+            "expression": "COUNT(devices)",
+            "description": "The number of devices of this product that are in the system",
+            "sample values": [10, 19, 32, 42],
+            "synonyms": ["number of devices", "device count"]
           }
         ],
         "description": "The products available in the system",
@@ -2167,6 +2194,24 @@
             "description": "The id of the error the incident was attributed to",
             "sample values": [784, 726, 573, 177, 806],
             "synonyms": ["error key", "error id"]
+          },
+          {
+            "name": "error_name",
+            "type": "pydough expression column",
+            "data type": "string",
+            "expression": "error.name",
+            "description": "The name of the error the incident was attributed to",
+            "sample values": ["Battery Failure", "Cracked Screen", "Overheating", "Software Bug", "Network Issue"],
+            "synonyms": ["error title", "error label"]
+          },
+          {
+            "name": "product_name",
+            "type": "pydough expression column",
+            "data type": "string",
+            "expression": "device.product.name",
+            "description": "The name of the product involved in the incident",
+            "sample values": ["CardinalSky-I", "GoldSky-Fox", "SapphireCarbon-IV", "RubyFlame-Set", "AmethystBolt-IV"],
+            "synonyms": ["product title", "product label"]
           },
           {
             "name": "reported_timestamp",

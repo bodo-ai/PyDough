@@ -1498,6 +1498,9 @@ class HybridTranslator:
                 )
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_expressions: dict[str, HybridExpr] = {}
+                print()
+                print(hybrid)
+                print(node)
                 for name in sorted(node.calc_terms):
                     expr = self.make_hybrid_expr(
                         hybrid, node.get_expr(name), child_ref_mapping, False

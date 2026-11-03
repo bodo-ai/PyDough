@@ -1,8 +1,0 @@
-SELECT
-  NVL(SUBSTR(PR_BRAND, 1, 1), '') || '' || NVL(UPPER(SUBSTR(PR_TYPE, 1, 1)), '') AS combination,
-  COUNT(*) AS n_products
-FROM MAIN.PRODUCTS
-GROUP BY
-  NVL(SUBSTR(PR_BRAND, 1, 1), '') || '' || NVL(UPPER(SUBSTR(PR_TYPE, 1, 1)), '')
-ORDER BY
-  1 NULLS FIRST
