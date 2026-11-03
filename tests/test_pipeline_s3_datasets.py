@@ -246,7 +246,7 @@ result = employee.WHERE(has_customer_expr).CALCULATE(
                 "   n_albums=COUNT(album)\n"
                 ")\n",
                 "chinook",
-                lambda: pd.DataFrame({"n_albuns": [2]}),
+                lambda: pd.DataFrame({"n_albums": [2]}),
                 "double_quoting_alias",
             ),
             id="double_quoting_alias",
