@@ -1,0 +1,4 @@
+ROOT(columns=[('total_1996', DEFAULT_TO(sum_o_totalprice, 0:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})
+  FILTER(condition=YEAR(o_orderdate) == 1996:numeric, columns={'o_totalprice': o_totalprice})
+   SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})

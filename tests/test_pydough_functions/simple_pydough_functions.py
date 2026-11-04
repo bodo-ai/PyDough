@@ -3898,6 +3898,102 @@ def partition_by_child_reference():
     )
 
 
+def partition_same_keys_different_filter():
+    """
+    Test that two PARTITION calls using the same grouping keys
+    but different WHERE filters on their input collection are not treated as
+    equal.
+    """
+    by_status_1995 = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .PARTITION(name="g1995", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    by_status_1996 = (
+        orders.WHERE(YEAR(order_date) == 1996)
+        .PARTITION(name="g1996", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    return TPCH.CALCULATE(
+        total_1995=SUM(by_status_1995.v),
+        total_1996=SUM(by_status_1996.v),
+    )
+
+
+def partition_same_keys_different_filter_shared_name():
+    """
+    Variation of `partition_same_keys_different_filter`: same
+    two differently-filtered PARTITION calls, but this time both are given
+    the same `name=`. This must produce the exact same (correct, independent)
+    results as the differently-named version.
+    """
+    by_status_1995 = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .PARTITION(name="g", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    by_status_1996 = (
+        orders.WHERE(YEAR(order_date) == 1996)
+        .PARTITION(name="g", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    return TPCH.CALCULATE(
+        total_1995=SUM(by_status_1995.v),
+        total_1996=SUM(by_status_1996.v),
+    )
+
+
+def partition_filter_1995_only():
+    """
+    Variation of `partition_same_keys_different_filter`:
+    evaluates just the 1995-filtered partition on its own, so its result can
+    be checked against the matching column of the combined query.
+    """
+    by_status_1995 = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .PARTITION(name="g1995", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    return TPCH.CALCULATE(total_1995=SUM(by_status_1995.v))
+
+
+def partition_filter_1996_only():
+    """
+    Same as partition_filter_1995_only but
+    evaluates just the 1996-filtered partition.
+    """
+    by_status_1996 = (
+        orders.WHERE(YEAR(order_date) == 1996)
+        .PARTITION(name="g1996", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    return TPCH.CALCULATE(total_1996=SUM(by_status_1996.v))
+
+
+def partition_same_keys_same_filter():
+    """
+    Variation of `partition_same_keys_different_filter`: two
+    PARTITION calls with identical grouping keys AND identical WHERE
+    filters are genuinely equivalent, so the fix must not
+    prevent them from still being recognized as equal (collapsed into a
+    single subquery instead of being computed twice).
+    """
+    by_status_a = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .PARTITION(name="ga", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    by_status_b = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .PARTITION(name="gb", by=order_status)
+        .CALCULATE(v=SUM(orders.total_price))
+    )
+    return TPCH.CALCULATE(
+        total_a=SUM(by_status_a.v),
+        total_b=SUM(by_status_b.v),
+    )
+
+
 def join_strings_too_few_values():
     """
     Test that calling JOIN_STRINGS with a delimiter and fewer than two
