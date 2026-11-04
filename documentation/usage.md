@@ -1036,18 +1036,81 @@ ORDER BY
 <!-- TOC --><a name="call_template_api"></a>
 ### `pydough.call_template`
 
-The `call_template` API invokes a previously registered [template](metadata.md#templates) using user-facing **labels** instead of raw PyDough/Python values. Each label is resolved against the `options` of the graph's [attributes](metadata.md#template-attributes) to find the concrete value (and its type) to pass into the template, after which the template is called like a normal PyDough function and the result is returned.
+The `call_template` API invokes a previously registered [template](metadata.md#templates). Arguments can be given as user-facing **labels**, which are resolved against the `options` of the graph's [attributes](metadata.md#template-attributes), as raw **values**, or as a mix of both. After the arguments are resolved, the template is called like a normal PyDough function and the result is returned.
 
 #### Syntax
 ```python
 def call_template(
     name: str,
-    labels: dict[str, str],
+    labels: dict[str, str | list[str]] | None = None,
+    values: dict[str, Any] | None = None,
 ) -> Any:
 ```
 
 - `name`: the name of the template to call, as registered in `pydough.active_session.metadata.templates_definitions`.
-- `labels`: a mapping from **template parameter name** to a **label string** (e.g. `{"arg_year": "Year 1998", "arg_dimension": "Customer Market Segment"}`). Each label must appear in the `options` of exactly one attribute in the active session's graph, and that attribute's `type` must match the corresponding template parameter's `type`.
+- `labels` (optional): a mapping from **template parameter name** to a **label string** (e.g. `{"arg_year": "Year 1998", "arg_dimension": "Customer Market Segment"}`), or, for parameters of type `list`, to a **list of label strings**. See [Labels](#call_template_labels).
+- `values` (optional): a mapping from **template parameter name** to a **raw Python value** (e.g. `{"arg_year": 1998}`). See [Values](#call_template_values).
+
+Every parameter of the template must be covered by exactly one of `labels`, `values`, or a default value defined in the template's metadata. A parameter that has a default can be left out of both.
+
+<!-- TOC --><a name="call_template_labels"></a>
+#### Labels
+
+A label is resolved by searching the `options` of every attribute in the active session's graph. Each label must appear in the `options` of exactly one attribute, and that attribute's [`usage`](metadata.md#attribute-usage-restriction) must allow the template and parameter being called. When a single label is given, the attribute's `type` must match the `type` of the template parameter.
+
+<!-- TOC --><a name="call_template_label_lists"></a>
+##### List of labels
+
+A parameter of type `list` can receive a **list of labels** instead of a single label. Each label is resolved separately, and the value of each label becomes one element of the list passed to the template, in the same order as the labels. This makes it possible to build a list from several attribute options without defining an option for every combination.
+
+- The labels in the list must be strings, and the `usage` of each label's attribute must allow the template and parameter being called.
+- Each label supplies one element, so the labels come from scalar attributes (for example `str` attributes), and not from `list` attributes.
+- Duplicates are kept, and an empty list of labels resolves to an empty list.
+- A list of labels can only be used for parameters of type `list`.
+
+Example of the metadata for an attribute and a template that use a list of labels:
+
+```json
+{
+  "name": "order_priorities",
+  "usage": { "count_orders_by_priority": ["priorities"] },
+  "type": "str",
+  "description": "Order priority levels",
+  "options": [
+    { "label": "Urgent", "value": "1-URGENT" },
+    { "label": "High", "value": "2-HIGH" },
+    { "label": "Medium", "value": "3-MEDIUM" }
+  ]
+},
+{
+  "name": "count_orders_by_priority",
+  "description": "Counts the orders whose priority is in the given list",
+  "parameters": {
+    "priorities": { "type": "list", "description": "Order priorities to include" }
+  },
+  "source": "result = COUNT(orders.WHERE(ISIN(order_priority, {1})))",
+  "answer_variable": "result"
+}
+```
+
+```python
+result = pydough.call_template(
+    "count_orders_by_priority",
+    labels={"priorities": ["Urgent", "High"]},
+)
+```
+
+This resolves the labels to `'1-URGENT'` and `'2-HIGH'`, and calls `count_orders_by_priority(priorities=['1-URGENT', '2-HIGH'])`.
+
+<!-- TOC --><a name="call_template_values"></a>
+#### Values
+
+Raw values are passed through `values` without being defined in an attribute. This avoids creating attributes and options for simple or open-ended values, such as numbers, dates, or a list of codes that changes between calls.
+
+- A parameter can appear in `labels` or in `values`, but not in both.
+- The Python type of the value must match the `type` of the parameter. See the [supported types](metadata.md#template-supported-types). An `int` parameter does not accept a `bool`, and a `float` parameter accepts an `int` or a `float`.
+- A parameter of type `pydough` accepts any value: a PyDough expression, or a plain literal. A string given for a `pydough` parameter is passed as a string, and is **not** parsed as PyDough code. Use a label, or a PyDough expression, when the argument must be code.
+- The template receives the same object that was passed, not a copy, exactly as in a direct call.
 
 #### Return value
 
@@ -1055,15 +1118,18 @@ The return type is `Any`, not necessarily an `UnqualifiedNode`. Because a templa
 
 #### Resolution process
 
-For each `(arg_name, label)` pair in `labels`, `call_template` does the following:
+`call_template` first checks that every name in `labels` and `values` is a parameter of the template, that no parameter appears in both, and that every parameter is covered by a label, a value, or a default.
 
-1. Confirms `arg_name` is a real parameter of the named template; if not, raises an error listing the template's actual parameter names as suggestions.
-2. Searches every attribute registered in the active session's graph for one whose `options` contains `label`.
-3. If a match is found, verifies that the matching attribute is allowed to supply this template/parameter combination, based on the attribute's [`usage`](metadata.md#attribute-usage-restriction) field.
-4. Verifies that the matching attribute's `type` matches the template parameter's `type`.
-5. Resolves `label` to its corresponding `value`, to be substituted into the generated call.
+For each `(arg_name, label)` pair in `labels`, it then does the following, once for the label or once per label if a list of labels is given:
 
-Once every entry in `labels` has been resolved, the template is invoked with the resolved arguments (as a normal PyDough/Python call), and the result is returned exactly as produced by the template — no additional check is made that it's an `UnqualifiedNode`.
+1. Searches every attribute registered in the active session's graph for one whose `options` contains the label.
+2. Verifies that the matching attribute is allowed to supply this template/parameter combination, based on the attribute's [`usage`](metadata.md#attribute-usage-restriction) field.
+3. For a single label, verifies that the matching attribute's `type` matches the template parameter's `type`.
+4. Resolves the label to its corresponding `value`, to be substituted into the generated call.
+
+For each `(arg_name, value)` pair in `values`, it verifies that the type of the value matches the template parameter's `type`.
+
+Once every argument has been resolved, the template is invoked with them (as a normal PyDough/Python call), and the result is returned exactly as produced by the template. No additional check is made that it's an `UnqualifiedNode`.
 
 #### Errors
 
@@ -1073,16 +1139,22 @@ Once every entry in `labels` has been resolved, the template is invoked with the
 |---|---|
 | No metadata is loaded in the active session | `"No metadata loaded in the current active session"` |
 | `name` doesn't match any registered template | Reports the template isn't found; if similarly-named templates exist, suggests them. |
-| The graph has no attributes registered at all | Reports that no attributes are available for the template. |
-| `arg_name` in `labels` isn't a parameter of the template | Reports the parameter doesn't exist; suggests the template's actual parameter names. |
-| `label` isn't restricted to this template/parameter by its attribute's `usage` | Reports the label isn't available for that parameter on that template. |
+| Labels are given but the graph has no attributes registered at all | Reports that no attributes are available for the template. |
+| A name in `labels` or `values` isn't a parameter of the template | Reports the parameter doesn't exist; suggests the template's actual parameter names. |
+| A parameter appears in both `labels` and `values` | Reports which parameter(s) were given both ways. |
+| A parameter has no label, no value, and no default | Reports which parameter(s) are missing, by name. |
+| A list of labels is given for a parameter whose type isn't `list` | Reports that lists of labels are only supported for `list` parameters. |
+| An entry in a list of labels isn't a string | Reports that every label in the list must be a string. |
+| A label doesn't appear in any attribute's `options` | Reports the label wasn't found in any attribute's options. |
+| A label isn't allowed for this template/parameter by its attribute's `usage` | Reports the label isn't available for that parameter on that template. |
 | The matching attribute's `type` differs from the parameter's expected `type` | Reports the type mismatch between the attribute and the parameter. |
-| `label` doesn't appear in any attribute's `options` | Reports the label wasn't found in any attribute's options. |
-| A required template parameter has no corresponding entry in `labels` | Reports which parameter(s) it's missing labels for, by name. |
+| The type of a value differs from the parameter's `type` | Reports the type of the value given and the type the parameter expects. |
 
-#### Example
+#### Examples
 
-Using the `orders_revenue_by` template and the `years` / `order_dimensions` attributes shown [here](metadata.md#templates):
+The following examples use the `orders_revenue_by` template and the `years` / `order_dimensions` attributes shown [here](metadata.md#templates).
+
+**Using labels only:**
 
 ```python
 import pydough
@@ -1100,6 +1172,30 @@ pydough.to_df(result)
 ```
 
 This resolves `"Year 1996"` to `1996` via the `years` attribute and `"Customer Region"` to `customer.nation.region.name` via the `order_dimensions` attribute, then calls the generated `orders_revenue_by(1996, customer.nation.region.name)` function and returns its result.
+
+**Mixing labels and values:**
+
+```python
+result = pydough.call_template(
+    "orders_revenue_by",
+    labels={"arg_dimension": "Customer Region"},
+    values={"arg_year": 1997},
+)
+pydough.to_df(result)
+```
+
+The year is passed directly, so it works for any year without needing an option in the `years` attribute. The dimension is still resolved from its label.
+
+**Using values only:**
+
+```python
+result = pydough.call_template(
+    "orders_revenue_by",
+    values={"arg_year": 1997, "arg_dimension": customer.nation.region.name},
+)
+```
+
+Here `arg_dimension` is a `pydough` parameter, so a PyDough expression is passed as the value. When called inside PyDough code, the expression is built as usual.
 
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs

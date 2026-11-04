@@ -35,6 +35,7 @@ from pydough.qdag.collections.user_collection_qdag import (
 from pydough.types import NumericType
 from pydough.utilities import ExplodeSpec
 
+from .conversion_helpers import build_new_ref_name
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
     HybridChildRefExpr,
@@ -186,7 +187,7 @@ class HybridPartitionChild(HybridOperation):
         )
 
     def __repr__(self):
-        return repr(self.subtree)
+        return "PARTITION_CHILD"
 
 
 class HybridCalculate(HybridOperation):
@@ -233,7 +234,7 @@ class HybridCalculate(HybridOperation):
                     and (self.predecessor.search_term_definition(used_name) == expr)
                 ):
                     break
-                used_name = f"{name}_{idx}"
+                used_name = build_new_ref_name(name, idx)
                 idx += 1
                 new_renamings[name] = used_name
             terms[used_name] = expr

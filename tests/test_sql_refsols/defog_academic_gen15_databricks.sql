@@ -1,18 +1,25 @@
-WITH _t1 AS (
+WITH _s2 AS (
   SELECT
-    ANY_VALUE(organization.continent) AS anything_continent,
-    COUNT(author.oid) AS count_oid
+    continent,
+    COUNT(*) AS n_rows
+  FROM defog.academic.organization
+  GROUP BY
+    1
+), _s3 AS (
+  SELECT
+    organization.continent,
+    COUNT(*) AS n_rows
   FROM defog.academic.organization AS organization
-  LEFT JOIN defog.academic.author AS author
+  JOIN defog.academic.author AS author
     ON author.oid = organization.oid
   GROUP BY
-    organization.oid
+    1
 )
 SELECT
-  anything_continent AS continent,
-  COALESCE(SUM(count_oid), 0) / COUNT(*) AS ratio
-FROM _t1
-GROUP BY
-  1
+  _s2.continent,
+  COALESCE(_s3.n_rows, 0) / NULLIF(_s2.n_rows, 0) AS ratio
+FROM _s2 AS _s2
+LEFT JOIN _s3 AS _s3
+  ON _s2.continent = _s3.continent
 ORDER BY
   2 DESC

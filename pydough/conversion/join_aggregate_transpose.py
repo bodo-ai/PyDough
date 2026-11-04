@@ -31,6 +31,8 @@ from pydough.relational.rel_util import (
 )
 from pydough.types import BooleanType, NumericType
 
+from .conversion_helpers import build_new_ref_name
+
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
     """
@@ -95,7 +97,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             return base
         i: int = 0
         while True:
-            name: str = f"{base}_{i}"
+            name: str = build_new_ref_name(base, i)
             if name not in used_names:
                 return name
             i += 1
@@ -229,14 +231,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             sentinel_join_name: str | None = None
             if existing_sentinel is not None:
-                # If there is an existing sentinel column from before, use it.
-                for col_name, col_expr in join.columns.items():
-                    if (
-                        isinstance(col_expr, ColumnReference)
-                        and col_expr.name == existing_sentinel
-                    ):
-                        sentinel_join_name = col_name
-                        break
+                sentinel_join_name = existing_sentinel
             else:
                 # Otherwise, create a new COUNT(*) column for that purpose.
                 agg_name = self.generate_name("n_rows", aggregate.columns)

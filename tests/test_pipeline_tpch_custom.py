@@ -114,6 +114,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     floor_and_ceil_2,
     function_sampler,
     global_acctbal_breakdown,
+    group_by_key_repeated_alias,
     highest_priority_per_year,
     iff_with_aggregates_on_different_collections,
     isin_mixed_literal_list,
@@ -6753,6 +6754,106 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .region\n"
+                "   .CALCULATE(r_name=name, n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust)\n"
+                "   .TOP_K(3, by=(n.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "r_name": ["EUROPE"] * 3,
+                        "n_name": ["ROMANIA"] * 3,
+                        "c_industry": ["MACHINERY"] * 3,
+                        "c_name": [
+                            "Customer#000000043",
+                            "Customer#000000208",
+                            "Customer#000000372",
+                        ],
+                        "n": [1273] * 3,
+                    }
+                ),
+                "partition_name_above_below",
+                order_sensitive=True,
+            ),
+            id="partition_name_above_below",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .WHERE(account_balance < 0)\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .CALCULATE(n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust, n_seg=COUNT(customers.WHERE((account_balance < 0) & (market_segment==cmkt))))\n"
+                "   .TOP_K(3, by=(n_cust.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_name": ["IRAN"] * 3,
+                        "c_industry": ["HOUSEHOLD"] * 3,
+                        "c_name": [
+                            "Customer#000002005",
+                            "Customer#000002193",
+                            "Customer#000002658",
+                        ],
+                        "n_cust": [144] * 3,
+                        "n_seg": [144] * 3,
+                    }
+                ),
+                "partition_name_above_agg",
+                order_sensitive=True,
+            ),
+            id="partition_name_above_agg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = (\n"
+                "   customers\n"
+                "   .WHERE(account_balance < 0)\n"
+                "   .CALCULATE(cmkt=market_segment, cnam=name)\n"
+                "   .nation\n"
+                "   .CALCULATE(nnam=name)\n"
+                "   .PARTITION(name='nation_industry_group', by=(cmkt, nnam))\n"
+                "   .CALCULATE(n_cust=COUNT(nation))\n"
+                "   .nation\n"
+                "   .BEST(per='nation_industry_group', by=cnam.ASC())\n"
+                "   .CALCULATE(n_name=nnam, c_industry=cmkt, c_name=cnam, n=n_cust, n_seg=COUNT(customers.WHERE((account_balance < 0) & (market_segment==cmkt))))\n"
+                "   .TOP_K(3, by=(n_cust.DESC(), c_name.ASC()))\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_name": ["IRAN", "CANADA", "ROMANIA"],
+                        "c_industry": ["HOUSEHOLD", "BUILDING", "MACHINERY"],
+                        "c_name": [
+                            "Customer#000002005",
+                            "Customer#000000064",
+                            "Customer#000000372",
+                        ],
+                        "n_cust": [144, 129, 129],
+                        "n_seg": [144, 129, 129],
+                    }
+                ),
+                "partition_name_above_uni_agg",
+                order_sensitive=True,
+            ),
+            id="partition_name_above_uni_agg",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 iff_with_aggregates_on_different_collections,
                 "TPCH",
                 lambda: pd.DataFrame({"output": [10000]}),
@@ -6900,6 +7001,47 @@ from .testing_utilities import (
                 "chained_partition_transformed_key",
             ),
             id="chained_partition_transformed_key",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                group_by_key_repeated_alias,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(25)),
+                        "key_again": list(range(25)),
+                        "cnt": [
+                            5925,
+                            5975,
+                            5999,
+                            6020,
+                            5995,
+                            5952,
+                            6100,
+                            5908,
+                            6042,
+                            6161,
+                            6009,
+                            5963,
+                            5948,
+                            6033,
+                            5992,
+                            5921,
+                            5974,
+                            5975,
+                            6024,
+                            6100,
+                            5904,
+                            6008,
+                            6078,
+                            6011,
+                            5983,
+                        ],
+                    }
+                ),
+                "group_by_key_repeated_alias",
+            ),
+            id="group_by_key_repeated_alias",
         ),
     ],
 )
@@ -8384,6 +8526,75 @@ def test_pipeline_e2e_errors(
                 skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_25",
+        ),
+        # Test 26: Materializes a PARTITION with
+        # a composite unique key (year, month) via to_table,
+        # then regroups by a proper subset of that key (year alone).
+        # The composite key must be preserved as a single multi-column
+        # uniqueness constraint, not flattened into independent single-column
+        # keys.
+        pytest.param(
+            PyDoughPandasTest(
+                "monthly = orders.WHERE(ISIN(order_date, (lo_date, hi_date)))"
+                ".CALCULATE(oyear=YEAR(order_date), omonth=MONTH(order_date))"
+                ".PARTITION(name='monthly_t26', by=(oyear, omonth))"
+                ".CALCULATE(oyear, omonth, n=COUNT(orders), tot=SUM(orders.total_price))\n"
+                "monthly_tmp = pydough.to_table(monthly, name='monthly_orders_t26', replace=True)\n"
+                "result = (\n"
+                "    monthly_tmp\n"
+                "    .PARTITION(name='yearly_t26', by=oyear)\n"
+                "    .CALCULATE(oyear, n=SUM(monthly_tmp.n), tot=SUM(monthly_tmp.tot))\n"
+                "    .ORDER_BY(oyear.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oyear": [1998],
+                        "n": [1239],
+                        "tot": [186673915.16],
+                    }
+                ),
+                "to_table_test_26",
+                skipped_dialects={"BODOSQL"},
+                kwargs={
+                    "lo_date": date(1998, 7, 31),
+                    "hi_date": date(1998, 8, 1),
+                },
+            ),
+            id="to_table_test_26",
+        ),
+        # Test 27: Same as test 26, but confirms a materialized single-column
+        # unique key is still handled correctly (sanity check alongside the
+        # composite-key fix in test 26).
+        pytest.param(
+            PyDoughPandasTest(
+                "yearly = orders.WHERE(ISIN(order_date, (lo_date, hi_date)))"
+                ".CALCULATE(oyear=YEAR(order_date))"
+                ".PARTITION(name='yearly_t27', by=oyear)"
+                ".CALCULATE(oyear, n=COUNT(orders), tot=SUM(orders.total_price))\n"
+                "yearly_tmp = pydough.to_table(yearly, name='yearly_orders_t27', replace=True)\n"
+                "result = (\n"
+                "    yearly_tmp\n"
+                "    .PARTITION(name='regroup_t27', by=oyear)\n"
+                "    .CALCULATE(oyear, n=SUM(yearly_tmp.n), tot=SUM(yearly_tmp.tot))\n"
+                "    .ORDER_BY(oyear.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oyear": [1998],
+                        "n": [1239],
+                        "tot": [186673915.16],
+                    }
+                ),
+                "to_table_test_27",
+                skipped_dialects={"BODOSQL"},
+                kwargs={
+                    "lo_date": date(1998, 7, 31),
+                    "hi_date": date(1998, 8, 1),
+                },
+            ),
+            id="to_table_test_27",
         ),
     ],
 )

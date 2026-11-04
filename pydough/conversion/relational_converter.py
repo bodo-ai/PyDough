@@ -64,6 +64,7 @@ from pydough.types.pydough_type import PyDoughType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .column_bubbler import bubble_column_names
+from .conversion_helpers import build_new_ref_name
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
@@ -186,7 +187,7 @@ class RelTranslation:
         new_name: str = name
         while new_name in existing_names:
             self.dummy_idx += 1
-            new_name = f"{name}_{self.dummy_idx}"
+            new_name = build_new_ref_name(name, self.dummy_idx)
         return new_name
 
     def get_correlated_name(self, context: TranslationOutput) -> str:
@@ -725,7 +726,7 @@ class RelTranslation:
                 old_name: str = old_reference.name
                 new_name: str = old_name
                 while new_name in join_columns:
-                    new_name = f"{old_name}_{self.dummy_idx}"
+                    new_name = build_new_ref_name(old_name, self.dummy_idx)
                     self.dummy_idx += 1
                 new_reference: ColumnReference = ColumnReference(
                     new_name, old_reference.data_type
@@ -1488,18 +1489,15 @@ class RelTranslation:
             out_columns[hybrid_ref] = col_ref
             gen_columns[column_name] = col_ref
 
-        # Generate the unique set
+        # Generate the unique set, treating `unique_terms` as a single
+        # (possibly composite) uniqueness set rather than one per column.
         uniqueness: set[frozenset[str]] = set()
-        for unique_set in node.user_collection.unique_terms:
-            names: list[str] = (
-                [unique_set] if isinstance(unique_set, str) else unique_set
-            )
-            real_names: set[str] = set()
-            for name in names:
-                expr = gen_columns[name]
-                assert isinstance(expr, ColumnReference)
-                real_names.add(expr.name)
-            uniqueness.add(frozenset(real_names))
+        real_names: set[str] = set()
+        for name in node.user_collection.unique_terms:
+            expr = gen_columns[name]
+            assert isinstance(expr, ColumnReference)
+            real_names.add(expr.name)
+        uniqueness.add(frozenset(real_names))
 
         answer: RelationalNode = GeneratedTable(collection, uniqueness)
         return TranslationOutput(answer, out_columns)

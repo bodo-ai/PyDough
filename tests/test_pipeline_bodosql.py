@@ -796,6 +796,20 @@ def bodosql_tpch_context(bodosql_setup, sqlite_tpch_db_path: str) -> BodoSQLCont
                         field = field.with_name(field.name[1:])
                     if field.type == pa.null():
                         field = field.with_type(pa.string())
+                    # These columns are never null in the TPC-H spec.
+                    # Marking them NOT NULL lets BodoSQL's planner cache
+                    # the shared computation between duplicate copies.
+                    # See tpch_q15 for an example of this, the query computes
+                    # the SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) twice.
+                    # Without "NOT NULL" annotations + 2026.10 BodoSQL,
+                    # this made the query result flaky under multiple workers
+                    # (confirmed with the BodoSQL team).
+                    if table_name == "lineitem" and field.name in (
+                        "L_EXTENDEDPRICE",
+                        "L_DISCOUNT",
+                        "L_SUPPKEY",
+                    ):
+                        field = field.with_nullable(False)
                     schema = schema.set(idx, field)
                 arrow_table = arrow_table.rename_columns(renamings)
                 arrow_table = arrow_table.cast(schema)
@@ -2743,8 +2757,6 @@ def test_bodosql_e2e_tpch(
         "tpch_q20": "BodoSQL Iceberg STARTSWITH read bug",
         "smoke_b": "BodoSQL Iceberg STARTSWITH read bug",
         "smoke_c": "Unknown Bodo/BodoSQL typing bug with array concatenation",
-        "tpch_q15": "Flaky since Bodo 2026.10: joins two independently-computed "
-        "SUM(...) CTEs",
     }
     if tpch_pipeline_test_data.test_name in tests_skipped:
         pytest.skip(tests_skipped[tpch_pipeline_test_data.test_name])
