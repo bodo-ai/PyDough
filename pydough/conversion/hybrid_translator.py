@@ -1824,6 +1824,8 @@ class HybridTranslator:
         """
         # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
+        # print()
+        # print(hybrid)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common
@@ -1836,6 +1838,10 @@ class HybridTranslator:
         self.run_hybrid_decorrelation(hybrid)
         # 6. Run the filter-merging procedure, then re-run ejecting aggregate
         # inputs to clean up any new aggregates created by filter merging.
+        # print()
+        # print("*" * 80)
+        # print()
+        # print(hybrid)
         self.run_filter_merging(hybrid)
         self.eject_aggregate_inputs(hybrid)
         # 7. Run any final rewrites, such as turning MEDIAN into an average

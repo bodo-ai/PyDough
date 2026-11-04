@@ -989,6 +989,8 @@ class HybridTree:
         """
         match expr:
             case HybridChildRefExpr():
+                # if expr.child_idx not in child_remapping:
+                #     breakpoint()
                 assert expr.child_idx in child_remapping
                 expr.child_idx = child_remapping[expr.child_idx]
             case HybridFunctionExpr():
