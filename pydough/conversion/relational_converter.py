@@ -1489,18 +1489,15 @@ class RelTranslation:
             out_columns[hybrid_ref] = col_ref
             gen_columns[column_name] = col_ref
 
-        # Generate the unique set
+        # Generate the unique set, treating `unique_terms` as a single
+        # (possibly composite) uniqueness set rather than one per column.
         uniqueness: set[frozenset[str]] = set()
-        for unique_set in node.user_collection.unique_terms:
-            names: list[str] = (
-                [unique_set] if isinstance(unique_set, str) else unique_set
-            )
-            real_names: set[str] = set()
-            for name in names:
-                expr = gen_columns[name]
-                assert isinstance(expr, ColumnReference)
-                real_names.add(expr.name)
-            uniqueness.add(frozenset(real_names))
+        real_names: set[str] = set()
+        for name in node.user_collection.unique_terms:
+            expr = gen_columns[name]
+            assert isinstance(expr, ColumnReference)
+            real_names.add(expr.name)
+        uniqueness.add(frozenset(real_names))
 
         answer: RelationalNode = GeneratedTable(collection, uniqueness)
         return TranslationOutput(answer, out_columns)
