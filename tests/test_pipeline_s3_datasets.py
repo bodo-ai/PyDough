@@ -238,6 +238,19 @@ result = employee.WHERE(has_customer_expr).CALCULATE(
             ),
             id="pear_music_has_1",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = artist.WHERE(\n"
+                '   name == "AC/DC"\n'
+                ").CALCULATE(\n"
+                "   n_albums=COUNT(album)\n"
+                ")\n",
+                "chinook",
+                lambda: pd.DataFrame({"n_albums": [2]}),
+                "double_quoting_alias",
+            ),
+            id="double_quoting_alias",
+        ),
     ],
 )
 def s3_datasets_test_data(request) -> PyDoughPandasTest:
