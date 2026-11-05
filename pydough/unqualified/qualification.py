@@ -11,16 +11,23 @@ import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughQDAGException, PyDoughUnqualifiedException
-from pydough.metadata import GeneralJoinMetadata, GraphMetadata
+from pydough.metadata import (
+    GeneralJoinMetadata,
+    GraphMetadata,
+    PyDoughExpressionColumnMetadata,
+)
+from pydough.metadata.properties.property_metadata import PropertyMetadata
 from pydough.pydough_operators.expression_operators import (
     ExpressionFunctionOperator,
     ExpressionWindowOperator,
 )
 from pydough.qdag import (
     AstNodeBuilder,
+    ChildAccess,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
+    CollectionAccess,
     ColumnProperty,
     ExpressionFunctionCall,
     GlobalContext,
@@ -559,6 +566,95 @@ class Qualifier:
                     f"Unsupported unqualified node in general join conditions: {condition.__class__.__name__}"
                 )
 
+    def qualify_expression_column(
+        self,
+        context: PyDoughCollectionQDAG,
+        children: list[PyDoughCollectionQDAG],
+        column_property: PyDoughExpressionColumnMetadata,
+    ) -> PyDoughExpressionQDAG:
+        # Create Python code for deriving the join condition and storing it in
+        # a variable called '_answer'.
+        condition_statement = transform_cell(
+            f"_answer = ({column_property.expression})", self.graph.name, set()
+        )
+        # Execute the Python code in an environment containing the graph.
+        local_env: dict[str, object] = {self.graph.name: self.graph}
+        exec(condition_statement, {}, local_env)
+        # Extract the answer from the local environment as an unqualified node.
+        assert "_answer" in local_env
+        value = local_env.get("_answer")
+        assert isinstance(value, UnqualifiedNode), (
+            "Expected the PyDough expression column to be a valid PyDough expression"
+        )
+        return self.qualify_expression(value, context, children)
+
+    def add_virtual_properties(
+        self, collection: PyDoughCollectionQDAG
+    ) -> PyDoughCollectionQDAG:
+        """
+        TODO
+        """
+        original_collection: PyDoughCollectionQDAG = collection
+        while isinstance(original_collection, ChildOperatorChildAccess):
+            original_collection = original_collection.child_access
+        if isinstance(original_collection, CollectionAccess) and any(
+            isinstance(meta, PyDoughExpressionColumnMetadata)
+            for meta in original_collection.collection.properties.values()
+        ):
+            # Qualify all of the CALCULATE terms, storing the children built
+            # along the way.
+            children: list[PyDoughCollectionQDAG] = []
+            qualified_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
+            # Build a copy of the context but with an empty ancestry mapping.
+            assert isinstance(collection, ChildAccess)
+            stripped_collection: PyDoughCollectionQDAG = collection.clone_with_parent(
+                collection.ancestor_context
+            )
+            stripped_collection.ancestral_mapping.clear()
+            # Qualify each column defined as a PyDoughExpressionColumnMetadata
+            # instance, using the stripped collection as the context since the
+            # expression in the metadata should only be defined relative to the
+            # current collection, and thus ignores any ancestral terms.
+            for name, meta in sorted(
+                original_collection.collection.properties.items(),
+                key=lambda item: original_collection.collection.definition_order[
+                    item[0]
+                ],
+            ):
+                if isinstance(meta, PyDoughExpressionColumnMetadata):
+                    qualified_term = self.qualify_expression_column(
+                        stripped_collection, children, meta
+                    )
+                    qualified_terms.append((name, qualified_term))
+
+            # Wrap the collection in a calculate to add the now-defined terms.
+            answer: Calculate = self.builder.build_calculate(
+                collection, children, qualified_terms
+            )
+            # Manually replace the ancestral mapping to prevent any terms
+            # from being pinned by the new calculate
+            answer._ancestral_mapping = answer.preceding_context.ancestral_mapping
+            # Manually replace the calc term indices with an updated mapping
+            # that includes the virtual properties
+            new_indices: dict[str, int] = {}
+            for property_name in sorted(
+                original_collection.collection.get_property_names(),
+                key=lambda name: original_collection.collection.definition_order[name],
+            ):
+                property = original_collection.collection.get_property(property_name)
+                assert isinstance(property, PropertyMetadata)
+                if not property.is_subcollection:
+                    new_indices[property_name] = len(new_indices)
+                    if property_name not in answer.calc_term_values:
+                        answer._calc_term_values[property_name] = answer.get_expr(
+                            property_name
+                        )
+            answer._calc_term_indices = new_indices
+            answer._calc_terms = set(new_indices)
+            return answer
+
+        return collection
+
     def qualify_access(
         self,
         unqualified: UnqualifiedAccess,
@@ -622,6 +718,7 @@ class Qualifier:
                 answer: PyDoughCollectionQDAG = self.builder.build_child_access(
                     name, qualified_parent
                 )
+
                 # In the case that it is a general join condition access,
                 # qualify the join condition at this time.
                 if isinstance(answer, SubCollection) and isinstance(
@@ -630,7 +727,10 @@ class Qualifier:
                     self.parse_general_condition(answer)
                 if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
                     answer = ChildOperatorChildAccess(answer)
-                return answer
+
+                # If the answer is a collection containing columns defined as
+                # PyDough expressions, append a CALCULATE to the collection.
+                return self.add_virtual_properties(answer)
             else:
                 assert isinstance(term, PyDoughExpressionQDAG)
                 if isinstance(unqualified_parent, UnqualifiedRoot):

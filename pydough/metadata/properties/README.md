@@ -21,6 +21,7 @@ The properties classes in PyDough follow a hierarchy that includes both abstract
     - [`ScalarAttributeMetadata`](scalar_attribute_metadata.py) (abstract): Base class for properties that are scalars within each record of a collection.
         - [`TableColumnMetadata`](table_column_metadata.py) (concrete): Represents a column of data from a relational table.
             - [`MaskedTableColumnMetadata`](masked_table_column_metadata.py) (concrete): Represents a variant of a TableColumnMetadata where the data in the table has been encrypted by a masking protocol but the metadata stores information about that protocol, including how to unmask it when reading the data from the table.
+        - [`PyDoughExpressionColumnMetadata`](pydough_expression_column_metadata.py) (concrete): TODO add description.
     - [`SubcollectionRelationshipMetadata`](subcollection_relationship_metadata.py) (abstract): Base class for properties that map to a subcollection of a collection.
         - [`ReversiblePropertyMetadata`](reversible_property_metadata.py) (abstract): Base class for properties that map to a subcollection and have a corresponding reverse relationship.
             - [`CartesianProductMetadata`](cartesian_product_metadata.py) (concrete): Represents a cartesian product between a collection and its subcollection.

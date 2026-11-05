@@ -620,6 +620,240 @@ result = (
             ),
             id="alternative_quarter_cum_ir_analysis",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .PARTITION(name="combinations", by=brand_cat)
+    .CALCULATE(combination=brand_cat, n_products=COUNT(products), n_devices=SUM(products.n_devices))
+    .ORDER_BY(combination.ASC())
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "combination": [
+                            "AA",
+                            "AL",
+                            "AP",
+                            "AT",
+                            "DA",
+                            "DL",
+                            "DP",
+                            "DT",
+                            "OA",
+                            "OL",
+                            "OP",
+                            "OT",
+                            "ZA",
+                            "ZL",
+                            "ZP",
+                            "ZT",
+                        ],
+                        "n_products": [
+                            8,
+                            10,
+                            5,
+                            6,
+                            11,
+                            9,
+                            5,
+                            9,
+                            17,
+                            12,
+                            16,
+                            11,
+                            9,
+                            6,
+                            3,
+                            6,
+                        ],
+                        "n_devices": [
+                            197,
+                            249,
+                            133,
+                            139,
+                            254,
+                            216,
+                            115,
+                            206,
+                            415,
+                            305,
+                            359,
+                            296,
+                            242,
+                            147,
+                            82,
+                            145,
+                        ],
+                    }
+                ),
+                "pydough_expression_column_01",
+            ),
+            id="pydough_expression_column_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .CALCULATE(_id, brand_cat)
+    .TOP_K(3, by=_id)
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "_id": [102921, 107723, 110882],
+                        "brand_cat": ["OA", "OA", "AL"],
+                    }
+                ),
+                "pydough_expression_column_02",
+            ),
+            id="pydough_expression_column_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .TOP_K(3, by=_id)
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "_id": [102921, 107723, 110882],
+                        "name": ["GoldSky-II", "EmeraldCarbon-V", "SapphireBolt-IV"],
+                        "category": ["accessory", "accessory", "laptop"],
+                        "brand": ["OrangeRectangle", "OrangeRectangle", "AstralSea"],
+                        "production_cost": [8.72, 5.25, 4084.88],
+                        "release_date": ["2023-05-30", "2015-03-04", "2016-10-18"],
+                        "brand_cat": ["OA", "OA", "AL"],
+                        "release_year": [2023, 2015, 2016],
+                        "release_fiscal_quarter": ["2023Q2", "2015Q1", "2016Q4"],
+                        "n_devices": [18, 14, 10],
+                    }
+                ),
+                "pydough_expression_column_03",
+            ),
+            id="pydough_expression_column_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    incidents
+    .PARTITION(name="error_names", by=error_name)
+    .CALCULATE(error_name, n_incidents=COUNT(incidents))
+    .TOP_K(3, by=n_incidents)
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "error_name": [
+                            "Microphone Issue",
+                            "Speaker Issue",
+                            "Charging Port Issue",
+                        ],
+                        "n_incidents": [647, 668, 678],
+                    }
+                ),
+                "pydough_expression_column_04",
+                order_sensitive=True,
+            ),
+            id="pydough_expression_column_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    incidents
+    .PARTITION(name="product_names", by=product_name)
+    .CALCULATE(product_name, n_incidents=COUNT(incidents))
+    .TOP_K(3, by=n_incidents.DESC())
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "product_name": [
+                            "SapphireBolt-Flare",
+                            "EmeraldScream-Vision",
+                            "Sun-Set",
+                        ],
+                        "n_incidents": [362, 343, 316],
+                    }
+                ),
+                "pydough_expression_column_05",
+                order_sensitive=True,
+            ),
+            id="pydough_expression_column_05",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = (
+    products
+    .PARTITION(name="years", by=release_year)
+    .products
+    .BEST(by=production_cost.DESC(), per="years")
+    .CALCULATE(release_year, name, production_cost)
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "release_year": [
+                            2013,
+                            2014,
+                            2015,
+                            2016,
+                            2017,
+                            2018,
+                            2019,
+                            2020,
+                            2021,
+                            2022,
+                            2023,
+                            2024,
+                        ],
+                        "name": [
+                            "Copper-IV",
+                            "CardinalBeat-IV",
+                            "EmeraldCopper-IV",
+                            "SapphireBolt-IV",
+                            "RubySun-III",
+                            "GoldVoid-Vision",
+                            "CardinalCopper-Set",
+                            "AmethystSky-Wave",
+                            "CardinalBeat-Wave",
+                            "AmethystSun-Flare",
+                            "EmeraldBeat-Set",
+                            "SapphireBeat-Fox",
+                        ],
+                        "production_cost": [
+                            9514.12,
+                            13888.18,
+                            3394.12,
+                            4084.88,
+                            2486.12,
+                            11591.78,
+                            9381.59,
+                            354.66,
+                            6961.96,
+                            51088.87,
+                            7757.15,
+                            62962.7,
+                        ],
+                    }
+                ),
+                "pydough_expression_column_06",
+            ),
+            id="pydough_expression_column_06",
+        ),
     ],
 )
 def technograph_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -627,6 +861,7 @@ def technograph_pipeline_test_data(request) -> PyDoughPandasTest:
     Test data for e2e tests using technograph test data. Returns an
     instance of PyDoughPandasTest containing information about the test.
     """
+    request.param.skipped_dialects = set(DatabaseDialect.__members__) - {"SQLITE"}
     return request.param
 
 

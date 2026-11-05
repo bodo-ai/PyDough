@@ -113,7 +113,7 @@ class Calculate(AugmentingChildOperator):
         for name in sorted(
             self.calc_terms, key=lambda name: self.get_expression_position(name)
         ):
-            expr: PyDoughExpressionQDAG = self.get_expr(name)
+            expr: PyDoughExpressionQDAG = self._calc_term_values[name]
             kwarg_strings.append(f"{name}={expr.to_string(tree_form)}")
         return ", ".join(kwarg_strings)
 
