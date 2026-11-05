@@ -28,7 +28,7 @@ jobs:
       - name: Setup Java
         # Pinned: newer JDKs (24+) removed the Security Manager, 
         # which breaks BodoSQL's Iceberg HadoopCatalog.
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
