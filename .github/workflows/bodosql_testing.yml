@@ -26,6 +26,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Setup Java
+        # Pinned: newer JDKs (24+) removed the Security Manager, 
+        # which breaks BodoSQL's Iceberg HadoopCatalog.
         uses: actions/setup-java@v4
         with:
           distribution: temurin
