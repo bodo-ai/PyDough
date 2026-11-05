@@ -136,11 +136,15 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     partition_child_inherited_term,
     partition_filter_1995_only,
     partition_filter_1996_only,
+    partition_four_colors_same_keys,
     partition_key_name_collision,
+    partition_same_filter_different_order,
     partition_same_keys_different_filter,
+    partition_same_keys_different_filter_distinct_aggs,
     partition_same_keys_different_filter_shared_name,
     partition_same_keys_same_filter,
     partition_self_reference,
+    partition_subset_filter,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -4017,6 +4021,66 @@ from .testing_utilities import (
                 "partition_same_keys_same_filter",
             ),
             id="partition_same_keys_same_filter",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_same_keys_different_filter_distinct_aggs,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "min_1995": [137576.669632295],
+                        "max_1995": [184446.394754171],
+                        "min_1996": [151379.828894614],
+                        "max_1996": [151379.828894614],
+                    }
+                ),
+                "partition_same_keys_different_filter_distinct_aggs",
+            ),
+            id="partition_same_keys_different_filter_distinct_aggs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_four_colors_same_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "max_smoke": [466],
+                        "max_rose": [471],
+                        "max_turquoise": [478],
+                        "max_spring": [469],
+                    }
+                ),
+                "partition_four_colors_same_keys",
+            ),
+            id="partition_four_colors_same_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_subset_filter,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_1995": [34546133183.6],
+                        "total_1995_urgent": [6858584755.04],
+                    }
+                ),
+                "partition_subset_filter",
+            ),
+            id="partition_subset_filter",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_same_filter_different_order,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_a": [34546133183.6],
+                        "total_b": [34546133183.6],
+                    }
+                ),
+                "partition_same_filter_different_order",
+            ),
+            id="partition_same_filter_different_order",
         ),
         pytest.param(
             PyDoughPandasTest(
