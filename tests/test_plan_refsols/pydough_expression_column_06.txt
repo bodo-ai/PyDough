@@ -1,0 +1,3 @@
+ROOT(columns=[('release_year', YEAR(pr_release)), ('name', pr_name), ('production_cost', pr_prodcost)], orderings=[])
+ FILTER(condition=1:numeric == RANKING(args=[], partition=[YEAR(pr_release)], order=[(pr_prodcost):desc_first], allow_ties=False), columns={'pr_name': pr_name, 'pr_prodcost': pr_prodcost, 'pr_release': pr_release})
+  SCAN(table=main.PRODUCTS, columns={'pr_name': pr_name, 'pr_prodcost': pr_prodcost, 'pr_release': pr_release})
