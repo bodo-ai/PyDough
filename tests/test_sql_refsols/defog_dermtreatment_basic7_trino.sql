@@ -1,7 +1,7 @@
 SELECT
   ins_type AS insurance_type,
-  AVG(height_cm) AS avg_height,
-  AVG(weight_kg) AS avg_weight
+  AVG(CAST(height_cm AS DOUBLE)) AS avg_height,
+  AVG(CAST(weight_kg AS DOUBLE)) AS avg_weight
 FROM cassandra.defog.patients
 GROUP BY
   1

@@ -3,7 +3,7 @@ SELECT
     d1.x + d2.y
   ) + d3.z AS s,
   COUNT(*) AS n,
-  AVG(d1.x * d2.y * d3.z) AS a
+  AVG(CAST(d1.x * d2.y * d3.z AS DOUBLE)) AS a
 FROM (VALUES
   (1),
   (2),

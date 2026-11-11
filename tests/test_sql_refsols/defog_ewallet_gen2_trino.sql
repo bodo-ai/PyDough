@@ -7,8 +7,8 @@ WITH _s0 AS (
 ), _s1 AS (
   SELECT
     snapshot_date,
-    AVG(tx_limit_daily) AS avg_tx_limit_daily,
-    AVG(tx_limit_monthly) AS avg_tx_limit_monthly
+    AVG(CAST(tx_limit_daily AS DOUBLE)) AS avg_tx_limit_daily,
+    AVG(CAST(tx_limit_monthly AS DOUBLE)) AS avg_tx_limit_monthly
   FROM cassandra.defog.user_setting_snapshot
   WHERE
     YEAR(CAST(snapshot_date AS TIMESTAMP)) = 2023

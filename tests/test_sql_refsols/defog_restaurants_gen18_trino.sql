@@ -30,7 +30,7 @@ WITH _s0 AS (
 ), _s7 AS (
   SELECT
     _s2.region,
-    AVG(restaurant.rating) AS avg_rating
+    AVG(CAST(restaurant.rating AS DOUBLE)) AS avg_rating
   FROM _s0 AS _s2
   LEFT JOIN _u_2 AS _u_2
     ON _s2.city_name = _u_2._u_3

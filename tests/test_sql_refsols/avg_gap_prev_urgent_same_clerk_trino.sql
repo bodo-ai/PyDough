@@ -13,5 +13,5 @@ WITH _t0 AS (
     o_orderpriority = '1-URGENT'
 )
 SELECT
-  AVG(delta) AS avg_delta
+  AVG(CAST(delta AS DOUBLE)) AS avg_delta
 FROM _t0

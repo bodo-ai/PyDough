@@ -9,11 +9,11 @@ WITH _s1 AS (
 SELECT
   ROUND(
     AVG(
-      DATE_DIFF(
+      CAST(DATE_DIFF(
         'DAY',
         CAST(DATE_TRUNC('DAY', CAST(sales.sale_date AS TIMESTAMP)) AS TIMESTAMP),
         CAST(DATE_TRUNC('DAY', CAST(_s1.max_payment_date AS TIMESTAMP)) AS TIMESTAMP)
-      )
+      ) AS DOUBLE)
     ),
     2
   ) AS avg_days_to_payment

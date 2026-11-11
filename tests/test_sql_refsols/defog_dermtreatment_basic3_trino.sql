@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     drug_id,
-    AVG(tot_drug_amt) AS avg_tot_drug_amt,
+    AVG(CAST(tot_drug_amt AS DOUBLE)) AS avg_tot_drug_amt,
     COUNT(*) AS n_rows
   FROM cassandra.defog.treatments
   GROUP BY

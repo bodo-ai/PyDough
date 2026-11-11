@@ -4230,11 +4230,11 @@ def partition_child_inherited_term():
 
 def partition_filtered_nested_subcollection_count():
     """
-    Test for issue #624: PARTITION on a filtered collection used to drop
-    the filter when aggregating over a subcollection nested two levels
-    below the partitioned collection (`orders.lines`), while an aggregation
-    directly on the partitioned collection itself (`orders`) correctly
-    respected the filter. Both aggregations must reflect the same filter.
+    Test for fixing the problem with PARTITION on a filtered collection
+    dropping the filter when aggregating over a subcollection nested two
+    levels below the partitioned collection (e.g. `orders.lines`), used to
+    give a different, incorrect result than aggregating the partitioned
+    collection itself (`orders`).
     """
     return (
         orders.CALCULATE(k="x")

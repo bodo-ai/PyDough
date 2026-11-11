@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    AVG(c_acctbal) AS avg_c_acctbal
+    AVG(CAST(c_acctbal AS DOUBLE)) AS avg_c_acctbal
   FROM tpch.customer
   WHERE
     SUBSTR(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')

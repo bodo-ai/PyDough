@@ -1,6 +1,6 @@
 WITH _s2 AS (
   SELECT
-    AVG(c_acctbal) AS avg_c_acctbal
+    AVG(CAST(c_acctbal AS DOUBLE)) AS avg_c_acctbal
   FROM tpch.customer
 ), _s0 AS (
   SELECT

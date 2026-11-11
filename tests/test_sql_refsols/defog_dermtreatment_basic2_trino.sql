@@ -46,7 +46,7 @@ WITH _t2 AS (
 ), _s11 AS (
   SELECT
     _s7.ins_type,
-    AVG(outcomes.day100_pasi_score) AS avg_day100_pasi_score
+    AVG(CAST(outcomes.day100_pasi_score AS DOUBLE)) AS avg_day100_pasi_score
   FROM _t2 AS _t5
   LEFT JOIN _u_2 AS _u_2
     ON _t5.treatment_id = _u_2._u_3

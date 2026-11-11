@@ -53,9 +53,9 @@ WITH _t1 AS (
 ), _s3 AS (
   SELECT
     n_regionkey,
-    AVG(expr_5) AS avg_expr_5,
-    AVG(expr_6) AS avg_expr_6,
-    AVG(expr_7) AS avg_expr_7,
+    AVG(CAST(expr_5 AS DOUBLE)) AS avg_expr_5,
+    AVG(CAST(expr_6 AS DOUBLE)) AS avg_expr_6,
+    AVG(CAST(expr_7 AS DOUBLE)) AS avg_expr_7,
     COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
     COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal
   FROM _t1
