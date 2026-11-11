@@ -4228,6 +4228,26 @@ def partition_child_inherited_term():
     )
 
 
+def partition_filtered_nested_subcollection_count():
+    """
+    Test for issue #624: PARTITION on a filtered collection used to drop
+    the filter when aggregating over a subcollection nested two levels
+    below the partitioned collection (`orders.lines`), while an aggregation
+    directly on the partitioned collection itself (`orders`) correctly
+    respected the filter. Both aggregations must reflect the same filter.
+    """
+    return (
+        orders.CALCULATE(k="x")
+        .WHERE(total_price > 100000)
+        .PARTITION(name="g", by=k)
+        .CALCULATE(
+            k,
+            n_orders=COUNT(orders),
+            n_lines=COUNT(orders.lines),
+        )
+    )
+
+
 def chained_partition_transformed_key():
     """
     Test for fixing the problem with chaining a second PARTITION on top of a

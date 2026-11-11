@@ -1086,7 +1086,19 @@ class RelTranslation:
                 collection_access.subcollection_property
             )
         )
-        if (not reverse_cardinality.filters) and (not parent.always_exists()):
+        # If the parent is a PARTITION child, its own `always_exists()` is
+        # always true regardless of filters applied to the data being
+        # partitioned, since every emitted group is non-empty by
+        # construction. That does not mean every row of the underlying
+        # (possibly filtered) data survived, so check the filtered subtree
+        # directly to avoid wrongly treating this join as unfiltered.
+        source_always_exists: bool = True
+        if isinstance(parent.pipeline[0], HybridPartitionChild):
+            source_always_exists = parent.pipeline[0].subtree.always_exists()
+
+        if (not reverse_cardinality.filters) and (
+            not parent.always_exists() or not source_always_exists
+        ):
             reverse_cardinality = reverse_cardinality.add_filter()
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None

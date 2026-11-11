@@ -4,7 +4,7 @@ ROOT(columns=[('container', p_container), ('highest_price_ship_date', anything_l
    FILTER(condition=p_brand == 'Brand#13':string, columns={'p_container': p_container})
     SCAN(table=tpch.PART, columns={'p_brand': p_brand, 'p_container': p_container})
    FILTER(condition=1:numeric == RANKING(args=[], partition=[p_container], order=[(l_extendedprice):desc_first, (l_shipdate):asc_last]), columns={'l_shipdate': l_shipdate, 'p_container': p_container})
-    JOIN(condition=t0.p_partkey == t1.l_partkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'l_extendedprice': t1.l_extendedprice, 'l_shipdate': t1.l_shipdate, 'p_container': t0.p_container})
+    JOIN(condition=t0.p_partkey == t1.l_partkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'l_extendedprice': t1.l_extendedprice, 'l_shipdate': t1.l_shipdate, 'p_container': t0.p_container})
      FILTER(condition=p_brand == 'Brand#13':string, columns={'p_container': p_container, 'p_partkey': p_partkey})
       SCAN(table=tpch.PART, columns={'p_brand': p_brand, 'p_container': p_container, 'p_partkey': p_partkey})
      FILTER(condition=(l_shipmode == 'RAIL':string) & (l_tax == 0:numeric), columns={'l_extendedprice': l_extendedprice, 'l_partkey': l_partkey, 'l_shipdate': l_shipdate})
