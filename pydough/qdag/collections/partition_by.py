@@ -173,4 +173,9 @@ class PartitionBy(ChildOperator):
         return tree_form
 
     def equals(self, other: object) -> bool:
-        return isinstance(other, PartitionBy) and self._keys == other._keys
+        return (
+            isinstance(other, PartitionBy)
+            and self._ancestor_context == other._ancestor_context
+            and self._child == other._child
+            and self._keys == other._keys
+        )
