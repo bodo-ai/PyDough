@@ -23,10 +23,10 @@ SELECT
     ELSE NULL
   END IS NULL AS e,
   ROUND(CAST(customer.c_acctbal AS DECIMAL), 0) AS f
-FROM tpch.region AS region
-JOIN tpch.nation AS nation
+FROM main.region AS region
+JOIN main.nation AS nation
   ON nation.n_regionkey = region.r_regionkey
-JOIN tpch.customer AS customer
+JOIN main.customer AS customer
   ON customer.c_acctbal <= 100.0
   AND customer.c_acctbal >= 0.0
   AND customer.c_nationkey = nation.n_nationkey

@@ -6,14 +6,14 @@ WITH _t AS (
       PARTITION BY customer.c_nationkey
       ORDER BY customer.c_acctbal DESC, customer.c_name
     ) AS _w
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM main.nation AS nation
+  JOIN main.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 ), _s3 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM main.orders
   GROUP BY
     1
 ), _s5 AS (
@@ -31,7 +31,7 @@ WITH _t AS (
 SELECT
   region.r_name AS region_name,
   COALESCE(_s5.sum_n_rows, 0) AS n_orders
-FROM tpch.region AS region
+FROM main.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s5.n_regionkey = region.r_regionkey
 ORDER BY

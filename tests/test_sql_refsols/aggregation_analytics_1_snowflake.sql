@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     s_name,
     s_suppkey
-  FROM tpch.supplier
+  FROM snowflake_sample_data.tpch_sf1.supplier
   WHERE
     s_name = 'Supplier#000009450'
 ), _s11 AS (
@@ -16,12 +16,12 @@ WITH _t1 AS (
         1 - lineitem.l_tax
       ) - lineitem.l_quantity * partsupp.ps_supplycost
     ) AS sum_revenue
-  FROM tpch.partsupp AS partsupp
+  FROM snowflake_sample_data.tpch_sf1.partsupp AS partsupp
   JOIN _t1 AS _t4
     ON _t4.s_suppkey = partsupp.ps_suppkey
-  JOIN tpch.part AS part
+  JOIN snowflake_sample_data.tpch_sf1.part AS part
     ON STARTSWITH(part.p_container, 'LG') AND part.p_partkey = partsupp.ps_partkey
-  JOIN tpch.lineitem AS lineitem
+  JOIN snowflake_sample_data.tpch_sf1.lineitem AS lineitem
     ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
     AND lineitem.l_partkey = partsupp.ps_partkey
     AND lineitem.l_suppkey = partsupp.ps_suppkey
@@ -32,10 +32,10 @@ WITH _t1 AS (
 SELECT
   part.p_name AS part_name,
   ROUND(COALESCE(_s11.sum_revenue, 0), 2) AS revenue_generated
-FROM tpch.partsupp AS partsupp
+FROM snowflake_sample_data.tpch_sf1.partsupp AS partsupp
 JOIN _t1 AS _t1
   ON _t1.s_suppkey = partsupp.ps_suppkey
-JOIN tpch.part AS part
+JOIN snowflake_sample_data.tpch_sf1.part AS part
   ON STARTSWITH(part.p_container, 'LG') AND part.p_partkey = partsupp.ps_partkey
 LEFT JOIN _s11 AS _s11
   ON _s11.ps_partkey = partsupp.ps_partkey AND _s11.ps_suppkey = partsupp.ps_suppkey

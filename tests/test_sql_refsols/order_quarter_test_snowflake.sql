@@ -10,7 +10,7 @@ SELECT
   DATEDIFF(QUARTER, CAST(o_orderdate AS DATETIME), CAST('2000-01-01' AS TIMESTAMP)) AS quarters_until_2000,
   DATEADD(QUARTER, -4, CAST(o_orderdate AS TIMESTAMP)) AS same_quarter_prev_year,
   DATEADD(QUARTER, 4, CAST(o_orderdate AS TIMESTAMP)) AS same_quarter_next_year
-FROM tpch.orders
+FROM snowflake_sample_data.tpch_sf1.orders
 WHERE
   YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1995
 ORDER BY

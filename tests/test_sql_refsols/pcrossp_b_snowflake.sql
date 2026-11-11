@@ -2,14 +2,14 @@ WITH _s0 AS (
   SELECT
     c_mktsegment,
     COUNT(*) AS n_rows
-  FROM tpch.customer
+  FROM snowflake_sample_data.tpch_sf1.customer
   GROUP BY
     1
 ), _s1 AS (
   SELECT
     p_mfgr,
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   GROUP BY
     1
 )

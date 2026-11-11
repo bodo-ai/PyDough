@@ -3,7 +3,7 @@ WITH _t AS (
     o_custkey,
     o_orderdate,
     ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_totalprice DESC NULLS FIRST) AS _w
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   WHERE
     o_orderpriority = '1-URGENT'
 ), _s1 AS (
@@ -16,7 +16,7 @@ WITH _t AS (
 )
 SELECT
   customer.c_name AS name
-FROM tpch.customer AS customer
+FROM postgres.tpch.customer AS customer
 LEFT JOIN _s1 AS _s1
   ON _s1.o_custkey = customer.c_custkey
 WHERE

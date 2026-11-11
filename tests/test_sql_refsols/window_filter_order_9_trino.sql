@@ -3,8 +3,8 @@ WITH _s3 AS (
     1 AS expr_0,
     COALESCE(SUM(orders.o_totalprice), 0) AS total_spent,
     customer.c_custkey
-  FROM tpch.customer AS customer
-  LEFT JOIN tpch.orders AS orders
+  FROM postgres.tpch.customer AS customer
+  LEFT JOIN mysql.tpch.orders AS orders
     ON customer.c_custkey = orders.o_custkey
   WHERE
     customer.c_mktsegment = 'BUILDING'
@@ -15,7 +15,7 @@ WITH _s3 AS (
     _s3.expr_0,
     orders.o_totalprice,
     AVG(CAST(_s3.total_spent AS DOUBLE)) OVER () AS _w
-  FROM tpch.orders AS orders
+  FROM mysql.tpch.orders AS orders
   LEFT JOIN _s3 AS _s3
     ON _s3.c_custkey = orders.o_custkey
   WHERE

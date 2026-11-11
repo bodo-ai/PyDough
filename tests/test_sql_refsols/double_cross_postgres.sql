@@ -1,7 +1,7 @@
 WITH _t3 AS (
   SELECT
     o_orderdate
-  FROM tpch.orders
+  FROM main.orders
 ), _s0 AS (
   SELECT
     MIN(o_orderdate) AS min_o_orderdate
@@ -13,7 +13,7 @@ WITH _t3 AS (
     ) AS DOUBLE PRECISION) / 7 AS BIGINT) AS ord_wk,
     COUNT(*) AS n_rows
   FROM _s0 AS _s0
-  JOIN tpch.orders AS orders
+  JOIN main.orders AS orders
     ON CAST(CAST((
       CAST(orders.o_orderdate AS DATE) - CAST(_s0.min_o_orderdate AS DATE) + EXTRACT(DOW FROM CAST(_s0.min_o_orderdate AS TIMESTAMP)) - EXTRACT(DOW FROM CAST(orders.o_orderdate AS TIMESTAMP))
     ) AS DOUBLE PRECISION) / 7 AS BIGINT) < 10
@@ -35,7 +35,7 @@ WITH _t3 AS (
     COUNT(*) AS n_rows
   FROM _s2 AS _s2
   CROSS JOIN _s3 AS _s3
-  JOIN tpch.lineitem AS lineitem
+  JOIN main.lineitem AS lineitem
     ON CAST(CAST((
       CAST(lineitem.l_receiptdate AS DATE) - CAST(_s3.min_o_orderdate AS DATE) + EXTRACT(DOW FROM CAST(_s3.min_o_orderdate AS TIMESTAMP)) - EXTRACT(DOW FROM CAST(lineitem.l_receiptdate AS TIMESTAMP))
     ) AS DOUBLE PRECISION) / 7 AS BIGINT) < 10

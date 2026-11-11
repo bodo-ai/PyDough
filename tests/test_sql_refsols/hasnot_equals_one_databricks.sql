@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
   WHERE
     o_orderpriority = '1-URGENT'
   GROUP BY
@@ -10,7 +10,7 @@ WITH _s1 AS (
 )
 SELECT
   COUNT(*) AS n
-FROM tpch.customer AS customer
+FROM tpch_s3_pq.tpch_sf1.customer AS customer
 LEFT JOIN _s1 AS _s1
   ON _s1.o_custkey = customer.c_custkey
 WHERE

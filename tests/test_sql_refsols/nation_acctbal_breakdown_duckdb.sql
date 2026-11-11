@@ -47,7 +47,7 @@ WITH _s3 AS (
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7
-  FROM tpch.customer
+  FROM main.customer
 )
 SELECT
   ANY_VALUE(nation.n_name) AS nation_name,
@@ -56,8 +56,8 @@ SELECT
   AVG(_s3.expr_7) AS median_red_acctbal,
   AVG(_s3.expr_5) AS median_black_acctbal,
   AVG(_s3.expr_6) AS median_overall_acctbal
-FROM tpch.nation AS nation
-JOIN tpch.region AS region
+FROM main.nation AS nation
+JOIN main.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
 JOIN _s3 AS _s3
   ON _s3.c_nationkey = nation.n_nationkey

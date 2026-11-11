@@ -2,17 +2,17 @@ WITH _s1 AS (
   SELECT
     s_acctbal,
     s_nationkey
-  FROM tpch.supplier
+  FROM tpch_s3_pq.tpch_sf1.supplier
 ), _s2 AS (
   SELECT
     n_nationkey,
     n_regionkey
-  FROM tpch.nation
+  FROM tpch_s3_pq.tpch_sf1.nation
 ), _s3 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM tpch.region
+  FROM tpch_s3_pq.tpch_sf1.region
 ), _s5 AS (
   SELECT
     _s2.n_nationkey,

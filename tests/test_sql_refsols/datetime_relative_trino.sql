@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     o_orderdate
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   ORDER BY
     o_custkey NULLS FIRST,
     1 NULLS FIRST

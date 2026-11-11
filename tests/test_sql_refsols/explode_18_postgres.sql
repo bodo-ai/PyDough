@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     c_comment AS comment,
     c_custkey AS key
-  FROM tpch.customer
+  FROM main.customer
   ORDER BY
     2 NULLS FIRST
   LIMIT 3

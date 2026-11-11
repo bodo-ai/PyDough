@@ -3,7 +3,7 @@ WITH _t3 AS (
     c_acctbal,
     c_mktsegment,
     c_nationkey
-  FROM tpch.customer
+  FROM main.customer
   WHERE
     c_acctbal < 0
 ), _s0 AS (
@@ -19,7 +19,7 @@ WITH _t3 AS (
   SELECT
     n_name,
     n_nationkey
-  FROM tpch.nation
+  FROM main.nation
 ), _s4 AS (
   SELECT
     _s0.c_mktsegment,
@@ -37,7 +37,7 @@ WITH _t3 AS (
     customer.c_name,
     _s3.n_name,
     _s3.n_nationkey
-  FROM tpch.customer AS customer
+  FROM main.customer AS customer
   JOIN _s1 AS _s3
     ON _s3.n_nationkey = customer.c_nationkey
   WHERE

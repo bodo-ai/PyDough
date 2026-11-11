@@ -1,3 +1,3 @@
 SELECT
   COUNT(*) AS output
-FROM tpch.supplier
+FROM mongo.tpch.supplier

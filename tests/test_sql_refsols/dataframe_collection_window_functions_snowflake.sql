@@ -8,8 +8,8 @@ WITH _t2 AS (
     ('UNITED STATES', 'BUILDING'),
     ('JAPAN', 'AUTOMOBILE'),
     ('BRAZIL', 'MACHINERY')) AS customers_filters(nation_name, mrk_segment)
-  CROSS JOIN tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  CROSS JOIN snowflake_sample_data.tpch_sf1.customer AS customer
+  JOIN snowflake_sample_data.tpch_sf1.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
     NTILE(1000) OVER (ORDER BY customer.c_acctbal) > 996
@@ -23,7 +23,7 @@ WITH _t2 AS (
     ANY_VALUE(_t2.nation_name) AS anything_nation_name,
     COUNT(orders.o_custkey) AS count_o_custkey
   FROM _t2 AS _t2
-  LEFT JOIN tpch.orders AS orders
+  LEFT JOIN snowflake_sample_data.tpch_sf1.orders AS orders
     ON _t2.c_custkey = orders.o_custkey
   GROUP BY
     1
@@ -35,7 +35,7 @@ WITH _t2 AS (
       CAST(LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS DATETIME),
       CAST(o_orderdate AS DATETIME)
     ) AS month_diff
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
 ), _s7 AS (
   SELECT
     o_custkey,
@@ -47,7 +47,7 @@ WITH _t2 AS (
   SELECT
     o_custkey,
     o_totalprice - LEAD(o_totalprice, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS price_diff
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
 ), _s9 AS (
   SELECT
     o_custkey,

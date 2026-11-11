@@ -11,7 +11,7 @@ WITH sizes AS (
     sizes_2.part_size,
     COUNT(*) AS n_rows
   FROM sizes_2 AS sizes_2
-  JOIN tpch.part AS part
+  JOIN snowflake_sample_data.tpch_sf1.part AS part
     ON CONTAINS(part.p_name, 'almond')
     AND part.p_size <= (
       sizes_2.part_size + 4

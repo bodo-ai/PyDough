@@ -1,0 +1,2 @@
+ROOT(columns=[('name', priority_name), ('value', priority_value)], orderings=[])
+ SQLQUERYSCAN(table=SELECT '1-URGENT' AS priority_name, 1 AS priority_value UNION ALL SELECT '2-HIGH', 2 UNION ALL SELECT '3-MEDIUM', 3 UNION ALL SELECT '4-NOT SPECIFIED', 4 UNION ALL SELECT '5-LOW', 5, columns={'priority_name': priority_name, 'priority_value': priority_value})

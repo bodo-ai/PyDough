@@ -5,7 +5,7 @@ WITH _t AS (
     sizes.part_size,
     ROW_NUMBER() OVER (PARTITION BY sizes.part_size ORDER BY part.p_retailprice) AS _w
   FROM GENERATE_SERIES(1, 10, 1) AS sizes(part_size)
-  JOIN tpch.part AS part
+  JOIN main.part AS part
     ON part.p_container LIKE '%SM DRUM%'
     AND part.p_name LIKE '%azure%'
     AND part.p_size = sizes.part_size

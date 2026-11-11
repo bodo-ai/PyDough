@@ -1,7 +1,7 @@
 SELECT
   region.r_name AS name,
   _s0.val AS letter
-FROM tpch.region AS region, LATERAL UNNEST(ARRAY['A', 'E', 'I']) WITH ORDINALITY AS _s0(val, idx)
+FROM main.region AS region, LATERAL UNNEST(ARRAY['A', 'E', 'I']) WITH ORDINALITY AS _s0(val, idx)
 WHERE
   region.r_name LIKE (
     '%' || _s0.val || '%'

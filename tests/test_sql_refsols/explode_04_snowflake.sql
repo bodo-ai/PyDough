@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     r_regionkey AS key,
     r_name AS name
-  FROM tpch.region
+  FROM snowflake_sample_data.tpch_sf1.region
 ), _s3 AS (
   SELECT
     _s1.key,
@@ -33,7 +33,7 @@ SELECT
   COALESCE(_s3.n_rows, 0) AS n_e_chunks,
   COALESCE(_s7.n_rows, 0) AS n_i_chunks,
   COALESCE(_s11.n_rows, 0) AS n_space_chunks
-FROM tpch.region AS region
+FROM snowflake_sample_data.tpch_sf1.region AS region
 LEFT JOIN _s3 AS _s3
   ON _s3.key = region.r_regionkey
 LEFT JOIN _s7 AS _s7

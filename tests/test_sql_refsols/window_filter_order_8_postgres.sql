@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
     o_custkey
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 1
     AND EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
@@ -9,8 +9,8 @@ WITH _s3 AS (
   SELECT
     ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
     COUNT(_s3.o_custkey) AS count_o_custkey
-  FROM tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  FROM main.customer AS customer
+  JOIN main.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'FRANCE'
   LEFT JOIN _s3 AS _s3
     ON _s3.o_custkey = customer.c_custkey

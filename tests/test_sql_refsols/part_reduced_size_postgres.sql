@@ -3,7 +3,7 @@ WITH _s0 AS (
     p_partkey,
     p_retailprice,
     p_size
-  FROM tpch.part
+  FROM main.part
   ORDER BY
     CAST(p_retailprice AS INT) NULLS FIRST
   LIMIT 2
@@ -21,7 +21,7 @@ SELECT
   TO_CHAR(lineitem.l_receiptdate, 'MM/DD') AS date_md,
   TO_CHAR(lineitem.l_receiptdate, 'HH24:MIPM') AS am_pm
 FROM _s0 AS _s0
-JOIN tpch.lineitem AS lineitem
+JOIN main.lineitem AS lineitem
   ON _s0.p_partkey = lineitem.l_partkey
 ORDER BY
   4 DESC NULLS LAST,

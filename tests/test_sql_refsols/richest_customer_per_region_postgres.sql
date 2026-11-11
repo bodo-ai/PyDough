@@ -5,10 +5,10 @@ WITH _t AS (
     nation.n_name,
     region.r_name,
     ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal DESC, customer.c_name) AS _w
-  FROM tpch.region AS region
-  JOIN tpch.nation AS nation
+  FROM main.region AS region
+  JOIN main.nation AS nation
     ON nation.n_regionkey = region.r_regionkey
-  JOIN tpch.customer AS customer
+  JOIN main.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 )
 SELECT

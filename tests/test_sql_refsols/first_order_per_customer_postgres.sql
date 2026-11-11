@@ -4,13 +4,13 @@ WITH _t AS (
     o_orderdate,
     o_totalprice,
     ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_orderdate, o_orderkey) AS _w
-  FROM tpch.orders
+  FROM main.orders
 )
 SELECT
   customer.c_name AS name,
   _t.o_orderdate AS first_order_date,
   _t.o_totalprice AS first_order_price
-FROM tpch.customer AS customer
+FROM main.customer AS customer
 JOIN _t AS _t
   ON _t._w = 1 AND _t.o_custkey = customer.c_custkey
 WHERE

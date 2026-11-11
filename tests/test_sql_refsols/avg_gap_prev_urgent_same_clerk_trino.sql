@@ -8,7 +8,7 @@ WITH _t0 AS (
       ) AS TIMESTAMP),
       CAST(DATE_TRUNC('DAY', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
     ) AS delta
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   WHERE
     o_orderpriority = '1-URGENT'
 )

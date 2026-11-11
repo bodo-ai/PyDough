@@ -10,7 +10,7 @@ SELECT
   DATE_DIFF('QUARTER', CAST(o_orderdate AS TIMESTAMP), CAST('2000-01-01' AS TIMESTAMP)) AS quarters_until_2000,
   CAST(o_orderdate AS TIMESTAMP) - INTERVAL '12' MONTH AS same_quarter_prev_year,
   CAST(o_orderdate AS TIMESTAMP) + INTERVAL '12' MONTH AS same_quarter_next_year
-FROM tpch.orders
+FROM main.orders
 WHERE
   EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
 ORDER BY

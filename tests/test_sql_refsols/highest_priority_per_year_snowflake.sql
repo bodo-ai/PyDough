@@ -3,7 +3,7 @@ WITH _t3 AS (
     YEAR(CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     o_orderpriority,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   GROUP BY
     1,
     2

@@ -2,7 +2,7 @@ WITH _t2 AS (
   SELECT
     o_custkey,
     o_orderdate
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   WHERE
     o_orderpriority = '1-URGENT'
   QUALIFY
@@ -10,7 +10,7 @@ WITH _t2 AS (
 )
 SELECT
   customer.c_name AS name
-FROM tpch.customer AS customer
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
 LEFT JOIN _t2 AS _t2
   ON _t2.o_custkey = customer.c_custkey
 WHERE

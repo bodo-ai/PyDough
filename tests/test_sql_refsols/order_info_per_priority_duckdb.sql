@@ -3,7 +3,7 @@ WITH _t1 AS (
     o_orderkey,
     o_orderpriority,
     o_totalprice
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1992
   QUALIFY

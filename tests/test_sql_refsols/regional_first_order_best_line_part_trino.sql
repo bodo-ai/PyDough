@@ -3,10 +3,10 @@ WITH _t AS (
     nation.n_regionkey,
     orders.o_orderkey,
     ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY orders.o_orderdate, orders.o_orderkey) AS _w
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM cassandra.tpch.nation AS nation
+  JOIN postgres.tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
-  JOIN tpch.orders AS orders
+  JOIN mysql.tpch.orders AS orders
     ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
     AND customer.c_custkey = orders.o_custkey
 ), _t_2 AS (
@@ -18,7 +18,7 @@ WITH _t AS (
       ORDER BY lineitem.l_quantity DESC NULLS FIRST, lineitem.l_linenumber
     ) AS _w
   FROM _t AS _t
-  JOIN tpch.lineitem AS lineitem
+  JOIN postgres.tpch.lineitem AS lineitem
     ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
     AND _t.o_orderkey = lineitem.l_orderkey
   WHERE
@@ -28,7 +28,7 @@ WITH _t AS (
     _t.n_regionkey,
     part.p_name
   FROM _t_2 AS _t
-  JOIN tpch.part AS part
+  JOIN mysql.tpch.part AS part
     ON _t.l_partkey = part.p_partkey
   WHERE
     _t._w = 1
@@ -36,7 +36,7 @@ WITH _t AS (
 SELECT
   region.r_name AS region_name,
   _s9.p_name AS part_name
-FROM tpch.region AS region
+FROM mongo.tpch.region AS region
 LEFT JOIN _s9 AS _s9
   ON _s9.n_regionkey = region.r_regionkey
 ORDER BY

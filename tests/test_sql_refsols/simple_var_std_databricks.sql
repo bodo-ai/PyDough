@@ -6,8 +6,8 @@ SELECT
   STDDEV(supplier.s_acctbal) AS sample_std,
   VAR_POP(supplier.s_acctbal) AS pop_var,
   STDDEV_POP(supplier.s_acctbal) AS pop_std
-FROM tpch.nation AS nation
-JOIN tpch.supplier AS supplier
+FROM tpch_s3_pq.tpch_sf1.nation AS nation
+JOIN tpch_s3_pq.tpch_sf1.supplier AS supplier
   ON nation.n_nationkey = supplier.s_nationkey
 WHERE
   nation.n_name IN ('ALGERIA', 'ARGENTINA')

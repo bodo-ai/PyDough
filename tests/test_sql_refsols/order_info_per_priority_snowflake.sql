@@ -3,7 +3,7 @@ WITH _t1 AS (
     o_orderkey,
     o_orderpriority,
     o_totalprice
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   WHERE
     YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1992
   QUALIFY

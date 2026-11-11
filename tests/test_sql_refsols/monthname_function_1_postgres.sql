@@ -5,7 +5,7 @@ SELECT
   TO_CHAR(CAST(o_orderdate AS TIMESTAMP) + INTERVAL '3 MONTH', 'Mon') AS month_col_added,
   TO_CHAR(CAST('1995-05-26' AS DATE), 'Mon') AS month_str_subs,
   TO_CHAR(CURRENT_TIMESTAMP, 'Mon') AS month_now
-FROM tpch.orders
+FROM main.orders
 WHERE
   EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
 ORDER BY

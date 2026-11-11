@@ -21,6 +21,7 @@ from pydough.metadata import (
     MaskedTableColumnMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
+    SQLQueryMetadata,
 )
 from pydough.qdag import (
     Calculate,
@@ -56,6 +57,7 @@ from pydough.relational import (
     RelationalNode,
     RelationalRoot,
     Scan,
+    SqlQueryScan,
     WindowCallExpression,
 )
 from pydough.types import BooleanType, NumericType, UnknownType
@@ -991,7 +993,9 @@ class RelTranslation:
             hybrid_ref: HybridRefExpr = HybridRefExpr(expr_name, hybrid_expr.typ)
             out_ref: ColumnReference = ColumnReference(expr_name, hybrid_expr.typ)
             out_columns[hybrid_ref] = out_ref
-        assert isinstance(node.collection.collection, SimpleTableMetadata), (
+        assert isinstance(
+            node.collection.collection, (SimpleTableMetadata, SQLQueryMetadata)
+        ), (
             f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
         )
         uniqueness: set[frozenset[str]] = set()
@@ -1005,9 +1009,19 @@ class RelTranslation:
                 assert isinstance(expr, ColumnReference)
                 real_names.add(expr.name)
             uniqueness.add(frozenset(real_names))
-        answer: RelationalNode = Scan(
-            node.collection.collection.table_path, scan_columns, uniqueness
-        )
+        answer: RelationalNode
+
+        match node.collection.collection:
+            case SimpleTableMetadata():
+                answer = Scan(
+                    node.collection.collection.table_path, scan_columns, uniqueness
+                )
+            case SQLQueryMetadata():
+                answer = SqlQueryScan(
+                    node.collection.collection.sql_query, scan_columns, uniqueness
+                )
+            case _:
+                raise NotImplementedError(node.collection.collection.__class__.__name__)
 
         # If any of the columns are masked, insert a projection on top to unmask
         # them.
@@ -1018,6 +1032,10 @@ class RelTranslation:
                     assert isinstance(hybrid_expr, HybridColumnExpr)
                     assert isinstance(
                         hybrid_expr.column.column_property, MaskedTableColumnMetadata
+                    )
+                    assert isinstance(
+                        node.collection.collection,
+                        SimpleTableMetadata,
                     )
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
@@ -1060,9 +1078,6 @@ class RelTranslation:
         # First, build the table scan for the collection being stepped into.
         collection_access: CollectionAccess = node.collection
         assert isinstance(collection_access, SubCollection)
-        assert isinstance(collection_access.collection, SimpleTableMetadata), (
-            f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
-        )
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
         cardinality: JoinCardinality = (

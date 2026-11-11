@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     s_acctbal,
     s_name
-  FROM tpch.supplier
+  FROM main.supplier
   QUALIFY
     ROW_NUMBER() OVER (ORDER BY s_acctbal DESC NULLS FIRST, s_name) = 1
 )

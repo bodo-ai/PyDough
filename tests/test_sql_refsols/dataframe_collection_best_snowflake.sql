@@ -5,7 +5,7 @@ WITH _t1 AS (
     orders.o_orderpriority,
     orders.o_totalprice,
     priority_taxes.tax_rate
-  FROM tpch.orders AS orders
+  FROM snowflake_sample_data.tpch_sf1.orders AS orders
   JOIN (VALUES
     ('1-URGENT', 0.05),
     ('2-HIGH', 0.04),
@@ -23,7 +23,7 @@ SELECT
   _t1.o_orderkey AS order_key,
   _t1.o_orderpriority AS order_priority,
   _t1.o_totalprice + _t1.o_totalprice * _t1.tax_rate AS cheapest_order_price
-FROM tpch.customer AS customer
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
 JOIN _t1 AS _t1
   ON _t1.o_custkey = customer.c_custkey
 ORDER BY

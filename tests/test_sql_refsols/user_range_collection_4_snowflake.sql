@@ -8,7 +8,7 @@ WITH sizes AS (
     part.p_retailprice,
     sizes.part_size
   FROM sizes AS sizes
-  JOIN tpch.part AS part
+  JOIN snowflake_sample_data.tpch_sf1.part AS part
     ON CONTAINS(part.p_container, 'SM DRUM')
     AND CONTAINS(part.p_name, 'azure')
     AND CONTAINS(part.p_type, 'PLATED')

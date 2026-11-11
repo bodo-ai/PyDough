@@ -302,7 +302,7 @@
           {
             "name": "month",
             "type": "table column",
-            "column name": "MONTH",
+            "column name": "date_val",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'MONTH'",
             "sample values": [

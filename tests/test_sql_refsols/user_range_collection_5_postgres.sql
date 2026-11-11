@@ -3,7 +3,7 @@ WITH _s3 AS (
     sizes_2.part_size,
     COUNT(*) AS n_rows
   FROM GENERATE_SERIES(1, 59, 5) AS sizes_2(part_size)
-  JOIN tpch.part AS part
+  JOIN main.part AS part
     ON part.p_name LIKE '%almond%'
     AND part.p_size <= (
       sizes_2.part_size + 4

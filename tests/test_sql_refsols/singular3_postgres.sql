@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     c_custkey,
     c_name
-  FROM tpch.customer
+  FROM main.customer
   ORDER BY
     2 NULLS FIRST
   LIMIT 5
@@ -11,7 +11,7 @@ WITH _s0 AS (
     o_custkey,
     o_orderdate,
     ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_totalprice DESC) AS _w
-  FROM tpch.orders
+  FROM main.orders
 ), _s1 AS (
   SELECT
     o_custkey,

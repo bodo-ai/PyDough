@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT DISTINCT
     c_custkey
-  FROM tpch.customer
+  FROM main.customer
   WHERE
     c_mktsegment = 'BUILDING'
 ), _u_0 AS (
@@ -14,7 +14,7 @@ WITH _s1 AS (
   SELECT
     orders.o_totalprice,
     AVG(CAST(NULL AS INT)) OVER () AS _w
-  FROM tpch.orders AS orders
+  FROM main.orders AS orders
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = orders.o_custkey
   WHERE

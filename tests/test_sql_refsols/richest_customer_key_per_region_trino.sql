@@ -2,8 +2,8 @@ WITH _t AS (
   SELECT
     customer.c_custkey,
     ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal DESC NULLS FIRST) AS _w
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM cassandra.tpch.nation AS nation
+  JOIN postgres.tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 )
 SELECT

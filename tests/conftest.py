@@ -716,6 +716,81 @@ def sqlite_tpch_session(
     return empty_sqlite_tpch_session
 
 
+@pytest.fixture(scope="session")
+def mysql_sample_graph_path() -> str:
+    """
+    Return the path to the MySQL sample graph JSON file.
+    """
+    os.path.dirname(os.path.dirname(__file__))
+    return f"{os.path.dirname(__file__)}/test_metadata/mysql_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
+def get_mysql_sample_graph(mysql_sample_graph_path: str) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported MySQL graph
+    names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=mysql_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def postgres_sample_graph_path() -> str:
+    """
+    Return the path to the PostGres sample graph JSON file.
+    """
+    os.path.dirname(os.path.dirname(__file__))
+    return f"{os.path.dirname(__file__)}/test_metadata/postgres_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
+def get_postgres_sample_graph(postgres_sample_graph_path: str) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported Postgres graph
+    names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=postgres_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def oracle_sample_graph_path() -> str:
+    """
+    Return the path to the Oracle sample graph JSON file.
+    """
+    os.path.dirname(os.path.dirname(__file__))
+    return f"{os.path.dirname(__file__)}/test_metadata/oracle_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
+def get_oracle_sample_graph(oracle_sample_graph_path: str) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported Oracle graph
+    names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=oracle_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
 _DIALECT_PARAMS = [
     pytest.param("snowflake", id="snowflake", marks=[pytest.mark.snowflake]),
     pytest.param("trino", id="trino", marks=[pytest.mark.trino]),
@@ -746,6 +821,9 @@ def all_dialects_tpch_db_context(
     get_databricks_sample_graph: graph_fetcher,
     get_trino_graphs: graph_fetcher,
     get_duckdb_sample_graph: graph_fetcher,
+    get_mysql_sample_graph: graph_fetcher,
+    get_oracle_sample_graph: graph_fetcher,
+    get_postgres_sample_graph: graph_fetcher,
 ) -> tuple[DatabaseContext, GraphMetadata]:
     """
     General fixture providing TPCH database context and graph metadata
@@ -770,13 +848,13 @@ def all_dialects_tpch_db_context(
             return trino_conn, get_trino_graphs("TPCH")
         case "mysql":
             mysql_conn = request.getfixturevalue("mysql_conn_db_context")
-            return mysql_conn("tpch"), get_sample_graph("TPCH")
+            return mysql_conn("tpch"), get_mysql_sample_graph("TPCH")  #
         case "postgres":
             db_context = request.getfixturevalue("postgres_conn_db_context")
-            return db_context, get_sample_graph("TPCH")
+            return db_context, get_postgres_sample_graph("TPCH")  #
         case "oracle":
             db_context = request.getfixturevalue("oracle_conn_db_context")
-            return db_context("tpch"), get_sample_graph("TPCH")
+            return db_context("tpch"), get_oracle_sample_graph("TPCH")  #
         case "databricks":
             db_context = request.getfixturevalue("databricks_conn_db_context")
             return (
@@ -792,6 +870,46 @@ def all_dialects_tpch_db_context(
     # Default fallback
     db_context = request.getfixturevalue("sqlite_tpch_db_context")
     return db_context, get_sample_graph("TPCH")
+
+
+@pytest.fixture
+def all_dialects_empty_sample_context(
+    empty_context_database: DatabaseContext,
+    get_sample_graph: graph_fetcher,
+    get_sf_sample_graph: graph_fetcher,
+    get_databricks_sample_graph: graph_fetcher,
+    get_trino_graphs: graph_fetcher,
+    get_duckdb_sample_graph: graph_fetcher,
+    get_mysql_sample_graph: graph_fetcher,
+    get_oracle_sample_graph: graph_fetcher,
+    get_postgres_sample_graph: graph_fetcher,
+) -> tuple[DatabaseContext, GraphMetadata]:
+    """
+    Same idea as all_dialects_sample_graphs, but for empty database contexts.
+    """
+    match empty_context_database.dialect.value:
+        case "sqlite":
+            return empty_context_database, get_sample_graph("TPCH")
+        case "snowflake":
+            return (empty_context_database, get_sf_sample_graph("TPCH"))
+        case "trino":
+            return empty_context_database, get_trino_graphs("TPCH")
+        case "mysql":
+            return empty_context_database, get_mysql_sample_graph("TPCH")
+        case "postgres":
+            return empty_context_database, get_postgres_sample_graph("TPCH")
+        case "oracle":
+            return empty_context_database, get_oracle_sample_graph("TPCH")
+        case "databricks":
+            return (
+                empty_context_database,
+                get_databricks_sample_graph("TPCH"),
+            )
+        case "duckdb":
+            return empty_context_database, get_duckdb_sample_graph("TPCH")
+
+        # TODO: Add bodosql later
+    return empty_context_database, get_sample_graph("TPCH")
 
 
 @pytest.fixture(params=_DIALECT_PARAMS)
@@ -1469,8 +1587,7 @@ def databricks_params_tpch_db_context() -> DatabaseContext:
 
 @pytest.fixture(scope="session")
 def duckdb_sample_graph_path() -> str:
-    # DuckDB schema is `main` so can use tpch_demo_graph.json directly.
-    return f"{os.path.dirname(__file__)}/../demos/metadata/tpch_demo_graph.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/duckdb_sample_graphs.json"
 
 
 @pytest.fixture(scope="session")

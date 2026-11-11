@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     p_size,
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM main.part
   WHERE
     p_name LIKE '%turquoise%'
   GROUP BY

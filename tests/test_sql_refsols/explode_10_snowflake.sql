@@ -2,7 +2,7 @@ SELECT
   LENGTH(_s0.value) AS word_length,
   COUNT(*) AS n_words,
   COUNT(DISTINCT _s0.value) AS n_unique_words
-FROM tpch.customer AS customer
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
 CROSS JOIN LATERAL SPLIT_TO_TABLE(
   TRIM(
     REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', ''),

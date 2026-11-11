@@ -2,8 +2,8 @@ WITH _t3 AS (
   SELECT
     lineitem.l_shipdate,
     part.p_container
-  FROM tpch.part AS part
-  JOIN tpch.lineitem AS lineitem
+  FROM snowflake_sample_data.tpch_sf1.part AS part
+  JOIN snowflake_sample_data.tpch_sf1.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
     AND lineitem.l_shipmode = 'RAIL'
     AND lineitem.l_tax = 0
@@ -18,7 +18,7 @@ WITH _t3 AS (
 SELECT
   part.p_container AS container,
   ANY_VALUE(_t3.l_shipdate) AS highest_price_ship_date
-FROM tpch.part AS part
+FROM snowflake_sample_data.tpch_sf1.part AS part
 JOIN _t3 AS _t3
   ON _t3.p_container = part.p_container
 WHERE

@@ -1,14 +1,14 @@
 WITH _s2 AS (
   SELECT
     AVG(c_acctbal) AS avg_c_acctbal
-  FROM tpch.customer
+  FROM snowflake_sample_data.tpch_sf1.customer
 ), _s0 AS (
   SELECT
     c_mktsegment,
     c_nationkey,
     COUNT(c_acctbal) AS count_c_acctbal,
     SUM(c_acctbal) AS sum_c_acctbal
-  FROM tpch.customer
+  FROM snowflake_sample_data.tpch_sf1.customer
   GROUP BY
     1,
     2
@@ -18,7 +18,7 @@ WITH _s2 AS (
     SUM(_s0.count_c_acctbal) AS sum_count_c_acctbal,
     SUM(_s0.sum_c_acctbal) AS sum_sum_c_acctbal
   FROM _s0 AS _s0
-  JOIN tpch.nation AS nation
+  JOIN snowflake_sample_data.tpch_sf1.nation AS nation
     ON _s0.c_nationkey = nation.n_nationkey
   GROUP BY
     nation.n_name,

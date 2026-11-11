@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     p_container,
     p_size
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   WHERE
     STARTSWITH(p_container, 'LG')
 ), _s6 AS (
@@ -25,15 +25,15 @@ WITH _t1 AS (
     _s0.p_size,
     SUM(lineitem.l_quantity) AS sum_l_quantity
   FROM _s0 AS _s0
-  JOIN tpch.orders AS orders
+  JOIN snowflake_sample_data.tpch_sf1.orders AS orders
     ON MONTH(CAST(orders.o_orderdate AS TIMESTAMP)) = 1
     AND YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
-  JOIN tpch.lineitem AS lineitem
+  JOIN snowflake_sample_data.tpch_sf1.lineitem AS lineitem
     ON lineitem.l_discount = 0
     AND lineitem.l_orderkey = orders.o_orderkey
     AND lineitem.l_shipmode = 'SHIP'
     AND lineitem.l_tax = 0
-  JOIN tpch.part AS part
+  JOIN snowflake_sample_data.tpch_sf1.part AS part
     ON STARTSWITH(part.p_container, 'LG')
     AND _s0.p_size = part.p_size
     AND lineitem.l_partkey = part.p_partkey

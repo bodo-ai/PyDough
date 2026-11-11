@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   GROUP BY
     YEAR(CAST(o_orderdate AS TIMESTAMP))
 )

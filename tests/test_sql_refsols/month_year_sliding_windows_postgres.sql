@@ -3,7 +3,7 @@ WITH _t7 AS (
     o_orderdate,
     o_orderpriority,
     o_totalprice
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     o_orderpriority = '1-URGENT'
 ), _t5 AS (

@@ -2,21 +2,21 @@ WITH _t1 AS (
   SELECT
     n_name,
     n_nationkey
-  FROM tpch.nation
+  FROM main.nation
   WHERE
     n_name IN ('CANADA', 'ARGENTINA')
 ), _s6 AS (
   SELECT DISTINCT
     _t1.n_name
-  FROM tpch.supplier AS supplier
+  FROM main.supplier AS supplier
   JOIN _t1 AS _t1
     ON _t1.n_nationkey = supplier.s_nationkey
 ), _s7 AS (
   SELECT DISTINCT
     EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     _t3.n_name
-  FROM tpch.orders AS orders
-  JOIN tpch.customer AS customer
+  FROM main.orders AS orders
+  JOIN main.customer AS customer
     ON customer.c_custkey = orders.o_custkey
   JOIN _t1 AS _t3
     ON _t3.n_nationkey = customer.c_nationkey

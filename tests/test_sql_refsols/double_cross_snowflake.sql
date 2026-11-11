@@ -1,7 +1,7 @@
 WITH _t3 AS (
   SELECT
     o_orderdate
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
 ), _s0 AS (
   SELECT
     MIN(o_orderdate) AS min_o_orderdate
@@ -15,7 +15,7 @@ WITH _t3 AS (
     ) AS ord_wk,
     COUNT(*) AS n_rows
   FROM _s0 AS _s0
-  JOIN tpch.orders AS orders
+  JOIN snowflake_sample_data.tpch_sf1.orders AS orders
     ON DATEDIFF(
       WEEK,
       CAST(DATEADD(DAY, DAYOFWEEK(_s0.min_o_orderdate) * -1, _s0.min_o_orderdate) AS DATETIME),
@@ -41,7 +41,7 @@ WITH _t3 AS (
     COUNT(*) AS n_rows
   FROM _s2 AS _s2
   CROSS JOIN _s3 AS _s3
-  JOIN tpch.lineitem AS lineitem
+  JOIN snowflake_sample_data.tpch_sf1.lineitem AS lineitem
     ON DATEDIFF(
       WEEK,
       CAST(DATEADD(DAY, DAYOFWEEK(_s3.min_o_orderdate) * -1, _s3.min_o_orderdate) AS DATETIME),
