@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   WHERE
     CONTAINS(p_name, 'smoke')
   GROUP BY
@@ -13,7 +13,7 @@ WITH _t0 AS (
 ), _t3 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   WHERE
     CONTAINS(p_name, 'rose')
   GROUP BY
@@ -25,7 +25,7 @@ WITH _t0 AS (
 ), _t6 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   WHERE
     CONTAINS(p_name, 'turquoise')
   GROUP BY
@@ -37,7 +37,7 @@ WITH _t0 AS (
 ), _t9 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   WHERE
     CONTAINS(p_name, 'spring')
   GROUP BY

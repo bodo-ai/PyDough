@@ -1,13 +1,13 @@
 WITH _s0 AS (
   SELECT
     SUM(o_totalprice) AS sum_o_totalprice
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
 ), _s1 AS (
   SELECT
     SUM(o_totalprice) AS sum_o_totalprice
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
     AND o_orderpriority = '1-URGENT'
