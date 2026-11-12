@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     salesperson_id,
-    AVG(sale_price) AS avg_sale_price
+    AVG(CAST(sale_price AS DOUBLE)) AS avg_sale_price
   FROM cassandra.defog.sales
   GROUP BY
     1

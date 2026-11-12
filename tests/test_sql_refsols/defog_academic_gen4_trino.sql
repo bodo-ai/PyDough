@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
     domain_publication.did,
-    AVG(publication.reference_num) AS avg_reference_num
+    AVG(CAST(publication.reference_num AS DOUBLE)) AS avg_reference_num
   FROM cassandra.defog.domain_publication AS domain_publication
   JOIN postgres.main.publication AS publication
     ON domain_publication.pid = publication.pid

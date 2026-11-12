@@ -1,0 +1,24 @@
+WITH "_s2" AS (
+  SELECT
+    'x' AS K,
+    COUNT(*) AS N_ROWS
+  FROM TPCH.ORDERS
+  WHERE
+    O_TOTALPRICE > 100000
+), "_s3" AS (
+  SELECT
+    'x' AS K,
+    COUNT(*) AS N_ROWS
+  FROM TPCH.ORDERS ORDERS
+  JOIN TPCH.LINEITEM LINEITEM
+    ON LINEITEM.L_ORDERKEY = ORDERS.O_ORDERKEY
+  WHERE
+    ORDERS.O_TOTALPRICE > 100000
+)
+SELECT
+  "_s2".K AS k,
+  "_s2".N_ROWS AS n_orders,
+  "_s3".N_ROWS AS n_lines
+FROM "_s2" "_s2"
+JOIN "_s3" "_s3"
+  ON "_s2".K = "_s3".K

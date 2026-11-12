@@ -44,7 +44,7 @@ WITH _t AS (
 ), _s7 AS (
   SELECT
     o_custkey,
-    AVG(month_diff) AS avg_month_diff
+    AVG(CAST(month_diff AS DOUBLE)) AS avg_month_diff
   FROM _t4
   GROUP BY
     1
@@ -56,7 +56,7 @@ WITH _t AS (
 ), _s9 AS (
   SELECT
     o_custkey,
-    AVG(price_diff) AS avg_price_diff
+    AVG(CAST(price_diff AS DOUBLE)) AS avg_price_diff
   FROM _t6
   GROUP BY
     1

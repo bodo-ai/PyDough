@@ -1,5 +1,5 @@
 SELECT
-  AVG(balance) AS AMB
+  AVG(CAST(balance AS DOUBLE)) AS AMB
 FROM mongo.defog.wallet_user_balance_daily
 WHERE
   DATE_DIFF(

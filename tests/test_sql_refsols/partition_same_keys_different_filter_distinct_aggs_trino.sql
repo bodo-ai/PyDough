@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    AVG(o_totalprice) AS avg_o_totalprice
+    AVG(CAST(o_totalprice AS DOUBLE)) AS avg_o_totalprice
   FROM tpch.orders
   WHERE
     YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1995
@@ -13,7 +13,7 @@ WITH _t0 AS (
   FROM _t0
 ), _t3 AS (
   SELECT
-    AVG(o_totalprice) AS avg_o_totalprice
+    AVG(CAST(o_totalprice AS DOUBLE)) AS avg_o_totalprice
   FROM tpch.orders
   WHERE
     YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1996

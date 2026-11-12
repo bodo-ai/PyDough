@@ -136,6 +136,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     partition_child_inherited_term,
     partition_filter_1995_only,
     partition_filter_1996_only,
+    partition_filtered_nested_subcollection_count,
     partition_four_colors_same_keys,
     partition_key_name_collision,
     partition_same_filter_different_order,
@@ -7091,6 +7092,21 @@ from .testing_utilities import (
                 "partition_child_inherited_term",
             ),
             id="partition_child_inherited_term",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_filtered_nested_subcollection_count,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": ["x"],
+                        "n_orders": [999334],
+                        "n_lines": [5040415],
+                    }
+                ),
+                "partition_filtered_nested_subcollection_count",
+            ),
+            id="partition_filtered_nested_subcollection_count",
         ),
         pytest.param(
             PyDoughPandasTest(

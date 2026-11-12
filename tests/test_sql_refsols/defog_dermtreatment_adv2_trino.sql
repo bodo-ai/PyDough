@@ -1,5 +1,5 @@
 SELECT
-  AVG(patients.weight_kg) AS avg_weight
+  AVG(CAST(patients.weight_kg AS DOUBLE)) AS avg_weight
 FROM cassandra.defog.treatments AS treatments
 JOIN postgres.main.drugs AS drugs
   ON LOWER(drugs.drug_name) = 'drugalin' AND drugs.drug_id = treatments.drug_id

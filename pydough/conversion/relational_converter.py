@@ -1086,7 +1086,21 @@ class RelTranslation:
                 collection_access.subcollection_property
             )
         )
-        if (not reverse_cardinality.filters) and (not parent.always_exists()):
+        # If the parent is a PARTITION child, its own `always_exists()` is
+        # always true regardless of filters applied to the data being
+        # partitioned, since every emitted group is non-empty by
+        # construction. That does not mean every row of the underlying
+        # (possibly filtered) data survived, so check the filtered subtree
+        # directly to avoid wrongly treating this join as unfiltered.
+        source_always_exists: bool = True
+        if isinstance(parent.pipeline[0], HybridPartitionChild):
+            source_always_exists = RelTranslation.partition_source_always_exists(
+                parent.pipeline[0].subtree
+            )
+
+        if (not reverse_cardinality.filters) and (
+            not parent.always_exists() or not source_always_exists
+        ):
             reverse_cardinality = reverse_cardinality.add_filter()
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
@@ -1656,6 +1670,31 @@ class RelTranslation:
                 )
         result = self.handle_children(result, hybrid, pipeline_idx)
         return result
+
+    @staticmethod
+    def partition_source_always_exists(subtree: HybridTree) -> bool:
+        """
+        Determines whether the data being partitioned by a `HybridPartition`
+        (i.e. the subtree of a `HybridPartitionChild`) always exists. This is
+        the same as `subtree.always_exists()`, except that `always_exists()`
+        treats a `HybridPartitionChild` at the start of a pipeline as always
+        existing by construction, which would hide a filter applied to the
+        data being partitioned if that data is itself reached through
+        another layer of PARTITION. This method recurses through any such
+        nested layers to check the real underlying data instead.
+
+        Args:
+            `subtree`: the `HybridTree` of the data being partitioned.
+
+        Returns:
+            Whether `subtree`, and the real data it is ultimately derived
+            from, always exists.
+        """
+        if isinstance(subtree.pipeline[0], HybridPartitionChild):
+            return RelTranslation.partition_source_always_exists(
+                subtree.pipeline[0].subtree
+            )
+        return subtree.always_exists()
 
     @staticmethod
     def preprocess_root(
