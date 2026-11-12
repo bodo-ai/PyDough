@@ -657,7 +657,7 @@
       {
         "name": "colors",
         "type": "sql query",
-        "query text": "SELECT DISTINCT l.value AS color FROM part p JOIN JSON_TABLE( CONCAT('[\"', REPLACE(p.p_name, ' ', '\",\"'), '\"]'), '$[*]' COLUMNS (value VARCHAR(255) PATH '$') ) l",
+        "query text": "SELECT DISTINCT l.value AS color FROM tpch.PART p JOIN JSON_TABLE( CONCAT('[\"', REPLACE(p.p_name, ' ', '\",\"'), '\"]'), '$[*]' COLUMNS (value VARCHAR(255) PATH '$') ) l",
         "unique properties": ["color"],
         "properties": [
           {

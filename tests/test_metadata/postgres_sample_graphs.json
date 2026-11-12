@@ -6,7 +6,7 @@
       {
         "name": "regions",
         "type": "simple table",
-        "table path": "main.REGION",
+        "table path": "tpch.REGION",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -40,7 +40,7 @@
       {
         "name": "nations",
         "type": "simple table",
-        "table path": "main.NATION",
+        "table path": "tpch.NATION",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -82,7 +82,7 @@
       {
         "name": "parts",
         "type": "simple table",
-        "table path": "main.PART",
+        "table path": "tpch.PART",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -169,7 +169,7 @@
       {
         "name": "suppliers",
         "type": "simple table",
-        "table path": "main.SUPPLIER",
+        "table path": "tpch.SUPPLIER",
         "unique properties": ["key", "name", "phone", "address"],
         "properties": [
           {
@@ -239,7 +239,7 @@
       {
         "name": "lines",
         "type": "simple table",
-        "table path": "main.LINEITEM",
+        "table path": "tpch.LINEITEM",
         "unique properties": [["order_key", "line_number"]],
         "properties": [
           {
@@ -385,7 +385,7 @@
       {
         "name": "supply_records",
         "type": "simple table",
-        "table path": "main.PARTSUPP",
+        "table path": "tpch.PARTSUPP",
         "unique properties": [["part_key", "supplier_key"]],
         "properties": [
           {
@@ -438,7 +438,7 @@
       {
         "name": "orders",
         "type": "simple table",
-        "table path": "main.ORDERS",
+        "table path": "tpch.ORDERS",
         "unique properties": ["key"],
         "properties": [
           {
@@ -526,7 +526,7 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "main.CUSTOMER",
+        "table path": "tpch.CUSTOMER",
         "unique properties": ["key", "name", "address"],
         "properties": [
           {
@@ -633,7 +633,7 @@
       {
         "name": "colors",
         "type": "sql query",
-        "query text": "SELECT DISTINCT UNNEST(STRING_TO_ARRAY(p.p_name, ' ')) AS color FROM part as p",
+        "query text": "SELECT DISTINCT UNNEST(STRING_TO_ARRAY(p.p_name, ' ')) AS color FROM tpch.part as p",
         "unique properties": ["color"],
         "properties": [
           {
