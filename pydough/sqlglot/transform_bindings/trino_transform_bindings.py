@@ -81,8 +81,6 @@ class TrinoTransformBindings(BaseTransformBindings):
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_TRINO_FUNC[operator], expressions=args
             )
-        if operator == pydop.AVG:
-            return self.convert_avg(args, types)
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
@@ -91,9 +89,8 @@ class TrinoTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         """
         Casts the argument to `DOUBLE` before averaging, since Trino's `AVG`
-        on exact numeric type rounds the result to the same
-        scale as its input (e.g. `2.275` over a `NUMERIC(4,1)` column
-        becomes `2.3`).
+        on an exact numeric type rounds the result to the same scale as its
+        input (e.g. `2.275` over a `NUMERIC(4,1)` column becomes `2.3`).
         """
         assert len(args) == 1
         return sqlglot_expressions.Avg(
