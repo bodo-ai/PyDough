@@ -3,7 +3,7 @@ WITH _s0 AS (
     n_name,
     n_nationkey,
     n_regionkey
-  FROM tpch.nation
+  FROM main.nation
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
@@ -46,8 +46,8 @@ WITH _s0 AS (
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_9
-  FROM tpch.customer AS customer
-  JOIN tpch.orders AS orders
+  FROM main.customer AS customer
+  JOIN main.orders AS orders
     ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000272'
 )
 SELECT
@@ -63,7 +63,7 @@ SELECT
   MAX(_s5.expr_14) AS orders_99_percent,
   MAX(_s5.o_totalprice) AS orders_max
 FROM _s0 AS _s0
-JOIN tpch.region AS region
+JOIN main.region AS region
   ON _s0.n_regionkey = region.r_regionkey
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey

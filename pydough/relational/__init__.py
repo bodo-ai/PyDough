@@ -28,6 +28,7 @@ __all__ = [
     "RelationalShuttle",
     "RelationalVisitor",
     "Scan",
+    "SqlQueryScan",
     "WindowCallExpression",
 ]
 
@@ -64,4 +65,5 @@ from .relational_nodes import (
     RelationalShuttle,
     RelationalVisitor,
     Scan,
+    SqlQueryScan,
 )

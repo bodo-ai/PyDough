@@ -4,7 +4,7 @@ WITH _t AS (
     o_orderkey,
     LAG(o_orderdate, 1) OVER (ORDER BY o_orderdate, o_orderkey) AS _w,
     LAG(o_orderdate, 1) OVER (ORDER BY o_orderdate, o_orderkey) AS _w_2
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   WHERE
     MONTH(CAST(o_orderdate AS TIMESTAMP)) = 1
 )

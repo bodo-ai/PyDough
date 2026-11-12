@@ -3,7 +3,7 @@ WITH _s0 AS (
     p_partkey,
     p_retailprice,
     p_size
-  FROM tpch.part
+  FROM mysql.tpch.part
   ORDER BY
     CAST(CAST(p_retailprice AS DOUBLE) AS BIGINT) NULLS FIRST
   LIMIT 2
@@ -21,7 +21,7 @@ SELECT
   DATE_FORMAT(lineitem.l_receiptdate, '%m/%d') AS date_md,
   DATE_FORMAT(lineitem.l_receiptdate, '%H:%i%p') AS am_pm
 FROM _s0 AS _s0
-JOIN tpch.lineitem AS lineitem
+JOIN postgres.tpch.lineitem AS lineitem
   ON _s0.p_partkey = lineitem.l_partkey
 ORDER BY
   4 DESC,

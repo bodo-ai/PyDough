@@ -5,7 +5,7 @@ collection.
 
 __all__ = ["ColumnProperty"]
 
-from pydough.metadata.collections import SimpleTableMetadata
+from pydough.metadata.collections import SimpleTableMetadata, SQLQueryMetadata
 from pydough.metadata.properties import TableColumnMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.types import PyDoughType
@@ -46,9 +46,13 @@ class ColumnProperty(PyDoughExpressionQDAG):
         return False
 
     def to_string(self, tree_form: bool = False) -> str:
-        assert isinstance(self.column_property.collection, SimpleTableMetadata)
-        table_path: str = self.column_property.collection.table_path
         column_name: str = self.column_property.column_name
+        table_path: str
+        match self.column_property.collection:
+            case SimpleTableMetadata():
+                table_path = self.column_property.collection.table_path
+            case SQLQueryMetadata():
+                table_path = self.column_property.collection.name
         return f"Column[{table_path}.{column_name}]"
 
     def equals(self, other: object) -> bool:

@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     n_name,
     n_regionkey
-  FROM tpch.nation
+  FROM cassandra.tpch.nation
   ORDER BY
     1 NULLS FIRST
   LIMIT 2
@@ -23,7 +23,7 @@ WITH _s0 AS (
       THEN r_regionkey
       ELSE NULL
     END AS avg_expr
-  FROM tpch.region
+  FROM mongo.tpch.region
 )
 SELECT
   _s0.n_name AS nation_name,

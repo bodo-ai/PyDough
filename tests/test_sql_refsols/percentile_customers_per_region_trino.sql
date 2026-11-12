@@ -3,8 +3,8 @@ WITH _t AS (
     customer.c_name,
     customer.c_phone,
     NTILE(100) OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal) AS _w
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM cassandra.tpch.nation AS nation
+  JOIN postgres.tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 )
 SELECT

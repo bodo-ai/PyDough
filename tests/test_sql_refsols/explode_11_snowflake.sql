@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT DISTINCT
     _s2.value AS cust_word
-  FROM tpch.customer AS customer
+  FROM snowflake_sample_data.tpch_sf1.customer AS customer
   CROSS JOIN LATERAL SPLIT_TO_TABLE(
     TRIM(
       REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', ''),
@@ -18,7 +18,7 @@ WITH _s5 AS (
 )
 SELECT
   COUNT(DISTINCT _s0.value) AS n_double_words
-FROM tpch.supplier AS supplier
+FROM snowflake_sample_data.tpch_sf1.supplier AS supplier
 CROSS JOIN LATERAL SPLIT_TO_TABLE(
   TRIM(
     REPLACE(REPLACE(REPLACE(REPLACE(supplier.s_comment, ';', ''), ',', ''), ':', ''), '.', ''),

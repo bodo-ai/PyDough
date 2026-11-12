@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     l_partkey,
     l_suppkey
-  FROM tpch.lineitem
+  FROM postgres.tpch.lineitem
   WHERE
     YEAR(CAST(l_shipdate AS TIMESTAMP)) = 1994
 ), _t4 AS (
@@ -10,8 +10,8 @@ WITH _s3 AS (
     partsupp.ps_suppkey,
     ARBITRARY(part.p_name) AS anything_p_name,
     COUNT(_s3.l_suppkey) AS count_l_suppkey
-  FROM tpch.partsupp AS partsupp
-  JOIN tpch.part AS part
+  FROM cassandra.tpch.partsupp AS partsupp
+  JOIN mysql.tpch.part AS part
     ON part.p_brand = 'Brand#13' AND part.p_partkey = partsupp.ps_partkey
   LEFT JOIN _s3 AS _s3
     ON _s3.l_partkey = partsupp.ps_partkey AND _s3.l_suppkey = partsupp.ps_suppkey
@@ -41,7 +41,7 @@ SELECT
   supplier.s_name AS supplier_name,
   _s5.anything_p_name AS part_name,
   _s5.n_orders
-FROM tpch.supplier AS supplier
+FROM mongo.tpch.supplier AS supplier
 LEFT JOIN _s5 AS _s5
   ON _s5.ps_suppkey = supplier.s_suppkey
 WHERE

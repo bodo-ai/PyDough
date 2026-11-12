@@ -1,7 +1,7 @@
 SELECT
   COUNT(*) AS n
-FROM tpch.customer AS customer
-JOIN tpch.nation AS nation
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
+JOIN snowflake_sample_data.tpch_sf1.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'CHINA'
-JOIN tpch.region AS region
+JOIN snowflake_sample_data.tpch_sf1.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'

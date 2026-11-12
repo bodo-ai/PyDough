@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     AVG(o_totalprice) AS avg_o_totalprice
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   WHERE
     YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1995
   GROUP BY
@@ -14,7 +14,7 @@ WITH _t0 AS (
 ), _t3 AS (
   SELECT
     AVG(o_totalprice) AS avg_o_totalprice
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   WHERE
     YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1996
   GROUP BY

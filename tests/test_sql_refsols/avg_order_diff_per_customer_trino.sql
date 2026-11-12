@@ -9,15 +9,15 @@ WITH _s3 AS (
       ) AS TIMESTAMP),
       CAST(DATE_TRUNC('DAY', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
     ) AS day_diff
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   WHERE
     o_orderpriority = '1-URGENT'
 )
 SELECT
   ARBITRARY(customer.c_name) AS name,
   AVG(_s3.day_diff) AS avg_diff
-FROM tpch.customer AS customer
-JOIN tpch.nation AS nation
+FROM postgres.tpch.customer AS customer
+JOIN cassandra.tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'JAPAN'
 JOIN _s3 AS _s3
   ON _s3.o_custkey = customer.c_custkey

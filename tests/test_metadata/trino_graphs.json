@@ -625,6 +625,72 @@
         ],
         "description": "The customers in the system within each nation. Each customer can have placed zero, one, or several orders.",
         "synonyms": ["citizens", "residents", "inhabitants", "consumers", "users", "buyers", "occupants"]
+      },
+      {
+        "name": "order_priorities",
+        "type": "sql query",
+        "query text": "SELECT '1-URGENT' AS priority_name, 1 AS priority_value UNION ALL SELECT '2-HIGH', 2 UNION ALL SELECT '3-MEDIUM', 3 UNION ALL SELECT '4-NOT SPECIFIED', 4 UNION ALL SELECT '5-LOW', 5",
+        "unique properties": ["name", "value"],
+        "properties": [
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "priority_name",
+            "data type": "string",
+            "description": "The priority of an order, which is always '1-URGENT', '2-HIGH', '3-MEDIUM', '4-NOT SPECIFIED' or '5-LOW'",
+            "sample values": ["1-URGENT", "2-HIGH", "3-MEDIUM", "4-NOT SPECIFIED", "5-LOW"],
+            "synonyms": ["urgency", "priority level"]
+          },
+          {
+            "name": "value",
+            "type": "table column",
+            "column name": "priority_value",
+            "data type": "numeric",
+            "description": "A numeric index assigned to the priority values, where 1 is the highest and 5 is the lowest",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["index", "key"]
+          }
+        ],
+        "description": "The different priority values that an order can have",
+        "synonyms": ["priorities"]
+      },
+      {
+        "name": "colors",
+        "type": "sql query",
+        "query text": "SELECT DISTINCT l.value AS color FROM mysql.tpch.part p CROSS JOIN UNNEST(split(p.p_name, ' ')) as l(value)",
+        "unique properties": ["color"],
+        "properties": [
+          {
+            "name": "color",
+            "type": "table column",
+            "column name": "color",
+            "data type": "string",
+            "description": "One of the color names contained within the various part names",
+            "sample values": ["goldenrod", "lavender", "chocolate", "yellow", "blue"],
+            "synonyms": ["color name", "word"]
+          }
+        ],
+        "description": "The different color names that appear within part names",
+        "synonyms": ["part name words"]
+      },
+      {
+        "name": "months",
+        "type": "sql query",
+        "query text": "WITH RECURSIVE months(date_val) AS ( SELECT date('1992-01-01') UNION ALL SELECT date(date_val, '+1 month') FROM months WHERE date_val < '1998-12-01' ) SELECT date_val FROM months",
+        "unique properties": ["month"],
+        "properties": [
+          {
+            "name": "month",
+            "type": "table column",
+            "column name": "date_val",
+            "data type": "datetime",
+            "description": "A month within the specified date range (from 1992 to 1998, inclusive), using the start of the month",
+            "sample values": ["1992-01-01", "1992-02-01", "1992-03-01", "1992-04-01", "1998-03-01"],
+            "synonyms": ["date"]
+          }
+        ],
+        "description": "The date range of months from 1992 to 1998",
+        "synonyms": ["dates"]
       }
     ],
     "relationships": [
@@ -843,6 +909,132 @@
         "always matches": false,
         "description": "The orders that a customer has placed, each of which contains one or more line items",
         "synonyms": ["transactions", "purchases"]
+      },
+      {
+        "type": "simple join",
+        "name": "orders",
+        "parent collection": "order_priorities",
+        "child collection": "orders",
+        "singular": false,
+        "always matches": true,
+        "keys": {"name": ["order_priority"]},
+        "description": "The orders that have a given order priority",
+        "synonyms": ["orders with priority"]
+      },
+      {
+        "type": "reverse",
+        "name": "priority",
+        "original parent": "order_priorities",
+        "original property": "orders",
+        "singular": true,
+        "always matches": true,
+        "description": "The priority of a given order",
+        "synonyms": ["priority"]
+      },
+      {
+        "type": "general join",
+        "name": "parts",
+        "parent collection": "colors",
+        "child collection": "parts",
+        "singular": false,
+        "always matches": true,
+        "condition": "STARTSWITH(other.name, JOIN_STRINGS('', self.color, ' ')) | ENDSWITH(other.name, JOIN_STRINGS('', ' ', self.color)) | CONTAINS(other.name, JOIN_STRINGS('', ' ', self.color, ' '))",
+        "description": "The parts that contain the given color in their name",
+        "synonyms": ["parts with color"]
+      },
+      {
+        "type": "reverse",
+        "name": "colors",
+        "original parent": "colors",
+        "original property": "parts",
+        "singular": false,
+        "always matches": true,
+        "description": "The colors contained within a part name",
+        "synonyms": ["color names"]
+      },
+      {
+        "type": "general join",
+        "name": "orders_made_in_month",
+        "parent collection": "months",
+        "child collection": "orders",
+        "singular": false,
+        "always matches": false,
+        "condition": "DATETIME(other.order_date, 'start of month') == self.month",
+        "description": "The orders made in the specified month",
+        "synonyms": ["month orders"]
+      },
+      {
+        "type": "reverse",
+        "name": "order_month",
+        "original parent": "months",
+        "original property": "orders_made_in_month",
+        "singular": true,
+        "always matches": true,
+        "description": "The month in which a given order was made",
+        "synonyms": ["order month"]
+      },
+      {
+        "type": "general join",
+        "name": "lines_shipped_in_month",
+        "parent collection": "months",
+        "child collection": "lines",
+        "singular": false,
+        "always matches": false,
+        "condition": "DATETIME(other.ship_date, 'start of month') == self.month",
+        "description": "The lines shipped in the specified month",
+        "synonyms": ["month shipments"]
+      },
+      {
+        "type": "reverse",
+        "name": "ship_month",
+        "original parent": "months",
+        "original property": "lines_shipped_in_month",
+        "singular": true,
+        "always matches": true,
+        "description": "The month in which a given line was shipped",
+        "synonyms": ["ship month"]
+      },
+      {
+        "type": "general join",
+        "name": "lines_committed_in_month",
+        "parent collection": "months",
+        "child collection": "lines",
+        "singular": false,
+        "always matches": false,
+        "condition": "DATETIME(other.commit_date, 'start of month') == self.month",
+        "description": "The lines committed in the specified month",
+        "synonyms": ["month commitments"]
+      },
+      {
+        "type": "reverse",
+        "name": "commit_month",
+        "original parent": "months",
+        "original property": "lines_committed_in_month",
+        "singular": true,
+        "always matches": true,
+        "description": "The month in which a given line was committed",
+        "synonyms": ["commit month"]
+      },
+      {
+        "type": "general join",
+        "name": "lines_received_in_month",
+        "parent collection": "months",
+        "child collection": "lines",
+        "singular": false,
+        "always matches": false,
+        "condition": "DATETIME(other.receipt_date, 'start of month') == self.month",
+        "description": "The lines received in the specified month",
+        "synonyms": ["month receipts"]
+      },
+      {
+        "type": "reverse",
+        "name": "receipt_month",
+        "original parent": "months",
+        "original property": "lines_received_in_month",
+        "singular": true,
+        "always matches": true,
+        "description": "The month in which a given line was received",
+        "synonyms": ["receipt month"]
       }
     ],
     "templates": {
@@ -6357,7 +6549,7 @@
           {
             "name": "month",
             "type": "table column",
-            "column name": "MONTH",
+            "column name": "date_val",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'MONTH'",
             "sample values": [

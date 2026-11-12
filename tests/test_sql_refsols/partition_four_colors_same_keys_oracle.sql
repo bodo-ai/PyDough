@@ -1,7 +1,7 @@
 WITH "_t0" AS (
   SELECT
     COUNT(*) AS N_ROWS
-  FROM TPCH.PART
+  FROM MAIN.PART
   WHERE
     P_NAME LIKE '%smoke%'
   GROUP BY
@@ -13,7 +13,7 @@ WITH "_t0" AS (
 ), "_t3" AS (
   SELECT
     COUNT(*) AS N_ROWS
-  FROM TPCH.PART
+  FROM MAIN.PART
   WHERE
     P_NAME LIKE '%rose%'
   GROUP BY
@@ -25,7 +25,7 @@ WITH "_t0" AS (
 ), "_t6" AS (
   SELECT
     COUNT(*) AS N_ROWS
-  FROM TPCH.PART
+  FROM MAIN.PART
   WHERE
     P_NAME LIKE '%turquoise%'
   GROUP BY
@@ -37,7 +37,7 @@ WITH "_t0" AS (
 ), "_t9" AS (
   SELECT
     COUNT(*) AS N_ROWS
-  FROM TPCH.PART
+  FROM MAIN.PART
   WHERE
     P_NAME LIKE '%spring%'
   GROUP BY

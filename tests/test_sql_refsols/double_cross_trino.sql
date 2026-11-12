@@ -1,7 +1,7 @@
 WITH _t3 AS (
   SELECT
     o_orderdate
-  FROM tpch.orders
+  FROM mysql.tpch.orders
 ), _s0 AS (
   SELECT
     MIN(o_orderdate) AS min_o_orderdate
@@ -25,7 +25,7 @@ WITH _t3 AS (
     ) AS DOUBLE) / 7 AS BIGINT) AS ord_wk,
     COUNT(*) AS n_rows
   FROM _s0 AS _s0
-  JOIN tpch.orders AS orders
+  JOIN mysql.tpch.orders AS orders
     ON CAST(CAST((
       DATE_DIFF(
         'DAY',
@@ -71,7 +71,7 @@ WITH _t3 AS (
     COUNT(*) AS n_rows
   FROM _s2 AS _s2
   CROSS JOIN _s3 AS _s3
-  JOIN tpch.lineitem AS lineitem
+  JOIN postgres.tpch.lineitem AS lineitem
     ON CAST(CAST((
       DATE_DIFF(
         'DAY',

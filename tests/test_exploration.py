@@ -185,16 +185,19 @@ Scalar properties:
   supplier_key
   tax
 Subcollection properties:
+  commit_month
   order
   part
   part_and_supplier
+  receipt_month
+  ship_month
   supplier
 Call pydough.explain(graph['lines'][property_name]) to learn more about any of these properties.
 """,
                 """
 PyDough collection: lines
 Scalar properties: comment, commit_date, discount, extended_price, line_number, order_key, part_key, quantity, receipt_date, return_flag, ship_date, ship_instruct, ship_mode, status, supplier_key, tax
-Subcollection properties: order, part, part_and_supplier, supplier
+Subcollection properties: commit-month, order, part, part_and_supplier, receipt_month, ship_month, supplier
 Call pydough.explain(graph['lines'][property_name]) to learn more about any of these properties.
 """,
             ),
@@ -486,6 +489,10 @@ Structure of PyDough graph: Empty
             """
 Structure of PyDough graph: TPCH
 
+  colors
+  ├── color
+  └── parts [multiple parts]
+
   customers
   ├── account_balance
   ├── address
@@ -515,10 +522,20 @@ Structure of PyDough graph: TPCH
   ├── status
   ├── supplier_key
   ├── tax
+  ├── commit_month [one member of months]
   ├── order [one member of orders]
   ├── part [one member of parts]
   ├── part_and_supplier [one member of supply_records]
+  ├── receipt_month [one member of months]
+  ├── ship_month [one member of months]
   └── supplier [one member of suppliers]
+
+  months
+  ├── month
+  ├── lines_committed_in_month [multiple lines]
+  ├── lines_received_in_month [multiple lines]
+  ├── lines_shipped_in_month [multiple lines]
+  └── orders_made_in_month [multiple orders]
 
   nations
   ├── comment
@@ -528,6 +545,11 @@ Structure of PyDough graph: TPCH
   ├── customers [multiple customers]
   ├── region [one member of regions]
   └── suppliers [multiple suppliers]
+
+  order_priorities
+  ├── name
+  ├── value
+  └── orders [multiple orders]
 
   orders
   ├── clerk
@@ -540,7 +562,9 @@ Structure of PyDough graph: TPCH
   ├── ship_priority
   ├── total_price
   ├── customer [one member of customers]
-  └── lines [multiple lines]
+  ├── lines [multiple lines]
+  ├── order_month [one member of months]
+  └── priority [one member of order_priorities]
 
   parts
   ├── brand
@@ -552,6 +576,7 @@ Structure of PyDough graph: TPCH
   ├── part_type
   ├── retail_price
   ├── size
+  ├── colors [multiple colors]
   ├── lines [multiple lines]
   └── supply_records [multiple supply_records]
 
@@ -660,7 +685,7 @@ This node is a reference to the global context for the entire graph. An operatio
 The collection does not have any terms that can be included in a result if it is executed.
 
 The collection has access to the following collections:
-  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+  colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -669,7 +694,7 @@ expressions or collections that the collection has access to.
 This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed.
 
 The collection has access to the following collections:
-  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+  colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -699,7 +724,7 @@ The collection has access to the following expressions:
   x, y
 
 The collection has access to the following collections:
-  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+  colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -713,7 +738,7 @@ The collection has access to the following expressions:
   x, y
 
 The collection has access to the following collections:
-  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+  colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -753,7 +778,7 @@ The collection has access to the following expressions:
   avg_part_price, n_customers
 
 The collection has access to the following collections:
-  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+  colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -771,7 +796,7 @@ The collection has access to the following expressions:
   avg_part_price, n_customers
 
 The collection has access to the following collections:
-  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+  colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1093,7 +1118,7 @@ The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, supply_records
+  colors, lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1107,7 +1132,7 @@ The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, supply_records
+  colors, lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1195,7 +1220,7 @@ The collection has access to the following expressions:
   avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, supply_records
+  colors, lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1207,7 +1232,7 @@ The collection has access to the following expressions:
   avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, supply_records
+  colors, lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1453,13 +1478,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_collections_impl,
                 """
-Unrecognized term of TPCH: 'line_items'. Did you mean: lines, parts, regions?
+Unrecognized term of TPCH: 'line_items'. Did you mean: lines, months, parts?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of TPCH: 'line_items'. Did you mean: lines, parts, regions?
+Unrecognized term of TPCH: 'line_items'. Did you mean: lines, months, parts?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
@@ -1472,13 +1497,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_expr_impl,
                 """
-Unrecognized term of TPCH: 'name'. Did you mean: lines, parts, nations, orders?
+Unrecognized term of TPCH: 'name'. Did you mean: lines, parts, months, nations, orders?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of TPCH: 'name'. Did you mean: lines, parts, nations, orders?
+Unrecognized term of TPCH: 'name'. Did you mean: lines, parts, months, nations, orders?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?

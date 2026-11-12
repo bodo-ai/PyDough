@@ -4,7 +4,7 @@ WITH _t AS (
     o_orderpriority,
     o_totalprice,
     ROW_NUMBER() OVER (PARTITION BY o_orderpriority ORDER BY o_totalprice DESC NULLS FIRST) AS _w
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   WHERE
     YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1992
 )

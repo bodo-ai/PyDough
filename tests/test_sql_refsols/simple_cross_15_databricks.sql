@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     r_name
-  FROM tpch.region
+  FROM tpch_s3_pq.tpch_sf1.region
 ), _s0 AS (
   SELECT DISTINCT
     IF(CONTAINS(r_name, 'A'), 'A', '*') AS a

@@ -3,7 +3,7 @@ WITH _s1 AS (
     1 AS expr_0,
     c_acctbal,
     c_custkey
-  FROM tpch.customer
+  FROM postgres.tpch.customer
   WHERE
     c_mktsegment = 'BUILDING'
 ), _t AS (
@@ -11,7 +11,7 @@ WITH _s1 AS (
     _s1.c_acctbal,
     _s1.expr_0,
     AVG(CAST(COALESCE(_s1.c_acctbal, 0) AS DOUBLE)) OVER () AS _w
-  FROM tpch.orders AS orders
+  FROM mysql.tpch.orders AS orders
   LEFT JOIN _s1 AS _s1
     ON _s1.c_custkey = orders.o_custkey
   WHERE

@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM mysql.tpch.part
   WHERE
     p_name LIKE '%smoke%'
   GROUP BY
@@ -13,7 +13,7 @@ WITH _t0 AS (
 ), _t3 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM mysql.tpch.part
   WHERE
     p_name LIKE '%rose%'
   GROUP BY
@@ -25,7 +25,7 @@ WITH _t0 AS (
 ), _t6 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM mysql.tpch.part
   WHERE
     p_name LIKE '%turquoise%'
   GROUP BY
@@ -37,7 +37,7 @@ WITH _t0 AS (
 ), _t9 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM mysql.tpch.part
   WHERE
     p_name LIKE '%spring%'
   GROUP BY

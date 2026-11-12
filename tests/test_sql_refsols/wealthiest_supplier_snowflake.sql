@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     s_acctbal,
     s_name
-  FROM tpch.supplier
+  FROM snowflake_sample_data.tpch_sf1.supplier
   QUALIFY
     ROW_NUMBER() OVER (ORDER BY s_acctbal DESC, s_name) = 1
 )

@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT DISTINCT
     _s2.val AS cust_word
-  FROM tpch.customer AS customer
+  FROM tpch_s3_pq.tpch_sf1.customer AS customer
   CROSS JOIN LATERAL POSEXPLODE(
     SPLIT(
       TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', '')),
@@ -17,7 +17,7 @@ WITH _s5 AS (
 )
 SELECT
   COUNT(DISTINCT _s0.val) AS n_double_words
-FROM tpch.supplier AS supplier
+FROM tpch_s3_pq.tpch_sf1.supplier AS supplier
 CROSS JOIN LATERAL POSEXPLODE(
   SPLIT(
     TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(supplier.s_comment, ';', ''), ',', ''), ':', ''), '.', '')),

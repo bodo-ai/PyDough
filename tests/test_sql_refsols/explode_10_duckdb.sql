@@ -2,7 +2,7 @@ SELECT
   LENGTH(_s0.val) AS word_length,
   COUNT(*) AS n_words,
   COUNT(DISTINCT _s0.val) AS n_unique_words
-FROM tpch.customer AS customer
+FROM main.customer AS customer
 CROSS JOIN LATERAL (
   SELECT
     UNNEST(

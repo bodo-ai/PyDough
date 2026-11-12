@@ -125,7 +125,7 @@ SELECT
     THEN 'Nov'
     ELSE 'Dec'
   END AS month_now
-FROM tpch.orders
+FROM main.orders
 WHERE
   EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
 ORDER BY

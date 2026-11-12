@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     r_name
-  FROM tpch.region
+  FROM mongo.tpch.region
 ), _s0 AS (
   SELECT DISTINCT
     IF(r_name LIKE '%A%', 'A', '*') AS a
