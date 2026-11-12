@@ -6,8 +6,8 @@ SELECT
   STDDEV(supplier.s_acctbal) AS sample_std,
   VAR_POP(supplier.s_acctbal) AS pop_var,
   STDDEV_POP(supplier.s_acctbal) AS pop_std
-FROM cassandra.tpch.nation AS nation
-JOIN mongo.tpch.supplier AS supplier
+FROM tpch.nation AS nation
+JOIN tpch.supplier AS supplier
   ON nation.n_nationkey = supplier.s_nationkey
 WHERE
   nation.n_name IN ('ALGERIA', 'ARGENTINA')

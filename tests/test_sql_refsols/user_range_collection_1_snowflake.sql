@@ -6,7 +6,7 @@ WITH sizes AS (
   SELECT
     p_size,
     COUNT(*) AS n_rows
-  FROM snowflake_sample_data.tpch_sf1.part
+  FROM tpch.part
   WHERE
     CONTAINS(p_name, 'turquoise')
   GROUP BY

@@ -14,7 +14,7 @@ WITH _t0 AS (
     (8),
     (9),
     (10) AS sizes(part_size)
-  JOIN tpch_s3_pq.tpch_sf1.part AS part
+  JOIN tpch.part AS part
     ON CONTAINS(part.p_container, 'SM DRUM')
     AND CONTAINS(part.p_name, 'azure')
     AND CONTAINS(part.p_type, 'PLATED')

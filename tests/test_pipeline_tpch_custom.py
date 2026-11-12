@@ -7909,7 +7909,7 @@ def test_pipeline_e2e_simple_week(
             bad_name_2,
             None,
             re.escape(
-                "Unrecognized term of TPCH: 'CUSTS'. Did you mean: parts, lines, customers, orders?"
+                "Unrecognized term of TPCH: 'CUSTS'. Did you mean: parts, lines, colors, months, customers?"
             ),
             id="bad_name_2",
         ),
@@ -8113,7 +8113,7 @@ def test_pipeline_e2e_simple_week(
             bad_cross_3,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers.TPCH: 'foo'. Did you mean: lines, parts, nations, orders, regions?"
+                "Unrecognized term of TPCH.customers.TPCH: 'foo'. Did you mean: colors, lines, months, parts, nations?"
             ),
             id="bad_cross_3",
         ),
@@ -8135,7 +8135,7 @@ def test_pipeline_e2e_simple_week(
             bad_cross_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: size, lines, key, name, supply_records?"
+                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: size, colors, lines, key, name?"
             ),
             id="bad_cross_6",
         ),

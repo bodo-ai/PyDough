@@ -14,7 +14,7 @@ WITH _t0 AS (
     (8),
     (9),
     (10)) AS sizes(part_size)
-  JOIN main.part AS part
+  JOIN tpch.part AS part
     ON part.p_container LIKE '%SM DRUM%'
     AND part.p_name LIKE '%azure%'
     AND part.p_size = sizes.part_size

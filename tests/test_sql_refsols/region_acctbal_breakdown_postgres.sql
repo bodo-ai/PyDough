@@ -9,8 +9,8 @@ WITH _s3 AS (
       CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS median_negative_acctbal,
     PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
       CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS median_non_negative_acctbal
-  FROM main.nation AS nation
-  JOIN main.customer AS customer
+  FROM tpch.nation AS nation
+  JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   GROUP BY
     1
@@ -22,7 +22,7 @@ SELECT
   _s3.median_negative_acctbal AS median_red_acctbal,
   _s3.median_non_negative_acctbal AS median_black_acctbal,
   _s3.median_c_acctbal AS median_overall_acctbal
-FROM main.region AS region
+FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.n_regionkey = region.r_regionkey
 ORDER BY
