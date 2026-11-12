@@ -657,7 +657,7 @@
       {
         "name": "colors",
         "type": "sql query",
-        "query text": "SELECT DISTINCT l.value AS color FROM mysql.tpch.part p CROSS JOIN UNNEST(split(p.p_name, ' ')) as l",
+        "query text": "SELECT DISTINCT l.value AS color FROM mysql.tpch.part p CROSS JOIN UNNEST(split(p.p_name, ' ')) as l(value)",
         "unique properties": ["color"],
         "properties": [
           {
