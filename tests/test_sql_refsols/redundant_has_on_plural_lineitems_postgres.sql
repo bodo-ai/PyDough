@@ -1,5 +1,5 @@
 SELECT
   COUNT(DISTINCT l_orderkey) AS n
-FROM main.lineitem
+FROM tpch.lineitem
 WHERE
   l_quantity > 49

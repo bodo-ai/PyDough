@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT DISTINCT
     _s2.val AS cust_word
-  FROM main.customer AS customer
+  FROM tpch.customer AS customer
   CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(
     TRIM(' ' FROM REPLACE(
       CAST(REPLACE(
@@ -23,7 +23,7 @@ WITH _s5 AS (
 )
 SELECT
   COUNT(DISTINCT _s0.val) AS n_double_words
-FROM main.supplier AS supplier
+FROM tpch.supplier AS supplier
 CROSS JOIN LATERAL UNNEST(STRING_TO_ARRAY(
   TRIM(' ' FROM REPLACE(
     CAST(REPLACE(

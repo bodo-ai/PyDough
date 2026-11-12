@@ -9,8 +9,8 @@ WITH _t AS (
         1 - lineitem.l_discount
       ) DESC
     ) AS _w
-  FROM main.orders AS orders
-  JOIN main.lineitem AS lineitem
+  FROM tpch.orders AS orders
+  JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
     orders.o_clerk = 'Clerk#000000017'
@@ -19,12 +19,12 @@ SELECT
   customer.c_name AS name,
   _t.l_receiptdate AS receipt_date,
   nation.n_name AS nation_name
-FROM main.customer AS customer
+FROM tpch.customer AS customer
 JOIN _t AS _t
   ON _t._w = 1 AND _t.o_custkey = customer.c_custkey
-JOIN main.supplier AS supplier
+JOIN tpch.supplier AS supplier
   ON _t.l_suppkey = supplier.s_suppkey
-JOIN main.nation AS nation
+JOIN tpch.nation AS nation
   ON nation.n_nationkey = supplier.s_nationkey
 WHERE
   customer.c_nationkey = 4

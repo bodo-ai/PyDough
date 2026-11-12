@@ -2,22 +2,22 @@ WITH _s1 AS (
   SELECT
     ps_partkey,
     ps_suppkey
-  FROM main.partsupp
+  FROM tpch.partsupp
 )
 SELECT
   lineitem.l_orderkey AS order_key,
   lineitem.l_linenumber AS line_number,
   part.p_size AS part_size,
   nation.n_nationkey AS supplier_nation
-FROM main.part AS part
+FROM tpch.part AS part
 JOIN _s1 AS _s1
   ON _s1.ps_partkey = part.p_partkey
-CROSS JOIN main.nation AS nation
-JOIN main.supplier AS supplier
+CROSS JOIN tpch.nation AS nation
+JOIN tpch.supplier AS supplier
   ON nation.n_nationkey = supplier.s_nationkey
 JOIN _s1 AS _s7
   ON _s7.ps_suppkey = supplier.s_suppkey
-JOIN main.lineitem AS lineitem
+JOIN tpch.lineitem AS lineitem
   ON _s1.ps_suppkey = lineitem.l_suppkey
   AND _s7.ps_partkey = lineitem.l_partkey
   AND _s7.ps_suppkey = lineitem.l_suppkey

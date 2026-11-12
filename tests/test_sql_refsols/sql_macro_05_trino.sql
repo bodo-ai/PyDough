@@ -9,8 +9,8 @@ WITH _s0 AS (
 ), _0 AS (
   SELECT DISTINCT
     l.value AS color
-  FROM part AS p
-  CROSS JOIN UNNEST(SPLIT(p.p_name, ' ')) AS l
+  FROM mysql.tpch.part AS p
+  CROSS JOIN UNNEST(SPLIT(p.p_name, ' ')) AS l(value)
 )
 SELECT
   ARBITRARY(_s0.p_name) AS name,

@@ -1,7 +1,7 @@
 WITH _t2 AS (
   SELECT
     o_custkey
-  FROM main.orders
+  FROM tpch.orders
 ), _s1 AS (
   SELECT
     o_custkey,
@@ -14,7 +14,7 @@ WITH _t2 AS (
     customer.c_acctbal,
     customer.c_custkey,
     _s1.n_rows
-  FROM main.customer AS customer
+  FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   ORDER BY

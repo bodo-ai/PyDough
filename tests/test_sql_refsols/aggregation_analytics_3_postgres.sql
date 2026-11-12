@@ -9,13 +9,13 @@ WITH _s6 AS (
         1 - lineitem.l_tax
       ) - lineitem.l_quantity * partsupp.ps_supplycost
     ) AS sum_revenue
-  FROM main.partsupp AS partsupp
-  JOIN main.supplier AS supplier
+  FROM tpch.partsupp AS partsupp
+  JOIN tpch.supplier AS supplier
     ON partsupp.ps_suppkey = supplier.s_suppkey
     AND supplier.s_name = 'Supplier#000000182'
-  JOIN main.part AS part
+  JOIN tpch.part AS part
     ON part.p_container LIKE 'MED%' AND part.p_partkey = partsupp.ps_partkey
-  JOIN main.lineitem AS lineitem
+  JOIN tpch.lineitem AS lineitem
     ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1994
     AND lineitem.l_partkey = partsupp.ps_partkey
     AND lineitem.l_suppkey = partsupp.ps_suppkey
@@ -30,7 +30,7 @@ SELECT
     2
   ) AS revenue_ratio
 FROM _s6 AS _s6
-JOIN main.part AS part
+JOIN tpch.part AS part
   ON _s6.ps_partkey = part.p_partkey
 ORDER BY
   2 NULLS FIRST,

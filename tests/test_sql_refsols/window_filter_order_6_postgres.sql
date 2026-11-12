@@ -3,7 +3,7 @@ WITH _s1 AS (
     1 AS expr_0,
     c_acctbal,
     c_custkey
-  FROM main.customer
+  FROM tpch.customer
   WHERE
     c_mktsegment = 'BUILDING'
 ), _t AS (
@@ -11,7 +11,7 @@ WITH _s1 AS (
     _s1.c_acctbal,
     _s1.expr_0,
     AVG(CAST(COALESCE(_s1.c_acctbal, 0) AS DOUBLE PRECISION)) OVER () AS _w
-  FROM main.orders AS orders
+  FROM tpch.orders AS orders
   LEFT JOIN _s1 AS _s1
     ON _s1.c_custkey = orders.o_custkey
   WHERE

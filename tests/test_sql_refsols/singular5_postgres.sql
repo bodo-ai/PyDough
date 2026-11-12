@@ -6,8 +6,8 @@ WITH _t AS (
       PARTITION BY part.p_container
       ORDER BY lineitem.l_extendedprice DESC, lineitem.l_shipdate
     ) AS _w
-  FROM main.part AS part
-  JOIN main.lineitem AS lineitem
+  FROM tpch.part AS part
+  JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
     AND lineitem.l_shipmode = 'RAIL'
     AND lineitem.l_tax = 0
@@ -17,7 +17,7 @@ WITH _t AS (
 SELECT
   part.p_container AS container,
   ANY_VALUE(_t.l_shipdate) AS highest_price_ship_date
-FROM main.part AS part
+FROM tpch.part AS part
 JOIN _t AS _t
   ON _t._w = 1 AND _t.p_container = part.p_container
 WHERE

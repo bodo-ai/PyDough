@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     c_acctbal
-  FROM main.customer
+  FROM tpch.customer
 ), _s1 AS (
   SELECT
     MIN(c_acctbal) AS min_c_acctbal
@@ -17,7 +17,7 @@ WITH _s0 AS (
 ), _s2 AS (
   SELECT
     s_acctbal
-  FROM main.supplier
+  FROM tpch.supplier
 ), _s3 AS (
   SELECT
     MAX(s_acctbal) AS max_s_acctbal

@@ -3,7 +3,7 @@ WITH _t AS (
     s_acctbal,
     s_name,
     ROW_NUMBER() OVER (ORDER BY s_acctbal DESC, s_name) AS _w
-  FROM main.supplier
+  FROM tpch.supplier
 )
 SELECT
   s_name AS name,

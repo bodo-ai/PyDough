@@ -4,7 +4,7 @@ WITH _t AS (
     o_orderpriority,
     o_totalprice,
     ROW_NUMBER() OVER (PARTITION BY o_orderpriority ORDER BY o_totalprice DESC) AS _w
-  FROM main.orders
+  FROM tpch.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1992
 )

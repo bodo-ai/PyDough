@@ -4,7 +4,7 @@ SELECT
   AVG(CAST(n_nationkey AS DOUBLE PRECISION)) OVER () AS key_avg,
   COUNT(CASE WHEN LENGTH(n_comment) < 75 THEN n_comment ELSE NULL END) OVER () AS n_short_comment,
   COUNT(*) OVER () AS n_nations
-FROM main.nation
+FROM tpch.nation
 WHERE
   NOT SUBSTRING(n_name FROM 1 FOR 1) IN ('A', 'E', 'I', 'O', 'U')
 ORDER BY

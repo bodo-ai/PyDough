@@ -1,6 +1,6 @@
 SELECT
   o_orderkey AS key
-FROM main.orders
+FROM tpch.orders
 ORDER BY
   1 NULLS FIRST
 LIMIT 5

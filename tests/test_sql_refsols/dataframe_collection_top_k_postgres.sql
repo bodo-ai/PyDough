@@ -12,9 +12,9 @@ FROM (VALUES
   ('REG AIR', 0.05),
   ('SHIP', 0.06),
   ('TRUCK', 0.05)) AS discounts(shipping_type, added_discount)
-JOIN main.lineitem AS lineitem
+JOIN tpch.lineitem AS lineitem
   ON discounts.shipping_type = lineitem.l_shipmode
-JOIN main.part AS part
+JOIN tpch.part AS part
   ON lineitem.l_partkey = part.p_partkey
 ORDER BY
   5 NULLS FIRST

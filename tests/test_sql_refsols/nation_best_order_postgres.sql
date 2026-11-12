@@ -7,8 +7,8 @@ WITH _t3 AS (
     CAST((
       100.0 * orders.o_totalprice
     ) AS DOUBLE PRECISION) / SUM(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS value_percentage
-  FROM main.customer AS customer
-  JOIN main.orders AS orders
+  FROM tpch.customer AS customer
+  JOIN tpch.orders AS orders
     ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
     AND customer.c_custkey = orders.o_custkey
 ), _t AS (
@@ -27,8 +27,8 @@ SELECT
   _t.o_orderkey AS order_key,
   _t.o_totalprice AS order_value,
   _t.value_percentage
-FROM main.nation AS nation
-JOIN main.region AS region
+FROM tpch.nation AS nation
+JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'
 JOIN _t AS _t
   ON _t._w = 1 AND _t.c_nationkey = nation.n_nationkey

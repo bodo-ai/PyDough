@@ -18,7 +18,7 @@ SELECT
   ) AS quarters_until_2000,
   CAST(o_orderdate AS TIMESTAMP) - INTERVAL '12 MONTH' AS same_quarter_prev_year,
   CAST(o_orderdate AS TIMESTAMP) + INTERVAL '12 MONTH' AS same_quarter_next_year
-FROM main.orders
+FROM tpch.orders
 WHERE
   EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
 ORDER BY

@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     n_name,
     n_regionkey
-  FROM main.nation
+  FROM tpch.nation
   ORDER BY
     1 NULLS FIRST
   LIMIT 2
@@ -22,7 +22,7 @@ SELECT
   region.r_name AS a7,
   region.r_regionkey AS a8
 FROM _s0 AS _s0
-JOIN main.region AS region
+JOIN tpch.region AS region
   ON _s0.n_regionkey = region.r_regionkey
 ORDER BY
   1 NULLS FIRST

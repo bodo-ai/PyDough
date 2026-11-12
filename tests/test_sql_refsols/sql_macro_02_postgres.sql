@@ -31,7 +31,7 @@ SELECT
   orders.o_orderpriority AS name,
   COUNT(*) AS n_orders
 FROM _s0 AS _s0
-JOIN main.orders AS orders
+JOIN tpch.orders AS orders
   ON _s0.priority_name = orders.o_orderpriority
 GROUP BY
   1

@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     o_custkey AS c_custkey,
     COUNT(*) AS n_rows
-  FROM main.orders
+  FROM tpch.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1994
     AND o_orderpriority = '1-URGENT'

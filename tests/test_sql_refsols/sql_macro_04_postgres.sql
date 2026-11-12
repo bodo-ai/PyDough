@@ -1,13 +1,13 @@
 WITH _0 AS (
   SELECT DISTINCT
     UNNEST(STRING_TO_ARRAY(p_name, ' ')) AS color
-  FROM part
+  FROM tpch.part
 )
 SELECT
   _0.color,
   COUNT(*) AS n
 FROM _0 AS _0
-JOIN main.part AS part
+JOIN tpch.part AS part
   ON part.p_name LIKE (
     '%' || CASE WHEN _0.color IS NULL THEN NULL ELSE CONCAT_WS('', ' ', _0.color) END
   )

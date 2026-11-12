@@ -2,14 +2,14 @@ WITH _s0 AS (
   SELECT
     p_name,
     p_partkey
-  FROM main.part
+  FROM tpch.part
   ORDER BY
     2 NULLS FIRST
   LIMIT 3
 ), _0 AS (
   SELECT DISTINCT
     UNNEST(STRING_TO_ARRAY(p_name, ' ')) AS color
-  FROM part
+  FROM tpch.part
 )
 SELECT
   ANY_VALUE(_s0.p_name) AS name,

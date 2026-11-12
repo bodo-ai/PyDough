@@ -1,7 +1,7 @@
 WITH _0 AS (
   SELECT DISTINCT
     l.value AS color
-  FROM part AS p
+  FROM tpch.PART AS p
   CROSS JOIN JSON_TABLE(CONCAT('["', REPLACE(p.p_name, ' ', '","'), '"]'), '$[*]' COLUMNS(value VARCHAR(255) PATH '$')) AS l
 )
 SELECT

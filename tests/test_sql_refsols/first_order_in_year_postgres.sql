@@ -4,7 +4,7 @@ WITH _t AS (
     o_orderkey,
     LAG(o_orderdate, 1) OVER (ORDER BY o_orderdate, o_orderkey) AS _w,
     LAG(o_orderdate, 1) OVER (ORDER BY o_orderdate, o_orderkey) AS _w_2
-  FROM main.orders
+  FROM tpch.orders
   WHERE
     EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 1
 )

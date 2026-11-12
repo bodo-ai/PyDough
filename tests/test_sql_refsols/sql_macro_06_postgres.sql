@@ -16,7 +16,7 @@ WITH months AS (
     _1.date_val,
     COUNT(*) AS n_rows
   FROM _0 AS _1
-  JOIN main.orders AS orders
+  JOIN tpch.orders AS orders
     ON _1.date_val = DATE_TRUNC('MONTH', CAST(orders.o_orderdate AS TIMESTAMP))
   GROUP BY
     1
@@ -25,7 +25,7 @@ WITH months AS (
     _2.date_val,
     COUNT(*) AS n_rows
   FROM _0 AS _2
-  JOIN main.lineitem AS lineitem
+  JOIN tpch.lineitem AS lineitem
     ON _2.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_shipdate AS TIMESTAMP))
   GROUP BY
     1
@@ -34,7 +34,7 @@ WITH months AS (
     _3.date_val,
     COUNT(*) AS n_rows
   FROM _0 AS _3
-  JOIN main.lineitem AS lineitem
+  JOIN tpch.lineitem AS lineitem
     ON _3.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_commitdate AS TIMESTAMP))
   GROUP BY
     1
@@ -43,7 +43,7 @@ WITH months AS (
     _4.date_val,
     COUNT(*) AS n_rows
   FROM _0 AS _4
-  JOIN main.lineitem AS lineitem
+  JOIN tpch.lineitem AS lineitem
     ON _4.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_receiptdate AS TIMESTAMP))
   GROUP BY
     1

@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     o_orderdate
-  FROM main.orders
+  FROM tpch.orders
 ), _s1 AS (
   SELECT
     MIN(o_orderdate) AS min_o_orderdate

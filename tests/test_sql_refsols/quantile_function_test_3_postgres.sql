@@ -3,7 +3,7 @@ WITH _s0 AS (
     n_name,
     n_nationkey,
     n_regionkey
-  FROM main.nation
+  FROM tpch.nation
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
@@ -11,8 +11,8 @@ WITH _s0 AS (
   SELECT
     customer.c_nationkey,
     orders.o_totalprice
-  FROM main.customer AS customer
-  JOIN main.orders AS orders
+  FROM tpch.customer AS customer
+  JOIN tpch.orders AS orders
     ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
     AND customer.c_custkey = orders.o_custkey
 )
@@ -38,7 +38,7 @@ SELECT
   PERCENTILE_DISC(1.0) WITHIN GROUP (ORDER BY
     _s5.o_totalprice) AS orders_max
 FROM _s0 AS _s0
-JOIN main.region AS region
+JOIN tpch.region AS region
   ON _s0.n_regionkey = region.r_regionkey
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey

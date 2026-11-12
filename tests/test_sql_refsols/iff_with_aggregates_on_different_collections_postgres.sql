@@ -1,3 +1,3 @@
 SELECT
   COUNT(*) AS output
-FROM main.supplier
+FROM tpch.supplier

@@ -1,7 +1,7 @@
 WITH _t AS (
   SELECT
     RANK() OVER (ORDER BY o_orderdate) AS _w
-  FROM main.orders
+  FROM tpch.orders
 )
 SELECT
   COUNT(*) AS n_orders

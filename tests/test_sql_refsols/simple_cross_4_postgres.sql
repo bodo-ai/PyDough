@@ -2,13 +2,13 @@ WITH _s2 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM main.region
+  FROM tpch.region
 ), _s3 AS (
   SELECT
     _s0.r_regionkey,
     COUNT(*) AS n_rows
   FROM _s2 AS _s0
-  JOIN main.region AS region
+  JOIN tpch.region AS region
     ON SUBSTRING(_s0.r_name FROM 1 FOR 1) = SUBSTRING(region.r_name FROM 1 FOR 1)
     AND _s0.r_name <> region.r_name
   GROUP BY

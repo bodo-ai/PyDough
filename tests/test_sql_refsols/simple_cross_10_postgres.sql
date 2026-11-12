@@ -2,7 +2,7 @@ WITH _s4 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM main.region
+  FROM tpch.region
 ), _s5 AS (
   SELECT
     _s0.r_regionkey,
@@ -10,7 +10,7 @@ WITH _s4 AS (
   FROM _s4 AS _s0
   JOIN _s4 AS _s1
     ON _s0.r_name <> _s1.r_name
-  JOIN main.nation AS nation
+  JOIN tpch.nation AS nation
     ON SUBSTRING(_s0.r_name FROM 1 FOR 1) = SUBSTRING(nation.n_name FROM 1 FOR 1)
     AND _s1.r_regionkey = nation.n_regionkey
   GROUP BY

@@ -4,7 +4,7 @@ WITH _s2 AS (
     l_suppkey,
     COUNT(*) AS n_rows,
     SUM(l_quantity) AS sum_l_quantity
-  FROM main.lineitem
+  FROM tpch.lineitem
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_tax = 0
   GROUP BY
@@ -18,7 +18,7 @@ WITH _s2 AS (
     _s2.sum_l_quantity,
     ROW_NUMBER() OVER (PARTITION BY _s2.l_suppkey ORDER BY COALESCE(_s2.sum_l_quantity, 0) DESC) AS _w
   FROM _s2 AS _s2
-  JOIN main.part AS part
+  JOIN tpch.part AS part
     ON _s2.l_partkey = part.p_partkey
 )
 SELECT
@@ -26,8 +26,8 @@ SELECT
   _t.p_name AS part_name,
   COALESCE(_t.sum_l_quantity, 0) AS total_quantity,
   _t.n_rows AS n_shipments
-FROM main.supplier AS supplier
-JOIN main.nation AS nation
+FROM tpch.supplier AS supplier
+JOIN tpch.nation AS nation
   ON nation.n_name = 'FRANCE' AND nation.n_nationkey = supplier.s_nationkey
 JOIN _t AS _t
   ON _t._w = 1 AND _t.l_suppkey = supplier.s_suppkey
