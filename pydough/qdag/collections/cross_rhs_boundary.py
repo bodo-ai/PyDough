@@ -26,15 +26,18 @@ class CrossRHSBoundary(AugmentingChildOperator):
 
     @property
     def standalone_string(self) -> str:
-        return "CROSS_RHS_BOUNDARY()"
+        return self.preceding_context.standalone_string
 
     @property
     def tree_item_string(self) -> str:
-        return "CrossRHSBoundary"
+        return self.preceding_context.tree_item_string
 
     def to_string(self) -> str:
         # The boundary is an internal bookkeeping node, not a user operator.
         return self.preceding_context.to_string()
+
+    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
+        return self.preceding_context.to_tree_form_isolated(is_last)
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         return self.preceding_context.to_tree_form(is_last)

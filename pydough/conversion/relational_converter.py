@@ -13,7 +13,6 @@ from dataclasses import dataclass
 import pydough.pydough_operators as pydop
 from pydough.configs import DivisionByZeroBehavior, PyDoughSession
 from pydough.database_connectors.database_connector import DatabaseDialect
-from pydough.errors import PyDoughSQLException
 from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
 from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
@@ -85,7 +84,6 @@ from .hybrid_operations import (
     HybridCalculate,
     HybridChildPullUp,
     HybridCollectionAccess,
-    HybridCrossRHSBoundary,
     HybridExplode,
     HybridFilter,
     HybridLimit,
@@ -590,8 +588,6 @@ class RelTranslation:
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None,
         join_cond: HybridExpr | None,
         child_idx: int | None,
-        *,
-        lhs_levels: int = 1,
     ) -> TranslationOutput:
         """
         Handles the joining of a parent context onto a child context.
@@ -617,8 +613,6 @@ class RelTranslation:
             down from a parent into its child. If non-none, it means the join
             is being used to bring a child's elements into the same context as
             the parent, and the `child_idx` is the index of that child.
-            `lhs_levels`: the number of levels to shift LHS references when
-            joining an independently translated descendant.
 
         Returns:
             The TranslationOutput payload containing the relational structure
@@ -707,7 +701,7 @@ class RelTranslation:
             existing_ref: ColumnReference = lhs_result.expressions[expr]
             join_columns[existing_ref.name] = existing_ref.with_input(input_aliases[0])
             if child_idx is None:
-                out_columns[expr.shift_back(lhs_levels)] = existing_ref
+                out_columns[expr.shift_back(1)] = existing_ref
             else:
                 out_columns[expr] = existing_ref
 
@@ -1320,131 +1314,6 @@ class RelTranslation:
         out_rel: Project = Project(context.relational_node, proj_columns)
         return TranslationOutput(out_rel, out_columns)
 
-    @staticmethod
-    def cross_rhs_expression_is_local(expression: HybridExpr, rhs_depth: int) -> bool:
-        """Check that an expression does not need data from outside the CROSS RHS."""
-        if isinstance(expression, HybridBackRefExpr):
-            return expression.back_idx <= rhs_depth
-        if isinstance(
-            expression, (HybridCorrelExpr, HybridChildRefExpr, HybridSidedRefExpr)
-        ):
-            return False
-        if isinstance(expression, HybridFunctionExpr):
-            return all(
-                RelTranslation.cross_rhs_expression_is_local(arg, rhs_depth)
-                for arg in expression.args
-            )
-        if isinstance(expression, HybridWindowExpr):
-            return all(
-                RelTranslation.cross_rhs_expression_is_local(arg, rhs_depth)
-                for arg in (
-                    *expression.args,
-                    *expression.partition_args,
-                    *(sort.expr for sort in expression.order_args),
-                )
-            )
-        return isinstance(
-            expression, (HybridColumnExpr, HybridRefExpr, HybridLiteralExpr)
-        )
-
-    @classmethod
-    def independent_partition_cross_scope(
-        cls, hybrid: HybridTree, boundary_idx: int, cross_id: int
-    ) -> tuple[HybridTree, int] | None:
-        """Find the start and depth of a windowed, independent partition RHS.
-
-        A nested RHS may cross several levels and contain other CROSS
-        boundaries. Match the exact start, not the closest ancestor root.
-        Keep the normal translation for shapes outside this rewrite.
-        """
-        levels: list[tuple[HybridTree, int]] = []
-        level: HybridTree | None = hybrid
-        end = boundary_idx
-        while level is not None:
-            start = level.pipeline[0]
-            if isinstance(start, HybridRoot) and start.cross_id == cross_id:
-                if level.parent is None:
-                    return None
-                levels.append((level, end))
-                break
-            levels.append((level, end))
-            level = level.parent
-            if level is not None:
-                end = len(level.pipeline)
-        if level is None:
-            return None
-
-        has_partition_child = any(
-            isinstance(item.pipeline[0], HybridPartitionChild) for item, _ in levels
-        )
-        has_window = any(
-            isinstance(op, HybridCalculate)
-            and any(
-                expr.contains_window_functions() for expr in op.new_expressions.values()
-            )
-            or isinstance(op, HybridFilter)
-            and op.condition.contains_window_functions()
-            for item, end in levels
-            for op in item.pipeline[:end]
-        )
-        if not (has_partition_child and has_window):
-            return None
-
-        for depth, (item, end) in enumerate(reversed(levels)):
-            for op in item.pipeline[:end]:
-                expressions: Iterable[HybridExpr]
-                match op:
-                    case HybridCalculate():
-                        expressions = op.new_expressions.values()
-                    case HybridFilter():
-                        expressions = [op.condition]
-                    case HybridLimit():
-                        expressions = [sort.expr for sort in op.orderings]
-                    case (
-                        HybridRoot()
-                        | HybridPartition()
-                        | HybridPartitionChild()
-                        | HybridNoop()
-                    ):
-                        continue
-                    case HybridCollectionAccess() if isinstance(
-                        op.collection, TableCollection
-                    ):
-                        continue
-                    case _:
-                        raise PyDoughSQLException(
-                            f"Cannot independently evaluate a windowed CROSS RHS with {type(op).__name__}"
-                        )
-                if not all(
-                    cls.cross_rhs_expression_is_local(expr, depth)
-                    for expr in expressions
-                ):
-                    raise PyDoughSQLException(
-                        "Cannot independently evaluate a windowed CROSS RHS "
-                        "that references an outer or unsupported child context"
-                    )
-
-            for child_idx, child in enumerate(item.children):
-                if child.max_steps > end:
-                    continue
-                if isinstance(item.pipeline[0], HybridPartition) and child_idx == 0:
-                    # A partition input normally joins on its own grouping
-                    # keys. Decorrelation can add an outer key and copy the
-                    # CROSS LHS into the input. Such an input cannot be detached.
-                    keys = child.subtree.agg_keys
-                    if (
-                        keys is not None
-                        and all(isinstance(key, HybridRefExpr) for key in keys)
-                        and child.subtree.join_keys == [(key, key) for key in keys]
-                        and child.subtree.general_join_condition is None
-                        and not child.subtree.get_correlate_names(1)
-                    ):
-                        continue
-                raise PyDoughSQLException(
-                    "Cannot independently evaluate a windowed CROSS RHS with dependent child connections"
-                )
-        return level, len(levels)
-
     def translate_partition_child(
         self,
         node: HybridPartitionChild,
@@ -1651,8 +1520,6 @@ class RelTranslation:
         self,
         hybrid: HybridTree,
         pipeline_idx: int,
-        *,
-        stop_at_cross: HybridTree | None = None,
     ) -> TranslationOutput:
         """
         The recursive procedure for converting a prefix of the hybrid tree
@@ -1664,8 +1531,6 @@ class RelTranslation:
             `pipeline_idx`: the index of the operation in the pipeline of the
             current level that is to be derived, as well as all operations
             preceding it in the pipeline.
-            `stop_at_cross`: the root of an independent RHS, if any. Its
-            predecessor must not be evaluated until the RHS is complete.
 
         Returns:
             The TranslationOutput payload corresponding to the relational
@@ -1684,41 +1549,6 @@ class RelTranslation:
         # stage must be defined as the first step.
         operation: HybridOperation = hybrid.pipeline[pipeline_idx]
         result: TranslationOutput
-        if isinstance(operation, HybridCrossRHSBoundary):
-            scope = self.independent_partition_cross_scope(
-                hybrid, pipeline_idx, operation.cross_id
-            )
-            if scope is not None:
-                cross_root, lhs_levels = scope
-                assert cross_root.parent is not None
-                lhs = self.rel_translation(
-                    cross_root.parent,
-                    len(cross_root.parent.pipeline) - 1,
-                    stop_at_cross=stop_at_cross,
-                )
-                rhs = self.rel_translation(
-                    hybrid, pipeline_idx - 1, stop_at_cross=cross_root
-                )
-                result = self.join_outputs(
-                    lhs,
-                    rhs,
-                    JoinType.INNER,
-                    JoinCardinality.PLURAL_ACCESS,
-                    JoinCardinality.PLURAL_ACCESS,
-                    [],
-                    None,
-                    None,
-                    lhs_levels=lhs_levels,
-                )
-                return self.handle_children(result, hybrid, pipeline_idx)
-
-        if hybrid is stop_at_cross and pipeline_idx == 0:
-            # Retain the HybridRoot level for BACK references, but do not
-            # translate its LHS when building the independent RHS.
-            return self.handle_children(
-                TranslationOutput(EmptySingleton(), {}), hybrid, pipeline_idx
-            )
-
         preceding_hybrid: tuple[HybridTree, int] | None = None
         if pipeline_idx > 0:
             preceding_hybrid = (hybrid, pipeline_idx - 1)
@@ -1739,9 +1569,7 @@ class RelTranslation:
             context = TranslationOutput(EmptySingleton(), {})
             context = self.handle_children(context, *preceding_hybrid)
         else:
-            context = self.rel_translation(
-                *preceding_hybrid, stop_at_cross=stop_at_cross
-            )
+            context = self.rel_translation(*preceding_hybrid)
 
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.

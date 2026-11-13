@@ -64,8 +64,7 @@ from .unqualified_transform import transform_cell
 
 
 class Qualifier:
-    def __init__(self, session: PyDoughSession, *, mark_cross_rhs: bool = True):
-        self._mark_cross_rhs = mark_cross_rhs
+    def __init__(self, session: PyDoughSession):
         self._next_cross_id = 0
         self._session: PyDoughSession = session
         assert session.metadata is not None
@@ -1370,10 +1369,8 @@ class Qualifier:
 
         # Now build a GlobalContext pointing to the qualified parent as its
         # ancestor, and use this as the new context for the child.
-        cross_id = None
-        if self._mark_cross_rhs:
-            cross_id = self._next_cross_id
-            self._next_cross_id += 1
+        cross_id = self._next_cross_id
+        self._next_cross_id += 1
         qualified_parent = GlobalContext(
             self.graph, qualified_parent, cross_id=cross_id
         )
@@ -1393,11 +1390,7 @@ class Qualifier:
 
         # Preserve where the RHS of CROSS finishes.
         # Any subsequent operations belong to the joined collection.
-        return (
-            CrossRHSBoundary(qualified_child, cross_id)
-            if cross_id is not None
-            else qualified_child
-        )
+        return CrossRHSBoundary(qualified_child, cross_id)
 
     def qualify_explode(
         self,
@@ -1559,8 +1552,6 @@ class Qualifier:
 def qualify_node(
     unqualified: UnqualifiedNode,
     session: PyDoughSession,
-    *,
-    mark_cross_rhs: bool = True,
 ) -> PyDoughQDAG:
     """
     Transforms an UnqualifiedNode into a qualified node.
@@ -1570,8 +1561,6 @@ def qualify_node(
         `session`: the session whose information should be used to derive
         necessary information for the qualification, such as the graph and
         configurations.
-        `mark_cross_rhs`: Whether to retain internal CROSS markers for SQL
-        translation. Public explanations use the unannotated qualified tree.
 
     Returns:
         The PyDough QDAG object for the qualified node. The result can be either
@@ -1582,7 +1571,7 @@ def qualify_node(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    qual: Qualifier = Qualifier(session, mark_cross_rhs=mark_cross_rhs)
+    qual: Qualifier = Qualifier(session)
     return qual.qualify_node(
         unqualified, qual.builder.build_global_context(), [], False
     )
@@ -1616,7 +1605,6 @@ def qualify_term(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    # Term qualification is used for public explanations, not SQL conversion.
-    qual: Qualifier = Qualifier(session, mark_cross_rhs=False)
+    qual: Qualifier = Qualifier(session)
     children: list[PyDoughCollectionQDAG] = []
     return children, qual.qualify_node(term, collection, children, True)

@@ -441,8 +441,8 @@ class HybridCrossRHSBoundary(HybridNoop):
 
     def __init__(self, last_operation: HybridOperation, cross_id: int):
         super().__init__(last_operation)
-        # Keep the boundary in HybridTree equality so two child trees with
-        # windows on different sides of CROSS are not merged.
+        # The marker position participates in tree comparisons. The ID only
+        # pairs roots and boundaries during translation, not tree equality.
         self.cross_id = cross_id
 
     def __repr__(self) -> str:

@@ -105,6 +105,7 @@ from ._common import (
     generate_query_summary,
     generate_step_notes,
     qualify_safely,
+    skip_cross_boundaries,
 )
 
 _HINT_MAP: dict[str, str | None] = {
@@ -805,6 +806,7 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     nodes: list[PyDoughCollectionQDAG] = []
     current: PyDoughCollectionQDAG | None = root
     while current is not None:
+        current = skip_cross_boundaries(current)
         nodes.append(current)
         current = getattr(current, "preceding_context", None)
 
@@ -823,7 +825,7 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     top: PyDoughCollectionQDAG = nodes[-1]
     seen_ids: set[int] = {id(n) for n in nodes}
     if isinstance(top, PartitionBy) and hasattr(top, "child"):
-        child = top.child
+        child = skip_cross_boundaries(top.child)
         child_anc = getattr(child, "ancestor_context", None)
         if child_anc is not None and not isinstance(child_anc, GlobalContext):
             # Subcollection case: child.ancestor_context points to the
@@ -844,6 +846,7 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
     else:
         ancestor = getattr(top, "ancestor_context", None)
     while ancestor is not None:
+        ancestor = skip_cross_boundaries(ancestor)
         # A GlobalContext produced by CROSS qualification carries its own
         # ancestor_context (the left-hand chain) — it is plumbing, not a
         # real step, so skip straight past it to the left-hand chain rather
@@ -862,7 +865,10 @@ def _collect_steps(root: PyDoughCollectionQDAG) -> list[dict]:
             # via .child_access so we reach the real collection node.
             anc_chain: list[PyDoughCollectionQDAG] = []
             cur_a: PyDoughCollectionQDAG | None = ancestor
-            while cur_a is not None and id(cur_a) not in seen_ids:
+            while cur_a is not None:
+                cur_a = skip_cross_boundaries(cur_a)
+                if id(cur_a) in seen_ids:
+                    break
                 if isinstance(cur_a, ChildOperatorChildAccess):
                     cur_a = cur_a.child_access
                     continue
