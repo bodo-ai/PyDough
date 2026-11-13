@@ -9,6 +9,7 @@ __all__ = [
     "HybridCalculate",
     "HybridChildPullUp",
     "HybridCollectionAccess",
+    "HybridCrossRHSBoundary",
     "HybridExplode",
     "HybridFilter",
     "HybridLimit",
@@ -35,7 +36,6 @@ from pydough.qdag.collections.user_collection_qdag import (
 from pydough.types import NumericType
 from pydough.utilities import ExplodeSpec
 
-from .conversion_helpers import build_new_ref_name
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
     HybridChildRefExpr,
@@ -234,7 +234,7 @@ class HybridCalculate(HybridOperation):
                     and (self.predecessor.search_term_definition(used_name) == expr)
                 ):
                     break
-                used_name = build_new_ref_name(name, idx)
+                used_name = f"{name}_{idx}"
                 idx += 1
                 new_renamings[name] = used_name
             terms[used_name] = expr
@@ -432,6 +432,17 @@ class HybridNoop(HybridOperation):
 
     def __repr__(self):
         return "NOOP"
+
+
+class HybridCrossRHSBoundary(HybridNoop):
+    """Marks the last operation belonging to the RHS operand of CROSS."""
+
+    def __init__(self, last_operation: HybridOperation):
+        super().__init__(last_operation)
+        self.is_hidden = True
+
+    def __repr__(self) -> str:
+        return "CROSS_RHS_BOUNDARY"
 
 
 class HybridPartition(HybridOperation):

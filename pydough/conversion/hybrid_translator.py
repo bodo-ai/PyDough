@@ -45,6 +45,7 @@ from pydough.qdag import (
     Where,
     WindowCall,
 )
+from pydough.qdag.collections.cross_rhs_boundary import CrossRHSBoundary
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
@@ -70,6 +71,7 @@ from .hybrid_filter_merger import HybridFilterMerger
 from .hybrid_operations import (
     HybridCalculate,
     HybridCollectionAccess,
+    HybridCrossRHSBoundary,
     HybridExplode,
     HybridFilter,
     HybridLimit,
@@ -1514,6 +1516,18 @@ class HybridTranslator:
                 for name in new_expressions:
                     hybrid.ancestral_mapping[name] = 0
                 return hybrid
+
+            case CrossRHSBoundary():
+                hybrid = self.make_hybrid_tree(
+                    node.preceding_context,
+                    parent,
+                    is_aggregate,
+                )
+
+                hybrid.add_operation(HybridCrossRHSBoundary(hybrid.pipeline[-1]))
+
+                return hybrid
+
             case Singular():
                 # a Singular node is just used to annotate the preceding context
                 # with additional information with respect to parent context.

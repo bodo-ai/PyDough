@@ -35,6 +35,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.qdag.collections.calculate import Calculate
+from pydough.qdag.collections.cross_rhs_boundary import CrossRHSBoundary
 from pydough.types import PyDoughType
 from pydough.utilities import ExplodeSpec
 
@@ -1382,7 +1383,9 @@ class Qualifier:
             False,
         )
 
-        return qualified_child
+        # Preserve where the RHS of CROSS finishes.
+        # Any subsequent operations belong to the joined collection.
+        return CrossRHSBoundary(qualified_child)
 
     def qualify_explode(
         self,

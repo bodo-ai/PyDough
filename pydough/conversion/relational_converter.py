@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import pydough.pydough_operators as pydop
 from pydough.configs import DivisionByZeroBehavior, PyDoughSession
 from pydough.database_connectors.database_connector import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
 from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
@@ -64,7 +65,6 @@ from pydough.types.pydough_type import PyDoughType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .column_bubbler import bubble_column_names
-from .conversion_helpers import build_new_ref_name
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
@@ -84,6 +84,7 @@ from .hybrid_operations import (
     HybridCalculate,
     HybridChildPullUp,
     HybridCollectionAccess,
+    HybridCrossRHSBoundary,
     HybridExplode,
     HybridFilter,
     HybridLimit,
@@ -187,7 +188,7 @@ class RelTranslation:
         new_name: str = name
         while new_name in existing_names:
             self.dummy_idx += 1
-            new_name = build_new_ref_name(name, self.dummy_idx)
+            new_name = f"{name}_{self.dummy_idx}"
         return new_name
 
     def get_correlated_name(self, context: TranslationOutput) -> str:
@@ -726,7 +727,7 @@ class RelTranslation:
                 old_name: str = old_reference.name
                 new_name: str = old_name
                 while new_name in join_columns:
-                    new_name = build_new_ref_name(old_name, self.dummy_idx)
+                    new_name = f"{old_name}_{self.dummy_idx}"
                     self.dummy_idx += 1
                 new_reference: ColumnReference = ColumnReference(
                     new_name, old_reference.data_type
@@ -1086,17 +1087,10 @@ class RelTranslation:
                 collection_access.subcollection_property
             )
         )
-        # If the parent is a PARTITION child, its own `always_exists()` is
-        # always true regardless of filters applied to the data being
-        # partitioned, since every emitted group is non-empty by
-        # construction. That does not mean every row of the underlying
-        # (possibly filtered) data survived, so check the filtered subtree
-        # directly to avoid wrongly treating this join as unfiltered.
+
         source_always_exists: bool = True
         if isinstance(parent.pipeline[0], HybridPartitionChild):
-            source_always_exists = RelTranslation.partition_source_always_exists(
-                parent.pipeline[0].subtree
-            )
+            source_always_exists = parent.pipeline[0].subtree.always_exists()
 
         if (not reverse_cardinality.filters) and (
             not parent.always_exists() or not source_always_exists
@@ -1314,6 +1308,154 @@ class RelTranslation:
         out_rel: Project = Project(context.relational_node, proj_columns)
         return TranslationOutput(out_rel, out_columns)
 
+    @staticmethod
+    def cross_partition_rhs_boundary(hybrid: HybridTree) -> int | None:
+        """Find a CROSS boundary whose partition RHS must be evaluated first.
+
+        Only handle a partition child under the independent global-root context
+        of CROSS. Do not alter other CROSS/partition combinations or queries
+        whose RHS has no window before the boundary.
+        """
+        if not isinstance(hybrid.pipeline[0], HybridPartitionChild):
+            return None
+        partition_level = hybrid.parent
+        if partition_level is None or not isinstance(
+            partition_level.pipeline[0], HybridPartition
+        ):
+            return None
+        cross_root = partition_level.parent
+        if (
+            cross_root is None
+            or cross_root.parent is None
+            or not isinstance(cross_root.pipeline[0], HybridRoot)
+        ):
+            return None
+        boundary_idx = next(
+            (
+                idx
+                for idx, operation in enumerate(hybrid.pipeline)
+                if isinstance(operation, HybridCrossRHSBoundary)
+            ),
+            None,
+        )
+        if boundary_idx is None:
+            return None
+        has_window = any(
+            isinstance(operation, HybridCalculate)
+            and any(
+                expression.contains_window_functions()
+                for expression in operation.new_expressions.values()
+            )
+            for operation in hybrid.pipeline[1:boundary_idx]
+        )
+        return boundary_idx if has_window else None
+
+    @staticmethod
+    def cross_rhs_expression_is_local(expression: HybridExpr) -> bool:
+        """Return whether an expression can be evaluated without the CROSS LHS.
+
+        The immediate BACK(1) of a partition child denotes its own partition
+        keys. More distant ancestors and correlated/child references must not
+        be silently rebound to identically named RHS columns.
+        """
+        if isinstance(expression, HybridBackRefExpr):
+            return expression.back_idx == 1
+        if isinstance(
+            expression, (HybridCorrelExpr, HybridChildRefExpr, HybridSidedRefExpr)
+        ):
+            return False
+        if isinstance(expression, HybridFunctionExpr):
+            return all(
+                RelTranslation.cross_rhs_expression_is_local(arg)
+                for arg in expression.args
+            )
+        if isinstance(expression, HybridWindowExpr):
+            return all(
+                RelTranslation.cross_rhs_expression_is_local(arg)
+                for arg in expression.args + expression.partition_args
+            ) and all(
+                RelTranslation.cross_rhs_expression_is_local(sort.expr)
+                for sort in expression.order_args
+            )
+        return isinstance(
+            expression, (HybridColumnExpr, HybridRefExpr, HybridLiteralExpr)
+        )
+
+    def validate_independent_cross_rhs(
+        self, hybrid: HybridTree, boundary_idx: int
+    ) -> None:
+        """Fail closed if we cannot safely translate the pre-CROSS pipeline.
+
+        Falling back to evaluating pre-CROSS windows after the join would
+        silently recreate #616; report unsupported cases instead.
+        """
+        for operation in hybrid.pipeline[1:boundary_idx]:
+            expressions: list[HybridExpr]
+            if isinstance(operation, HybridCalculate):
+                expressions = list(operation.new_expressions.values())
+            elif isinstance(operation, HybridFilter):
+                expressions = [operation.condition]
+            elif isinstance(operation, HybridLimit):
+                expressions = [sort.expr for sort in operation.orderings]
+            elif isinstance(operation, HybridNoop):
+                expressions = []
+            else:
+                raise PyDoughSQLException(
+                    "Cannot independently evaluate the CROSS RHS with window "
+                    f"functions: unsupported {type(operation).__name__} before CROSS"
+                )
+            if not all(
+                self.cross_rhs_expression_is_local(expr) for expr in expressions
+            ):
+                raise PyDoughSQLException(
+                    "Cannot independently evaluate the CROSS RHS with window "
+                    "functions: an expression references the CROSS LHS or "
+                    "an unsupported child context"
+                )
+
+        # Bringing child connections into the RHS before CROSS may depend on
+        # columns from the left. Do not rewrite those patterns without proving
+        # their independence.
+        if any(child.max_steps <= boundary_idx for child in hybrid.children):
+            raise PyDoughSQLException(
+                "Cannot independently evaluate the CROSS RHS with window "
+                "functions: dependent child connections before CROSS"
+            )
+
+    def join_independent_cross_rhs(
+        self,
+        hybrid: HybridTree,
+        rhs: TranslationOutput,
+    ) -> TranslationOutput:
+        """Attach the complete, independently translated RHS exactly once.
+
+        Use the ordinary join translator so name collisions, join conditions,
+        and expression mappings are managed consistently with other partition
+        child joins. The RHS already includes all pre-CROSS window stages.
+        """
+        partition_level = hybrid.parent
+        assert partition_level is not None
+        partition_child = hybrid.pipeline[0]
+        assert isinstance(partition_child, HybridPartitionChild)
+        assert partition_child.subtree.agg_keys is not None
+
+        lhs = self.rel_translation(partition_level, len(partition_level.pipeline) - 1)
+        join_keys = [
+            (key, key) for key in sorted(partition_child.subtree.agg_keys, key=str)
+        ]
+        return self.join_outputs(
+            lhs,
+            rhs,
+            JoinType.INNER,
+            JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.SINGULAR_ACCESS
+            if partition_level.always_exists()
+            else JoinCardinality.SINGULAR_FILTER,
+            join_keys,
+            None,
+            None,
+        )
+
     def translate_partition_child(
         self,
         node: HybridPartitionChild,
@@ -1503,15 +1645,18 @@ class RelTranslation:
             out_columns[hybrid_ref] = col_ref
             gen_columns[column_name] = col_ref
 
-        # Generate the unique set, treating `unique_terms` as a single
-        # (possibly composite) uniqueness set rather than one per column.
+        # Generate the unique set
         uniqueness: set[frozenset[str]] = set()
-        real_names: set[str] = set()
-        for name in node.user_collection.unique_terms:
-            expr = gen_columns[name]
-            assert isinstance(expr, ColumnReference)
-            real_names.add(expr.name)
-        uniqueness.add(frozenset(real_names))
+        for unique_set in node.user_collection.unique_terms:
+            names: list[str] = (
+                [unique_set] if isinstance(unique_set, str) else unique_set
+            )
+            real_names: set[str] = set()
+            for name in names:
+                expr = gen_columns[name]
+                assert isinstance(expr, ColumnReference)
+                real_names.add(expr.name)
+            uniqueness.add(frozenset(real_names))
 
         answer: RelationalNode = GeneratedTable(collection, uniqueness)
         return TranslationOutput(answer, out_columns)
@@ -1615,14 +1760,29 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                result = self.translate_partition_child(
-                    operation,
-                    context,
-                    preceding_hybrid[0] if preceding_hybrid is not None else None,
-                )
+                boundary_idx = self.cross_partition_rhs_boundary(hybrid)
+                if boundary_idx is not None:
+                    self.validate_independent_cross_rhs(hybrid, boundary_idx)
+                    # Translate the partition data without the CROSS LHS.
+                    # Make partition keys visible under BACK(1), just as the
+                    # regular partition-child translation would.
+                    child_output = self.translate_partition_child(operation, None, None)
+                    child_expressions = dict(child_output.expressions)
+                    for expr, column in child_output.expressions.items():
+                        child_expressions[expr.shift_back(1)] = column
+                    result = TranslationOutput(
+                        child_output.relational_node, child_expressions
+                    )
+                else:
+                    result = self.translate_partition_child(
+                        operation,
+                        context,
+                        preceding_hybrid[0] if preceding_hybrid is not None else None,
+                    )
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calculate(operation, context)
+
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
@@ -1641,6 +1801,15 @@ class RelTranslation:
             case HybridChildPullUp():
                 assert context is None, "Malformed HybridTree pattern."
                 result = self.translate_child_pullup(operation)
+            case HybridCrossRHSBoundary():
+                assert context is not None, "Malformed HybridTree pattern."
+                boundary_idx = self.cross_partition_rhs_boundary(hybrid)
+                if boundary_idx == pipeline_idx:
+                    # All RHS operations, including windows, are now complete.
+                    # Restore the LHS only at the actual CROSS boundary.
+                    result = self.join_independent_cross_rhs(hybrid, context)
+                else:
+                    result = context
             case HybridNoop():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = context
@@ -1670,31 +1839,6 @@ class RelTranslation:
                 )
         result = self.handle_children(result, hybrid, pipeline_idx)
         return result
-
-    @staticmethod
-    def partition_source_always_exists(subtree: HybridTree) -> bool:
-        """
-        Determines whether the data being partitioned by a `HybridPartition`
-        (i.e. the subtree of a `HybridPartitionChild`) always exists. This is
-        the same as `subtree.always_exists()`, except that `always_exists()`
-        treats a `HybridPartitionChild` at the start of a pipeline as always
-        existing by construction, which would hide a filter applied to the
-        data being partitioned if that data is itself reached through
-        another layer of PARTITION. This method recurses through any such
-        nested layers to check the real underlying data instead.
-
-        Args:
-            `subtree`: the `HybridTree` of the data being partitioned.
-
-        Returns:
-            Whether `subtree`, and the real data it is ultimately derived
-            from, always exists.
-        """
-        if isinstance(subtree.pipeline[0], HybridPartitionChild):
-            return RelTranslation.partition_source_always_exists(
-                subtree.pipeline[0].subtree
-            )
-        return subtree.always_exists()
 
     @staticmethod
     def preprocess_root(
