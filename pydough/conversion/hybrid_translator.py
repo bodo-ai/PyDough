@@ -1429,7 +1429,7 @@ class HybridTranslator:
                     )
                     # Create a new hybrid tree for the current global context, which
                     # will be the a successor of the hybrid tree for the ancestor context.
-                    successor_hybrid = HybridTree(HybridRoot(), {})
+                    successor_hybrid = HybridTree(HybridRoot(node.cross_id), {})
                     hybrid.add_successor(successor_hybrid)
                     return successor_hybrid
             case TableCollection() | SubCollection():
@@ -1524,7 +1524,9 @@ class HybridTranslator:
                     is_aggregate,
                 )
 
-                hybrid.add_operation(HybridCrossRHSBoundary(hybrid.pipeline[-1]))
+                hybrid.add_operation(
+                    HybridCrossRHSBoundary(hybrid.pipeline[-1], node.cross_id)
+                )
 
                 return hybrid
 

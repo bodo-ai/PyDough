@@ -153,7 +153,7 @@ def explain_term(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
             )
         else:
-            qualified_node = qualify_node(node, session)
+            qualified_node = qualify_node(node, session, mark_cross_rhs=False)
     except PyDoughQDAGException as e:
         if "Unrecognized term" in str(e):
             lines.append(

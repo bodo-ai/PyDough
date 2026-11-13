@@ -36,6 +36,7 @@ from pydough.qdag.collections.user_collection_qdag import (
 from pydough.types import NumericType
 from pydough.utilities import ExplodeSpec
 
+from .conversion_helpers import build_new_ref_name
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
     HybridChildRefExpr,
@@ -130,8 +131,9 @@ class HybridRoot(HybridOperation):
     Class for HybridOperation corresponding to the "root" context.
     """
 
-    def __init__(self):
+    def __init__(self, cross_id: int | None = None):
         super().__init__({}, {}, [], [])
+        self.cross_id = cross_id
 
     def __repr__(self):
         return "ROOT"
@@ -234,7 +236,7 @@ class HybridCalculate(HybridOperation):
                     and (self.predecessor.search_term_definition(used_name) == expr)
                 ):
                     break
-                used_name = f"{name}_{idx}"
+                used_name = build_new_ref_name(name, idx)
                 idx += 1
                 new_renamings[name] = used_name
             terms[used_name] = expr
@@ -437,9 +439,11 @@ class HybridNoop(HybridOperation):
 class HybridCrossRHSBoundary(HybridNoop):
     """Marks the last operation belonging to the RHS operand of CROSS."""
 
-    def __init__(self, last_operation: HybridOperation):
+    def __init__(self, last_operation: HybridOperation, cross_id: int):
         super().__init__(last_operation)
-        self.is_hidden = True
+        # Keep the boundary in HybridTree equality so two child trees with
+        # windows on different sides of CROSS are not merged.
+        self.cross_id = cross_id
 
     def __repr__(self) -> str:
         return "CROSS_RHS_BOUNDARY"

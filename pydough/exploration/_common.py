@@ -163,7 +163,7 @@ def qualify_safely(
         to ``PyDoughCollectionQDAG`` or ``PyDoughExpressionQDAG`` as needed.
     """
     try:
-        return qualify_node(node, session), None
+        return qualify_node(node, session, mark_cross_rhs=False), None
     except Exception as e:
         return None, e
 

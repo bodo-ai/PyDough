@@ -6,6 +6,7 @@ __all__ = ["CrossRHSBoundary"]
 
 from .augmenting_child_operator import AugmentingChildOperator
 from .collection_qdag import PyDoughCollectionQDAG
+from .collection_tree_form import CollectionTreeForm
 
 
 class CrossRHSBoundary(AugmentingChildOperator):
@@ -15,8 +16,9 @@ class CrossRHSBoundary(AugmentingChildOperator):
     Preserves the predecessor's terms and cardinality.
     """
 
-    def __init__(self, predecessor: PyDoughCollectionQDAG):
+    def __init__(self, predecessor: PyDoughCollectionQDAG, cross_id: int):
         super().__init__(predecessor, [])
+        self.cross_id = cross_id
 
     @property
     def key(self) -> str:
@@ -34,7 +36,7 @@ class CrossRHSBoundary(AugmentingChildOperator):
         # The boundary is an internal bookkeeping node, not a user operator.
         return self.preceding_context.to_string()
 
-    def to_tree_form(self, is_last: bool):
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         return self.preceding_context.to_tree_form(is_last)
 
     def equals(self, other: object) -> bool:
