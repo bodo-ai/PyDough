@@ -36,6 +36,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
+    nested_decorrelation_cumulative_thresholds,
+    nested_decorrelation_multiple_aggregates,
     quantile_function_test_1,
     quantile_function_test_2,
     rank_a,
@@ -64,6 +66,7 @@ from tests.test_pydough_functions.user_collections import (
     user_range_collection_4,
     user_range_collection_5,
     user_range_collection_6,
+    user_range_collection_7,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -138,6 +141,18 @@ from tests.testing_utilities import (
             None,
             "global_acctbal_breakdown",
             id="global_acctbal_breakdown",
+        ),
+        pytest.param(
+            nested_decorrelation_cumulative_thresholds,
+            None,
+            "nested_decorrelation_cumulative_thresholds",
+            id="nested_decorrelation_cumulative_thresholds",
+        ),
+        pytest.param(
+            nested_decorrelation_multiple_aggregates,
+            None,
+            "nested_decorrelation_multiple_aggregates",
+            id="nested_decorrelation_multiple_aggregates",
         ),
         pytest.param(
             simple_smallest_or_largest,
@@ -269,6 +284,12 @@ from tests.testing_utilities import (
             None,
             "user_range_collection_6",
             id="user_range_collection_6",
+        ),
+        pytest.param(
+            user_range_collection_7,
+            None,
+            "user_range_collection_7",
+            id="user_range_collection_7",
         ),
     ],
 )

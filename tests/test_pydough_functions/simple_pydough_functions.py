@@ -4248,6 +4248,51 @@ def partition_filtered_nested_subcollection_count():
     )
 
 
+def nested_decorrelation_cumulative_thresholds():
+    """
+    Regression test for a stale reverse cardinality bug where nested
+    decorrelation (a correlated child of a correlated child) could drop the
+    outer grouping keys of an intermediate aggregation, since each level of
+    decorrelation must preserve the previous level's grouping guarantees.
+    """
+    order_info = orders.WHERE(key == 1).CALCULATE(
+        order_key=key,
+        order_value=SUM(lines.extended_price),
+    )
+    region_thresholds = regions.WHERE(key <= 2).CALCULATE(r=key)
+    region_totals = region_thresholds.CALCULATE(
+        r,
+        amount=SUM(CROSS(order_info).WHERE(order_key <= r).order_value),
+    )
+    thresholds = nations.WHERE(key <= 4).CALCULATE(k=key)
+    return thresholds.CALCULATE(
+        k,
+        total_value=SUM(CROSS(region_totals).WHERE(r <= k).amount),
+    ).ORDER_BY(k.ASC())
+
+
+def nested_decorrelation_multiple_aggregates():
+    """
+    Regression test for the same stale reverse cardinality bug as
+    `nested_decorrelation_cumulative_thresholds`, but for a correlated child
+    with multiple aggregates, one of which is nested two levels deep
+    (`orders.lines.part.lines`).
+    """
+    line_info = lines.CALCULATE(same_part_count=COUNT(part.lines))
+    order_info = orders.WHERE(key == 1).CALCULATE(
+        order_key=key,
+        order_value=SUM(lines.extended_price),
+        part_usage_score=SUM(line_info.same_part_count),
+    )
+    thresholds = nations.WHERE(key <= 4).CALCULATE(k=key)
+    matching_orders = CROSS(order_info).WHERE(order_key <= k)
+    return thresholds.CALCULATE(
+        k,
+        total_value=SUM(matching_orders.order_value),
+        part_usage_score=SUM(matching_orders.part_usage_score),
+    ).ORDER_BY(k.ASC())
+
+
 def chained_partition_transformed_key():
     """
     Test for fixing the problem with chaining a second PARTITION on top of a
