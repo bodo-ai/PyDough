@@ -368,6 +368,23 @@ class HybridDecorrelater:
         )
         original_general_join: HybridExpr | None = child.subtree.general_join_condition
         new_parent.add_successor(child_root)
+        # If `child_root` had no pre-existing join tying it to `old_parent`
+        # (purely correlated, e.g. via a `CROSS` filter) and `new_parent` is
+        # not singular, its rows may now repeat per `new_parent` row, so any
+        # pre-existing child connections below it have a stale singular
+        # `reverse_cardinality` that must be promoted to plural.
+        if (
+            not original_join_keys
+            and original_general_join is None
+            and not new_parent.is_singular()
+        ):
+            level: HybridTree | None = child_root
+            while level is not None:
+                for connection in level.children:
+                    connection.reverse_cardinality = (
+                        connection.reverse_cardinality.add_plural()
+                    )
+                level = level.successor
         # Update the join keys to join on the unique keys of all the ancestors,
         # and the aggregation keys along with them.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
