@@ -450,6 +450,40 @@ def cross_case(
                 columns=["k", "c", "oid", "total"],
             ),
         ),
+        cross_case(
+            queries.cross_rhs_per_lhs_ancestor,
+            lambda: pd.DataFrame(
+                [
+                    (1, nk, oid, 2 * len(ORDER_IDS), CROSS_TOTAL)
+                    for nk in (1, 2)
+                    for oid in ORDER_IDS
+                ],
+                columns=["rk", "nk", "oid", "n", "total"],
+            ),
+        ),
+        cross_case(
+            queries.cross_nested_per_inner_lhs,
+            lambda: pd.DataFrame(
+                [
+                    (rk, k, oid, RHS_TOTAL)
+                    for rk in REGION_KEYS
+                    for k in CUSTOMER_KEYS
+                    for oid in ORDER_IDS
+                ],
+                columns=["rk", "k", "oid", "t"],
+            ),
+        ),
+        cross_case(
+            queries.cross_range_lhs,
+            lambda: pd.DataFrame(
+                [
+                    (i, oid, rank, RHS_TOTAL)
+                    for i in (0, 1)
+                    for rank, oid in enumerate(ORDER_IDS, start=1)
+                ],
+                columns=["i", "oid", "r", "tot"],
+            ),
+        ),
     ],
 )
 def cross_pipeline_test_data(request: pytest.FixtureRequest) -> PyDoughPandasTest:

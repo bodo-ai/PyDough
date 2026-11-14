@@ -4,6 +4,8 @@
 # mypy: ignore-errors
 # The test harness supplies the PyDough names when it transforms each function.
 
+import pydough
+
 
 def cross_top():
     accounts = (
@@ -394,3 +396,41 @@ def cross_explicit_per_after_join():
     rhs = accounts.orders.CALCULATE(c, oid, amount=total_price)
     lhs = customers.WHERE(key <= 2).CALCULATE(k=key)
     return lhs.CROSS(rhs).CALCULATE(k, c, oid, total=RELSUM(amount, per="acct"))
+
+
+def cross_rhs_per_lhs_ancestor():
+    # `per` names an ancestor on the LHS side of the CROSS. The explicit
+    # request wins: the window spans both LHS nations of the region.
+    rhs = orders.WHERE(customer_key <= 2).CALCULATE(
+        oid=key,
+        n=RELCOUNT(key, per="regions"),
+        total=RELSUM(total_price, per="regions"),
+    )
+    lhs = (
+        regions.WHERE(key == 1)
+        .CALCULATE(rk=key)
+        .nations.WHERE(key <= 2)
+        .CALCULATE(nk=key)
+    )
+    return lhs.CROSS(rhs).CALCULATE(rk, nk, oid, n, total)
+
+
+def cross_nested_per_inner_lhs():
+    # `per` names the LHS of the inner CROSS, which lies inside the RHS of
+    # the outer CROSS. The inner CROSS adds no implicit key, the outer one
+    # still adds the region.
+    ranked = orders.WHERE(customer_key <= 2).CALCULATE(
+        oid=key, t=RELSUM(total_price, per="customers")
+    )
+    inner = customers.WHERE(key <= 2).CALCULATE(k=key).CROSS(ranked)
+    lhs = regions.WHERE(key <= 1).CALCULATE(rk=key)
+    return lhs.CROSS(inner).CALCULATE(rk, k, oid, t)
+
+
+def cross_range_lhs():
+    # A generated collection as the LHS still identifies each LHS row.
+    rhs = orders.WHERE(customer_key <= 2).CALCULATE(
+        oid=key, r=RANKING(by=key.ASC()), tot=RELSUM(total_price)
+    )
+    lhs = pydough.range_collection("rng", "i", 0, 2).CALCULATE(i)
+    return lhs.CROSS(rhs).CALCULATE(i, oid, r, tot)

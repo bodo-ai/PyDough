@@ -989,13 +989,21 @@ class HybridTranslator:
             )
 
     def add_cross_scope_keys(
-        self, hybrid: HybridTree, partition_args: list[HybridExpr]
+        self,
+        hybrid: HybridTree,
+        partition_args: list[HybridExpr],
+        *,
+        per_levels: int | None = None,
     ) -> None:
         """Add the row identity of each LHS whose CROSS RHS contains this step.
 
         Translation appends an end marker only after the RHS is complete.
         Walk the same ancestry as add_unique_terms, including the stack for
         child subtrees, and ignore scopes whose end markers we already saw.
+
+        If explicit `per=` reaches the LHS of a scope or an ancestor above
+        it, that scope must not make the partition finer. Enclosing scopes
+        beyond the explicit ancestor still apply.
         """
         closed_scopes: set[int] = set()
         level: HybridTree | None = hybrid
@@ -1014,6 +1022,7 @@ class HybridTranslator:
                 and root.cross_id is not None
                 and root.cross_id not in closed_scopes
                 and level.parent is not None
+                and (per_levels is None or distance >= per_levels)
             ):
                 include_ancestor_keys = True
             elif include_ancestor_keys:
@@ -1222,7 +1231,9 @@ class HybridTranslator:
                 # for that ancestor level.
                 if expr.levels is not None:
                     self.add_unique_terms(hybrid, expr.levels, 0, partition_args, None)
-                self.add_cross_scope_keys(hybrid, partition_args)
+                self.add_cross_scope_keys(
+                    hybrid, partition_args, per_levels=expr.levels
+                )
                 # Convert all of the window function arguments to hybrid
                 # expressions.
                 for arg in expr.args:
