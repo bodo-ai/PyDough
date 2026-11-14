@@ -45,6 +45,8 @@ from pydough.unqualified import (
     qualify_term,
 )
 
+from ._common import skip_cross_boundaries
+
 
 def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedNode | None:
     """
@@ -206,7 +208,7 @@ def explain_term(
                 f"The term is the following expression: {qualified_term.to_string(True)}"
             )
             lines.append("")
-            collection: PyDoughCollectionQDAG = qualified_node
+            collection: PyDoughCollectionQDAG = skip_cross_boundaries(qualified_node)
             expr: PyDoughExpressionQDAG = qualified_term
             while True:
                 match expr:
@@ -241,7 +243,9 @@ def explain_term(
                             isinstance(expr, Reference)
                             and collection.preceding_context is not None
                         ):
-                            collection = collection.preceding_context
+                            collection = skip_cross_boundaries(
+                                collection.preceding_context
+                            )
                     case ColumnProperty():
                         lines.append(
                             f"This is column '{expr.column_property.name}' of collection '{expr.column_property.collection.name}'"
@@ -551,6 +555,7 @@ def explain_term(
                     )
         else:
             assert isinstance(qualified_term, PyDoughCollectionQDAG)
+            qualified_term = skip_cross_boundaries(qualified_term)
             lines.append("The term is the following child of the collection:")
             if verbose:
                 for line in qualified_term.to_tree_string().splitlines():

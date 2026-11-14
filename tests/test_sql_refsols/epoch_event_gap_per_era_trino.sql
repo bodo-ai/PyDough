@@ -8,7 +8,7 @@ WITH _t2 AS (
       'DAY',
       CAST(DATE_TRUNC(
         'DAY',
-        CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt) AS TIMESTAMP)
+        CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt) AS TIMESTAMP)
       ) AS TIMESTAMP),
       CAST(DATE_TRUNC('DAY', CAST(events.ev_dt AS TIMESTAMP)) AS TIMESTAMP)
     ) AS day_gap

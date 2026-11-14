@@ -6,7 +6,7 @@ WITH _t2 AS (
     events.ev_dt,
     DATEDIFF(
       CAST(events.ev_dt AS DATETIME),
-      CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt NULLS LAST) AS DATETIME),
+      CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt NULLS LAST) AS DATETIME),
       DAY
     ) AS day_gap
   FROM eras AS eras

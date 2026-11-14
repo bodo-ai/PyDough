@@ -9,6 +9,7 @@ __all__ = [
     "HybridCalculate",
     "HybridChildPullUp",
     "HybridCollectionAccess",
+    "HybridCrossRHSBoundary",
     "HybridExplode",
     "HybridFilter",
     "HybridLimit",
@@ -130,8 +131,9 @@ class HybridRoot(HybridOperation):
     Class for HybridOperation corresponding to the "root" context.
     """
 
-    def __init__(self):
+    def __init__(self, cross_id: int | None = None):
         super().__init__({}, {}, [], [])
+        self.cross_id: int | None = cross_id
 
     def __repr__(self):
         return "ROOT"
@@ -430,8 +432,21 @@ class HybridNoop(HybridOperation):
             last_operation.unique_exprs,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "NOOP"
+
+
+class HybridCrossRHSBoundary(HybridNoop):
+    """Marks the last operation belonging to the RHS operand of CROSS."""
+
+    def __init__(self, last_operation: HybridOperation, cross_id: int):
+        super().__init__(last_operation)
+        # The marker position participates in tree comparisons. The ID only
+        # pairs roots and boundaries during translation, not tree equality.
+        self.cross_id: int = cross_id
+
+    def __repr__(self) -> str:
+        return "CROSS_RHS_BOUNDARY"
 
 
 class HybridPartition(HybridOperation):

@@ -11,6 +11,7 @@ __all__ = [
     "ChildOperatorChildAccess",
     "ChildReferenceCollection",
     "CollectionAccess",
+    "CrossRHSBoundary",
     "Explode",
     "GlobalContext",
     "OrderBy",
@@ -34,6 +35,7 @@ from .child_operator_child_access import ChildOperatorChildAccess
 from .child_reference_collection import ChildReferenceCollection
 from .collection_access import CollectionAccess
 from .collection_qdag import PyDoughCollectionQDAG
+from .cross_rhs_boundary import CrossRHSBoundary
 from .explode import Explode
 from .global_context import GlobalContext
 from .order_by import OrderBy

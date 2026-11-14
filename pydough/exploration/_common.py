@@ -30,6 +30,7 @@ from pydough.qdag import (
     ChildReferenceCollection,
     ChildReferenceExpression,
     ColumnProperty,
+    CrossRHSBoundary,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -145,6 +146,13 @@ def find_source_collection(node: PyDoughCollectionQDAG) -> str | None:
     return None
 
 
+def skip_cross_boundaries(node: PyDoughCollectionQDAG) -> PyDoughCollectionQDAG:
+    """Skip compiler markers when describing a collection operation."""
+    while isinstance(node, CrossRHSBoundary):
+        node = node.preceding_context
+    return node
+
+
 def qualify_safely(
     node: UnqualifiedNode,
     session: PyDoughSession,
@@ -223,6 +231,7 @@ def describe_subcollection_arg(
         - ``"implicit_scope_note"``  — explanatory string when ``access_path``
           is non-empty; ``None`` otherwise.
     """
+    collection = skip_cross_boundaries(collection)
     access_path: list[str] = []
     filters: list[str] = []
     user_gen: PyDoughUserGeneratedCollectionQDag | None = None
@@ -329,14 +338,16 @@ def _resolve_collection_arg(
         and hasattr(parent, "children")
         and arg.child_idx < len(parent.children)
     ):
-        child: PyDoughCollectionQDAG = parent.children[arg.child_idx]
+        child: PyDoughCollectionQDAG = skip_cross_boundaries(
+            parent.children[arg.child_idx]
+        )
         if isinstance(child, ChildOperatorChildAccess):
-            return child.child_access
+            return skip_cross_boundaries(child.child_access)
     # ChildReferenceCollection always carries the underlying collection via
     # .collection — use it as a fallback when the children-list path fails.
     if isinstance(arg, ChildReferenceCollection):
-        return arg.collection
-    return arg
+        return skip_cross_boundaries(arg.collection)
+    return skip_cross_boundaries(arg)
 
 
 def describe_expression(
