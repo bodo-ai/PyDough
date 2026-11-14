@@ -392,11 +392,15 @@ class RelTranslation:
                 return CallExpression(expr.operator, expr.typ, inputs)
             case HybridWindowExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
-                partition_inputs = [
-                    self.translate_expression(arg, context)
-                    for arg in expr.partition_args
-                ]
-                order_inputs = [
+                # Remove duplicated partition inputs while preserving order
+                partition_inputs: list[RelationalExpression] = []
+                for arg in expr.partition_args:
+                    partition_input: RelationalExpression = self.translate_expression(
+                        arg, context
+                    )
+                    if partition_input not in partition_inputs:
+                        partition_inputs.append(partition_input)
+                order_inputs: list[ExpressionSortInfo] = [
                     ExpressionSortInfo(
                         self.translate_expression(arg.expr, context),
                         arg.asc,

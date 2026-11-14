@@ -7,7 +7,7 @@ WITH _t1 AS (
 ), _t2 AS (
   SELECT
     _t4.c_custkey,
-    SUM(orders.o_totalprice) OVER (PARTITION BY region.r_regionkey, _t4.c_custkey, _t4.c_custkey) AS t
+    SUM(orders.o_totalprice) OVER (PARTITION BY region.r_regionkey, _t4.c_custkey) AS t
   FROM _t1 AS _t4
   JOIN tpch.region AS region
     ON region.r_regionkey <= 1

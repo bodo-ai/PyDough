@@ -7,7 +7,7 @@ WITH _t2 AS (
     DATEDIFF(
       EVENTS.ev_dt,
       LAG(EVENTS.ev_dt, 1) OVER (
-        PARTITION BY ERAS.er_name, ERAS.er_name
+        PARTITION BY ERAS.er_name
         ORDER BY CASE WHEN EVENTS.ev_dt IS NULL THEN 1 ELSE 0 END, EVENTS.ev_dt
       )
     ) AS day_gap

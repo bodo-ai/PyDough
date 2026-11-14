@@ -15,7 +15,7 @@ WITH _t1 AS (
     _t7.c_custkey,
     _t6.n_nationkey,
     orders.o_custkey,
-    SUM(orders.o_totalprice) OVER (PARTITION BY _t6.n_nationkey, _t7.c_custkey, _t6.n_nationkey) AS t
+    SUM(orders.o_totalprice) OVER (PARTITION BY _t6.n_nationkey, _t7.c_custkey) AS t
   FROM _t1 AS _t6
   CROSS JOIN _t2 AS _t7
   JOIN tpch.orders AS orders
