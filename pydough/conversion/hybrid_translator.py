@@ -4,7 +4,7 @@ Definition of the logic to convert QDAG nodes into a HybridTree
 
 __all__ = ["HybridTranslator", "HybridTree"]
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from decimal import Decimal
 
 import pydough.pydough_operators as pydop
@@ -999,16 +999,16 @@ class HybridTranslator:
         """
         closed_scopes: set[int] = set()
         level: HybridTree | None = hybrid
-        distance = 0
-        stack = iter(reversed(self.stack))
-        include_ancestor_keys = False
+        distance: int = 0
+        stack: Iterator[HybridTree] = iter(reversed(self.stack))
+        include_ancestor_keys: bool = False
         while level is not None:
             closed_scopes.update(
                 op.cross_id
                 for op in level.pipeline
                 if isinstance(op, HybridCrossRHSBoundary)
             )
-            root = level.pipeline[0]
+            root: HybridOperation = level.pipeline[0]
             if (
                 isinstance(root, HybridRoot)
                 and root.cross_id is not None
@@ -1655,7 +1655,7 @@ class HybridTranslator:
                     if scope_keys:
                         # LIMIT would keep K rows across all LHS rows. Rank
                         # and filter separately for each LHS row instead.
-                        rank = HybridWindowExpr(
+                        rank: HybridWindowExpr = HybridWindowExpr(
                             pydop.RANKING,
                             [],
                             scope_keys,
@@ -1663,10 +1663,10 @@ class HybridTranslator:
                             NumericType(),
                             {},
                         )
-                        threshold = HybridLiteralExpr(
+                        threshold: HybridLiteralExpr = HybridLiteralExpr(
                             Literal(node.records_to_keep, NumericType())
                         )
-                        condition = HybridFunctionExpr(
+                        condition: HybridFunctionExpr = HybridFunctionExpr(
                             pydop.LEQ, [rank, threshold], BooleanType()
                         )
                         hybrid.add_operation(

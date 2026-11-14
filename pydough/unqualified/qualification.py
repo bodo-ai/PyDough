@@ -65,7 +65,7 @@ from .unqualified_transform import transform_cell
 
 class Qualifier:
     def __init__(self, session: PyDoughSession):
-        self._next_cross_id = 0
+        self._next_cross_id: int = 0
         self._session: PyDoughSession = session
         assert session.metadata is not None
         self._builder: AstNodeBuilder = AstNodeBuilder(session.metadata)
@@ -1369,7 +1369,7 @@ class Qualifier:
 
         # Now build a GlobalContext pointing to the qualified parent as its
         # ancestor, and use this as the new context for the child.
-        cross_id = self._next_cross_id
+        cross_id: int = self._next_cross_id
         self._next_cross_id += 1
         qualified_parent = GlobalContext(
             self.graph, qualified_parent, cross_id=cross_id

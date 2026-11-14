@@ -133,7 +133,7 @@ class HybridRoot(HybridOperation):
 
     def __init__(self, cross_id: int | None = None):
         super().__init__({}, {}, [], [])
-        self.cross_id = cross_id
+        self.cross_id: int | None = cross_id
 
     def __repr__(self):
         return "ROOT"
@@ -432,7 +432,7 @@ class HybridNoop(HybridOperation):
             last_operation.unique_exprs,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "NOOP"
 
 
@@ -443,7 +443,7 @@ class HybridCrossRHSBoundary(HybridNoop):
         super().__init__(last_operation)
         # The marker position participates in tree comparisons. The ID only
         # pairs roots and boundaries during translation, not tree equality.
-        self.cross_id = cross_id
+        self.cross_id: int = cross_id
 
     def __repr__(self) -> str:
         return "CROSS_RHS_BOUNDARY"

@@ -18,7 +18,7 @@ class CrossRHSBoundary(AugmentingChildOperator):
 
     def __init__(self, predecessor: PyDoughCollectionQDAG, cross_id: int):
         super().__init__(predecessor, [])
-        self.cross_id = cross_id
+        self.cross_id: int = cross_id
 
     @property
     def key(self) -> str:

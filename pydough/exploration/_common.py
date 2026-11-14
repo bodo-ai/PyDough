@@ -338,7 +338,9 @@ def _resolve_collection_arg(
         and hasattr(parent, "children")
         and arg.child_idx < len(parent.children)
     ):
-        child = skip_cross_boundaries(parent.children[arg.child_idx])
+        child: PyDoughCollectionQDAG = skip_cross_boundaries(
+            parent.children[arg.child_idx]
+        )
         if isinstance(child, ChildOperatorChildAccess):
             return skip_cross_boundaries(child.child_access)
     # ChildReferenceCollection always carries the underlying collection via

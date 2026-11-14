@@ -34,8 +34,8 @@ class GlobalContext(PyDoughCollectionQDAG):
         cross_id: int | None = None,
     ):
         self._ancestor: PyDoughCollectionQDAG | None = ancestor
-        self.cross_id = cross_id
-        self._graph = graph
+        self.cross_id: int | None = cross_id
+        self._graph: GraphMetadata = graph
         self._collections: dict[str, PyDoughCollectionQDAG] = {}
         self._ancestral_mapping: dict[str, int] = {}
         self._all_terms: set[str] = set()
