@@ -59,7 +59,7 @@ from tests.testing_utilities import (
         pytest.param(
             TableCollectionInfo("regions")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
-            "Unrecognized term of TPCH: 'foo'. Did you mean: lines, parts, nations, orders, regions?",
+            "Unrecognized term of TPCH: 'foo'. Did you mean: colors, lines, months, parts, nations?",
             id="back_on_root",
         ),
         pytest.param(

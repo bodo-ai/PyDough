@@ -721,7 +721,6 @@ def mysql_sample_graph_path() -> str:
     """
     Return the path to the MySQL sample graph JSON file.
     """
-    os.path.dirname(os.path.dirname(__file__))
     return f"{os.path.dirname(__file__)}/test_metadata/mysql_sample_graphs.json"
 
 
@@ -746,7 +745,6 @@ def postgres_sample_graph_path() -> str:
     """
     Return the path to the PostGres sample graph JSON file.
     """
-    os.path.dirname(os.path.dirname(__file__))
     return f"{os.path.dirname(__file__)}/test_metadata/postgres_sample_graphs.json"
 
 
@@ -771,7 +769,6 @@ def oracle_sample_graph_path() -> str:
     """
     Return the path to the Oracle sample graph JSON file.
     """
-    os.path.dirname(os.path.dirname(__file__))
     return f"{os.path.dirname(__file__)}/test_metadata/oracle_sample_graphs.json"
 
 
@@ -848,13 +845,13 @@ def all_dialects_tpch_db_context(
             return trino_conn, get_trino_graphs("TPCH")
         case "mysql":
             mysql_conn = request.getfixturevalue("mysql_conn_db_context")
-            return mysql_conn("tpch"), get_mysql_sample_graph("TPCH")  #
+            return mysql_conn("tpch"), get_mysql_sample_graph("TPCH")
         case "postgres":
             db_context = request.getfixturevalue("postgres_conn_db_context")
-            return db_context, get_postgres_sample_graph("TPCH")  #
+            return db_context, get_postgres_sample_graph("TPCH")
         case "oracle":
             db_context = request.getfixturevalue("oracle_conn_db_context")
-            return db_context("tpch"), get_oracle_sample_graph("TPCH")  #
+            return db_context("tpch"), get_oracle_sample_graph("TPCH")
         case "databricks":
             db_context = request.getfixturevalue("databricks_conn_db_context")
             return (

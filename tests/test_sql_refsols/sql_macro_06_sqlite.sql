@@ -11,55 +11,92 @@ WITH months AS (
   SELECT
     date_val
   FROM months
+), _s2 AS (
+  SELECT
+    date_val
+  FROM _0
+  ORDER BY
+    1
+  LIMIT 5
+), _s0 AS (
+  SELECT
+    date_val
+  FROM _0
+  ORDER BY
+    1
+  LIMIT 5
 ), _s3 AS (
   SELECT
-    _1.date_val,
+    _s0.date_val,
     COUNT(*) AS n_rows
-  FROM _0 AS _1
+  FROM _s0 AS _s0
   JOIN tpch.orders AS orders
-    ON _1.date_val = DATE(orders.o_orderdate, 'start of month')
+    ON _s0.date_val = DATE(orders.o_orderdate, 'start of month')
   GROUP BY
     1
+), _s4 AS (
+  SELECT
+    date_val
+  FROM _0
+  ORDER BY
+    1
+  LIMIT 5
 ), _s7 AS (
   SELECT
-    _2.date_val,
+    _s4.date_val,
     COUNT(*) AS n_rows
-  FROM _0 AS _2
+  FROM _s4 AS _s4
   JOIN tpch.lineitem AS lineitem
-    ON _2.date_val = DATE(lineitem.l_shipdate, 'start of month')
+    ON _s4.date_val = DATE(lineitem.l_shipdate, 'start of month')
   GROUP BY
     1
+), _s8 AS (
+  SELECT
+    date_val
+  FROM _0
+  ORDER BY
+    1
+  LIMIT 5
 ), _s11 AS (
   SELECT
-    _3.date_val,
+    _s8.date_val,
     COUNT(*) AS n_rows
-  FROM _0 AS _3
+  FROM _s8 AS _s8
   JOIN tpch.lineitem AS lineitem
-    ON _3.date_val = DATE(lineitem.l_commitdate, 'start of month')
+    ON _s8.date_val = DATE(lineitem.l_commitdate, 'start of month')
   GROUP BY
     1
+), _s12 AS (
+  SELECT
+    date_val
+  FROM _0
+  ORDER BY
+    1
+  LIMIT 5
 ), _s15 AS (
   SELECT
-    _4.date_val,
+    _s12.date_val,
     COUNT(*) AS n_rows
-  FROM _0 AS _4
+  FROM _s12 AS _s12
   JOIN tpch.lineitem AS lineitem
-    ON _4.date_val = DATE(lineitem.l_receiptdate, 'start of month')
+    ON _s12.date_val = DATE(lineitem.l_receiptdate, 'start of month')
   GROUP BY
     1
 )
 SELECT
-  _0.date_val AS month,
+  _s2.date_val AS month,
   COALESCE(_s3.n_rows, 0) AS orders,
   COALESCE(_s7.n_rows, 0) AS lines_shipped,
   COALESCE(_s11.n_rows, 0) AS lines_committed,
   COALESCE(_s15.n_rows, 0) AS lines_received
-FROM _0 AS _0
+FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
-  ON _0.date_val = _s3.date_val
+  ON _s2.date_val = _s3.date_val
 LEFT JOIN _s7 AS _s7
-  ON _0.date_val = _s7.date_val
+  ON _s2.date_val = _s7.date_val
 LEFT JOIN _s11 AS _s11
-  ON _0.date_val = _s11.date_val
+  ON _s11.date_val = _s2.date_val
 LEFT JOIN _s15 AS _s15
-  ON _0.date_val = _s15.date_val
+  ON _s15.date_val = _s2.date_val
+ORDER BY
+  1

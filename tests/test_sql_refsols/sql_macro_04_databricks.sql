@@ -1,5 +1,5 @@
 WITH _0 AS (
-  SELECT
+  SELECT DISTINCT
     EXPLODE(SPLIT(p_name, ' ')) AS color
   FROM part
 )

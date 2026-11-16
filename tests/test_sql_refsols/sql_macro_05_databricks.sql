@@ -7,7 +7,7 @@ WITH _s0 AS (
     2
   LIMIT 3
 ), _0 AS (
-  SELECT
+  SELECT DISTINCT
     EXPLODE(SPLIT(p_name, ' ')) AS color
   FROM part
 )

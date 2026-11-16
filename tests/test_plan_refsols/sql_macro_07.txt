@@ -1,0 +1,2 @@
+ROOT(columns=[('color', color)], orderings=[(color):asc_first], limit=5:numeric)
+ SQLQUERYSCAN(table=SELECT DISTINCT l.value AS color FROM part p JOIN json_each('["' || replace(p.p_name, ' ', '","') || '"]') l, columns={'color': color})

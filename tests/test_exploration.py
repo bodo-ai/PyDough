@@ -86,9 +86,12 @@ Collections: graph contains no collections
                 """
 PyDough graph: TPCH
 Collections:
+  colors
   customers
   lines
+  months
   nations
+  order_priorities
   orders
   parts
   regions
@@ -99,7 +102,7 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
 """,
                 """
 PyDough graph: TPCH
-Collections: customers, lines, nations, orders, parts, regions, suppliers, supply_records
+Collections: coolors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
 Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
 """,
@@ -197,7 +200,7 @@ Call pydough.explain(graph['lines'][property_name]) to learn more about any of t
                 """
 PyDough collection: lines
 Scalar properties: comment, commit_date, discount, extended_price, line_number, order_key, part_key, quantity, receipt_date, return_flag, ship_date, ship_instruct, ship_mode, status, supplier_key, tax
-Subcollection properties: commit-month, order, part, part_and_supplier, receipt_month, ship_month, supplier
+Subcollection properties: commit_month, order, part, part_and_supplier, receipt_month, ship_month, supplier
 Call pydough.explain(graph['lines'][property_name]) to learn more about any of these properties.
 """,
             ),

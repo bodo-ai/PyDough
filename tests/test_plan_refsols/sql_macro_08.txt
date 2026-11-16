@@ -1,0 +1,6 @@
+ROOT(columns=[('color', color), ('n_parts', n_rows)], orderings=[(color):asc_first])
+ AGGREGATE(keys={'color': color}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=CONTAINS(t1.p_name, JOIN_STRINGS('':string, ' ':string, t0.color, ' ':string)) | ENDSWITH(t1.p_name, JOIN_STRINGS('':string, ' ':string, t0.color)) | STARTSWITH(t1.p_name, JOIN_STRINGS('':string, t0.color, ' ':string)), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'color': t0.color})
+   LIMIT(limit=5:numeric, columns={'color': color}, orderings=[(color):asc_first])
+    SQLQUERYSCAN(table=SELECT DISTINCT l.value AS color FROM part p JOIN json_each('["' || replace(p.p_name, ' ', '","') || '"]') l, columns={'color': color})
+   SCAN(table=tpch.PART, columns={'p_name': p_name})

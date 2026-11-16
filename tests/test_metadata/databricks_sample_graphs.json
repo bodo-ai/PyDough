@@ -633,7 +633,7 @@
       {
         "name": "colors",
         "type": "sql query",
-        "query text": "SELECT explode(SPLIT(p.p_name, ' ')) AS color FROM part as p",
+        "query text": "SELECT distinct explode(SPLIT(p.p_name, ' ')) AS color FROM part as p",
         "unique properties": ["color"],
         "properties": [
           {

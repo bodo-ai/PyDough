@@ -1,0 +1,11 @@
+WITH _0 AS (
+  SELECT DISTINCT
+    UNNEST(STR_SPLIT(p_name, ' ')) AS color
+  FROM part
+)
+SELECT
+  color
+FROM _0
+ORDER BY
+  1 NULLS FIRST
+LIMIT 5
