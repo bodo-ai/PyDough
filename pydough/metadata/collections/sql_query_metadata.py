@@ -125,7 +125,7 @@ class SQLQueryMetadata(CollectionMetadata):
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
         """
-        Parses a JSON object into the metadata for a simple table collection
+        Parses a JSON object into the metadata for a SQL query as a table collection
         and inserts it into the graph.
 
         Args:
