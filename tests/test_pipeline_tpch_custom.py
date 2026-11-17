@@ -7189,6 +7189,7 @@ from .testing_utilities import (
                     }
                 ),
                 "sql_macro_01",
+                order_sensitive=True,
             ),
             id="sql_macro_01",
         ),
@@ -7203,6 +7204,7 @@ from .testing_utilities import (
                     }
                 ),
                 "sql_macro_02",
+                order_sensitive=True,
             ),
             id="sql_macro_02",
         ),
@@ -7291,6 +7293,7 @@ from .testing_utilities import (
                     }
                 ),
                 "sql_macro_06",
+                order_sensitive=True,
             ),
             id="sql_macro_06",
         ),
@@ -7304,6 +7307,7 @@ from .testing_utilities import (
                     }
                 ),
                 "sql_macro_07",
+                order_sensitive=True,
             ),
             id="sql_macro_07",
         ),
@@ -7318,8 +7322,169 @@ from .testing_utilities import (
                     }
                 ),
                 "sql_macro_08",
+                order_sensitive=True,
             ),
             id="sql_macro_08",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " colors"
+                " .CALCULATE(color)"
+                " .TOP_K(5, by=color.ASC())"
+                " .parts"
+                " .BEST(by=(retail_price.DESC(), key.ASC()), per='colors')"
+                " .CALCULATE(color, key, retail_price)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "colors": ["almond", "antique", "aquamarine", "azure", "beige"],
+                        "key": [198999, 198999, 196999, 198999, 191998],
+                        "retail_price": [2097.99, 2097.99, 2095.99, 2097.99, 2089.99],
+                    }
+                ),
+                "sql_macro_09",
+                order_sensitive=True,
+            ),
+            id="sql_macro_09",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "chosen_orders = orders.WHERE(PERCENTILE(by=(total_price.ASC(), key.ASC()), n_buckets=10) == 1)\n"
+                "result = order_priorities.CALCULATE(prio=name, n_chosen=COUNT(chosen_orders))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "prio": [
+                            "1-URGENT",
+                            "2-HIGH",
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                        ],
+                        "n_chosen": [30037, 29768, 29971, 30172, 30052],
+                    }
+                ),
+                "sql_macro_10",
+            ),
+            id="sql_macro_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " order_priorities"
+                " .CALCULATE(total_val=SUM(orders.total_price))"
+                " .CALCULATE(prio=value, cum_val=RELSUM(total_val, by=name.DESC(), cumulative=True))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "prio": [1, 2, 3, 4, 5],
+                        "cum_val": [
+                            226829306447.46,
+                            181410577010.38,
+                            135930800767.35,
+                            90777192678.89,
+                            45501158695.79,
+                        ],
+                    }
+                ),
+                "sql_macro_11",
+            ),
+            id="sql_macro_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " colors"
+                " .CALCULATE(color)"
+                " .EXPLODE(color, 'letters', value_name='letter', index_name='idx', version='string', delimiter='')"
+                " .PARTITION(name='letter_groups', by=letter)"
+                " .CALCULATE(letter, n_occur=COUNT(letters), n_colors=NDISTINCT(letters.color))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "letters": list("abcdefghijklmnopqrstuvwyz"),
+                        "n_occur": [
+                            46,
+                            12,
+                            18,
+                            24,
+                            58,
+                            9,
+                            12,
+                            18,
+                            34,
+                            1,
+                            9,
+                            37,
+                            19,
+                            37,
+                            43,
+                            13,
+                            4,
+                            38,
+                            27,
+                            24,
+                            16,
+                            6,
+                            10,
+                            13,
+                            1,
+                        ],
+                        "n_colors": [
+                            40,
+                            12,
+                            16,
+                            21,
+                            50,
+                            7,
+                            12,
+                            18,
+                            31,
+                            1,
+                            8,
+                            33,
+                            18,
+                            34,
+                            36,
+                            11,
+                            4,
+                            35,
+                            26,
+                            22,
+                            15,
+                            6,
+                            10,
+                            13,
+                            1,
+                        ],
+                    }
+                ),
+                "sql_macro_12",
+                skipped_dialects={"ANSI", "SQLITE", "MYSQL", "ORACLE"},
+            ),
+            id="sql_macro_12",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "chosen_combinations = ("
+                " order_priorities.CALCULATE(priority=name)"
+                " .CROSS(colors.CALCULATE(color))"
+                " .WHERE(HASNOT(parts.WHERE(size < 3).lines.WHERE((ship_date < DATETIME('1992-02-01')) & (ship_mode == 'RAIL')).order.WHERE((clerk < 'Clerk#000000100') & (order_date < DATETIME('1992-02-01')) & (order_priority == priority))))"
+                ")\n"
+                "result = TPCH.CALCULATE(n=COUNT(chosen_combinations))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [445],
+                    }
+                ),
+                "sql_macro_13",
+            ),
+            id="sql_macro_13",
         ),
     ],
 )

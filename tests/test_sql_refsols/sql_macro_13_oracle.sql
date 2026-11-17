@@ -1,0 +1,70 @@
+WITH "_0" AS (
+  SELECT
+    '1-URGENT' AS PRIORITY_NAME,
+    1 AS PRIORITY_VALUE
+  UNION ALL
+  SELECT
+    '2-HIGH' AS "2-HIGH",
+    2 AS "2"
+  UNION ALL
+  SELECT
+    '3-MEDIUM' AS "3-MEDIUM",
+    3 AS "3"
+  UNION ALL
+  SELECT
+    '4-NOT SPECIFIED' AS "4-NOT SPECIFIED",
+    4 AS "4"
+  UNION ALL
+  SELECT
+    '5-LOW' AS "5-LOW",
+    5 AS "5"
+), "_1" AS (
+  SELECT DISTINCT
+    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, L.LVL) AS COLOR
+  FROM PART P
+  CROSS JOIN LATERAL (
+    SELECT
+      "LEVEL" AS LVL
+    FROM DUAL
+    CONNECT BY "LEVEL" <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
+  ) AS L
+), "_u_0" AS (
+  SELECT
+    "_3".COLOR AS "_u_1",
+    "_2".PRIORITY_NAME AS "_u_2"
+  FROM "_0" "_2"
+  CROSS JOIN "_1" "_3"
+  JOIN TPCH.PART PART
+    ON (
+      PART.P_NAME LIKE CONCAT('%', (
+        ' ' || NVL("_3".COLOR, '')
+      ))
+      OR PART.P_NAME LIKE CONCAT('%', (
+        ' ' || NVL("_3".COLOR, '') || ' '
+      ), '%')
+      OR PART.P_NAME LIKE CONCAT((
+        NVL("_3".COLOR, '') || ' '
+      ), '%')
+    )
+    AND PART.P_SIZE < 3
+  JOIN TPCH.LINEITEM LINEITEM
+    ON LINEITEM.L_PARTKEY = PART.P_PARTKEY
+    AND LINEITEM.L_SHIPDATE < TO_DATE('1992-02-01', 'YYYY-MM-DD')
+    AND LINEITEM.L_SHIPMODE = 'RAIL'
+  JOIN TPCH.ORDERS ORDERS
+    ON LINEITEM.L_ORDERKEY = ORDERS.O_ORDERKEY
+    AND ORDERS.O_CLERK < 'Clerk#000000100'
+    AND ORDERS.O_ORDERDATE < TO_DATE('1992-02-01', 'YYYY-MM-DD')
+    AND ORDERS.O_ORDERPRIORITY = "_2".PRIORITY_NAME
+  GROUP BY
+    "_3".COLOR,
+    "_2".PRIORITY_NAME
+)
+SELECT
+  COUNT(*) AS n
+FROM "_0" "_0"
+CROSS JOIN "_1" "_1"
+LEFT JOIN "_u_0" "_u_0"
+  ON "_0".PRIORITY_NAME = "_u_0"."_u_2" AND "_1".COLOR = "_u_0"."_u_1"
+WHERE
+  "_u_0"."_u_1" IS NULL
