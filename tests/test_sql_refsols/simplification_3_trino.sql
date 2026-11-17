@@ -85,7 +85,7 @@ SELECT
   FALSE AS s23,
   TRUE AS s24,
   MAX(expr_15) AS s25,
-  AVG(expr_16) AS s26,
+  AVG(CAST(expr_16 AS DOUBLE)) AS s26,
   MIN(rank) AS s27,
   MAX(rank) AS s28,
   ARBITRARY(rsum1) AS s29,

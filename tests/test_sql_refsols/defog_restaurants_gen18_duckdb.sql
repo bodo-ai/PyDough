@@ -27,27 +27,19 @@ WITH _s0 AS (
   FROM _s1
   GROUP BY
     1
-), _s5 AS (
-  SELECT
-    city_name,
-    COUNT(rating) AS count_rating,
-    SUM(rating) AS sum_rating
-  FROM main.restaurant
-  GROUP BY
-    1
 ), _s7 AS (
   SELECT
-    SUM(_s5.sum_rating) / SUM(_s5.count_rating) AS avg_rating,
-    _s2.region
+    _s2.region,
+    AVG(restaurant.rating) AS avg_rating
   FROM _s0 AS _s2
   LEFT JOIN _u_2 AS _u_2
     ON _s2.city_name = _u_2._u_3
-  JOIN _s5 AS _s5
-    ON _s2.city_name = _s5.city_name
+  JOIN main.restaurant AS restaurant
+    ON _s2.city_name = restaurant.city_name
   WHERE
     NOT _u_2._u_3 IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
   _s6.region AS rest_region,

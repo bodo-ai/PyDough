@@ -15,7 +15,7 @@ WITH "_s3" AS (
     (46),
     (51),
     (56)) AS SIZES_2(PART_SIZE)
-  JOIN MAIN.PART PART
+  JOIN TPCH.PART PART
     ON PART.P_NAME LIKE '%almond%'
     AND PART.P_SIZE <= (
       SIZES_2.PART_SIZE + 4

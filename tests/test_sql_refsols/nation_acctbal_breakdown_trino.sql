@@ -47,17 +47,17 @@ WITH _s3 AS (
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7
-  FROM postgres.tpch.customer
+  FROM tpch.customer
 )
 SELECT
   ARBITRARY(nation.n_name) AS nation_name,
   COUNT(CASE WHEN _s3.c_acctbal < 0 THEN _s3.c_acctbal ELSE NULL END) AS n_red_acctbal,
   COUNT(CASE WHEN _s3.c_acctbal >= 0 THEN _s3.c_acctbal ELSE NULL END) AS n_black_acctbal,
-  AVG(_s3.expr_7) AS median_red_acctbal,
-  AVG(_s3.expr_5) AS median_black_acctbal,
-  AVG(_s3.expr_6) AS median_overall_acctbal
-FROM cassandra.tpch.nation AS nation
-JOIN mongo.tpch.region AS region
+  AVG(CAST(_s3.expr_7 AS DOUBLE)) AS median_red_acctbal,
+  AVG(CAST(_s3.expr_5 AS DOUBLE)) AS median_black_acctbal,
+  AVG(CAST(_s3.expr_6 AS DOUBLE)) AS median_overall_acctbal
+FROM tpch.nation AS nation
+JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
 JOIN _s3 AS _s3
   ON _s3.c_nationkey = nation.n_nationkey

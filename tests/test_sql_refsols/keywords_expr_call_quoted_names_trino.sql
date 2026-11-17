@@ -4,7 +4,7 @@ WITH _s0 AS (
   FROM keywords."partition"
 ), _s1 AS (
   SELECT
-    AVG("= ""quote""") AS avg_quote,
+    AVG(CAST("= ""quote""" AS DOUBLE)) AS avg_quote,
     COUNT("`cast`") AS count_cast,
     MAX("`name""[") AS max_name,
     MIN("= ""quote""") AS min_quote,

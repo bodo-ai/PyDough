@@ -28,7 +28,7 @@ SELECT
   COALESCE(SUM(FLOOR(c_acctbal)), 0) AS b,
   COALESCE(SUM(CEIL(c_acctbal)), 0) AS c,
   COUNT(DISTINCT c_mktsegment) AS d,
-  ROUND(AVG(ABS(c_acctbal)), 4) AS e,
+  ROUND(AVG(CAST(ABS(c_acctbal) AS DOUBLE)), 4) AS e,
   MIN(c_acctbal) AS f,
   MAX(c_acctbal) AS g,
   ARBITRARY(SUBSTR(c_name, 1, 1)) AS h,
@@ -37,9 +37,14 @@ SELECT
   ROUND(VARIANCE(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END), 4) AS k,
   FLOOR(STDDEV_POP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)) AS l,
   ROUND(STDDEV(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END), 4) AS m,
-  ROUND(AVG(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0)), 2) AS n,
+  ROUND(
+    AVG(
+      CAST(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0) AS DOUBLE)
+    ),
+    2
+  ) AS n,
   COUNT_IF(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS o,
   COUNT_IF(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p,
   MAX(expr_30) AS q,
-  AVG(expr_31) AS r
+  AVG(CAST(expr_31 AS DOUBLE)) AS r
 FROM _t1

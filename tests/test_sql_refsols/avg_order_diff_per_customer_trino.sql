@@ -15,7 +15,7 @@ WITH _s3 AS (
 )
 SELECT
   ARBITRARY(customer.c_name) AS name,
-  AVG(_s3.day_diff) AS avg_diff
+  AVG(CAST(_s3.day_diff AS DOUBLE)) AS avg_diff
 FROM postgres.tpch.customer AS customer
 JOIN cassandra.tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'JAPAN'

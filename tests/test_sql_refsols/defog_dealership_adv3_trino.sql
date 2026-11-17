@@ -5,21 +5,14 @@ WITH _s2 AS (
   FROM postgres.main.cars
   WHERE
     LOWER(vin_number) LIKE '%m5%'
-), _s1 AS (
-  SELECT
-    car_id,
-    COUNT(*) AS n_rows
-  FROM cassandra.defog.sales
-  GROUP BY
-    1
 ), _s3 AS (
   SELECT
     cars.make,
     cars.model,
-    SUM(_s1.n_rows) AS sum_n_rows
+    COUNT(*) AS n_rows
   FROM postgres.main.cars AS cars
-  JOIN _s1 AS _s1
-    ON _s1.car_id = cars._id
+  JOIN cassandra.defog.sales AS sales
+    ON cars._id = sales.car_id
   WHERE
     LOWER(cars.vin_number) LIKE '%m5%'
   GROUP BY
@@ -29,7 +22,7 @@ WITH _s2 AS (
 SELECT
   _s2.make,
   _s2.model,
-  COALESCE(_s3.sum_n_rows, 0) AS num_sales
+  COALESCE(_s3.n_rows, 0) AS num_sales
 FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.make = _s3.make AND _s2.model = _s3.model

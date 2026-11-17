@@ -15,7 +15,7 @@ WITH _s3 AS (
     (46),
     (51),
     (56) AS sizes_2(part_size)
-  JOIN tpch_s3_pq.tpch_sf1.part AS part
+  JOIN tpch.part AS part
     ON CONTAINS(part.p_name, 'almond')
     AND part.p_size <= (
       sizes_2.part_size + 4

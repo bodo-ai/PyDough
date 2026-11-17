@@ -34,8 +34,8 @@ WITH _s1 AS (
 ), _t1 AS (
   SELECT
     ARBITRARY(c_acctbal) AS anything_c_acctbal,
-    AVG(c_acctbal) AS avg_c_acctbal,
-    AVG(expr_17) AS avg_expr_17,
+    AVG(CAST(c_acctbal AS DOUBLE)) AS avg_c_acctbal,
+    AVG(CAST(expr_17 AS DOUBLE)) AS avg_expr_17,
     COUNT(c_acctbal) AS count_c_acctbal,
     MAX(c_acctbal) AS max_c_acctbal,
     MAX(expr_18) AS max_expr_18,

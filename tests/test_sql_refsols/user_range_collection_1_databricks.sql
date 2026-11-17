@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     p_size,
     COUNT(*) AS n_rows
-  FROM tpch_s3_pq.tpch_sf1.part
+  FROM tpch.part
   WHERE
     CONTAINS(p_name, 'turquoise')
   GROUP BY

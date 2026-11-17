@@ -20,7 +20,7 @@ SELECT
   "_s0".COLOR AS color,
   COUNT(*) AS n_parts
 FROM "_s0" "_s0"
-JOIN MAIN.PART PART
+JOIN TPCH.PART PART
   ON PART.P_NAME LIKE CONCAT('%', (
     ' ' || NVL("_s0".COLOR, '')
   ))
