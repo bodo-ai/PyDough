@@ -36,3 +36,5 @@ SELECT
   p_partkey AS key,
   p_retailprice AS retail_price
 FROM _t0
+ORDER BY
+  1 NULLS FIRST

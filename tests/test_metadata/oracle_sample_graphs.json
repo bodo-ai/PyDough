@@ -633,7 +633,7 @@
       {
         "name": "colors",
         "type": "sql query",
-        "query text": "SELECT DISTINCT REGEXP_SUBSTR(p.p_name, '[^ ]+', 1, l.lvl) as color from part p CROSS JOIN LATERAL ( SELECT LEVEL AS lvl FROM dual CONNECT BY LEVEL <= REGEXP_COUNT(p.p_name, '[^ ]+') ) l",
+        "query text": "SELECT DISTINCT REGEXP_SUBSTR(p.p_name, '[^ ]+', 1, lvl) as color from part p CROSS JOIN LATERAL ( SELECT LEVEL AS lvl FROM dual CONNECT BY LEVEL <= REGEXP_COUNT(p.p_name, '[^ ]+') )",
         "unique properties": ["color"],
         "properties": [
           {

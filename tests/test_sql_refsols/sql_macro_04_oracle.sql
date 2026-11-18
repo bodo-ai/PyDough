@@ -1,30 +1,30 @@
-WITH "_0" AS (
+WITH "_1" AS (
   SELECT DISTINCT
-    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, L.LVL) AS COLOR
+    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, "_0".LVL) AS COLOR
   FROM PART P
   CROSS JOIN LATERAL (
     SELECT
-      "LEVEL" AS LVL
+      LEVEL AS LVL
     FROM DUAL
-    CONNECT BY "LEVEL" <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
-  ) AS L
+    CONNECT BY LEVEL <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
+  )"_0"
 )
 SELECT
-  "_0".COLOR AS color,
+  "_1".COLOR AS color,
   COUNT(*) AS n
-FROM "_0" "_0"
+FROM "_1" "_1"
 JOIN TPCH.PART PART
   ON PART.P_NAME LIKE CONCAT('%', (
-    ' ' || NVL("_0".COLOR, '')
+    ' ' || NVL("_1".COLOR, '')
   ))
   OR PART.P_NAME LIKE CONCAT('%', (
-    ' ' || NVL("_0".COLOR, '') || ' '
+    ' ' || NVL("_1".COLOR, '') || ' '
   ), '%')
   OR PART.P_NAME LIKE CONCAT((
-    NVL("_0".COLOR, '') || ' '
+    NVL("_1".COLOR, '') || ' '
   ), '%')
 GROUP BY
-  "_0".COLOR
+  "_1".COLOR
 ORDER BY
   2 DESC NULLS LAST,
   1 NULLS FIRST

@@ -7205,7 +7205,6 @@ from .testing_utilities import (
                     }
                 ),
                 "sql_macro_01",
-                order_sensitive=True,
             ),
             id="sql_macro_01",
         ),
@@ -7351,6 +7350,7 @@ from .testing_utilities import (
                 " .parts"
                 " .BEST(by=(retail_price.DESC(), key.ASC()), per='colors')"
                 " .CALCULATE(color, key, retail_price)"
+                " .ORDER_BY(color.ASC())"
                 ")",
                 "TPCH",
                 lambda: pd.DataFrame(

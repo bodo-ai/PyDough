@@ -26,9 +26,11 @@ WITH _0 AS (
     OR PART.p_name LIKE CONCAT(CONCAT_WS('', _s0.color, ' '), '%')
 )
 SELECT
-  color,
+  color COLLATE utf8mb4_bin AS color,
   p_partkey AS `key`,
   p_retailprice AS retail_price
 FROM _t
 WHERE
   _w = 1
+ORDER BY
+  1

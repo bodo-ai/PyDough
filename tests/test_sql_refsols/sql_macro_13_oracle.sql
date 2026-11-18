@@ -18,32 +18,42 @@ WITH "_0" AS (
   SELECT
     '5-LOW' AS "5-LOW",
     5 AS "5"
-), "_1" AS (
+), "_2" AS (
   SELECT DISTINCT
-    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, L.LVL) AS COLOR
+    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, "_1".LVL) AS COLOR
   FROM PART P
   CROSS JOIN LATERAL (
     SELECT
-      "LEVEL" AS LVL
+      LEVEL AS LVL
     FROM DUAL
-    CONNECT BY "LEVEL" <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
-  ) AS L
+    CONNECT BY LEVEL <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
+  )"_1"
+), "_5" AS (
+  SELECT DISTINCT
+    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, "_4".LVL) AS COLOR
+  FROM PART P
+  CROSS JOIN LATERAL (
+    SELECT
+      LEVEL AS LVL
+    FROM DUAL
+    CONNECT BY LEVEL <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
+  )"_4"
 ), "_u_0" AS (
   SELECT
-    "_3".COLOR AS "_u_1",
-    "_2".PRIORITY_NAME AS "_u_2"
-  FROM "_0" "_2"
-  CROSS JOIN "_1" "_3"
+    "_5".COLOR AS "_u_1",
+    "_3".PRIORITY_NAME AS "_u_2"
+  FROM "_0" "_3"
+  CROSS JOIN "_5" "_5"
   JOIN TPCH.PART PART
     ON (
       PART.P_NAME LIKE CONCAT('%', (
-        ' ' || NVL("_3".COLOR, '')
+        ' ' || NVL("_5".COLOR, '')
       ))
       OR PART.P_NAME LIKE CONCAT('%', (
-        ' ' || NVL("_3".COLOR, '') || ' '
+        ' ' || NVL("_5".COLOR, '') || ' '
       ), '%')
       OR PART.P_NAME LIKE CONCAT((
-        NVL("_3".COLOR, '') || ' '
+        NVL("_5".COLOR, '') || ' '
       ), '%')
     )
     AND PART.P_SIZE < 3
@@ -55,16 +65,16 @@ WITH "_0" AS (
     ON LINEITEM.L_ORDERKEY = ORDERS.O_ORDERKEY
     AND ORDERS.O_CLERK < 'Clerk#000000100'
     AND ORDERS.O_ORDERDATE < TO_DATE('1992-02-01', 'YYYY-MM-DD')
-    AND ORDERS.O_ORDERPRIORITY = "_2".PRIORITY_NAME
+    AND ORDERS.O_ORDERPRIORITY = "_3".PRIORITY_NAME
   GROUP BY
-    "_3".COLOR,
-    "_2".PRIORITY_NAME
+    "_5".COLOR,
+    "_3".PRIORITY_NAME
 )
 SELECT
   COUNT(*) AS n
 FROM "_0" "_0"
-CROSS JOIN "_1" "_1"
+CROSS JOIN "_2" "_2"
 LEFT JOIN "_u_0" "_u_0"
-  ON "_0".PRIORITY_NAME = "_u_0"."_u_2" AND "_1".COLOR = "_u_0"."_u_1"
+  ON "_0".PRIORITY_NAME = "_u_0"."_u_2" AND "_2".COLOR = "_u_0"."_u_1"
 WHERE
   "_u_0"."_u_1" IS NULL

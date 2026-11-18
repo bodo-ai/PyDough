@@ -35,3 +35,5 @@ SELECT
 FROM _t
 WHERE
   _w = 1
+ORDER BY
+  1
