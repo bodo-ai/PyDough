@@ -102,7 +102,7 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
 """,
                 """
 PyDough graph: TPCH
-Collections: coolors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
+Collections: colors, customers, lines, months, nations, order_priorities, orders, parts, regions, suppliers, supply_records
 Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
 Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
 """,

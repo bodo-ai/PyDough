@@ -43,7 +43,6 @@ from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
-from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.scope import traverse_scope
@@ -61,6 +60,7 @@ from pydough.relational.relational_expressions import (
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 
 from .override_canonicalize import canonicalize
+from .override_eliminate_subqueries import eliminate_subqueries
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections

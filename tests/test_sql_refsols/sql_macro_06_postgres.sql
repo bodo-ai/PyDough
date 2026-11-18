@@ -1,4 +1,4 @@
-WITH months AS (
+WITH RECURSIVE months AS (
   SELECT
     CAST('1992-01-01' AS DATE) AS date_val
   UNION ALL
@@ -6,7 +6,7 @@ WITH months AS (
     date_val + INTERVAL '1 MONTH' AS date_val
   FROM months
   WHERE
-    date_val < '1998-12-01'
+    date_val < CAST('1998-12-01' AS DATE)
 ), _0 AS (
   SELECT
     date_val

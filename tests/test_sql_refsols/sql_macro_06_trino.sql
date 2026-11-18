@@ -1,31 +1,31 @@
-WITH months AS (
+WITH RECURSIVE months(date_val) AS (
   SELECT
     CAST('1992-01-01' AS DATE) AS date_val
   UNION ALL
   SELECT
-    DATE(date_val, '+1 month') AS date_val
+    date_val
   FROM months
   WHERE
-    date_val < '1998-12-01'
-), _0 AS (
+    date_val < CAST('1998-12-01' AS DATE)
+), _0(date_val) AS (
   SELECT
     date_val
   FROM months
-), _s2 AS (
+), _s2(date_val) AS (
   SELECT
     date_val
   FROM _0
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s0 AS (
+), _s0(date_val) AS (
   SELECT
     date_val
   FROM _0
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s3 AS (
+), _s3(date_val, n_rows) AS (
   SELECT
     _s0.date_val,
     COUNT(*) AS n_rows
@@ -34,14 +34,14 @@ WITH months AS (
     ON _s0.date_val = DATE_TRUNC('MONTH', CAST(orders.o_orderdate AS TIMESTAMP))
   GROUP BY
     1
-), _s4 AS (
+), _s4(date_val) AS (
   SELECT
     date_val
   FROM _0
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s7 AS (
+), _s7(date_val, n_rows) AS (
   SELECT
     _s4.date_val,
     COUNT(*) AS n_rows
@@ -50,14 +50,14 @@ WITH months AS (
     ON _s4.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_shipdate AS TIMESTAMP))
   GROUP BY
     1
-), _s8 AS (
+), _s8(date_val) AS (
   SELECT
     date_val
   FROM _0
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s11 AS (
+), _s11(date_val, n_rows) AS (
   SELECT
     _s8.date_val,
     COUNT(*) AS n_rows
@@ -66,14 +66,14 @@ WITH months AS (
     ON _s8.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_commitdate AS TIMESTAMP))
   GROUP BY
     1
-), _s12 AS (
+), _s12(date_val) AS (
   SELECT
     date_val
   FROM _0
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s15 AS (
+), _s15(date_val, n_rows) AS (
   SELECT
     _s12.date_val,
     COUNT(*) AS n_rows

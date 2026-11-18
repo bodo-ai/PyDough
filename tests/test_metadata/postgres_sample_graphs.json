@@ -652,7 +652,7 @@
       {
         "name": "months",
         "type": "sql query",
-        "query text": "WITH RECURSIVE months(date_val) AS ( SELECT CAST('1992-01-01' as DATE) UNION ALL SELECT date_val + INTERVAL '1 month' FROM months WHERE date_val < '1998-12-01' ) SELECT date_val FROM months",
+        "query text": "WITH RECURSIVE months(date_val) AS ( SELECT CAST('1992-01-01' as TIMESTAMP) UNION ALL SELECT date_val + INTERVAL '1 month' FROM months WHERE date_val < '1998-12-01' ) SELECT date_val FROM months",
         "unique properties": ["month"],
         "properties": [
           {
