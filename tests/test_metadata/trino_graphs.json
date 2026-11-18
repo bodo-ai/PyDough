@@ -676,7 +676,7 @@
       {
         "name": "months",
         "type": "sql query",
-        "query text": "WITH RECURSIVE months(date_val) AS ( SELECT date('1992-01-01') UNION ALL SELECT date(date_val, '+1 month') FROM months WHERE date_val < '1998-12-01' ) SELECT date_val FROM months",
+        "query text": "WITH RECURSIVE months(date_val, yr, mo) AS ( SELECT date('1992-01-01'), 1992, 1 UNION ALL SELECT date_val + INTERVAL '1' MONTH, year(date_val + INTERVAL '1' MONTH), month(date_val + INTERVAL '1' MONTH) FROM months WHERE date_val < '1998-12-01' ) SELECT date_val, yr, mo FROM months",
         "unique properties": ["month"],
         "properties": [
           {
@@ -687,6 +687,22 @@
             "description": "A month within the specified date range (from 1992 to 1998, inclusive), using the start of the month",
             "sample values": ["1992-01-01", "1992-02-01", "1992-03-01", "1992-04-01", "1998-03-01"],
             "synonyms": ["date"]
+          },
+          {
+            "name": "year",
+            "type": "table column",
+            "column name": "yr",
+            "data type": "numeric",
+            "description": "The year of the datetime value",
+            "sample values": [1992, 1993, 1998]
+          },
+          {
+            "name": "month_of_year",
+            "type": "table column",
+            "column name": "mo",
+            "data type": "numeric",
+            "description": "The month of the datetime within the year",
+            "sample values": [1, 2, 3, 8, 12]
           }
         ],
         "description": "The date range of months from 1992 to 1998",

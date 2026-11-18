@@ -7502,6 +7502,80 @@ from .testing_utilities import (
             ),
             id="sql_macro_13",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " months.TOP_K(24, by=month.ASC())"
+                " .PARTITION(name='years', by=year)"
+                " .months"
+                " .CALCULATE(n_orders=COUNT(orders_made_in_month))"
+                " .CALCULATE(year, month_of_year, csum=RELSUM(n_orders, per='years', by=month_of_year.ASC(), cumulative=True), delta=n_orders-PREV(n_orders, per='years', by=month_of_year.ASC()))"
+                " .ORDER_BY(year, month_of_year)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1992] * 12 + [1993] * 12,
+                        "month_of_year": list(range(1, 13)) * 2,
+                        "csum": [
+                            19330,
+                            37388,
+                            56741,
+                            75341,
+                            94538,
+                            113178,
+                            132439,
+                            151498,
+                            169955,
+                            189227,
+                            207650,
+                            227089,
+                            19318,
+                            36669,
+                            55924,
+                            74584,
+                            93603,
+                            112358,
+                            131677,
+                            150883,
+                            169576,
+                            188815,
+                            207475,
+                            226645,
+                        ],
+                        "delta": [
+                            None,
+                            -1272,
+                            1295,
+                            -753,
+                            597,
+                            -557,
+                            621,
+                            -202,
+                            -602,
+                            815,
+                            -849,
+                            1016,
+                            None,
+                            -1967,
+                            1904,
+                            -595,
+                            359,
+                            -264,
+                            564,
+                            -113,
+                            -513,
+                            546,
+                            -579,
+                            510,
+                        ],
+                    }
+                ),
+                "sql_macro_14",
+                order_sensitive=True,
+            ),
+            id="sql_macro_14",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:

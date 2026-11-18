@@ -1,9 +1,13 @@
 WITH RECURSIVE months AS (
   SELECT
-    CAST('1992-01-01' AS DATE) AS date_val
+    CAST('1992-01-01' AS DATE) AS date_val,
+    1992 AS yr,
+    1 AS mo
   UNION ALL
   SELECT
-    date_val + INTERVAL '1' MONTH AS date_val
+    date_val + INTERVAL '1' MONTH AS date_val,
+    YEAR(date_val + INTERVAL '1' MONTH) AS yr,
+    MONTH(date_val + INTERVAL '1' MONTH) AS mo
   FROM months
   WHERE
     date_val < CAST('1998-12-01' AS DATE)

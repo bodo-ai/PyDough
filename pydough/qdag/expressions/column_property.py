@@ -53,6 +53,10 @@ class ColumnProperty(PyDoughExpressionQDAG):
                 table_path = self.column_property.collection.table_path
             case SQLQueryMetadata():
                 table_path = self.column_property.collection.name
+            case _:
+                raise NotImplementedError(
+                    self.column_property.collection.__class__.__name__
+                )
         return f"Column[{table_path}.{column_name}]"
 
     def equals(self, other: object) -> bool:

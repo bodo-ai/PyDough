@@ -7,6 +7,7 @@ This page document the exact format that the JSON files containing PyDough metad
 - [JSON File Structure](#json-file-structure)
 - [Collections](#collections)
    * [Collection Type: Simple Table](#collection-type-simple-table)
+   * [Collection Type: SQL Macro](#collection-type-sql-macro)
 - [Properties](#properties)
    * [Property Type: Table Column](#property-type-table-column)
    * [Property Type: Masked Table Column](#property-type-masked-table-column)
@@ -55,7 +56,7 @@ The core components of the JSON file structure are as follows:
     "version": "V2",
     "collections": [...],
     "relationships": [...],
-    "funcitons": [...],
+    "functions": [...],
     "additional definitions": [...]
     "verified pydough analysis": [
       {"question": ..., "code": ...},
@@ -100,8 +101,8 @@ Example of the structure of the metadata for a simple table collection:
 {
     "name": "accounts",
     "type": "simple table",
-    "table_path": "bank_schema.ACCOUNTS",
-    "unique_properties": ["account_id"],
+    "table path": "bank_schema.ACCOUNTS",
+    "unique properties": ["account_id"],
     "properties": {
         "account_id": {...},
         "client_id": {...},
@@ -110,6 +111,31 @@ Example of the structure of the metadata for a simple table collection:
         "date_opened": {...}
     },
     "description": "Every account currently open in the bank's system",
+    "extra semantic info": {...}
+}
+```
+
+<!-- TOC --><a name="collection-type-sql-macro"></a>
+### Collection Type: SQL Macro
+
+A collection with this type translates into a stored SQL query as a data source, similar to views in a database. Collections of this type have a type string of "sql macro" and the following additional key-value pairs in their metadata JSON object:
+
+- `macro text` (required): a string indicating the SQL query text that should be used to define the collection. The query text can be specific of the dialect of database it is intended to run on.
+- `unique properties` (required): same as in [simple table](#collection-type-simple-table).
+- `properties` (required): an array of objects representing scalar properties of each record from the collection ([see here for details](#properties)).
+
+Example of the structure of the metadata for a sql macro collection:
+
+```json
+{
+    "name": "rainbow",
+    "type": "sql macro",
+    "macro text": "SELECT 'red' as color UNION ALL SELECT 'orange' as color UNION ALL SELECT 'yellow' as color UNION ALL SELECT 'green' as color UNION ALL SELECT 'blue' as color UNION ALL SELECT 'indigo' as color UNION ALL SELECT 'violet' as color",
+    "unique_properties": ["color"],
+    "properties": {
+        "color": {...}
+    },
+    "description": "Every color in the rainbow",
     "extra semantic info": {...}
 }
 ```

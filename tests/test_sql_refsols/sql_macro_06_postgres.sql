@@ -1,12 +1,16 @@
 WITH RECURSIVE months AS (
   SELECT
-    CAST('1992-01-01' AS DATE) AS date_val
+    CAST('1992-01-01' AS TIMESTAMP) AS date_val,
+    EXTRACT(YEAR FROM CAST('1992-01-01' AS TIMESTAMP)) AS yr,
+    EXTRACT(MONTH FROM CAST('1992-01-01' AS TIMESTAMP)) AS mo
   UNION ALL
   SELECT
-    date_val + INTERVAL '1 MONTH' AS date_val
+    date_val + INTERVAL '1 MONTH' AS date_val,
+    EXTRACT(YEAR FROM date_val + INTERVAL '1 MONTH') AS yr,
+    EXTRACT(MONTH FROM date_val + INTERVAL '1 MONTH') AS mo
   FROM months
   WHERE
-    date_val < CAST('1998-12-01' AS DATE)
+    date_val < CAST('1998-12-01' AS TIMESTAMP)
 ), _0 AS (
   SELECT
     date_val
