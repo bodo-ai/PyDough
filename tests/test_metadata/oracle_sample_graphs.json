@@ -652,7 +652,7 @@
       {
         "name": "months",
         "type": "sql query",
-        "query text": "WITH RECURSIVE months(date_val, yr, mo) AS ( SELECT DATE '1992-01-01', 1992, 1 UNION ALL SELECT ADD_MONTHS(date_val, 1), EXTRACT(YEAR FROM ADD_MONTHS(date_val, 1)), EXTRACT(MONTH FROM ADD_MONTHS(date_val, 1)) FROM months WHERE date_val < '1998-12-01' ) SELECT date_val, yr, mo FROM months",
+        "query text": "WITH date_range AS ( SELECT ADD_MONTHS(DATE '1992-01-01', LEVEL - 1) AS date_val, EXTRACT(YEAR FROM ADD_MONTHS(DATE '1992-01-01', LEVEL - 1)) as yr, EXTRACT(MONTH FROM ADD_MONTHS(DATE '1992-01-01', LEVEL - 1)) as mo FROM dual CONNECT BY LEVEL <= 84 ) SELECT date_val, yr, mo FROM date_range",
         "unique properties": ["month"],
         "properties": [
           {

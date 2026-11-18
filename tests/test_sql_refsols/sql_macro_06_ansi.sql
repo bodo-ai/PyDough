@@ -5,9 +5,9 @@ WITH RECURSIVE months AS (
     1 AS mo
   UNION ALL
   SELECT
-    date_val,
-    CAST(STRFTIME('%Y', date_val) AS INT) AS yr,
-    CAST(STRFTIME('%m', date_val) AS INT) AS mo
+    DATE(DATETIME(date_val, '+1 month')) AS date_val,
+    CAST(STRFTIME('%Y', DATE(DATETIME(date_val, '+1 month'))) AS INT) AS yr,
+    CAST(STRFTIME('%m', DATE(DATETIME(date_val, '+1 month'))) AS INT) AS mo
   FROM months
   WHERE
     date_val < CAST('1998-12-01' AS DATE)

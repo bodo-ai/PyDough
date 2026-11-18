@@ -535,6 +535,8 @@ Structure of PyDough graph: TPCH
 
   months
   ├── month
+  ├── month_of_year
+  ├── year
   ├── lines_committed_in_month [multiple lines]
   ├── lines_received_in_month [multiple lines]
   ├── lines_shipped_in_month [multiple lines]

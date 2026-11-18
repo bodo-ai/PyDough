@@ -676,7 +676,7 @@
       {
         "name": "months",
         "type": "sql query",
-        "query text": "WITH RECURSIVE months(date_val, yr, mo) AS ( SELECT date('1992-01-01'), 1992, 1 UNION ALL SELECT date_val + INTERVAL '1' MONTH, year(date_val + INTERVAL '1' MONTH), month(date_val + INTERVAL '1' MONTH) FROM months WHERE date_val < '1998-12-01' ) SELECT date_val, yr, mo FROM months",
+        "query text": "WITH RECURSIVE months(date_val, yr, mo) AS ( SELECT date('1992-01-01'), year(date('1992-01-01')), month(date('1992-01-01')) UNION ALL SELECT date_val + INTERVAL '1' MONTH, year(date_val + INTERVAL '1' MONTH), month(date_val + INTERVAL '1' MONTH) FROM months WHERE date_val < '1998-12-01' ) SELECT date_val, yr, mo FROM months",
         "unique properties": ["month"],
         "properties": [
           {
