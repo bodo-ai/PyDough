@@ -881,7 +881,8 @@ class HybridTree:
                 if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
                     return False
             case HybridUserGeneratedCollection():
-                return self.pipeline[0].user_collection.collection.is_singular()
+                if not self.pipeline[0].user_collection.collection.is_singular():
+                    return False
             case HybridRoot():
                 pass
             case _:
@@ -900,7 +901,13 @@ class HybridTree:
         match self.pipeline[0]:
             case HybridCollectionAccess():
                 if isinstance(self.pipeline[0].collection, TableCollection):
-                    pass
+                    # A table scan below a non-root level is a cartesian
+                    # product, so it is not reverse-singular.
+                    if not (
+                        self.parent.parent is None
+                        and isinstance(self.parent.pipeline[0], HybridRoot)
+                    ):
+                        return False
                 else:
                     assert isinstance(self.pipeline[0].collection, SubCollection)
                     meta_cardinality: JoinCardinality = (
@@ -917,6 +924,16 @@ class HybridTree:
                 if not self.children[
                     self.pipeline[0].child_idx
                 ].subtree.is_reverse_singular():
+                    return False
+            case HybridUserGeneratedCollection():
+                # Same reasoning as the table scan case: a multi-row
+                # generated collection below a non-root level is a
+                # cartesian product, so it is not reverse-singular.
+                gen_collection = self.pipeline[0].user_collection.collection
+                at_root: bool = self.parent.parent is None and isinstance(
+                    self.parent.pipeline[0], HybridRoot
+                )
+                if not gen_collection.is_singular() and not at_root:
                     return False
             case _:
                 pass

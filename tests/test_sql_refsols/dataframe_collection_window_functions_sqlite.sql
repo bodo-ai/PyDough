@@ -15,18 +15,11 @@ WITH _t AS (
   CROSS JOIN tpch.customer AS customer
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey
-), _s6 AS (
+), _s5 AS (
   SELECT
-    _t.c_custkey AS o_custkey,
-    MAX(_t.c_acctbal) AS anything_c_acctbal,
-    MAX(_t.c_name) AS anything_c_name,
-    MAX(_t.nation_name) AS anything_nation_name,
-    COUNT(orders.o_custkey) AS count_o_custkey
-  FROM _t AS _t
-  LEFT JOIN tpch.orders AS orders
-    ON _t.c_custkey = orders.o_custkey
-  WHERE
-    _t._w > 996 AND _t.c_mktsegment = _t.mrk_segment AND _t.n_name = _t.nation_name
+    o_custkey,
+    COUNT(*) AS n_rows
+  FROM tpch.orders
   GROUP BY
     1
 ), _t4 AS (
@@ -57,23 +50,23 @@ WITH _t AS (
     1
 )
 SELECT
-  _s6.anything_c_name AS name,
-  ROW_NUMBER() OVER (PARTITION BY _s6.anything_nation_name ORDER BY _s6.anything_c_acctbal DESC) AS ranking_balance,
-  COALESCE(_s6.count_o_custkey, 0) AS n_orders,
+  _t.c_name AS name,
+  ROW_NUMBER() OVER (PARTITION BY _t.nation_name ORDER BY _t.c_acctbal DESC) AS ranking_balance,
+  COALESCE(_s5.n_rows, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,
-  CAST(_s6.anything_c_acctbal AS REAL) / SUM(_s6.anything_c_acctbal) OVER () AS proportion,
-  IIF(
-    _s6.anything_c_acctbal > AVG(CAST(_s6.anything_c_acctbal AS REAL)) OVER (),
-    TRUE,
-    FALSE
-  ) AS above_avg,
-  COUNT(_s6.anything_c_acctbal) OVER (ORDER BY _s6.anything_c_acctbal ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_poorer,
-  CAST(_s6.anything_c_acctbal AS REAL) / COUNT(*) OVER () AS ratio
-FROM _s6 AS _s6
+  CAST(_t.c_acctbal AS REAL) / SUM(_t.c_acctbal) OVER () AS proportion,
+  IIF(_t.c_acctbal > AVG(CAST(_t.c_acctbal AS REAL)) OVER (), TRUE, FALSE) AS above_avg,
+  COUNT(_t.c_acctbal) OVER (ORDER BY _t.c_acctbal ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_poorer,
+  CAST(_t.c_acctbal AS REAL) / COUNT(*) OVER () AS ratio
+FROM _t AS _t
+LEFT JOIN _s5 AS _s5
+  ON _s5.o_custkey = _t.c_custkey
 LEFT JOIN _s7 AS _s7
-  ON _s6.o_custkey = _s7.o_custkey
+  ON _s7.o_custkey = _t.c_custkey
 LEFT JOIN _s9 AS _s9
-  ON _s6.o_custkey = _s9.o_custkey
+  ON _s9.o_custkey = _t.c_custkey
+WHERE
+  _t._w > 996 AND _t.c_mktsegment = _t.mrk_segment AND _t.n_name = _t.nation_name
 ORDER BY
   1

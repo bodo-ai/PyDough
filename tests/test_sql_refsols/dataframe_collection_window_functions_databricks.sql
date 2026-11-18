@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
     customer.c_acctbal,
     customer.c_custkey,
@@ -15,16 +15,11 @@ WITH _t2 AS (
     NTILE(1000) OVER (ORDER BY customer.c_acctbal NULLS LAST) > 996
     AND customer.c_mktsegment = customers_filters.mrk_segment
     AND customers_filters.nation_name = nation.n_name
-), _s6 AS (
+), _s5 AS (
   SELECT
-    _t2.c_custkey AS o_custkey,
-    ANY_VALUE(_t2.c_acctbal) AS anything_c_acctbal,
-    ANY_VALUE(_t2.c_name) AS anything_c_name,
-    ANY_VALUE(_t2.nation_name) AS anything_nation_name,
-    COUNT(orders.o_custkey) AS count_o_custkey
-  FROM _t2 AS _t2
-  LEFT JOIN tpch.orders AS orders
-    ON _t2.c_custkey = orders.o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
+  FROM tpch.orders
   GROUP BY
     1
 ), _t4 AS (
@@ -59,29 +54,24 @@ WITH _t2 AS (
     1
 )
 SELECT
-  _s6.anything_c_name AS name,
-  ROW_NUMBER() OVER (
-    PARTITION BY _s6.anything_nation_name
-    ORDER BY _s6.anything_c_acctbal DESC NULLS FIRST
-  ) AS ranking_balance,
-  COALESCE(_s6.count_o_custkey, 0) AS n_orders,
+  _t1.c_name AS name,
+  ROW_NUMBER() OVER (PARTITION BY _t1.nation_name ORDER BY _t1.c_acctbal DESC NULLS FIRST) AS ranking_balance,
+  COALESCE(_s5.n_rows, 0) AS n_orders,
   _s7.avg_month_diff AS avg_month_orders,
   _s9.avg_price_diff,
-  _s6.anything_c_acctbal / SUM(_s6.anything_c_acctbal) OVER () AS proportion,
-  IF(
-    _s6.anything_c_acctbal > AVG(CAST(_s6.anything_c_acctbal AS DOUBLE)) OVER (),
-    TRUE,
-    FALSE
-  ) AS above_avg,
-  COUNT(_s6.anything_c_acctbal) OVER (
-    ORDER BY _s6.anything_c_acctbal NULLS LAST
+  _t1.c_acctbal / SUM(_t1.c_acctbal) OVER () AS proportion,
+  IF(_t1.c_acctbal > AVG(CAST(_t1.c_acctbal AS DOUBLE)) OVER (), TRUE, FALSE) AS above_avg,
+  COUNT(_t1.c_acctbal) OVER (
+    ORDER BY _t1.c_acctbal NULLS LAST
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
   ) AS n_poorer,
-  _s6.anything_c_acctbal / COUNT(*) OVER () AS ratio
-FROM _s6 AS _s6
+  _t1.c_acctbal / COUNT(*) OVER () AS ratio
+FROM _t1 AS _t1
+LEFT JOIN _s5 AS _s5
+  ON _s5.o_custkey = _t1.c_custkey
 LEFT JOIN _s7 AS _s7
-  ON _s6.o_custkey = _s7.o_custkey
+  ON _s7.o_custkey = _t1.c_custkey
 LEFT JOIN _s9 AS _s9
-  ON _s6.o_custkey = _s9.o_custkey
+  ON _s9.o_custkey = _t1.c_custkey
 ORDER BY
   1

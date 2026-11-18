@@ -4276,3 +4276,23 @@ def group_by_key_repeated_alias():
         key_again=nat_key,
         cnt=COUNT(customers),
     ).ORDER_BY(key.ASC())
+
+
+def cross_table_scan_reverse_singular():
+    """
+    Test for `HybridTree.is_reverse_singular()` wrongly treating
+    a table scan as reverse-singular when it is really a cartesian product
+    nested below a `CROSS`, which let an aggregation be incorrectly pulled
+    above the join and merge separate groups together.
+    """
+    outer = nations.WHERE(key <= 1).CALCULATE(k=key)
+    return (
+        outer.CROSS(regions.WHERE(key == 0))
+        .CALCULATE(
+            k,
+            total=ROUND(
+                SUM(nations.CALCULATE(n_bal=SUM(customers.account_balance)).n_bal), 2
+            ),
+        )
+        .ORDER_BY(k.ASC())
+    )

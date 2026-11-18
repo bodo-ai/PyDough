@@ -159,6 +159,21 @@ def user_range_collection_6():
     )
 
 
+def user_range_collection_7():
+    """
+    Test for `HybridTree.is_singular()` wrongly treating a
+    generated collection as singular without checking its ancestors,
+    which let a correlated semi join duplicate parent rows.
+    """
+    one_row = pydough.range_collection("one_row", "x", 0, 1)
+    return (
+        regions.CALCULATE(rk=key)
+        .WHERE(HAS(nations.CROSS(one_row).WHERE(x <= rk)))
+        .CALCULATE(rk)
+        .ORDER_BY(rk.ASC())
+    )
+
+
 def simple_dataframe_collection_1():
     # Generates a simple dataframe collection
     df = pd.DataFrame(
