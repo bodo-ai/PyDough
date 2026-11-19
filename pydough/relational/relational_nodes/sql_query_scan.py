@@ -37,6 +37,9 @@ class SqlQueryScan(Scan):
     def to_string(self, compact=False) -> str:
         return f"SQLQUERYSCAN(table={self.table_name}, columns={self.make_column_string(self.columns, compact)})"
 
+    def node_equals(self, other: RelationalNode) -> bool:
+        return isinstance(other, SqlQueryScan) and super().node_equals(other)
+
     def node_copy(
         self,
         columns: dict[str, RelationalExpression],
