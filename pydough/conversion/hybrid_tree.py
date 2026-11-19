@@ -926,14 +926,15 @@ class HybridTree:
                 ].subtree.is_reverse_singular():
                     return False
             case HybridUserGeneratedCollection():
-                # Same reasoning as the table scan case: a multi-row
-                # generated collection below a non-root level is a
-                # cartesian product, so it is not reverse-singular.
-                gen_collection = self.pipeline[0].user_collection.collection
-                at_root: bool = self.parent.parent is None and isinstance(
-                    self.parent.pipeline[0], HybridRoot
-                )
-                if not gen_collection.is_singular() and not at_root:
+                # Same reasoning as the table scan case: a generated
+                # collection below a non-root level is a cartesian
+                # product, so it is not reverse-singular, even if it
+                # only has a single row (that row can still match
+                # multiple rows on the other side of the join).
+                if not (
+                    self.parent.parent is None
+                    and isinstance(self.parent.pipeline[0], HybridRoot)
+                ):
                     return False
             case _:
                 pass

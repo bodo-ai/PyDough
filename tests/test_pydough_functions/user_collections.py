@@ -174,6 +174,17 @@ def user_range_collection_7():
     )
 
 
+def cross_generated_collection_reverse_singular():
+    """
+    Test for `HybridTree.is_reverse_singular()` wrongly treating a
+    single-row generated collection as reverse-singular when it is
+    really a cartesian product nested below a `CROSS`.
+    """
+    one_row = pydough.range_collection("one_row", "x", 0, 1)
+    outer = nations.WHERE(key <= 1).CALCULATE(k=key)
+    return outer.CROSS(one_row).CALCULATE(k, x).ORDER_BY(k.ASC())
+
+
 def simple_dataframe_collection_1():
     # Generates a simple dataframe collection
     df = pd.DataFrame(

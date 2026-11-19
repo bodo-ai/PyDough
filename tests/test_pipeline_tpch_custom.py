@@ -222,6 +222,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     yoy_change_in_num_orders,
 )
 from tests.test_pydough_functions.user_collections import (
+    cross_generated_collection_reverse_singular,
     dataframe_collection_bad_1,
     dataframe_collection_bad_2,
     dataframe_collection_bad_3,
@@ -7212,6 +7213,15 @@ from .testing_utilities import (
                 "cross_table_scan_reverse_singular",
             ),
             id="cross_table_scan_reverse_singular",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                cross_generated_collection_reverse_singular,
+                "TPCH",
+                lambda: pd.DataFrame({"k": [0, 1], "x": [0, 0]}),
+                "cross_generated_collection_reverse_singular",
+            ),
+            id="cross_generated_collection_reverse_singular",
         ),
     ],
 )
