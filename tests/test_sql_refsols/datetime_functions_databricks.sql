@@ -83,4 +83,4 @@ SELECT
   MONTHNAME(CAST('1995-10-27' AS TIMESTAMP)) AS monthname_str4,
   MONTHNAME(CAST('1999-12-31' AS TIMESTAMP)) AS monthname_str5,
   MONTHNAME(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) AS monthname_dt
-FROM tpch.orders
+FROM tpch_s3_pq.tpch_sf1.orders

@@ -1,35 +1,18 @@
-WITH RECURSIVE months(date_val, yr, mo) AS (
+WITH _s2 AS (
   SELECT
-    CAST('1992-01-01' AS DATE) AS date_val,
-    YEAR(CAST('1992-01-01' AS DATE)) AS yr,
-    MONTH(CAST('1992-01-01' AS DATE)) AS mo
-  UNION ALL
-  SELECT
-    date_val + INTERVAL '1' MONTH AS date_val,
-    YEAR(date_val + INTERVAL '1' MONTH) AS yr,
-    MONTH(date_val + INTERVAL '1' MONTH) AS mo
-  FROM months
-  WHERE
-    date_val < CAST('1998-12-01' AS DATE)
-), _0(date_val) AS (
-  SELECT
-    date_val
-  FROM months
-), _s2(date_val) AS (
-  SELECT
-    date_val
-  FROM _0
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s0(date_val) AS (
+), _s0 AS (
   SELECT
-    date_val
-  FROM _0
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s3(date_val, n_rows) AS (
+), _s3 AS (
   SELECT
     _s0.date_val,
     COUNT(*) AS n_rows
@@ -38,14 +21,14 @@ WITH RECURSIVE months(date_val, yr, mo) AS (
     ON _s0.date_val = DATE_TRUNC('MONTH', CAST(orders.o_orderdate AS TIMESTAMP))
   GROUP BY
     1
-), _s4(date_val) AS (
+), _s4 AS (
   SELECT
-    date_val
-  FROM _0
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s7(date_val, n_rows) AS (
+), _s7 AS (
   SELECT
     _s4.date_val,
     COUNT(*) AS n_rows
@@ -54,14 +37,14 @@ WITH RECURSIVE months(date_val, yr, mo) AS (
     ON _s4.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_shipdate AS TIMESTAMP))
   GROUP BY
     1
-), _s8(date_val) AS (
+), _s8 AS (
   SELECT
-    date_val
-  FROM _0
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s11(date_val, n_rows) AS (
+), _s11 AS (
   SELECT
     _s8.date_val,
     COUNT(*) AS n_rows
@@ -70,14 +53,14 @@ WITH RECURSIVE months(date_val, yr, mo) AS (
     ON _s8.date_val = DATE_TRUNC('MONTH', CAST(lineitem.l_commitdate AS TIMESTAMP))
   GROUP BY
     1
-), _s12(date_val) AS (
+), _s12 AS (
   SELECT
-    date_val
-  FROM _0
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _s15(date_val, n_rows) AS (
+), _s15 AS (
   SELECT
     _s12.date_val,
     COUNT(*) AS n_rows

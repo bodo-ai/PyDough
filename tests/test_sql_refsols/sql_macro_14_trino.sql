@@ -1,34 +1,27 @@
-WITH RECURSIVE months(date_val, yr, mo) AS (
+WITH _s2 AS (
   SELECT
-    CAST('1992-01-01' AS DATE) AS date_val,
-    YEAR(CAST('1992-01-01' AS DATE)) AS yr,
-    MONTH(CAST('1992-01-01' AS DATE)) AS mo
-  UNION ALL
-  SELECT
-    date_val + INTERVAL '1' MONTH AS date_val,
-    YEAR(date_val + INTERVAL '1' MONTH) AS yr,
-    MONTH(date_val + INTERVAL '1' MONTH) AS mo
-  FROM months
-  WHERE
-    date_val < CAST('1998-12-01' AS DATE)
-), _s2(date_val, mo, yr) AS (
-  SELECT
-    date_val,
-    mo,
-    yr
-  FROM months
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val,
+    MONTH(
+      DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP))
+    ) AS mo,
+    YEAR(
+      DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP))
+    ) AS yr
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 24
-), _s0(date_val, yr) AS (
+), _s0 AS (
   SELECT
-    date_val,
-    yr
-  FROM months
+    DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)) AS date_val,
+    YEAR(
+      DATE_ADD('MONTHS', CAST(n AS BIGINT), CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP))
+    ) AS yr
+  FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 24
-), _s3(date_val, yr, n_rows) AS (
+), _s3 AS (
   SELECT
     _s0.date_val,
     _s0.yr,

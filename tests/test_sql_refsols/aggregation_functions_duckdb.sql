@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM main.orders
   GROUP BY
     1
 ), _t2 AS (
@@ -28,7 +28,7 @@ WITH _s1 AS (
       THEN customer.c_acctbal
       ELSE NULL
     END AS expr_18
-  FROM tpch.customer AS customer
+  FROM main.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
 ), _t1 AS (

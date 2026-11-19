@@ -8,4 +8,4 @@ SELECT
   SIGN(c_acctbal) AS sign_value,
   LEAST(c_acctbal, 0) AS smallest_value,
   GREATEST(c_acctbal, 0) AS largest_value
-FROM tpch.customer
+FROM snowflake_sample_data.tpch_sf1.customer
