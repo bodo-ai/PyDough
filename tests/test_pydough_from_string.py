@@ -16,7 +16,163 @@ from pydough.database_connectors import DatabaseContext
 from pydough.errors import PyDoughSessionException
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
+from pydough.unqualified.unqualified_transform import extract_var
 from tests.testing_utilities import graph_fetcher
+
+
+@pytest.mark.parametrize(
+    "code, expected",
+    [
+        pytest.param("# fake = 2\nresult = 1", "result", id="leading_comment"),
+        pytest.param(
+            "result = 1  # inline_fake = 2\n# trailing_fake = 3",
+            "result",
+            id="inline_and_trailing_comments",
+        ),
+        pytest.param("left = 1\nright = 2", "right", id="last_assignment"),
+        pytest.param("left = right = 1", "right", id="chained_assignment"),
+        pytest.param(
+            "result = 1\nif result == 1:\n    nested = 4",
+            "result",
+            id="nested_assignment_ignored",
+        ),
+        pytest.param("result: int = 3", None, id="int_annotation_ignored"),
+        pytest.param("result = orders.CALCULATE(value=1)", "result", id="pydough_call"),
+        pytest.param(
+            "result: UnqualifiedNode = orders", "result", id="unqualified_annotation"
+        ),
+        pytest.param(
+            "result: DataFrame = orders", None, id="dataframe_annotation_ignored"
+        ),
+        pytest.param("result: UnqualifiedNode", None, id="annotation_without_value"),
+        pytest.param(
+            "result: UnqualifiedNode | None = orders",
+            None,
+            id="union_annotation_ignored",
+        ),
+        pytest.param(
+            'result: "UnqualifiedNode" = orders', None, id="string_annotation_ignored"
+        ),
+        pytest.param(
+            "result: pydough.UnqualifiedNode = orders",
+            None,
+            id="qualified_annotation_ignored",
+        ),
+        pytest.param(
+            "first = orders\nresult: UnqualifiedNode = orders",
+            "result",
+            id="annotated_assignment_after_plain",
+        ),
+        pytest.param(
+            "first: UnqualifiedNode = orders\nresult = orders",
+            "result",
+            id="plain_assignment_after_annotated",
+        ),
+        pytest.param(
+            "first = orders\nignored: DataFrame = orders",
+            "first",
+            id="trailing_other_annotation_ignored",
+        ),
+        pytest.param(
+            "first = orders\nignored: UnqualifiedNode",
+            "first",
+            id="trailing_declaration_ignored",
+        ),
+        pytest.param(
+            "if True:\n    nested: UnqualifiedNode = orders",
+            None,
+            id="annotated_assignment_in_block_ignored",
+        ),
+        pytest.param(
+            "def example():\n    nested: UnqualifiedNode = orders",
+            None,
+            id="annotated_assignment_in_function_ignored",
+        ),
+        pytest.param(
+            "holder.value: UnqualifiedNode = orders",
+            None,
+            id="annotated_attribute_target_ignored",
+        ),
+        pytest.param(
+            "holder[0]: UnqualifiedNode = orders",
+            None,
+            id="annotated_subscript_target_ignored",
+        ),
+        pytest.param(
+            '"""fake: UnqualifiedNode = orders"""',
+            None,
+            id="standalone_triple_quoted_string_ignored",
+        ),
+        pytest.param("print('hello')", None, id="standalone_call_ignored"),
+        pytest.param(
+            "def example():\n    nested = 42", None, id="assignment_in_function_ignored"
+        ),
+        pytest.param(
+            "result = 1\nholder.value = 2", "result", id="trailing_attribute_ignored"
+        ),
+        pytest.param(
+            "result = orders\n1 == 2\norders",
+            "result",
+            id="trailing_expressions_ignored",
+        ),
+        pytest.param(
+            "left, right = 1, 2\nobj.attr = 3\nvalues[0] = 4\n(x := 5)",
+            None,
+            id="no_supported_assignment",
+        ),
+    ],
+)
+def test_extract_var(code: str, expected: str | None) -> None:
+    """Test which Python assignments are eligible for result inference."""
+    assert extract_var(code) == expected
+
+
+def test_extract_var_propagates_syntax_error() -> None:
+    """Test that invalid source raises a syntax error from the extractor."""
+    with pytest.raises(SyntaxError):
+        extract_var("result =")
+
+
+@pytest.mark.parametrize(
+    "pydough_code, answer_variable",
+    [
+        pytest.param(
+            "result = orders\nselected = nations.CALCULATE(name)",
+            None,
+            id="last_assignment_even_when_result_exists",
+        ),
+        pytest.param(
+            "from pydough.unqualified import UnqualifiedNode\n"
+            "selected: UnqualifiedNode = nations.CALCULATE(name)",
+            None,
+            id="annotated_result",
+        ),
+        pytest.param(
+            "if True:\n    result = nations.CALCULATE(name)",
+            None,
+            id="fallback_to_result",
+        ),
+        pytest.param(
+            "selected = nations.CALCULATE(name)\nlast = 42",
+            "selected",
+            id="explicit_name_overrides_inference",
+        ),
+    ],
+)
+def test_from_string_result_selection(
+    pydough_code: str,
+    answer_variable: str | None,
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """Test which value from_string returns without executing a database query."""
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    query: UnqualifiedNode = pydough.from_string(
+        pydough_code, answer_variable, metadata=graph
+    )
+
+    assert pydough.to_sql(query, metadata=graph) == (
+        "SELECT\n  n_name AS name\nFROM tpch.nation"
+    )
 
 
 @pytest.mark.execute
@@ -24,11 +180,11 @@ from tests.testing_utilities import graph_fetcher
     "pydough_code, answer_variable, env, answer",
     [
         pytest.param(
-            "result = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            "nation_counts = TPCH.CALCULATE(n_nations=COUNT(nations))",
             None,
             None,
             lambda: pd.DataFrame({"n_nations": [25]}),
-            id="count_nations-no_var-no_env",
+            id="count_nations-inferred_var-no_env",
         ),
         pytest.param(
             "answer_var = TPCH.CALCULATE(n_nations=COUNT(nations))",
@@ -168,8 +324,8 @@ cnt_customers = template(mkt_segments=segments_list)""",
 )
 def test_tpch_data_e2e_from_string(
     pydough_code: str,
-    answer_variable: str,
-    env: dict[str, Any],
+    answer_variable: str | None,
+    env: dict[str, Any] | None,
     answer: Callable[[], pd.DataFrame],
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
@@ -192,7 +348,7 @@ def test_tpch_data_e2e_from_string(
     "pydough_code, answer_variable, env, error_message",
     [
         pytest.param(
-            "result2 = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            "if True:\n    result2 = TPCH.CALCULATE(n_nations=COUNT(nations))",
             None,
             None,
             "PyDough code expected to store the answer in a variable named 'result'.",
@@ -211,6 +367,13 @@ def test_tpch_data_e2e_from_string(
             {"selected_nation_name": "JAPAN"},
             "Expected variable 'result' in the text to store PyDough code, instead found 'str'.",
             id="invalid_pydough_result_type",
+        ),
+        pytest.param(
+            "result = TPCH.CALCULATE(n_nations=COUNT(nations))\ncount = 1",
+            None,
+            None,
+            "Expected variable 'count' in the text to store PyDough code, instead found 'int'.",
+            id="invalid_inferred_result_type",
         ),
         pytest.param(
             "result = nations.CALCULATE(n_nations=COUNT())",
@@ -234,8 +397,8 @@ def test_tpch_data_e2e_from_string(
 )
 def test_invalid_tpch_data_e2e_from_string(
     pydough_code: str,
-    answer_variable: str,
-    env: dict[str, Any],
+    answer_variable: str | None,
+    env: dict[str, Any] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,
 ):
