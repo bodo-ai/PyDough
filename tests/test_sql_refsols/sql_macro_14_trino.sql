@@ -1,42 +1,16 @@
 WITH _s2 AS (
   SELECT
-    DATE_ADD(
-      'MONTHS',
-      CAST(sequential_number AS BIGINT),
-      CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)
-    ) AS date_val,
-    MONTH(
-      DATE_ADD(
-        'MONTHS',
-        CAST(sequential_number AS BIGINT),
-        CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)
-      )
-    ) AS mo,
-    YEAR(
-      DATE_ADD(
-        'MONTHS',
-        CAST(sequential_number AS BIGINT),
-        CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)
-      )
-    ) AS yr
+    DATE_ADD('MONTH', CAST(sequential_number AS BIGINT), CAST('1992-01-01' AS DATE)) AS date_val,
+    MONTH(DATE_ADD('MONTH', CAST(sequential_number AS BIGINT), CAST('1992-01-01' AS DATE))) AS mo,
+    YEAR(DATE_ADD('MONTH', CAST(sequential_number AS BIGINT), CAST('1992-01-01' AS DATE))) AS yr
   FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
   LIMIT 24
 ), _s0 AS (
   SELECT
-    DATE_ADD(
-      'MONTHS',
-      CAST(sequential_number AS BIGINT),
-      CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)
-    ) AS date_val,
-    YEAR(
-      DATE_ADD(
-        'MONTHS',
-        CAST(sequential_number AS BIGINT),
-        CAST(CAST('1992-01-01' AS DATE) AS TIMESTAMP)
-      )
-    ) AS yr
+    DATE_ADD('MONTH', CAST(sequential_number AS BIGINT), CAST('1992-01-01' AS DATE)) AS date_val,
+    YEAR(DATE_ADD('MONTH', CAST(sequential_number AS BIGINT), CAST('1992-01-01' AS DATE))) AS yr
   FROM TABLE(SEQUENCE(start => 0, stop => 71, step => 1))
   ORDER BY
     1 NULLS FIRST
