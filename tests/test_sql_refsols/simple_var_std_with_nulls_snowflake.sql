@@ -11,6 +11,6 @@ SELECT
   STDDEV_POP(CASE WHEN c_custkey > 3 THEN c_acctbal ELSE NULL END) AS std_pop_0_nnull,
   STDDEV_POP(CASE WHEN c_custkey > 2 THEN c_acctbal ELSE NULL END) AS std_pop_1_nnull,
   STDDEV_POP(CASE WHEN c_custkey > 1 THEN c_acctbal ELSE NULL END) AS std_pop_2_nnull
-FROM tpch.customer
+FROM snowflake_sample_data.tpch_sf1.customer
 WHERE
   c_custkey IN (1, 2, 3)

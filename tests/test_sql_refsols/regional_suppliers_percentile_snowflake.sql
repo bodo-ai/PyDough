@@ -2,14 +2,14 @@ WITH _s3 AS (
   SELECT
     ps_suppkey,
     COUNT(*) AS n_rows
-  FROM tpch.partsupp
+  FROM snowflake_sample_data.tpch_sf1.partsupp
   GROUP BY
     1
 ), _t0 AS (
   SELECT
     supplier.s_name
-  FROM tpch.nation AS nation
-  JOIN tpch.supplier AS supplier
+  FROM snowflake_sample_data.tpch_sf1.nation AS nation
+  JOIN snowflake_sample_data.tpch_sf1.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
   JOIN _s3 AS _s3
     ON _s3.ps_suppkey = supplier.s_suppkey

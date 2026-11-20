@@ -8,6 +8,7 @@ from typing import Any
 
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot import expressions as exp
 from sqlglot import parse_one, transforms
 from sqlglot.dialects import Databricks as DatabricksDialect
 from sqlglot.dialects import Dialect as SQLGlotDialect
@@ -37,14 +38,14 @@ from sqlglot.expressions import (
 )
 from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.generator import Generator
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
-from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
-from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
+from sqlglot.optimizer.scope import traverse_scope
 
 import pydough
 from pydough.configs import PyDoughSession
@@ -59,6 +60,7 @@ from pydough.relational.relational_expressions import (
 from pydough.sqlglot.sqlglot_helpers import normalize_column_name
 
 from .override_canonicalize import canonicalize
+from .override_eliminate_subqueries import eliminate_subqueries
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
@@ -372,29 +374,20 @@ def replace_keys_with_indices(
 
         # Replace GROUP BY keys that are in the select clause with indices.
         # Oracle does not support indices in the GROUP BY, for this dialect this
-        # step is skipped
+        # step is skipped. Always use an index rather than falling back to the
+        # alias name when a key repeats in the select clause: an alias can
+        # collide with a real column name shared by multiple joined tables
+        # (e.g. `customer_id` on both `customer` and `invoice`), which makes
+        # the alias reference ambiguous even though the ordinal position is
+        # always unambiguous.
         if expression.args.get("group") is not None and not isinstance(
             dialect, OracleDialect
         ):
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
-                # Only replace with the index if the key expression appears in
-                # the select list exactly once. Otherwise, replace with the
-                # alias.
                 if key_expr in expressions:
                     expr_idx = expressions.index(key_expr)
-                    n_match: int = 0
-                    for select_elem in expressions:
-                        if not select_elem.find(sqlglot_expressions.AggFunc):
-                            for exp in walk_in_scope(select_elem):
-                                if exp == key_expr:
-                                    n_match += 1
-                    if n_match <= 1:
-                        keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
-                    elif isinstance(expression.expressions[expr_idx], Alias):
-                        keys_list[idx] = sqlglot_expressions.Identifier(
-                            this=expression.expressions[expr_idx].alias, quoted=False
-                        )
+                    keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
             keys_list.sort(key=repr)
 
     # Now iterate through all window functions and replace any ordering keys
@@ -643,7 +636,14 @@ def protect_oracle_reserved_identifiers(
     if not isinstance(dialect, OracleDialect):
         return
 
-    if isinstance(expr, sqlglot_expressions.Identifier):
+    # Stop transforming once inside a CONNECT statement, as the LEVEL
+    # pseudo-column should remain untouched at that point.
+    if isinstance(expr, exp.Connect) or (
+        isinstance(expr, exp.Select) and expr.args.get("connect") is not None
+    ):
+        return
+
+    if isinstance(expr, exp.Identifier):
         if not expr.quoted and _oracle_identifier_needs_quoting(expr.this):
             expr.meta["case_sensitive"] = True
         # Identifiers are leaf nodes, so no recursion is needed
@@ -669,6 +669,13 @@ def quote_oracle_identifiers(expr: SQLGlotExpression, dialect: SQLGlotDialect) -
     """
     # This runs just for Oracle dialect
     if not isinstance(dialect, OracleDialect):
+        return
+
+    # Stop transforming once inside a CONNECT statement, as the LEVEL
+    # pseudo-column should remain untouched at that point.
+    if isinstance(expr, exp.Connect) or (
+        isinstance(expr, exp.Select) and expr.args.get("connect") is not None
+    ):
         return
 
     if isinstance(
@@ -720,6 +727,49 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
+def lateral_sql_without_as(self, expression: exp.Lateral) -> str:
+    """
+    Override the SQLGlot definition of `lateral_sql` to remove the injection of
+    the AS keyword for the table alias, since some dialects do not syntactically
+    allow the AS keyword to be included in that spot.
+    """
+    this = self.sql(expression, "this")
+
+    if expression.args.get("view"):
+        alias = expression.args["alias"]
+        columns = self.expressions(alias, key="columns", flat=True)
+        table = f" {alias.name}" if alias.name else ""
+        columns = f" AS {columns}" if columns else ""
+        op_sql = self.seg(
+            f"LATERAL VIEW{' OUTER' if expression.args.get('outer') else ''}"
+        )
+        return f"{op_sql}{self.sep()}{this}{table}{columns}"
+
+    table_alias = expression.args.get("alias")
+    offset = expression.this.args.get("offset")
+
+    if (
+        self.UNNEST_WITH_ORDINALITY
+        and table_alias
+        and isinstance(expression.this, exp.Unnest)
+        and isinstance(offset, exp.Identifier)
+    ):
+        # UNNEST ... WITH ORDINALITY stores the ordinality column's name in Unnest.offset
+        table_alias = table_alias.copy()
+        table_alias.append("columns", offset.copy())
+
+    alias = self.sql(table_alias)
+    # PyDough Change: remove the injection of the AS
+    # alias = f" AS {alias}" if alias else ""
+
+    ordinality = expression.args.get("ordinality") or ""
+    if ordinality:
+        ordinality = f" WITH ORDINALITY{alias}"
+        alias = ""
+
+    return f"{self.lateral_op(expression)} {this}{alias}{ordinality}"
+
+
 def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
     """
     Update the configuration of the sqlglot dialect for the given dialect
@@ -737,6 +787,9 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             # Keep the parenthesis around the values
             MySQL.Generator.WRAP_DERIVED_VALUES = True
         case DatabaseDialect.ORACLE:
+            # Override the lateral SQL generation for Oracle to avoid using
+            # the faulty injection of AS
+            Oracle.Generator.lateral_sql = lateral_sql_without_as
             # This tells the Oracle generator to map DATETIME requests to DATE
             Oracle.Generator.TYPE_MAPPING[
                 sqlglot_expressions.DataType.Type.DATETIME
@@ -810,6 +863,7 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
             MySQL.Generator.VALUES_AS_TABLE = False
             MySQL.Generator.WRAP_DERIVED_VALUES = False
         case DatabaseDialect.ORACLE:
+            Oracle.Generator.lateral_sql = Generator.lateral_sql
             del Oracle.Generator.TYPE_MAPPING[
                 sqlglot_expressions.DataType.Type.DATETIME
             ]

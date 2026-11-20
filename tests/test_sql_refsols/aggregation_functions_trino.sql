@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   GROUP BY
     1
 ), _t2 AS (
@@ -28,14 +28,14 @@ WITH _s1 AS (
       THEN customer.c_acctbal
       ELSE NULL
     END AS expr_18
-  FROM tpch.customer AS customer
+  FROM postgres.tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
 ), _t1 AS (
   SELECT
     ARBITRARY(c_acctbal) AS anything_c_acctbal,
-    AVG(c_acctbal) AS avg_c_acctbal,
-    AVG(expr_17) AS avg_expr_17,
+    AVG(CAST(c_acctbal AS DOUBLE)) AS avg_c_acctbal,
+    AVG(CAST(expr_17 AS DOUBLE)) AS avg_expr_17,
     COUNT(c_acctbal) AS count_c_acctbal,
     MAX(c_acctbal) AS max_c_acctbal,
     MAX(expr_18) AS max_expr_18,

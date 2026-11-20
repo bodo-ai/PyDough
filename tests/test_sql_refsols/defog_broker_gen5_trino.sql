@@ -1,6 +1,6 @@
 SELECT
   DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP)) AS month,
-  AVG(sbtxprice) AS avg_price
+  AVG(CAST(sbtxprice AS DOUBLE)) AS avg_price
 FROM mysql.broker.sbtransaction
 WHERE
   MONTH(CAST(sbtxdatetime AS TIMESTAMP)) IN (1, 2, 3)

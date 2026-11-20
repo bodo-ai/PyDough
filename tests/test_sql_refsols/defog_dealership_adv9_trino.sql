@@ -1,5 +1,5 @@
 SELECT
-  AVG(sale_price) AS ASP
+  AVG(CAST(sale_price AS DOUBLE)) AS ASP
 FROM cassandra.defog.sales
 WHERE
   sale_date <= CAST('2023-03-31' AS DATE)

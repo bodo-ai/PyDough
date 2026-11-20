@@ -3,7 +3,7 @@ WITH _s0 AS (
     p_partkey,
     p_retailprice,
     p_size
-  FROM tpch.part
+  FROM tpch_s3_pq.tpch_sf1.part
   ORDER BY
     CAST(CAST(p_retailprice AS DOUBLE) AS BIGINT)
   LIMIT 2
@@ -21,7 +21,7 @@ SELECT
   DATE_FORMAT(lineitem.l_receiptdate, 'MM/dd') AS date_md,
   DATE_FORMAT(lineitem.l_receiptdate, 'HH:mma') AS am_pm
 FROM _s0 AS _s0
-JOIN tpch.lineitem AS lineitem
+JOIN tpch_s3_pq.tpch_sf1.lineitem AS lineitem
   ON _s0.p_partkey = lineitem.l_partkey
 ORDER BY
   4 DESC,

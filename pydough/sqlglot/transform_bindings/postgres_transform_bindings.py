@@ -83,10 +83,6 @@ class PostgresTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
-        match operator:
-            case pydop.AVG:
-                return self.convert_avg(args, types)
-
         if operator in self.PYDOP_TO_POSTGRES_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_POSTGRES_FUNC[operator], expressions=args

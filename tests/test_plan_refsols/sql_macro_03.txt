@@ -1,0 +1,3 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  SQLQUERYSCAN(table=SELECT DISTINCT l.value AS color FROM part p JOIN json_each('["' || replace(p.p_name, ' ', '","') || '"]') l, columns={})

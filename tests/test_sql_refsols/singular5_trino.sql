@@ -6,8 +6,8 @@ WITH _t AS (
       PARTITION BY part.p_container
       ORDER BY lineitem.l_extendedprice DESC NULLS FIRST, lineitem.l_shipdate
     ) AS _w
-  FROM tpch.part AS part
-  JOIN tpch.lineitem AS lineitem
+  FROM mysql.tpch.part AS part
+  JOIN postgres.tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
     AND lineitem.l_shipmode = 'RAIL'
     AND lineitem.l_tax = 0
@@ -17,7 +17,7 @@ WITH _t AS (
 SELECT
   part.p_container AS container,
   ARBITRARY(_t.l_shipdate) AS highest_price_ship_date
-FROM tpch.part AS part
+FROM mysql.tpch.part AS part
 JOIN _t AS _t
   ON _t._w = 1 AND _t.p_container = part.p_container
 WHERE

@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     o_orderdate,
     o_orderkey
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   WHERE
     MONTH(CAST(o_orderdate AS TIMESTAMP)) = 1
   QUALIFY

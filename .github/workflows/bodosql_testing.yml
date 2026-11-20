@@ -25,6 +25,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Setup Java
+        # Pinned: newer JDKs (24+) removed the Security Manager, 
+        # which breaks BodoSQL's Iceberg HadoopCatalog.
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v10.0.1
         with:

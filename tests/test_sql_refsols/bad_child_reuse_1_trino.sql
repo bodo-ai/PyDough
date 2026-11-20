@@ -2,14 +2,14 @@ WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   GROUP BY
     1
 ), _t1 AS (
   SELECT
     customer.c_custkey,
     _s1.n_rows
-  FROM tpch.customer AS customer
+  FROM postgres.tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   ORDER BY

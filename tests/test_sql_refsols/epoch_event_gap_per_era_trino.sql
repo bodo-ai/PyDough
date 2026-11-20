@@ -19,7 +19,7 @@ WITH _t2 AS (
 )
 SELECT
   er_name AS era_name,
-  AVG(day_gap) AS avg_event_gap
+  AVG(CAST(day_gap AS DOUBLE)) AS avg_event_gap
 FROM _t2
 WHERE
   er_end_year > YEAR(CAST(ev_dt AS TIMESTAMP))

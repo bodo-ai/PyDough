@@ -8,10 +8,10 @@ WITH _t AS (
       PARTITION BY nation.n_regionkey
       ORDER BY customer.c_acctbal DESC NULLS FIRST, customer.c_name
     ) AS _w
-  FROM tpch.region AS region
-  JOIN tpch.nation AS nation
+  FROM mongo.tpch.region AS region
+  JOIN cassandra.tpch.nation AS nation
     ON nation.n_regionkey = region.r_regionkey
-  JOIN tpch.customer AS customer
+  JOIN postgres.tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 )
 SELECT

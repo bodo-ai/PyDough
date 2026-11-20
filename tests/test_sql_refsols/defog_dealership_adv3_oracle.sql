@@ -5,21 +5,14 @@ WITH "_s2" AS (
   FROM MAIN.CARS
   WHERE
     LOWER(VIN_NUMBER) LIKE '%m5%'
-), "_s1" AS (
-  SELECT
-    CAR_ID,
-    COUNT(*) AS N_ROWS
-  FROM MAIN.SALES
-  GROUP BY
-    CAR_ID
 ), "_s3" AS (
   SELECT
     CARS.MAKE,
     CARS.MODEL,
-    SUM("_s1".N_ROWS) AS SUM_N_ROWS
+    COUNT(*) AS N_ROWS
   FROM MAIN.CARS CARS
-  JOIN "_s1" "_s1"
-    ON CARS."_id" = "_s1".CAR_ID
+  JOIN MAIN.SALES SALES
+    ON CARS."_id" = SALES.CAR_ID
   WHERE
     LOWER(CARS.VIN_NUMBER) LIKE '%m5%'
   GROUP BY
@@ -29,7 +22,7 @@ WITH "_s2" AS (
 SELECT
   "_s2".MAKE AS make,
   "_s2".MODEL AS model,
-  COALESCE("_s3".SUM_N_ROWS, 0) AS num_sales
+  COALESCE("_s3".N_ROWS, 0) AS num_sales
 FROM "_s2" "_s2"
 LEFT JOIN "_s3" "_s3"
   ON "_s2".MAKE = "_s3".MAKE AND "_s2".MODEL = "_s3".MODEL

@@ -156,7 +156,6 @@ class BaseTransformBindings:
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
-        pydop.AVG: sqlglot_expressions.Avg,
         pydop.MIN: sqlglot_expressions.Min,
         pydop.MAX: sqlglot_expressions.Max,
         pydop.ANYTHING: sqlglot_expressions.AnyValue,
@@ -221,6 +220,8 @@ class BaseTransformBindings:
             provided arguments.
         """
         func: sqlglot_expressions.Func
+        if operator == pydop.AVG:
+            return self.convert_avg(args, types)
         if operator in self.standard_func_bindings:
             func = self.standard_func_bindings[operator]
             return func.from_arg_list(args)
@@ -447,6 +448,16 @@ class BaseTransformBindings:
                 return sqlglot_expressions.CountIf(this=args[0])
             case _:
                 return sqlglot_expressions.Sum(this=args[0])
+
+    def convert_avg(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts an AVG function call to its SQLGlot equivalent. Dialects
+        whose AVG implementation loses precision on exact numeric types
+        (e.g. Trino) should override this.
+        """
+        return sqlglot_expressions.Avg.from_arg_list(args)
 
     def convert_listof(
         self, args: SQLGlotExpression, types: list[PyDoughType]

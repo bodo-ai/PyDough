@@ -2,13 +2,13 @@ WITH _s2 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM tpch.region
+  FROM snowflake_sample_data.tpch_sf1.region
 ), _s3 AS (
   SELECT
     _s0.r_regionkey,
     COUNT(*) AS n_rows
   FROM _s2 AS _s0
-  JOIN tpch.region AS region
+  JOIN snowflake_sample_data.tpch_sf1.region AS region
     ON SUBSTRING(_s0.r_name, 1, 1) = SUBSTRING(region.r_name, 1, 1)
     AND _s0.r_name <> region.r_name
   GROUP BY

@@ -1,7 +1,7 @@
 WITH _t3 AS (
   SELECT
     o_orderdate
-  FROM tpch.orders
+  FROM main.orders
 ), _s0 AS (
   SELECT
     MIN(o_orderdate) AS min_o_orderdate
@@ -17,7 +17,7 @@ WITH _t3 AS (
     ) / 7 AS BIGINT) AS ord_wk,
     COUNT(*) AS n_rows
   FROM _s0 AS _s0
-  JOIN tpch.orders AS orders
+  JOIN main.orders AS orders
     ON CAST(DATE_DIFF(
       'DAY',
       CAST(_s0.min_o_orderdate AS DATE) - CAST(DAYOFWEEK(_s0.min_o_orderdate) AS INT),
@@ -45,7 +45,7 @@ WITH _t3 AS (
     COUNT(*) AS n_rows
   FROM _s2 AS _s2
   CROSS JOIN _s3 AS _s3
-  JOIN tpch.lineitem AS lineitem
+  JOIN main.lineitem AS lineitem
     ON CAST(DATE_DIFF(
       'DAY',
       CAST(_s3.min_o_orderdate AS DATE) - CAST(DAYOFWEEK(_s3.min_o_orderdate) AS INT),

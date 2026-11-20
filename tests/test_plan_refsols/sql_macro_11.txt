@@ -1,0 +1,5 @@
+ROOT(columns=[('prio', priority_value), ('cum_val', RELSUM(args=[DEFAULT_TO(sum_o_totalprice, 0:numeric)], partition=[], order=[(priority_name):desc_first], cumulative=True))], orderings=[])
+ JOIN(condition=t0.priority_name == t1.o_orderpriority, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'priority_name': t0.priority_name, 'priority_value': t0.priority_value, 'sum_o_totalprice': t1.sum_o_totalprice})
+  SQLQUERYSCAN(table=SELECT '1-URGENT' AS priority_name, 1 AS priority_value UNION ALL SELECT '2-HIGH', 2 UNION ALL SELECT '3-MEDIUM', 3 UNION ALL SELECT '4-NOT SPECIFIED', 4 UNION ALL SELECT '5-LOW', 5, columns={'priority_name': priority_name, 'priority_value': priority_value})
+  AGGREGATE(keys={'o_orderpriority': o_orderpriority}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})
+   SCAN(table=tpch.ORDERS, columns={'o_orderpriority': o_orderpriority, 'o_totalprice': o_totalprice})

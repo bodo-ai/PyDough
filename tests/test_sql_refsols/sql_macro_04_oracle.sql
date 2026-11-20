@@ -1,0 +1,31 @@
+WITH "_1" AS (
+  SELECT DISTINCT
+    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, "_0".LVL) AS COLOR
+  FROM PART P
+  CROSS JOIN LATERAL (
+    SELECT
+      LEVEL AS LVL
+    FROM DUAL
+    CONNECT BY LEVEL <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
+  )"_0"
+)
+SELECT
+  "_1".COLOR AS color,
+  COUNT(*) AS n
+FROM "_1" "_1"
+JOIN TPCH.PART PART
+  ON PART.P_NAME LIKE CONCAT('%', (
+    ' ' || NVL("_1".COLOR, '')
+  ))
+  OR PART.P_NAME LIKE CONCAT('%', (
+    ' ' || NVL("_1".COLOR, '') || ' '
+  ), '%')
+  OR PART.P_NAME LIKE CONCAT((
+    NVL("_1".COLOR, '') || ' '
+  ), '%')
+GROUP BY
+  "_1".COLOR
+ORDER BY
+  2 DESC NULLS LAST,
+  1 NULLS FIRST
+FETCH FIRST 3 ROWS ONLY

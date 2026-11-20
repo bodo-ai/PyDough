@@ -31,7 +31,7 @@ WITH _s2 AS (
         CAST(LPAD(CAST(MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS VARCHAR), 2, '0') AS VARCHAR)
       )
     END AS month,
-    AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
+    AVG(CAST(sbtransaction.sbtxamount AS DOUBLE)) AS avg_sbtxamount
   FROM mongo.defog.sbcustomer AS sbcustomer
   JOIN mysql.broker.sbtransaction AS sbtransaction
     ON MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) = MONTH(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))

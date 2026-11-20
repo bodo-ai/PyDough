@@ -48,7 +48,7 @@
           {
             "name": "artist_id",
             "type": "table column",
-            "column name": "ArtistId",
+            "column name": "\"ArtistId\"",
             "data type": "numeric",
             "sample values": [
               1,
@@ -85,7 +85,7 @@
           {
             "name": "artist_id",
             "type": "table column",
-            "column name": "ArtistId",
+            "column name": "\"ArtistId\"",
             "data type": "numeric",
             "sample values": [
               1,

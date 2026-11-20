@@ -73,4 +73,4 @@ SELECT
   TO_CHAR(CAST('1995-10-27' AS TIMESTAMP), 'Mon') AS monthname_str4,
   TO_CHAR(CAST('1999-12-31' AS TIMESTAMP), 'Mon') AS monthname_str5,
   TO_CHAR(CAST('1993-08-15 00:00:00' AS TIMESTAMP), 'Mon') AS monthname_dt
-FROM tpch.orders
+FROM snowflake_sample_data.tpch_sf1.orders

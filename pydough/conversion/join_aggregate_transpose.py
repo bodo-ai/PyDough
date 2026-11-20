@@ -31,6 +31,8 @@ from pydough.relational.rel_util import (
 )
 from pydough.types import BooleanType, NumericType
 
+from .conversion_helpers import build_new_ref_name
+
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
     """
@@ -95,7 +97,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             return base
         i: int = 0
         while True:
-            name: str = f"{base}_{i}"
+            name: str = build_new_ref_name(base, i)
             if name not in used_names:
                 return name
             i += 1

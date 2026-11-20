@@ -1,6 +1,6 @@
 SELECT
   food_type,
-  AVG(rating) AS avg_rating
+  AVG(CAST(rating AS DOUBLE)) AS avg_rating
 FROM cassandra.defog.restaurant
 GROUP BY
   1

@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   GROUP BY
     1
 )
@@ -15,10 +15,10 @@ SELECT
   NOT _s1.n_rows IS NULL AND _s1.n_rows >= 5 AS at_least_5_orders,
   region.r_name = 'ASIA' OR region.r_name = 'EUROPE' AS is_eurasian,
   customer.c_acctbal < 0 AND region.r_name = 'EUROPE' AS is_european_in_debt
-FROM tpch.customer AS customer
+FROM postgres.tpch.customer AS customer
 LEFT JOIN _s1 AS _s1
   ON _s1.o_custkey = customer.c_custkey
-JOIN tpch.nation AS nation
+JOIN cassandra.tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
-JOIN tpch.region AS region
+JOIN mongo.tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey

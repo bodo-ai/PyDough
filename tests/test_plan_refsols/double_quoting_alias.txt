@@ -1,0 +1,6 @@
+ROOT(columns=[('n_albums', DEFAULT_TO(KEEP_IF(count_ArtistId, (count_ArtistId != 0:numeric)), 0:numeric))], orderings=[])
+ AGGREGATE(keys={'"ArtistId"': "ArtistId_0"}, aggregations={'count_ArtistId': COUNT("ArtistId")})
+  JOIN(condition=t0."ArtistId" == t1."ArtistId", type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'"ArtistId"': t1."ArtistId", '"ArtistId_0"': t0."ArtistId"})
+   FILTER(condition=Name == 'AC/DC':string, columns={'"ArtistId"': "ArtistId"})
+    SCAN(table=main.Artist, columns={'"ArtistId"': "ArtistId", 'Name': Name})
+   SCAN(table=main.Album, columns={'"ArtistId"': "ArtistId"})

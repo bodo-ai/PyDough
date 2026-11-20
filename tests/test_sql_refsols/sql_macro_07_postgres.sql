@@ -1,0 +1,11 @@
+WITH _0 AS (
+  SELECT DISTINCT
+    UNNEST(STRING_TO_ARRAY(p_name, ' ')) AS color
+  FROM tpch.part
+)
+SELECT
+  color
+FROM _0
+ORDER BY
+  1 NULLS FIRST
+LIMIT 5

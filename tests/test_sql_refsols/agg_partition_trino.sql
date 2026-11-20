@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   GROUP BY
     YEAR(CAST(o_orderdate AS TIMESTAMP))
 )

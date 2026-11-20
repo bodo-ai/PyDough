@@ -3,15 +3,15 @@ WITH _s4 AS (
     o_custkey,
     o_orderdate,
     o_orderkey
-  FROM tpch.orders
+  FROM mysql.tpch.orders
 ), _t AS (
   SELECT
     customer.c_custkey,
     customer.c_name,
     _s3.o_orderdate,
     ROW_NUMBER() OVER (PARTITION BY _s3.o_custkey ORDER BY _s3.o_orderdate, _s3.o_orderkey) AS _w
-  FROM tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  FROM postgres.tpch.customer AS customer
+  JOIN cassandra.tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'VIETNAM'
   JOIN _s4 AS _s3
     ON _s3.o_custkey = customer.c_custkey

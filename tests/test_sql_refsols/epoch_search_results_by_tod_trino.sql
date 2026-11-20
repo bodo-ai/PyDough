@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     times.t_name,
     ARBITRARY(times.t_start_hour) AS anything_t_start_hour,
-    AVG(searches.search_num_results) AS avg_search_num_results,
+    AVG(CAST(searches.search_num_results AS DOUBLE)) AS avg_search_num_results,
     COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches

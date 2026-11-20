@@ -1,0 +1,8 @@
+ROOT(columns=[('total_1995', DEFAULT_TO(sum_o_totalprice, 0:numeric)), ('total_1996', DEFAULT_TO(sum_v_1_2, 0:numeric))], orderings=[])
+ JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'sum_o_totalprice': t0.sum_o_totalprice, 'sum_v_1_2': t1.sum_o_totalprice})
+  AGGREGATE(keys={}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})
+   FILTER(condition=YEAR(o_orderdate) == 1995:numeric, columns={'o_totalprice': o_totalprice})
+    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})
+  AGGREGATE(keys={}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})
+   FILTER(condition=YEAR(o_orderdate) == 1996:numeric, columns={'o_totalprice': o_totalprice})
+    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})

@@ -21,6 +21,7 @@ from pydough.metadata import (
     MaskedTableColumnMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
+    SQLQueryMetadata,
 )
 from pydough.qdag import (
     Calculate,
@@ -56,6 +57,7 @@ from pydough.relational import (
     RelationalNode,
     RelationalRoot,
     Scan,
+    SqlQueryScan,
     WindowCallExpression,
 )
 from pydough.types import BooleanType, NumericType, UnknownType
@@ -64,6 +66,7 @@ from pydough.types.pydough_type import PyDoughType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .column_bubbler import bubble_column_names
+from .conversion_helpers import build_new_ref_name
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
@@ -186,7 +189,7 @@ class RelTranslation:
         new_name: str = name
         while new_name in existing_names:
             self.dummy_idx += 1
-            new_name = f"{name}_{self.dummy_idx}"
+            new_name = build_new_ref_name(name, self.dummy_idx)
         return new_name
 
     def get_correlated_name(self, context: TranslationOutput) -> str:
@@ -725,7 +728,7 @@ class RelTranslation:
                 old_name: str = old_reference.name
                 new_name: str = old_name
                 while new_name in join_columns:
-                    new_name = f"{old_name}_{self.dummy_idx}"
+                    new_name = build_new_ref_name(old_name, self.dummy_idx)
                     self.dummy_idx += 1
                 new_reference: ColumnReference = ColumnReference(
                     new_name, old_reference.data_type
@@ -991,7 +994,9 @@ class RelTranslation:
             hybrid_ref: HybridRefExpr = HybridRefExpr(expr_name, hybrid_expr.typ)
             out_ref: ColumnReference = ColumnReference(expr_name, hybrid_expr.typ)
             out_columns[hybrid_ref] = out_ref
-        assert isinstance(node.collection.collection, SimpleTableMetadata), (
+        assert isinstance(
+            node.collection.collection, (SimpleTableMetadata, SQLQueryMetadata)
+        ), (
             f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
         )
         uniqueness: set[frozenset[str]] = set()
@@ -1005,9 +1010,19 @@ class RelTranslation:
                 assert isinstance(expr, ColumnReference)
                 real_names.add(expr.name)
             uniqueness.add(frozenset(real_names))
-        answer: RelationalNode = Scan(
-            node.collection.collection.table_path, scan_columns, uniqueness
-        )
+        answer: RelationalNode
+
+        match node.collection.collection:
+            case SimpleTableMetadata():
+                answer = Scan(
+                    node.collection.collection.table_path, scan_columns, uniqueness
+                )
+            case SQLQueryMetadata():
+                answer = SqlQueryScan(
+                    node.collection.collection.sql_query, scan_columns, uniqueness
+                )
+            case _:
+                raise NotImplementedError(node.collection.collection.__class__.__name__)
 
         # If any of the columns are masked, insert a projection on top to unmask
         # them.
@@ -1018,6 +1033,10 @@ class RelTranslation:
                     assert isinstance(hybrid_expr, HybridColumnExpr)
                     assert isinstance(
                         hybrid_expr.column.column_property, MaskedTableColumnMetadata
+                    )
+                    assert isinstance(
+                        node.collection.collection,
+                        SimpleTableMetadata,
                     )
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
@@ -1060,9 +1079,6 @@ class RelTranslation:
         # First, build the table scan for the collection being stepped into.
         collection_access: CollectionAccess = node.collection
         assert isinstance(collection_access, SubCollection)
-        assert isinstance(collection_access.collection, SimpleTableMetadata), (
-            f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
-        )
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
         cardinality: JoinCardinality = (
@@ -1085,7 +1101,21 @@ class RelTranslation:
                 collection_access.subcollection_property
             )
         )
-        if (not reverse_cardinality.filters) and (not parent.always_exists()):
+        # If the parent is a PARTITION child, its own `always_exists()` is
+        # always true regardless of filters applied to the data being
+        # partitioned, since every emitted group is non-empty by
+        # construction. That does not mean every row of the underlying
+        # (possibly filtered) data survived, so check the filtered subtree
+        # directly to avoid wrongly treating this join as unfiltered.
+        source_always_exists: bool = True
+        if isinstance(parent.pipeline[0], HybridPartitionChild):
+            source_always_exists = RelTranslation.partition_source_always_exists(
+                parent.pipeline[0].subtree
+            )
+
+        if (not reverse_cardinality.filters) and (
+            not parent.always_exists() or not source_always_exists
+        ):
             reverse_cardinality = reverse_cardinality.add_filter()
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
@@ -1488,18 +1518,15 @@ class RelTranslation:
             out_columns[hybrid_ref] = col_ref
             gen_columns[column_name] = col_ref
 
-        # Generate the unique set
+        # Generate the unique set, treating `unique_terms` as a single
+        # (possibly composite) uniqueness set rather than one per column.
         uniqueness: set[frozenset[str]] = set()
-        for unique_set in node.user_collection.unique_terms:
-            names: list[str] = (
-                [unique_set] if isinstance(unique_set, str) else unique_set
-            )
-            real_names: set[str] = set()
-            for name in names:
-                expr = gen_columns[name]
-                assert isinstance(expr, ColumnReference)
-                real_names.add(expr.name)
-            uniqueness.add(frozenset(real_names))
+        real_names: set[str] = set()
+        for name in node.user_collection.unique_terms:
+            expr = gen_columns[name]
+            assert isinstance(expr, ColumnReference)
+            real_names.add(expr.name)
+        uniqueness.add(frozenset(real_names))
 
         answer: RelationalNode = GeneratedTable(collection, uniqueness)
         return TranslationOutput(answer, out_columns)
@@ -1658,6 +1685,31 @@ class RelTranslation:
                 )
         result = self.handle_children(result, hybrid, pipeline_idx)
         return result
+
+    @staticmethod
+    def partition_source_always_exists(subtree: HybridTree) -> bool:
+        """
+        Determines whether the data being partitioned by a `HybridPartition`
+        (i.e. the subtree of a `HybridPartitionChild`) always exists. This is
+        the same as `subtree.always_exists()`, except that `always_exists()`
+        treats a `HybridPartitionChild` at the start of a pipeline as always
+        existing by construction, which would hide a filter applied to the
+        data being partitioned if that data is itself reached through
+        another layer of PARTITION. This method recurses through any such
+        nested layers to check the real underlying data instead.
+
+        Args:
+            `subtree`: the `HybridTree` of the data being partitioned.
+
+        Returns:
+            Whether `subtree`, and the real data it is ultimately derived
+            from, always exists.
+        """
+        if isinstance(subtree.pipeline[0], HybridPartitionChild):
+            return RelTranslation.partition_source_always_exists(
+                subtree.pipeline[0].subtree
+            )
+        return subtree.always_exists()
 
     @staticmethod
     def preprocess_root(

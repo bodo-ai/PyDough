@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS FIRST, c_name NULLS LAST) AS r,
     c_name
-  FROM tpch.customer
+  FROM tpch_s3_pq.tpch_sf1.customer
 )
 SELECT
   c_name AS n,

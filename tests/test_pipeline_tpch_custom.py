@@ -114,6 +114,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     floor_and_ceil_2,
     function_sampler,
     global_acctbal_breakdown,
+    group_by_key_repeated_alias,
     highest_priority_per_year,
     iff_with_aggregates_on_different_collections,
     isin_mixed_literal_list,
@@ -133,8 +134,18 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     partition_by_child_reference,
     partition_by_literal,
     partition_child_inherited_term,
+    partition_filter_1995_only,
+    partition_filter_1996_only,
+    partition_filtered_nested_subcollection_count,
+    partition_four_colors_same_keys,
     partition_key_name_collision,
+    partition_same_filter_different_order,
+    partition_same_keys_different_filter,
+    partition_same_keys_different_filter_distinct_aggs,
+    partition_same_keys_different_filter_shared_name,
+    partition_same_keys_same_filter,
     partition_self_reference,
+    partition_subset_filter,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -3954,6 +3965,126 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                partition_same_keys_different_filter,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_1995": [34546133183.6],
+                        "total_1996": [34609364760.86],
+                    }
+                ),
+                "partition_same_keys_different_filter",
+            ),
+            id="partition_same_keys_different_filter",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_same_keys_different_filter_shared_name,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_1995": [34546133183.6],
+                        "total_1996": [34609364760.86],
+                    }
+                ),
+                "partition_same_keys_different_filter_shared_name",
+            ),
+            id="partition_same_keys_different_filter_shared_name",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_filter_1995_only,
+                "TPCH",
+                lambda: pd.DataFrame({"total_1995": [34546133183.6]}),
+                "partition_filter_1995_only",
+            ),
+            id="partition_filter_1995_only",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_filter_1996_only,
+                "TPCH",
+                lambda: pd.DataFrame({"total_1996": [34609364760.86]}),
+                "partition_filter_1996_only",
+            ),
+            id="partition_filter_1996_only",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_same_keys_same_filter,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_a": [34546133183.6],
+                        "total_b": [34546133183.6],
+                    }
+                ),
+                "partition_same_keys_same_filter",
+            ),
+            id="partition_same_keys_same_filter",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_same_keys_different_filter_distinct_aggs,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "min_1995": [137576.669632295],
+                        "max_1995": [184446.394754171],
+                        "min_1996": [151379.828894614],
+                        "max_1996": [151379.828894614],
+                    }
+                ),
+                "partition_same_keys_different_filter_distinct_aggs",
+            ),
+            id="partition_same_keys_different_filter_distinct_aggs",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_four_colors_same_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "max_smoke": [466],
+                        "max_rose": [471],
+                        "max_turquoise": [478],
+                        "max_spring": [469],
+                    }
+                ),
+                "partition_four_colors_same_keys",
+            ),
+            id="partition_four_colors_same_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_subset_filter,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_1995": [34546133183.6],
+                        "total_1995_urgent": [6858584755.04],
+                    }
+                ),
+                "partition_subset_filter",
+            ),
+            id="partition_subset_filter",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                partition_same_filter_different_order,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "total_a": [34546133183.6],
+                        "total_b": [34546133183.6],
+                    }
+                ),
+                "partition_same_filter_different_order",
+            ),
+            id="partition_same_filter_different_order",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(HAS(orders.WHERE(order_priority == '1-URGENT')) == 1)))",
                 "TPCH",
                 lambda: pd.DataFrame({"n": [92333]}),
@@ -6964,6 +7095,21 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                partition_filtered_nested_subcollection_count,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": ["x"],
+                        "n_orders": [999334],
+                        "n_lines": [5040415],
+                    }
+                ),
+                "partition_filtered_nested_subcollection_count",
+            ),
+            id="partition_filtered_nested_subcollection_count",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 chained_partition_transformed_key,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -7001,6 +7147,435 @@ from .testing_utilities import (
             ),
             id="chained_partition_transformed_key",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                group_by_key_repeated_alias,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(25)),
+                        "key_again": list(range(25)),
+                        "cnt": [
+                            5925,
+                            5975,
+                            5999,
+                            6020,
+                            5995,
+                            5952,
+                            6100,
+                            5908,
+                            6042,
+                            6161,
+                            6009,
+                            5963,
+                            5948,
+                            6033,
+                            5992,
+                            5921,
+                            5974,
+                            5975,
+                            6024,
+                            6100,
+                            5904,
+                            6008,
+                            6078,
+                            6011,
+                            5983,
+                        ],
+                    }
+                ),
+                "group_by_key_repeated_alias",
+            ),
+            id="group_by_key_repeated_alias",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = order_priorities",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "1-URGENT",
+                            "2-HIGH",
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                        ],
+                        "value": [1, 2, 3, 4, 5],
+                    }
+                ),
+                "sql_macro_01",
+            ),
+            id="sql_macro_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = order_priorities.TOP_K(3, by=value.ASC()).CALCULATE(name, n_orders=COUNT(orders))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["1-URGENT", "2-HIGH", "3-MEDIUM"],
+                        "n_orders": [300343, 300091, 298723],
+                    }
+                ),
+                "sql_macro_02",
+                order_sensitive=True,
+            ),
+            id="sql_macro_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT(colors))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [92],
+                    }
+                ),
+                "sql_macro_03",
+            ),
+            id="sql_macro_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = colors.CALCULATE(color, n=COUNT(parts)).TOP_K(3, by=(n.DESC(), color.ASC()))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"color": ["tomato", "cyan", "tan"], "n": [11150, 11082, 11075]}
+                ),
+                "sql_macro_04",
+                order_sensitive=True,
+            ),
+            id="sql_macro_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = parts.TOP_K(3, by=key.ASC()).CALCULATE(name, a=MIN(colors.color), b=MAX(colors.color))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "goldenrod lavender spring chocolate lace",
+                            "blush thistle blue yellow saddle",
+                            "spring green yellow purple cornsilk",
+                        ],
+                        "a": ["chocolate", "blue", "cornsilk"],
+                        "b": ["spring", "yellow", "yellow"],
+                    }
+                ),
+                "sql_macro_05",
+                order_sensitive=True,
+            ),
+            id="sql_macro_05",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = months.TOP_K(5, by=month.ASC()).CALCULATE(month, orders=COUNT(orders_made_in_month), lines_shipped=COUNT(lines_shipped_in_month), lines_committed=COUNT(lines_committed_in_month), lines_received=COUNT(lines_received_in_month))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "months": list(
+                            pd.date_range("1-1-1992", "5-1-1992", freq="MS")
+                        ),
+                        "orders": [
+                            19330,
+                            18058,
+                            19353,
+                            18600,
+                            19197,
+                        ],
+                        "lines_shipped": [
+                            9524,
+                            26740,
+                            48238,
+                            65233,
+                            76368,
+                        ],
+                        "lines_committed": [
+                            38,
+                            19111,
+                            58025,
+                            75054,
+                            76781,
+                        ],
+                        "lines_received": [
+                            3018,
+                            17633,
+                            37986,
+                            56013,
+                            73290,
+                        ],
+                    }
+                ),
+                "sql_macro_06",
+                order_sensitive=True,
+            ),
+            id="sql_macro_06",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = colors.TOP_K(5, by=color.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "colors": ["almond", "antique", "aquamarine", "azure", "beige"],
+                    }
+                ),
+                "sql_macro_07",
+                order_sensitive=True,
+            ),
+            id="sql_macro_07",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = colors.TOP_K(5, by=color.ASC()).CALCULATE(color, n_parts=COUNT(parts))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "colors": ["almond", "antique", "aquamarine", "azure", "beige"],
+                        "n_parts": [10970, 10869, 10727, 10880, 10876],
+                    }
+                ),
+                "sql_macro_08",
+                order_sensitive=True,
+            ),
+            id="sql_macro_08",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " colors"
+                " .CALCULATE(color)"
+                " .TOP_K(5, by=color.ASC())"
+                " .parts"
+                " .BEST(by=(retail_price.DESC(), key.ASC()), per='colors')"
+                " .CALCULATE(color, key, retail_price)"
+                " .ORDER_BY(color.ASC())"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "colors": ["almond", "antique", "aquamarine", "azure", "beige"],
+                        "key": [198999, 198999, 196999, 198999, 191998],
+                        "retail_price": [2097.99, 2097.99, 2095.99, 2097.99, 2089.99],
+                    }
+                ),
+                "sql_macro_09",
+                order_sensitive=True,
+            ),
+            id="sql_macro_09",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "chosen_orders = orders.WHERE(PERCENTILE(by=(total_price.ASC(), key.ASC()), n_buckets=10) == 1)\n"
+                "result = order_priorities.CALCULATE(prio=name, n_chosen=COUNT(chosen_orders))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "prio": [
+                            "1-URGENT",
+                            "2-HIGH",
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                        ],
+                        "n_chosen": [30037, 29768, 29971, 30172, 30052],
+                    }
+                ),
+                "sql_macro_10",
+            ),
+            id="sql_macro_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " order_priorities"
+                " .CALCULATE(total_val=SUM(orders.total_price))"
+                " .CALCULATE(prio=value, cum_val=RELSUM(total_val, by=name.DESC(), cumulative=True))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "prio": [1, 2, 3, 4, 5],
+                        "cum_val": [
+                            226829306447.46,
+                            181410577010.38,
+                            135930800767.35,
+                            90777192678.89,
+                            45501158695.79,
+                        ],
+                    }
+                ),
+                "sql_macro_11",
+            ),
+            id="sql_macro_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " colors"
+                " .CALCULATE(color)"
+                " .EXPLODE(color, 'letters', value_name='letter', index_name='idx', version='string', delimiter='')"
+                " .PARTITION(name='letter_groups', by=letter)"
+                " .CALCULATE(letter, n_occur=COUNT(letters), n_colors=NDISTINCT(letters.color))"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "letters": list("abcdefghijklmnopqrstuvwyz"),
+                        "n_occur": [
+                            46,
+                            12,
+                            18,
+                            24,
+                            58,
+                            9,
+                            12,
+                            18,
+                            34,
+                            1,
+                            9,
+                            37,
+                            19,
+                            37,
+                            43,
+                            13,
+                            4,
+                            38,
+                            27,
+                            24,
+                            16,
+                            6,
+                            10,
+                            13,
+                            1,
+                        ],
+                        "n_colors": [
+                            40,
+                            12,
+                            16,
+                            21,
+                            50,
+                            7,
+                            12,
+                            18,
+                            31,
+                            1,
+                            8,
+                            33,
+                            18,
+                            34,
+                            36,
+                            11,
+                            4,
+                            35,
+                            26,
+                            22,
+                            15,
+                            6,
+                            10,
+                            13,
+                            1,
+                        ],
+                    }
+                ),
+                "sql_macro_12",
+                skipped_dialects={"ANSI", "SQLITE", "MYSQL", "ORACLE"},
+            ),
+            id="sql_macro_12",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "chosen_combinations = ("
+                " order_priorities.CALCULATE(priority=name)"
+                " .CROSS(colors.CALCULATE(color))"
+                " .WHERE(HASNOT(parts.WHERE(size < 3).lines.WHERE((ship_date < DATETIME('1992-02-01')) & (ship_mode == 'RAIL')).order.WHERE((clerk < 'Clerk#000000100') & (order_date < DATETIME('1992-02-01')) & (order_priority == priority))))"
+                ")\n"
+                "result = TPCH.CALCULATE(n=COUNT(chosen_combinations))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [445],
+                    }
+                ),
+                "sql_macro_13",
+            ),
+            id="sql_macro_13",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " months.TOP_K(24, by=month.ASC())"
+                " .PARTITION(name='years', by=year)"
+                " .months"
+                " .CALCULATE(n_orders=COUNT(orders_made_in_month))"
+                " .CALCULATE(year, month_of_year, csum=RELSUM(n_orders, per='years', by=month_of_year.ASC(), cumulative=True), delta=n_orders-PREV(n_orders, per='years', by=month_of_year.ASC()))"
+                " .ORDER_BY(year, month_of_year)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1992] * 12 + [1993] * 12,
+                        "month_of_year": list(range(1, 13)) * 2,
+                        "csum": [
+                            19330,
+                            37388,
+                            56741,
+                            75341,
+                            94538,
+                            113178,
+                            132439,
+                            151498,
+                            169955,
+                            189227,
+                            207650,
+                            227089,
+                            19318,
+                            36669,
+                            55924,
+                            74584,
+                            93603,
+                            112358,
+                            131677,
+                            150883,
+                            169576,
+                            188815,
+                            207475,
+                            226645,
+                        ],
+                        "delta": [
+                            None,
+                            -1272,
+                            1295,
+                            -753,
+                            597,
+                            -557,
+                            621,
+                            -202,
+                            -602,
+                            815,
+                            -849,
+                            1016,
+                            None,
+                            -1967,
+                            1904,
+                            -595,
+                            359,
+                            -264,
+                            564,
+                            -113,
+                            -513,
+                            546,
+                            -579,
+                            510,
+                        ],
+                    }
+                ),
+                "sql_macro_14",
+                order_sensitive=True,
+            ),
+            id="sql_macro_14",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -7031,24 +7606,24 @@ def test_pipeline_until_relational_tpch_custom(
 
 def test_pipeline_until_sql_tpch_custom(
     tpch_custom_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    empty_context_database: DatabaseContext,
+    all_dialects_empty_sample_context: tuple[DatabaseContext, GraphMetadata],
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ) -> None:
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
+    db_context, graph = all_dialects_empty_sample_context
 
     tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
-        empty_context_database.dialect, tpch_custom_pipeline_test_data
+        db_context.dialect, tpch_custom_pipeline_test_data
     )
 
     file_path: str = get_sql_test_filename(
-        tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
+        tpch_custom_pipeline_test_data.test_name, db_context.dialect
     )
     tpch_custom_pipeline_test_data.run_sql_test(
-        get_sample_graph, file_path, update_tests, empty_context_database
+        lambda _: graph, file_path, update_tests, db_context
     )
 
 
@@ -7300,7 +7875,7 @@ def test_pipeline_e2e_simple_week(
             bad_name_2,
             None,
             re.escape(
-                "Unrecognized term of TPCH: 'CUSTS'. Did you mean: parts, lines, customers, orders?"
+                "Unrecognized term of TPCH: 'CUSTS'. Did you mean: parts, lines, colors, months, customers?"
             ),
             id="bad_name_2",
         ),
@@ -7504,7 +8079,7 @@ def test_pipeline_e2e_simple_week(
             bad_cross_3,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers.TPCH: 'foo'. Did you mean: lines, parts, nations, orders, regions?"
+                "Unrecognized term of TPCH.customers.TPCH: 'foo'. Did you mean: colors, lines, months, parts, nations?"
             ),
             id="bad_cross_3",
         ),
@@ -7526,7 +8101,7 @@ def test_pipeline_e2e_simple_week(
             bad_cross_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: size, lines, key, name, supply_records?"
+                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: size, colors, lines, key, name?"
             ),
             id="bad_cross_6",
         ),
@@ -8484,6 +9059,75 @@ def test_pipeline_e2e_errors(
                 skipped_dialects={"BODOSQL"},
             ),
             id="to_table_test_25",
+        ),
+        # Test 26: Materializes a PARTITION with
+        # a composite unique key (year, month) via to_table,
+        # then regroups by a proper subset of that key (year alone).
+        # The composite key must be preserved as a single multi-column
+        # uniqueness constraint, not flattened into independent single-column
+        # keys.
+        pytest.param(
+            PyDoughPandasTest(
+                "monthly = orders.WHERE(ISIN(order_date, (lo_date, hi_date)))"
+                ".CALCULATE(oyear=YEAR(order_date), omonth=MONTH(order_date))"
+                ".PARTITION(name='monthly_t26', by=(oyear, omonth))"
+                ".CALCULATE(oyear, omonth, n=COUNT(orders), tot=SUM(orders.total_price))\n"
+                "monthly_tmp = pydough.to_table(monthly, name='monthly_orders_t26', replace=True)\n"
+                "result = (\n"
+                "    monthly_tmp\n"
+                "    .PARTITION(name='yearly_t26', by=oyear)\n"
+                "    .CALCULATE(oyear, n=SUM(monthly_tmp.n), tot=SUM(monthly_tmp.tot))\n"
+                "    .ORDER_BY(oyear.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oyear": [1998],
+                        "n": [1239],
+                        "tot": [186673915.16],
+                    }
+                ),
+                "to_table_test_26",
+                skipped_dialects={"BODOSQL"},
+                kwargs={
+                    "lo_date": date(1998, 7, 31),
+                    "hi_date": date(1998, 8, 1),
+                },
+            ),
+            id="to_table_test_26",
+        ),
+        # Test 27: Same as test 26, but confirms a materialized single-column
+        # unique key is still handled correctly (sanity check alongside the
+        # composite-key fix in test 26).
+        pytest.param(
+            PyDoughPandasTest(
+                "yearly = orders.WHERE(ISIN(order_date, (lo_date, hi_date)))"
+                ".CALCULATE(oyear=YEAR(order_date))"
+                ".PARTITION(name='yearly_t27', by=oyear)"
+                ".CALCULATE(oyear, n=COUNT(orders), tot=SUM(orders.total_price))\n"
+                "yearly_tmp = pydough.to_table(yearly, name='yearly_orders_t27', replace=True)\n"
+                "result = (\n"
+                "    yearly_tmp\n"
+                "    .PARTITION(name='regroup_t27', by=oyear)\n"
+                "    .CALCULATE(oyear, n=SUM(yearly_tmp.n), tot=SUM(yearly_tmp.tot))\n"
+                "    .ORDER_BY(oyear.ASC())\n"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oyear": [1998],
+                        "n": [1239],
+                        "tot": [186673915.16],
+                    }
+                ),
+                "to_table_test_27",
+                skipped_dialects={"BODOSQL"},
+                kwargs={
+                    "lo_date": date(1998, 7, 31),
+                    "hi_date": date(1998, 8, 1),
+                },
+            ),
+            id="to_table_test_27",
         ),
     ],
 )

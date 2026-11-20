@@ -1,4 +1,4 @@
-WITH _s0 AS (
+WITH RECURSIVE _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,

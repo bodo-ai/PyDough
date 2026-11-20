@@ -22,6 +22,6 @@ SELECT
     LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
   ) AS BIGINT) AS count_e,
   LOCATE('Alex', customer.c_name) - 1 AS idx_Alex
-FROM tpch.customer AS customer
-JOIN tpch.nation AS nation
+FROM tpch_s3_pq.tpch_sf1.customer AS customer
+JOIN tpch_s3_pq.tpch_sf1.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
