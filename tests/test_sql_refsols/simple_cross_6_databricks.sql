@@ -4,7 +4,7 @@ WITH _t1 AS (
     c_custkey,
     c_mktsegment,
     c_nationkey
-  FROM tpch.customer
+  FROM tpch_s3_pq.tpch_sf1.customer
   WHERE
     c_acctbal > 9990
 )

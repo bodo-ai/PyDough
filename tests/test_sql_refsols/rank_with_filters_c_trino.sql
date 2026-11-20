@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT DISTINCT
     p_size
-  FROM tpch.part
+  FROM mysql.tpch.part
   ORDER BY
     1 DESC
   LIMIT 5
@@ -14,7 +14,7 @@ WITH _s0 AS (
       ORDER BY part.p_retailprice DESC NULLS FIRST, part.p_partkey
     ) AS _w
   FROM _s0 AS _s0
-  JOIN tpch.part AS part
+  JOIN mysql.tpch.part AS part
     ON _s0.p_size = part.p_size
 )
 SELECT

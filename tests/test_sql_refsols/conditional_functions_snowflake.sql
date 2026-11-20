@@ -9,8 +9,8 @@ SELECT
     THEN ANY_VALUE(customer.c_acctbal)
     ELSE NULL
   END AS no_debt_bal
-FROM tpch.customer AS customer
-LEFT JOIN tpch.orders AS orders
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
+LEFT JOIN snowflake_sample_data.tpch_sf1.orders AS orders
   ON customer.c_custkey = orders.o_custkey
 WHERE
   customer.c_acctbal <= 1000 AND customer.c_acctbal >= 100

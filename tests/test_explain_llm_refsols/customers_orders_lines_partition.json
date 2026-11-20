@@ -12,9 +12,12 @@
           "available_terms": {
             "expressions": [],
             "collections": [
+              "colors",
               "customers",
               "lines",
+              "months",
               "nations",
+              "order_priorities",
               "orders",
               "parts",
               "regions",
@@ -114,7 +117,9 @@
             ],
             "collections": [
               "customer",
-              "lines"
+              "lines",
+              "order_month",
+              "priority"
             ]
           }
         },
@@ -148,9 +153,12 @@
               "tax"
             ],
             "collections": [
+              "commit_month",
               "order",
               "part",
               "part_and_supplier",
+              "receipt_month",
+              "ship_month",
               "supplier"
             ]
           }
@@ -186,9 +194,12 @@
             "tax"
           ],
           "collections": [
+            "commit_month",
             "order",
             "part",
             "part_and_supplier",
+            "receipt_month",
+            "ship_month",
             "supplier"
           ]
         },

@@ -3,7 +3,7 @@ WITH _t3 AS (
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     o_orderpriority,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
   GROUP BY
     1,
     2

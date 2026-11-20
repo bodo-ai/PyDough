@@ -1,20 +1,20 @@
 WITH _t1 AS (
   SELECT
     n_nationkey
-  FROM tpch.nation
+  FROM tpch_s3_pq.tpch_sf1.nation
   WHERE
     n_nationkey <= 4
 ), _t5 AS (
   SELECT
     r_regionkey
-  FROM tpch.region
+  FROM tpch_s3_pq.tpch_sf1.region
   WHERE
     r_regionkey <= 2
 ), _s7 AS (
   SELECT
     l_orderkey,
     SUM(l_extendedprice) AS sum_l_extendedprice
-  FROM tpch.lineitem
+  FROM tpch_s3_pq.tpch_sf1.lineitem
   GROUP BY
     1
 ), _s9 AS (
@@ -24,7 +24,7 @@ WITH _t1 AS (
     _t9.r_regionkey
   FROM _t1 AS _t8
   CROSS JOIN _t5 AS _t9
-  JOIN tpch.orders AS orders
+  JOIN tpch_s3_pq.tpch_sf1.orders AS orders
     ON _t9.r_regionkey >= orders.o_orderkey AND orders.o_orderkey = 1
   JOIN _s7 AS _s7
     ON _s7.l_orderkey = orders.o_orderkey

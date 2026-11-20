@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     l_orderkey,
     SUM(l_extendedprice) AS sum_l_extendedprice
-  FROM tpch.lineitem
+  FROM postgres.tpch.lineitem
   GROUP BY
     1
 ), _s5 AS (
@@ -17,7 +17,7 @@ WITH _s3 AS (
     (1996),
     (1997),
     (1998)) AS years_2(y)
-  JOIN tpch.orders AS orders
+  JOIN mysql.tpch.orders AS orders
     ON orders.o_custkey = 1 AND years_2.y >= YEAR(CAST(orders.o_orderdate AS TIMESTAMP))
   JOIN _s3 AS _s3
     ON _s3.l_orderkey = orders.o_orderkey

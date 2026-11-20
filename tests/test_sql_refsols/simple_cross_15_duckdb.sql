@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     r_name
-  FROM tpch.region
+  FROM main.region
 ), _s0 AS (
   SELECT DISTINCT
     CASE WHEN r_name LIKE '%A%' THEN 'A' ELSE '*' END AS a

@@ -2,15 +2,15 @@ WITH _s2 AS (
   SELECT
     'x' AS k,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   WHERE
     o_totalprice > 100000
 ), _s3 AS (
   SELECT
     'x' AS k,
     COUNT(*) AS n_rows
-  FROM tpch.orders AS orders
-  JOIN tpch.lineitem AS lineitem
+  FROM mysql.tpch.orders AS orders
+  JOIN postgres.tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
     orders.o_totalprice > 100000

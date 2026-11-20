@@ -66,7 +66,7 @@ SELECT
       ELSE SPLIT_PART(p_name, ' ', 6)
     END
   ) AS c6
-FROM tpch.part
+FROM mysql.tpch.part
 ORDER BY
   1 NULLS FIRST
 LIMIT 5

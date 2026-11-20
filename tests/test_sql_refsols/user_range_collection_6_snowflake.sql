@@ -6,10 +6,10 @@ WITH years AS (
   SELECT
     YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
     COUNT(DISTINCT orders.o_custkey) AS ndistinct_o_custkey
-  FROM tpch.orders AS orders
-  JOIN tpch.customer AS customer
+  FROM snowflake_sample_data.tpch_sf1.orders AS orders
+  JOIN snowflake_sample_data.tpch_sf1.customer AS customer
     ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'AUTOMOBILE'
-  JOIN tpch.nation AS nation
+  JOIN snowflake_sample_data.tpch_sf1.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'JAPAN'
   WHERE
     orders.o_clerk = 'Clerk#000000925'

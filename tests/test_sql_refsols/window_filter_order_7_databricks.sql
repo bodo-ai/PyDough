@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
     1 AS `_`
-  FROM tpch.orders AS orders
-  JOIN tpch.customer AS customer
+  FROM tpch_s3_pq.tpch_sf1.orders AS orders
+  JOIN tpch_s3_pq.tpch_sf1.customer AS customer
     ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'BUILDING'
   WHERE
     EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)) = 1995

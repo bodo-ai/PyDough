@@ -2,13 +2,13 @@ WITH _s2 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM tpch.region
+  FROM mongo.tpch.region
 ), _s3 AS (
   SELECT
     _s0.r_regionkey,
     COUNT(*) AS n_rows
   FROM _s2 AS _s0
-  JOIN tpch.region AS region
+  JOIN mongo.tpch.region AS region
     ON SUBSTR(_s0.r_name, 1, 1) = SUBSTR(region.r_name, 1, 1)
     AND _s0.r_name <> region.r_name
   GROUP BY

@@ -1,28 +1,28 @@
 WITH _t1 AS (
   SELECT
     n_nationkey
-  FROM tpch.nation
+  FROM cassandra.tpch.nation
   WHERE
     n_nationkey <= 4
 ), _s3 AS (
   SELECT
     l_orderkey,
     SUM(l_extendedprice) AS sum_l_extendedprice
-  FROM tpch.lineitem
+  FROM postgres.tpch.lineitem
   GROUP BY
     1
 ), _s5 AS (
   SELECT
     l_partkey,
     COUNT(*) AS n_rows
-  FROM tpch.lineitem
+  FROM postgres.tpch.lineitem
   GROUP BY
     1
 ), _s7 AS (
   SELECT
     lineitem.l_orderkey,
     SUM(_s5.n_rows) AS sum_n_rows
-  FROM tpch.lineitem AS lineitem
+  FROM postgres.tpch.lineitem AS lineitem
   LEFT JOIN _s5 AS _s5
     ON _s5.l_partkey = lineitem.l_partkey
   GROUP BY
@@ -33,7 +33,7 @@ WITH _t1 AS (
     COALESCE(SUM(_s7.sum_n_rows), 0) AS sum_part_usage_score,
     _t4.n_nationkey
   FROM _t1 AS _t4
-  JOIN tpch.orders AS orders
+  JOIN mysql.tpch.orders AS orders
     ON _t4.n_nationkey >= orders.o_orderkey AND orders.o_orderkey = 1
   JOIN _s3 AS _s3
     ON _s3.l_orderkey = orders.o_orderkey

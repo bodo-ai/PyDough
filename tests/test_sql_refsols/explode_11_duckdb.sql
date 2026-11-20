@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT DISTINCT
     _s2.val AS cust_word
-  FROM tpch.customer AS customer
+  FROM main.customer AS customer
   CROSS JOIN LATERAL (
     SELECT
       UNNEST(
@@ -33,7 +33,7 @@ WITH _s5 AS (
 )
 SELECT
   COUNT(DISTINCT _s0.val) AS n_double_words
-FROM tpch.supplier AS supplier
+FROM main.supplier AS supplier
 CROSS JOIN LATERAL (
   SELECT
     UNNEST(

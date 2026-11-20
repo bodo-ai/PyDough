@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     AVG(o_totalprice) AS avg_o_totalprice
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
   GROUP BY
@@ -14,7 +14,7 @@ WITH _t0 AS (
 ), _t3 AS (
   SELECT
     AVG(o_totalprice) AS avg_o_totalprice
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1996
   GROUP BY

@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     o_orderdate,
     o_orderkey
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
   WHERE
     EXTRACT(MONTH FROM CAST(o_orderdate AS TIMESTAMP)) = 1
   QUALIFY

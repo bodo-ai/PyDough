@@ -5,7 +5,7 @@ WITH _t0 AS (
       THEN o_totalprice
       ELSE NULL
     END AS expr_1
-  FROM tpch.orders
+  FROM main.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1998
 )

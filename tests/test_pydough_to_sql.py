@@ -29,42 +29,18 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     datediff,
     datetime_sampler,
-    extract_colors,
-    floor_and_ceil,
-    floor_and_ceil_2,
     get_part_multiple,
-    global_acctbal_breakdown,
     hour_minute_day,
-    nation_acctbal_breakdown,
-    quantile_function_test_1,
-    quantile_function_test_2,
     rank_a,
     rank_b,
     rank_c,
-    region_acctbal_breakdown,
     simple_filter,
     simple_scan,
-    simple_smallest_or_largest,
-    simple_var_std,
     time_threshold_reached,
     transaction_week_sampler,
     week_offset,
     window_sliding_frame_relsize,
     window_sliding_frame_relsum,
-)
-from tests.test_pydough_functions.user_collections import (
-    simple_range_1,
-    simple_range_2,
-    simple_range_3,
-    simple_range_4,
-    simple_range_5,
-    user_range_collection_1,
-    user_range_collection_2,
-    user_range_collection_3,
-    user_range_collection_4,
-    user_range_collection_5,
-    user_range_collection_6,
-    user_range_collection_7,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -105,64 +81,10 @@ from tests.testing_utilities import (
             id="rank_c",
         ),
         pytest.param(
-            floor_and_ceil,
-            None,
-            "floor_and_ceil",
-            id="floor_and_ceil",
-        ),
-        pytest.param(
-            floor_and_ceil_2,
-            None,
-            "floor_and_ceil_2",
-            id="floor_and_ceil_2",
-        ),
-        pytest.param(
             datetime_sampler,
             None,
             "datetime_sampler",
             id="datetime_sampler",
-        ),
-        pytest.param(
-            nation_acctbal_breakdown,
-            None,
-            "nation_acctbal_breakdown",
-            id="nation_acctbal_breakdown",
-        ),
-        pytest.param(
-            region_acctbal_breakdown,
-            None,
-            "region_acctbal_breakdown",
-            id="region_acctbal_breakdown",
-        ),
-        pytest.param(
-            global_acctbal_breakdown,
-            None,
-            "global_acctbal_breakdown",
-            id="global_acctbal_breakdown",
-        ),
-        pytest.param(
-            simple_smallest_or_largest,
-            None,
-            "simple_smallest_or_largest",
-            id="simple_smallest_or_largest",
-        ),
-        pytest.param(
-            simple_var_std,
-            None,
-            "simple_var_std",
-            id="simple_var_std",
-        ),
-        pytest.param(
-            extract_colors,
-            None,
-            "extract_colors",
-            id="extract_colors",
-        ),
-        pytest.param(
-            quantile_function_test_1, None, "quantile_test_1", id="quantile_test_1"
-        ),
-        pytest.param(
-            quantile_function_test_2, None, "quantile_test_2", id="quantile_test_2"
         ),
         pytest.param(
             arithmetic_and_binary_operators,
@@ -205,99 +127,26 @@ from tests.testing_utilities import (
         pytest.param(
             casting_functions, None, "casting_functions", id="casting_functions"
         ),
-        pytest.param(
-            simple_range_1,
-            None,
-            "simple_range_1",
-            id="simple_range_1",
-        ),
-        pytest.param(
-            simple_range_2,
-            None,
-            "simple_range_2",
-            id="simple_range_2",
-        ),
-        pytest.param(
-            simple_range_3,
-            None,
-            "simple_range_3",
-            id="simple_range_3",
-        ),
-        pytest.param(
-            simple_range_4,
-            None,
-            "simple_range_4",
-            id="simple_range_4",
-        ),
-        pytest.param(
-            simple_range_5,
-            None,
-            "simple_range_5",
-            id="simple_range_5",
-        ),
-        pytest.param(
-            user_range_collection_1,
-            None,
-            "user_range_collection_1",
-            id="user_range_collection_1",
-        ),
-        pytest.param(
-            user_range_collection_2,
-            None,
-            "user_range_collection_2",
-            id="user_range_collection_2",
-        ),
-        pytest.param(
-            user_range_collection_3,
-            None,
-            "user_range_collection_3",
-            id="user_range_collection_3",
-        ),
-        pytest.param(
-            user_range_collection_4,
-            None,
-            "user_range_collection_4",
-            id="user_range_collection_4",
-        ),
-        pytest.param(
-            user_range_collection_5,
-            None,
-            "user_range_collection_5",
-            id="user_range_collection_5",
-        ),
-        pytest.param(
-            user_range_collection_6,
-            None,
-            "user_range_collection_6",
-            id="user_range_collection_6",
-        ),
-        pytest.param(
-            user_range_collection_7,
-            None,
-            "user_range_collection_7",
-            id="user_range_collection_7",
-        ),
     ],
 )
 def test_pydough_to_sql_tpch(
     pydough_code: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     test_name: str,
-    get_sample_graph: graph_fetcher,
+    all_dialects_empty_sample_context: tuple[DatabaseContext, GraphMetadata],
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
-    empty_context_database: DatabaseContext,
     update_tests: bool,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
     qualified DAG version, with the correct string representation.
     """
-    graph: GraphMetadata = get_sample_graph("TPCH")
+    database, graph = all_dialects_empty_sample_context
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(
-        root, columns=columns, metadata=graph, database=empty_context_database
+        root, columns=columns, metadata=graph, database=database
     ).strip()
-    file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
+    file_path: str = get_sql_test_filename(test_name, database.dialect)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")

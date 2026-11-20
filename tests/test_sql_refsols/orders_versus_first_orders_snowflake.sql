@@ -3,14 +3,14 @@ WITH _s4 AS (
     o_custkey,
     o_orderdate,
     o_orderkey
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
 ), _t1 AS (
   SELECT
     customer.c_custkey,
     customer.c_name,
     _s3.o_orderdate
-  FROM tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  FROM snowflake_sample_data.tpch_sf1.customer AS customer
+  JOIN snowflake_sample_data.tpch_sf1.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'VIETNAM'
   JOIN _s4 AS _s3
     ON _s3.o_custkey = customer.c_custkey

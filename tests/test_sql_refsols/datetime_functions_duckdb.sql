@@ -233,4 +233,4 @@ SELECT
     THEN 'Nov'
     ELSE 'Dec'
   END AS monthname_dt
-FROM tpch.orders
+FROM main.orders

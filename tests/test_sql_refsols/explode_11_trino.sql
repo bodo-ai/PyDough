@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT DISTINCT
     _s2.val AS cust_word
-  FROM tpch.customer AS customer
+  FROM postgres.tpch.customer AS customer
   CROSS JOIN UNNEST(SPLIT(
     TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', '')),
     ' '
@@ -15,7 +15,7 @@ WITH _s5 AS (
 )
 SELECT
   COUNT(DISTINCT _s0.val) AS n_double_words
-FROM tpch.supplier AS supplier
+FROM mongo.tpch.supplier AS supplier
 CROSS JOIN UNNEST(SPLIT(
   TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(supplier.s_comment, ';', ''), ',', ''), ':', ''), '.', '')),
   ' '

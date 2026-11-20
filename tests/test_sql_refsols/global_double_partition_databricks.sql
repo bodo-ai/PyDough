@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     AVG(c_acctbal) AS avg_c_acctbal
-  FROM tpch.customer
+  FROM tpch_s3_pq.tpch_sf1.customer
 ), _s2 AS (
   SELECT
     customer.c_mktsegment,
@@ -14,7 +14,7 @@ WITH _s0 AS (
       ) / _s0.avg_c_acctbal
     ) AS max_pct_diff
   FROM _s0 AS _s0
-  CROSS JOIN tpch.customer AS customer
+  CROSS JOIN tpch_s3_pq.tpch_sf1.customer AS customer
   GROUP BY
     1,
     2
@@ -23,7 +23,7 @@ WITH _s0 AS (
     _s2.c_mktsegment,
     MAX(_s2.max_pct_diff) AS max_max_pct_diff
   FROM _s2 AS _s2
-  JOIN tpch.nation AS nation
+  JOIN tpch_s3_pq.tpch_sf1.nation AS nation
     ON _s2.c_nationkey = nation.n_nationkey
   GROUP BY
     nation.n_name,

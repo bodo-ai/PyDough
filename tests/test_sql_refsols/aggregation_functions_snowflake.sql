@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   GROUP BY
     1
 ), _t1 AS (
@@ -22,7 +22,7 @@ WITH _s1 AS (
     VARIANCE(customer.c_acctbal) AS sample_var_c_acctbal,
     SUM(customer.c_acctbal) AS sum_c_acctbal,
     SUM(_s1.n_rows) AS sum_n_rows
-  FROM tpch.customer AS customer
+  FROM snowflake_sample_data.tpch_sf1.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   GROUP BY

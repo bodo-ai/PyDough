@@ -20,7 +20,7 @@ from pydough.errors.error_utils import (
     is_string,
 )
 
-from .collections import CollectionMetadata, SimpleTableMetadata
+from .collections import CollectionMetadata, SimpleTableMetadata, SQLQueryMetadata
 from .graphs import GraphMetadata
 from .properties import (
     CartesianProductMetadata,
@@ -307,6 +307,8 @@ def parse_collection_v2(graph: GraphMetadata, collection_json: dict) -> None:
     match collection_type:
         case "simple table":
             SimpleTableMetadata.parse_from_json(graph, collection_name, collection_json)
+        case "sql query":
+            SQLQueryMetadata.parse_from_json(graph, collection_name, collection_json)
         case _:
             raise PyDoughMetadataException(
                 f"Unrecognized PyDough collection type for collection {collection_name!r}: {collection_type!r}"
