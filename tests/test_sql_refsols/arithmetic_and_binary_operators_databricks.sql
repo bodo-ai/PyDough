@@ -11,6 +11,6 @@ SELECT
   lineitem.l_quantity * lineitem.l_discount AS product,
   lineitem.l_extendedprice / lineitem.l_quantity AS ratio,
   POWER(lineitem.l_discount, 2) AS exponent
-FROM tpch.lineitem AS lineitem
-JOIN tpch.part AS part
+FROM tpch_s3_pq.tpch_sf1.lineitem AS lineitem
+JOIN tpch_s3_pq.tpch_sf1.part AS part
   ON lineitem.l_partkey = part.p_partkey

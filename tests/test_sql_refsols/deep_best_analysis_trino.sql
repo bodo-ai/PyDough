@@ -3,7 +3,7 @@ WITH _t2 AS (
     c_acctbal,
     c_custkey,
     c_nationkey
-  FROM tpch.customer
+  FROM postgres.tpch.customer
 ), _t AS (
   SELECT
     c_acctbal,
@@ -15,7 +15,7 @@ WITH _t2 AS (
   SELECT
     n_nationkey,
     n_regionkey
-  FROM tpch.nation
+  FROM cassandra.tpch.nation
 ), _t_2 AS (
   SELECT
     _s5.c_acctbal,
@@ -49,9 +49,9 @@ WITH _t2 AS (
       ORDER BY partsupp.ps_availqty DESC NULLS FIRST, partsupp.ps_partkey
     ) AS _w
   FROM _s4 AS _s8
-  JOIN tpch.supplier AS supplier
+  JOIN mongo.tpch.supplier AS supplier
     ON _s8.n_nationkey = supplier.s_nationkey
-  JOIN tpch.partsupp AS partsupp
+  JOIN cassandra.tpch.partsupp AS partsupp
     ON partsupp.ps_suppkey = supplier.s_suppkey
 ), _t_4 AS (
   SELECT
@@ -99,8 +99,8 @@ SELECT
   _s13.ps_partkey AS p_key,
   _s13.ps_availqty AS p_qty,
   _s15.c_custkey AS cg_key
-FROM tpch.region AS region
-JOIN tpch.nation AS nation
+FROM mongo.tpch.region AS region
+JOIN cassandra.tpch.nation AS nation
   ON nation.n_regionkey = region.r_regionkey
 JOIN _t AS _t
   ON _t._w = 1 AND _t.c_nationkey = nation.n_nationkey

@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
     customer.c_name
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM main.nation AS nation
+  JOIN main.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
     NTILE(100) OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal) = 95

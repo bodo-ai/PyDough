@@ -357,4 +357,4 @@ SELECT
     CAST('1999-03-14' AS TIMESTAMP)
   ) AS _expr99,
   DATEDIFF(SECOND, CAST('2022-11-24' AS DATE), CAST('2019-07-04 11:30:00' AS TIMESTAMP)) AS _expr100
-FROM tpch.orders
+FROM snowflake_sample_data.tpch_sf1.orders

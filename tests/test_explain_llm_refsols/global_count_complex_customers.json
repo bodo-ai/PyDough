@@ -12,9 +12,12 @@
           "available_terms": {
             "expressions": [],
             "collections": [
+              "colors",
               "customers",
               "lines",
+              "months",
               "nations",
+              "order_priorities",
               "orders",
               "parts",
               "regions",
@@ -57,9 +60,12 @@
               "n"
             ],
             "collections": [
+              "colors",
               "customers",
               "lines",
+              "months",
               "nations",
+              "order_priorities",
               "orders",
               "parts",
               "regions",

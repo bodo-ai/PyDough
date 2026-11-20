@@ -3,13 +3,13 @@ WITH _s1 AS (
     1 AS expr_0,
     c_acctbal,
     c_custkey
-  FROM tpch.customer
+  FROM main.customer
   WHERE
     c_mktsegment = 'BUILDING'
 ), _t1 AS (
   SELECT
     1 AS "_"
-  FROM tpch.orders AS orders
+  FROM main.orders AS orders
   LEFT JOIN _s1 AS _s1
     ON _s1.c_custkey = orders.o_custkey
   WHERE

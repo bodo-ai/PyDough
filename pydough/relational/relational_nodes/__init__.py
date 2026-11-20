@@ -23,6 +23,7 @@ __all__ = [
     "RelationalShuttle",
     "RelationalVisitor",
     "Scan",
+    "SqlQueryScan",
 ]
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
@@ -43,3 +44,4 @@ from .relational_root import RelationalRoot
 from .relational_shuttle import RelationalShuttle
 from .relational_visitor import RelationalVisitor
 from .scan import Scan
+from .sql_query_scan import SqlQueryScan

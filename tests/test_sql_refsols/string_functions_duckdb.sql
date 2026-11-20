@@ -26,6 +26,6 @@ SELECT
     LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
   ) AS BIGINT) AS count_e,
   STRPOS(customer.c_name, 'Alex') - 1 AS idx_Alex
-FROM tpch.customer AS customer
-JOIN tpch.nation AS nation
+FROM main.customer AS customer
+JOIN main.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey

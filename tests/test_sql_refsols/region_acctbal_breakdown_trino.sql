@@ -47,8 +47,8 @@ WITH _t1 AS (
       THEN CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM cassandra.tpch.nation AS nation
+  JOIN postgres.tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 ), _s3 AS (
   SELECT
@@ -69,7 +69,7 @@ SELECT
   _s3.avg_expr_7 AS median_red_acctbal,
   _s3.avg_expr_5 AS median_black_acctbal,
   _s3.avg_expr_6 AS median_overall_acctbal
-FROM tpch.region AS region
+FROM mongo.tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.n_regionkey = region.r_regionkey
 ORDER BY

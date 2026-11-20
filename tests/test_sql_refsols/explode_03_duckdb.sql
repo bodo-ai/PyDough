@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     c_name AS name
-  FROM tpch.customer
+  FROM main.customer
   ORDER BY
     c_custkey NULLS FIRST
   LIMIT 5

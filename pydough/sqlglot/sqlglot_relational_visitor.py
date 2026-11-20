@@ -5,16 +5,18 @@ SQLGlot query.
 
 import warnings
 
+from sqlglot import parse_one
 from sqlglot.expressions import AggFunc as SQLGlotAggFunc
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
-from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import (
+    ExpOrStr,
     Identifier,
     Select,
     Subquery,
     TableAlias,
 )
+from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
@@ -43,6 +45,7 @@ from pydough.relational import (
     Scan,
     WindowCallExpression,
 )
+from pydough.relational.relational_nodes.sql_query_scan import SqlQueryScan
 
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
 from .sqlglot_identifier_finder import find_identifiers_in_list
@@ -381,7 +384,20 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # If the subquery has no columns(because of PyDough's column pruning), add a NULL column to make it valid.
         if len(exprs) == 0:
             exprs = [sqlglot_convert((None,))]
-        query: Select = Select().select(*exprs).from_(scan.table_name)
+
+        # Iff it is a regular scan, just scan from the table. But if it is a
+        # SQLQueryScan, parse the underlying query.
+        source: ExpOrStr
+        if isinstance(scan, SqlQueryScan):
+            source = Subquery(
+                this=parse_one(
+                    scan.sql_query,
+                    dialect=self._session.database.dialect.sqlglot_dialect,
+                )
+            )
+        else:
+            source = scan.table_name
+        query: Select = Select().select(*exprs).from_(source)
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:

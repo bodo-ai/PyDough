@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     o_orderdate
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
   ORDER BY
     o_custkey,
     1

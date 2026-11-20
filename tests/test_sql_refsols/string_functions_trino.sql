@@ -22,6 +22,6 @@ SELECT
     LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
   ) AS DOUBLE) AS BIGINT) AS count_e,
   STRPOS(customer.c_name, 'Alex') - 1 AS idx_Alex
-FROM tpch.customer AS customer
-JOIN tpch.nation AS nation
+FROM postgres.tpch.customer AS customer
+JOIN cassandra.tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey

@@ -14,7 +14,7 @@ SELECT
   ) * 4 + QUARTER(CAST('2000-01-01' AS TIMESTAMP)) - QUARTER(o_orderdate) AS quarters_until_2000,
   ADD_MONTHS(CAST(o_orderdate AS TIMESTAMP), -12) AS same_quarter_prev_year,
   DATE_ADD(QUARTER, 4, CAST(o_orderdate AS TIMESTAMP)) AS same_quarter_next_year
-FROM tpch.orders
+FROM tpch_s3_pq.tpch_sf1.orders
 WHERE
   EXTRACT(YEAR FROM CAST(o_orderdate AS TIMESTAMP)) = 1995
 ORDER BY

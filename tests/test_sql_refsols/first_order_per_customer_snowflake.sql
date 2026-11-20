@@ -3,7 +3,7 @@ WITH _t2 AS (
     o_custkey,
     o_orderdate,
     o_totalprice
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_orderdate, o_orderkey) = 1
 )
@@ -11,7 +11,7 @@ SELECT
   customer.c_name AS name,
   _t2.o_orderdate AS first_order_date,
   _t2.o_totalprice AS first_order_price
-FROM tpch.customer AS customer
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
 JOIN _t2 AS _t2
   ON _t2.o_custkey = customer.c_custkey
 WHERE

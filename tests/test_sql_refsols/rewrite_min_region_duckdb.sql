@@ -1,5 +1,5 @@
 SELECT
   MIN(n_regionkey) AS min_region
-FROM tpch.nation
+FROM main.nation
 WHERE
   n_name LIKE 'I%'

@@ -4,7 +4,7 @@ WITH _s2 AS (
     l_suppkey,
     COUNT(*) AS n_rows,
     SUM(l_quantity) AS sum_l_quantity
-  FROM tpch.lineitem
+  FROM postgres.tpch.lineitem
   WHERE
     YEAR(CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_tax = 0
   GROUP BY
@@ -21,7 +21,7 @@ WITH _s2 AS (
       ORDER BY COALESCE(_s2.sum_l_quantity, 0) DESC NULLS FIRST
     ) AS _w
   FROM _s2 AS _s2
-  JOIN tpch.part AS part
+  JOIN mysql.tpch.part AS part
     ON _s2.l_partkey = part.p_partkey
 )
 SELECT
@@ -29,8 +29,8 @@ SELECT
   _t.p_name AS part_name,
   COALESCE(_t.sum_l_quantity, 0) AS total_quantity,
   _t.n_rows AS n_shipments
-FROM tpch.supplier AS supplier
-JOIN tpch.nation AS nation
+FROM mongo.tpch.supplier AS supplier
+JOIN cassandra.tpch.nation AS nation
   ON nation.n_name = 'FRANCE' AND nation.n_nationkey = supplier.s_nationkey
 JOIN _t AS _t
   ON _t._w = 1 AND _t.l_suppkey = supplier.s_suppkey

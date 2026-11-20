@@ -2,8 +2,8 @@ WITH _s7 AS (
   SELECT
     lineitem.l_quantity,
     lineitem.l_suppkey
-  FROM tpch.lineitem AS lineitem
-  JOIN tpch.part AS part
+  FROM tpch_s3_pq.tpch_sf1.lineitem AS lineitem
+  JOIN tpch_s3_pq.tpch_sf1.part AS part
     ON CONTAINS(part.p_name, 'tomato')
     AND STARTSWITH(part.p_container, 'LG')
     AND lineitem.l_partkey = part.p_partkey
@@ -17,10 +17,10 @@ WITH _s7 AS (
     ANY_VALUE(supplier.s_name) AS anything_s_name,
     ANY_VALUE(supplier.s_nationkey) AS anything_s_nationkey,
     SUM(_s7.l_quantity) AS sum_l_quantity
-  FROM tpch.nation AS nation
-  JOIN tpch.region AS region
+  FROM tpch_s3_pq.tpch_sf1.nation AS nation
+  JOIN tpch_s3_pq.tpch_sf1.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AFRICA'
-  JOIN tpch.supplier AS supplier
+  JOIN tpch_s3_pq.tpch_sf1.supplier AS supplier
     ON CONTAINS(supplier.s_comment, 'careful')
     AND nation.n_nationkey = supplier.s_nationkey
     AND supplier.s_acctbal >= 8000.0

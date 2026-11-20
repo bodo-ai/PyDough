@@ -2,10 +2,10 @@ WITH _t3 AS (
   SELECT
     nation.n_regionkey,
     orders.o_orderkey
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM snowflake_sample_data.tpch_sf1.nation AS nation
+  JOIN snowflake_sample_data.tpch_sf1.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
-  JOIN tpch.orders AS orders
+  JOIN snowflake_sample_data.tpch_sf1.orders AS orders
     ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
     AND customer.c_custkey = orders.o_custkey
   QUALIFY
@@ -15,7 +15,7 @@ WITH _t3 AS (
     lineitem.l_partkey,
     _t3.n_regionkey
   FROM _t3 AS _t3
-  JOIN tpch.lineitem AS lineitem
+  JOIN snowflake_sample_data.tpch_sf1.lineitem AS lineitem
     ON YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1992
     AND _t3.o_orderkey = lineitem.l_orderkey
   QUALIFY
@@ -28,13 +28,13 @@ WITH _t3 AS (
     _t1.n_regionkey,
     part.p_name
   FROM _t1 AS _t1
-  JOIN tpch.part AS part
+  JOIN snowflake_sample_data.tpch_sf1.part AS part
     ON _t1.l_partkey = part.p_partkey
 )
 SELECT
   region.r_name AS region_name,
   _s9.p_name AS part_name
-FROM tpch.region AS region
+FROM snowflake_sample_data.tpch_sf1.region AS region
 LEFT JOIN _s9 AS _s9
   ON _s9.n_regionkey = region.r_regionkey
 ORDER BY

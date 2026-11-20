@@ -18,7 +18,7 @@ SELECT
   ) AS quarters_until_2000,
   DATE_ADD('QUARTER', -4, CAST(o_orderdate AS TIMESTAMP)) AS same_quarter_prev_year,
   DATE_ADD('QUARTER', 4, CAST(o_orderdate AS TIMESTAMP)) AS same_quarter_next_year
-FROM tpch.orders
+FROM mysql.tpch.orders
 WHERE
   YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1995
 ORDER BY

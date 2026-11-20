@@ -1,0 +1,6 @@
+ROOT(columns=[('name', o_orderpriority), ('n_orders', n_rows)], orderings=[(anything_priority_value):asc_first])
+ AGGREGATE(keys={'o_orderpriority': o_orderpriority}, aggregations={'anything_priority_value': ANYTHING(priority_value), 'n_rows': COUNT()})
+  JOIN(condition=t0.priority_name == t1.o_orderpriority, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'o_orderpriority': t1.o_orderpriority, 'priority_value': t0.priority_value})
+   LIMIT(limit=3:numeric, columns={'priority_name': priority_name, 'priority_value': priority_value}, orderings=[(priority_value):asc_first])
+    SQLQUERYSCAN(table=SELECT '1-URGENT' AS priority_name, 1 AS priority_value UNION ALL SELECT '2-HIGH', 2 UNION ALL SELECT '3-MEDIUM', 3 UNION ALL SELECT '4-NOT SPECIFIED', 4 UNION ALL SELECT '5-LOW', 5, columns={'priority_name': priority_name, 'priority_value': priority_value})
+   SCAN(table=tpch.ORDERS, columns={'o_orderpriority': o_orderpriority})

@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     c_comment AS comment
-  FROM tpch.customer
+  FROM snowflake_sample_data.tpch_sf1.customer
   ORDER BY
     c_custkey NULLS FIRST
   LIMIT 3

@@ -2,7 +2,7 @@ SELECT
   LENGTH(_s0.val) AS word_length,
   COUNT(*) AS n_words,
   COUNT(DISTINCT _s0.val) AS n_unique_words
-FROM tpch.customer AS customer
+FROM tpch_s3_pq.tpch_sf1.customer AS customer
 CROSS JOIN LATERAL POSEXPLODE(
   SPLIT(
     TRIM(' ' FROM REPLACE(REPLACE(REPLACE(REPLACE(customer.c_comment, ';', ''), ',', ''), ':', ''), '.', '')),

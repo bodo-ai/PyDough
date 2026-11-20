@@ -2,12 +2,12 @@ WITH _s0 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM tpch.region
+  FROM tpch_s3_pq.tpch_sf1.region
 ), _s1 AS (
   SELECT
     n_name,
     n_regionkey
-  FROM tpch.nation
+  FROM tpch_s3_pq.tpch_sf1.nation
 )
 SELECT
   _s1.n_name AS n1,

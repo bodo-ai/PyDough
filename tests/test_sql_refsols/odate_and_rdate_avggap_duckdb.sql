@@ -11,8 +11,8 @@ SELECT
       END AS TIMESTAMP)
     )
   ) AS avg_gap
-FROM tpch.lineitem AS lineitem
-JOIN tpch.orders AS orders
+FROM main.lineitem AS lineitem
+JOIN main.orders AS orders
   ON lineitem.l_orderkey = orders.o_orderkey
 WHERE
   lineitem.l_shipmode = 'RAIL'

@@ -2,17 +2,17 @@ WITH _s1 AS (
   SELECT
     s_acctbal,
     s_nationkey
-  FROM tpch.supplier
+  FROM mongo.tpch.supplier
 ), _s2 AS (
   SELECT
     n_nationkey,
     n_regionkey
-  FROM tpch.nation
+  FROM cassandra.tpch.nation
 ), _s3 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM tpch.region
+  FROM mongo.tpch.region
 ), _s5 AS (
   SELECT
     _s2.n_nationkey,

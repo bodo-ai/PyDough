@@ -2,8 +2,8 @@ WITH _s3 AS (
   SELECT
     part.p_partkey,
     COUNT(*) AS n_rows
-  FROM tpch.part AS part
-  JOIN tpch.part AS part_2
+  FROM tpch_s3_pq.tpch_sf1.part AS part
+  JOIN tpch_s3_pq.tpch_sf1.part AS part_2
     ON ABS(part_2.p_retailprice - part.p_retailprice) < 5.0
     AND CONTAINS(part_2.p_name, 'tomato')
     AND part.p_brand = part_2.p_brand
@@ -19,7 +19,7 @@ WITH _s3 AS (
 SELECT
   part.p_partkey AS original_part_key,
   COALESCE(_s3.n_rows, 0) AS n_other_parts
-FROM tpch.part AS part
+FROM tpch_s3_pq.tpch_sf1.part AS part
 LEFT JOIN _s3 AS _s3
   ON _s3.p_partkey = part.p_partkey
 WHERE
