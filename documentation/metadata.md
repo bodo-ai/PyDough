@@ -120,7 +120,7 @@ Example of the structure of the metadata for a simple table collection:
 
 A collection with this type translates into a stored SQL query as a data source, similar to views in a database. Collections of this type have a type string of "sql macro" and the following additional key-value pairs in their metadata JSON object:
 
-- `macro text` (required): a string indicating the SQL query text that should be used to define the collection. The query text can be specific of the dialect of database it is intended to run on.
+- `query text` (required): a string indicating the SQL query text that should be used to define the collection. The query text can be specific of the dialect of database it is intended to run on.
 - `unique properties` (required): same as in [simple table](#collection-type-simple-table).
 - `properties` (required): an array of objects representing scalar properties of each record from the collection ([see here for details](#properties)).
 

@@ -39,7 +39,7 @@ class SQLQueryMetadata(CollectionMetadata):
     def __init__(
         self,
         name: str,
-        graph,
+        graph: GraphMetadata,
         sql_query: str,
         unique_properties: list[str | list[str]],
         description: str | None = None,

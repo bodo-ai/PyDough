@@ -728,6 +728,11 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
 
 
 def lateral_sql_without_as(self, expression: exp.Lateral) -> str:
+    """
+    Override the SQLGlot definition of `lateral_sql` to remove the injection of
+    the AS keyword for the table alias, since some dialects do not syntactically
+    allow the AS keyword to be included in that spot.
+    """
     this = self.sql(expression, "this")
 
     if expression.args.get("view"):

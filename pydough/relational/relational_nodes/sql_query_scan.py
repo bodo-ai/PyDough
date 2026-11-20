@@ -15,7 +15,7 @@ class SqlQueryScan(Scan):
     """
     A variation of the Scan node in the relational tree that reads the result of
     a SQL query instead of a base table. This is treated as identical to a
-    regular scan, except that the table path contains a query. Other operations
+    regular scan, except that the table name contains a query. Other operations
     throughout the various optimization pipelines for relational nodes are
     unaffected because they use the node/node_copy APIs, rather than directly
     creating a new SCAN instance. When a SqlQueryScan is copied, the resulting
