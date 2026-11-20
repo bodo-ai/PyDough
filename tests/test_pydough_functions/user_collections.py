@@ -185,6 +185,22 @@ def cross_generated_collection_reverse_singular():
     return outer.CROSS(one_row).CALCULATE(k, x).ORDER_BY(k.ASC())
 
 
+def standalone_singleton():
+    """
+    A single-row generated collection sitting directly under the root.
+    """
+    return pydough.range_collection("one_row", "x", 0, 1)
+
+
+def crossed_singleton():
+    """
+    A single-row generated collection `CROSS`-ed onto a plural collection,
+    making it reverse-plural despite having only one row.
+    """
+    one_row = pydough.range_collection("one_row", "x", 0, 1)
+    return nations.WHERE(key <= 1).CROSS(one_row)
+
+
 def simple_dataframe_collection_1():
     # Generates a simple dataframe collection
     df = pd.DataFrame(

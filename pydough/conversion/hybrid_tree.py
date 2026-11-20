@@ -903,11 +903,11 @@ class HybridTree:
                 if isinstance(self.pipeline[0].collection, TableCollection):
                     # A table scan below a non-root level is a cartesian
                     # product, so it is not reverse-singular.
-                    if not (
-                        self.parent.parent is None
-                        and isinstance(self.parent.pipeline[0], HybridRoot)
-                    ):
-                        return False
+                    match self.parent.pipeline[0]:
+                        case HybridRoot() if self.parent.parent is None:
+                            pass
+                        case _:
+                            return False
                 else:
                     assert isinstance(self.pipeline[0].collection, SubCollection)
                     meta_cardinality: JoinCardinality = (
@@ -931,11 +931,11 @@ class HybridTree:
                 # product, so it is not reverse-singular, even if it
                 # only has a single row (that row can still match
                 # multiple rows on the other side of the join).
-                if not (
-                    self.parent.parent is None
-                    and isinstance(self.parent.pipeline[0], HybridRoot)
-                ):
-                    return False
+                match self.parent.pipeline[0]:
+                    case HybridRoot() if self.parent.parent is None:
+                        pass
+                    case _:
+                        return False
             case _:
                 pass
         return self.parent.is_reverse_singular()

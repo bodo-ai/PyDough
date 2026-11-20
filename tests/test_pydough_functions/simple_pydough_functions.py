@@ -4278,6 +4278,22 @@ def group_by_key_repeated_alias():
     ).ORDER_BY(key.ASC())
 
 
+def tablescan_singular():
+    """
+    A table scan filtered down to a single row, sitting directly under
+    the root.
+    """
+    return regions.WHERE(key == 0)
+
+
+def tablescan_plural():
+    """
+    A table scan filtered down to a single row, but `CROSS`-ed onto a
+    plural collection, making it reverse-plural.
+    """
+    return nations.WHERE(key <= 1).CROSS(regions.WHERE(key == 0))
+
+
 def cross_table_scan_reverse_singular():
     """
     Test for `HybridTree.is_reverse_singular()` wrongly treating
