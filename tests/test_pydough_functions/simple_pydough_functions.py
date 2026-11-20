@@ -4321,3 +4321,39 @@ def group_by_key_repeated_alias():
         key_again=nat_key,
         cnt=COUNT(customers),
     ).ORDER_BY(key.ASC())
+
+
+def tablescan_singular():
+    """
+    A table scan filtered down to a single row, sitting directly under
+    the root.
+    """
+    return regions.WHERE(key == 0)
+
+
+def tablescan_plural():
+    """
+    A table scan filtered down to a single row, but `CROSS`-ed onto a
+    plural collection, making it reverse-plural.
+    """
+    return nations.WHERE(key <= 1).CROSS(regions.WHERE(key == 0))
+
+
+def cross_table_scan_reverse_singular():
+    """
+    Test for `HybridTree.is_reverse_singular()` wrongly treating
+    a table scan as reverse-singular when it is really a cartesian product
+    nested below a `CROSS`, which let an aggregation be incorrectly pulled
+    above the join and merge separate groups together.
+    """
+    outer = nations.WHERE(key <= 1).CALCULATE(k=key)
+    return (
+        outer.CROSS(regions.WHERE(key == 0))
+        .CALCULATE(
+            k,
+            total=ROUND(
+                SUM(nations.CALCULATE(n_bal=SUM(customers.account_balance)).n_bal), 2
+            ),
+        )
+        .ORDER_BY(k.ASC())
+    )

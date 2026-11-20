@@ -881,7 +881,8 @@ class HybridTree:
                 if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
                     return False
             case HybridUserGeneratedCollection():
-                return self.pipeline[0].user_collection.collection.is_singular()
+                if not self.pipeline[0].user_collection.collection.is_singular():
+                    return False
             case HybridRoot():
                 pass
             case _:
@@ -900,7 +901,13 @@ class HybridTree:
         match self.pipeline[0]:
             case HybridCollectionAccess():
                 if isinstance(self.pipeline[0].collection, TableCollection):
-                    pass
+                    # A table scan below a non-root level is a cartesian
+                    # product, so it is not reverse-singular.
+                    match self.parent.pipeline[0]:
+                        case HybridRoot() if self.parent.parent is None:
+                            pass
+                        case _:
+                            return False
                 else:
                     assert isinstance(self.pipeline[0].collection, SubCollection)
                     meta_cardinality: JoinCardinality = (
@@ -918,6 +925,17 @@ class HybridTree:
                     self.pipeline[0].child_idx
                 ].subtree.is_reverse_singular():
                     return False
+            case HybridUserGeneratedCollection():
+                # Same reasoning as the table scan case: a generated
+                # collection below a non-root level is a cartesian
+                # product, so it is not reverse-singular, even if it
+                # only has a single row (that row can still match
+                # multiple rows on the other side of the join).
+                match self.parent.pipeline[0]:
+                    case HybridRoot() if self.parent.parent is None:
+                        pass
+                    case _:
+                        return False
             case _:
                 pass
         return self.parent.is_reverse_singular()
