@@ -27,10 +27,15 @@ class GlobalContext(PyDoughCollectionQDAG):
     """
 
     def __init__(
-        self, graph: GraphMetadata, ancestor: PyDoughCollectionQDAG | None = None
+        self,
+        graph: GraphMetadata,
+        ancestor: PyDoughCollectionQDAG | None = None,
+        *,
+        cross_id: int | None = None,
     ):
         self._ancestor: PyDoughCollectionQDAG | None = ancestor
-        self._graph = graph
+        self.cross_id: int | None = cross_id
+        self._graph: GraphMetadata = graph
         self._collections: dict[str, PyDoughCollectionQDAG] = {}
         self._ancestral_mapping: dict[str, int] = {}
         self._all_terms: set[str] = set()
