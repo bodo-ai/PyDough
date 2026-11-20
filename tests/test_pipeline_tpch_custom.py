@@ -125,6 +125,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
+    nested_decorrelation_cumulative_thresholds,
+    nested_decorrelation_multiple_aggregates,
     odate_and_rdate_avggap,
     order_info_per_priority,
     order_quarter_test,
@@ -7187,6 +7189,47 @@ from .testing_utilities import (
                 "group_by_key_repeated_alias",
             ),
             id="group_by_key_repeated_alias",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                nested_decorrelation_cumulative_thresholds,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [0, 1, 2, 3, 4],
+                        "total_value": [
+                            0.0,
+                            181861.27,
+                            363722.54,
+                            363722.54,
+                            363722.54,
+                        ],
+                    }
+                ),
+                "nested_decorrelation_cumulative_thresholds",
+            ),
+            id="nested_decorrelation_cumulative_thresholds",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                nested_decorrelation_multiple_aggregates,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [0, 1, 2, 3, 4],
+                        "total_value": [
+                            0.0,
+                            181861.27,
+                            181861.27,
+                            181861.27,
+                            181861.27,
+                        ],
+                        "part_usage_score": [0, 194, 194, 194, 194],
+                    }
+                ),
+                "nested_decorrelation_multiple_aggregates",
+            ),
+            id="nested_decorrelation_multiple_aggregates",
         ),
     ],
 )
