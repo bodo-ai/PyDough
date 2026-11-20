@@ -1,4 +1,4 @@
 SELECT
   c_custkey AS id,
   ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS FIRST) AS rk
-FROM tpch.customer
+FROM tpch_s3_pq.tpch_sf1.customer

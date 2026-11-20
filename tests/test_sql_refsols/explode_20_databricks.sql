@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     c_comment AS comment
-  FROM tpch.customer
+  FROM tpch_s3_pq.tpch_sf1.customer
   ORDER BY
     c_custkey
   LIMIT 3

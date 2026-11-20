@@ -197,7 +197,7 @@ from pydough.unqualified import (
         ),
         pytest.param(
             "result = TPCH.CALCULATE(x=COUNT(TPCH.nations) / COUNT(TPCH.regions))",
-            "Unrecognized term of TPCH: 'TPCH'. Did you mean: lines, parts, orders, nations, regions?",
+            "Unrecognized term of TPCH: 'TPCH'. Did you mean: lines, parts, months, colors, orders?",
             id="double_graph",
         ),
         pytest.param(

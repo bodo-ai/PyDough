@@ -8,8 +8,8 @@ WITH _t1 AS (
     ('UNITED STATES', 'BUILDING'),
     ('JAPAN', 'AUTOMOBILE'),
     ('BRAZIL', 'MACHINERY')) AS customers_filters(nation_name, mrk_segment)
-  CROSS JOIN tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  CROSS JOIN main.customer AS customer
+  JOIN main.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
     NTILE(1000) OVER (ORDER BY customer.c_acctbal) > 996
@@ -19,7 +19,7 @@ WITH _t1 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM main.orders
   GROUP BY
     1
 ), _t4 AS (
@@ -30,7 +30,7 @@ WITH _t1 AS (
       CAST(LAG(o_orderdate, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS TIMESTAMP),
       CAST(o_orderdate AS TIMESTAMP)
     ) AS month_diff
-  FROM tpch.orders
+  FROM main.orders
 ), _s7 AS (
   SELECT
     o_custkey,
@@ -42,7 +42,7 @@ WITH _t1 AS (
   SELECT
     o_custkey,
     o_totalprice - LEAD(o_totalprice, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS price_diff
-  FROM tpch.orders
+  FROM main.orders
 ), _s9 AS (
   SELECT
     o_custkey,

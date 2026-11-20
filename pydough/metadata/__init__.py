@@ -9,6 +9,7 @@ __all__ = [
     "GraphMetadata",
     "MaskedTableColumnMetadata",
     "PropertyMetadata",
+    "SQLQueryMetadata",
     "ScalarAttributeMetadata",
     "SimpleJoinMetadata",
     "SimpleTableMetadata",
@@ -18,7 +19,7 @@ __all__ = [
     "parse_metadata_from_list",
 ]
 
-from .collections import CollectionMetadata, SimpleTableMetadata
+from .collections import CollectionMetadata, SimpleTableMetadata, SQLQueryMetadata
 from .graphs import GraphMetadata
 from .parse import parse_json_metadata_from_file, parse_metadata_from_list
 from .properties import (

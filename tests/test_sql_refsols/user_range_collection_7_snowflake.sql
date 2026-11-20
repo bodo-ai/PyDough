@@ -1,18 +1,35 @@
-WITH one_row AS (
+WITH years AS (
   SELECT
-    SEQ4() AS x
-  FROM TABLE(GENERATOR(ROWCOUNT => 1)) AS _0
-), _t0 AS (
-  SELECT DISTINCT
-    region.r_regionkey
-  FROM tpch.region AS region
-  JOIN tpch.nation AS nation
-    ON nation.n_regionkey = region.r_regionkey
-  JOIN one_row AS one_row
-    ON one_row.x <= region.r_regionkey
+    1992 + SEQ4() AS y
+  FROM TABLE(GENERATOR(ROWCOUNT => 7)) AS _0
+), years_2 AS (
+  SELECT
+    1992 + SEQ4() AS y
+  FROM TABLE(GENERATOR(ROWCOUNT => 7)) AS _1
+), _s3 AS (
+  SELECT
+    l_orderkey,
+    SUM(l_extendedprice) AS sum_l_extendedprice
+  FROM snowflake_sample_data.tpch_sf1.lineitem
+  GROUP BY
+    1
+), _s5 AS (
+  SELECT
+    COALESCE(SUM(_s3.sum_l_extendedprice), 0) AS sum_order_total,
+    years_2.y
+  FROM years_2 AS years_2
+  JOIN snowflake_sample_data.tpch_sf1.orders AS orders
+    ON orders.o_custkey = 1 AND years_2.y >= YEAR(CAST(orders.o_orderdate AS TIMESTAMP))
+  JOIN _s3 AS _s3
+    ON _s3.l_orderkey = orders.o_orderkey
+  GROUP BY
+    2
 )
 SELECT
-  r_regionkey AS rk
-FROM _t0
+  years.y AS yy,
+  COALESCE(_s5.sum_order_total, 0) AS total_to_date
+FROM years AS years
+LEFT JOIN _s5 AS _s5
+  ON _s5.y = years.y
 ORDER BY
   1 NULLS FIRST

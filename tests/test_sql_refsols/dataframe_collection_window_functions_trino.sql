@@ -12,14 +12,14 @@ WITH _t AS (
     ('UNITED STATES', 'BUILDING'),
     ('JAPAN', 'AUTOMOBILE'),
     ('BRAZIL', 'MACHINERY')) AS customers_filters(nation_name, mrk_segment)
-  CROSS JOIN tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  CROSS JOIN postgres.tpch.customer AS customer
+  JOIN cassandra.tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey
 ), _s5 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM mysql.tpch.orders
   GROUP BY
     1
 ), _t4 AS (
@@ -33,7 +33,7 @@ WITH _t AS (
       ) AS TIMESTAMP),
       CAST(DATE_TRUNC('MONTH', CAST(o_orderdate AS TIMESTAMP)) AS TIMESTAMP)
     ) AS month_diff
-  FROM tpch.orders
+  FROM mysql.tpch.orders
 ), _s7 AS (
   SELECT
     o_custkey,
@@ -45,7 +45,7 @@ WITH _t AS (
   SELECT
     o_custkey,
     o_totalprice - LEAD(o_totalprice, 1) OVER (PARTITION BY o_custkey ORDER BY o_orderdate) AS price_diff
-  FROM tpch.orders
+  FROM mysql.tpch.orders
 ), _s9 AS (
   SELECT
     o_custkey,

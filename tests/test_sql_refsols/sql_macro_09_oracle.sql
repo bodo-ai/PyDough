@@ -1,0 +1,44 @@
+WITH "_1" AS (
+  SELECT DISTINCT
+    REGEXP_SUBSTR(P.P_NAME, '[^ ]+', 1, "_0".LVL) AS COLOR
+  FROM PART P
+  CROSS JOIN LATERAL (
+    SELECT
+      LEVEL AS LVL
+    FROM DUAL
+    CONNECT BY LEVEL <= REGEXP_COUNT(P.P_NAME, '[^ ]+')
+  )"_0"
+), "_s0" AS (
+  SELECT
+    COLOR
+  FROM "_1"
+  ORDER BY
+    1 NULLS FIRST
+  FETCH FIRST 5 ROWS ONLY
+), "_t" AS (
+  SELECT
+    "_s0".COLOR,
+    PART.P_PARTKEY,
+    PART.P_RETAILPRICE,
+    ROW_NUMBER() OVER (PARTITION BY "_s0".COLOR ORDER BY PART.P_RETAILPRICE DESC, PART.P_PARTKEY) AS "_w"
+  FROM "_s0" "_s0"
+  JOIN TPCH.PART PART
+    ON PART.P_NAME LIKE CONCAT('%', (
+      ' ' || NVL("_s0".COLOR, '')
+    ))
+    OR PART.P_NAME LIKE CONCAT('%', (
+      ' ' || NVL("_s0".COLOR, '') || ' '
+    ), '%')
+    OR PART.P_NAME LIKE CONCAT((
+      NVL("_s0".COLOR, '') || ' '
+    ), '%')
+)
+SELECT
+  COLOR AS color,
+  P_PARTKEY AS "key",
+  P_RETAILPRICE AS retail_price
+FROM "_t"
+WHERE
+  "_w" = 1
+ORDER BY
+  1 NULLS FIRST

@@ -1,15 +1,42 @@
-WITH _t0 AS (
-  SELECT DISTINCT
-    region.r_regionkey
-  FROM tpch.region AS region
-  JOIN tpch.nation AS nation
-    ON nation.n_regionkey = region.r_regionkey
-  JOIN (VALUES
-    (0)) AS one_row
-    ON one_row.column1 <= region.r_regionkey
+WITH _s3 AS (
+  SELECT
+    l_orderkey,
+    SUM(l_extendedprice) AS sum_l_extendedprice
+  FROM tpch.lineitem
+  GROUP BY
+    1
+), _s5 AS (
+  SELECT
+    COALESCE(SUM(_s3.sum_l_extendedprice), 0) AS sum_order_total,
+    years_2.column1 AS y
+  FROM (VALUES
+    (1992),
+    (1993),
+    (1994),
+    (1995),
+    (1996),
+    (1997),
+    (1998)) AS years_2
+  JOIN tpch.orders AS orders
+    ON orders.o_custkey = 1
+    AND years_2.column1 >= CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER)
+  JOIN _s3 AS _s3
+    ON _s3.l_orderkey = orders.o_orderkey
+  GROUP BY
+    2
 )
 SELECT
-  r_regionkey AS rk
-FROM _t0
+  years.column1 AS yy,
+  COALESCE(_s5.sum_order_total, 0) AS total_to_date
+FROM (VALUES
+  (1992),
+  (1993),
+  (1994),
+  (1995),
+  (1996),
+  (1997),
+  (1998)) AS years
+LEFT JOIN _s5 AS _s5
+  ON _s5.y = years.column1
 ORDER BY
   1

@@ -18,6 +18,6 @@ SELECT
     LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
   ) AS BIGINT) AS count_e,
   CHARINDEX('Alex', customer.c_name) - 1 AS idx_Alex
-FROM tpch.customer AS customer
-JOIN tpch.nation AS nation
+FROM snowflake_sample_data.tpch_sf1.customer AS customer
+JOIN snowflake_sample_data.tpch_sf1.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey

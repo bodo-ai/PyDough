@@ -2,7 +2,7 @@ WITH _s0 AS (
   SELECT
     c_custkey,
     c_name
-  FROM tpch.customer
+  FROM snowflake_sample_data.tpch_sf1.customer
   ORDER BY
     2 NULLS FIRST
   LIMIT 5
@@ -10,7 +10,7 @@ WITH _s0 AS (
   SELECT
     o_custkey,
     o_orderdate
-  FROM tpch.orders
+  FROM snowflake_sample_data.tpch_sf1.orders
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY o_totalprice DESC) = 1
 )

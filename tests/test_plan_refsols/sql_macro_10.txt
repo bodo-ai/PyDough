@@ -1,0 +1,6 @@
+ROOT(columns=[('prio', priority_name), ('n_chosen', DEFAULT_TO(n_rows, 0:numeric))], orderings=[])
+ JOIN(condition=t0.priority_name == t1.o_orderpriority, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'priority_name': t0.priority_name})
+  SQLQUERYSCAN(table=SELECT '1-URGENT' AS priority_name, 1 AS priority_value UNION ALL SELECT '2-HIGH', 2 UNION ALL SELECT '3-MEDIUM', 3 UNION ALL SELECT '4-NOT SPECIFIED', 4 UNION ALL SELECT '5-LOW', 5, columns={'priority_name': priority_name})
+  AGGREGATE(keys={'o_orderpriority': o_orderpriority}, aggregations={'n_rows': COUNT()})
+   FILTER(condition=1:numeric == PERCENTILE(args=[], partition=[], order=[(o_totalprice):asc_last, (o_orderkey):asc_last], n_buckets=10), columns={'o_orderpriority': o_orderpriority})
+    SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority, 'o_totalprice': o_totalprice})

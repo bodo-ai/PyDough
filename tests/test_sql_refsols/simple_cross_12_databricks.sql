@@ -1,11 +1,11 @@
 WITH _s0 AS (
   SELECT DISTINCT
     o_orderpriority
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
 ), _s1 AS (
   SELECT DISTINCT
     c_mktsegment
-  FROM tpch.customer
+  FROM tpch_s3_pq.tpch_sf1.customer
 )
 SELECT
   _s0.o_orderpriority AS order_priority,

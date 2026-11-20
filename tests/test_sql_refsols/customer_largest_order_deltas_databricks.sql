@@ -3,7 +3,7 @@ WITH _s1 AS (
     l_discount,
     l_extendedprice,
     l_orderkey
-  FROM tpch.lineitem
+  FROM tpch_s3_pq.tpch_sf1.lineitem
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994 AND l_shipmode = 'AIR'
 ), _t5 AS (
@@ -13,7 +13,7 @@ WITH _s1 AS (
     SUM(_s1.l_extendedprice * (
       1 - _s1.l_discount
     )) AS sum_r
-  FROM tpch.orders AS orders
+  FROM tpch_s3_pq.tpch_sf1.orders AS orders
   LEFT JOIN _s1 AS _s1
     ON _s1.l_orderkey = orders.o_orderkey
   WHERE
@@ -41,7 +41,7 @@ SELECT
     MIN(_s3.revenue_delta),
     MAX(_s3.revenue_delta)
   ) AS largest_diff
-FROM tpch.customer AS customer
+FROM tpch_s3_pq.tpch_sf1.customer AS customer
 JOIN _s3 AS _s3
   ON _s3.anything_o_custkey = customer.c_custkey
 WHERE

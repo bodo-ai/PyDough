@@ -2,8 +2,8 @@ WITH _t2 AS (
   SELECT
     customer.c_custkey,
     nation.n_regionkey
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
+  FROM tpch_s3_pq.tpch_sf1.nation AS nation
+  JOIN tpch_s3_pq.tpch_sf1.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
     ROW_NUMBER() OVER (
@@ -14,7 +14,7 @@ WITH _t2 AS (
   SELECT
     o_custkey,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
   GROUP BY
     1
 ), _s5 AS (
@@ -30,7 +30,7 @@ WITH _t2 AS (
 SELECT
   region.r_name AS region_name,
   COALESCE(_s5.sum_n_rows, 0) AS n_orders
-FROM tpch.region AS region
+FROM tpch_s3_pq.tpch_sf1.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s5.n_regionkey = region.r_regionkey
 ORDER BY

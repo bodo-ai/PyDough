@@ -2,15 +2,15 @@ WITH _s2 AS (
   SELECT
     'x' AS k,
     COUNT(*) AS n_rows
-  FROM tpch.orders
+  FROM tpch_s3_pq.tpch_sf1.orders
   WHERE
     o_totalprice > 100000
 ), _s3 AS (
   SELECT
     'x' AS k,
     COUNT(*) AS n_rows
-  FROM tpch.orders AS orders
-  JOIN tpch.lineitem AS lineitem
+  FROM tpch_s3_pq.tpch_sf1.orders AS orders
+  JOIN tpch_s3_pq.tpch_sf1.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
     orders.o_totalprice > 100000

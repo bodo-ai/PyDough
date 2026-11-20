@@ -6,7 +6,7 @@ WITH one_row AS (
 SELECT
   nation.n_nationkey AS k,
   one_row.x
-FROM tpch.nation AS nation
+FROM snowflake_sample_data.tpch_sf1.nation AS nation
 CROSS JOIN one_row AS one_row
 WHERE
   nation.n_nationkey <= 1

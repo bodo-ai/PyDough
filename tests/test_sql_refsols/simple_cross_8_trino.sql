@@ -2,17 +2,17 @@ WITH _s0 AS (
   SELECT
     r_name,
     r_regionkey
-  FROM tpch.region
+  FROM mongo.tpch.region
 ), _s3 AS (
   SELECT
     n_nationkey,
     n_regionkey
-  FROM tpch.nation
+  FROM cassandra.tpch.nation
 ), _s15 AS (
   SELECT
     _s13.r_name,
     supplier.s_suppkey
-  FROM tpch.supplier AS supplier
+  FROM mongo.tpch.supplier AS supplier
   JOIN _s3 AS _s11
     ON _s11.n_nationkey = supplier.s_nationkey
   JOIN _s0 AS _s13
@@ -28,11 +28,11 @@ FROM _s0 AS _s0
 CROSS JOIN _s0 AS _s1
 JOIN _s3 AS _s3
   ON _s1.r_regionkey = _s3.n_regionkey
-JOIN tpch.customer AS customer
+JOIN postgres.tpch.customer AS customer
   ON _s3.n_nationkey = customer.c_nationkey AND customer.c_mktsegment = 'AUTOMOBILE'
-JOIN tpch.orders AS orders
+JOIN mysql.tpch.orders AS orders
   ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000007'
-JOIN tpch.lineitem AS lineitem
+JOIN postgres.tpch.lineitem AS lineitem
   ON MONTH(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 3
   AND YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1998
   AND lineitem.l_orderkey = orders.o_orderkey

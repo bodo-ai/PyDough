@@ -3,7 +3,7 @@ WITH _s0 AS (
     p_partkey,
     p_retailprice,
     p_size
-  FROM tpch.part
+  FROM snowflake_sample_data.tpch_sf1.part
   ORDER BY
     CAST(p_retailprice AS BIGINT) NULLS FIRST
   LIMIT 2
@@ -17,7 +17,7 @@ SELECT
   TO_CHAR(lineitem.l_receiptdate, 'mm/DD') AS date_md,
   TO_CHAR(lineitem.l_receiptdate, 'hh24:miAM') AS am_pm
 FROM _s0 AS _s0
-JOIN tpch.lineitem AS lineitem
+JOIN snowflake_sample_data.tpch_sf1.lineitem AS lineitem
   ON _s0.p_partkey = lineitem.l_partkey
 ORDER BY
   4 DESC NULLS LAST,

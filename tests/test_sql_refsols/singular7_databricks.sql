@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     l_partkey,
     l_suppkey
-  FROM tpch.lineitem
+  FROM tpch_s3_pq.tpch_sf1.lineitem
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS TIMESTAMP)) = 1994
 ), _t3 AS (
@@ -10,8 +10,8 @@ WITH _s3 AS (
     partsupp.ps_suppkey,
     ANY_VALUE(part.p_name) AS anything_p_name,
     COUNT(_s3.l_suppkey) AS count_l_suppkey
-  FROM tpch.partsupp AS partsupp
-  JOIN tpch.part AS part
+  FROM tpch_s3_pq.tpch_sf1.partsupp AS partsupp
+  JOIN tpch_s3_pq.tpch_sf1.part AS part
     ON part.p_brand = 'Brand#13' AND part.p_partkey = partsupp.ps_partkey
   LEFT JOIN _s3 AS _s3
     ON _s3.l_partkey = partsupp.ps_partkey AND _s3.l_suppkey = partsupp.ps_suppkey
@@ -28,7 +28,7 @@ SELECT
   supplier.s_name AS supplier_name,
   _t3.anything_p_name AS part_name,
   COALESCE(_t3.count_l_suppkey, 0) AS n_orders
-FROM tpch.supplier AS supplier
+FROM tpch_s3_pq.tpch_sf1.supplier AS supplier
 LEFT JOIN _t3 AS _t3
   ON _t3.ps_suppkey = supplier.s_suppkey
 WHERE

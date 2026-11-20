@@ -12,6 +12,6 @@ SELECT
   customer.c_acctbal / AVG(CAST(customer.c_acctbal AS DOUBLE)) OVER (ORDER BY customer.c_acctbal ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS relavg_value,
   customer.c_acctbal / COUNT(CASE WHEN customer.c_acctbal > 0.0 THEN customer.c_acctbal ELSE NULL END) OVER () AS relcount_value,
   customer.c_acctbal / COUNT(*) OVER () AS relsize_value
-FROM tpch.nation AS nation
-JOIN tpch.customer AS customer
+FROM main.nation AS nation
+JOIN main.customer AS customer
   ON customer.c_nationkey = nation.n_nationkey

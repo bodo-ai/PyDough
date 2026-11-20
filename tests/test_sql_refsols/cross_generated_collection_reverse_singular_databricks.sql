@@ -1,7 +1,7 @@
 SELECT
   nation.n_nationkey AS k,
   one_row.x
-FROM tpch.nation AS nation
+FROM tpch_s3_pq.tpch_sf1.nation AS nation
 CROSS JOIN VALUES
   (0) AS one_row(x)
 WHERE

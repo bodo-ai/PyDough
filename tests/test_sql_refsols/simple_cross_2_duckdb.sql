@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     r_name
-  FROM tpch.region
+  FROM main.region
 )
 SELECT
   _s0.r_name AS r1,

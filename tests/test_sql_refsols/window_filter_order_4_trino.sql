@@ -1,10 +1,10 @@
 WITH _t2 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM tpch.customer AS customer
-  JOIN tpch.nation AS nation
+  FROM postgres.tpch.customer AS customer
+  JOIN cassandra.tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'GERMANY'
-  JOIN tpch.orders AS orders
+  JOIN mysql.tpch.orders AS orders
     ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1992
     AND customer.c_custkey = orders.o_custkey
   GROUP BY

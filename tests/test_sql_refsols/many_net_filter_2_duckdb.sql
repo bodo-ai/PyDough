@@ -1,7 +1,7 @@
 SELECT
   COUNT(*) AS n
-FROM tpch.supplier AS supplier
-JOIN tpch.customer AS customer
+FROM main.supplier AS supplier
+JOIN main.customer AS customer
   ON customer.c_custkey = supplier.s_suppkey
   AND customer.c_nationkey = supplier.s_nationkey
 WHERE

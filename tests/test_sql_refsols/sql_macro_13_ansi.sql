@@ -1,0 +1,54 @@
+WITH _0 AS (
+  SELECT
+    '1-URGENT' AS priority_name,
+    1 AS priority_value
+  UNION ALL
+  SELECT
+    '2-HIGH' AS "2-HIGH",
+    2 AS "2"
+  UNION ALL
+  SELECT
+    '3-MEDIUM' AS "3-MEDIUM",
+    3 AS "3"
+  UNION ALL
+  SELECT
+    '4-NOT SPECIFIED' AS "4-NOT SPECIFIED",
+    4 AS "4"
+  UNION ALL
+  SELECT
+    '5-LOW' AS "5-LOW",
+    5 AS "5"
+), _1 AS (
+  SELECT DISTINCT
+    l.value AS color
+  FROM part AS p
+  CROSS JOIN JSON_EACH('["' || REPLACE(p.p_name, ' ', '","') || '"]') AS l
+), _s11 AS (
+  SELECT
+    _3.color,
+    _2.priority_name
+  FROM _0 AS _2
+  CROSS JOIN _1 AS _3
+  JOIN tpch.part AS part
+    ON (
+      part.p_name LIKE CONCAT('%', CONCAT_WS('', ' ', _3.color, ' '), '%')
+      OR part.p_name LIKE CONCAT('%', CONCAT_WS('', ' ', _3.color))
+      OR part.p_name LIKE CONCAT(CONCAT_WS('', _3.color, ' '), '%')
+    )
+    AND part.p_size < 3
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_partkey = part.p_partkey
+    AND lineitem.l_shipdate < CAST('1992-02-01' AS DATE)
+    AND lineitem.l_shipmode = 'RAIL'
+  JOIN tpch.orders AS orders
+    ON _2.priority_name = orders.o_orderpriority
+    AND lineitem.l_orderkey = orders.o_orderkey
+    AND orders.o_clerk < 'Clerk#000000100'
+    AND orders.o_orderdate < CAST('1992-02-01' AS DATE)
+)
+SELECT
+  COUNT(*) AS n
+FROM _0 AS _0
+CROSS JOIN _1 AS _1
+ANTI JOIN _s11 AS _s11
+  ON _0.priority_name = _s11.priority_name AND _1.color = _s11.color

@@ -3,7 +3,7 @@ WITH _t2 AS (
     c_acctbal,
     c_custkey,
     c_nationkey
-  FROM tpch.customer
+  FROM main.customer
 ), _t1 AS (
   SELECT
     c_acctbal,
@@ -16,7 +16,7 @@ WITH _t2 AS (
   SELECT
     n_nationkey,
     n_regionkey
-  FROM tpch.nation
+  FROM main.nation
 ), _t3 AS (
   SELECT
     _s5.c_acctbal,
@@ -39,9 +39,9 @@ WITH _t2 AS (
     supplier.s_nationkey,
     supplier.s_suppkey
   FROM _s4 AS _s8
-  JOIN tpch.supplier AS supplier
+  JOIN main.supplier AS supplier
     ON _s8.n_nationkey = supplier.s_nationkey
-  JOIN tpch.partsupp AS partsupp
+  JOIN main.partsupp AS partsupp
     ON partsupp.ps_suppkey = supplier.s_suppkey
   QUALIFY
     ROW_NUMBER() OVER (
@@ -77,8 +77,8 @@ SELECT
   _t5.ps_partkey AS p_key,
   _t5.ps_availqty AS p_qty,
   _t9.c_custkey AS cg_key
-FROM tpch.region AS region
-JOIN tpch.nation AS nation
+FROM main.region AS region
+JOIN main.nation AS nation
   ON nation.n_regionkey = region.r_regionkey
 JOIN _t1 AS _t1
   ON _t1.c_nationkey = nation.n_nationkey

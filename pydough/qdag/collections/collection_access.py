@@ -12,6 +12,7 @@ from pydough.metadata import (
     CollectionMetadata,
     PropertyMetadata,
     SimpleTableMetadata,
+    SQLQueryMetadata,
     TableColumnMetadata,
 )
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
@@ -93,11 +94,14 @@ class CollectionAccess(ChildAccess):
 
     @property
     def unique_terms(self) -> list[str]:
-        if isinstance(self.collection, SimpleTableMetadata):
-            chosen_unique: str | list[str] = self.collection.unique_properties[0]
-            return [chosen_unique] if isinstance(chosen_unique, str) else chosen_unique
-        else:
-            raise NotImplementedError(self.collection.__class__.__name__)
+        match self.collection:
+            case SimpleTableMetadata() | SQLQueryMetadata():
+                chosen_unique: str | list[str] = self.collection.unique_properties[0]
+                return (
+                    [chosen_unique] if isinstance(chosen_unique, str) else chosen_unique
+                )
+            case _:
+                raise NotImplementedError(self.collection.__class__.__name__)
 
     def get_expression_position(self, expr_name: str) -> int:
         if expr_name not in self.calc_terms:

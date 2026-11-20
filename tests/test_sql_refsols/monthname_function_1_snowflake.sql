@@ -5,7 +5,7 @@ SELECT
   TO_CHAR(DATEADD(MONTH, 3, CAST(o_orderdate AS TIMESTAMP)), 'Mon') AS month_col_added,
   TO_CHAR(CAST('1995-05-26' AS DATE), 'Mon') AS month_str_subs,
   TO_CHAR(CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMPNTZ), 'Mon') AS month_now
-FROM tpch.orders
+FROM snowflake_sample_data.tpch_sf1.orders
 WHERE
   YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1998
 ORDER BY

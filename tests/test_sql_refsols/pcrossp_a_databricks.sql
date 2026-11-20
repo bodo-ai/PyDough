@@ -2,14 +2,14 @@ WITH _s0 AS (
   SELECT
     p_mfgr,
     COUNT(*) AS n_rows
-  FROM tpch.part
+  FROM tpch_s3_pq.tpch_sf1.part
   GROUP BY
     1
 ), _s1 AS (
   SELECT
     c_mktsegment,
     COUNT(*) AS n_rows
-  FROM tpch.customer
+  FROM tpch_s3_pq.tpch_sf1.customer
   GROUP BY
     1
 )
