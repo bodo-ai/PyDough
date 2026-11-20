@@ -159,6 +159,28 @@ def user_range_collection_6():
     )
 
 
+def user_range_collection_7():
+    """
+    Regression test for a stale reverse cardinality bug: decorrelating a
+    `CROSS` subquery with a nested aggregation (`orders.lines`) could let the
+    aggregation be incorrectly pulled above the join with the new correlated
+    parent (`years`), since the same order can match multiple years.
+    """
+    years = pydough.range_collection("years", "y", 1992, 1999)
+    cust_orders = orders.WHERE(customer_key == 1).CALCULATE(
+        d=order_date,
+        order_total=SUM(lines.extended_price),
+    )
+    return (
+        years.CALCULATE(yy=y)
+        .CALCULATE(
+            yy,
+            total_to_date=SUM(CROSS(cust_orders).WHERE(YEAR(d) <= yy).order_total),
+        )
+        .ORDER_BY(yy.ASC())
+    )
+
+
 def simple_dataframe_collection_1():
     # Generates a simple dataframe collection
     df = pd.DataFrame(

@@ -125,6 +125,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
+    nested_decorrelation_cumulative_thresholds,
+    nested_decorrelation_multiple_aggregates,
     odate_and_rdate_avggap,
     order_info_per_priority,
     order_quarter_test,
@@ -273,6 +275,7 @@ from tests.test_pydough_functions.user_collections import (
     user_range_collection_4,
     user_range_collection_5,
     user_range_collection_6,
+    user_range_collection_7,
 )
 
 from .conftest import tpch_custom_test_data_dialect_replacements
@@ -6035,6 +6038,36 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                user_range_collection_7,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [
+                            1992,
+                            1993,
+                            1994,
+                            1995,
+                            1996,
+                            1997,
+                            1998,
+                        ],
+                        "n_orders": [
+                            203737.13,
+                            203737.13,
+                            203737.13,
+                            203737.13,
+                            498914.98,
+                            594563.26,
+                            594563.26,
+                        ],
+                    }
+                ),
+                "user_range_collection_7",
+            ),
+            id="user_range_collection_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_dataframe_collection_1,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -7187,6 +7220,47 @@ from .testing_utilities import (
                 "group_by_key_repeated_alias",
             ),
             id="group_by_key_repeated_alias",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                nested_decorrelation_cumulative_thresholds,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [0, 1, 2, 3, 4],
+                        "total_value": [
+                            0.0,
+                            181861.27,
+                            363722.54,
+                            363722.54,
+                            363722.54,
+                        ],
+                    }
+                ),
+                "nested_decorrelation_cumulative_thresholds",
+            ),
+            id="nested_decorrelation_cumulative_thresholds",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                nested_decorrelation_multiple_aggregates,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [0, 1, 2, 3, 4],
+                        "total_value": [
+                            0.0,
+                            181861.27,
+                            181861.27,
+                            181861.27,
+                            181861.27,
+                        ],
+                        "part_usage_score": [0, 194, 194, 194, 194],
+                    }
+                ),
+                "nested_decorrelation_multiple_aggregates",
+            ),
+            id="nested_decorrelation_multiple_aggregates",
         ),
         pytest.param(
             PyDoughPandasTest(
