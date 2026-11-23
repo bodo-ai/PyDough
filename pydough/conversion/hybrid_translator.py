@@ -1112,7 +1112,6 @@ class HybridTranslator:
                 return self.translate_back_reference(
                     hybrid, expr.term_name, expr.back_levels, expr.pydough_type
                 )
-
             case Reference():
                 if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
                     return self.translate_back_reference(
@@ -1444,7 +1443,7 @@ class HybridTranslator:
                     collection_access.general_condition = self.make_hybrid_expr(
                         successor_hybrid,
                         node.general_condition,
-                        {},
+                        child_ref_mapping,
                         False,
                     )
                 hybrid = self.make_hybrid_tree(
@@ -1499,6 +1498,9 @@ class HybridTranslator:
                 )
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_expressions: dict[str, HybridExpr] = {}
+                print()
+                print(hybrid)
+                print(node)
                 for name in sorted(node.calc_terms):
                     expr = self.make_hybrid_expr(
                         hybrid, node.get_expr(name), child_ref_mapping, False
@@ -1646,7 +1648,7 @@ class HybridTranslator:
                                     self.make_hybrid_expr(
                                         successor_hybrid,
                                         node.child_access.general_condition,
-                                        {},
+                                        child_ref_mapping,
                                         False,
                                     )
                                 )
@@ -1822,6 +1824,8 @@ class HybridTranslator:
         """
         # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
+        # print()
+        # print(hybrid)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common
@@ -1834,6 +1838,10 @@ class HybridTranslator:
         self.run_hybrid_decorrelation(hybrid)
         # 6. Run the filter-merging procedure, then re-run ejecting aggregate
         # inputs to clean up any new aggregates created by filter merging.
+        # print()
+        # print("*" * 80)
+        # print()
+        # print(hybrid)
         self.run_filter_merging(hybrid)
         self.eject_aggregate_inputs(hybrid)
         # 7. Run any final rewrites, such as turning MEDIAN into an average

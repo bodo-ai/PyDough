@@ -1,0 +1,8 @@
+ROOT(columns=[('product_name', pr_name), ('n_incidents', sum_n_rows)], orderings=[(sum_n_rows):desc_last], limit=3:numeric)
+ AGGREGATE(keys={'pr_name': pr_name}, aggregations={'sum_n_rows': SUM(n_rows)})
+  JOIN(condition=t0.in_device_id == t1.de_id, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'n_rows': t0.n_rows, 'pr_name': t1.pr_name})
+   AGGREGATE(keys={'in_device_id': in_device_id}, aggregations={'n_rows': COUNT()})
+    SCAN(table=main.INCIDENTS, columns={'in_device_id': in_device_id})
+   JOIN(condition=t0.de_product_id == t1.pr_id, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'de_id': t0.de_id, 'pr_name': t1.pr_name})
+    SCAN(table=main.DEVICES, columns={'de_id': de_id, 'de_product_id': de_product_id})
+    SCAN(table=main.PRODUCTS, columns={'pr_id': pr_id, 'pr_name': pr_name})

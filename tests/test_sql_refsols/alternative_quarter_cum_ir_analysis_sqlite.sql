@@ -46,7 +46,7 @@ WITH _s2 AS (
   FROM main.products
   WHERE
     pr_name = 'RubyCopper-Star'
-), _s13 AS (
+), _s15 AS (
   SELECT
     countries.co_id,
     _t7.pr_id
@@ -80,10 +80,11 @@ WITH _s2 AS (
   CROSS JOIN _t3 AS _t6
   JOIN main.incidents AS incidents
     ON _s6.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
-  JOIN _s13 AS _s13
-    ON _s13.co_id = incidents.in_repair_country_id
   JOIN main.devices AS devices
-    ON _s13.pr_id = devices.de_product_id AND devices.de_id = incidents.in_device_id
+    ON devices.de_id = incidents.in_device_id
+  JOIN _s15 AS _s15
+    ON _s15.co_id = incidents.in_repair_country_id
+    AND _s15.pr_id = devices.de_product_id
   GROUP BY
     1
 ), _s29 AS (
