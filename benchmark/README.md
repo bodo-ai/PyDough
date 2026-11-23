@@ -102,7 +102,7 @@ Execution times are measured using `time.perf_counter()` for high-resolution tim
 Main entry point. Orchestrates the full benchmark run — loads questions, executes both SQL paths, validates results, and collects all metrics.
 
 ### `execute_pydough(pydough_code: str) -> tuple[DataFrame, str]`
-Executes the given PyDough DSL code using the `from_string` API and returns the result as a DataFrame and the generated SQL.
+Executes the given PyDough DSL code using [`from_string`](../documentation/usage.md#pydoughfrom_string) and returns a DataFrame and the generated SQL. The benchmark lets `from_string` infer the result variable from the last supported top-level assignment, with `result` as a fallback.
 
 ### `execute_sql(query: str) -> DataFrame`
 Executes a raw SQL query against the configured PostgreSQL connection and returns the result as a DataFrame.
