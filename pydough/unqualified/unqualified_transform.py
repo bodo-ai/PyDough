@@ -428,6 +428,49 @@ def transform_cell(cell: str, graph_name: str, known_names: set[str]) -> str:
     return ast.unparse(new_tree)
 
 
+def extract_var(code: str | ast.Module) -> str | None:
+    """
+    Returns the variable name from the last supported top-level assignment.
+
+    Supports:
+    - Regular assignments: result = expression
+    - UnqualifiedNode annotations: result: UnqualifiedNode = expression
+
+    Ignores:
+    - # comments
+    - Standalone triple-quoted strings / multiline comments
+    - Comparison operators (==, !=, >=, <=)
+    - Assignments inside nested scopes/expressions
+    - Other type annotations and declarations without values
+
+    Args:
+        `code`: Python source text or its parsed module AST.
+
+    Returns:
+        The last matching name, or None if no supported assignment is found.
+
+    Raises:
+        `SyntaxError` if the source text is not valid Python syntax.
+    """
+    tree: ast.Module = ast.parse(code) if isinstance(code, str) else code
+
+    for node in reversed(tree.body):
+        if isinstance(node, ast.Assign):
+            for target in reversed(node.targets):
+                if isinstance(target, ast.Name):
+                    return target.id
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and isinstance(node.annotation, ast.Name)
+            and node.annotation.id == "UnqualifiedNode"
+            and node.value is not None
+        ):
+            return node.target.id
+
+    return None
+
+
 def from_string(
     source: str,
     answer_variable: str | None = None,
@@ -444,7 +487,9 @@ def from_string(
         `source`: a valid PyDough code string that will be executed to define
         the PyDough code.
         `answer_variable`: The name of the variable that holds the result of the
-        PyDough code. If not provided, assumes the answer is `result`.
+        PyDough code. If omitted or None, uses the name from the last supported
+        top-level assignment (a plain name target or an assignment annotated
+        as `UnqualifiedNode`). Falls back to `result` if none is found.
         `metadata`: The metadata graph to use. If not provided,
         `active_session.metadata` will be used.
         `environment`: A dictionary of variables that will be available
@@ -458,7 +503,7 @@ def from_string(
         session is provided, use `session.metadata` to control the graph.
 
     Returns:
-        A PyDough UnualifiedNode object representing the result of the
+        A PyDough UnqualifiedNode object representing the result of the
         transformed PyDough code.
 
     Raises:
@@ -490,7 +535,8 @@ def _execute_source(
         `source`: a valid PyDough code string that will be executed to define
         the PyDough code.
         `answer_variable`: The name of the variable that holds the result of the
-        PyDough code. If not provided, assumes the answer is `result`.
+        PyDough code. If omitted or None, uses `extract_var()` on the source
+        and falls back to `result` if no supported assignment is found.
         `metadata`: The metadata graph to use. If not provided,
         `active_session.metadata` will be used.
         `environment`: A dictionary of variables that will be available
@@ -506,8 +552,7 @@ def _execute_source(
         an UnqualifiedNode will be returned, Any otherwise.
 
     Returns:
-        A PyDough UnualifiedNode object representing the result of the
-        transformed PyDough code.
+        The value of the answer variable in the executed PyDough code.
 
     Raises:
         `PyDoughSessionException` if both `session` and `metadata` are provided.
@@ -536,10 +581,6 @@ def _execute_source(
     if environment is None:
         environment = {}
 
-    # Verify if answer_variable is provided
-    if answer_variable is None:
-        answer_variable = "result"
-
     # Transform PyDough code into valid Python code
     # Include "pydough" as a known name so that pydough.to_table, etc. are not
     # transformed into _ROOT.pydough.to_table
@@ -547,12 +588,17 @@ def _execute_source(
     graph_name: str = "_graph"
     visitor: ast.NodeTransformer = AddRootVisitor(graph_name, known_names)
     try:
-        tree: ast.AST = ast.parse(source)
+        tree: ast.Module = ast.parse(source)
     except SyntaxError as e:
         raise ValueError(
             f"Syntax error in source PyDough code:\n{source}\n{e!s}"
         ) from e
-    assert isinstance(tree, ast.AST)
+    # Infer from the original source before the visitor adds its own assignments.
+    if answer_variable is None:
+        answer_variable = extract_var(tree)
+    if answer_variable is None:
+        answer_variable = "result"
+
     new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
 

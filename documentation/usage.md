@@ -866,18 +866,20 @@ def from_string(
     answer_variable: str | None = None,
     metadata: GraphMetadata | None = None,
     environment: dict[str, Any] | None = None,
+    session: PyDoughSession | None = None,
 ) -> UnqualifiedNode:
 ```
 
-The first argument `source` is the source code string. It can be a single pydough command or a multi-line pydough code with intermediate results stored in variables. It can optionally take in the following keyword arguments:
+The first argument `source` is a PyDough source string. It can contain a single assignment or multiple statements with intermediate results stored in variables. The optional arguments control result selection and execution.
 
-- `answer_variable`: The name of the variable that stores the final result of the PyDough code. If not provided, the API expects the final result to be in a variable named `result`. The API returns a PyDough collection holding this value. It is assumed that the PyDough code string includes a variable definition where the name of the variable is the same as `answer_variable` and the value is valid PyDough code; if not it raises an exception.
-- `metadata`: The PyDough knowledge graph to use for the transformation. If omitted, `pydough.active_session.metadata` is used.
+- `answer_variable` selects the variable that holds the result. If omitted or set to `None`, PyDough uses the last supported top-level assignment. It recognizes a plain variable name (the rightmost name in a chained assignment) or an assignment with the bare `UnqualifiedNode` annotation and a value. It ignores unpacking, assignments inside blocks or functions, and bare expressions. If no supported assignment is found, it looks for `result`. The selected variable must exist after execution and hold an `UnqualifiedNode`. If later assignments are not the result you want, pass its name explicitly.
+- `metadata` supplies the PyDough knowledge graph. If omitted, PyDough uses the supplied session's metadata or, if there is no supplied session, `pydough.active_session.metadata`.
 - `environment`: A dictionary representing additional environment context. This serves as the local namespace where the PyDough code will be executed.
+- `session` supplies the session to use during execution, including its metadata and database connection. Pass either `session` or `metadata`, not both.
 
 Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output. All these examples use the TPC-H dataset that can be downloaded [here](https://github.com/lovasoa/TPCH-sqlite/releases) with the [graph used in the demos directory](../demos/metadata/tpch_demo_graph.json).
  
-This first example is of Python code using `pydough.from_string` to generate SQL to get the count of customers in the market segment `"AUTOMOBILE"`. The result will be returned in a variable named `pydough_query` instead of the default `result`, and the market segment `"AUTOMOBILE"` is passed in an environment variable `SEG`.:
+The first example counts customers in the `"AUTOMOBILE"` market segment. PyDough infers `pydough_query` from the assignment, and `SEG` is supplied through the execution environment.
 ```py
 import pydough
 
@@ -891,10 +893,14 @@ pydough.active_session.connect_database("sqlite", database="tpch.db")
 pydough_code = (
     "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
 )
-# Transform the pydough code and get the result from pydough_query
-query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG": "AUTOMOBILE"})
+# Infer the result variable from the source.
+query = pydough.from_string(
+    pydough_code, metadata=graph, environment={"SEG": "AUTOMOBILE"}
+)
 sql = pydough.to_sql(query)
 ```
+
+To select the same variable explicitly, pass `answer_variable="pydough_query"` to `from_string()`.
 
 The value of `sql` is the following SQL query text as a Python string:
 ```sql
@@ -907,7 +913,7 @@ WHERE
 
 This next example is of Python code to generate SQL to get the top 5 suppliers with the highest revenue. The code snippet uses variables provided in the environment context to filter by nation, ship mode and year (`TARGET_NATION`, `DESIRED_SHIP_MODE` and `REQUESTED_SHIP_YEAR`):
 ```py
-# Example of a multi-line pydough code snippet with intermetiate results
+# Example of a multi-line PyDough code snippet with intermediate results
 nation_name = "JAPAN"
 ship_mode = "TRUCK"
 ship_year = 1996
@@ -932,9 +938,9 @@ selected_suppliers = suppliers.WHERE((nation.name == TARGET_NATION) & HAS(lines_
 supplier_info = selected_suppliers.CALCULATE(name, revenue_year=ROUND(SUM(lines_year.rev), 2))
 
 # Pick the 5 suppliers with the highest revenue from REQUESTED_SHIP_YEAR
-result = supplier_info.TOP_K(5, by=revenue_year.DESC())
+top_suppliers = supplier_info.TOP_K(5, by=revenue_year.DESC())
 """
-# Transform the pydough code and get the result from result
+# Infer top_suppliers from the last top-level assignment.
 query = pydough.from_string(pydough_code, environment=env)
 sql = pydough.to_sql(query)
 ```
