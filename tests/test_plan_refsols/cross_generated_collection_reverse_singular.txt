@@ -1,0 +1,5 @@
+ROOT(columns=[('k', n_nationkey), ('x', x)], orderings=[(n_nationkey):asc_first])
+ JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'x': t1.x})
+  FILTER(condition=n_nationkey <= 1:numeric, columns={'n_nationkey': n_nationkey})
+   SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey})
+  GENERATED_TABLE(RangeCollection('one_row', x=range(0, 1)))

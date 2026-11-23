@@ -181,6 +181,48 @@ def user_range_collection_7():
     )
 
 
+def user_range_collection_8():
+    """
+    Test for `HybridTree.is_singular()` wrongly treating a
+    generated collection as singular without checking its ancestors,
+    which let a correlated semi join duplicate parent rows.
+    """
+    one_row = pydough.range_collection("one_row", "x", 0, 1)
+    return (
+        regions.CALCULATE(rk=key)
+        .WHERE(HAS(nations.CROSS(one_row).WHERE(x <= rk)))
+        .CALCULATE(rk)
+        .ORDER_BY(rk.ASC())
+    )
+
+
+def cross_generated_collection_reverse_singular():
+    """
+    Test for `HybridTree.is_reverse_singular()` wrongly treating a
+    single-row generated collection as reverse-singular when it is
+    really a cartesian product nested below a `CROSS`.
+    """
+    one_row = pydough.range_collection("one_row", "x", 0, 1)
+    outer = nations.WHERE(key <= 1).CALCULATE(k=key)
+    return outer.CROSS(one_row).CALCULATE(k, x).ORDER_BY(k.ASC())
+
+
+def standalone_singleton():
+    """
+    A single-row generated collection sitting directly under the root.
+    """
+    return pydough.range_collection("one_row", "x", 0, 1)
+
+
+def crossed_singleton():
+    """
+    A single-row generated collection `CROSS`-ed onto a plural collection,
+    making it reverse-plural despite having only one row.
+    """
+    one_row = pydough.range_collection("one_row", "x", 0, 1)
+    return nations.WHERE(key <= 1).CROSS(one_row)
+
+
 def simple_dataframe_collection_1():
     # Generates a simple dataframe collection
     df = pd.DataFrame(

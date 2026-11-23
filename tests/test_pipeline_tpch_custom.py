@@ -99,6 +99,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     bad_child_reuse_5,
     chained_partition_transformed_key,
     cross_similar_partitions,
+    cross_table_scan_reverse_singular,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -223,6 +224,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     yoy_change_in_num_orders,
 )
 from tests.test_pydough_functions.user_collections import (
+    cross_generated_collection_reverse_singular,
     dataframe_collection_bad_1,
     dataframe_collection_bad_2,
     dataframe_collection_bad_3,
@@ -276,6 +278,7 @@ from tests.test_pydough_functions.user_collections import (
     user_range_collection_5,
     user_range_collection_6,
     user_range_collection_7,
+    user_range_collection_8,
 )
 
 from .conftest import tpch_custom_test_data_dialect_replacements
@@ -6068,6 +6071,15 @@ from .testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                user_range_collection_8,
+                "TPCH",
+                lambda: pd.DataFrame({"rk": [0, 1, 2, 3, 4]}),
+                "user_range_collection_8",
+            ),
+            id="user_range_collection_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_dataframe_collection_1,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -7220,6 +7232,29 @@ from .testing_utilities import (
                 "group_by_key_repeated_alias",
             ),
             id="group_by_key_repeated_alias",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                cross_table_scan_reverse_singular,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [0, 1],
+                        "total": [133967761.21, 133967761.21],
+                    }
+                ),
+                "cross_table_scan_reverse_singular",
+            ),
+            id="cross_table_scan_reverse_singular",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                cross_generated_collection_reverse_singular,
+                "TPCH",
+                lambda: pd.DataFrame({"k": [0, 1], "x": [0, 0]}),
+                "cross_generated_collection_reverse_singular",
+            ),
+            id="cross_generated_collection_reverse_singular",
         ),
         pytest.param(
             PyDoughPandasTest(
