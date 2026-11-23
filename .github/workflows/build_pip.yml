@@ -52,7 +52,8 @@ jobs:
         id: download-artifact
         with:
           pattern: pydough-wheel*
-          path: .
+          path: ./dist
+          merge-multiple: true
 
       - uses: actions/setup-python@v7
         with:
@@ -61,7 +62,7 @@ jobs:
       - name: Install
         run: |
           # Install pydough from the local wheel
-          pip install pydough --find-links "$(find . -name "pydough-wheel*" -print)" --no-index --no-deps
+          pip install pydough --find-links ./dist --no-index --no-deps
           # Install dependencies from pypi
           pip install pydough
       - name: Test Import
