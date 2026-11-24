@@ -4357,3 +4357,22 @@ def cross_table_scan_reverse_singular():
         )
         .ORDER_BY(k.ASC())
     )
+
+
+def cross_table_scan_child_aggregation():
+    """
+    Tests that aggregating a child collection after a CROSS between two
+    plural table scans preserves the left-side grouping context and does
+    not multiply the aggregated values.
+    """
+    moments = orders.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(moment_id=key)
+    people = customers.WHERE(key <= 2)
+    return (
+        moments.CROSS(people)
+        .CALCULATE(
+            moment_id,
+            customer_id=key,
+            total_ever=SUM(orders.total_price),
+        )
+        .ORDER_BY(moment_id.ASC(), customer_id.ASC())
+    )
