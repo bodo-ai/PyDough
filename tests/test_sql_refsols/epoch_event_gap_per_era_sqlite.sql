@@ -7,7 +7,7 @@ WITH _t2 AS (
     CAST((
       JULIANDAY(DATE(events.ev_dt, 'start of day')) - JULIANDAY(
         DATE(
-          LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt),
+          LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt),
           'start of day'
         )
       )

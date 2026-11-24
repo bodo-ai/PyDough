@@ -46,7 +46,12 @@ from pydough.unqualified import (
     display_raw,
 )
 
-from ._common import extract_conditions, extract_terms, qualify_safely
+from ._common import (
+    extract_conditions,
+    extract_terms,
+    qualify_safely,
+    skip_cross_boundaries,
+)
 from .term import find_unqualified_root
 
 
@@ -306,6 +311,7 @@ def explain_unqualified(
             "Did you mean to use pydough.explain_term?"
         )
     elif isinstance(qualified_node, PyDoughCollectionQDAG):
+        qualified_node = skip_cross_boundaries(qualified_node)
         if verbose:
             # Dump the structure of the collection
             lines.append("PyDough collection representing the following logic:")

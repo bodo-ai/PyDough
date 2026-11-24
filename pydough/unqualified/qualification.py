@@ -35,6 +35,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.qdag.collections.calculate import Calculate
+from pydough.qdag.collections.cross_rhs_boundary import CrossRHSBoundary
 from pydough.types import PyDoughType
 from pydough.utilities import ExplodeSpec
 
@@ -64,6 +65,7 @@ from .unqualified_transform import transform_cell
 
 class Qualifier:
     def __init__(self, session: PyDoughSession):
+        self._next_cross_id: int = 0
         self._session: PyDoughSession = session
         assert session.metadata is not None
         self._builder: AstNodeBuilder = AstNodeBuilder(session.metadata)
@@ -1367,7 +1369,11 @@ class Qualifier:
 
         # Now build a GlobalContext pointing to the qualified parent as its
         # ancestor, and use this as the new context for the child.
-        qualified_parent = GlobalContext(self.graph, qualified_parent)
+        cross_id: int = self._next_cross_id
+        self._next_cross_id += 1
+        qualified_parent = GlobalContext(
+            self.graph, qualified_parent, cross_id=cross_id
+        )
 
         # If the parent is the root, then the child access is a child operator
         # child access.
@@ -1382,7 +1388,9 @@ class Qualifier:
             False,
         )
 
-        return qualified_child
+        # Preserve where the RHS of CROSS finishes.
+        # Any subsequent operations belong to the joined collection.
+        return CrossRHSBoundary(qualified_child, cross_id)
 
     def qualify_explode(
         self,
@@ -1541,7 +1549,10 @@ class Qualifier:
         return answer
 
 
-def qualify_node(unqualified: UnqualifiedNode, session: PyDoughSession) -> PyDoughQDAG:
+def qualify_node(
+    unqualified: UnqualifiedNode,
+    session: PyDoughSession,
+) -> PyDoughQDAG:
     """
     Transforms an UnqualifiedNode into a qualified node.
 

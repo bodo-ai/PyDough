@@ -4,7 +4,7 @@ Definition of the logic to convert QDAG nodes into a HybridTree
 
 __all__ = ["HybridTranslator", "HybridTree"]
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from decimal import Decimal
 
 import pydough.pydough_operators as pydop
@@ -45,6 +45,7 @@ from pydough.qdag import (
     Where,
     WindowCall,
 )
+from pydough.qdag.collections.cross_rhs_boundary import CrossRHSBoundary
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
@@ -70,6 +71,7 @@ from .hybrid_filter_merger import HybridFilterMerger
 from .hybrid_operations import (
     HybridCalculate,
     HybridCollectionAccess,
+    HybridCrossRHSBoundary,
     HybridExplode,
     HybridFilter,
     HybridLimit,
@@ -986,6 +988,55 @@ class HybridTranslator:
                 child_idx,
             )
 
+    def add_cross_scope_keys(
+        self,
+        hybrid: HybridTree,
+        partition_args: list[HybridExpr],
+        *,
+        per_levels: int | None = None,
+    ) -> None:
+        """Add the row identity of each LHS whose CROSS RHS contains this step.
+
+        Translation appends an end marker only after the RHS is complete.
+        Walk the same ancestry as add_unique_terms, including the stack for
+        child subtrees, and ignore scopes whose end markers we already saw.
+
+        If explicit `per=` reaches the LHS of a scope or an ancestor above
+        it, that scope must not make the partition finer. Enclosing scopes
+        beyond the explicit ancestor still apply.
+        """
+        closed_scopes: set[int] = set()
+        level: HybridTree | None = hybrid
+        distance: int = 0
+        stack: Iterator[HybridTree] = iter(reversed(self.stack))
+        include_ancestor_keys: bool = False
+        while level is not None:
+            closed_scopes.update(
+                op.cross_id
+                for op in level.pipeline
+                if isinstance(op, HybridCrossRHSBoundary)
+            )
+            root: HybridOperation = level.pipeline[0]
+            if (
+                isinstance(root, HybridRoot)
+                and root.cross_id is not None
+                and root.cross_id not in closed_scopes
+                and level.parent is not None
+                and (per_levels is None or distance >= per_levels)
+            ):
+                include_ancestor_keys = True
+            elif include_ancestor_keys:
+                # Local uniqueness is not always enough: a LHS row may have
+                # been reached through a relationship or an earlier CROSS.
+                # Its ancestors distinguish those occurrences.
+                keys: list[HybridExpr] = []
+                self.add_unique_terms(hybrid, distance, 0, keys, None)
+                for key in keys:
+                    if key not in partition_args:
+                        partition_args.append(key)
+            level = level.parent if level.parent is not None else next(stack, None)
+            distance += 1
+
     def translate_back_reference(
         self, hybrid: HybridTree, expr_name: str, back_levels: int, typ: PyDoughType
     ) -> HybridExpr:
@@ -1180,6 +1231,9 @@ class HybridTranslator:
                 # for that ancestor level.
                 if expr.levels is not None:
                     self.add_unique_terms(hybrid, expr.levels, 0, partition_args, None)
+                self.add_cross_scope_keys(
+                    hybrid, partition_args, per_levels=expr.levels
+                )
                 # Convert all of the window function arguments to hybrid
                 # expressions.
                 for arg in expr.args:
@@ -1427,7 +1481,7 @@ class HybridTranslator:
                     )
                     # Create a new hybrid tree for the current global context, which
                     # will be the a successor of the hybrid tree for the ancestor context.
-                    successor_hybrid = HybridTree(HybridRoot(), {})
+                    successor_hybrid = HybridTree(HybridRoot(node.cross_id), {})
                     hybrid.add_successor(successor_hybrid)
                     return successor_hybrid
             case TableCollection() | SubCollection():
@@ -1514,6 +1568,20 @@ class HybridTranslator:
                 for name in new_expressions:
                     hybrid.ancestral_mapping[name] = 0
                 return hybrid
+
+            case CrossRHSBoundary():
+                hybrid = self.make_hybrid_tree(
+                    node.preceding_context,
+                    parent,
+                    is_aggregate,
+                )
+
+                hybrid.add_operation(
+                    HybridCrossRHSBoundary(hybrid.pipeline[-1], node.cross_id)
+                )
+
+                return hybrid
+
             case Singular():
                 # a Singular node is just used to annotate the preceding context
                 # with additional information with respect to parent context.
@@ -1593,9 +1661,32 @@ class HybridTranslator:
                     HybridCalculate(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
                 )
                 if isinstance(node, TopK):
-                    hybrid.add_operation(
-                        HybridLimit(hybrid.pipeline[-1], node.records_to_keep)
-                    )
+                    scope_keys: list[HybridExpr] = []
+                    self.add_cross_scope_keys(hybrid, scope_keys)
+                    if scope_keys:
+                        # LIMIT would keep K rows across all LHS rows. Rank
+                        # and filter separately for each LHS row instead.
+                        rank: HybridWindowExpr = HybridWindowExpr(
+                            pydop.RANKING,
+                            [],
+                            scope_keys,
+                            hybrid_orderings,
+                            NumericType(),
+                            {},
+                        )
+                        threshold: HybridLiteralExpr = HybridLiteralExpr(
+                            Literal(node.records_to_keep, NumericType())
+                        )
+                        condition: HybridFunctionExpr = HybridFunctionExpr(
+                            pydop.LEQ, [rank, threshold], BooleanType()
+                        )
+                        hybrid.add_operation(
+                            HybridFilter(hybrid.pipeline[-1], condition)
+                        )
+                    else:
+                        hybrid.add_operation(
+                            HybridLimit(hybrid.pipeline[-1], node.records_to_keep)
+                        )
                 return hybrid
             case PyDoughUserGeneratedCollectionQDag():
                 # A user-generated collection is a special case of a collection
