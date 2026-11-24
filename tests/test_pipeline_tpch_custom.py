@@ -99,6 +99,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     bad_child_reuse_5,
     chained_partition_transformed_key,
     cross_similar_partitions,
+    cross_table_scan_child_aggregation,
     cross_table_scan_reverse_singular,
     customer_largest_order_deltas,
     customer_most_recent_orders,
@@ -7246,6 +7247,28 @@ from .testing_utilities import (
                 "cross_table_scan_reverse_singular",
             ),
             id="cross_table_scan_reverse_singular",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                cross_table_scan_child_aggregation,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "moment_id": [1, 1, 2, 2, 3, 3],
+                        "customer_id": [1, 2, 1, 2, 1, 2],
+                        "total_ever": [
+                            587762.91,
+                            1028273.4299999999,
+                            587762.91,
+                            1028273.4299999999,
+                            587762.91,
+                            1028273.4299999999,
+                        ],
+                    }
+                ),
+                "cross_table_scan_child_aggregation",
+            ),
+            id="cross_table_scan_child_aggregation",
         ),
         pytest.param(
             PyDoughPandasTest(
