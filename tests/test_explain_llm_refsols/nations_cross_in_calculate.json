@@ -2,7 +2,7 @@
   "pydough": "result = nations.CALCULATE(name, n=COUNT(customers.CROSS(suppliers)))",
   "explain_output": {
     "error": false,
-    "query_summary": "Accesses 'nations', selecting name and computing counting customers \u00d7 suppliers records as 'n'.",
+    "query_summary": "Accesses 'nations', selecting name and computing counting nations records as 'n'.",
     "steps": [
       {
         "order": 1,
@@ -65,11 +65,11 @@
           },
           "n": {
             "kind": "Aggregation",
-            "text": "COUNT(customers \u00d7 suppliers)",
+            "text": "COUNT(customers.CROSS(TPCH.suppliers))",
             "function": "COUNT",
             "args": [
               {
-                "name": "customers \u00d7 suppliers",
+                "name": "nations",
                 "access_path": [],
                 "filters": [],
                 "implicit_scope_note": null,
