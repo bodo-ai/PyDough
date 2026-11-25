@@ -6,7 +6,7 @@
 
 ## Query Summary
 
-Accesses 'nations', selecting name and computing counting customers × suppliers records as 'n'.
+Accesses 'nations', selecting name and computing counting nations records as 'n'.
 
 ## Steps
 
@@ -27,7 +27,7 @@ Adds computed expressions to the collection.
 
 - Terms:
   - `name` → reference
-  - `n` → COUNT(`customers × suppliers`)
+  - `n` → COUNT(`nations`)
 
 ## Schema
 

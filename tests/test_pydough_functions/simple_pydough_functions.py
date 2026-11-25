@@ -3318,15 +3318,18 @@ def simple_cross_5():
         orders.CALCULATE(order_priority)
         .WHERE((YEAR(order_date) == 1998) & (MONTH(order_date) == 1))
         .lines.WHERE(
-            (part.size == part_size)
-            & (tax == 0)
+            (tax == 0)
             & (discount == 0)
             & (ship_mode == "SHIP")
             & STARTSWITH(part.container, "LG")
         )
+        .CALCULATE(line_part_size=part.size)
     )
     best_priority = (
-        CROSS(order_info.PARTITION(name="priorities", by=order_priority))
+        CROSS(
+            order_info.PARTITION(name="priorities", by=(order_priority, line_part_size))
+        )
+        .WHERE(part_size == line_part_size)
         .CALCULATE(total_qty=KEEP_IF(SUM(lines.quantity), SUM(lines.quantity) > 0))
         .BEST(by=total_qty.DESC(), per="sizes")
     )

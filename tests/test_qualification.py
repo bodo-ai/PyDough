@@ -833,10 +833,11 @@ from tests.test_pydough_functions.user_collections import (
 ──┬─ TPCH
   ├─── TableCollection[regions]
   └─┬─ Calculate[r1=name]
-    └─┬─ TPCH
-      ├─── TableCollection[regions]
-      ├─── Calculate[r1=r1, r2=name]
-      └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
+    ├─┬─ Cross
+    │ └─┬─ TPCH
+    │   └─── TableCollection[regions]
+    ├─── Calculate[r1=r1, r2=name]
+    └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
             """,
             id="simple_cross_1",
         ),
@@ -846,47 +847,49 @@ from tests.test_pydough_functions.user_collections import (
 ──┬─ TPCH
   ├─── TableCollection[regions]
   └─┬─ Calculate[r1=name]
-    └─┬─ TPCH
-      ├─── TableCollection[regions]
-      ├─── Calculate[r1=r1, r2=name]
-      ├─── Where[r1 != r2]
-      └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
+    ├─┬─ Cross
+    │ └─┬─ TPCH
+    │   └─── TableCollection[regions]
+    ├─── Calculate[r1=r1, r2=name]
+    ├─── Where[r1 != r2]
+    └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
             """,
             id="simple_cross_2",
         ),
         pytest.param(
             simple_cross_3,
-            """
+            """       
 ──┬─ TPCH
   ├─── TableCollection[regions]
   └─┬─ Where[name == 'ASIA']
     ├─── SubCollection[nations]
     └─┬─ Calculate[s_key=key, supplier_nation=name]
-      └─┬─ TPCH
-        ├─── TableCollection[regions]
-        └─┬─ Where[name == 'AMERICA']
-          ├─── SubCollection[nations]
-          ├─── Calculate[customer_nation=name]
-          ├─┬─ Calculate[supplier_nation=supplier_nation, customer_nation=customer_nation, nation_combinations=COUNT($1)]
-          │ └─┬─ AccessChild
-          │   ├─── SubCollection[customers]
-          │   └─┬─ Where[account_balance < 0]
-          │     ├─── SubCollection[orders]
-          │     └─┬─ Where[(YEAR(order_date) == 1992) & (MONTH(order_date) == 4)]
-          │       ├─── SubCollection[lines]
-          │       └─┬─ Where[($1.nation_key == s_key) & (ship_mode == 'SHIP')]
-          │         └─┬─ AccessChild
-          │           └─── SubCollection[supplier]
-          └─┬─ Where[HAS($1)]
-            └─┬─ AccessChild
-              ├─── SubCollection[customers]
-              └─┬─ Where[account_balance < 0]
-                ├─── SubCollection[orders]
-                └─┬─ Where[(YEAR(order_date) == 1992) & (MONTH(order_date) == 4)]
-                  ├─── SubCollection[lines]
-                  └─┬─ Where[($1.nation_key == s_key) & (ship_mode == 'SHIP')]
-                    └─┬─ AccessChild
-                      └─── SubCollection[supplier]            
+      ├─┬─ Cross
+      │ └─┬─ TPCH
+      │   ├─── TableCollection[regions]
+      │   └─┬─ Where[name == 'AMERICA']
+      │     ├─── SubCollection[nations]
+      │     └─── Calculate[customer_nation=name]
+      ├─┬─ Calculate[supplier_nation=supplier_nation, customer_nation=customer_nation, nation_combinations=COUNT($1)]
+      │ └─┬─ AccessChild
+      │   ├─── SubCollection[customers]
+      │   └─┬─ Where[account_balance < 0]
+      │     ├─── SubCollection[orders]
+      │     └─┬─ Where[(YEAR(order_date) == 1992) & (MONTH(order_date) == 4)]
+      │       ├─── SubCollection[lines]
+      │       └─┬─ Where[($1.nation_key == s_key) & (ship_mode == 'SHIP')]
+      │         └─┬─ AccessChild
+      │           └─── SubCollection[supplier]
+      └─┬─ Where[HAS($1)]
+        └─┬─ AccessChild
+          ├─── SubCollection[customers]
+          └─┬─ Where[account_balance < 0]
+            ├─── SubCollection[orders]
+            └─┬─ Where[(YEAR(order_date) == 1992) & (MONTH(order_date) == 4)]
+              ├─── SubCollection[lines]
+              └─┬─ Where[($1.nation_key == s_key) & (ship_mode == 'SHIP')]
+                └─┬─ AccessChild
+                  └─── SubCollection[supplier]
             """,
             id="simple_cross_3",
         ),
@@ -898,9 +901,10 @@ from tests.test_pydough_functions.user_collections import (
   ├─── Calculate[region_name=name]
   ├─┬─ Calculate[region_name=region_name, n_other_regions=COUNT($1)]
   │ └─┬─ AccessChild
-  │   └─┬─ TPCH
-  │     ├─── TableCollection[regions]
-  │     └─── Where[(name != region_name) & (SLICE(name, None, 1, None) == SLICE(region_name, None, 1, None))]
+  │   ├─┬─ Cross
+  │   │ └─┬─ TPCH
+  │   │   └─── TableCollection[regions]
+  │   └─── Where[(name != region_name) & (SLICE(name, None, 1, None) == SLICE(region_name, None, 1, None))]
   └─── OrderBy[region_name.ASC(na_pos='first')]
             """,
             id="simple_cross_4",
@@ -917,21 +921,26 @@ from tests.test_pydough_functions.user_collections import (
   ├─── TopK[10, size.ASC(na_pos='first')]
   └─┬─ Calculate[part_size=part_size, best_order_priority=$1.order_priority, best_order_priority_qty=$1.total_qty]
     └─┬─ AccessChild
-      └─┬─ TPCH
-        ├─┬─ Partition[name='priorities', by=order_priority]
-        │ └─┬─ AccessChild
-        │   ├─── TableCollection[orders]
-        │   ├─── Calculate[order_priority=order_priority]
-        │   └─┬─ Where[(YEAR(order_date) == 1998) & (MONTH(order_date) == 1)]
-        │     ├─── SubCollection[lines]
-        │     └─┬─ Where[($1.size == part_size) & (tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
-        │       └─┬─ AccessChild
-        │         └─── SubCollection[part]
-        ├─┬─ Calculate[total_qty=KEEP_IF(SUM($1.quantity), SUM($1.quantity) > 0)]
-        │ └─┬─ AccessChild
-        │   └─── PartitionChild[lines]
-        ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=2, allow_ties=False) == 1]
-        └─── Singular
+      ├─┬─ Cross
+      │ └─┬─ TPCH
+      │   └─┬─ Partition[name='priorities', by=(order_priority, line_part_size)]
+      │     └─┬─ AccessChild
+      │       ├─── TableCollection[orders]
+      │       ├─── Calculate[order_priority=order_priority]
+      │       └─┬─ Where[(YEAR(order_date) == 1998) & (MONTH(order_date) == 1)]
+      │         ├─── SubCollection[lines]
+      │         ├─┬─ Where[(tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
+      │         │ └─┬─ AccessChild
+      │         │   └─── SubCollection[part]
+      │         └─┬─ Calculate[line_part_size=$1.size]
+      │           └─┬─ AccessChild
+      │             └─── SubCollection[part]
+      ├─── Where[part_size == line_part_size]
+      ├─┬─ Calculate[total_qty=KEEP_IF(SUM($1.quantity), SUM($1.quantity) > 0)]
+      │ └─┬─ AccessChild
+      │   └─── PartitionChild[lines]
+      ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
+      └─── Singular
             """,
             id="simple_cross_5",
         ),
@@ -944,11 +953,12 @@ from tests.test_pydough_functions.user_collections import (
     ├─── TableCollection[customers]
     ├─── Calculate[original_customer_key=key, original_customer_nation_key=nation_key, original_customer_segment=market_segment]
     └─┬─ Where[account_balance > 9990]
-      └─┬─ TPCH
-        ├─── TableCollection[customers]
-        ├─── Where[account_balance > 9990]
-        └─── Where[(nation_key == original_customer_nation_key) & (key > original_customer_key) & (market_segment == original_customer_segment)]
-  """,
+      ├─┬─ Cross
+      │ └─┬─ TPCH
+      │   ├─── TableCollection[customers]
+      │   └─── Where[account_balance > 9990]
+      └─── Where[(nation_key == original_customer_nation_key) & (key > original_customer_key) & (market_segment == original_customer_segment)]
+            """,
             id="simple_cross_6",
         ),
         pytest.param(

@@ -22,6 +22,7 @@ from pydough.qdag import (
     ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    Cross,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -1365,24 +1366,24 @@ class Qualifier:
             unqualified_parent, context, is_child
         )
 
-        # Now build a GlobalContext pointing to the qualified parent as its
-        # ancestor, and use this as the new context for the child.
-        qualified_parent = GlobalContext(self.graph, qualified_parent)
-
-        # If the parent is the root, then the child access is a child operator
-        # child access.
-        if isinstance(unqualified_parent, UnqualifiedRoot):
-            qualified_parent = ChildOperatorChildAccess(qualified_parent)
+        # Now build a new GlobalContext to use as the root.
+        new_root = GlobalContext(self.graph)
 
         # Qualify the child collection with the (augmented) parent as its
         # context.
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child,
-            qualified_parent,
+            new_root,
             False,
         )
 
-        return qualified_child
+        # Return a Cross node combining the qualified parent and child
+        # collections. If the parent is the root, then the child access is a
+        # child operator child access.
+        result: PyDoughCollectionQDAG = Cross(qualified_parent, qualified_child)
+        if isinstance(unqualified_parent, UnqualifiedRoot):
+            result = ChildOperatorChildAccess(result)
+        return result
 
     def qualify_explode(
         self,
