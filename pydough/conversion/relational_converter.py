@@ -102,6 +102,7 @@ from .join_aggregate_transpose import pull_aggregates_above_joins
 from .join_key_substitution import join_key_substitution
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
+from .ordering_deduplication import deduplicate_orderings
 from .projection_pullup import pullup_projections
 from .relational_simplification import simplify_expressions
 
@@ -1944,6 +1945,10 @@ def optimize_relational_tree(
     # Re-run column pruning one last time to remove any columns that are no
     # longer used after the final round of transformations.
     root = pruner.prune_unused_columns(root)
+
+    # Remove repeated sort keys left behind by passes that rewrite root and
+    # limit orderings in place.
+    deduplicate_orderings(root)
 
     return root
 

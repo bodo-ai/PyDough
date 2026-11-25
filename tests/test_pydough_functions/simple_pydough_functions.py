@@ -4357,3 +4357,204 @@ def cross_table_scan_reverse_singular():
         )
         .ORDER_BY(k.ASC())
     )
+
+
+def duplicate_window_partition_keys():
+    """
+    Two partition keys that are aliases of the same column must produce a
+    single window `PARTITION BY` key.
+    """
+    order_info = orders.WHERE(customer_key <= 2).CALCULATE(
+        c1=customer_key, c2=customer_key, oid=key
+    )
+    groups = order_info.PARTITION(name="grp", by=(c1, c2))
+    return groups.orders.CALCULATE(
+        c1, c2, oid, prev_oid=PREV(oid, by=oid.ASC(), per="grp")
+    ).ORDER_BY(c1.ASC(), oid.ASC())
+
+
+def duplicate_window_order_keys():
+    """
+    A window sort key given twice must produce a single window `ORDER BY`
+    key.
+    """
+    return (
+        orders.WHERE(customer_key <= 2)
+        .CALCULATE(
+            oid=key,
+            c=customer_key,
+            prev_oid=PREV(key, by=(key.ASC(), key.ASC())),
+        )
+        .ORDER_BY(oid.ASC())
+    )
+
+
+def duplicate_window_and_final_keys():
+    """
+    Repeated window partition keys, window sort keys and final sort keys in
+    the same query.
+    """
+    order_info = orders.WHERE(customer_key <= 2).CALCULATE(
+        c1=customer_key, c2=customer_key, oid=key
+    )
+    groups = order_info.PARTITION(name="grp", by=(c1, c2))
+    return groups.orders.CALCULATE(
+        c1,
+        c2,
+        oid,
+        running=RELSUM(
+            total_price, by=(oid.ASC(), oid.ASC()), per="grp", cumulative=True
+        ),
+    ).ORDER_BY(c1.ASC(), c2.ASC(), oid.ASC())
+
+
+def duplicate_orderings_aliases():
+    """
+    Final sort keys that are aliases of the same column must produce a single
+    `ORDER BY` key.
+    """
+    return (
+        orders.WHERE(customer_key <= 2)
+        .CALCULATE(oid=key, c1=customer_key, c2=customer_key)
+        .ORDER_BY(c1.ASC(), c2.ASC(), oid.ASC())
+    )
+
+
+def duplicate_orderings_join_keys():
+    """
+    Final sort keys that only become the same column after join key
+    substitution must produce a single `ORDER BY` key.
+    """
+    return (
+        orders.WHERE(customer_key <= 2)
+        .CALCULATE(oid=key, c1=customer_key, c2=customer.key)
+        .ORDER_BY(c1.ASC(), c2.ASC(), oid.ASC())
+    )
+
+
+def duplicate_top_k_orderings():
+    """
+    A `TOP_K` sort key given twice must produce a single `ORDER BY` key.
+    """
+    return orders.CALCULATE(oid=key, amount=total_price).TOP_K(
+        5, by=(amount.DESC(), amount.DESC(), oid.ASC())
+    )
+
+
+def duplicate_orderings_mixed_direction():
+    """
+    A later sort key on an expression that is already sorted on is redundant,
+    whatever its direction or NULL placement, both in window and final
+    orderings.
+    """
+    return (
+        orders.WHERE(customer_key <= 2)
+        .CALCULATE(
+            oid=key,
+            amount=total_price,
+            r=RANKING(
+                by=(
+                    total_price.DESC(),
+                    total_price.ASC(),
+                    total_price.DESC(na_pos="last"),
+                    key.ASC(),
+                )
+            ),
+        )
+        .TOP_K(
+            5,
+            by=(
+                amount.DESC(),
+                amount.ASC(),
+                amount.DESC(na_pos="last"),
+                oid.ASC(),
+            ),
+        )
+    )
+
+
+def duplicate_window_partition_join_keys():
+    """
+    Window partition keys that only become the same column after join key
+    substitution must produce a single `PARTITION BY` key.
+    """
+    order_info = orders.WHERE(customer_key <= 2).CALCULATE(
+        c1=customer_key, c2=customer.key, oid=key
+    )
+    groups = order_info.PARTITION(name="grp", by=(c1, c2))
+    return groups.orders.CALCULATE(
+        c1, oid, prev_oid=PREV(oid, by=oid.ASC(), per="grp")
+    ).ORDER_BY(c1.ASC(), oid.ASC())
+
+
+def duplicate_window_keys_in_filter():
+    """
+    Repeated sort keys in a window function used inside a filter.
+    """
+    return (
+        orders.WHERE(
+            RANKING(by=(total_price.DESC(), total_price.DESC(), key.ASC())) <= 3
+        )
+        .CALCULATE(key, total_price)
+        .ORDER_BY(total_price.DESC(), total_price.DESC())
+    )
+
+
+def duplicate_window_keys_best():
+    """
+    Repeated sort keys in `BEST`, which is translated to a window function.
+    """
+    return (
+        customers.WHERE(key <= 3)
+        .CALCULATE(
+            key,
+            best_order=orders.BEST(
+                by=(total_price.DESC(), total_price.DESC(), key.ASC()),
+                per="customers",
+            ).key,
+        )
+        .ORDER_BY(key.ASC())
+    )
+
+
+def duplicate_window_partition_multi_level():
+    """
+    Partition keys taken from two levels of the hierarchy that refer to the
+    same column must produce a single `PARTITION BY` key.
+    """
+    groups = (
+        nations.CALCULATE(nk=key)
+        .customers.WHERE(account_balance > 9999)
+        .CALCULATE(nk2=nation_key)
+        .PARTITION(name="grp", by=(nk, nk2))
+    )
+    return groups.customers.CALCULATE(
+        key, nk, rk=RANKING(by=(account_balance.DESC(), key.ASC()), per="grp")
+    ).ORDER_BY(key.ASC())
+
+
+def duplicate_top_k_then_order_by():
+    """
+    Repeated sort keys in a `TOP_K` that stays below a different
+    `ORDER_BY`, which also has repeated sort keys.
+    """
+    return (
+        orders.WHERE(customer_key <= 2)
+        .CALCULATE(oid=key, c1=customer_key, c2=customer_key)
+        .TOP_K(5, by=(c1.ASC(), c2.ASC(), oid.ASC()))
+        .ORDER_BY(oid.DESC(), oid.DESC())
+    )
+
+
+def duplicate_top_k_merged_into_root():
+    """
+    A `TOP_K` with a repeated sort key followed by an `ORDER_BY` with the same
+    keys without the repetition. Once the repetition is removed, the limit is
+    merged into the final `ORDER BY` instead of staying in a subquery.
+    """
+    return (
+        orders.WHERE(customer_key <= 2)
+        .CALCULATE(oid=key, c1=customer_key, c2=customer_key)
+        .TOP_K(5, by=(c1.ASC(), c2.ASC(), oid.ASC()))
+        .ORDER_BY(c1.ASC(), oid.ASC())
+    )

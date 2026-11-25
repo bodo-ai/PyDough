@@ -10,12 +10,14 @@ from pydough.relational import (
     CallExpression,
     ColumnReference,
     EmptySingleton,
+    ExpressionSortInfo,
     Filter,
     Join,
     JoinType,
     Limit,
     LiteralExpression,
     Project,
+    RelationalExpression,
     RelationalNode,
     RelationalRoot,
     Scan,
@@ -1664,3 +1666,60 @@ def test_join_requires_boolean_condition() -> None:
                 "a": make_relational_column_reference("a", input_name="t0"),
             },
         )
+
+
+@pytest.mark.parametrize(
+    "orderings, output",
+    [
+        pytest.param([], [], id="empty"),
+        pytest.param(
+            [
+                make_relational_ordering(make_relational_column_reference("a")),
+                make_relational_ordering(make_relational_column_reference("b")),
+            ],
+            [
+                make_relational_ordering(make_relational_column_reference("a")),
+                make_relational_ordering(make_relational_column_reference("b")),
+            ],
+            id="already_unique",
+        ),
+        pytest.param(
+            [
+                make_relational_ordering(
+                    make_relational_column_reference("a"), ascending=False
+                ),
+                make_relational_ordering(make_relational_column_reference("b")),
+                make_relational_ordering(make_relational_column_reference("a")),
+            ],
+            [
+                make_relational_ordering(
+                    make_relational_column_reference("a"), ascending=False
+                ),
+                make_relational_ordering(make_relational_column_reference("b")),
+            ],
+            id="repeated_key",
+        ),
+    ],
+)
+def test_root_and_limit_deduplicate_orderings(
+    orderings: list[ExpressionSortInfo], output: list[ExpressionSortInfo]
+) -> None:
+    """
+    Tests that the Root and Limit nodes remove repeated sort keys when they
+    are built, keeping the first occurrence and the original order.
+    """
+    columns: dict[str, RelationalExpression] = {
+        "a": make_relational_column_reference("a"),
+        "b": make_relational_column_reference("b"),
+    }
+    root: RelationalRoot = RelationalRoot(
+        build_simple_scan(), list(columns.items()), orderings
+    )
+    limit: Limit = Limit(
+        build_simple_scan(),
+        make_relational_literal(10, NumericType()),
+        columns,
+        orderings,
+    )
+    assert root.orderings == output
+    assert limit.orderings == output

@@ -1,0 +1,3 @@
+ROOT(columns=[('oid', o_orderkey), ('c', o_custkey), ('prev_oid', PREV(args=[o_orderkey], partition=[], order=[(o_orderkey):asc_last]))], orderings=[(o_orderkey):asc_first])
+ FILTER(condition=o_custkey <= 2:numeric, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
+  SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
