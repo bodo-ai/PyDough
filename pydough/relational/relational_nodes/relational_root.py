@@ -40,7 +40,7 @@ class RelationalRoot(SingleRelational):
         super().__init__(input, columns)
         self._ordered_columns: list[tuple[str, RelationalExpression]] = ordered_columns
         self._orderings: list[ExpressionSortInfo] = (
-            [] if orderings is None else orderings
+            [] if orderings is None else ExpressionSortInfo.deduplicate(orderings)
         )
         self._limit: RelationalExpression | None = limit
 

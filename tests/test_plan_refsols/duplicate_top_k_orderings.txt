@@ -1,0 +1,2 @@
+ROOT(columns=[('oid', o_orderkey), ('amount', o_totalprice)], orderings=[(o_totalprice):desc_last, (o_orderkey):asc_first], limit=5:numeric)
+ SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice})

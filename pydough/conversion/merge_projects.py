@@ -266,7 +266,10 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
             )
             for ordering in node.orderings
         ]
-        if node.input.orderings == new_orderings:
+        if ExpressionSortInfo.same_orderings(
+            ExpressionSortInfo.deduplicate(node.input.orderings),
+            ExpressionSortInfo.deduplicate(new_orderings),
+        ):
             # If the orderings are the same, pull in the limit into the root.
             # Replace all column references in the root's columns with
             # the expressions from the child projection.

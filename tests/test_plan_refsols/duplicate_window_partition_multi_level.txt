@@ -1,0 +1,3 @@
+ROOT(columns=[('key', c_custkey), ('nk', c_nationkey), ('rk', RANKING(args=[], partition=[c_nationkey], order=[(c_acctbal):desc_first, (c_custkey):asc_last]))], orderings=[(c_custkey):asc_first])
+ FILTER(condition=c_acctbal > 9999:numeric, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
+  SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_nationkey': c_nationkey})

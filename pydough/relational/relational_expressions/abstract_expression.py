@@ -70,6 +70,34 @@ class RelationalExpression(ABC):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, RelationalExpression) and self.equals(other)
 
+    def is_same_key(self, other: "RelationalExpression") -> bool:
+        """
+        Determine if two expressions are interchangeable as partition or sort
+        keys, so that one of them can be removed as a duplicate.
+
+        This is stricter than `equals`, which compares literal values with
+        `==`: here every literal must also have the same Python type and
+        representation. For example, `x + 1` and `x + 1.0` are equal but are
+        not the same key, since they can sort or group large integers
+        differently.
+
+        Args:
+            `other`: The other relational expression to compare against.
+
+        Returns:
+            Whether the two expressions are the same key.
+        """
+        # Imported here to avoid a circular import with the expression classes.
+        from .literal_type_finder import LiteralTypeFinder
+
+        if not self.equals(other):
+            return False
+        self_finder: LiteralTypeFinder = LiteralTypeFinder()
+        other_finder: LiteralTypeFinder = LiteralTypeFinder()
+        self.accept(self_finder)
+        other.accept(other_finder)
+        return self_finder.get_literal_types() == other_finder.get_literal_types()
+
     @abstractmethod
     def to_string(self, compact: bool = False) -> str:
         """

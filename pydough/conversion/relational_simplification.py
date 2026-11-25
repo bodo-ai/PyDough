@@ -309,12 +309,15 @@ class SimplificationShuttle(RelationalExpressionShuttle):
     ) -> RelationalExpression:
         new_window = super().visit_window_expression(window_expression)
         assert isinstance(new_window, WindowCallExpression)
-        for _ in range(len(new_window.order_inputs)):
+        # One predicate set was pushed per input of the original expression.
+        # Use its counts, since the rebuilt window may have fewer partition or
+        # order keys if simplification made some of them identical.
+        for _ in range(len(window_expression.order_inputs)):
             self.stack.pop()
-        for _ in range(len(new_window.partition_inputs)):
+        for _ in range(len(window_expression.partition_inputs)):
             self.stack.pop()
         arg_predicates: list[PredicateSet] = [
-            self.stack.pop() for _ in range(len(new_window.inputs))
+            self.stack.pop() for _ in range(len(window_expression.inputs))
         ]
         arg_predicates.reverse()
         return self.simplify_window_call(new_window, arg_predicates)

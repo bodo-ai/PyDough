@@ -108,6 +108,19 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     double_cross,
     double_partition,
     dumb_aggregation,
+    duplicate_orderings_aliases,
+    duplicate_orderings_join_keys,
+    duplicate_orderings_mixed_direction,
+    duplicate_top_k_merged_into_root,
+    duplicate_top_k_orderings,
+    duplicate_top_k_then_order_by,
+    duplicate_window_and_final_keys,
+    duplicate_window_keys_best,
+    duplicate_window_keys_in_filter,
+    duplicate_window_order_keys,
+    duplicate_window_partition_join_keys,
+    duplicate_window_partition_keys,
+    duplicate_window_partition_multi_level,
     extract_colors,
     first_order_in_year,
     first_order_per_customer,
@@ -7684,6 +7697,377 @@ from .testing_utilities import (
                 order_sensitive=True,
             ),
             id="sql_macro_14",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_partition_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "c1": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "c2": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "oid": [
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            5133509,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3986496,
+                        ],
+                        "prev_oid": [
+                            None,
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            None,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                        ],
+                    }
+                ),
+                "duplicate_window_partition_keys",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_partition_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_order_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [
+                            430243,
+                            454791,
+                            579908,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3868359,
+                            3986496,
+                            4273923,
+                            4808192,
+                            5133509,
+                        ],
+                        "c": [2, 1, 1, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1],
+                        "prev_oid": [
+                            None,
+                            430243,
+                            454791,
+                            579908,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3868359,
+                            3986496,
+                            4273923,
+                            4808192,
+                        ],
+                    }
+                ),
+                "duplicate_window_order_keys",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_order_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_and_final_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "c1": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "c2": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "oid": [
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            5133509,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3986496,
+                        ],
+                        "running": [
+                            74602.81,
+                            128651.07,
+                            251727.91,
+                            347638.92,
+                            413116.97,
+                            587762.91,
+                            33082.83,
+                            254480.18,
+                            421496.79,
+                            437992.12,
+                            612283.53,
+                            715581.21,
+                            1028273.43,
+                        ],
+                    }
+                ),
+                "duplicate_window_and_final_keys",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_and_final_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_orderings_aliases,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            5133509,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3986496,
+                        ],
+                        "c1": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "c2": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                    }
+                ),
+                "duplicate_orderings_aliases",
+                order_sensitive=True,
+            ),
+            id="duplicate_orderings_aliases",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_orderings_join_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            5133509,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3986496,
+                        ],
+                        "c1": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "c2": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                    }
+                ),
+                "duplicate_orderings_join_keys",
+                order_sensitive=True,
+            ),
+            id="duplicate_orderings_join_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_top_k_orderings,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [1750466, 4722021, 3043270, 4576548, 2232932],
+                        "amount": [
+                            555285.16,
+                            544089.09,
+                            530604.44,
+                            525590.57,
+                            522720.61,
+                        ],
+                    }
+                ),
+                "duplicate_top_k_orderings",
+                order_sensitive=True,
+            ),
+            id="duplicate_top_k_orderings",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_orderings_mixed_direction,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [3986496, 1071617, 5133509, 1842406, 1374019],
+                        "amount": [
+                            312692.22,
+                            221397.35,
+                            174645.94,
+                            174291.41,
+                            167016.61,
+                        ],
+                        "r": [1, 2, 3, 4, 5],
+                    }
+                ),
+                "duplicate_orderings_mixed_direction",
+                order_sensitive=True,
+            ),
+            id="duplicate_orderings_mixed_direction",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_partition_join_keys,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "c1": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+                        "oid": [
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            5133509,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3986496,
+                        ],
+                        "prev_oid": [
+                            None,
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            None,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                        ],
+                    }
+                ),
+                "duplicate_window_partition_join_keys",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_partition_join_keys",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_keys_in_filter,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1750466, 4722021, 3043270],
+                        "total_price": [555285.16, 544089.09, 530604.44],
+                    }
+                ),
+                "duplicate_window_keys_in_filter",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_keys_in_filter",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_keys_best,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3],
+                        "best_order": [5133509, 3986496, None],
+                    }
+                ),
+                "duplicate_window_keys_best",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_keys_best",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_window_partition_multi_level,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [
+                            2487,
+                            15980,
+                            23828,
+                            43044,
+                            61453,
+                            63655,
+                            69321,
+                            76146,
+                            129934,
+                            144232,
+                            148504,
+                        ],
+                        "nk": [24, 16, 16, 2, 15, 19, 15, 17, 5, 7, 14],
+                        "rk": [1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1],
+                    }
+                ),
+                "duplicate_window_partition_multi_level",
+                order_sensitive=True,
+            ),
+            id="duplicate_window_partition_multi_level",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_top_k_then_order_by,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [4808192, 4273923, 3868359, 579908, 454791],
+                        "c1": [1, 1, 1, 1, 1],
+                        "c2": [1, 1, 1, 1, 1],
+                    }
+                ),
+                "duplicate_top_k_then_order_by",
+                order_sensitive=True,
+            ),
+            id="duplicate_top_k_then_order_by",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                duplicate_top_k_merged_into_root,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "oid": [454791, 579908, 3868359, 4273923, 4808192],
+                        "c1": [1, 1, 1, 1, 1],
+                        "c2": [1, 1, 1, 1, 1],
+                    }
+                ),
+                "duplicate_top_k_merged_into_root",
+                order_sensitive=True,
+            ),
+            id="duplicate_top_k_merged_into_root",
         ),
     ],
 )

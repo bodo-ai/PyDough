@@ -36,6 +36,12 @@ The relational_expressions module provides functionality to define and manage va
 ### [expression_sort_info.py](expression_sort_info.py)
 
 - `ExpressionSortInfo`: The representation of ordering for an expression within a relational node.
+  - `ExpressionSortInfo.deduplicate`: Removes repeated sort keys, keeping the first occurrence of each sort expression.
+  - `ExpressionSortInfo.same_orderings`: Returns whether two lists of sort keys are interchangeable.
+
+### [literal_type_finder.py](literal_type_finder.py)
+
+- `LiteralTypeFinder`: Collects the type and representation of every literal in an expression, used by `RelationalExpression.is_same_key` to tell apart keys such as `x + 1` and `x + 1.0`.
 
 ### [relational_expression_visitor.py](relational_expression_visitor.py)
 

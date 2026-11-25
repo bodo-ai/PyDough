@@ -43,7 +43,7 @@ class Limit(SingleRelational):
         )
         self._limit: RelationalExpression = limit
         self._orderings: list[ExpressionSortInfo] = (
-            [] if orderings is None else orderings
+            [] if orderings is None else ExpressionSortInfo.deduplicate(orderings)
         )
 
     @property

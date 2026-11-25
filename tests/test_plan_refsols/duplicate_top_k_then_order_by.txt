@@ -1,0 +1,4 @@
+ROOT(columns=[('oid', o_orderkey), ('c1', o_custkey), ('c2', o_custkey)], orderings=[(o_orderkey):desc_last])
+ LIMIT(limit=5:numeric, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey}, orderings=[(o_custkey):asc_first, (o_orderkey):asc_first])
+  FILTER(condition=o_custkey <= 2:numeric, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
+   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
