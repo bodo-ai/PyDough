@@ -521,7 +521,21 @@ class HybridUserGeneratedCollection(HybridOperation):
         return self._user_collection
 
     def __repr__(self):
-        return self.user_collection.to_string()
+        from pydough.user_collections.dataframe_collection import (
+            DataframeGeneratedCollection,
+        )
+
+        collection = self.user_collection.collection
+        representation = self.user_collection.to_string()
+
+        # Temporary change to distinguish DataFrame contents.
+        if isinstance(collection, DataframeGeneratedCollection):
+            return (
+                f"{representation}"
+                f"[data={collection.dataframe.to_dict(orient='split')!r}]"
+            )
+
+        return representation
 
 
 class HybridExplode(HybridOperation):
