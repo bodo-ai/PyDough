@@ -518,6 +518,52 @@ class HybridTree:
         is_singular: bool = child.is_singular()
         always_exists: bool = child.always_exists()
         for idx, existing_connection in enumerate(self.children):
+            existing_op = existing_connection.subtree.pipeline[0]
+            new_op = child.pipeline[0]
+
+            if isinstance(existing_op, HybridUserGeneratedCollection) and isinstance(
+                new_op, HybridUserGeneratedCollection
+            ):
+                existing_collection = existing_op.user_collection.collection
+                new_collection = new_op.user_collection.collection
+
+                print("\n=== GENERATED COLLECTION COMPARISON ===")
+
+                print("Existing collection:", existing_collection)
+                print("New collection:", new_collection)
+
+                print(
+                    "Underlying collection equality:",
+                    existing_collection == new_collection,
+                )
+
+                print(
+                    "QDAG equality:",
+                    existing_op.user_collection == new_op.user_collection,
+                )
+
+                print(
+                    "Hybrid operation equality:",
+                    existing_op == new_op,
+                )
+
+                print(
+                    "Hybrid tree equality:",
+                    existing_connection.subtree == child,
+                )
+
+                print(
+                    "Join conditions equality:",
+                    (
+                        child.join_keys,
+                        child.general_join_condition,
+                    )
+                    == (
+                        existing_connection.subtree.join_keys,
+                        existing_connection.subtree.general_join_condition,
+                    ),
+                )
+
             # Identify whether the child is the same as an existing one, and
             # therefore the existing one can potentially be reused.
             if self.is_same_child(idx, child):
