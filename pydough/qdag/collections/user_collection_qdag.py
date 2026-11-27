@@ -1,5 +1,3 @@
-from functools import cache
-
 from pydough.errors import PyDoughQDAGException
 from pydough.qdag import PyDoughCollectionQDAG
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
@@ -66,7 +64,6 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
     def inherited_downstreamed_terms(self) -> set[str]:
         return self.ancestor_context.inherited_downstreamed_terms
 
-    @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
         # Special handling of terms down-streamed
         if term_name in self.ancestral_mapping:
