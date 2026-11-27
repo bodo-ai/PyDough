@@ -10,9 +10,7 @@ def aggregate_join_two_sided_key():
     Test a calculated grouping key referencing both inputs of a join.
     """
     return (
-        customers.CALCULATE(
-            label=JOIN_STRINGS(" - ", market_segment, nation.name)
-        )
+        customers.CALCULATE(label=JOIN_STRINGS(" - ", market_segment, nation.name))
         .PARTITION(name="groups", by=label)
         .CALCULATE(label, n=COUNT(customers))
         .ORDER_BY(label.ASC())
@@ -25,9 +23,7 @@ def aggregate_join_nested_two_sided_key():
     references both inputs of the inner join.
     """
     return (
-        customers.CALCULATE(
-            label=JOIN_STRINGS(" - ", nation.name, nation.region.name)
-        )
+        customers.CALCULATE(label=JOIN_STRINGS(" - ", nation.name, nation.region.name))
         .PARTITION(name="groups", by=label)
         .CALCULATE(label, n_customers=COUNT(customers))
         .ORDER_BY(label.ASC())

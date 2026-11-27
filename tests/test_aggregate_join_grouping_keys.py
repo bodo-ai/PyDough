@@ -39,9 +39,7 @@ class AggregateJoinTestCase:
     reference_sql: str
     expected_rows: int
 
-    def make_test_data(
-        self, expected: pd.DataFrame | None = None
-    ) -> PyDoughPandasTest:
+    def make_test_data(self, expected: pd.DataFrame | None = None) -> PyDoughPandasTest:
         return PyDoughPandasTest(
             self.pydough_function,
             "TPCH",
