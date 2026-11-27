@@ -16,6 +16,7 @@ from tests.test_pydough_functions.user_collections import (
     dataframe_collection_filtered_count,
 )
 
+
 @pytest.mark.execute
 @pytest.mark.parametrize(
     "same_name",
