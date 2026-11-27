@@ -33,6 +33,7 @@ def test_dataframe_collection_query_lifetime(
     Tests that independent queries return correct results and release their
     temporary input DataFrames after execution (#649).
     """
+    assert sqlite_tpch_session.metadata is not None
     query = init_pydough_context(sqlite_tpch_session.metadata)(
         dataframe_collection_filtered_count
     )
