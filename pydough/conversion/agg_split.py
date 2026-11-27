@@ -303,12 +303,16 @@ def attempt_join_aggregate_transpose(
         # push the aggregate down.
         return node, True
 
-    # Verify that all of the aggregation keys strictly come from one side of the
-    # join.
+    # Verify that each aggregation key references at most one join input.
+    # Transpose the keys through the join before inspecting their input names,
+    # since they initially reference the join's output columns.
     finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        join, True
+    )
     for key_expr in node.keys.values():
         finder.reset()
-        key_expr.accept(finder)
+        key_expr.accept_shuttle(transposer).accept(finder)
         if len({ref.input_name for ref in finder.get_column_references()}) > 1:
             return node, True
 
@@ -316,9 +320,6 @@ def attempt_join_aggregate_transpose(
     lhs_aggs: list[str] = []
     rhs_aggs: list[str] = []
     count_aggs: list[str] = []
-    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
-        join, True
-    )
     for agg_name, agg_call in node.aggregations.items():
         finder.reset()
         agg_call.accept_shuttle(transposer).accept(finder)
