@@ -1,0 +1,5 @@
+ROOT(columns=[('label', label), ('n', n_rows)], orderings=[(label):asc_first])
+ AGGREGATE(keys={'label': JOIN_STRINGS(' - ':string, c_mktsegment, n_name)}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'c_mktsegment': t0.c_mktsegment, 'n_name': t1.n_name})
+   SCAN(table=tpch.CUSTOMER, columns={'c_mktsegment': c_mktsegment, 'c_nationkey': c_nationkey})
+   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})

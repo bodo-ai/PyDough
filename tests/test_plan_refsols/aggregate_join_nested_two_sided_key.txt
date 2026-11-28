@@ -1,0 +1,8 @@
+ROOT(columns=[('label', label), ('n_customers', sum_n_rows)], orderings=[(label):asc_first])
+ AGGREGATE(keys={'label': JOIN_STRINGS(' - ':string, n_name, r_name)}, aggregations={'sum_n_rows': SUM(n_rows)})
+  JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t1.n_name, 'n_rows': t0.n_rows, 'r_name': t1.r_name})
+   AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'n_rows': COUNT()})
+    SCAN(table=tpch.CUSTOMER, columns={'c_nationkey': c_nationkey})
+   JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'r_name': t1.r_name})
+    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
+    SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
