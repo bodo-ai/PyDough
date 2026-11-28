@@ -7,6 +7,7 @@ Various functions containing PyDough code snippets for testing purposes.
 
 import pandas as pd
 import datetime
+import pydough
 
 
 def simple_scan():
@@ -4357,3 +4358,14 @@ def cross_table_scan_reverse_singular():
         )
         .ORDER_BY(k.ASC())
     )
+
+
+def dataframe_collection_term_access(collection_name, df):
+    # Creates a user-generated collection for QDAG term access tests.
+    return pydough.dataframe_collection(collection_name, df, ["k"])
+
+
+def dataframe_collection_filtered_count(collection_name, df):
+    # Counts the rows satisfying a filter in a temporary DataFrame.
+    numbers = pydough.dataframe_collection(collection_name, df, ["k"])
+    return TPCH.CALCULATE(n=COUNT(numbers.WHERE(k < 3)))

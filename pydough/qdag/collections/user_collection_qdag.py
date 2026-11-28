@@ -64,6 +64,8 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
     def inherited_downstreamed_terms(self) -> set[str]:
         return self.ancestor_context.inherited_downstreamed_terms
 
+    # Intentionally uncached: a shared cache retains user-generated
+    # collections and their underlying data (#649).
     def get_term(self, term_name: str) -> PyDoughQDAG:
         # Special handling of terms down-streamed
         if term_name in self.ancestral_mapping:
