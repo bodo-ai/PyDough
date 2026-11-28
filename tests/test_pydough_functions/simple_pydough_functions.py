@@ -8,6 +8,7 @@ Various functions containing PyDough code snippets for testing purposes.
 import pandas as pd
 import datetime
 import pydough
+from pydough.unqualified import UnqualifiedCalculate, UnqualifiedGeneratedCollection
 
 
 def simple_scan():
@@ -4360,12 +4361,18 @@ def cross_table_scan_reverse_singular():
     )
 
 
-def dataframe_collection_term_access(collection_name, df):
+def dataframe_collection_term_access(
+    collection_name: str, df: pd.DataFrame
+) -> UnqualifiedGeneratedCollection:
     # Creates a user-generated collection for QDAG term access tests.
     return pydough.dataframe_collection(collection_name, df, ["k"])
 
 
-def dataframe_collection_filtered_count(collection_name, df):
+def dataframe_collection_filtered_count(
+    collection_name: str, df: pd.DataFrame
+) -> UnqualifiedCalculate:
     # Counts the rows satisfying a filter in a temporary DataFrame.
-    numbers = pydough.dataframe_collection(collection_name, df, ["k"])
+    numbers: UnqualifiedGeneratedCollection = pydough.dataframe_collection(
+        collection_name, df, ["k"]
+    )
     return TPCH.CALCULATE(n=COUNT(numbers.WHERE(k < 3)))
