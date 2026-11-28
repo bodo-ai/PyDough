@@ -4,8 +4,10 @@
 # mypy: ignore-errors
 # PyDough names are resolved by the test utilities when the functions run.
 
+from pydough.unqualified import UnqualifiedNode
 
-def aggregate_join_two_sided_key():
+
+def aggregate_join_two_sided_key() -> UnqualifiedNode:
     """
     Test a calculated grouping key referencing both inputs of a join.
     """
@@ -17,7 +19,7 @@ def aggregate_join_two_sided_key():
     )
 
 
-def aggregate_join_nested_two_sided_key():
+def aggregate_join_nested_two_sided_key() -> UnqualifiedNode:
     """
     Test a grouping key that is single-sided at the outer join but
     references both inputs of the inner join.
@@ -30,7 +32,7 @@ def aggregate_join_nested_two_sided_key():
     )
 
 
-def aggregate_join_separate_keys():
+def aggregate_join_separate_keys() -> UnqualifiedNode:
     """
     Test separate grouping keys that individually reference only one
     join input, even though together they reference both inputs.

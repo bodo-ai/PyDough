@@ -13,6 +13,7 @@ from pydough import to_sql
 from pydough.configs import PyDoughSession
 from pydough.conversion import relational_converter
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
 from pydough.relational import RelationalNode, RelationalRoot
 from pydough.relational.relational_nodes.column_pruner import ColumnPruner
 from pydough.unqualified import UnqualifiedNode
@@ -113,7 +114,9 @@ def aggregate_join_case(request: pytest.FixtureRequest) -> AggregateJoinTestCase
 
 def enable_extra_pruning(monkeypatch: pytest.MonkeyPatch) -> None:
     """Expose the unsafe optimizer input without changing production code."""
-    original_split = relational_converter.split_partial_aggregates
+    original_split: Callable[[RelationalNode, PyDoughSession], RelationalNode] = (
+        relational_converter.split_partial_aggregates
+    )
 
     def split_after_pruning(
         root: RelationalRoot, session: PyDoughSession
@@ -137,7 +140,7 @@ def test_pipeline_until_relational_aggregate_join_grouping_keys(
     update_tests: bool,
 ) -> None:
     """Check the normal production pipeline's Relational plan."""
-    test_data = aggregate_join_case.make_test_data()
+    test_data: PyDoughPandasTest = aggregate_join_case.make_test_data()
     test_data.run_relational_test(
         get_sample_graph,
         get_plan_test_filename(test_data.test_name),
@@ -157,7 +160,7 @@ def test_pipeline_until_sql_aggregate_join_grouping_keys(
     Relational optimizer, so a single dialect is enough here; dialect-specific
     SQL generation is already covered elsewhere.
     """
-    test_data = aggregate_join_case.make_test_data()
+    test_data: PyDoughPandasTest = aggregate_join_case.make_test_data()
     test_data.run_sql_test(
         get_sample_graph,
         get_sql_test_filename(test_data.test_name, DatabaseDialect.SQLITE),
@@ -174,15 +177,15 @@ def test_aggregate_join_grouping_keys_extra_pruning_sql(
 ) -> None:
     """Expose the regression at SQL generation time without a TPCH database."""
     enable_extra_pruning(monkeypatch)
-    session = empty_sqlite_tpch_session
-    graph = session.metadata
+    session: PyDoughSession = empty_sqlite_tpch_session
+    graph: GraphMetadata | None = session.metadata
     assert graph is not None
-    root = transform_and_exec_pydough(
+    root: UnqualifiedNode = transform_and_exec_pydough(
         aggregate_join_case.pydough_function, graph, None, session=session
     )
     # Before the fix, the two cross-input keys produce invalid plans with
     # missing column references. SQL generation must succeed after the fix.
-    sql = to_sql(
+    sql: str = to_sql(
         root,
         metadata=graph,
         database=session.database,
@@ -210,7 +213,7 @@ def test_aggregate_join_grouping_keys_e2e(
     if extra_pruning:
         enable_extra_pruning(monkeypatch)
 
-    expected = sqlite_tpch_db_context.execute_query_df(
+    expected: pd.DataFrame = sqlite_tpch_db_context.execute_query_df(
         aggregate_join_case.reference_sql
     )
     assert len(expected) == aggregate_join_case.expected_rows

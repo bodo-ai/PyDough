@@ -15,6 +15,7 @@ that earlier optimizer passes produce.
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
@@ -38,6 +39,9 @@ from pydough.relational.relational_nodes.column_pruner import ColumnPruner
 from pydough.relational.relational_nodes.join import JoinCardinality
 from pydough.sqlglot import convert_relation_to_sql, execute_df
 from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+
+if TYPE_CHECKING:
+    from _pytest.mark.structures import ParameterSet
 
 N: PyDoughType = NumericType()
 S: PyDoughType = StringType()
@@ -178,9 +182,9 @@ def nested_aggregate(key_side: str) -> Aggregate:
     return Aggregate(outer, {"label": key}, {"n": agg_call(pydop.COUNT)})
 
 
-C = frozenset({CUSTOMER})
-NA = frozenset({NATION})
-NA_R = frozenset({NATION, REGION})
+C: frozenset[str] = frozenset({CUSTOMER})
+NA: frozenset[str] = frozenset({NATION})
+NA_R: frozenset[str] = frozenset({NATION, REGION})
 
 
 def two_sided_key() -> dict[str, RelationalExpression]:
@@ -209,7 +213,7 @@ class RelationalAggJoinCase:
     """Whether to run the column pruner after the split, as the pipeline does."""
 
 
-relational_agg_join_cases = [
+relational_agg_join_cases: list["ParameterSet"] = [
     # A single grouping key reads both join inputs: never transposed.
     pytest.param(
         RelationalAggJoinCase(
@@ -409,7 +413,7 @@ def output_columns(aggregate: Aggregate) -> list[tuple[str, RelationalExpression
 
 def split_aggregate(aggregate: Aggregate, session: PyDoughSession) -> RelationalRoot:
     """Apply only the aggregate-splitting pass to a fresh input plan."""
-    columns = output_columns(aggregate)
+    columns: list[tuple[str, RelationalExpression]] = output_columns(aggregate)
     return RelationalRoot(split_partial_aggregates(aggregate, session), columns)
 
 
@@ -453,9 +457,9 @@ def test_split_partial_aggregates_grouping_keys_plan(
     that SQL can be generated from the result (an invalid plan fails with
     `Unknown column`).
     """
-    aggregate = case.build()
-    original_plan = aggregate.to_tree_string()
-    root = split_aggregate(aggregate, empty_sqlite_tpch_session)
+    aggregate: Aggregate = case.build()
+    original_plan: str = aggregate.to_tree_string()
+    root: RelationalRoot = split_aggregate(aggregate, empty_sqlite_tpch_session)
 
     # Assert the split itself, before pruning can change the plan shape.
     assert pushed_down_aggregates(root) == case.pushed_into, root.to_tree_string()
@@ -481,7 +485,7 @@ def test_split_partial_aggregates_grouping_keys_results(
     aggregate: Aggregate = case.build()
     original: RelationalRoot = RelationalRoot(aggregate, output_columns(aggregate))
     expected: pd.DataFrame = execute_df(original, sqlite_tpch_session)
-    split_root = split_aggregate(case.build(), sqlite_tpch_session)
+    split_root: RelationalRoot = split_aggregate(case.build(), sqlite_tpch_session)
     result: pd.DataFrame = execute_df(
         prune_after_split(split_root, case), sqlite_tpch_session
     )
